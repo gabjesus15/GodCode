@@ -1,10 +1,17 @@
 import type { NextConfig } from "next";
 import { resolve } from "path";
 
+const monorepoRoot = resolve(__dirname, "../..");
+
 const nextConfig: NextConfig = {
-	// Misma raíz que el monorepo y que outputFileTracingRoot en Vercel (evita warning y mezcla de roots).
+	// Alineado con Vercel/monorepo: Turbopack y NFT ven la raíz del repo.
 	turbopack: {
-		root: resolve(__dirname, "../.."),
+		root: monorepoRoot,
+	},
+	outputFileTracingRoot: monorepoRoot,
+	// APIs importan `lib/` fuera de este paquete; sin esto el deploy puede romper en runtime (MODULE_NOT_FOUND).
+	outputFileTracingIncludes: {
+		"/api/**": ["../../lib/**/*"],
 	},
 };
 
