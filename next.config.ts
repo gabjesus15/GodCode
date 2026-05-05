@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { resolve } from "path";
 import createNextIntlPlugin from "next-intl/plugin";
 import bundleAnalyzer from "@next/bundle-analyzer";
 
@@ -6,7 +7,10 @@ const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "tr
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const nextConfig: NextConfig = {
-  turbopack: {},
+  // Evita que Turbopack infiera `app/` como raíz y luego falle con "Next.js package not found".
+  turbopack: {
+    root: resolve(__dirname),
+  },
   experimental: {
     optimizePackageImports: [
       "lucide-react",

@@ -158,7 +158,13 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
     return [...paymentItems, ...ticketItems, ...entitlementItems].filter((i) => i.occurredAt).sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()).slice(0, 20);
   }, [snapshot.paymentRows, snapshot.tickets, snapshot.branchEntitlements, company]);
 
-  const filteredActivityTimeline = useMemo(() => activityFilter === "all" ? activityTimeline : activityTimeline.filter((i) => i.type === activityFilter), [activityTimeline, activityFilter]);
+  const filteredActivityTimeline = useMemo(
+    () =>
+      activityFilter === "all"
+        ? activityTimeline
+        : activityTimeline.filter((item: AccountActivityItem) => item.type === activityFilter),
+    [activityTimeline, activityFilter],
+  );
 
   const handleTabChange = async (nextTab: PortalTab) => {
     await unsavedGuard.guardedTabChange(nextTab, setTab);
