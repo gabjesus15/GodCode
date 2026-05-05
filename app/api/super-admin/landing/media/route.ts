@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { defaultLandingAssetsRows, type LandingMediaAssetRow } from "../../../../../lib/landing-media";
-import { supabaseAdmin } from "../../../../../lib/supabase-admin";
+import { defaultLandingAssetsRows, type LandingMediaAssetRow } from "@/lib/landing/landing-media";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
 function normalizeRow(input: Partial<LandingMediaAssetRow>): LandingMediaAssetRow | null {

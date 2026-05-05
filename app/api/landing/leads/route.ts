@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { EMAIL_RE, getClientIp, landingFormRateOk, normalizeText } from "../../../../lib/landing-form-utils";
-import { notifyLandingWebhooks } from "../../../../lib/landing-webhook";
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { EMAIL_RE, getClientIp, landingFormRateOk, normalizeText } from "@/lib/landing/landing-form-utils";
+import { notifyLandingWebhooks } from "@/lib/integrations/landing-webhook";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 function sanitize(value: unknown, maxLen: number): string {
   return String(value ?? "").trim().slice(0, maxLen);

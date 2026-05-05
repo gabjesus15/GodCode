@@ -1,6 +1,11 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("smoke", () => {
+	test("robots.txt responde", async ({ page }) => {
+		const res = await page.goto("/robots.txt");
+		expect(res?.ok()).toBeTruthy();
+	});
+
 	test("página de login responde", async ({ page }) => {
 		await page.goto("/login");
 		await expect(page.getByRole("textbox", { name: /email/i })).toBeVisible({ timeout: 15_000 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeCartWithBranchPrices } from "../../../../components/tenant/utils/cart-pricing";
+import { mergeCartWithBranchPrices } from "../../../../components/tenant/cart/utils/cart-pricing";
 
 describe("mergeCartWithBranchPrices", () => {
 	it("keeps synthetic beverage lines and drops missing branch products", () => {

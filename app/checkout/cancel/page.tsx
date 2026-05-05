@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, AlertTriangle, Clock3, ExternalLink, ShieldAlert } from "lucide-react";
 
 import { Badge } from "../../../components/ui/badge";
-import { getCheckoutCopy } from "../../../lib/checkout-copy";
+import { getCheckoutCopy } from "@/lib/plans/checkout-copy";
 import { getCurrentLocale } from "../../../lib/i18n/server";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
 

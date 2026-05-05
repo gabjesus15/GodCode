@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { getCustomerAccountContext } from "../../../../lib/customer-account-context";
+import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { sendOnboardingEmail } from "../../../../lib/onboarding/emails";
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 type CompanyRow = {
   id: string;

@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { supabaseAdmin } from "../../../lib/supabase-admin";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getCurrentLocale } from "@/lib/i18n/server";
-import { resolvePlanName } from "../../../lib/plan-i18n";
-import { OnboardingStep2Form } from "../../../components/onboarding/OnboardingStep2Form";
-import { OnboardingStepBar } from "../../../components/onboarding/OnboardingStepBar";
+import { resolvePlanName } from "@/lib/plans/plan-i18n";
+import { OnboardingStep2Form } from "@/components/onboarding/steps/OnboardingStep2Form";
+import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
 
 export const dynamic = "force-dynamic";
 

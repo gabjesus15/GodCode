@@ -3,7 +3,7 @@ import {
 	getMonthsPaidFromPayment,
 	getSubscriptionEndsAt,
 } from "../../lib/onboarding/billing-activation";
-import { isTenantSubscriptionAccessible } from "../../lib/tenant-subscription";
+import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 
 describe("getMonthsPaidFromPayment", () => {
 	it("retorna months_paid cuando es valido", () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { PortalTab } from "../customer-account-types";
+import type { PortalTab } from "../shared/customer-account-types";
 import type { UseConfirmDialogReturn } from "../ui/ConfirmDialog";
 
 /**

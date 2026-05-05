@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getAppUrl } from "../lib/app-url";
+import { getAppUrl } from "@/lib/tenant/app-url";
 
 const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-04-30T00:00:00.000Z";
 

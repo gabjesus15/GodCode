@@ -1,12 +1,12 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { logAdminAudit } from "../../../../../lib/admin-audit";
-import { buildCompanyPanelAccessFromPlanFeatures } from "../../../../../lib/company-panel-access";
-import { normalizePlanFeaturesPayload } from "../../../../../lib/plan-features";
-import { buildPlanMarketingLinesI18nPayload, buildPlanNameI18nPayload } from "../../../../../lib/plan-i18n";
-import { normalizeMarketingLines } from "../../../../../lib/plan-marketing-lines";
-import { adminUpdatePlanById } from "../../../../../lib/plans-db-query";
-import { supabaseAdmin } from "../../../../../lib/supabase-admin";
+import { logAdminAudit } from "@/lib/super-admin/admin-audit";
+import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
+import { normalizePlanFeaturesPayload } from "@/lib/plans/plan-features";
+import { buildPlanMarketingLinesI18nPayload, buildPlanNameI18nPayload } from "@/lib/plans/plan-i18n";
+import { normalizeMarketingLines } from "@/lib/plans/plan-marketing-lines";
+import { adminUpdatePlanById } from "@/lib/plans/plans-db-query";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
 type PatchBody = {
@@ -160,6 +160,7 @@ export async function PATCH(
 		metadata: { fields: Object.keys(updates) },
 	});
 	revalidatePath("/");
+	revalidateTag("tag:plans", "max");
 	const warningMessages: string[] = [];
 	if (optionalColumnsSkipped) {
 		warningMessages.push(

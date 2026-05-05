@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { CustomerAccountShell } from "@/components/customer-portal/CustomerAccountShell";
-import { SUBSCRIPTION_STATUS_LABELS, PAYMENT_STATUS_LABELS, TICKET_CATEGORY_LABELS, TICKET_STATUS_LABELS } from "@/components/customer-portal/customer-account-constants";
-import { displayStatus, fmtMoney, branchEntitlementStatusLabel } from "@/components/customer-portal/customer-account-format";
+import { CustomerAccountShell } from "@/components/customer-portal/shell/CustomerAccountShell";
+import { SUBSCRIPTION_STATUS_LABELS, PAYMENT_STATUS_LABELS, TICKET_CATEGORY_LABELS, TICKET_STATUS_LABELS } from "@/components/customer-portal/shared/customer-account-constants";
+import { displayStatus, fmtMoney, branchEntitlementStatusLabel } from "@/components/customer-portal/shared/customer-account-format";
 
 import { useAccountSnapshot }  from "@/components/customer-portal/hooks/use-account-snapshot";
 import { usePlanManager }      from "@/components/customer-portal/hooks/use-plan-manager";
@@ -15,21 +15,21 @@ import { useTickets }          from "@/components/customer-portal/hooks/use-tick
 import { useUnsavedGuard }     from "@/components/customer-portal/hooks/use-unsaved-guard";
 import { useConfirmDialog }    from "@/components/customer-portal/ui/ConfirmDialog";
 
-import { AccountResumenTab }    from "@/components/customer-portal/tabs/account-resumen-tab";
-import { AccountTiendaTab }     from "@/components/customer-portal/tabs/account-tienda-tab";
-import { AccountPlanTab }       from "@/components/customer-portal/tabs/account-plan-tab";
-import { AccountSucursalesTab } from "@/components/customer-portal/tabs/account-sucursales-tab";
-import { AccountFacturacionTab } from "@/components/customer-portal/tabs/account-facturacion-tab";
-import { AccountSoporteTab }    from "@/components/customer-portal/tabs/account-soporte-tab";
-import { AccountSeguridadTab }  from "@/components/customer-portal/tabs/account-seguridad-tab";
+import { AccountResumenTab }    from "@/components/customer-portal/account/tabs/account-resumen-tab";
+import { AccountTiendaTab }     from "@/components/customer-portal/account/tabs/account-tienda-tab";
+import { AccountPlanTab }       from "@/components/customer-portal/account/tabs/account-plan-tab";
+import { AccountSucursalesTab } from "@/components/customer-portal/account/tabs/account-sucursales-tab";
+import { AccountFacturacionTab } from "@/components/customer-portal/account/tabs/account-facturacion-tab";
+import { AccountSoporteTab }    from "@/components/customer-portal/account/tabs/account-soporte-tab";
+import { AccountSeguridadTab }  from "@/components/customer-portal/account/tabs/account-seguridad-tab";
 
 import type {
   AccountActivityItem,
   CustomerAccountClientProps,
   PortalTab,
-} from "@/components/customer-portal/customer-account-types";
+} from "@/components/customer-portal/shared/customer-account-types";
 
-export type { CustomerAccountClientProps } from "@/components/customer-portal/customer-account-types";
+export type { CustomerAccountClientProps } from "@/components/customer-portal/shared/customer-account-types";
 
 export function CustomerAccountClient(props: CustomerAccountClientProps) {
   const { company, branches, payments, activeAddons, availablePlans, availableAddons, initialTickets, initialBranchEntitlements } = props;
@@ -37,7 +37,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
   const [mounted,       setMounted]       = useState(false);
   const [tab,           setTab]           = useState<PortalTab>("resumen");
   const [activityFilter, setActivityFilter] = useState<"all" | "pago" | "ticket" | "extra">("all");
-  const [billingOptions, setBillingOptions] = useState<import("@/components/customer-portal/customer-account-types").BillingOptionsResponse | null>(null);
+  const [billingOptions, setBillingOptions] = useState<import("@/components/customer-portal/shared/customer-account-types").BillingOptionsResponse | null>(null);
   const [billingLoading, setBillingLoading] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -49,6 +49,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
   const snapshot = useAccountSnapshot(
     payments, initialTickets, initialBranchEntitlements, activeAddons,
     company.subscriptionStatus, company.subscriptionEndsAt,
+    { enablePolling: tab !== "tienda" && tab !== "seguridad" },
   );
 
   const planManager = usePlanManager(
@@ -101,7 +102,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
     setBillingLoading(true);
     try {
       const res  = await fetch("/api/customer-account/billing", { cache: "no-store" });
-      const data = (await res.json().catch(() => ({}))) as import("@/components/customer-portal/customer-account-types").BillingOptionsResponse & { error?: string };
+      const data = (await res.json().catch(() => ({}))) as import("@/components/customer-portal/shared/customer-account-types").BillingOptionsResponse & { error?: string };
       if (!res.ok) return;
       setBillingOptions(data);
       const cur = branchFlow.expansionMethodSlug;

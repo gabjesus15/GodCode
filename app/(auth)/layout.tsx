@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 
 import "../super-admin.tailwind.css";
-import { SaasAdminPwaRegister } from "../../components/super-admin/saas-admin-pwa-register";
+import { SaasAdminPwaRegister } from "../../components/super-admin/shell/saas-admin-pwa-register";
 
 export const metadata: Metadata = {
 	manifest: "/saas-admin/manifest.webmanifest",

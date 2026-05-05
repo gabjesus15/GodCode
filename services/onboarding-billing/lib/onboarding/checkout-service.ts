@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { buildCompanyPanelAccessFromPlanFeatures } from "../../../../lib/company-panel-access";
+import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
 import { slugify as slugifyBase } from "../../utils/slugify";
 import { resolveRegionalPlanPrice } from "../plan-regional-pricing";
 

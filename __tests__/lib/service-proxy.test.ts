@@ -11,7 +11,7 @@ describe("proxyToOnboardingBilling", () => {
 	});
 
 	async function getProxy() {
-		const mod = await import("../../lib/service-proxy");
+		const mod = await import("@/lib/onboarding/service-proxy");
 		return mod.proxyToOnboardingBilling;
 	}
 

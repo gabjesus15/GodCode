@@ -8,7 +8,7 @@ import { ShieldCheck } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
-import { SaasLogo } from "../../../components/super-admin/SaasLogo";
+import { SaasLogo } from "../../../components/super-admin/shell/SaasLogo";
 import { mapAuthClientError } from "../../../utils/auth-client-errors";
 import { createSupabaseBrowserClient } from "../../../utils/supabase/client";
 

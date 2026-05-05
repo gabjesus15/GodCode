@@ -7,7 +7,7 @@ import type {
   PaymentSummary,
   RealtimeSnapshotResponse,
   TicketSummary,
-} from "../customer-account-types";
+} from "../shared/customer-account-types";
 
 export type AccountSnapshotState = {
   subscriptionStatus:    string | null;
@@ -37,7 +37,9 @@ export function useAccountSnapshot(
   initialAddons:        ActiveAddon[],
   initialStatus:        string | null,
   initialEndsAt:        string | null,
+  options?: { enablePolling?: boolean },
 ): UseAccountSnapshotReturn {
+  const enablePolling = options?.enablePolling !== false;
   const [subscriptionStatus, setSubscriptionStatus] = useState(initialStatus);
   const [subscriptionEndsAt, setSubscriptionEndsAt] = useState(initialEndsAt);
   const [paymentRows,        setPaymentRows]         = useState(initialPayments);
@@ -85,9 +87,13 @@ export function useAccountSnapshot(
   }, []);
 
   useEffect(() => {
+    if (!enablePolling) return undefined;
     void refresh();
     const id = window.setInterval(() => void refresh(), 15_000);
-    return () => { window.clearInterval(id); abortRef.current?.abort(); };
+    return () => {
+      window.clearInterval(id);
+      abortRef.current?.abort();
+    };
     /*
      * DEUDA TÉCNICA — Fase 8: migración a Supabase Realtime
      *
@@ -108,7 +114,7 @@ export function useAccountSnapshot(
      *          .subscribe();
      *      Mantener el polling como fallback si channel.state !== "joined".
      */
-  }, [refresh]);
+  }, [refresh, enablePolling]);
 
   return {
     subscriptionStatus,

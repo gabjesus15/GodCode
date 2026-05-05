@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { CompanySnapshot, PaymentSummary, TicketMessage, TicketSummary } from "../customer-account-types";
-import { displayStatus, fmtMoney } from "../customer-account-format";
-import { PAYMENT_STATUS_LABELS } from "../customer-account-constants";
+import type { CompanySnapshot, PaymentSummary, TicketMessage, TicketSummary } from "../shared/customer-account-types";
+import { displayStatus, fmtMoney } from "../shared/customer-account-format";
+import { PAYMENT_STATUS_LABELS } from "../shared/customer-account-constants";
 
 async function postTicket(payload: {
   subject:     string;
@@ -11,7 +11,7 @@ async function postTicket(payload: {
   category:    "general" | "billing" | "technical" | "product" | "account";
   priority:    "low" | "medium" | "high" | "critical";
 }): Promise<{ ok: boolean; error?: string; ticket?: TicketSummary }> {
-  const res  = await fetch("/api/tenant-tickets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+  const res  = await fetch("/api/tenant/tickets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
   const data = (await res.json().catch(() => ({}))) as { error?: string; ticket?: TicketSummary };
   return res.ok ? { ok: true, ticket: data.ticket } : { ok: false, error: data.error || "No se pudo crear la solicitud." };
 }
@@ -74,7 +74,7 @@ export function useTickets(
   const loadMessages = useCallback(async (ticketId: string) => {
     setMessageLoading(true);
     try {
-      const res  = await fetch(`/api/tenant-tickets/${ticketId}/messages`);
+      const res  = await fetch(`/api/tenant/tickets/${ticketId}/messages`);
       const data = (await res.json().catch(() => ({}))) as { messages?: TicketMessage[] };
       setMessages(Array.isArray(data.messages) ? data.messages : []);
     } finally { setMessageLoading(false); }
@@ -113,7 +113,7 @@ export function useTickets(
     if (!selectedTicket || !messageDraft.trim()) return;
     setMessageLoading(true);
     try {
-      const res = await fetch(`/api/tenant-tickets/${selectedTicket.id}/messages`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: messageDraft.trim() }) });
+      const res = await fetch(`/api/tenant/tickets/${selectedTicket.id}/messages`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: messageDraft.trim() }) });
       if (!res.ok) { setTicketFeedbackError("No se pudo enviar el mensaje."); return; }
       setMessageDraft(""); await loadMessages(selectedTicket.id);
     } finally { setMessageLoading(false); }

@@ -3,8 +3,8 @@ import { NextRequest } from "next/server";
 import { SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../utils/admin/server-auth";
 import { SAAS_MUTATE_ROLES } from "../../../../utils/admin/server-auth";
 
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
-import { logAdminAudit } from "../../../../lib/admin-audit";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { logAdminAudit } from "@/lib/super-admin/admin-audit";
 
 export async function GET() {
 	const permission = await validateAdminRolesOnServer([...SAAS_READ_ROLES]);

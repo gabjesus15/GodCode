@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getCustomerAccountContext } from "../../../../lib/customer-account-context";
+import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { sendOnboardingEmail } from "../../../../lib/onboarding/emails";
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
-import { checkRateLimit } from "../../../../lib/rate-limiter";
-import { sanitizeServerText } from "../../../../lib/server-sanitize";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { checkRateLimit } from "@/lib/infra/rate-limiter";
+import { sanitizeServerText } from "@/lib/infra/server-sanitize";
 
 type CompanyRow = {
 	id: string;

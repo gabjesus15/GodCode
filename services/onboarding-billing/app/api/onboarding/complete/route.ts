@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 const VALID_STATUSES = new Set(["email_verified", "form_completed", "payment_pending", "paid", "approved"]);
 

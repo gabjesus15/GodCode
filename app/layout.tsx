@@ -8,7 +8,7 @@ import { GlobalAntiZoom } from "../components/theme/global-anti-zoom";
 import { PageAnalyticsTracker } from "../components/analytics/page-analytics-tracker";
 import { getMessagesForLocale } from "@/lib/i18n/messages";
 import { getCurrentLocale } from "@/lib/i18n/server";
-import { getAppUrl } from "@/lib/app-url";
+import { getAppUrl } from "@/lib/tenant/app-url";
 // import Image from 'next/image'; // Eliminado porque no se usa
 
 import "./globals.css";

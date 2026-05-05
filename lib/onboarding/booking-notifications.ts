@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { getAppUrl } from "../app-url";
+import { getAppUrl } from "../tenant/app-url";
 import { sendOnboardingEmail } from "./emails";
 
 const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";

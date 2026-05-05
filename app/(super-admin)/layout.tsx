@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { redirect } from "next/navigation";
 
-import { AdminRoleProvider } from "../../components/super-admin/admin-role-context";
-import { SaasAdminPwaRegister } from "../../components/super-admin/saas-admin-pwa-register";
-import { AdminShell } from "../../components/super-admin/admin-shell";
+import { AdminRoleProvider } from "../../components/super-admin/shell/admin-role-context";
+import { SaasAdminPwaRegister } from "../../components/super-admin/shell/saas-admin-pwa-register";
+import { AdminShell } from "../../components/super-admin/shell/admin-shell";
 import { ThemeToggle } from "../../components/theme/theme-toggle";
 import { createSupabaseServerClient } from "../../utils/supabase/server";
 

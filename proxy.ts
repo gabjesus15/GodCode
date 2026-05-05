@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseAuthScope } from "./utils/supabase/auth-scope";
-import { getAppUrl } from "./lib/app-url";
+import { getAppUrl } from "@/lib/tenant/app-url";
 import {
   normalizeHostForLookup,
   resolveTenantSlugFromCustomDomainHost,
-} from "./lib/custom-domain-resolve";
-import { publicApiCorsHeaders } from "./lib/api-cors";
+} from "@/lib/tenant/custom-domain-resolve";
+import { publicApiCorsHeaders } from "@/lib/infra/api-cors";
 
 const SECURITY_HEADERS: [string, string][] = [
   ["X-Content-Type-Options", "nosniff"],
@@ -213,14 +213,14 @@ const resolveTenantSlugFromReferer = (refererHeader: string | null) => {
 };
 
 const PUBLIC_DELIVERY_API_PATHS = new Set([
-  "/api/delivery-quote",
-  "/api/public-order-delivery",
+  "/api/geo/delivery-quote",
+  "/api/tenant/public-order-delivery",
 ]);
 
 function attachPublicDeliveryApiCors(req: NextRequest, res: NextResponse): NextResponse {
   if (!PUBLIC_DELIVERY_API_PATHS.has(req.nextUrl.pathname)) return res;
   const cors = publicApiCorsHeaders(req);
-  cors.forEach((value, key) => res.headers.set(key, value));
+  cors.forEach((value: string, key: string) => res.headers.set(key, value));
   return res;
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { createRequestContext, logger, startTimer } from "../../lib/logger";
+import { createRequestContext, logger, startTimer } from "@/lib/infra/logger";
 
 describe("createRequestContext", () => {
 	it("genera un requestId UUID", () => {

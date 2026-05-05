@@ -1,4 +1,4 @@
-import { buildAdminAuditLogRow } from "../lib/admin-audit-row";
+import { buildAdminAuditLogRow } from "@/lib/super-admin/admin-audit-row";
 import { createSupabaseBrowserClient } from "./supabase/client";
 
 interface AuditPayload {

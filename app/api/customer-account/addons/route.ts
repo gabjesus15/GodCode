@@ -1,9 +1,9 @@
 import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
-import { getCustomerAccountContext } from "../../../../lib/customer-account-context";
-import { resolveAddonOfferForPlan } from "../../../../lib/plan-offer-rules";
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
+import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 type CompanyRow = {
   id: string;

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
-import { supabaseAdmin } from "../../../../../lib/supabase-admin";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 const ATTENTION_STATUSES = ["pending_verification", "email_verified", "form_completed", "payment_pending"] as const;
 

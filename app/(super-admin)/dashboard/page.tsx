@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Activity, BarChart3, ScrollText, ShieldAlert } from "lucide-react";
 
-import { DashboardPeriodTabs } from "../../../components/super-admin/dashboard-period-tabs";
+import { DashboardPeriodTabs } from "../../../components/super-admin/analytics/dashboard-period-tabs";
 import {
 	type DashboardPeriod,
 	DASHBOARD_PERIODS,
@@ -13,7 +13,7 @@ import {
 	fetchOpenTicketsCount,
 	fetchRevenueInPeriod,
 	periodStartIso,
-} from "../../../lib/super-admin-metrics";
+} from "@/lib/super-admin/super-admin-metrics";
 import { MetricCardClient } from "./MetricCardClient";
 
 export const dynamic = "force-dynamic";

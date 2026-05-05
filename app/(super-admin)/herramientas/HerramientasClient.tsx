@@ -1,11 +1,11 @@
 "use client";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useAdminRole } from "@/components/super-admin/admin-role-context";
+import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 
-const RolesManager = dynamic(() => import("@/components/super-admin/roles-manager").then(mod => mod.default), { ssr: false });
-const AdminModulesManager = dynamic(() => import("@/components/super-admin/admin-modules-manager").then(mod => mod.default), { ssr: false });
-const BroadcastsManager = dynamic(() => import("@/components/super-admin/broadcasts-manager").then(mod => mod.default), { ssr: false });
+const RolesManager = dynamic(() => import("@/components/super-admin/roles/roles-manager").then(mod => mod.default), { ssr: false });
+const AdminModulesManager = dynamic(() => import("@/components/super-admin/roles/admin-modules-manager").then(mod => mod.default), { ssr: false });
+const BroadcastsManager = dynamic(() => import("@/components/super-admin/broadcasts/broadcasts-manager").then(mod => mod.default), { ssr: false });
 
 export function HerramientasClient() {
 	const { readOnly } = useAdminRole();

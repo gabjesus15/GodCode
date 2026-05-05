@@ -9,7 +9,7 @@
  *   EMAIL_TAGLINE      - Eslogan bajo el logo (default: Tu visión, nuestro código.)
  */
 
-import { getAppUrl } from "../app-url";
+import { getAppUrl } from "../tenant/app-url";
 
 const RESEND_API = "https://api.resend.com/emails";
 

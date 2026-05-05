@@ -32,7 +32,7 @@ FF_ONBOARDING_BILLING_EXTERNAL=proxy_only
 ```
 
 Redesplegar y monitorear:
-- Verificar que `/api/health` del BFF reporta `proxy.status: "reachable"`
+- Verificar que `/api/system/health` del BFF reporta `proxy.status: "reachable"`
 - Revisar logs en Vercel por errores `proxy_error`
 - Verificar que el header `x-proxy-mode: proxy_only` esta presente en las respuestas
 

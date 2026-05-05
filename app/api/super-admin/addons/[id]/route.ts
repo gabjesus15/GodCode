@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { logAdminAudit } from "../../../../../lib/admin-audit";
-import { supabaseAdmin } from "../../../../../lib/supabase-admin";
+import { logAdminAudit } from "@/lib/super-admin/admin-audit";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
 type PatchBody = {

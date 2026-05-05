@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { logAdminAudit } from "../../../../../lib/admin-audit";
-import { supabaseAdmin } from "../../../../../lib/supabase-admin";
-import { logger, createRequestContext } from "../../../../../lib/logger";
+import { logAdminAudit } from "@/lib/super-admin/admin-audit";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { logger, createRequestContext } from "@/lib/infra/logger";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 import {
 	activateCompanyAddonsFromApplication,
@@ -14,7 +14,7 @@ import {
 	sendPaymentValidatedNotice,
 } from "../../../../../lib/onboarding/booking-notifications";
 import { provisionOnboardingWelcome } from "../../../../../lib/onboarding/welcome-provisioning";
-import { proxyToOnboardingBilling } from "../../../../../lib/service-proxy";
+import { proxyToOnboardingBilling } from "@/lib/onboarding/service-proxy";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const RESEND_FROM = process.env.RESEND_FROM?.trim() || "";

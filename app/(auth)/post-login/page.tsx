@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { getCustomerMembership, getSuperAdminRoleByEmail } from "../../../lib/account-access";
+import { getCustomerMembership, getSuperAdminRoleByEmail } from "@/lib/super-admin/account-access";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
 
 export const dynamic = "force-dynamic";

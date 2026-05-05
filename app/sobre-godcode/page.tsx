@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { ArrowRight, ChartNoAxesCombined, ShieldCheck, Sparkles, Users } from "lucide-react";
 
-import { LandingLogo } from "@/components/landing/landing-logo";
-import { getAppUrl } from "@/lib/app-url";
+import { LandingLogo } from "@/components/landing/media/landing-logo";
+import { getAppUrl } from "@/lib/tenant/app-url";
 import { getCurrentLocale } from "@/lib/i18n/server";
 
 const copy = {

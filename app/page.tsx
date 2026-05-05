@@ -4,13 +4,13 @@ import { redirect } from "next/navigation";
 import Script from "next/script";
 
 import { GodcodeLanding } from "../components/landing/godcode-landing";
-import { getAppUrl } from "../lib/app-url";
+import { getAppUrl } from "@/lib/tenant/app-url";
 import { getMessagesForLocale } from "@/lib/i18n/messages";
 import { getCurrentLocale } from "@/lib/i18n/server";
-import { getLandingMediaBundle } from "../lib/landing-media";
-import { getPublicPlansForLanding } from "../lib/public-plans";
-import { getSubdomainFromHost, isMainDomain } from "../lib/main-domain-host";
-import { getCountryFromHeaders } from "../lib/landing-geo-plans";
+import { getLandingMediaBundle } from "@/lib/landing/landing-media";
+import { getPublicPlansForLanding } from "@/lib/plans/public-plans";
+import { getSubdomainFromHost, isMainDomain } from "@/lib/tenant/main-domain-host";
+import { getCountryFromHeaders } from "@/lib/geo/landing-geo-plans";
 
 function getLandingFaq(locale: string) {
   const isSpanish = locale.toLowerCase().startsWith("es");
@@ -96,7 +96,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       images: [
         {
-          url: `${base}/api/og`,
+          url: `${base}/api/system/og`,
           width: 1200,
           height: 630,
           alt: shareTitle,
@@ -107,7 +107,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: shareTitle,
       description,
-      images: [`${base}/api/og`],
+      images: [`${base}/api/system/og`],
     },
     robots: {
       index: true,
@@ -233,7 +233,7 @@ function JsonLd({
       name: "Del caos al control: demo de GodCode",
       description:
         "Demo completo de GodCode: menú digital, carrito de pedidos, caja e inventario en una sola plataforma. Sin marketplaces, sin comisiones.",
-      thumbnailUrl: `${base}/api/og`,
+      thumbnailUrl: `${base}/api/system/og`,
       uploadDate: "2025-01-01T00:00:00+00:00",
       contentUrl: `${base}/Del_caos_al_control.mp4`,
       embedUrl: `${base}/#demo`,

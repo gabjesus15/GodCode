@@ -15,16 +15,16 @@ import {
 	createLocalizedPlanMarketingLinesState,
 	createLocalizedPlanNameState,
 	resolvePlanMarketingLines,
-} from "../../../lib/plan-i18n";
-import { normalizeMarketingLines } from "../../../lib/plan-marketing-lines";
+} from "@/lib/plans/plan-i18n";
+import { normalizeMarketingLines } from "@/lib/plans/plan-marketing-lines";
 import {
 	DEFAULT_ROLE_NAV_PERMISSIONS,
 	TENANT_ADMIN_TAB_OPTIONS,
-} from "../../../lib/tenant-admin-tabs";
+} from "@/lib/super-admin/tenant-admin-tabs";
 import {
 	extractCeoTabsFromPlanFeatures,
 	upsertPlanFeaturesCeoTabs,
-} from "../../../lib/tenant-plan-features";
+} from "@/lib/plans/tenant-plan-features";
 
 function newDescriptionLineId(): string {
 	if (typeof crypto !== "undefined" && "randomUUID" in crypto) {

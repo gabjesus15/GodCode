@@ -1,12 +1,12 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../utils/admin/server-auth";
 
-import { logAdminAudit } from "../../../../lib/admin-audit";
-import { normalizePlanFeaturesPayload } from "../../../../lib/plan-features";
-import { buildPlanMarketingLinesI18nPayload, buildPlanNameI18nPayload } from "../../../../lib/plan-i18n";
-import { normalizeMarketingLines } from "../../../../lib/plan-marketing-lines";
-import { adminInsertPlan, queryAdminPlansList } from "../../../../lib/plans-db-query";
+import { logAdminAudit } from "@/lib/super-admin/admin-audit";
+import { normalizePlanFeaturesPayload } from "@/lib/plans/plan-features";
+import { buildPlanMarketingLinesI18nPayload, buildPlanNameI18nPayload } from "@/lib/plans/plan-i18n";
+import { normalizeMarketingLines } from "@/lib/plans/plan-marketing-lines";
+import { adminInsertPlan, queryAdminPlansList } from "@/lib/plans/plans-db-query";
 
 export async function GET() {
 	const permission = await validateAdminRolesOnServer([...SAAS_READ_ROLES]);
@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
 		metadata: { name },
 	});
 	revalidatePath("/");
+	revalidateTag("tag:plans", "max");
 	return NextResponse.json({
 		ok: true,
 		id: singleId,

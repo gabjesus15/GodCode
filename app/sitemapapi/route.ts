@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "../../lib/supabase-admin";
-import { getAppUrl } from "../../lib/app-url";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { getAppUrl } from "@/lib/tenant/app-url";
 
 const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-04-17T00:00:00.000Z";
 

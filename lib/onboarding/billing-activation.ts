@@ -13,7 +13,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { getAppUrl } from "../app-url";
+import { getAppUrl } from "../tenant/app-url";
 import { sendOnboardingEmail } from "./emails";
 
 type PaymentStatusRow = {

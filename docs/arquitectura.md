@@ -81,6 +81,21 @@ Los datos comparten **un mismo proyecto Supabase**; el aislamiento depende de **
 2. **Rutas bajo “subdominio” en path** (`/[slug]/...`): home del negocio, menú, login tenant, panel admin del negocio (en producción el path suele alinearse con el host vía configuración de despliegue o reglas de enrutamiento).
 3. **API bajo `/api`**: JSON y acciones para formularios, paneles y tareas programadas.
 
+### 3.1 Árbol resumido de `app/api`
+
+| Carpeta | Contenido típico |
+|---------|-------------------|
+| `tenant/` | Staff, tickets, broadcasts, delivery, pedidos públicos auxiliares. |
+| `super-admin/` | Empresas, planes, roles, permisos/módulos, tickets SaaS, broadcasts, landing CMS, pagos manuales. |
+| `geo/` | Dirección, reverse geocode, geocode delivery, cotización, preview cupón. |
+| `system/` | Health BFF, OG, crons (`/api/system/cron/*`), `client-info`. |
+| `customer-account/` | Snapshot cuenta, billing, tema tienda, addons. |
+| `onboarding/` | Proxy BFF → micro `onboarding-billing` cuando el flag lo permite. |
+| `auth/` | Sign-out, usuario super-admin. |
+| `landing/`, `public/`, `analytics/`, `webhooks/` | Superficies públicas o integraciones externas. |
+
+Los **crons declarados en Vercel** apuntan a rutas bajo `/api/system/cron/...` (ver `vercel.json`).
+
 ---
 
 ## 5. Microservicio onboarding-billing
@@ -88,6 +103,16 @@ Los datos comparten **un mismo proyecto Supabase**; el aislamiento depende de **
 - **Qué es**: otra aplicación Next.js más pequeña, carpeta `services/onboarding-billing`, con sus propias rutas de API (onboarding, salud, cron de suscripciones, validación de pagos para super admin, etc.).
 - **Por qué existe**: separar **escalado, despliegue y límites** del flujo de alta y facturación respecto al panel grande.
 - **Cómo se conecta**: variable de entorno con la URL base del servicio, clave interna para peticiones servidor-a-servidor, y modo de operación (`off` / reenvío con fallback local / solo proxy). La app principal **repite la ruta** en el servicio remoto cuando corresponde.
+
+**Estructura útil en el repo** (`services/onboarding-billing/`):
+
+| Ruta | Rol |
+|------|-----|
+| `app/api/**` | Handlers HTTP del microservicio (onboarding, Stripe/PayPal, health, crons). |
+| `lib/**` | Lógica compartida del servicio (Supabase admin, Stripe, PayPal, emails). |
+| `package.json` / `next.config.*` | Build y despliegue independiente del monolito principal. |
+
+**Variables típicas** (ver `.env.example` del servicio si existe): URL de Supabase y claves de servicio, secretos de Stripe/PayPal, `INTERNAL_API_KEY` o equivalente para llamadas servidor-a-servidor desde la app principal, y URL pública del servicio consumida por `lib/onboarding/service-proxy` en el monolito.
 
 Riesgo de arquitectura: **duplicación de lógica** entre ambos lados si no se mantiene un criterio claro de “fuente de verdad” y despliegues coordinados.
 
@@ -106,11 +131,17 @@ Riesgo de arquitectura: **duplicación de lógica** entre ambos lados si no se m
 |----------|------------------------|
 | **Supabase** | Auth, datos, políticas. |
 | **Stripe / PayPal** | Cobro en onboarding y métodos de pago. |
-| **Resend (+ Nodemailer en stack)** | Correos transaccionales. |
+| **Resend** | Correos transaccionales. |
 | **Cloudinary** | Imágenes y subidas desde UI. |
 | **reCAPTCHA** | Abuso en formularios de onboarding. |
 
 Si falta una integración, suele **degradarse** esa función, no necesariamente toda la app (según ruta y validación de entorno).
+
+---
+
+## 7.1 Advisors Supabase (performance / seguridad)
+
+Tras cambios en `supabase/migrations/`, conviene re-ejecutar los advisors del proyecto y seguir [docs/supabase/advisor-runbook.md](./supabase/advisor-runbook.md) (índices FK, initplan RLS, HIBP, consolidación de políticas). Tras el refactor **Esquema Perfecto**, el runbook incluye un snapshot cualitativo de hallazgos típicos (RLS sin política explícita, funciones `SECURITY DEFINER`, HIBP).
 
 ---
 

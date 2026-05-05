@@ -14,7 +14,7 @@
 /coverage
 /playwright-report/
 /test-results/
-/services/Saas-panel-admin-ceo/
+
 # next.js
 /.next/
 /out/
@@ -44,6 +44,10 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# Nested Next.js microservice (onboarding-billing)
+services/onboarding-billing/node_modules/
+services/onboarding-billing/.next/
 
 # typescript
 *.tsbuildinfo

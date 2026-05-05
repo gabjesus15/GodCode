@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { isTenantExternalDeliveryAllowed } from "../../../../lib/company-integration-policy";
+import { isTenantExternalDeliveryAllowed } from "@/lib/integrations/company-integration-policy";
 import {
 	mergeCompanyIntegrationUberPatch,
 	parseCompanyIntegrationSettings,
-} from "../../../../lib/company-integration-settings";
-import { encryptUberClientSecret } from "../../../../lib/integration-secrets";
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+} from "@/lib/integrations/company-integration-settings";
+import { encryptUberClientSecret } from "@/lib/integrations/integration-secrets";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import {
 	SAAS_MUTATE_ROLES,
 	validateAdminRolesOnServer,

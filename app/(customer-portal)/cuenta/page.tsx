@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 
 import { CustomerAccountClient } from "./CustomerAccountClient";
-import { getCustomerMembership } from "../../../lib/account-access";
+import { getCustomerMembership } from "@/lib/super-admin/account-access";
 import { getCurrentLocale } from "@/lib/i18n/server";
-import { resolvePlanName } from "../../../lib/plan-i18n";
-import { supabaseAdmin } from "../../../lib/supabase-admin";
+import { resolvePlanName } from "@/lib/plans/plan-i18n";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
-import { getCountryConfig } from "../../../lib/country-registry";
+import { getCountryConfig } from "@/lib/geo/country-registry";
 
 type TicketRow = {
   id: string;

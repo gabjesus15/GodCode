@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
-import { getAppUrl } from "../../../../lib/app-url";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { getAppUrl } from "@/lib/tenant/app-url";
 import { sendOnboardingEmail } from "../../../../lib/onboarding/emails";
 import { verifyRecaptcha } from "../../../../lib/onboarding/recaptcha";
 import { isRateLimited } from "../../../../lib/onboarding/rate-limit";

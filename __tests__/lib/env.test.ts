@@ -11,7 +11,7 @@ const OPTIONAL_KEYS = ["STRIPE_SECRET_KEY", "RESEND_API_KEY", "RESEND_FROM"];
 
 function freshValidateEnv() {
 	vi.resetModules();
-	return import("../../lib/env").then((m) => m.validateEnv);
+	return import("@/lib/infra/env").then((m) => m.validateEnv);
 }
 
 function setEnvFull() {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { sendLandingWebhookTestById, type LandingWebhookEvent } from "../../../../../../lib/landing-webhook";
+import { sendLandingWebhookTestById, type LandingWebhookEvent } from "@/lib/integrations/landing-webhook";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../../utils/admin/server-auth";
 
 const EVENT_VALUES = new Set<LandingWebhookEvent>(["lead.created", "contact.created"]);

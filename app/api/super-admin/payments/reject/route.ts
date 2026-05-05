@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { proxyToOnboardingBilling } from "../../../../../lib/service-proxy";
+import { proxyToOnboardingBilling } from "@/lib/onboarding/service-proxy";
 
 export async function POST(req: NextRequest) {
 	const proxied = await proxyToOnboardingBilling(req, "/api/super-admin/payments/reject");

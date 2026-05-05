@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { uploadImage } from "@/components/tenant/utils/cloudinary";
-import { useAdminRole } from "@/components/super-admin/admin-role-context";
+import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 

@@ -1,4 +1,4 @@
-import { CompaniesView } from "../../../components/super-admin/companies-view";
+import { CompaniesView } from "../../../components/super-admin/companies/companies-view";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
 
 export default async function CompaniesPage() {

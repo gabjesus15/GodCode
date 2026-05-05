@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { supabaseAdmin } from "../../../lib/supabase-admin";
-import { startTimer } from "../../../lib/logger";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { startTimer } from "@/lib/infra/logger";
 
 const startedAt = new Date().toISOString();
 

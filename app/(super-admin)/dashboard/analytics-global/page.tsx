@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-import { AnalyticsCountryMap } from "../../../../components/super-admin/analytics-country-map";
-import { DashboardPeriodTabs } from "../../../../components/super-admin/dashboard-period-tabs";
+import { AnalyticsCountryMapLazy } from "@/components/super-admin/analytics/analytics-country-map-lazy";
+import { DashboardPeriodTabs } from "../../../../components/super-admin/analytics/dashboard-period-tabs";
 import {
   DASHBOARD_PERIODS,
   type DashboardPeriod,
   periodStartIso,
-} from "../../../../lib/super-admin-metrics";
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+} from "@/lib/super-admin/super-admin-metrics";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -193,7 +193,7 @@ export default async function AnalyticsGlobalPage({
         <div className="rounded-2xl border border-zinc-200 bg-white/90 p-4 dark:border-zinc-700 dark:bg-zinc-900/80"><p className="text-xs text-zinc-500">SaaS views</p><p className="mt-1 text-2xl font-bold">{saasViews}</p></div>
       </div>
 
-      <AnalyticsCountryMap countriesTop={countriesTop} />
+      <AnalyticsCountryMapLazy countriesTop={countriesTop} />
 
       <div className="grid gap-4 xl:grid-cols-2">
         <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white/90 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">

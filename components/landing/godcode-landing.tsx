@@ -1,14 +1,14 @@
 import Link from "next/link";
 
-import type { LandingMediaBundle } from "../../lib/landing-media-types";
-import type { PublicPlanForLanding } from "../../lib/public-plans";
-import type { CountryCode } from "../../lib/landing-geo-plans";
+import type { LandingMediaBundle } from "@/lib/landing/landing-media-types";
+import type { PublicPlanForLanding } from "@/lib/plans/public-plans";
+import type { CountryCode } from "@/lib/geo/landing-geo-plans";
 import { getCurrentLocale, getCurrentMessages } from "@/lib/i18n/server";
 
-import { LandingNav } from "./landing-nav";
-import { LandingSections } from "./landing-sections";
-import { LandingScrollToTop } from "./landing-scroll-to-top";
-import { FloatingWhatsappButton } from "./floating-whatsapp-button";
+import { LandingNav } from "./media/landing-nav";
+import { LandingSections } from "./sections/landing-sections";
+import { LandingScrollToTop } from "./widgets/landing-scroll-to-top";
+import { FloatingWhatsappButton } from "./widgets/floating-whatsapp-button";
 import { LandingThemeEnforcer } from "../theme/landing-theme-enforcer";
 
 type GodcodeLandingProps = {

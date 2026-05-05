@@ -5,7 +5,7 @@ import {
 	OrdersController,
 } from "@paypal/paypal-server-sdk";
 
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import {
 	provisionCompanyFromApplication,
 	recordPayment,

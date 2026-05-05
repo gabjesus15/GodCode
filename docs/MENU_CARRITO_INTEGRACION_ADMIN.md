@@ -5,21 +5,21 @@ Este documento explica como funciona actualmente el flujo de `menu + carrito + c
 ## 1) Mapa general de arquitectura
 
 - **Entrada tenant**
-  - [`components/tenant/menu-client.tsx`](components/tenant/menu-client.tsx)
+  - [`components/tenant/menu/menu-client.tsx`](components/tenant/menu/menu-client.tsx)
   - Monta `CartProvider`, `CartFloat` y `CartModal`.
   - Pasa `selectedBranch` y `selectedBranch.delivery_settings` al provider.
 
 - **Estado global del carrito**
-  - [`components/tenant/cart-provider.tsx`](components/tenant/cart-provider.tsx)
+  - [`components/tenant/cart/provider/cart-provider.tsx`](components/tenant/cart/provider/cart-provider.tsx)
   - Encapsula store, pricing, fee de delivery, quote states, feature flags por sucursal.
   - Expone todo via contexto.
 
 - **UI y flujo checkout**
-  - [`components/tenant/cart-modal.tsx`](components/tenant/cart-modal.tsx)
+  - [`components/tenant/cart/views/cart-modal.tsx`](components/tenant/cart/views/cart-modal.tsx)
   - Maneja steps (`summary -> fulfillment -> payment`), render de bebidas/extras, delivery form, envio de orden.
 
 - **Validacion y persistencia de orden**
-  - [`components/tenant/orders-service.ts`](components/tenant/orders-service.ts)
+  - [`components/tenant/data/orders-service.ts`](components/tenant/data/orders-service.ts)
   - Recalcula totales/fees server-side y ejecuta RPC `create_order_transaction`.
 
 - **Normalizacion de delivery settings**
@@ -34,7 +34,7 @@ Hoy casi todo se controla desde `branches.delivery_settings` (JSON).
 
 ### 2.1 Flags de activacion de botones Bebidas/Extras
 
-Leidos en [`components/tenant/cart-provider.tsx`](components/tenant/cart-provider.tsx):
+Leidos en [`components/tenant/cart/provider/cart-provider.tsx`](components/tenant/cart/provider/cart-provider.tsx):
 
 - `extrasEnabledByBranch` o `extras_enabled_by_branch` -> activa boton/panel **Extras**.
 - `beveragesUpsellEnabledByBranch` o `beverages_upsell_enabled_by_branch` -> activa boton/panel **Bebidas**.
@@ -43,7 +43,7 @@ Si estan en `false` (o ausentes), no se muestran en UI.
 
 ### 2.2 Catalogos de Bebidas/Extras en carrito
 
-Leidos en [`components/tenant/cart-modal.tsx`](components/tenant/cart-modal.tsx), desde `selectedBranch.delivery_settings`:
+Leidos en [`components/tenant/cart/views/cart-modal.tsx`](components/tenant/cart/views/cart-modal.tsx), desde `selectedBranch.delivery_settings`:
 
 - `cartBeveragesCatalog` (fallback: `beveragesCatalog`)
 - `cartGlobalExtrasCatalog` (fallback: `globalExtrasCatalog`)
@@ -82,7 +82,7 @@ Con `deliveryPricingStrategy: "external"` y `externalDeliveryProvider: "uber_dir
 - `uberDirectStoreId`: store id de Uber por **sucursal** (panel CEO, edicion de sucursal).
 - `showExternalDeliveryFeeAmount` / `externalDeliveryDisplayText`: UX cuando no se muestra monto fijo.
 
-Credenciales OAuth (`client_id` / `client_secret`) van por **empresa** en `companies.integration_settings.uber` (Client Secret cifrado con `UBER_SECRETS_ENCRYPTION_KEY`). Si la empresa no tiene credenciales en BD, el servidor puede usar `UBER_CLIENT_ID` / `UBER_CLIENT_SECRET` como respaldo. Las APIs [`app/api/delivery-quote/route.ts`](../app/api/delivery-quote/route.ts) y [`app/api/public-order-delivery/route.ts`](../app/api/public-order-delivery/route.ts) resuelven el token con [`lib/company-integration-settings.ts`](../lib/company-integration-settings.ts).
+Credenciales OAuth (`client_id` / `client_secret`) van por **empresa** en `companies.integration_settings.uber` (Client Secret cifrado con `UBER_SECRETS_ENCRYPTION_KEY`). Si la empresa no tiene credenciales en BD, el servidor puede usar `UBER_CLIENT_ID` / `UBER_CLIENT_SECRET` como respaldo. Las APIs [`app/api/geo/delivery-quote/route.ts`](../app/api/geo/delivery-quote/route.ts) y [`app/api/tenant/public-order-delivery/route.ts`](../app/api/tenant/public-order-delivery/route.ts) resuelven el token con [`lib/company-integration-settings.ts`](../lib/company-integration-settings.ts).
 
 
 ## 3) Flujo de datos: de donde sale cada cosa y a donde va
@@ -114,8 +114,8 @@ Credenciales OAuth (`client_id` / `client_secret`) van por **empresa** en `compa
 
 En modo `distance`, `cart-modal` puede usar:
 
-- `GET /api/address-search` (sugerencias/geocoding),
-- `POST /api/delivery-quote` (fee por coordenadas).
+- `GET /api/geo/address-search` (sugerencias/geocoding),
+- `POST /api/geo/delivery-quote` (fee por coordenadas).
 
 En modo `named_areas + address_matched`, se usa geocoding por direccion para resolver area.
 
@@ -134,7 +134,7 @@ En modo `named_areas + address_matched`, se usa geocoding por direccion para res
    - `p_delivery_fee`,
    - `p_delivery_address`,
    - datos cliente/pago/sucursal.
-5. Si delivery y hay `orderId`, hace patch adicional via `POST /api/public-order-delivery`.
+5. Si delivery y hay `orderId`, hace patch adicional via `POST /api/tenant/public-order-delivery`.
 
 
 ## 4) Que se envia exactamente (resumen practico)

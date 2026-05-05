@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { getCachedCompany } from "../../utils/tenant-cache";
 import "./tenant.css";
-import { TenantShell } from "../../components/tenant/tenant-shell";
+import { TenantShell } from "../../components/tenant/shell/tenant-shell";
 
 export const dynamic = "force-dynamic";
 

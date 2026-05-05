@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { validateApiKey } from "../../../../lib/api-key-auth";
 
 export async function DELETE(request: Request) {

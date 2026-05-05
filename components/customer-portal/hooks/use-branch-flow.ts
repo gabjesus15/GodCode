@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { BillingOptionsResponse, BillingPaymentResponse, BranchEntitlementSummary, CompanySnapshot, PaymentSummary, TicketSummary } from "../customer-account-types";
+import type { BillingOptionsResponse, BillingPaymentResponse, BranchEntitlementSummary, CompanySnapshot, PaymentSummary, TicketSummary } from "../shared/customer-account-types";
 import { uploadImage } from "@/components/tenant/utils/cloudinary";
 
 async function postTicket(payload: {
@@ -10,7 +10,7 @@ async function postTicket(payload: {
   category:    "general" | "billing" | "technical" | "product" | "account";
   priority:    "low" | "medium" | "high" | "critical";
 }): Promise<{ ok: boolean; error?: string; ticket?: TicketSummary }> {
-  const res  = await fetch("/api/tenant-tickets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+  const res  = await fetch("/api/tenant/tickets", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
   const data = (await res.json().catch(() => ({}))) as { error?: string; ticket?: TicketSummary };
   return res.ok ? { ok: true, ticket: data.ticket } : { ok: false, error: data.error || "No se pudo crear la solicitud." };
 }

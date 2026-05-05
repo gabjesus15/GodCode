@@ -1,10 +1,23 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import bundleAnalyzer from "@next/bundle-analyzer";
 
+const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "true" });
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const nextConfig: NextConfig = {
   turbopack: {},
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "framer-motion",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-accordion",
+      "embla-carousel-react",
+      "react-chartjs-2",
+      "chart.js",
+    ],
+  },
   images: {
     qualities: [75, 92, 95],
     remotePatterns: [
@@ -23,13 +36,7 @@ const nextConfig: NextConfig = {
 
       config.watchOptions = {
         ...config.watchOptions,
-        ignored: [
-          ...ignoredList,
-          "**/supabase-functions-backup/**",
-          "**/tenant-template/**",
-          "**/_vercel_exclude/**",
-          "**/services/**",
-        ],
+        ignored: [...ignoredList, "**/services/**"],
       };
     }
 
@@ -37,6 +44,33 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/images/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/fonts/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
       {
         source: "/(.*)",
         headers: [
@@ -50,4 +84,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+export default withBundleAnalyzer(withNextIntl(nextConfig));

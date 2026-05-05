@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { PaymentSummary } from "../customer-account-types";
-import { displayStatus } from "../customer-account-format";
-import { PAYMENT_STATUS_LABELS } from "../customer-account-constants";
+import type { PaymentSummary } from "../shared/customer-account-types";
+import { displayStatus } from "../shared/customer-account-format";
+import { PAYMENT_STATUS_LABELS } from "../shared/customer-account-constants";
 
 export type UseBillingFiltersReturn = {
   paymentStatusFilter:    string;

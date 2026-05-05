@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../utils/admin/server-auth";
 
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 function getDeletePolicy(input: {
 	status: string | null;

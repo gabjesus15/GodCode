@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Shield, Mail, Clock } from "lucide-react";
 
-import { OnboardingStep1Form } from "../../components/onboarding/OnboardingStep1Form";
-import { OnboardingStepBar } from "../../components/onboarding/OnboardingStepBar";
+import { OnboardingStep1Form } from "@/components/onboarding/steps/OnboardingStep1Form";
+import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
 import { getCurrentMessages } from "@/lib/i18n/server";
-import { getAppUrl } from "@/lib/app-url";
+import { getAppUrl } from "@/lib/tenant/app-url";
 
 export async function generateMetadata(): Promise<Metadata> {
 	const base = getAppUrl();

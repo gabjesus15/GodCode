@@ -26,6 +26,18 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@/lib/*": [
+        "./lib/*"
+      ],
+      "@/components/*": [
+        "./components/*"
+      ],
+      "@/utils/*": [
+        "./utils/*"
+      ],
+      "@/hooks/*": [
+        "./hooks/*"
       ]
     }
   },
@@ -40,7 +52,6 @@
   ],
   "exclude": [
     "node_modules",
-    "supabase-functions-backup/**",
     "services/**"
   ]
 }

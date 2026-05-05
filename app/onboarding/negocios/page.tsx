@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Store, ExternalLink } from "lucide-react";
 
-import { getAppUrl } from "../../../lib/app-url";
-import { supabaseAdmin } from "../../../lib/supabase-admin";
+import { getAppUrl } from "@/lib/tenant/app-url";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getCurrentLocale } from "../../../lib/i18n/server";
 import { getTenantUrl } from "../../../utils/tenant-url";
 

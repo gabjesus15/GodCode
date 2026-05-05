@@ -1,5 +1,5 @@
-import { getSubdomainFromHost, isMainDomain } from "@/lib/main-domain-host";
-import { resolveTenantSlugFromCustomDomainHost } from "@/lib/custom-domain-resolve";
+import { getSubdomainFromHost, isMainDomain } from "@/lib/tenant/main-domain-host";
+import { resolveTenantSlugFromCustomDomainHost } from "@/lib/tenant/custom-domain-resolve";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
 
 import { normalizeLocale, type AppLocale } from "./config";

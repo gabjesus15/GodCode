@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, Download } from "lucide-react";
 
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import type { Json } from "../../../../types/supabase-database";
 
 export const dynamic = "force-dynamic";

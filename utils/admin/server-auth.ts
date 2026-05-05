@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../../lib/supabase-admin";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 const FALLBACK_ALLOWED_ROLES = new Set(["super_admin"]);
 

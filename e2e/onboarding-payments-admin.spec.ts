@@ -11,13 +11,6 @@ type RuntimeConfig = {
   adminPassword: string;
 };
 
-type OnboardingAppRow = {
-  id: string;
-  company_id: string | null;
-  verification_token: string | null;
-  status: string | null;
-};
-
 function onboardingBillingUrl(path: string): string {
   return `${onboardingBillingBaseUrl}${path}`;
 }

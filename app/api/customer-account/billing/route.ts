@@ -1,12 +1,12 @@
 import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
-import { getCustomerAccountContext } from "../../../../lib/customer-account-context";
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
-import { checkRateLimit } from "../../../../lib/rate-limiter";
-import { normalizeCountryCode } from "../../../../lib/country-registry";
-import { resolveContinentFromCountryInput } from "../../../../lib/plan-regional-pricing";
-import { logger } from "../../../../lib/logger";
+import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { checkRateLimit } from "@/lib/infra/rate-limiter";
+import { normalizeCountryCode } from "@/lib/geo/country-registry";
+import { resolveContinentFromCountryInput } from "@/lib/plans/plan-regional-pricing";
+import { logger } from "@/lib/infra/logger";
 
 type CompanySnapshot = {
   id: string;

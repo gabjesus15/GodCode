@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getAppUrl } from "../../../../lib/app-url";
+import { getAppUrl } from "@/lib/tenant/app-url";
 import { sendOnboardingEmail } from "../../../../lib/onboarding/emails";
 import { isRateLimited } from "../../../../lib/onboarding/rate-limit";
 import { normalizeEmail } from "../../../../lib/onboarding/trial-eligibility";
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";

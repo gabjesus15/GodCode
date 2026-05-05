@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 
 import { createSupabasePublicServerClient } from "../../utils/supabase/server";
 import { getCachedCompany } from "../../utils/tenant-cache";
-import { HomeClient } from "../../components/tenant/home-client";
-import { isTenantSubscriptionAccessible } from "../../lib/tenant-subscription";
+import { HomeClient } from "../../components/tenant/home/home-client";
+import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 
 interface TenantPageProps {
   params: Promise<{ subdomain: string }>;

@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 
-const TicketsManager = dynamic(() => import("@/components/super-admin/tickets-manager").then(mod => mod.default), { ssr: false });
+const TicketsManager = dynamic(() => import("@/components/super-admin/tickets/tickets-manager").then(mod => mod.default), { ssr: false });
 
 export function TicketsClient() {
   return (

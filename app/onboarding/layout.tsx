@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { getCurrentMessages } from "@/lib/i18n/server";
-import { LandingLogo } from "../../components/landing/landing-logo";
+import { LandingLogo } from "@/components/landing/media/landing-logo";
 import "../super-admin.tailwind.css";
 import "./onboarding.css";
 

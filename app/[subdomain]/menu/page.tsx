@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
-import { MenuClient } from "../../../components/tenant/menu-client";
-import type { HeroBanner } from "../../../components/tenant/hero-carousel";
+import { MenuClient } from "../../../components/tenant/menu/menu-client";
+import type { HeroBanner } from "../../../components/tenant/home/hero-carousel";
 
 // ==========================================
 // 1. INTERFACES DE PROPS Y OUTPUT CLIENTE

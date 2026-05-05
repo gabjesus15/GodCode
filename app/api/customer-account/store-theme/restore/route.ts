@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getCustomerAccountContext } from "../../../../../lib/customer-account-context";
-import { supabaseAdmin } from "../../../../../lib/supabase-admin";
+import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 export async function POST(req: NextRequest) {
   const ctx = await getCustomerAccountContext();

@@ -3,8 +3,8 @@ import Link from "next/link";
 import { AlertTriangle, ArrowRight, CheckCircle, ExternalLink, ShieldCheck, Sparkles } from "lucide-react";
 
 import { Badge } from "../../../components/ui/badge";
-import { CheckoutSuccessFinalize } from "../../../components/onboarding/CheckoutSuccessFinalize";
-import { getCheckoutCopy } from "../../../lib/checkout-copy";
+import { CheckoutSuccessFinalize } from "@/components/onboarding/payments/CheckoutSuccessFinalize";
+import { getCheckoutCopy } from "@/lib/plans/checkout-copy";
 import { getCurrentLocale } from "../../../lib/i18n/server";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
 

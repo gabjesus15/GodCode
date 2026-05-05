@@ -1,4 +1,4 @@
-import { CompanyForm } from "../../../../components/super-admin/company-form";
+import { CompanyForm } from "../../../../components/super-admin/companies/company-form";
 import { createSupabaseServerClient } from "../../../../utils/supabase/server";
 
 export default async function CompanyCreatePage() {

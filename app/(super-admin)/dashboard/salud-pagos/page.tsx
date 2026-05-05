@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-import { fetchPaymentHealthRows } from "../../../../lib/super-admin-metrics";
+import { fetchPaymentHealthRows } from "@/lib/super-admin/super-admin-metrics";
 
 export const dynamic = "force-dynamic";
 

@@ -1,8 +1,8 @@
 import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
-import { supabaseAdmin } from "../../../../lib/supabase-admin";
-import { getSubdomainFromHost, isMainDomain } from "../../../../lib/main-domain-host";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { getSubdomainFromHost, isMainDomain } from "@/lib/tenant/main-domain-host";
 
 type EventBody = {
   event?: string;

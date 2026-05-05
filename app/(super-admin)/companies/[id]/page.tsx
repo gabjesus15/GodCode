@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { BranchesCreateForm } from "../../../../components/super-admin/branches-create-form";
-import { BranchesTable } from "../../../../components/super-admin/branches-table";
-import { CompanyGlobalTab } from "../../../../components/super-admin/company-global-tab";
-import { CompanyTabs } from "../../../../components/super-admin/company-tabs";
-import { isTenantExternalDeliveryAllowed } from "../../../../lib/company-integration-policy";
-import { parseCompanyIntegrationSettingsJson } from "../../../../lib/company-integration-json";
+import { BranchesCreateForm } from "../../../../components/super-admin/branches/branches-create-form";
+import { BranchesTable } from "../../../../components/super-admin/branches/branches-table";
+import { CompanyGlobalTab } from "../../../../components/super-admin/companies/company-global-tab";
+import { CompanyTabs } from "../../../../components/super-admin/companies/company-tabs";
+import { isTenantExternalDeliveryAllowed } from "@/lib/integrations/company-integration-policy";
+import { parseCompanyIntegrationSettingsJson } from "@/lib/integrations/company-integration-json";
 import { createSupabaseServerClient } from "../../../../utils/supabase/server";
 
 export async function generateMetadata({

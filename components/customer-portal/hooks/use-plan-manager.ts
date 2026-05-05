@@ -7,9 +7,9 @@ import type {
   AddonPurchasePreview,
   PlanChangePreview,
   PlanOption,
-} from "../customer-account-types";
-import { normalizeAddonIdentity, isSingleInstanceAddon } from "../customer-account-addon-utils";
-import { resolveAddonOfferForPlan } from "@/lib/plan-offer-rules";
+} from "../shared/customer-account-types";
+import { normalizeAddonIdentity, isSingleInstanceAddon } from "../shared/customer-account-addon-utils";
+import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 
 export type UsePlanManagerReturn = {
   // Plan change

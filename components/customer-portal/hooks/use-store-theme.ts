@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { StoreThemeAssetField, StoreThemeAutosaveStatus, StoreThemeConfig, StoreThemeResponse } from "../customer-account-types";
+import type { StoreThemeAssetField, StoreThemeAutosaveStatus, StoreThemeConfig, StoreThemeResponse } from "../shared/customer-account-types";
 import {
   buildContrastSuggestions,
   buildStoreThemeChecklist,
   getStoreThemeSignature,
   normalizeStoreThemeInput,
   validateStoreThemeAssetFile,
-} from "@/lib/store-theme-utils";
-import { STORE_THEME_FIELD_LABELS, STORE_THEME_TEMPLATES } from "../customer-account-store-theme-constants";
+} from "@/lib/store-theme/store-theme-utils";
+import { STORE_THEME_FIELD_LABELS, STORE_THEME_TEMPLATES } from "../shared/customer-account-store-theme-constants";
 import { uploadImage } from "@/components/tenant/utils/cloudinary";
 
 export type UseStoreThemeReturn = {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { buildAdminAuditLogRow } from "../../../../../lib/admin-audit-row";
-import { supabaseAdmin } from "../../../../../lib/supabase-admin";
+import { buildAdminAuditLogRow } from "@/lib/super-admin/admin-audit-row";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 import { createSupabaseServerClient } from "../../../../../utils/supabase/server";
 

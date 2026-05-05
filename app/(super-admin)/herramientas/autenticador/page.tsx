@@ -1,4 +1,4 @@
-import { SuperAdminMfaEnroll } from "@/components/super-admin/super-admin-mfa-enroll";
+import { SuperAdminMfaEnroll } from "@/components/super-admin/mfa/super-admin-mfa-enroll";
 
 export default function HerramientasAutenticadorPage() {
 	return (

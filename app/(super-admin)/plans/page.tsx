@@ -1,6 +1,7 @@
-import { queryAdminPlansList } from "../../../lib/plans-db-query";
-import { supabaseAdmin } from "../../../lib/supabase-admin";
-import { PlansAdminClient } from "./PlansAdminClient";
+import { PlansAdminClientLazy } from "./plans-admin-client-lazy";
+
+import { queryAdminPlansList } from "@/lib/plans/plans-db-query";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 const getUsdToClp = async () => {
 	try {
@@ -39,7 +40,13 @@ export default async function PlansPage() {
 			throw addonsError;
 		}
 
-		return <PlansAdminClient plans={data ?? []} rate={rate} addons={(addons ?? []) as Array<{ id: string; slug: string | null; name: string }>} />;
+		return (
+			<PlansAdminClientLazy
+				plans={data ?? []}
+				rate={rate}
+				addons={(addons ?? []) as Array<{ id: string; slug: string | null; name: string }>}
+			/>
+		);
 	} catch (err) {
 		console.error("[plans/page]", err);
 		return (
