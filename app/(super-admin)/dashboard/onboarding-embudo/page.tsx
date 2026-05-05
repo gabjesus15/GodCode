@@ -12,6 +12,7 @@ const ORDER = [
 	"payment_pending",
 	"active",
 	"rejected",
+	"other",
 ] as const;
 
 const LABELS: Record<string, string> = {
@@ -21,6 +22,7 @@ const LABELS: Record<string, string> = {
 	payment_pending: "Esperando pago de suscripción",
 	active: "Onboarding completado (activo)",
 	rejected: "Rechazado",
+	other: "Otro estado (no coincide con el embudo; revisá la columna status en BD)",
 };
 
 export default async function OnboardingEmbudoPage() {
@@ -39,7 +41,7 @@ export default async function OnboardingEmbudoPage() {
 				<h2 className="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Embudo de onboarding</h2>
 				<p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
 					Distribución por <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">onboarding_applications.status</code>.
-					Usá esto para ver en qué paso se estanca el registro.
+					Los pagos con PayPal antes no pasaban a <code className="text-xs">active</code>: métricas y embudo quedaban desalineados respecto a Stripe; ya está corregido en el servicio de onboarding.
 				</p>
 			</div>
 
@@ -50,7 +52,7 @@ export default async function OnboardingEmbudoPage() {
 			) : null}
 
 			<div className="space-y-4">
-				{ORDER.map((key) => {
+				{ORDER.filter((key) => key !== "other" || (funnel.counts.other ?? 0) > 0).map((key) => {
 					const count = funnel.counts[key] ?? 0;
 					const pct = Math.round((1000 * count) / total) / 10;
 					const progressValue = Math.max(0, Math.min(1000, Math.round((count / total) * 1000)));

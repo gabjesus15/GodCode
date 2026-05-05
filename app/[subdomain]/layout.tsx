@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedCompany } from "../../utils/tenant-cache";
 import "./tenant.css";
 import { TenantShell } from "../../components/tenant/shell/tenant-shell";
@@ -63,7 +64,7 @@ export async function generateMetadata({
   }
 
   const name = company.theme_config?.displayName ?? company.name ?? "GodCode";
-  const versionSeed = String(company.updated_at ?? company.id ?? name);
+  const versionSeed = tenantBrandingIconVersionSeed(company);
   const icon = `/${resolvedParams.subdomain}/tenant-favicon?v=${encodeURIComponent(versionSeed)}`;
 
   // Mejorar título y descripción según idioma y empresa
@@ -124,8 +125,10 @@ export default async function TenantLayout({
   // SEO y social meta tags
   const seoTitle = company?.theme_config?.displayName ?? company?.name ?? "GodCode";
   const seoDescription = `Panel de administración de ${seoTitle}. Gestiona tu empresa, planes y pedidos.`;
-  const versionSeed = String(company?.updated_at ?? company?.id ?? seoTitle);
-  const ogImage = `https://${resolvedParams.subdomain}.godcode.me/${resolvedParams.subdomain}/tenant-favicon?v=${encodeURIComponent(versionSeed)}`;
+  const iconVersionSeed = company
+    ? tenantBrandingIconVersionSeed(company)
+    : resolvedParams.subdomain;
+  const ogImage = `https://${resolvedParams.subdomain}.godcode.me/${resolvedParams.subdomain}/tenant-favicon?v=${encodeURIComponent(iconVersionSeed)}`;
 
   // Datos estructurados schema.org
   const orgJsonLd = {

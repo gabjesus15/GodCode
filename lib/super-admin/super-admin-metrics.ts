@@ -111,6 +111,20 @@ export async function fetchOnboardingFunnelCounts(): Promise<{
 		counts[r.status] = r.count;
 		total += r.count;
 	}
+
+	const { count: rowTotal, error: totalErr } = await supabaseAdmin
+		.from("onboarding_applications")
+		.select("id", { count: "exact", head: true });
+	if (totalErr) {
+		return { counts, total, error: totalErr.message };
+	}
+	const accounted = total;
+	const other = Math.max(0, (rowTotal ?? 0) - accounted);
+	if (other > 0) {
+		counts.other = other;
+		total = rowTotal ?? accounted;
+	}
+
 	return { counts, total, error: null };
 }
 

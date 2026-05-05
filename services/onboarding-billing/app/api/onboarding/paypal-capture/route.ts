@@ -13,6 +13,10 @@ import {
 } from "../../../../lib/onboarding/booking-notifications";
 import { hashPaymentIdentity, normalizeEmail } from "../../../../lib/onboarding/trial-eligibility";
 import {
+	activateCompanyAddonsFromApplication,
+	activateCompanySubscription,
+} from "../../../../lib/onboarding/billing-activation";
+import {
 	provisionCompanyFromApplication,
 	recordPayment,
 	type OnboardingApplication,
@@ -176,6 +180,29 @@ export async function GET(req: NextRequest) {
 					contactDate: booking.scheduledFor,
 				});
 			}
+
+			const finalizeAt = new Date();
+			await supabaseAdmin
+				.from("onboarding_applications")
+				.update({
+					status: "active",
+					payment_status: "paid",
+					updated_at: finalizeAt.toISOString(),
+				})
+				.eq("id", app.id);
+			await activateCompanySubscription({
+				supabaseAdmin,
+				companyId: companyResult.company.id,
+				monthsPaid: months,
+				now: finalizeAt,
+			});
+			await activateCompanyAddonsFromApplication({
+				supabaseAdmin,
+				applicationId: app.id,
+				companyId: companyResult.company.id,
+				monthsPaid: months,
+				now: finalizeAt,
+			});
 		}
 
 		const baseUrl =

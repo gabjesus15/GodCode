@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedCompany } from "../../../../utils/tenant-cache";
 
 type RouteContext = {
@@ -28,7 +30,7 @@ export async function GET(req: Request, context: RouteContext) {
 				"GodCode Menu";
 
 	const iconVersion = encodeURIComponent(
-		String(company?.updated_at ?? company?.id ?? name)
+		company ? tenantBrandingIconVersionSeed(company) : String(name)
 	);
 	const tenantIcon = baseUrl ? `${baseUrl}/${subdomain}/tenant-favicon?v=${iconVersion}` : `/${subdomain}/tenant-favicon?v=${iconVersion}`;
 	const startUrl = baseUrl ? `${pathPrefix}/menu` : `/${subdomain}/menu`;

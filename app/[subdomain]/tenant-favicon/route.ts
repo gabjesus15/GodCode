@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
+
+export const dynamic = "force-dynamic";
 
 const getInitials = (name: string) => {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -25,24 +28,38 @@ export async function GET(
     .eq("public_slug", subdomain)
     .maybeSingle();
 
-  const name = company?.theme_config?.displayName ?? company?.name ?? "GodCode";
-  const primaryColor = company?.theme_config?.primaryColor ?? "#111827";
-  const logoUrl = company?.theme_config?.logoUrl as string | undefined;
+  const theme = company?.theme_config as Record<string, unknown> | null | undefined;
+  const displayName =
+    typeof theme?.displayName === "string" ? theme.displayName.trim() : "";
+  const name = displayName || company?.name || "GodCode";
+  const primaryColor =
+    (typeof theme?.primaryColor === "string" && theme.primaryColor.trim()) || "#111827";
+  const logoUrl = parseThemeLogoUrl(company?.theme_config);
   const status = company?.subscription_status?.toLowerCase();
 
   if (logoUrl && status !== "suspended" && status !== "cancelled") {
     try {
-      const upstream = await fetch(logoUrl, { cache: "no-store" });
+      const upstream = await fetch(logoUrl, {
+        cache: "no-store",
+        redirect: "follow",
+        headers: {
+          Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/png,image/jpeg,image/*,*/*;q=0.8",
+          "User-Agent": "GodCode-TenantFavicon/1.0",
+        },
+      });
       if (upstream.ok) {
-        const contentType = upstream.headers.get("content-type") || "image/png";
-        const body = await upstream.arrayBuffer();
+        const buf = await upstream.arrayBuffer();
+        if (buf.byteLength > 0) {
+          const rawType = upstream.headers.get("content-type") || "";
+          const contentType = rawType.split(";")[0]?.trim() || "image/png";
 
-        return new NextResponse(body, {
-          headers: {
-            "Content-Type": contentType,
-            "Cache-Control": "public, max-age=300",
-          },
-        });
+          return new NextResponse(buf, {
+            headers: {
+              "Content-Type": contentType,
+              "Cache-Control": "public, max-age=300, s-maxage=120",
+            },
+          });
+        }
       }
     } catch {
       // Fallback handled below.

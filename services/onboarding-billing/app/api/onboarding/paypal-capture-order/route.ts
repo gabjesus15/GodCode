@@ -7,6 +7,10 @@ import {
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import {
+	activateCompanyAddonsFromApplication,
+	activateCompanySubscription,
+} from "../../../../lib/onboarding/billing-activation";
+import {
 	provisionCompanyFromApplication,
 	recordPayment,
 	type OnboardingApplication,
@@ -147,6 +151,29 @@ export async function POST(req: NextRequest) {
 				})
 				.eq("id", paymentInsert.id);
 		}
+
+		const now = new Date();
+		await supabaseAdmin
+			.from("onboarding_applications")
+			.update({
+				status: "active",
+				payment_status: "paid",
+				updated_at: now.toISOString(),
+			})
+			.eq("id", app.id);
+		await activateCompanySubscription({
+			supabaseAdmin,
+			companyId: companyResult.company.id,
+			monthsPaid: months,
+			now,
+		});
+		await activateCompanyAddonsFromApplication({
+			supabaseAdmin,
+			applicationId: app.id,
+			companyId: companyResult.company.id,
+			monthsPaid: months,
+			now,
+		});
 
 		return NextResponse.json({ ok: true, ref: orderId });
 	} catch (err) {
