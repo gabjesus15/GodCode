@@ -54,9 +54,7 @@ export async function POST(req: NextRequest) {
 				.eq("id", app.id);
 
 			logger.info("Pago rechazado", ctx, {
-				companyId: null,
-				paymentId: null,
-				reason: reason || null,
+				...(reason ? { reason } : {}),
 			});
 
 			return NextResponse.json({ ok: true, message: "Pago rechazado correctamente" });
@@ -79,9 +77,9 @@ export async function POST(req: NextRequest) {
 		}
 
 		logger.info("Pago rechazado", ctx, {
-			companyId: payment.company_id,
-			paymentId: payment.id,
-			reason: reason || null,
+			companyId: payment.company_id ?? undefined,
+			paymentId: payment.id ?? undefined,
+			...(reason ? { reason } : {}),
 		});
 
 		return NextResponse.json({ ok: true, message: "Pago rechazado correctamente" });
