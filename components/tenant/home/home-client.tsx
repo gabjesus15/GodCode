@@ -12,6 +12,7 @@ const ContactBranchModal = dynamic(
   () => import("../branch/contact-branch-modal").then((mod) => mod.ContactBranchModal),
   { ssr: false }
 );
+import { getAppUrl } from "@/lib/tenant/app-url";
 import { getTenantScopedPath } from "../utils/tenant-route";
 
 interface BranchInfo {
@@ -153,11 +154,13 @@ export function HomeClient(props: HomeClientProps) {
       onClick: () => handleActionClick("location"),
     },
     {
-      label: "¿Quieres tu menú digital?",
-      ariaLabel: "Descubre cómo tener tu propio menú digital",
+      label: "REGISTRAR MI NEGOCIO",
+      ariaLabel: "Ir a Registrar mi negocio",
       icon: <Building2 size={20} />,
       onClick: () => {
-        window.location.href = "https://www.godcode.me/landing";
+        // La landing pública de marketing es `/` (GodcodeLanding). `/landing` es el panel super-admin y pide login.
+        const base = getAppUrl().replace(/\/$/, "");
+        window.location.assign(`${base}/`);
       },
     },
   ], [handleActionClick, router, menuPath]);
