@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Tag } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useCart } from "../use-cart";
@@ -140,10 +140,6 @@ export function CartCouponFields({
 
   return (
     <div className="cart-coupon-block">
-      <div className="cart-coupon-label">
-        <Tag size={16} aria-hidden />
-        <span>{t("coupon.title")}</span>
-      </div>
       {appliedCouponCode && appliedCouponDiscount > 0 ? (
         <div className="cart-coupon-applied">
           <span className="cart-coupon-applied-text">
@@ -167,7 +163,7 @@ export function CartCouponFields({
             className="form-input cart-coupon-input"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder={t("coupon.placeholder")}
+            placeholder={`${t("coupon.title")} — Colócalo aquí`}
             autoCapitalize="characters"
             autoCorrect="off"
             spellCheck={false}

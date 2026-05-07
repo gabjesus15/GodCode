@@ -1790,12 +1790,6 @@ export function CartModal({
               </>
             ) : !viewState.showPaymentMethods ? (
               <>
-                <CartCouponFields
-                  branchId={selectedBranchId}
-                  cartSubtotal={cartSubtotal}
-                  clientPhone={formValues.phone || ""}
-                  currency={currency}
-                />
                 <div className="cart-footer-fulfillment-expand">
                   <div className="cart-footer-fulfillment-scroll" ref={fulfillmentScrollRef}>
                     {deliverySettings.enabled ? (
