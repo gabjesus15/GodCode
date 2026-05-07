@@ -7,15 +7,13 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { isValidLatLng } from "@/lib/geo/geo";
 
-// Fix para el ícono por defecto de Leaflet con bundlers.
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
+// Fix para el ícono por defecto de Leaflet sin depender de imports de PNG.
+const LEAFLET_IMAGE_BASE = "https://unpkg.com/leaflet@1.9.4/dist/images";
 
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: (markerIcon2x as unknown as { src?: string })?.src ?? (markerIcon2x as unknown as string),
-  iconUrl: (markerIcon as unknown as { src?: string })?.src ?? (markerIcon as unknown as string),
-  shadowUrl: (markerShadow as unknown as { src?: string })?.src ?? (markerShadow as unknown as string),
+  iconRetinaUrl: `${LEAFLET_IMAGE_BASE}/marker-icon-2x.png`,
+  iconUrl: `${LEAFLET_IMAGE_BASE}/marker-icon.png`,
+  shadowUrl: `${LEAFLET_IMAGE_BASE}/marker-shadow.png`,
 });
 
 type DeliveryPreviewMapProps = {
