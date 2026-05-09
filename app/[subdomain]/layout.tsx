@@ -129,6 +129,7 @@ export default async function TenantLayout({
     ? tenantBrandingIconVersionSeed(company)
     : resolvedParams.subdomain;
   const ogImage = `https://${resolvedParams.subdomain}.godcode.me/${resolvedParams.subdomain}/tenant-favicon?v=${encodeURIComponent(iconVersionSeed)}`;
+  const iconHref = `/${resolvedParams.subdomain}/icon?v=${encodeURIComponent(iconVersionSeed)}`;
 
   // Datos estructurados schema.org
   const orgJsonLd = {
@@ -144,9 +145,10 @@ export default async function TenantLayout({
     <>
       <link rel="preconnect" href="https://res.cloudinary.com" />
       <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+      <link rel="icon" href={iconHref} />
+      <link rel="shortcut icon" href={iconHref} />
       {/* SEO meta tags */}
       <meta name="robots" content="index,follow" />
-      <meta name="theme-color" content={primaryColor} />
       <meta name="description" content={seoDescription} />
       {/* Open Graph */}
       <meta property="og:type" content="website" />
