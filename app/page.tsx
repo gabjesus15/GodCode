@@ -5,7 +5,7 @@ import Script from "next/script";
 
 import { GodcodeLanding } from "../components/landing/godcode-landing";
 import { getAppUrl } from "@/lib/tenant/app-url";
-import { SUPPORTED_LOCALES, normalizeLocale } from "@/lib/i18n/config";
+import { SUPPORTED_LOCALES, normalizeLocale, type AppLocale } from "@/lib/i18n/config";
 import { getMessagesForLocale } from "@/lib/i18n/messages";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { getLandingMediaBundle } from "@/lib/landing/landing-media";
@@ -17,7 +17,7 @@ type LandingSearchParams = {
   hl?: string;
 };
 
-function resolveLandingLocale(hlParam: string | undefined, fallbackLocale: string): string {
+function resolveLandingLocale(hlParam: string | undefined, fallbackLocale: AppLocale): AppLocale {
   if (!hlParam) return fallbackLocale;
   return normalizeLocale(hlParam);
 }
