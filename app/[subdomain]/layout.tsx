@@ -65,7 +65,7 @@ export async function generateMetadata({
 
   const name = company.theme_config?.displayName ?? company.name ?? "GodCode";
   const versionSeed = tenantBrandingIconVersionSeed(company);
-  const icon = `/${resolvedParams.subdomain}/tenant-favicon?v=${encodeURIComponent(versionSeed)}`;
+  const icon = `/${resolvedParams.subdomain}/icon?v=${encodeURIComponent(versionSeed)}`;
 
   // Mejorar título y descripción según idioma y empresa
   const DESCRIPTIONS: Record<string, string> = {
