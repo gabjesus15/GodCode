@@ -32,7 +32,7 @@ export async function GET(req: Request, context: RouteContext) {
 	const iconVersion = encodeURIComponent(
 		company ? tenantBrandingIconVersionSeed(company) : String(name)
 	);
-	const tenantIcon = baseUrl ? `${baseUrl}/${subdomain}/tenant-favicon?v=${iconVersion}` : `/${subdomain}/tenant-favicon?v=${iconVersion}`;
+	const tenantIcon = baseUrl ? `${baseUrl}/tenant-favicon?v=${iconVersion}` : `/tenant-favicon?v=${iconVersion}`;
 	const startUrl = baseUrl ? `${pathPrefix}/menu` : `/${subdomain}/menu`;
 	const scope = pathPrefix;
 

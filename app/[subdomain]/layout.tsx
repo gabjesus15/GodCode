@@ -114,7 +114,7 @@ export async function generateMetadata({
       ? theme.displayName.trim()
       : company.name?.trim()) || slugFallback || "GodCode";
   const versionSeed = tenantBrandingIconVersionSeed(company);
-  const icon = `${pathPrefix}/favicon.ico?v=${encodeURIComponent(versionSeed)}`;
+  const icon = `/tenant-favicon?v=${encodeURIComponent(versionSeed)}`;
   const description = `Pide online en ${name}. Consulta nuestro menu digital, precios y haz tu pedido por WhatsApp con delivery o retiro.`;
   const appHost = (() => {
     try {

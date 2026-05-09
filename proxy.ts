@@ -362,7 +362,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
 
 export const config = {
   matcher: [
-    // Exclude asset-like paths, API, next internals, root favicon and any tenant-favicon route
-    "/((?!api/|_next/static|_next/image|favicon.ico|tenant-favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Exclude asset-like paths and next internals; keep /favicon.ico in the middleware so tenants can serve their own icon.
+    "/((?!api/|_next/static|_next/image|tenant-favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

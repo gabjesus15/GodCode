@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
 import { MenuClient } from "../../../components/tenant/menu/menu-client";
 import type { HeroBanner } from "../../../components/tenant/home/hero-carousel";
-import { getAppUrl } from "@/lib/tenant/app-url";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 
@@ -65,14 +64,7 @@ export async function generateMetadata({
       ? rawDisplayName.trim()
       : company?.name?.trim()) || slugFallback || "Menú";
   const iconVersionSeed = company ? tenantBrandingIconVersionSeed(company) : resolvedParams.subdomain;
-  const icon = `${pathPrefix}/favicon.ico?v=${encodeURIComponent(String(iconVersionSeed))}`;
-  const appHost = (() => {
-    try {
-      return new URL(getAppUrl()).host.replace(/^www\./, "");
-    } catch {
-      return "";
-    }
-  })();
+  const icon = `/tenant-favicon?v=${encodeURIComponent(String(iconVersionSeed))}`;
   const canonical = `${metadataBase.origin}${pathPrefix}/menu`;
 
 	return {
