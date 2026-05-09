@@ -3,28 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  AlertCircle,
-  ArrowLeft,
-  Check,
-  MapPin,
-  Plus,
-  Store,
-  Truck,
-  X,
-  CupSoda,
-  Sparkles,
-} from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-
-import { useCart } from "../use-cart";
-import { ordersService } from "../../data/orders-service";
-import { validateImageFile } from "../../utils/cloudinary";
-import { createSupabaseBrowserClient } from "../../../../utils/supabase/client";
-import { sanitizeUserText } from "../../../../utils/sanitize-user-text";
-import { getFormStrategy } from "@/lib/geo/country-forms";
-import { mergeCartWithBranchPrices } from "../utils/cart-pricing";
+import { createSupabaseBrowserClient } from "@/utils/supabase/client";
+import { X, MapPin, AlertCircle, Plus, Check, CupSoda, Sparkles, Store, Truck, ArrowLeft } from "lucide-react";
 import { formatCartMoney } from "../utils/format-cart-money";
 import type { Json } from "../../../../types/supabase-database";
 import { type CartFulfillment, isUpsellBeverageLineId } from "../cart-context";
@@ -38,6 +20,7 @@ import {
 import { parseUnifiedAddressSearch } from "@/lib/delivery/address-search-query";
 import { generateWSMessage } from "../services/whatsapp-message";
 import { parseOrderRpcPayload } from "../services/order-payload";
+import { getFormStrategy } from "@/lib/geo/country-forms";
 import {
   ENHANCE_CATALOG_BEVERAGE_FALLBACK,
   ENHANCE_CATALOG_EXTRA_FALLBACK,
@@ -60,6 +43,11 @@ import { CartNamedAreaSelect } from "./cart-named-area-select";
 import { CartPaymentFlow } from "./cart-payment-flow";
 import { CartSuccessView } from "./cart-success-view";
 import { buildCartClientSchema } from "../services/cart-validation";
+import { mergeCartWithBranchPrices } from "../utils/cart-pricing";
+import { validateImageFile } from "../../utils/cloudinary";
+import { useCart } from "../use-cart";
+import { sanitizeUserText } from "@/utils/sanitize-user-text";
+import { ordersService } from "../../data/orders-service";
 const DeliveryPreviewMap = dynamic(
   () =>
     import("../../delivery/delivery-preview-map").then((mod) => mod.DeliveryPreviewMap),
@@ -829,14 +817,43 @@ export function CartModal({
           ? !deliveryQuoteLoading
           : kmManualValid()));
 
+  const requiresDeliveryAddress =
+    mapAddressMode ||
+    (deliveryPriceMode === "named" && deliverySettings.namedAreaResolution === "address_matched");
+
   const canProceedFulfillment =
     fulfillment !== "delivery" ||
-    (deliveryAddressOk &&
+    ((requiresDeliveryAddress ? deliveryAddressOk : true) &&
       meetsMinDelivery &&
       deliveryReferenceOk &&
       namedManualOk &&
       addressMatchedOk &&
       distanceReady);
+
+  const fulfillmentErrorMessage =
+    !canProceedFulfillment
+      ? fulfillment === "delivery" && requiresDeliveryAddress && !deliveryAddressOk
+        ? deliveryPriceMode === "external"
+          ? t("delivery.needLocationForUber")
+          : t("delivery.needLocationStreetOrKm")
+        : fulfillment === "delivery" && mapAddressMode && !isValidCoordsForQuote()
+        ? deliveryPriceMode === "external"
+          ? t("delivery.needLocationForUber")
+          : t("delivery.needLocationStreetOrKm")
+        : fulfillment === "delivery" && !deliveryReferenceOk
+        ? t("delivery.addDriverInstructionsMin", { min: MIN_DRIVER_REFERENCE_LEN })
+        : isDeliveryOutOfZone
+        ? t("delivery.locationOutsideArea")
+        : !meetsMinDelivery
+        ? t("delivery.minOrderForDelivery", { amount: formatCartMoney(minOrder) })
+        : deliveryQuoteLoading &&
+          (deliveryPriceMode === "distance" || deliveryPriceMode === "external") &&
+          isValidCoordsForQuote()
+        ? t("delivery.calculatingWithLocation")
+        : deliveryQuoteError
+        ? deliveryQuoteError
+        : t("delivery.completeDataToContinue")
+      : null;
 
   const checkoutPhase = useMemo((): "summary" | "fulfillment" | "payment" => {
     if (!viewState.showPaymentInfo) return "summary";
@@ -1186,7 +1203,7 @@ export function CartModal({
       setViewState((v) => ({
         ...v,
         isSaving: false,
-        error: t("errors.completeDeliveryOrMin"),
+        error: fulfillmentErrorMessage || t("errors.completeDeliveryOrMin"),
       }));
       return;
     }
