@@ -24,6 +24,9 @@
       }
     ],
     "paths": {
+      "@/lib/infra/supabase-admin": [
+        "./lib/supabase-admin.ts"
+      ],
       "@/lib/*": [
         "../../lib/*"
       ],
