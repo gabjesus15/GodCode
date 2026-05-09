@@ -236,6 +236,7 @@ export async function proxy(req: NextRequest) {
 async function _proxy(req: NextRequest): Promise<NextResponse> {
 
   const { pathname } = req.nextUrl;
+  
 
   const canonicalRedirect = maybeRedirectToCanonicalHost(req);
   if (canonicalRedirect) {
@@ -269,9 +270,18 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
   }
 
   if (pathname === "/favicon.ico") {
-    const tenantSlug = subdomain ?? resolveTenantSlugFromReferer(req.headers.get("referer"));
+    let tenantSlug = subdomain ?? resolveTenantSlugFromReferer(req.headers.get("referer"));
+    if (!tenantSlug && hostHeader) {
+      try {
+        const custom = await resolveTenantSlugFromCustomDomainHost(hostHeader);
+        tenantSlug = custom ?? tenantSlug;
+      } catch {
+        // ignore
+      }
+    }
+
     if (tenantSlug) {
-      const rewriteUrl = new URL(`/${tenantSlug}/tenant-favicon`, req.url);
+      const rewriteUrl = new URL(`/${tenantSlug}/tenant-favicon`, req.nextUrl.origin);
       rewriteUrl.search = req.nextUrl.search;
       const response = NextResponse.rewrite(rewriteUrl);
       return attachPublicDeliveryApiCors(
@@ -316,7 +326,17 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const rewriteUrl = new URL(`/${subdomain}${pathname}`, req.url);
+    // If the pathname already starts with the resolved subdomain, don't rewrite again.
+    if (pathname.startsWith(`/${subdomain}`)) {
+      const response = NextResponse.next({ request: req });
+      return attachPublicDeliveryApiCors(
+        req,
+        await applySessionRefresh(req, response, "tenant"),
+      );
+    }
+
+    const prefixedPath = `/${subdomain}${pathname}`;
+    const rewriteUrl = new URL(prefixedPath, req.nextUrl.origin);
     rewriteUrl.search = req.nextUrl.search;
     const response = NextResponse.rewrite(rewriteUrl);
     return attachPublicDeliveryApiCors(
@@ -342,6 +362,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
 
 export const config = {
   matcher: [
-    "/((?!api/|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Exclude asset-like paths, API, next internals, root favicon and any tenant-favicon route
+    "/((?!api/|_next/static|_next/image|favicon.ico|tenant-favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

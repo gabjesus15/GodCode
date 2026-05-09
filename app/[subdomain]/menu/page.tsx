@@ -73,18 +73,7 @@ export async function generateMetadata({
       return "";
     }
   })();
-  const normalizedHost = host.replace(/^www\./i, "").toLowerCase();
-  const normalizedCustom = String(company?.custom_domain ?? "")
-    .replace(/^https?:\/\//i, "")
-    .replace(/^www\./i, "")
-    .replace(/\/$/, "")
-    .toLowerCase();
-  const useSelfCanonical = normalizedCustom.length > 0 && normalizedHost === normalizedCustom;
-  const canonical = useSelfCanonical
-    ? `${metadataBase.origin}${pathPrefix}/menu`
-    : pathPrefix && appHost && !appHost.includes("localhost")
-      ? `https://${resolvedParams.subdomain}.${appHost}/menu`
-      : `${metadataBase.origin}${pathPrefix}/menu`;
+  const canonical = `${metadataBase.origin}${pathPrefix}/menu`;
 
 	return {
     metadataBase,

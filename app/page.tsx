@@ -81,7 +81,7 @@ export async function generateMetadata({
     return {};
   }
   const base = getAppUrl();
-  const canonical = locale === "es" ? `${base}/` : `${base}/?hl=${locale}`;
+  const canonical = `${base}${locale === "es" ? "/" : `/?hl=${locale}`}`;
   const languageAlternates = buildLandingLanguageAlternates(base);
   const shareTitle = messages.landing.meta.title;
   const description = messages.landing.meta.description;
