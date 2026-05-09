@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
 import { MenuClient } from "../../../components/tenant/menu/menu-client";
 import type { HeroBanner } from "../../../components/tenant/home/hero-carousel";
+import { getAppUrl } from "@/lib/tenant/app-url";
+import { isMainDomain } from "@/lib/tenant/main-domain-host";
+import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 
 // ==========================================
 // 1. INTERFACES DE PROPS Y OUTPUT CLIENTE
@@ -13,28 +17,94 @@ interface TenantMenuPageProps {
   searchParams?: Promise<{ branch?: string; debug?: string }>;
 }
 
+function formatBusinessNameFromSlug(slug: string): string {
+  return slug
+    .split("-")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => part[0].toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 export async function generateMetadata({
 	params,
 }: {
 	params: Promise<{ subdomain: string }>;
 }): Promise<Metadata> {
+  const hdrs = await headers();
 	const resolvedParams = await params;
+  const host =
+    hdrs.get("x-forwarded-host")?.split(",")[0]?.trim() ??
+    hdrs.get("host") ??
+    `${resolvedParams.subdomain}.godcode.me`;
+  const protocol = hdrs.get("x-forwarded-proto") ?? "https";
+  const metadataBase = new URL(`${protocol}://${host}`);
+  const pathPrefix = isMainDomain(host) ? `/${resolvedParams.subdomain}` : "";
 	const supabase = createSupabasePublicServerClient();
 	const { data: company } = await supabase
 		.from("companies")
-		.select("name,theme_config")
+    .select("id,updated_at,name,theme_config,custom_domain")
 		.eq("public_slug", resolvedParams.subdomain)
 		.maybeSingle();
 
-	const displayName =
-		(company?.theme_config as Record<string, unknown> | null)?.displayName as string | undefined
-		?? company?.name
-		?? "Menú";
+  const rawThemeConfig = company?.theme_config;
+  const parsedThemeConfig =
+    typeof rawThemeConfig === "string"
+      ? (() => {
+          try {
+            return JSON.parse(rawThemeConfig) as Record<string, unknown>;
+          } catch {
+            return null;
+          }
+        })()
+      : (rawThemeConfig as Record<string, unknown> | null);
+  const rawDisplayName = parsedThemeConfig?.displayName;
+  const slugFallback = formatBusinessNameFromSlug(resolvedParams.subdomain);
+  const displayName =
+    (typeof rawDisplayName === "string" && rawDisplayName.trim().length > 0
+      ? rawDisplayName.trim()
+      : company?.name?.trim()) || slugFallback || "Menú";
+  const iconVersionSeed = company ? tenantBrandingIconVersionSeed(company) : resolvedParams.subdomain;
+  const icon = `${pathPrefix}/favicon.ico?v=${encodeURIComponent(String(iconVersionSeed))}`;
+  const appHost = (() => {
+    try {
+      return new URL(getAppUrl()).host.replace(/^www\./, "");
+    } catch {
+      return "";
+    }
+  })();
+  const normalizedHost = host.replace(/^www\./i, "").toLowerCase();
+  const normalizedCustom = String(company?.custom_domain ?? "")
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/$/, "")
+    .toLowerCase();
+  const useSelfCanonical = normalizedCustom.length > 0 && normalizedHost === normalizedCustom;
+  const canonical = useSelfCanonical
+    ? `${metadataBase.origin}${pathPrefix}/menu`
+    : pathPrefix && appHost && !appHost.includes("localhost")
+      ? `https://${resolvedParams.subdomain}.${appHost}/menu`
+      : `${metadataBase.origin}${pathPrefix}/menu`;
 
 	return {
-		title: { absolute: `${displayName} — Menú` },
+    metadataBase,
+    title: { absolute: displayName },
 		description: `Explora el menú de ${displayName}. Pide online y recibe en tu puerta.`,
-		manifest: `/${resolvedParams.subdomain}/menu/manifest.webmanifest`,
+    alternates: {
+      canonical,
+    },
+    manifest: `${pathPrefix}/menu/manifest.webmanifest`,
+    icons: {
+      icon,
+      shortcut: icon,
+      apple: icon,
+    },
+    openGraph: {
+      title: displayName,
+      description: `Explora el menú de ${displayName}. Pide online y recibe en tu puerta.`,
+      url: canonical,
+      type: "website",
+    },
 		appleWebApp: {
 			capable: true,
 			statusBarStyle: "default",

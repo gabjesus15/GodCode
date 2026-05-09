@@ -8,7 +8,6 @@ import { useTranslations } from "next-intl";
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 import { X, MapPin, AlertCircle, Plus, Check, CupSoda, Sparkles, Store, Truck, ArrowLeft } from "lucide-react";
 import { formatCartMoney } from "../utils/format-cart-money";
-import type { Json } from "../../../../types/supabase-database";
 import { type CartFulfillment, isUpsellBeverageLineId } from "../cart-context";
 import {
   effectiveDeliveryPricingMode,
@@ -170,7 +169,7 @@ export function CartModal({
                 row.payment_methods === null
                   ? undefined
                   : (row.payment_methods as string[] | undefined),
-              delivery_settings: row.delivery_settings as Json | null | undefined,
+              delivery_settings: row.delivery_settings as BranchInfo["delivery_settings"],
               efectivo: row.efectivo,
               tarjeta: row.tarjeta,
             });

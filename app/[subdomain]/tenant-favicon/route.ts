@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
+import { getCloudinaryOptimizedUrl } from "@/components/tenant/utils/cloudinary";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,18 @@ export async function GET(
 
   if (logoUrl && status !== "suspended" && status !== "cancelled") {
     try {
-      const upstream = await fetch(logoUrl, {
+      const optimizedLogo = getCloudinaryOptimizedUrl(logoUrl, {
+        width: 128,
+        height: 128,
+        crop: "fill",
+        gravity: "auto",
+      });
+      const normalizedLogoUrl =
+        typeof optimizedLogo === "string" && optimizedLogo.startsWith("//")
+          ? `https:${optimizedLogo}`
+          : optimizedLogo;
+
+      const upstream = await fetch(String(normalizedLogoUrl), {
         cache: "no-store",
         redirect: "follow",
         headers: {

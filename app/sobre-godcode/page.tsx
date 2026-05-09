@@ -3,8 +3,13 @@ import Script from "next/script";
 import { ArrowRight, ChartNoAxesCombined, ShieldCheck, Sparkles, Users } from "lucide-react";
 
 import { LandingLogo } from "@/components/landing/media/landing-logo";
+import { normalizeLocale } from "@/lib/i18n/config";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { getCurrentLocale } from "@/lib/i18n/server";
+
+type AboutSearchParams = {
+  hl?: string;
+};
 
 const copy = {
   es: {
@@ -93,18 +98,45 @@ function getLocaleCopy(locale: string) {
   return locale.toLowerCase().startsWith("es") ? copy.es : copy.en;
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+function resolveAboutLocale(hlParam: string | undefined, fallbackLocale: string): "es" | "en" {
+  const normalized = hlParam ? normalizeLocale(hlParam) : normalizeLocale(fallbackLocale);
+  return normalized === "es" ? "es" : "en";
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams?: Promise<AboutSearchParams>;
+}): Promise<Metadata> {
   const base = getAppUrl();
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const fallbackLocale = await getCurrentLocale();
+  const locale = resolveAboutLocale(resolvedSearchParams?.hl, fallbackLocale);
+  const isSpanish = locale === "es";
+  const title = isSpanish ? "Sobre GodCode" : "About GodCode";
+  const description = isSpanish
+    ? "Página de marca de GodCode: una plataforma para menú digital, pedidos online, caja, inventario y delivery."
+    : "GodCode brand page: a platform for digital menus, online orders, POS, inventory and delivery.";
+  const canonical =
+    locale === "es"
+      ? `${base}/sobre-godcode`
+      : `${base}/sobre-godcode?hl=${locale}`;
   return {
     metadataBase: new URL(base),
-    title: "Sobre GodCode",
-    description:
-      "Página de marca de GodCode: una plataforma para menú digital, pedidos online, caja, inventario y delivery.",
-    alternates: { canonical: `${base}/sobre-godcode` },
+    title,
+    description,
+    alternates: {
+      canonical,
+      languages: {
+        es: `${base}/sobre-godcode`,
+        en: `${base}/sobre-godcode?hl=en`,
+        "x-default": `${base}/sobre-godcode`,
+      },
+    },
     openGraph: {
-      title: "Sobre GodCode",
-      description: "Una página de marca para reforzar la identidad de GodCode y su propuesta de valor.",
-      url: `${base}/sobre-godcode`,
+      title,
+      description,
+      url: canonical,
       siteName: "GodCode",
       type: "website",
     },
@@ -117,8 +149,14 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function SobreGodCodePage() {
-  const locale = await getCurrentLocale();
+export default async function SobreGodCodePage({
+  searchParams,
+}: {
+  searchParams?: Promise<AboutSearchParams>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const fallbackLocale = await getCurrentLocale();
+  const locale = resolveAboutLocale(resolvedSearchParams?.hl, fallbackLocale);
   const t = getLocaleCopy(locale);
   const base = getAppUrl();
   const ld = [
@@ -138,7 +176,12 @@ export default async function SobreGodCodePage() {
       {/* ── HEADER ── */}
       <header className="sticky top-0 z-20 border-b border-zinc-100 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-          <a href="/" className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+          <a
+            href="/"
+            aria-label="Ir al inicio de GodCode"
+            title="Ir al inicio de GodCode"
+            className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          >
             <LandingLogo className="gap-1" />
           </a>
           <a
@@ -157,8 +200,7 @@ export default async function SobreGodCodePage() {
           {t.eyebrow}
         </p>
         <h1
-          className="mt-5 max-w-4xl font-semibold leading-[1.06] tracking-[-0.03em] text-[#1d1d1f]"
-          style={{ fontSize: "clamp(2.6rem, 5.5vw, 5.25rem)" }}
+          className="mt-5 max-w-4xl text-[clamp(2.6rem,5.5vw,5.25rem)] font-semibold leading-[1.06] tracking-[-0.03em] text-[#1d1d1f]"
         >
           {t.title}
         </h1>
@@ -188,8 +230,7 @@ export default async function SobreGodCodePage() {
           <dl className="grid divide-y divide-[#e5e5ea] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
             {t.facts.map((fact) => (
               <div key={fact.label} className="py-10 sm:px-8 sm:first:pl-0 sm:last:pr-0">
-                <div className="mb-4 h-px w-8 bg-indigo-500" />
-                <dt className="text-lg font-semibold tracking-tight text-[#1d1d1f]">{fact.label}</dt>
+                <dt className="border-t border-indigo-500 pt-4 text-lg font-semibold tracking-tight text-[#1d1d1f]">{fact.label}</dt>
                 <dd className="mt-1.5 text-sm leading-relaxed text-[#6e6e73]">{fact.detail}</dd>
               </div>
             ))}
@@ -206,8 +247,7 @@ export default async function SobreGodCodePage() {
                 {t.sectionOneEyebrow}
               </p>
               <h2
-                className="mt-4 font-semibold leading-[1.1] tracking-[-0.022em] text-[#1d1d1f]"
-                style={{ fontSize: "clamp(1.9rem, 3.5vw, 3rem)" }}
+                className="mt-4 text-[clamp(1.9rem,3.5vw,3rem)] font-semibold leading-[1.1] tracking-[-0.022em] text-[#1d1d1f]"
               >
                 {t.sectionOneTitle}
               </h2>
@@ -238,8 +278,7 @@ export default async function SobreGodCodePage() {
                 {t.sectionTwoEyebrow}
               </p>
               <h2
-                className="mt-4 font-semibold leading-[1.1] tracking-[-0.022em] text-[#1d1d1f]"
-                style={{ fontSize: "clamp(1.9rem, 3.5vw, 3rem)" }}
+                className="mt-4 text-[clamp(1.9rem,3.5vw,3rem)] font-semibold leading-[1.1] tracking-[-0.022em] text-[#1d1d1f]"
               >
                 {t.sectionTwoTitle}
               </h2>
@@ -265,8 +304,7 @@ export default async function SobreGodCodePage() {
       <section className="border-t border-[#e5e5ea] bg-white">
         <div className="mx-auto max-w-5xl px-6 py-20 sm:py-28 lg:py-32">
           <blockquote
-            className="font-semibold leading-[1.15] tracking-[-0.022em] text-[#1d1d1f]"
-            style={{ fontSize: "clamp(1.6rem, 3.8vw, 3.25rem)" }}
+            className="text-[clamp(1.6rem,3.8vw,3.25rem)] font-semibold leading-[1.15] tracking-[-0.022em] text-[#1d1d1f]"
           >
             <span className="text-indigo-600">&ldquo;</span>
             {t.pullQuote}
@@ -284,8 +322,7 @@ export default async function SobreGodCodePage() {
                 {t.sectionThreeEyebrow}
               </p>
               <h2
-                className="mt-4 font-semibold leading-[1.1] tracking-[-0.022em] text-[#1d1d1f]"
-                style={{ fontSize: "clamp(1.9rem, 3.5vw, 3rem)" }}
+                className="mt-4 text-[clamp(1.9rem,3.5vw,3rem)] font-semibold leading-[1.1] tracking-[-0.022em] text-[#1d1d1f]"
               >
                 {t.sectionThreeTitle}
               </h2>
@@ -336,8 +373,7 @@ export default async function SobreGodCodePage() {
             {t.closingEyebrow}
           </p>
           <h2
-            className="mt-5 max-w-3xl font-semibold leading-[1.1] tracking-[-0.022em] text-[#1d1d1f]"
-            style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)" }}
+            className="mt-5 max-w-3xl text-[clamp(2rem,4vw,3.5rem)] font-semibold leading-[1.1] tracking-[-0.022em] text-[#1d1d1f]"
           >
             {t.closingTitle}
           </h2>

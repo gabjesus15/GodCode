@@ -66,7 +66,7 @@ export function CartItemRow({
       ) : (
         <Image
           src={imageSrc}
-          alt={item.name ?? t("item.productFallback")}
+          alt={`${item.name || t("item.productFallback")} - ${t("header.title")}`}
           width={65}
           height={65}
           unoptimized

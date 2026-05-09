@@ -13,10 +13,18 @@ function normalizeColor(value: unknown, fallback: string) {
 	return t.length > 0 ? t : fallback;
 }
 
+interface IconThemeConfig {
+	logoUrl?: string;
+	imageUrl?: string;
+	displayName?: string;
+	primaryColor?: string;
+	secondaryColor?: string;
+}
+
 export default async function Icon(props: { params: Promise<{ subdomain: string }> }) {
 	// Validación segura para evitar el error de "reading params of undefined" durante el build
-	const resolvedProps = props ? await props.params : null;
-	const subdomain = resolvedProps?.subdomain;
+	const resolvedParams = props?.params ? await props.params : null;
+	const subdomain = resolvedParams?.subdomain;
 
 	if (!subdomain) {
 		return new Response(null, { status: 404 });
@@ -24,15 +32,7 @@ export default async function Icon(props: { params: Promise<{ subdomain: string 
 
 	const company = await getCachedCompany(subdomain);
 
-	// Definimos una interfaz para el tema para evitar el uso de 'any' y mejorar el tipado
-	interface IconThemeConfig {
-		logoUrl?: string;
-		imageUrl?: string;
-		displayName?: string;
-		primaryColor?: string;
-		secondaryColor?: string;
-	}
-	const theme_config = (company?.theme_config as IconThemeConfig) ?? {};
+	const theme_config: IconThemeConfig = (company?.theme_config as unknown as IconThemeConfig) || {};
 	const status = String(company?.subscription_status ?? "").toLowerCase();
 	const isUnavailable = status === "suspended" || status === "cancelled";
 
@@ -90,7 +90,7 @@ export default async function Icon(props: { params: Promise<{ subdomain: string 
 	return new Response(svg, {
 		headers: {
 			"Content-Type": "image/svg+xml; charset=utf-8",
-			"Cache-Control": "public, max-age=300",
+			"Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
 		},
 	});
 }

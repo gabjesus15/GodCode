@@ -5,12 +5,30 @@ import Script from "next/script";
 
 import { GodcodeLanding } from "../components/landing/godcode-landing";
 import { getAppUrl } from "@/lib/tenant/app-url";
+import { SUPPORTED_LOCALES, normalizeLocale } from "@/lib/i18n/config";
 import { getMessagesForLocale } from "@/lib/i18n/messages";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { getLandingMediaBundle } from "@/lib/landing/landing-media";
 import { getPublicPlansForLanding } from "@/lib/plans/public-plans";
 import { getSubdomainFromHost, isMainDomain } from "@/lib/tenant/main-domain-host";
 import { getCountryFromHeaders } from "@/lib/geo/landing-geo-plans";
+
+type LandingSearchParams = {
+  hl?: string;
+};
+
+function resolveLandingLocale(hlParam: string | undefined, fallbackLocale: string): string {
+  if (!hlParam) return fallbackLocale;
+  return normalizeLocale(hlParam);
+}
+
+function buildLandingLanguageAlternates(base: string): Record<string, string> {
+  const entries = SUPPORTED_LOCALES.map((locale) => [
+    locale,
+    locale === "es" ? `${base}/` : `${base}/?hl=${locale}`,
+  ] as const);
+  return Object.fromEntries(entries);
+}
 
 function getLandingFaq(locale: string) {
   const isSpanish = locale.toLowerCase().startsWith("es");
@@ -48,15 +66,23 @@ function getLandingFaq(locale: string) {
   ];
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams?: Promise<LandingSearchParams>;
+}): Promise<Metadata> {
   const hdrs = await headers();
-  const locale = await getCurrentLocale();
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const fallbackLocale = await getCurrentLocale();
+  const locale = resolveLandingLocale(resolvedSearchParams?.hl, fallbackLocale);
   const messages = getMessagesForLocale(locale);
   const host = hdrs.get("host") || "";
   if (!isMainDomain(host)) {
     return {};
   }
   const base = getAppUrl();
+  const canonical = locale === "es" ? `${base}/` : `${base}/?hl=${locale}`;
+  const languageAlternates = buildLandingLanguageAlternates(base);
   const shareTitle = messages.landing.meta.title;
   const description = messages.landing.meta.description;
 
@@ -64,10 +90,9 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(base),
     applicationName: "GodCode",
     title: {
-      absolute: "GodCode | Menú digital, pedidos online y delivery para restaurantes",
+      absolute: shareTitle,
     },
-    description:
-      "GodCode ayuda a restaurantes y negocios con sucursales a vender online con menú digital, pedidos por WhatsApp, delivery, caja e inventario. Sin comisiones por venta y listo en minutos.",
+    description,
     keywords: [
       "menú digital para restaurantes",
       "pedidos online para restaurantes",
@@ -85,14 +110,18 @@ export async function generateMetadata(): Promise<Metadata> {
       "GodCode",
     ],
     alternates: {
-      canonical: `${base}/`,
+      canonical,
+      languages: {
+        ...languageAlternates,
+        "x-default": `${base}/`,
+      },
     },
     openGraph: {
       title: shareTitle,
       description,
-      url: base,
+      url: canonical,
       siteName: "GodCode",
-      locale: "es_CL",
+      locale: locale === "es" ? "es_CL" : "en_US",
       type: "website",
       images: [
         {
@@ -250,12 +279,18 @@ function JsonLd({
   );
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: Promise<LandingSearchParams>;
+}) {
   const hdrs = await headers();
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const country = getCountryFromHeaders(hdrs);
   const host = hdrs.get("host") || "";
   if (isMainDomain(host)) {
-    const locale = await getCurrentLocale();
+    const fallbackLocale = await getCurrentLocale();
+    const locale = resolveLandingLocale(resolvedSearchParams?.hl, fallbackLocale);
     const [plans, media] = await Promise.all([
       getPublicPlansForLanding(locale),
       getLandingMediaBundle(),

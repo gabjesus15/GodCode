@@ -7,6 +7,10 @@ import type { ActiveSessionInfo, BranchInfo } from "../cart-modal-types";
 import { formatCartMoney } from "../utils/format-cart-money";
 import { resolvePaymentMethodLabel } from "../constants";
 
+type TransferenciaBancariaConfig = NonNullable<BranchInfo["transferencia_bancaria"]>;
+type PagoMovilConfig = NonNullable<BranchInfo["pago_movil"]>;
+type ZelleConfig = NonNullable<BranchInfo["zelle"]>;
+
 export function CartOnlinePaymentDetails({
   methodKey,
   cartTotal,
@@ -17,28 +21,14 @@ export function CartOnlinePaymentDetails({
   activeInfo: ActiveSessionInfo;
 }) {
   const t = useTranslations("tenant.cart.modal");
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
-
-  const renderRow = (label: string, value: string | undefined | null) => {
-    if (!value) return null;
-    return (
-      <li className="copy-row" onClick={() => copyToClipboard(value)}>
-        <span className="copy-row-label">{label}:</span>{" "}
-        <div className="copy-row-value">
-          <b>{value}</b> <Copy size={14} />
-        </div>
-      </li>
-    );
-  };
 
   const renderDetails = () => {
     let methodData = activeInfo[methodKey as keyof ActiveSessionInfo];
 
     if (typeof methodData === "string") {
       try {
-        methodData = JSON.parse(methodData);
+        // Cast to unknown first, then to the expected object type
+        methodData = JSON.parse(methodData) as unknown;
       } catch {
         methodData = null;
       }
@@ -53,7 +43,7 @@ export function CartOnlinePaymentDetails({
     }
 
     if (methodKey === "transferencia_bancaria") {
-      const data = methodData as BranchInfo["transferencia_bancaria"] | null | undefined;
+      const data = methodData as TransferenciaBancariaConfig | null | undefined;
       if (!data) return <p className="bank-empty-msg">{t("payment.noBankData")}</p>;
       const bankName = data.banco;
       const hasAccount = data.nro_cuenta || data.identificacion;
@@ -83,7 +73,7 @@ export function CartOnlinePaymentDetails({
     }
 
     if (methodKey === "pago_movil") {
-      const data = methodData as BranchInfo["pago_movil"] | null | undefined;
+      const data = methodData as PagoMovilConfig | null | undefined;
       if (!data || !data.telefono || !data.banco)
         return <p className="bank-empty-msg">{t("payment.noMobilePaymentData")}</p>;
       return (
@@ -100,7 +90,7 @@ export function CartOnlinePaymentDetails({
     }
 
     if (methodKey === "zelle") {
-      const data = methodData as BranchInfo["zelle"] | null | undefined;
+      const data = methodData as ZelleConfig | null | undefined;
       if (!data || !data.email) return <p className="bank-empty-msg">{t("payment.noZelleData")}</p>;
       return (
         <ul className="bank-details-list">
@@ -147,6 +137,22 @@ export function CartOnlinePaymentDetails({
       <p className="bank-empty-msg">
         {t("payment.followInstructions")} {resolvePaymentMethodLabel(methodKey, t)}.
       </p>
+    );
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  const renderRow = (label: string, value: string | undefined | null) => {
+    if (!value) return null;
+    return (
+      <li className="copy-row" onClick={() => copyToClipboard(value)}>
+        <span className="copy-row-label">{label}:</span>{" "}
+        <div className="copy-row-value">
+          <b>{value}</b> <Copy size={14} />
+        </div>
+      </li>
     );
   };
 

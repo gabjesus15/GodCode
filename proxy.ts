@@ -272,6 +272,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
     const tenantSlug = subdomain ?? resolveTenantSlugFromReferer(req.headers.get("referer"));
     if (tenantSlug) {
       const rewriteUrl = new URL(`/${tenantSlug}/tenant-favicon`, req.url);
+      rewriteUrl.search = req.nextUrl.search;
       const response = NextResponse.rewrite(rewriteUrl);
       return attachPublicDeliveryApiCors(
         req,

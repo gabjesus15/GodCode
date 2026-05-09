@@ -13,7 +13,7 @@ export function parseThemeLogoUrl(themeConfig: unknown): string {
 	}
 	if (typeof themeConfig !== "object") return "";
 	const tc = themeConfig as Record<string, unknown>;
-	const raw = tc.logoUrl ?? tc.logo_url;
+	const raw = tc.logoUrl ?? tc.logo_url ?? tc.imageUrl ?? tc.image_url;
 	if (typeof raw !== "string") return "";
 	const t = raw.trim();
 	return t.length > 0 ? t : "";

@@ -1,6 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { headers } from "next/headers";
 
+import { getAppUrl } from "@/lib/tenant/app-url";
+import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedCompany } from "../../utils/tenant-cache";
 import "./tenant.css";
@@ -8,7 +11,7 @@ import { TenantShell } from "../../components/tenant/shell/tenant-shell";
 
 export const dynamic = "force-dynamic";
 
-export const viewport = {
+export const viewport: Viewport = {
 	width: "device-width",
 	initialScale: 1,
 	maximumScale: 1,
@@ -18,6 +21,28 @@ export const viewport = {
 interface TenantLayoutProps {
   children: ReactNode;
   params: Promise<{ subdomain: string }>;
+}
+
+function formatBusinessNameFromSlug(slug: string): string {
+  return slug
+    .split("-")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => part[0].toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+interface TenantThemeConfig {
+  displayName?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  priceColor?: string;
+  discountColor?: string;
+  hoverColor?: string;
+  backgroundColor?: string;
+  backgroundImageUrl?: string;
+  logoUrl?: string;
+  imageUrl?: string;
 }
 
 const toRgba = (hex: string, alpha: number, fallback: string) => {
@@ -51,11 +76,19 @@ export async function generateMetadata({
 }: {
   params: Promise<{ subdomain: string }>;
 }): Promise<Metadata> {
+  const hdrs = await headers();
   const resolvedParams = await params;
   const company = await getCachedCompany(resolvedParams.subdomain);
+  const host =
+    hdrs.get("x-forwarded-host")?.split(",")[0]?.trim() ??
+    hdrs.get("host") ??
+    `${resolvedParams.subdomain}.godcode.me`;
+  const protocol = hdrs.get("x-forwarded-proto") ?? "https";
+  const metadataBase = new URL(`${protocol}://${host}`);
+  const pathPrefix = isMainDomain(host) ? `/${resolvedParams.subdomain}` : "";
 
   if (!company) {
-    return { title: { absolute: "GodCode" } };
+    return { title: { absolute: "GodCode | Menú Digital" } };
   }
 
   const status = company.subscription_status?.toLowerCase();
@@ -63,31 +96,81 @@ export async function generateMetadata({
     return { title: { absolute: "GodCode" } };
   }
 
-  const name = company.theme_config?.displayName ?? company.name ?? "GodCode";
+  const rawThemeConfig = company.theme_config;
+  const parsedThemeConfig =
+    typeof rawThemeConfig === "string"
+      ? (() => {
+          try {
+            return JSON.parse(rawThemeConfig) as TenantThemeConfig;
+          } catch {
+            return {} as TenantThemeConfig;
+          }
+        })()
+      : ((rawThemeConfig as unknown as TenantThemeConfig) ?? {});
+  const theme = parsedThemeConfig;
+  const slugFallback = formatBusinessNameFromSlug(resolvedParams.subdomain);
+  const name =
+    (typeof theme.displayName === "string" && theme.displayName.trim().length > 0
+      ? theme.displayName.trim()
+      : company.name?.trim()) || slugFallback || "GodCode";
   const versionSeed = tenantBrandingIconVersionSeed(company);
-  const icon = `/${resolvedParams.subdomain}/icon?v=${encodeURIComponent(versionSeed)}`;
+  const icon = `${pathPrefix}/favicon.ico?v=${encodeURIComponent(versionSeed)}`;
+  const description = `Pide online en ${name}. Consulta nuestro menu digital, precios y haz tu pedido por WhatsApp con delivery o retiro.`;
+  const appHost = (() => {
+    try {
+      return new URL(getAppUrl()).host.replace(/^www\./, "");
+    } catch {
+      return "";
+    }
+  })();
+  const normalizedHost = host.replace(/^www\./i, "").toLowerCase();
+  const normalizedCustom = String(company.custom_domain ?? "")
+    .replace(/^https?:\/\//i, "")
+    .replace(/^www\./i, "")
+    .replace(/\/$/, "")
+    .toLowerCase();
+  const useSelfCanonical = normalizedCustom.length > 0 && normalizedHost === normalizedCustom;
+  const canonical = useSelfCanonical
+    ? `${metadataBase.origin}${pathPrefix}/`
+    : pathPrefix && appHost && !appHost.includes("localhost")
+      ? `https://${resolvedParams.subdomain}.${appHost}/`
+      : `${metadataBase.origin}${pathPrefix}/`;
 
-  // Mejorar título y descripción según idioma y empresa
-  const DESCRIPTIONS: Record<string, string> = {
-    es: `Panel de administración de ${name}. Gestiona tu empresa, planes y pedidos.`,
-    en: `${name} admin panel. Manage your company, plans and orders.`,
-    pt: `Painel de administração de ${name}. Gerencie sua empresa, planos e pedidos.`,
-    fr: `Panneau d'administration de ${name}. Gérez votre entreprise, plans et commandes.`,
-    de: `${name} Admin-Panel. Verwalten Sie Ihr Unternehmen, Pläne und Bestellungen.`,
-    it: `Pannello di amministrazione di ${name}. Gestisci la tua azienda, piani e ordini.`,
-  };
-  // Detectar idioma por preferencia o default (usando fallback a 'es')
-  // company.locale no existe, así que usamos 'es' siempre o podrías usar otro campo si lo tienes
-  const lang = 'es';
   return {
-    title: {
-      absolute: name,
+    metadataBase,
+    alternates: {
+      canonical,
     },
-    description: DESCRIPTIONS[lang] || DESCRIPTIONS['es'],
+    title: {
+      default: name,
+      template: `%s | ${name}`,
+    },
+    description: description,
+    keywords: [name, "menú digital", "pedidos online", "delivery", "carta online", resolvedParams.subdomain],
     icons: {
       icon,
       shortcut: icon,
       apple: icon,
+    },
+    openGraph: {
+      title: name,
+      description: description,
+      type: 'website',
+      siteName: name,
+      url: `${metadataBase.origin}${pathPrefix}/`,
+      images: [
+        {
+          url: `${pathPrefix}/opengraph-image`,
+          width: 1200,
+          height: 630,
+          alt: `Menú de ${name}`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: name,
+      description: description,
     },
   };
 }
@@ -96,13 +179,23 @@ export default async function TenantLayout({
   children,
   params,
 }: TenantLayoutProps) {
+  const hdrs = await headers();
   const resolvedParams = await params;
   const company = await getCachedCompany(resolvedParams.subdomain);
-  const primaryColor = company?.theme_config?.primaryColor ?? "#111827";
-  const secondaryColor = company?.theme_config?.secondaryColor ?? primaryColor;
-  const priceColor = company?.theme_config?.priceColor ?? "#ff4757";
-  const discountColor = company?.theme_config?.discountColor ?? "#25d366";
-  const hoverColor = company?.theme_config?.hoverColor ?? "#ff2e40";
+  const theme = (company?.theme_config as unknown as TenantThemeConfig) ?? {};
+  const host =
+    hdrs.get("x-forwarded-host")?.split(",")[0]?.trim() ??
+    hdrs.get("host") ??
+    `${resolvedParams.subdomain}.godcode.me`;
+  const protocol = hdrs.get("x-forwarded-proto") ?? "https";
+  const pathPrefix = isMainDomain(host) ? `/${resolvedParams.subdomain}` : "";
+  const baseUrl = `${protocol}://${host}${pathPrefix}`;
+
+  const primaryColor = theme.primaryColor ?? "#111827";
+  const secondaryColor = theme.secondaryColor ?? primaryColor;
+  const priceColor = theme.priceColor ?? "#ff4757";
+  const discountColor = theme.discountColor ?? "#25d366";
+  const hoverColor = theme.hoverColor ?? "#ff2e40";
   const accentShadow = toRgba(primaryColor, 0.3, "rgba(255, 71, 87, 0.3)");
   const accentShadowStrong = toRgba(
     primaryColor,
@@ -110,69 +203,39 @@ export default async function TenantLayout({
     "rgba(255, 71, 87, 0.5)"
   );
   const cardBorder = toRgba(primaryColor, 0.18, "rgba(255, 255, 255, 0.1)");
-  const backgroundColor =
-    company?.theme_config?.backgroundColor ?? "#0a0a0a";
-  const backgroundImageUrl =
-    company?.theme_config?.backgroundImageUrl ?? "/tenant/menu-pattern.webp";
+  const backgroundColor = theme.backgroundColor ?? "#0a0a0a";
+  const backgroundImageUrl = theme.backgroundImageUrl ?? "/tenant/menu-pattern.webp";
   const backgroundImage = backgroundImageUrl
     ? `url(${backgroundImageUrl}), url(/tenant/menu-pattern.webp)`
     : "url(/tenant/menu-pattern.webp)";
   const tenantThemeCss = `.tenant-theme-vars{--tenant-primary:${sanitizeCssValue(primaryColor)};--accent-primary:${sanitizeCssValue(primaryColor)};--accent-secondary:${sanitizeCssValue(secondaryColor)};--price-color:${sanitizeCssValue(priceColor)};--discount-color:${sanitizeCssValue(discountColor)};--accent-hover:${sanitizeCssValue(hoverColor)};--accent-shadow:${sanitizeCssValue(accentShadow)};--accent-shadow-strong:${sanitizeCssValue(accentShadowStrong)};--card-border:${sanitizeCssValue(cardBorder)};--bg-primary:${sanitizeCssValue(backgroundColor)};--tenant-bg-image:${sanitizeCssValue(backgroundImage)};}`;
 
-  // Construir URL base para el subdominio
-  const baseUrl = `https://${resolvedParams.subdomain}.godcode.me`;
+  const businessDescription = `Pide online en ${theme.displayName ?? company?.name ?? "GodCode"}. Consulta nuestro menu digital, precios y haz tu pedido por WhatsApp con delivery o retiro.`;
 
-  // SEO y social meta tags
-  const seoTitle = company?.theme_config?.displayName ?? company?.name ?? "GodCode";
-  const seoDescription = `Panel de administración de ${seoTitle}. Gestiona tu empresa, planes y pedidos.`;
-  const iconVersionSeed = company
-    ? tenantBrandingIconVersionSeed(company)
-    : resolvedParams.subdomain;
-  const ogImage = `https://${resolvedParams.subdomain}.godcode.me/${resolvedParams.subdomain}/tenant-favicon?v=${encodeURIComponent(iconVersionSeed)}`;
-  const iconHref = `/${resolvedParams.subdomain}/icon?v=${encodeURIComponent(iconVersionSeed)}`;
-
-  // Datos estructurados schema.org
-  const orgJsonLd = {
+  // Datos estructurados LocalBusiness/Restaurant (Mucho más potentes para SEO local)
+  const businessJsonLd = {
     "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": seoTitle,
+    "@type": "Restaurant",
+    "name": theme.displayName ?? company?.name,
     "url": baseUrl,
-    "logo": ogImage,
-    "description": seoDescription
+    "logo": theme.logoUrl,
+    "image": `${baseUrl}/opengraph-image`,
+    "description": businessDescription,
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": company?.address,
+      "addressCountry": company?.country || "CL"
+    },
+    "servesCuisine": "International",
+    "hasMenu": `${baseUrl}/menu`,
+    "acceptsReservations": "False",
+    "priceRange": "$$"
   };
 
   return (
     <>
-      <link rel="preconnect" href="https://res.cloudinary.com" />
-      <link rel="dns-prefetch" href="https://res.cloudinary.com" />
-      <link rel="icon" href={iconHref} />
-      <link rel="shortcut icon" href={iconHref} />
-      {/* SEO meta tags */}
-      <meta name="robots" content="index,follow" />
-      <meta name="description" content={seoDescription} />
-      {/* Open Graph */}
-      <meta property="og:type" content="website" />
-      <meta property="og:title" content={seoTitle} />
-      <meta property="og:description" content={seoDescription} />
-      <meta property="og:url" content={baseUrl} />
-      <meta property="og:image" content={ogImage} />
-      {/* Twitter Card */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={seoTitle} />
-      <meta name="twitter:description" content={seoDescription} />
-      <meta name="twitter:image" content={ogImage} />
-      {/* Etiqueta canónica y hreflang para SEO internacional en subdominios */}
-      <link rel="canonical" href={baseUrl} />
-      {['es','en','pt','fr','de','it'].map((lang) => (
-        <link
-          key={lang}
-          rel="alternate"
-          hrefLang={lang}
-          href={`${baseUrl}?hl=${lang}`}
-        />
-      ))}
-      {/* Datos estructurados Organization */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
+      {/* Datos estructurados Restaurant */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(businessJsonLd) }} />
       <style>{tenantThemeCss}</style>
       <div className="tenant-theme-vars">
         <TenantShell>{children}</TenantShell>

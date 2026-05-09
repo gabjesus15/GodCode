@@ -9,6 +9,11 @@ interface TenantPageProps {
   params: Promise<{ subdomain: string }>;
 }
 
+interface TenantPageThemeConfig {
+  displayName?: string;
+  logoUrl?: string;
+}
+
 export default async function TenantPage({ params }: TenantPageProps) {
   const resolvedParams = await params;
   const company = await getCachedCompany(resolvedParams.subdomain);
@@ -51,8 +56,9 @@ export default async function TenantPage({ params }: TenantPageProps) {
     .eq("company_id", company.id)
     .maybeSingle();
 
-  const name = company.theme_config?.displayName || company.name || resolvedParams.subdomain || "GodCode";
-  const logoUrl = company.theme_config?.logoUrl ?? null;
+  const theme = (company?.theme_config as unknown as TenantPageThemeConfig) ?? {};
+  const name = theme.displayName || company.name || resolvedParams.subdomain || "GodCode";
+  const logoUrl = theme.logoUrl ?? null;
 
   return (
     <HomeClient

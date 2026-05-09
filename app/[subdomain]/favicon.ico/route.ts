@@ -8,6 +8,7 @@ export async function GET(_req: Request, context: { params: Promise<{ subdomain:
   const { subdomain } = await context.params;
   const company = await getCachedCompany(subdomain);
   const versionSeed = company ? tenantBrandingIconVersionSeed(company) : subdomain;
-  const target = `/${subdomain}/tenant-favicon?v=${encodeURIComponent(String(versionSeed))}`;
+  const targetPath = `/${subdomain}/tenant-favicon?v=${encodeURIComponent(String(versionSeed))}`;
+  const target = new URL(targetPath, _req.url);
   return NextResponse.redirect(target, 302);
 }
