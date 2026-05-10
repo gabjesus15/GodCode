@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mergeCartWithBranchPrices } from "../../../../components/tenant/cart/utils/cart-pricing";
 
 describe("mergeCartWithBranchPrices", () => {
-	it("keeps synthetic beverage lines and drops missing branch products", () => {
+	it("keeps synthetic beverage lines and preserves priced cart items without branch rows", () => {
 		const cart = [
 			{
 				id: "11111111-1111-4111-8111-111111111111",
@@ -43,9 +43,10 @@ describe("mergeCartWithBranchPrices", () => {
 			omitLinesWithoutPriceWhenBranchHasData: true,
 		});
 
-		expect(merged).toHaveLength(2);
+		expect(merged).toHaveLength(3);
 		expect(merged.map((item) => item.id)).toEqual([
 			"11111111-1111-4111-8111-111111111111",
+			"22222222-2222-4222-8222-222222222222",
 			"upsell_beverage_coke",
 		]);
 		expect(merged[0]).toMatchObject({
@@ -53,6 +54,10 @@ describe("mergeCartWithBranchPrices", () => {
 			price: 950,
 		});
 		expect(merged[1]).toMatchObject({
+			name: "Burger",
+			price: 1200,
+		});
+		expect(merged[2]).toMatchObject({
 			name: "Coke",
 			price: 800,
 		});

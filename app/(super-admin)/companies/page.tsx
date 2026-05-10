@@ -1,6 +1,8 @@
 import { CompaniesView } from "../../../components/super-admin/companies/companies-view";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 export default async function CompaniesPage() {
   try {
     const supabase = await createSupabaseServerClient();

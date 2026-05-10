@@ -59,7 +59,13 @@ export function mergeCartWithBranchPrices<
       return acc;
     }
     const isSyntheticLine = !isUuidLike(String(cartItem.id));
-    if (!hasAnyRows || !options.omitLinesWithoutPriceWhenBranchHasData || isSyntheticLine) {
+    const hasStoredPrice = Number(cartItem.price) > 0;
+    if (
+      !hasAnyRows ||
+      !options.omitLinesWithoutPriceWhenBranchHasData ||
+      isSyntheticLine ||
+      hasStoredPrice
+    ) {
       acc.push({ ...cartItem });
     }
     return acc;

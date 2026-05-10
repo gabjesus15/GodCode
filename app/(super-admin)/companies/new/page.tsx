@@ -1,6 +1,8 @@
 import { CompanyForm } from "../../../../components/super-admin/companies/company-form";
 import { createSupabaseServerClient } from "../../../../utils/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 export default async function CompanyCreatePage() {
   try {
     const supabase = await createSupabaseServerClient();

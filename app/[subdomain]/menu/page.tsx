@@ -122,6 +122,7 @@ interface RawRPCProduct {
   description: string | null;
   image_url: string | null;
   category_id: string | null;
+  is_active?: boolean | null;
 }
 
 interface RawRPCPrice {
@@ -325,7 +326,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
           (status) => status.product_id === product.id
         );
 
-        if (!statusData || statusData.is_active !== true) {
+        if (!statusData || statusData.is_active !== true || product.is_active !== true) {
           return null;
         }
 

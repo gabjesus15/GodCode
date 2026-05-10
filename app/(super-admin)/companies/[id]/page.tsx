@@ -9,6 +9,8 @@ import { isTenantExternalDeliveryAllowed } from "@/lib/integrations/company-inte
 import { parseCompanyIntegrationSettingsJson } from "@/lib/integrations/company-integration-json";
 import { createSupabaseServerClient } from "../../../../utils/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {
