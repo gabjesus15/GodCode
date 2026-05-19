@@ -4,12 +4,5 @@
       "path": "/api/system/cron/subscription-status",
       "schedule": "0 6 * * *"
     }
-  ],
-  "redirects": [
-    {
-      "source": "/sitemap.xml",
-      "destination": "/sitemapapi",
-      "permanent": true
-    }
   ]
 }

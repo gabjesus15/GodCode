@@ -9,7 +9,8 @@ import { getCachedCompany } from "../../utils/tenant-cache";
 import "./tenant.css";
 import { TenantShell } from "../../components/tenant/shell/tenant-shell";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60; // ISR: regenera cada 60 segundos → HTML pre-renderizado para Googlebot
+
 
 export const viewport: Viewport = {
 	width: "device-width",
@@ -172,8 +173,15 @@ export async function generateMetadata({
       title: name,
       description: description,
     },
+    robots: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   };
 }
+
 
 export default async function TenantLayout({
   children,
@@ -232,10 +240,32 @@ export default async function TenantLayout({
     "priceRange": "$$"
   };
 
+  // BreadcrumbList para rich results y navegación estructurada
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "GodCode",
+        "item": "https://www.godcode.me"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": theme.displayName ?? company?.name ?? "Menú",
+        "item": baseUrl
+      }
+    ]
+  };
+
   return (
     <>
       {/* Datos estructurados Restaurant */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(businessJsonLd) }} />
+      {/* BreadcrumbList para rich results */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <style>{tenantThemeCss}</style>
       <div className="tenant-theme-vars">
         <TenantShell>{children}</TenantShell>
@@ -243,3 +273,4 @@ export default async function TenantLayout({
     </>
   );
 }
+

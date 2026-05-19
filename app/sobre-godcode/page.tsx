@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Script from "next/script";
+
 import { ArrowRight, ChartNoAxesCombined, ShieldCheck, Sparkles, Users } from "lucide-react";
 
 import { LandingLogo } from "@/components/landing/media/landing-logo";
@@ -166,10 +166,10 @@ export default async function SobreGodCodePage({
 
   return (
     <main className="bg-white text-[#1d1d1f]">
-      <Script
+      <script
         id="godcode-about-jsonld"
         type="application/ld+json"
-        strategy="afterInteractive"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data JSON-LD must be inline for Googlebot
         dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
       />
 

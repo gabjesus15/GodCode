@@ -47,7 +47,25 @@ const nextConfig: NextConfig = {
     return config;
   },
   async headers() {
+    // Detectar si estamos en un dominio de preview de Vercel para añadir noindex.
+    // En producción (godcode.me) este bloque no aplica el header.
+    const isVercelPreview = process.env.VERCEL_URL?.includes(".vercel.app") ?? false;
+    const previewNoindexHeaders = isVercelPreview
+      ? [
+          {
+            source: "/(.*)",
+            headers: [
+              {
+                key: "X-Robots-Tag",
+                value: "noindex, nofollow",
+              },
+            ],
+          },
+        ]
+      : [];
+
     return [
+      ...previewNoindexHeaders,
       {
         source: "/images/:path*",
         headers: [
@@ -77,6 +95,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
 };
 
 export default withBundleAnalyzer(withNextIntl(nextConfig));

@@ -15,6 +15,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getAppUrl();
   const lastModified = getSitemapLastModified();
   const supabase = createSupabasePublicServerClient();
+
+  // Variantes localizadas de la landing (excluye "es" que ya es la URL canónica raíz)
   const localizedLandingUrls: MetadataRoute.Sitemap = SUPPORTED_LOCALES
     .filter((locale) => locale !== "es")
     .map((locale) => ({
@@ -23,6 +25,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.8,
     }));
+
+  // Variantes localizadas de sobre-godcode
   const localizedAboutUrls: MetadataRoute.Sitemap = [
     {
       url: `${base}/sobre-godcode?hl=en`,
@@ -32,7 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Obtener todos los subdominios activos de la base de datos
+  // Obtener todos los negocios activos de la base de datos
   const { data: companies } = await supabase
     .from("companies")
     .select("public_slug,custom_domain")
@@ -76,19 +80,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
 
   return [
+    // Página principal (prioridad máxima)
     {
       url: `${base}/`,
       lastModified,
       changeFrequency: "weekly",
       priority: 1,
     },
+    // Sobre GodCode
     {
       url: `${base}/sobre-godcode`,
       lastModified,
       changeFrequency: "monthly",
       priority: 0.8,
     },
-    ...localizedAboutUrls,
+    // Onboarding — landing de registro (indexable)
     {
       url: `${base}/onboarding`,
       lastModified,
@@ -101,6 +107,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.7,
     },
+    // NOTA: /onboarding/terminos y /onboarding/privacidad tienen robots noindex
+    // intencionalmente y NO se incluyen en el sitemap para evitar señales contradictorias.
+    ...localizedAboutUrls,
     ...localizedLandingUrls,
     ...tenantUrls,
   ];

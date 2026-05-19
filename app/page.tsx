@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import Script from "next/script";
 
 import { GodcodeLanding } from "../components/landing/godcode-landing";
 import { getAppUrl } from "@/lib/tenant/app-url";
@@ -270,10 +269,10 @@ function JsonLd({
     },
   ];
   return (
-    <Script
+    <script
       id="godcode-jsonld-landing"
       type="application/ld+json"
-      strategy="afterInteractive"
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data JSON-LD must be inline for Googlebot
       dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
     />
   );

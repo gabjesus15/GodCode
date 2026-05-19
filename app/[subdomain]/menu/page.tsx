@@ -86,13 +86,25 @@ export async function generateMetadata({
       url: canonical,
       type: "website",
     },
+    twitter: {
+      card: "summary_large_image",
+      title: displayName,
+      description: `Explora el menú de ${displayName}. Pide online y recibe en tu puerta.`,
+    },
 		appleWebApp: {
 			capable: true,
 			statusBarStyle: "default",
 			title: displayName,
 		},
+    robots: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
 	};
 }
+
 
 interface MenuProduct {
   id: string;
@@ -365,19 +377,72 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
       schedule: businessInfoRaw?.schedule ?? null,
     };
 
+    // --- H. JSON-LD: BreadcrumbList + Menu schema para rich results ---
+    const hdrs = await headers();
+    const host =
+      hdrs.get("x-forwarded-host")?.split(",")[0]?.trim() ??
+      hdrs.get("host") ??
+      `${resolvedParams.subdomain}.godcode.me`;
+    const protocol = hdrs.get("x-forwarded-proto") ?? "https";
+    const pathPrefix = isMainDomain(host) ? `/${resolvedParams.subdomain}` : "";
+    const tenantBaseUrl = `${protocol}://${host}${pathPrefix}`;
+
+    const menuJsonLd = [
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "GodCode",
+            "item": "https://www.godcode.me"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": name,
+            "item": tenantBaseUrl
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Menú",
+            "item": `${tenantBaseUrl}/menu`
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "Menu",
+        "name": `Menú de ${name}`,
+        "url": `${tenantBaseUrl}/menu`,
+        "inLanguage": "es",
+        "description": `Menú digital de ${name}. Pide online con delivery o retiro en tienda.`,
+      }
+    ];
+
     return (
-      <MenuClient
-        name={name}
-        logoUrl={logoUrl}
-        businessInfo={businessInfo}
-        branches={safeBranches}
-        openBranchIds={openBranchIds}
-        categories={categories}
-        products={products}
-        selectedBranchId={selectedBranch?.id ?? null}
-        banners={heroBanners}
-        country={company.country ?? "CL"}
-        currency={company.currency ?? "CLP"}
-      />
+      <>
+        <script
+          type="application/ld+json"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data JSON-LD must be inline for Googlebot
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(menuJsonLd) }}
+        />
+        <MenuClient
+          name={name}
+          logoUrl={logoUrl}
+          businessInfo={businessInfo}
+          branches={safeBranches}
+          openBranchIds={openBranchIds}
+          categories={categories}
+          products={products}
+          selectedBranchId={selectedBranch?.id ?? null}
+          banners={heroBanners}
+          country={company.country ?? "CL"}
+          currency={company.currency ?? "CLP"}
+        />
+      </>
     );
 }
+
