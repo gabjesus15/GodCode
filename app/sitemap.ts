@@ -42,27 +42,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .select("public_slug,custom_domain")
     .eq("subscription_status", "active");
 
-  const normalizeTenantOrigin = (company: {
-    public_slug: string;
-    custom_domain?: string | null;
-  }): string => {
-    const customDomain = String(company.custom_domain ?? "").trim();
-    if (customDomain.length > 0) {
-      const host = customDomain
-        .replace(/^https?:\/\//i, "")
-        .replace(/\/$/, "");
-      return `https://${host}`;
-    }
-    return `https://${company.public_slug}.godcode.me`;
-  };
-
+  // Solo incluir tenants SIN dominio custom en el sitemap de godcode.me.
+  // Google no permite que un sitemap incluya URLs de dominios externos.
+  // Los tenants con dominio custom (ej: oishisushi.shop) necesitarían
+  // su propio sitemap en su propio dominio.
   const tenantUrls: MetadataRoute.Sitemap = (companies ?? [])
     .filter(
       (c): c is { public_slug: string; custom_domain: string | null } =>
-        typeof c.public_slug === "string" && c.public_slug.length > 0,
+        typeof c.public_slug === "string" &&
+        c.public_slug.length > 0 &&
+        !String(c.custom_domain ?? "").trim(), // excluir tenants con dominio custom
     )
     .flatMap((c) => {
-      const origin = normalizeTenantOrigin(c);
+      const origin = `https://${c.public_slug}.godcode.me`;
       return [
         {
           url: `${origin}/`,
