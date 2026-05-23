@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import type { LandingMediaBundle } from "@/lib/landing/landing-media-types";
@@ -35,11 +36,7 @@ export async function GodcodeLanding({ plans, media, country = "OTHER" }: Godcod
             {/* Brand */}
             <div className="min-w-0 sm:col-span-2 sm:border-b sm:border-slate-800/60 sm:pb-10 lg:col-span-1 lg:border-b-0 lg:pb-0">
               <a href="#inicio" className="inline-flex items-center gap-1.5" aria-label="GodCode">
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                  <rect width="28" height="28" rx="8" fill="#6366f1" />
-                  <path d="M8 10.5h5.5a2.5 2.5 0 010 5H11v3" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                  <circle cx="19" cy="17.5" r="2.5" fill="#c4b5fd" />
-                </svg>
+                <Image src="/logo.png" alt="" width={28} height={28} className="shrink-0" />
                 <span className="text-lg font-bold tracking-tight text-white">
                   God<span className="text-indigo-400">Code</span>
                 </span>

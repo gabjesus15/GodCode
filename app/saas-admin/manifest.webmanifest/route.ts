@@ -9,7 +9,6 @@ export async function GET(req: Request) {
 		origin = "";
 	}
 
-	const svgIcon = origin ? `${origin}/icon.svg` : "/icon.svg";
 	const png192 = origin ? `${origin}/saas-admin/icon-192.png` : "/saas-admin/icon-192.png";
 	const png512 = origin ? `${origin}/saas-admin/icon-512.png` : "/saas-admin/icon-512.png";
 
@@ -44,12 +43,6 @@ export async function GET(req: Request) {
 				sizes: "512x512",
 				type: "image/png",
 				purpose: "maskable",
-			},
-			{
-				src: svgIcon,
-				sizes: "any",
-				type: "image/svg+xml",
-				purpose: "any",
 			},
 		],
 	};

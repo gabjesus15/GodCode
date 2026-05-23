@@ -6,8 +6,8 @@ import { SaasAdminPwaRegister } from "../../components/super-admin/shell/saas-ad
 export const metadata: Metadata = {
 	manifest: "/saas-admin/manifest.webmanifest",
 	icons: {
-		icon: "/icon.svg",
-		apple: "/icon.svg",
+		icon: "/logo.png",
+		apple: "/logo.png",
 	},
 	appleWebApp: {
 		capable: true,

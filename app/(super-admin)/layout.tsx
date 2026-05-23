@@ -10,8 +10,8 @@ import { createSupabaseServerClient } from "../../utils/supabase/server";
 export const metadata: Metadata = {
 	manifest: "/saas-admin/manifest.webmanifest",
 	icons: {
-		icon: "/icon.svg",
-		apple: "/icon.svg",
+		icon: "/logo.png",
+		apple: "/logo.png",
 	},
 	appleWebApp: {
 		capable: true,

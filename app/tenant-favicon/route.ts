@@ -1,3 +1,6 @@
+import { readFile } from "fs/promises";
+import path from "path";
+
 import { NextRequest, NextResponse } from "next/server";
 
 import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
@@ -6,6 +9,7 @@ import { getCachedCompany } from "@/utils/tenant-cache";
 import { getCloudinaryOptimizedUrl } from "@/components/tenant/utils/cloudinary";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const tenantBaseDomain = (process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN ?? "")
   .replace(/^https?:\/\//, "")
@@ -55,12 +59,22 @@ export async function GET(req: NextRequest) {
   const tenantSlug = customDomainSlug ?? hostSlug;
 
   if (!tenantSlug) {
-    return new NextResponse(buildFallbackSvg("GodCode", "#111827"), {
-      headers: {
-        "Content-Type": "image/svg+xml; charset=utf-8",
-        "Cache-Control": "public, max-age=300",
-      },
-    });
+    try {
+      const buf = await readFile(path.join(process.cwd(), "public", "logo.png"));
+      return new NextResponse(buf, {
+        headers: {
+          "Content-Type": "image/png",
+          "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+        },
+      });
+    } catch {
+      return new NextResponse(buildFallbackSvg("GodCode", "#111827"), {
+        headers: {
+          "Content-Type": "image/svg+xml; charset=utf-8",
+          "Cache-Control": "public, max-age=300",
+        },
+      });
+    }
   }
 
   const company = await getCachedCompany(tenantSlug);
