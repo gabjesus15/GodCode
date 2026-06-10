@@ -31,6 +31,7 @@ export function CartPaymentFlow({
   activeInfo,
   setViewState,
   strategy,
+  isOrderIntakePaused = false,
 }: {
   paymentMethodKey: string | null;
   setPaymentMethodKey: (value: string | null) => void;
@@ -56,6 +57,7 @@ export function CartPaymentFlow({
   activeInfo: ActiveSessionInfo;
   setViewState: React.Dispatch<React.SetStateAction<CartModalViewState>>;
   strategy: CountryFormStrategy;
+  isOrderIntakePaused?: boolean;
 }) {
   const { currency } = useCart();
   const t = useTranslations("tenant.cart.modal");
@@ -186,9 +188,10 @@ export function CartPaymentFlow({
           <div className="form-actions-col mt-20">
             <button
               type="submit"
-              disabled={isSaving || !validation.isReady}
+              disabled={isSaving || !validation.isReady || isOrderIntakePaused}
               className="btn btn-primary btn-block"
               onClick={() => {
+                if (isOrderIntakePaused) return;
                 if (!validation.isReady) {
                   setShowFieldErrors(true);
                   let errorMsg = `${t("validation.completeCorrectly")}:`;
@@ -202,7 +205,7 @@ export function CartPaymentFlow({
                 }
               }}
             >
-              {isSaving ? t("actions.sending") : t("actions.confirmOrder")}
+              {isSaving ? t("actions.sending") : isOrderIntakePaused ? "Pedidos pausados" : t("actions.confirmOrder")}
             </button>
             <button type="button" className="btn btn-text btn-block" onClick={() => setShowForm(false)}>
               <ArrowLeft size={16} className="mr-5" /> {t("actions.back")}
@@ -239,8 +242,8 @@ export function CartPaymentFlow({
             </div>
           )}
 
-          <button onClick={() => setShowForm(true)} className="btn btn-primary btn-block mt-4">
-            {isOnline ? t("actions.alreadyPaid") : t("actions.continue")}
+          <button onClick={() => setShowForm(true)} disabled={isOrderIntakePaused} className="btn btn-primary btn-block mt-4">
+            {isOrderIntakePaused ? "Pedidos pausados" : isOnline ? t("actions.alreadyPaid") : t("actions.continue")}
           </button>
 
           <button onClick={() => setPaymentMethodKey(null)} className="btn btn-text btn-block mt-2">

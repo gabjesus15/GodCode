@@ -1228,11 +1228,13 @@ export function CartModal({
   const handleSendOrder = handleSubmit(async (data) => {
     // ...existing code...
     if (!canCheckout) {
-      const msg = selectedBranch
-        ? `Esta sucursal (${selectedBranch.name}) no esta recibiendo pedidos. Abre la caja en el admin para habilitar compras.`
-        : businessInfo?.schedule
-          ? `Nuestro horario es: ${businessInfo.schedule}`
-          : t("errors.noOrdersNow");
+      const msg = isOrderIntakePaused
+        ? (selectedBranchForCheckout?.order_intake_pause_message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.")
+        : selectedBranch
+          ? `Esta sucursal (${selectedBranch.name}) no está recibiendo pedidos. Abre la caja en el admin para habilitar compras.`
+          : businessInfo?.schedule
+            ? `Nuestro horario es: ${businessInfo.schedule}`
+            : t("errors.noOrdersNow");
       // ...existing code...
       setViewState((v) => ({ ...v, isSaving: false, error: msg }));
       return;
@@ -1573,6 +1575,15 @@ export function CartModal({
           <button onClick={handleCloseCart} className="btn-close-cart" aria-label={t("actions.close")}><X size={20} /></button>
         </header>
 
+        {isOrderIntakePaused && (
+          <div className="cart-error-banner animate-fade" style={{ background: "rgba(245, 158, 11, 0.1)", color: "#f59e0b", borderBottom: "1px solid rgba(245, 158, 11, 0.2)" }}>
+            <AlertCircle size={16} className="shrink-0" />
+            <span>
+              {selectedBranchForCheckout?.order_intake_pause_message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos."}
+            </span>
+          </div>
+        )}
+
         {viewState.error ? (
           <div className="cart-error-banner animate-fade">
             <AlertCircle size={16} /> {viewState.error}
@@ -1874,15 +1885,17 @@ export function CartModal({
                   <button className="btn btn-primary btn-block btn-lg" disabled>
                     {t("actions.loading")}
                   </button>
-                ) : !canCheckout ? (
+                ) : isOrderIntakePaused ? (
+                  <button className="btn btn-primary btn-block btn-lg" disabled>
+                    Pedidos pausados
+                  </button>
+                ) : !isShiftOpen ? (
                   <div className="cash-closed-banner">
                     <AlertCircle size={16} />
                     <span>
-                      {isOrderIntakePaused
-                        ? (selectedBranchForCheckout?.order_intake_pause_message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.")
-                        : selectedBranch
-                          ? `Esta sucursal no está recibiendo pedidos. Abre la caja en ${selectedBranch.name} para habilitar compras.`
-                          : `Caja cerrada.${businessInfo?.schedule ? ` Horario: ${businessInfo.schedule}` : ""}`}
+                      {selectedBranch
+                        ? `Esta sucursal no está recibiendo pedidos. Abre la caja en ${selectedBranch.name} para habilitar compras.`
+                        : `Caja cerrada.${businessInfo?.schedule ? ` Horario: ${businessInfo.schedule}` : ""}`}
                     </span>
                   </div>
                 ) : (
@@ -2318,6 +2331,7 @@ export function CartModal({
                 activeInfo={activeInfo}
                 setViewState={setViewState}
                 strategy={strategy}
+                isOrderIntakePaused={isOrderIntakePaused}
               />
             )}
             </div>

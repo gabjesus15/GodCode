@@ -134,7 +134,7 @@ export const ordersService = {
 
     const { data: branchCfg, error: branchCfgError } = await supabase
       .from("branches")
-      .select("delivery_settings, order_intake_paused")
+      .select("delivery_settings, order_intake_paused, order_intake_pause_message")
       .eq("id", orderData.branch_id)
       .maybeSingle();
 
@@ -143,7 +143,10 @@ export const ordersService = {
     }
 
     if (branchCfg?.order_intake_paused) {
-      throw new Error("ORDER_INTAKE_PAUSED: Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.");
+      throw new Error(
+        branchCfg.order_intake_pause_message?.trim() ||
+        "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos."
+      );
     }
 
     const deliverySettings = normalizeDeliverySettings(branchCfg?.delivery_settings);
@@ -490,8 +493,11 @@ export const ordersService = {
         }),
       });
       if (!patchRes.ok) {
-        const j = (await patchRes.json().catch(() => ({}))) as { error?: string };
-        throw new Error(j.error || "No se pudo registrar los datos de facturación del pedido.");
+        const j = (await patchRes.json().catch(() => ({}))) as { error?: string; message?: string };
+        const msg = j.error === "ORDER_INTAKE_PAUSED"
+          ? (j.message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.")
+          : (j.error || "No se pudo registrar los datos de facturación del pedido.");
+        throw new Error(msg);
       }
     }
 
