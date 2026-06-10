@@ -312,7 +312,35 @@ export async function POST(req: NextRequest) {
 			return jsonWithPublicCors(req, { error: "Tarifa de envío no válida" }, { status: 400 });
 		}
 
-		const expectedTotal = Math.round(subtotal + expectedFee);
+		const discount = Number(order.discount_total) || 0;
+		const taxRatePercent = settings.taxRate ? settings.taxRate : 0;
+		const taxIncluded = settings.taxIncluded ?? false;
+
+		const sub = currency(subtotal);
+		const disc = currency(discount);
+		const devFee = currency(expectedFee);
+
+		const subAfterDiscount = currency(Math.max(0, sub.subtract(disc).value));
+
+		let taxTotal = 0;
+		let baseTotal = currency(0);
+
+		if (taxRatePercent > 0) {
+			if (taxIncluded) {
+				const divisor = currency(1).add(currency(taxRatePercent).divide(100));
+				const net = subAfterDiscount.divide(divisor);
+				taxTotal = subAfterDiscount.subtract(net).value;
+				baseTotal = subAfterDiscount.add(devFee);
+			} else {
+				const taxTotalVal = subAfterDiscount.multiply(currency(taxRatePercent).divide(100));
+				taxTotal = taxTotalVal.value;
+				baseTotal = subAfterDiscount.add(taxTotalVal).add(devFee);
+			}
+		} else {
+			baseTotal = subAfterDiscount.add(devFee);
+		}
+
+		const expectedTotal = Math.round(Math.max(0, baseTotal.value));
 		const orderTotal = Number(order.total) || 0;
 		if (Math.abs(orderTotal - expectedTotal) > TOTAL_EPS) {
 			return jsonWithPublicCors(
@@ -349,21 +377,7 @@ export async function POST(req: NextRequest) {
 		const handoff =
 			isDeliveryType(orderTypeRaw) ? await pickHandoffCode() : null;
 
-		let taxTotal = 0;
-		const taxRatePercent = settings.taxRate ? settings.taxRate : 0;
-		const taxIncluded = settings.taxIncluded ?? false;
-		if (taxRatePercent > 0) {
-			const sub = currency(subtotal);
-			const disc = currency(Number(order.discount_total) || 0);
-			const subAfterDiscount = currency(Math.max(0, sub.subtract(disc).value));
-			if (taxIncluded) {
-				const divisor = currency(1).add(currency(taxRatePercent).divide(100));
-				const net = subAfterDiscount.divide(divisor);
-				taxTotal = subAfterDiscount.subtract(net).value;
-			} else {
-				taxTotal = subAfterDiscount.multiply(currency(taxRatePercent).divide(100)).value;
-			}
-		}
+		// taxTotal is already pre-calculated in block scope
 
 		const { error: upErr } = await supabaseAdmin
 			.from("orders")
