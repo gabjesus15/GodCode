@@ -19,17 +19,17 @@ export class TenantStaffService {
     const email = user.email.trim();
     
     // 1. Intentar leer usando el cliente scoped (con RLS de usuario)
-    let rows: any[] | null = null;
-    let error: any = null;
+    let rows: Array<{ id: string; company_id: string | null; role: string | null }> | null = null;
+    let error: { message: string } | null = null;
     try {
       const scopedRes = await supabase
         .from("users")
         .select("id,company_id,role")
         .ilike("email", email);
-      rows = scopedRes.data;
+      rows = scopedRes.data as Array<{ id: string; company_id: string | null; role: string | null }> | null;
       error = scopedRes.error;
     } catch (err) {
-      error = err;
+      error = err instanceof Error ? err : { message: String(err) };
     }
 
     // Doble lectura temporal y log de advertencia
@@ -75,18 +75,18 @@ export class TenantStaffService {
     const supabase = await createSupabaseServerClient("tenant");
     
     // 1. Intentar leer usando el cliente scoped (con RLS de usuario)
-    let branch: any = null;
-    let branchError: any = null;
+    let branch: { id: string; company_id: string | null } | null = null;
+    let branchError: { message: string } | null = null;
     try {
       const scopedRes = await supabase
         .from("branches")
         .select("id,company_id")
         .eq("id", branchId)
         .maybeSingle();
-      branch = scopedRes.data;
+      branch = scopedRes.data as { id: string; company_id: string | null } | null;
       branchError = scopedRes.error;
     } catch (err) {
-      branchError = err;
+      branchError = err instanceof Error ? err : { message: String(err) };
     }
 
     // Doble lectura temporal
