@@ -131,7 +131,7 @@ export async function generateMetadata({
       return "";
     }
   })();
-  const normalizedHost = host.replace(/^www\./i, "").toLowerCase();
+
   const normalizedCustom = String(company.custom_domain ?? "")
     .replace(/^https?:\/\//i, "")
     .replace(/^www\./i, "")

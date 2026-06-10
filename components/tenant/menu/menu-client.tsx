@@ -379,9 +379,6 @@ export function MenuClient({
     return undefined; // glass handles inline on its own
   }, [detailsMode, cardStyle, handleInlineProductClick]);
 
-  const handleProductClick = useCallback((product: MenuProduct) => {
-    setSelectedProductDetails(product);
-  }, []);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -764,7 +761,7 @@ export function MenuClient({
     sections.forEach((section) => observer.observe(section));
 
     return () => observer.disconnect();
-  }, [query, visibleCategories]);
+  }, [query, navigationMode, visibleCategories]);
 
   useEffect(() => {
     if (navbarType === "icon-list" && activeCategory) {

@@ -11,8 +11,6 @@ import { kvStore } from "../infra/kv-store";
 const UBER_TOKEN_URL = "https://auth.uber.com/oauth/v2/token";
 const UBER_ESTIMATES_URL = "https://api.uber.com/v1/eats/deliveries/estimates";
 
-const TOKEN_SKEW_MS = 60_000;
-
 function cacheKeyForCredentials(clientId: string, clientSecret: string): string {
 	const h = createHash("sha256").update(clientSecret, "utf8").digest("hex").slice(0, 24);
 	return `${clientId.trim()}::${h}`;
@@ -80,7 +78,7 @@ export async function getUberDirectAccessToken(
 		if (cachedToken) {
 			return { ok: true, accessToken: cachedToken };
 		}
-	} catch (err) {
+	} catch {
 		// Fallback silencioso
 	}
 
@@ -106,7 +104,7 @@ export async function getUberDirectAccessToken(
 	if (!res.ok) {
 		try {
 			await kvStore.delete(redisKey);
-		} catch (err) {}
+		} catch {}
 		const msg =
 			typeof j.error_description === "string"
 				? j.error_description
@@ -125,7 +123,7 @@ export async function getUberDirectAccessToken(
 	const ttlSeconds = Math.max(60, expiresIn) - 60; // Descuenta 1 minuto para evitar expiración en tránsito
 	try {
 		await kvStore.set(redisKey, accessToken, ttlSeconds);
-	} catch (err) {}
+	} catch {}
 
 	return { ok: true, accessToken };
 }
@@ -214,7 +212,7 @@ export async function fetchUberDeliveryEstimate(params: {
 			try {
 				const redisKey = `uber_token:${oauthKey}`;
 				await kvStore.delete(redisKey);
-			} catch (err) {}
+			} catch {}
 		}
 		const msg =
 			typeof j.message === "string"

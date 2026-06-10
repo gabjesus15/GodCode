@@ -3,7 +3,7 @@
  * Extraídas del monolito CustomerAccountClient para ser reutilizadas en hooks y tests.
  */
 
-import { DEFAULT_STORE_THEME, STORE_THEME_FIELD_LABELS } from "@/components/customer-portal/shared/customer-account-store-theme-constants";
+import { STORE_THEME_FIELD_LABELS } from "@/components/customer-portal/shared/customer-account-store-theme-constants";
 import type { StoreThemeAssetField, StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 

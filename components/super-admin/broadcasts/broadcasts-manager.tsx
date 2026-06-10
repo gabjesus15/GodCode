@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Megaphone, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 
@@ -92,12 +92,12 @@ export default function BroadcastsManager() {
 
   const sortedItems = useMemo(
     () =>
-      [...items].sort((a, b) => {
+      [...(broadcastsData ?? [])].sort((a, b) => {
         const start = new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime();
         if (start !== 0) return start;
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       }),
-    [items]
+    [broadcastsData]
   );
 
   const setField = <K extends keyof typeof emptyForm>(key: K, value: (typeof emptyForm)[K]) => {

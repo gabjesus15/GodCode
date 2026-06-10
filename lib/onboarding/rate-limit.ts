@@ -10,7 +10,7 @@ export async function isRateLimited(key: string, limit: number, windowMs: number
       return true;
     }
     return false;
-  } catch (err) {
+  } catch {
     // Graceful degradation: fallback silently if KV store fails
     return false;
   }

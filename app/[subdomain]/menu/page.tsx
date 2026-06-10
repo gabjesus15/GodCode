@@ -45,7 +45,7 @@ export async function generateMetadata({
     hdrs.get("host") ??
     `${resolvedParams.subdomain}.godcode.me`;
   const protocol = hdrs.get("x-forwarded-proto") ?? "https";
-  const metadataBase = new URL(`${protocol}://${host}`);
+
   const pathPrefix = isMainDomain(host) ? `/${resolvedParams.subdomain}` : "";
 	const supabase = createSupabasePublicServerClient();
 	const { data: company } = await supabase

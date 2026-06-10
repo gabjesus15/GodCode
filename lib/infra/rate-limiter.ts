@@ -15,7 +15,7 @@ export async function checkRateLimit(
 			return false;
 		}
 		return true;
-	} catch (err) {
+	} catch {
 		// Graceful degradation: fallback silently if KV store operations fail
 		return true;
 	}

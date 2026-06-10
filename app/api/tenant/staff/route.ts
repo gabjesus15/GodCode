@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { withApiHandler } from "@/lib/api/api-handler";
 import { TenantStaffService } from "@/lib/services/tenant-staff.service";
@@ -6,7 +6,7 @@ import { ValidationError, NotFoundError, ForbiddenError } from "@/lib/api/errors
 
 const TENANT_ALLOWED_ROLES = new Set(["ceo", "cashier"]);
 
-export const GET = withApiHandler(async (req) => {
+export const GET = withApiHandler(async (_req) => {
 	const ceo = await TenantStaffService.getCeoSession();
 
 	const { data, error } = await supabaseAdmin

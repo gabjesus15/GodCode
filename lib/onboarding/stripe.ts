@@ -7,7 +7,9 @@ export function getStripeClient(): Stripe | null {
   if (!secretKey) return null;
   if (!cachedStripe) {
     cachedStripe = new Stripe(secretKey, {
-      apiVersion: "2026-03-25.dahlia" as unknown as Stripe.StripeConfig["apiVersion"],
+      apiVersion: "2026-03-25.dahlia" as unknown as NonNullable<
+        ConstructorParameters<typeof Stripe>[1]
+      >["apiVersion"],
     });
   }
   return cachedStripe;

@@ -6,7 +6,6 @@ import type { CartItem } from "../cart-context";
 import { isUpsellBeverageLineId } from "../cart-context";
 import { createSupabaseBrowserClient } from "../../../../utils/supabase/client";
 import { useCartStore, sanitizeQty, sanitizePrice } from "../cart-store";
-import { UBER_NEEDS_COORDINATES_CODE } from "@/lib/delivery/delivery-quote-contract";
 import {
   computeDeliveryFee,
   effectiveDeliveryPricingMode,

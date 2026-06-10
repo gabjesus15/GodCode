@@ -18,7 +18,7 @@ import { PageHeader } from "../../ui/PageHeader";
 import { SegmentedControl } from "../../ui/SegmentedControl";
 import { StatCard } from "../../ui/StatCard";
 import { EmptyState } from "../../ui/EmptyState";
-import { Button } from "../../ui/Button";
+
 import { getTenantMenuUrl } from "@/utils/tenant-url";
 
 export type AccountAlert = {

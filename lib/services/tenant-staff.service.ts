@@ -1,10 +1,8 @@
-import { SupabaseClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { TENANT_ADMIN_TAB_IDS } from "@/lib/super-admin/tenant-admin-tabs";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { ForbiddenError, NotFoundError, ValidationError } from "@/lib/api/errors";
 
-const TENANT_ALLOWED_ROLES = new Set(["ceo", "cashier"]);
 const TENANT_ALLOWED_TAB_IDS = new Set<string>(TENANT_ADMIN_TAB_IDS);
 
 export class TenantStaffService {
