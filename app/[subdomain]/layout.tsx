@@ -14,12 +14,35 @@ import { QueryProvider } from "@/components/ui/query-provider";
 export const revalidate = 60; // ISR: regenera cada 60 segundos → HTML pre-renderizado para Googlebot
 
 
-export const viewport: Viewport = {
-	width: "device-width",
-	initialScale: 1,
-	maximumScale: 1,
-	userScalable: false,
-};
+export async function generateViewport({
+  params,
+}: {
+  params: Promise<{ subdomain: string }>;
+}): Promise<Viewport> {
+  const resolvedParams = await params;
+  const company = await getCachedCompany(resolvedParams.subdomain);
+  const rawThemeConfig = company?.theme_config;
+  const parsedThemeConfig =
+    typeof rawThemeConfig === "string"
+      ? (() => {
+          try {
+            return JSON.parse(rawThemeConfig) as TenantThemeConfig;
+          } catch {
+            return {} as TenantThemeConfig;
+          }
+        })()
+      : ((rawThemeConfig as unknown as TenantThemeConfig) ?? {});
+  
+  const backgroundColor = parsedThemeConfig.backgroundColor ?? "#0a0a0a";
+
+  return {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    themeColor: backgroundColor,
+  };
+}
 
 interface TenantLayoutProps {
   children: ReactNode;
@@ -159,6 +182,10 @@ export async function generateMetadata({
       shortcut: icon,
       apple: icon,
     },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+    },
     openGraph: {
       title: name,
       description: description,
@@ -222,7 +249,7 @@ export default async function TenantLayout({
   const backgroundImage = backgroundImageUrl
     ? `url(${backgroundImageUrl}), url(/tenant/menu-pattern.webp)`
     : "url(/tenant/menu-pattern.webp)";
-  const tenantThemeCss = `.tenant-theme-vars{--tenant-primary:${sanitizeCssValue(primaryColor)};--accent-primary:${sanitizeCssValue(primaryColor)};--accent-secondary:${sanitizeCssValue(secondaryColor)};--price-color:${sanitizeCssValue(priceColor)};--discount-color:${sanitizeCssValue(discountColor)};--accent-hover:${sanitizeCssValue(hoverColor)};--accent-shadow:${sanitizeCssValue(accentShadow)};--accent-shadow-strong:${sanitizeCssValue(accentShadowStrong)};--card-border:${sanitizeCssValue(cardBorder)};--bg-primary:${sanitizeCssValue(backgroundColor)};--tenant-bg-image:${sanitizeCssValue(backgroundImage)};}`;
+  const tenantThemeCss = `html, body { background-color: ${sanitizeCssValue(backgroundColor)} !important; } .tenant-theme-vars{--tenant-primary:${sanitizeCssValue(primaryColor)};--accent-primary:${sanitizeCssValue(primaryColor)};--accent-secondary:${sanitizeCssValue(secondaryColor)};--price-color:${sanitizeCssValue(priceColor)};--discount-color:${sanitizeCssValue(discountColor)};--accent-hover:${sanitizeCssValue(hoverColor)};--accent-shadow:${sanitizeCssValue(accentShadow)};--accent-shadow-strong:${sanitizeCssValue(accentShadowStrong)};--card-border:${sanitizeCssValue(cardBorder)};--bg-primary:${sanitizeCssValue(backgroundColor)};--tenant-bg-image:${sanitizeCssValue(backgroundImage)};}`;
 
   const businessDescription = `Pide online en ${theme.displayName ?? company?.name ?? "GodCode"}. Consulta nuestro menu digital, precios y haz tu pedido por WhatsApp con delivery o retiro.`;
 
