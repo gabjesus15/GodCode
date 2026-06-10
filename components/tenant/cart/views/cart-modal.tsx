@@ -332,6 +332,7 @@ export function CartModal({
     >(null);
     /** Evita geocodificar por calle/comuna justo después de elegir sugerencia o GPS. */
     const suppressLineGeocodeUntilRef = useRef(0);
+    const isManualEditRef = useRef(false);
     const [lineGeocodeLoading, setLineGeocodeLoading] = useState(false);
     const [debouncedDeliveryLine, setDebouncedDeliveryLine] = useState({
       line1: "",
@@ -364,6 +365,10 @@ export function CartModal({
 
     // Mantener inputs sincronizados si `deliveryLine1` se setea desde GPS / geocoding.
     useEffect(() => {
+      if (isManualEditRef.current) {
+        isManualEditRef.current = false;
+        return;
+      }
       const { street, number } = splitLine1IntoStreetAndNumber(deliveryLine1);
       queueMicrotask(() => {
         setStreetInput(street);
@@ -2039,6 +2044,8 @@ export function CartModal({
                                 className="form-input"
                                 value={deliveryCommune}
                                 onChange={(e) => {
+                                  isManualEditRef.current = true;
+                                  suppressLineGeocodeUntilRef.current = 0;
                                   const nextCommune = e.target.value;
                                   setDeliveryCommune(nextCommune);
                                   setDeliveryAddressPrecision(null);
@@ -2070,6 +2077,8 @@ export function CartModal({
                                 className="form-input"
                                 value={streetInput}
                                 onChange={(e) => {
+                                  isManualEditRef.current = true;
+                                  suppressLineGeocodeUntilRef.current = 0;
                                   const nextStreet = e.target.value;
                                   setStreetInput(nextStreet);
                                   setDeliveryAddressPrecision(null);
@@ -2099,6 +2108,8 @@ export function CartModal({
                                 className="form-input"
                                 value={streetNumberInput}
                                 onChange={(e) => {
+                                  isManualEditRef.current = true;
+                                  suppressLineGeocodeUntilRef.current = 0;
                                   const nextNumber = e.target.value;
                                   setStreetNumberInput(nextNumber);
                                   setDeliveryAddressPrecision(null);
