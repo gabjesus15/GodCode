@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ShoppingBag, Heart, Image as ImageIcon, Plus, Minus, ChevronRight } from "lucide-react";
+import { ChevronLeft, ShoppingBag, Image as ImageIcon, Plus, Minus, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { motion, useAnimation, useMotionValue, useTransform } from "framer-motion";
 import type { PanInfo } from "framer-motion";
@@ -153,14 +153,6 @@ export function ProductDetailsModal({
 
         {/* Floating Actions Sidebar */}
         <div className={`pdm-right-actions pdm-hud-transition ${isHudHidden ? "pdm-hud-hidden" : ""}`}>
-          {onlineOrderingEnabled !== false && (
-            <button className="pdm-icon-btn" aria-label="Ver bolsa">
-              <ShoppingBag size={20} strokeWidth={2} />
-            </button>
-          )}
-          <button className="pdm-icon-btn" aria-label="Favorito">
-            <Heart size={20} strokeWidth={2} />
-          </button>
           <button className="pdm-icon-btn" aria-label="Ver galería" onClick={handleHideHud}>
             <ImageIcon size={20} strokeWidth={2} />
           </button>

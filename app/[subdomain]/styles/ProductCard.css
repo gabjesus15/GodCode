@@ -622,19 +622,9 @@
     flex-wrap: wrap;
   }
   
-  .is-viewing-info .product-info {
-    height: 100%; /* Ocupar toda la altura de la tarjeta */
-    min-height: 0; 
-    padding: 8px; /* Menos padding para aprovechar espacio */
-    display: flex;
-    flex-direction: column;
-  }
-
-  .is-viewing-info .info-content-wrapper { 
-    height: 100%; 
-    flex-grow: 1 !important; 
-    display: flex;
-    flex-direction: column;
+  .is-viewing-info .product-info,
+  .is-viewing-info .info-content-wrapper {
+    position: static !important;
   }
 
   /* Restaurar overlay absoluto para que funcione como antes */
@@ -646,7 +636,12 @@
     height: 100%;
     max-height: none;
     z-index: 20;
-    padding: 0;
+    padding: 12px;
+    background: rgba(15, 15, 15, 0.98);
+    border-radius: inherit;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
   }
 
   .product-name {
@@ -714,9 +709,9 @@
   }
 
   /* Ajustes descripciÃ³n overlay */
-  .product-desc-scrollable { padding: 0; }
-  .desc-header { padding-bottom: 2px; font-size: 0.7rem; }
-  .scroll-area { font-size: 0.85rem; max-height: 120px; }
+  .product-desc-scrollable { padding: 12px; }
+  .desc-header { padding-bottom: 6px; font-size: 0.7rem; }
+  .scroll-area { font-size: 0.85rem; max-height: none; }
 
   /* Stepper Móvil (AJUSTADO PARA MOSTRAR SOLO EL BOTÓN MÁS) */
   .stepper-control {
