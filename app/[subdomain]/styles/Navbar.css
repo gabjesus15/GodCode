@@ -39,6 +39,8 @@
     scroll-behavior: smooth;
     white-space: nowrap;
     -ms-overflow-style: none;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
 }
 
 /* Ocultar barra en Chrome/Safari */
@@ -52,15 +54,17 @@
     align-items: flex-end;
     gap: 6px;
     line-height: 1.2;
-    padding: 8px 14px;
-    border-radius: 50px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.02);
-    color: var(--text-secondary, #ccc);
+    padding: 8px 18px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    color: #a1a1a6;
     font-weight: 600;
     font-size: 0.84rem;
     cursor: pointer;
-    transition: transform 0.2s ease, background-color 0.22s ease, color 0.2s ease, border-color 0.22s ease, box-shadow 0.25s ease;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     -webkit-user-select: none;
     user-select: none;
     transform: translateZ(0);
@@ -71,19 +75,17 @@
 .tab-item:hover {
     background: rgba(255, 255, 255, 0.08);
     color: #fff;
-    border-color: rgba(255, 255, 255, 0.16);
-    box-shadow: 0 4px 12px var(--accent-shadow, rgba(255, 78, 80, 0.2));
-    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 /* Estado Activo */
 .tab-item.active {
-    background: var(--accent-primary, #ff4e50);
-    /* Fallback a rojo si no hay variable */
-    color: white;
-    border-color: var(--accent-primary, #ff4e50);
+    background: var(--accent-primary) !important;
+    color: #ffffff !important;
+    border-color: var(--accent-primary) !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px var(--accent-shadow, rgba(255, 78, 80, 0.3));
+    box-shadow: 0 4px 12px var(--accent-shadow, rgba(255, 255, 255, 0.15));
+    font-weight: 700;
 }
 
 .tab-item:active {

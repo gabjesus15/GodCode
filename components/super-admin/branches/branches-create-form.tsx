@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { revalidateMenuCache } from "@/app/actions/revalidate";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,6 +93,7 @@ export function BranchesCreateForm({ companyId, businessInfo }: BranchesCreateFo
         metadata: { name: form.name, slug: finalSlug },
       });
       setForm({ name: "", slug: "", address: "", phone: "", is_active: true, country: businessInfo?.country ?? "", currency: businessInfo?.currency ?? "" });
+      await revalidateMenuCache(companyId);
       router.refresh();
     } catch (err) {
       const message =

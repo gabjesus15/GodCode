@@ -49,7 +49,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
   const snapshot = useAccountSnapshot(
     payments, initialTickets, initialBranchEntitlements, activeAddons,
     company.subscriptionStatus, company.subscriptionEndsAt,
-    { enablePolling: tab !== "tienda" && tab !== "seguridad" },
+    { enablePolling: tab !== "tienda" && tab !== "seguridad", companyId: company.id },
   );
 
   const planManager = usePlanManager(

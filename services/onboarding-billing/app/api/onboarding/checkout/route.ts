@@ -14,8 +14,8 @@ import {
 	calculateAddonsTotalUsd,
 	getManualMethodConfig,
 	updateApplicationPaymentState,
-} from "../../../../lib/onboarding/checkout-service";
-import { normalizeEmail } from "../../../../lib/onboarding/trial-eligibility";
+} from "@/lib/onboarding/checkout-service";
+import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 
 const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY ?? "";
 const PAYPAL_CLIENT_ID = (process.env.PAYPAL_CLIENT_ID ?? "").trim();

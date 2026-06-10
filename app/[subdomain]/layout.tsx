@@ -6,8 +6,10 @@ import { getAppUrl } from "@/lib/tenant/app-url";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedCompany } from "../../utils/tenant-cache";
+import "./styles/ProductCardLayouts.css";
 import "./tenant.css";
 import { TenantShell } from "../../components/tenant/shell/tenant-shell";
+import { QueryProvider } from "@/components/ui/query-provider";
 
 export const revalidate = 60; // ISR: regenera cada 60 segundos → HTML pre-renderizado para Googlebot
 
@@ -85,7 +87,12 @@ export async function generateMetadata({
     hdrs.get("host") ??
     `${resolvedParams.subdomain}.godcode.me`;
   const protocol = hdrs.get("x-forwarded-proto") ?? "https";
-  const metadataBase = new URL(`${protocol}://${host}`);
+
+  const customDomain = company?.custom_domain?.trim();
+  const baseOrigin = customDomain
+    ? `${protocol}://${customDomain.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/$/, "")}`
+    : `${protocol}://${host}`;
+  const metadataBase = new URL(baseOrigin);
   const pathPrefix = isMainDomain(host) ? `/${resolvedParams.subdomain}` : "";
 
   if (!company) {
@@ -130,9 +137,8 @@ export async function generateMetadata({
     .replace(/^www\./i, "")
     .replace(/\/$/, "")
     .toLowerCase();
-  const useSelfCanonical = normalizedCustom.length > 0 && normalizedHost === normalizedCustom;
-  const canonical = useSelfCanonical
-    ? `${metadataBase.origin}${pathPrefix}/`
+  const canonical = normalizedCustom.length > 0
+    ? `https://${normalizedCustom}${pathPrefix}/`
     : pathPrefix && appHost && !appHost.includes("localhost")
       ? `https://${resolvedParams.subdomain}.${appHost}/`
       : `${metadataBase.origin}${pathPrefix}/`;
@@ -261,7 +267,7 @@ export default async function TenantLayout({
   };
 
   return (
-    <>
+    <QueryProvider>
       {/* Datos estructurados Restaurant */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(businessJsonLd) }} />
       {/* BreadcrumbList para rich results */}
@@ -270,7 +276,7 @@ export default async function TenantLayout({
       <div className="tenant-theme-vars">
         <TenantShell>{children}</TenantShell>
       </div>
-    </>
+    </QueryProvider>
   );
 }
 

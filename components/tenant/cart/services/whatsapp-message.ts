@@ -12,6 +12,12 @@ export type WsFulfillmentMeta = {
   handoffCode?: string | null;
   couponCode?: string | null;
   couponDiscount?: number;
+  currency?: string;
+  localCurrency?: string;
+  localTotal?: number | null;
+  taxTotal?: number;
+  taxRate?: number | null;
+  taxIncluded?: boolean | null;
 };
 
 export type WsMessageCopy = {
@@ -41,6 +47,7 @@ export type WsMessageCopy = {
   bankTransferHint: string;
   note: string;
   couponLabel: string;
+  taxLabel: string;
 };
 
 export const DEFAULT_WS_MESSAGE_COPY: WsMessageCopy = {
@@ -70,6 +77,7 @@ export const DEFAULT_WS_MESSAGE_COPY: WsMessageCopy = {
   bankTransferHint: "Cuando completes la transferencia, adjunta el comprobante en tu pedido.",
   note: "Nota",
   couponLabel: "Cupón",
+  taxLabel: "Impuesto (IVA)",
 };
 
 export function generateWSMessage(
@@ -85,29 +93,46 @@ export function generateWSMessage(
   paymentMethodLabel?: string,
 ): string {
   const c: WsMessageCopy = { ...DEFAULT_WS_MESSAGE_COPY, ...(copy ?? {}) };
+  const currency = meta?.currency || "CLP";
+  
   let msg = `*${c.titlePrefix} - ${businessName || c.businessFallback}*\n`;
   msg += "================================\n\n";
   msg += `${c.customer}: ${formData.name}\n`;
-  msg += `${c.rut}: ${formData.rut}\n`;
+  if (formData.rut && formData.rut.trim()) {
+    msg += `${c.rut}: ${formData.rut}\n`;
+  }
   msg += `${c.phone}: ${formData.phone}\n\n`;
+  
   if (meta) {
     msg += `${c.typeLabel}: ${meta.fulfillment === "delivery" ? c.typeDelivery : c.typePickup}\n`;
     if (meta.fulfillment === "delivery" && meta.deliverySummary) {
       msg += `${meta.deliverySummary}\n`;
     }
     if (meta.fulfillment === "delivery" && meta.deliveryFee > 0) {
-      msg += `${c.shipping}: ${formatCartMoney(meta.deliveryFee)}\n`;
+      msg += `${c.shipping}: ${formatCartMoney(meta.deliveryFee, currency)}\n`;
     }
-    msg += `${c.subtotalProducts}: ${formatCartMoney(meta.cartSubtotal)}\n`;
+    msg += `${c.subtotalProducts}: ${formatCartMoney(meta.cartSubtotal, currency)}\n`;
+    
+    // Desglose de cupones
     if (meta.couponDiscount != null && meta.couponDiscount > 0) {
       const suffix = meta.couponCode ? ` (${meta.couponCode})` : "";
-      msg += `${c.couponLabel}${suffix}: -${formatCartMoney(meta.couponDiscount)}\n`;
+      msg += `${c.couponLabel}${suffix}: -${formatCartMoney(meta.couponDiscount, currency)}\n`;
     }
+    
+    // Desglose de Impuestos (IVA)
+    if (meta.taxTotal != null && meta.taxTotal > 0) {
+      const isInc = meta.taxIncluded ?? false;
+      const rateStr = meta.taxRate ? ` (${meta.taxRate}%)` : "";
+      const incStr = isInc ? " (Incluido)" : " (Adicional)";
+      msg += `${c.taxLabel}${rateStr}${incStr}: ${formatCartMoney(meta.taxTotal, currency)}\n`;
+    }
+
     if (meta.orderNumber != null) msg += `${c.orderNumber}: #${meta.orderNumber}\n`;
     else if (meta.orderId != null) msg += `${c.orderId}: ${meta.orderId}\n`;
     if (meta.handoffCode) msg += `${c.handoffCode}: ${meta.handoffCode}\n`;
     msg += "\n";
   }
+  
   msg += `${c.detail}:\n`;
   cart.forEach((item) => {
     msg += `+ ${item.quantity} x ${(item.name ?? "").toUpperCase()}\n`;
@@ -115,7 +140,14 @@ export function generateWSMessage(
       msg += `   (${c.doLabel}: ${item.description})\n`;
     }
   });
-  msg += `\n*${c.total}: ${formatCartMoney(grandTotal)}*\n`;
+  
+  // Imprimir total dual
+  if (meta?.localTotal != null && meta.localTotal > 0 && meta.localCurrency) {
+    msg += `\n*${c.total}: ${formatCartMoney(grandTotal, currency)} (${formatCartMoney(meta.localTotal, meta.localCurrency)})*\n`;
+  } else {
+    msg += `\n*${c.total}: ${formatCartMoney(grandTotal, currency)}*\n`;
+  }
+  
   const methodLabel = paymentMethodLabel ?? paymentMethodKey ?? c.paymentUnknown;
   msg += `${c.payment}: ${methodLabel}\n`;
 

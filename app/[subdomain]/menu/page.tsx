@@ -6,6 +6,14 @@ import { MenuClient } from "../../../components/tenant/menu/menu-client";
 import type { HeroBanner } from "../../../components/tenant/home/hero-carousel";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
+import { getCachedMenuStaticData, getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
+import { getCachedCompany } from "@/utils/tenant-cache";
+
+// ISR: re-generate at most every 60 s. Menu updates (product edits, theme publish)
+// are pushed instantly via revalidateTag(`menu:${companyId}`) from:
+//   • store-theme/publish API route
+//   • Supabase Webhook → /api/revalidate-menu
+export const revalidate = 60;
 
 // ==========================================
 // 1. INTERFACES DE PROPS Y OUTPUT CLIENTE
@@ -65,10 +73,15 @@ export async function generateMetadata({
       : company?.name?.trim()) || slugFallback || "Menú";
   const iconVersionSeed = company ? tenantBrandingIconVersionSeed(company) : resolvedParams.subdomain;
   const icon = `/tenant-favicon?v=${encodeURIComponent(String(iconVersionSeed))}`;
-  const canonical = `${metadataBase.origin}${pathPrefix}/menu`;
+  const customDomain = company?.custom_domain?.trim();
+  const baseOrigin = customDomain
+    ? `${protocol}://${customDomain.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/$/, "")}`
+    : `${protocol}://${host}`;
+  const resolvedMetadataBase = new URL(baseOrigin);
+  const canonical = `${resolvedMetadataBase.origin}${pathPrefix}/menu`;
 
 	return {
-    metadataBase,
+    metadataBase: resolvedMetadataBase,
     title: { absolute: displayName },
 		description: `Explora el menú de ${displayName}. Pide online y recibe en tu puerta.`,
     alternates: {
@@ -162,28 +175,48 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const supabase = createSupabasePublicServerClient();
 
-  // --- A. Obtener la empresa primero (Filtro base) ---
-  const { data: company, error: companyError } = await supabase
-    .from("companies")
-    .select("id,name,public_slug,theme_config,subscription_status,phone,address,country,currency")
-    .eq("public_slug", resolvedParams.subdomain)
-    .maybeSingle();
+  // --- A. Obtener la empresa primero (Filtro base cacheado) ---
+  const company = await getCachedCompany(resolvedParams.subdomain);
 
-  if (companyError || !company) {
+  if (!company) {
     if (resolvedSearchParams?.debug === "1") {
       return (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
           No se pudo cargar la empresa para este subdominio.
+        </div>
+      );
+    }
+    notFound();
+  }
+
+  const onlineOrderingEnabled = (company.plans as { features?: { online_ordering?: boolean } } | null)?.features?.online_ordering !== false;
+
+  const status = company.subscription_status?.toLowerCase();
+  if (status === "suspended" || status === "cancelled") {
+    notFound();
+  }
+
+  // --- B. Datos cacheados (branches + business_info) + cash_shifts en tiempo real ---
+  // cash_shifts se mantiene FUERA del cache porque cambia con apertura/cierre de caja.
+  const [staticData, { data: openShifts, error: openShiftsError }] = await Promise.all([
+    getCachedMenuStaticData(company.id, resolvedParams.subdomain),
+    supabase
+      .from("cash_shifts")
+      .select("branch_id")
+      .eq("company_id", company.id)
+      .eq("status", "open"),
+  ]);
+
+  const branches = staticData.branches;
+  const businessInfoRaw = staticData.businessInfo;
+
+  if (openShiftsError) {
+    if (resolvedSearchParams?.debug === "1") {
+      return (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          No se pudo cargar el estado de turnos.
           <pre className="debug-pre">
-            {JSON.stringify(
-              {
-                subdomain: resolvedParams.subdomain,
-                error: companyError?.message ?? null,
-                status: companyError?.code ?? null,
-              },
-              null,
-              2
-            )}
+            {JSON.stringify({ subdomain: resolvedParams.subdomain, openShiftsError: openShiftsError?.message ?? null }, null, 2)}
           </pre>
         </div>
       );
@@ -191,64 +224,17 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
     notFound();
   }
 
-  const status = company.subscription_status?.toLowerCase();
-  if (status === "suspended" || status === "cancelled") {
-    notFound();
-  }
-
-  // --- B. Ejecutar consultas secundarias en PARALELO para máximo rendimiento ---
-  const [
-      { data: branches, error: branchesError },
-      { data: openShifts, error: openShiftsError },
-      { data: businessInfoRaw, error: businessInfoError },
-    ] = await Promise.all([
-      supabase
-        .from("branches")
-        .select("id,name,address,phone,schedule,company_id,payment_methods,pago_movil,zelle,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta,delivery_settings,origin_lat,origin_lng")
-        .eq("company_id", company.id)
-        .order("name"),
-      supabase
-        .from("cash_shifts")
-        .select("branch_id")
-        .eq("company_id", company.id)
-        .eq("status", "open"),
-      supabase
-        .from("business_info")
-        .select("id,name,phone,address,instagram,schedule,country,currency,bank_name,account_type,account_number,account_rut,account_email,bank_details,account_holder,company_id,created_at,updated_at")
-        .eq("company_id", company.id)
-        .maybeSingle(),
-    ]);
-
-    if (branchesError || openShiftsError || businessInfoError) {
-      if (resolvedSearchParams?.debug === "1") {
-        return (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-            No se pudo cargar la informacion base del menu.
-            <pre className="debug-pre">
-              {JSON.stringify(
-                {
-                  subdomain: resolvedParams.subdomain,
-                  branchesError: branchesError?.message ?? null,
-                  openShiftsError: openShiftsError?.message ?? null,
-                  businessInfoError: businessInfoError?.message ?? null,
-                },
-                null,
-                2
-              )}
-            </pre>
-          </div>
-        );
-      }
-      notFound();
-    }
-
     const openBranchIds = (openShifts ?? [])
       .map((shift) => String(shift.branch_id))
       .filter(Boolean);
     const openBranchIdSet = new Set(openBranchIds);
 
     // --- C. Selección segura de la sucursal ---
-    const safeBranches = branches ?? [];
+    // Cast through unknown: the DB fields (pago_movil, zelle, etc.) are stored as JSON strings
+    // and match BranchInfo's object types at runtime. TypeScript cannot verify cross-boundary
+    // JSON shapes statically, so we assert the type here at the server→client data boundary.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const safeBranches = (branches ?? []) as unknown as Array<any>;
     if (safeBranches.length === 0) {
       notFound();
     }
@@ -272,22 +258,14 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
     let heroBannerRows: HeroBanner[] = [];
 
     if (menuBranch) {
-      // --- D. Obtener Menú + Banners en paralelo ---
-      const [menuResult, bannersResult] = await Promise.all([
-        supabase.rpc("get_public_menu", {
-          p_company_slug: resolvedParams.subdomain,
-          p_branch_id: menuBranch.id,
-        }),
-        supabase
-          .from("hero_banners")
-          .select("id, image_url")
-          .eq("branch_id", menuBranch.id)
-          .eq("is_active", true)
-          .gt("expires_at", new Date().toISOString())
-          .order("sort_order"),
-      ]);
+      // --- D. Obtener Menú + Banners desde caché ---
+      const rpcData = await getCachedMenuRpcData(
+        company.id,
+        resolvedParams.subdomain,
+        menuBranch.id,
+      );
 
-      if (menuResult.error) {
+      if (rpcData.menuError) {
         if (resolvedSearchParams?.debug === "1") {
           return (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
@@ -297,8 +275,8 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
                   {
                     subdomain: resolvedParams.subdomain,
                     branchId: menuBranch.id,
-                    error: menuResult.error.message ?? null,
-                    code: menuResult.error.code ?? null,
+                    error: rpcData.menuError.message ?? null,
+                    code: rpcData.menuError.code ?? null,
                   },
                   null,
                   2
@@ -310,12 +288,10 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
         notFound();
       }
 
-      menuData = Array.isArray(menuResult.data) && menuResult.data.length > 0
-        ? menuResult.data[0]
-        : menuResult.data;
-      heroBannerRows = ((bannersResult.data ?? []) as { id: string; image_url: string }[]).filter(
-        (r) => typeof r.image_url === "string" && r.image_url.trim().length > 0
-      );
+      menuData = Array.isArray(rpcData.menuData) && rpcData.menuData.length > 0
+        ? rpcData.menuData[0]
+        : rpcData.menuData;
+      heroBannerRows = rpcData.heroBannerRows;
     }
 
     // --- E. Asignación de tipos fuertes (¡Adiós 'any'!) ---
@@ -370,6 +346,11 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
     const themeConfig = company.theme_config as Record<string, unknown> | null;
     const name = (themeConfig?.displayName as string) ?? company.name ?? "GodCode";
     const logoUrl = (themeConfig?.logoUrl as string) ?? null;
+    const navbarType = (themeConfig?.navbarType as string) || "category-tabs";
+    const navigationMode = (themeConfig?.navigationMode as string) || "scroll";
+    const productCardStyle = (themeConfig?.productCardStyle as string) || "glass";
+    const productDetailsMode = (themeConfig?.productDetailsMode as string) || "modal-premium";
+    const productGridStyle = (themeConfig?.productGridStyle as string) || "auto";
     const businessInfo = {
       name,
       phone: company.phone ?? null,
@@ -386,6 +367,25 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
     const protocol = hdrs.get("x-forwarded-proto") ?? "https";
     const pathPrefix = isMainDomain(host) ? `/${resolvedParams.subdomain}` : "";
     const tenantBaseUrl = `${protocol}://${host}${pathPrefix}`;
+
+    const categoriesWithProducts = categories.map((cat) => {
+      const catProducts = products.filter((p) => p.category_id === cat.id);
+      return {
+        "@type": "MenuSection",
+        "name": cat.name,
+        "hasMenuItem": catProducts.map((prod) => ({
+          "@type": "MenuItem",
+          "name": prod.name,
+          "description": prod.description || undefined,
+          "image": prod.image_url || undefined,
+          "offers": {
+            "@type": "Offer",
+            "price": prod.discount_price ?? prod.price,
+            "priceCurrency": company.currency ?? "CLP"
+          }
+        }))
+      };
+    }).filter((section) => section.hasMenuItem.length > 0);
 
     const menuJsonLd = [
       {
@@ -419,6 +419,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
         "url": `${tenantBaseUrl}/menu`,
         "inLanguage": "es",
         "description": `Menú digital de ${name}. Pide online con delivery o retiro en tienda.`,
+        "hasMenuSection": categoriesWithProducts,
       }
     ];
 
@@ -441,6 +442,12 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
           banners={heroBanners}
           country={company.country ?? "CL"}
           currency={company.currency ?? "CLP"}
+          navbarType={navbarType}
+          navigationMode={navigationMode}
+          productCardStyle={productCardStyle}
+          productDetailsMode={productDetailsMode}
+          productGridStyle={productGridStyle}
+          onlineOrderingEnabled={onlineOrderingEnabled}
         />
       </>
     );

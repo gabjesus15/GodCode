@@ -24,6 +24,9 @@
       }
     ],
     "paths": {
+      "@supabase/supabase-js": [
+        "../../node_modules/@supabase/supabase-js"
+      ],
       "@/lib/infra/supabase-admin": [
         "./lib/supabase-admin.ts"
       ],

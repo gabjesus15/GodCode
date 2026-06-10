@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Plus, Store, Upload } from "lucide-react";
+import { MapPin, Plus, Store, Upload, Edit } from "lucide-react";
 import type { BillingOptionsResponse, BillingPaymentResponse, BranchSummary, CompanySnapshot } from "../../shared/customer-account-types";
 import { fmtMoney } from "../../shared/customer-account-format";
 import { Alert } from "../../ui/Alert";
@@ -12,6 +12,7 @@ import { Dialog, DialogFooter } from "../../ui/Dialog";
 import { EmptyState } from "../../ui/EmptyState";
 import { PageHeader } from "../../ui/PageHeader";
 import { StatCard } from "../../ui/StatCard";
+import { BranchEditModal } from "./branch-edit-modal";
 
 export type AccountSucursalesTabProps = {
   company: CompanySnapshot;
@@ -141,6 +142,13 @@ export function AccountSucursalesTab({
   onBranchWizardNext,
 }: AccountSucursalesTabProps) {
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedBranchForEdit, setSelectedBranchForEdit] = useState<BranchSummary | null>(null);
+
+  // Derived value: get the fresh branch data from the branches prop if it changes
+  const branchToEdit = selectedBranchForEdit
+    ? (branches.find((b) => b.id === selectedBranchForEdit.id) ?? selectedBranchForEdit)
+    : null;
 
   const maxBranches = billingOptions?.effectiveMaxBranches ?? billingOptions?.maxBranches ?? null;
   const usedPct     = maxBranches != null ? Math.min(100, Math.round((activeBranchesCount / maxBranches) * 100)) : null;
@@ -207,6 +215,15 @@ export function AccountSucursalesTab({
                   <Badge variant={branch.is_active !== false ? "success" : "neutral"} dot>
                     {branch.is_active !== false ? "Activa" : "Inactiva"}
                   </Badge>
+                  <button
+                    onClick={() => {
+                      setSelectedBranchForEdit(branch);
+                      setEditModalOpen(true);
+                    }}
+                    className="text-xs font-medium text-indigo-600 hover:underline flex items-center gap-1"
+                  >
+                    <Edit className="h-3 w-3" /> Editar
+                  </button>
                   {company.tenantAdminUrl ? (
                     <a
                       href={company.tenantAdminUrl}
@@ -256,11 +273,13 @@ export function AccountSucursalesTab({
             </div>
             {!withPayment && (
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Notas adicionales (opcional)</label>
+                <label htmlFor="branch-request-notes" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Notas adicionales (opcional)</label>
                 <textarea
+                  id="branch-request-notes"
                   value={branchRequestNotes}
                   onChange={(e) => setBranchRequestNotes(e.target.value)}
                   rows={3}
+                  placeholder="Notas para el equipo"
                   className="w-full resize-none rounded-xl border border-[#d2d2d7] bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
@@ -273,19 +292,40 @@ export function AccountSucursalesTab({
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Cantidad de cupos</label>
-                <input type="number" min={1} value={expansionQty} onChange={(e) => setExpansionQty(e.target.value)} className="h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none" />
+                <label htmlFor="expansion-qty" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Cantidad de cupos</label>
+                <input
+                  id="expansion-qty"
+                  type="number"
+                  min={1}
+                  value={expansionQty}
+                  onChange={(e) => setExpansionQty(e.target.value)}
+                  placeholder="1"
+                  className="h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none"
+                />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Meses</label>
-                <input type="number" min={1} value={expansionMonths} onChange={(e) => setExpansionMonths(e.target.value)} className="h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none" />
+                <label htmlFor="expansion-months" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Meses</label>
+                <input
+                  id="expansion-months"
+                  type="number"
+                  min={1}
+                  value={expansionMonths}
+                  onChange={(e) => setExpansionMonths(e.target.value)}
+                  placeholder="1"
+                  className="h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none"
+                />
               </div>
             </div>
 
             {billingOptions?.paymentMethods && billingOptions.paymentMethods.length > 0 && (
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Metodo de pago</label>
-                <select value={expansionMethodSlug} onChange={(e) => setExpansionMethodSlug(e.target.value)} className="h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none">
+                <label htmlFor="expansion-method" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Metodo de pago</label>
+                <select
+                  id="expansion-method"
+                  value={expansionMethodSlug}
+                  onChange={(e) => setExpansionMethodSlug(e.target.value)}
+                  className="h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none"
+                >
                   {billingOptions.paymentMethods.map((m) => <option key={m.id} value={m.slug}>{m.name}</option>)}
                 </select>
               </div>
@@ -350,6 +390,16 @@ export function AccountSucursalesTab({
           )}
         </DialogFooter>
       </Dialog>
+
+      <BranchEditModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        branch={branchToEdit}
+        onSaveSuccess={() => {
+          // router.refresh() inside the modal will update the branches prop via SSR;
+          // branchToEdit will then resolve to the updated branch automatically.
+        }}
+      />
     </div>
   );
 }

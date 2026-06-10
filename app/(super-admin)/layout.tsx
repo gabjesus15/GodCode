@@ -6,6 +6,7 @@ import { SaasAdminPwaRegister } from "../../components/super-admin/shell/saas-ad
 import { AdminShell } from "../../components/super-admin/shell/admin-shell";
 import { ThemeToggle } from "../../components/theme/theme-toggle";
 import { createSupabaseServerClient } from "../../utils/supabase/server";
+import { QueryProvider } from "@/components/ui/query-provider";
 
 export const metadata: Metadata = {
 	manifest: "/saas-admin/manifest.webmanifest",
@@ -64,12 +65,12 @@ export default async function SuperAdminLayout({
 	}
 
 	return (
-		<>
+		<QueryProvider>
 			<SaasAdminPwaRegister />
 			<ThemeToggle />
 			<AdminRoleProvider role={role}>
 				<AdminShell>{children}</AdminShell>
 			</AdminRoleProvider>
-		</>
+		</QueryProvider>
 	);
 }

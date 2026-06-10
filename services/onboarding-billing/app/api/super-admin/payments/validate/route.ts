@@ -7,18 +7,18 @@ import {
 	activateCompanyAddonsFromApplication,
 	activateCompanySubscription,
 	getMonthsPaidFromPayment,
-} from "../../../../../lib/onboarding/billing-activation";
+} from "@/lib/onboarding/billing-activation";
 import {
 	provisionCompanyFromApplication,
 	recordPayment,
 	type OnboardingApplication,
-} from "../../../../../lib/onboarding/checkout-service";
+} from "@/lib/onboarding/checkout-service";
 import {
 	getBookingContactDate,
 	queueBookingReminder,
 	sendPaymentValidatedNotice,
-} from "../../../../../lib/onboarding/booking-notifications";
-import { provisionOnboardingWelcome } from "../../../../../lib/onboarding/welcome-provisioning";
+} from "@/lib/onboarding/booking-notifications";
+import { provisionOnboardingWelcome } from "@/lib/onboarding/welcome-provisioning";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";

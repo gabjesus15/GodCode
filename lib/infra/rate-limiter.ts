@@ -1,30 +1,23 @@
-const rateBuckets = new Map<string, { n: number; reset: number }>();
+import { kvStore } from "./kv-store";
 
-export function checkRateLimit(
+export async function checkRateLimit(
 	key: string,
 	maxRequests: number,
 	windowMs: number
-): boolean {
-	const now = Date.now();
-	const bucket = rateBuckets.get(key);
+): Promise<boolean> {
+	const redisKey = `rate_limit:${key}`;
+	const ttlSeconds = Math.max(1, Math.round(windowMs / 1000));
 
-	// Limpiar entradas expiradas ocasionalmente para evitar memory leaks en long-running processes
-	if (Math.random() < 0.05) {
-		for (const [k, v] of rateBuckets.entries()) {
-			if (now > v.reset) rateBuckets.delete(k);
+	try {
+		const currentCount = await kvStore.incr(redisKey, ttlSeconds);
+		if (currentCount > maxRequests) {
+			console.warn(`[RATE_LIMIT_EXCEEDED] Key: ${key} | Max: ${maxRequests} | Window: ${windowMs}ms`);
+			return false;
 		}
-	}
-
-	if (!bucket || now > bucket.reset) {
-		rateBuckets.set(key, { n: 1, reset: now + windowMs });
+		return true;
+	} catch (err) {
+		// Graceful degradation: fallback silently if KV store operations fail
 		return true;
 	}
-
-	if (bucket.n >= maxRequests) {
-		console.warn(`[RATE_LIMIT_EXCEEDED] Key: ${key} | Max: ${maxRequests} | Window: ${windowMs}ms`);
-		return false;
-	}
-
-	bucket.n += 1;
-	return true;
 }
+

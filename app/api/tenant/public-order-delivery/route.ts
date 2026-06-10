@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import currency from "currency.js";
 
 import { jsonWithPublicCors, publicApiCorsHeaders } from "@/lib/infra/api-cors";
 import { resolveNamedAreaFromAddress } from "@/lib/delivery/delivery-area-resolve";
@@ -89,7 +90,7 @@ export async function POST(req: NextRequest) {
 
 		const { data: order, error: orderErr } = await supabaseAdmin
 			.from("orders")
-			.select("id, branch_id, total, items, created_at, status")
+			.select("id, branch_id, total, items, created_at, status, discount_total")
 			.eq("id", orderId)
 			.maybeSingle();
 
@@ -116,12 +117,23 @@ export async function POST(req: NextRequest) {
 
 		const { data: branch, error: brErr } = await supabaseAdmin
 			.from("branches")
-			.select("id, company_id, delivery_settings, origin_lat, origin_lng")
+			.select("id, company_id, delivery_settings, origin_lat, origin_lng, order_intake_paused, order_intake_pause_message")
 			.eq("id", order.branch_id)
 			.maybeSingle();
 
 		if (brErr || !branch) {
 			return jsonWithPublicCors(req, { error: "Sucursal no encontrada" }, { status: 400 });
+		}
+
+		if (branch.order_intake_paused) {
+			return jsonWithPublicCors(
+				req,
+				{
+					error: "ORDER_INTAKE_PAUSED",
+					message: branch.order_intake_pause_message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos."
+				},
+				{ status: 423 }
+			);
 		}
 
 		let currencyCode = "CLP";
@@ -337,11 +349,28 @@ export async function POST(req: NextRequest) {
 		const handoff =
 			isDeliveryType(orderTypeRaw) ? await pickHandoffCode() : null;
 
+		let taxTotal = 0;
+		const taxRatePercent = settings.taxRate ? settings.taxRate : 0;
+		const taxIncluded = settings.taxIncluded ?? false;
+		if (taxRatePercent > 0) {
+			const sub = currency(subtotal);
+			const disc = currency(Number(order.discount_total) || 0);
+			const subAfterDiscount = currency(Math.max(0, sub.subtract(disc).value));
+			if (taxIncluded) {
+				const divisor = currency(1).add(currency(taxRatePercent).divide(100));
+				const net = subAfterDiscount.divide(divisor);
+				taxTotal = subAfterDiscount.subtract(net).value;
+			} else {
+				taxTotal = subAfterDiscount.multiply(currency(taxRatePercent).divide(100)).value;
+			}
+		}
+
 		const { error: upErr } = await supabaseAdmin
 			.from("orders")
 			.update({
 				delivery_fee: expectedFee,
 				delivery_address: deliveryAddress,
+				tax_total: taxTotal,
 				...(handoff ? { handoff_code: handoff } : {}),
 			})
 			.eq("id", orderId)

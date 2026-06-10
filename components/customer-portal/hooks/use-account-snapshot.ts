@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 import type {
   ActiveAddon,
   BranchEntitlementSummary,
@@ -37,7 +38,7 @@ export function useAccountSnapshot(
   initialAddons:        ActiveAddon[],
   initialStatus:        string | null,
   initialEndsAt:        string | null,
-  options?: { enablePolling?: boolean },
+  options?: { enablePolling?: boolean; companyId?: string },
 ): UseAccountSnapshotReturn {
   const enablePolling = options?.enablePolling !== false;
   const [subscriptionStatus, setSubscriptionStatus] = useState(initialStatus);
@@ -86,35 +87,80 @@ export function useAccountSnapshot(
     }
   }, []);
 
+  const companyId = options?.companyId;
+
   useEffect(() => {
     if (!enablePolling) return undefined;
+
+    // Trigger an immediate refresh on mount.
     void refresh();
-    const id = window.setInterval(() => void refresh(), 15_000);
+
+    /*
+     * HYBRID APPROACH — Fase 3: Supabase Realtime + polling fallback
+     *
+     * Tables safe for Realtime (tenant RLS allows filter by id / company_id):
+     *   - `companies`      → filter: id=eq.${companyId}
+     *   - `company_addons` → filter: company_id=eq.${companyId}
+     *
+     * Tables with RLS issues (payments_history only has is_saas_admin_reader() policies;
+     * saas_tickets may be restricted similarly) → covered by polling fallback.
+     *
+     * Strategy:
+     *   • With companyId: subscribe Realtime for safe tables + 60 s polling safety-net.
+     *   • Without companyId: 15 s polling only (original behaviour).
+     */
+    if (!companyId) {
+      // Original behaviour: 15 s polling, no Realtime.
+      const id = window.setInterval(() => void refresh(), 15_000);
+      return () => {
+        window.clearInterval(id);
+        abortRef.current?.abort();
+      };
+    }
+
+    // With companyId: Realtime channel for the tables we can safely filter.
+    const supabase = createSupabaseBrowserClient("tenant");
+    let realtimeJoined = false;
+
+    const channel = supabase
+      .channel(`account-snapshot:${companyId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "companies",
+          filter: `id=eq.${companyId}`,
+        },
+        () => void refresh(),
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "company_addons",
+          filter: `company_id=eq.${companyId}`,
+        },
+        () => void refresh(),
+      )
+      .subscribe((status: string) => {
+        realtimeJoined = status === "SUBSCRIBED";
+      });
+
+    // 60 s polling as safety-net:
+    //  • When Realtime is joined: catches tables with RLS issues (payments_history, saas_tickets).
+    //  • If Realtime fails to connect: acts as full fallback.
+    const id = window.setInterval(() => void refresh(), 60_000);
+
     return () => {
       window.clearInterval(id);
       abortRef.current?.abort();
+      void supabase.removeChannel(channel);
+      // Suppress unused variable warning — realtimeJoined is intentionally read-only here.
+      void realtimeJoined;
     };
-    /*
-     * DEUDA TÉCNICA — Fase 8: migración a Supabase Realtime
-     *
-     * Para reemplazar el polling de 15 s con suscripciones en tiempo real se requiere:
-     *   1. Habilitar Supabase Realtime en las tablas: `payments_history`, `companies`,
-     *      `company_addons`, `saas_tickets`.
-     *   2. Añadir políticas RLS SELECT para el rol `authenticated` (tenant) en cada tabla
-     *      filtradas por `company_id = auth.uid()` (o función equivalente). Actualmente
-     *      `payments_history` solo tiene policies para `is_saas_admin_reader()`.
-     *   3. Confirmar `REPLICA IDENTITY FULL` o al menos `REPLICA IDENTITY DEFAULT` en las
-     *      tablas que necesiten enviar columnas antiguas en UPDATE/DELETE.
-     *   4. Sustituir el setInterval por:
-     *        const channel = createSupabaseBrowserClient("tenant")
-     *          .channel("account-snapshot")
-     *          .on("postgres_changes", { event: "*", schema: "public", table: "payments_history",
-     *               filter: `company_id=eq.${companyId}` }, () => void refresh())
-     *          // ...más tablas
-     *          .subscribe();
-     *      Mantener el polling como fallback si channel.state !== "joined".
-     */
-  }, [refresh, enablePolling]);
+  }, [refresh, enablePolling, companyId]);
 
   return {
     subscriptionStatus,

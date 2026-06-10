@@ -9,6 +9,7 @@ import { FALLBACK_IMAGE } from "../constants";
 import { formatCartMoney } from "../utils/format-cart-money";
 import { getCloudinaryOptimizedUrl } from "../../utils/cloudinary";
 import { isUpsellBeverageLineId } from "../cart-context";
+import { useCart } from "../use-cart";
 
 export function CartItemRow({
   item,
@@ -29,6 +30,7 @@ export function CartItemRow({
   ) => void;
   onDecrease: (id: string) => void;
 }) {
+  const { currency, exchangeRate } = useCart();
   const t = useTranslations("tenant.cart.modal");
   const optimizedSrc = getCloudinaryOptimizedUrl(item.image_url ?? null, {
     width: 120,
@@ -90,9 +92,16 @@ export function CartItemRow({
         </div>
 
         <div className="item-bottom item-bottom-tight">
-          <span className="item-price item-price-strong">
-            {formatCartMoney(lineUnitTotal * item.quantity)}
-          </span>
+          <div className="item-price-wrapper">
+            <span className="item-price item-price-strong">
+              {formatCartMoney(lineUnitTotal * item.quantity, currency)}
+            </span>
+            {exchangeRate != null && exchangeRate > 0 && (
+              <span className="item-price-local" style={{ display: "block", fontSize: "0.78rem", opacity: 0.6, marginTop: "1px" }}>
+                {formatCartMoney(lineUnitTotal * item.quantity * exchangeRate, currency === "USD" ? "VES" : "USD")}
+              </span>
+            )}
+          </div>
           <div className="qty-control-sm">
             <button
               onClick={() => onDecrease(item.lineId ?? item.id)}

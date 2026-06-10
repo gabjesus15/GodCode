@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { useQuery } from "@tanstack/react-query";
 import { mergeCartWithBranchPrices, type BranchProductPriceRow } from "../utils/cart-pricing";
 import { filterValidProductIds, isValidBranchId } from "../utils/safe-ids";
 import { useCartStore } from "../cart-store";
@@ -91,81 +92,81 @@ export function useBranchPrices(
     return uniq.join(",");
   }, [cart, isHydrated]);
 
-  const [branchPriceRows, setBranchPriceRows] = useState<BranchProductPriceRow[]>([]);
+  const enabled = Boolean(
+    isHydrated &&
+      cartProductIds &&
+      selectedBranchId &&
+      isValidBranchId(selectedBranchId),
+  );
 
-  useEffect(() => {
-    if (!isHydrated || !cartProductIds || !selectedBranchId) return;
-    if (!isValidBranchId(selectedBranchId)) return;
-
-    let cancelled = false;
-
-    const validatePrices = async () => {
+  const { data: rows = [] } = useQuery<BranchProductPriceRow[]>({
+    queryKey: ["cart-branch-prices", selectedBranchId, cartProductIds],
+    queryFn: async () => {
       const ids = filterValidProductIds(cartProductIds.split(","));
-      if (ids.length === 0) return;
+      if (ids.length === 0) return [];
 
-      try {
-        let rows: BranchProductPriceRow[] = [];
+      let resultRows: BranchProductPriceRow[] = [];
 
-        const rpc = await supabase.rpc("get_cart_branch_prices", {
-          p_branch_id: selectedBranchId,
-          p_product_ids: ids,
+      const rpc = await supabase.rpc("get_cart_branch_prices", {
+        p_branch_id: selectedBranchId,
+        p_product_ids: ids,
+      });
+
+      if (!rpc.error && Array.isArray(rpc.data)) {
+        resultRows = (rpc.data as Record<string, unknown>[]).map(mapRpcRow);
+      } else {
+        const { data, error } = await supabase
+          .from("product_prices")
+          .select(
+            "product_id, price, has_discount, discount_price, products(id,name,is_active,description)",
+          )
+          .in("product_id", ids)
+          .eq("branch_id", selectedBranchId);
+          
+        if (error) throw error;
+        
+        resultRows = (data || []).map((row: LegacyPriceRow) => {
+          const meta = normalizeProductJoin(row.products);
+          return {
+            product_id: String(row.product_id),
+            price: Number(row.price),
+            has_discount: Boolean(row.has_discount),
+            discount_price: Number(row.discount_price),
+            products: meta
+              ? {
+                  id: meta.id,
+                  name: meta.name ?? null,
+                  is_active: meta.is_active ?? null,
+                  description: meta.description ?? null,
+                }
+              : undefined,
+          };
         });
-
-        if (!rpc.error && Array.isArray(rpc.data) && rpc.data.length >= 0) {
-          rows = (rpc.data as Record<string, unknown>[]).map(mapRpcRow);
-        } else {
-          const { data, error } = await supabase
-            .from("product_prices")
-            .select(
-              "product_id, price, has_discount, discount_price, products(id,name,is_active,description)",
-            )
-            .in("product_id", ids)
-            .eq("branch_id", selectedBranchId);
-          if (cancelled || error) return;
-          rows = (data || []).map((row: LegacyPriceRow) => {
-            const meta = normalizeProductJoin(row.products);
-            return {
-              product_id: String(row.product_id),
-              price: Number(row.price),
-              has_discount: Boolean(row.has_discount),
-              discount_price: Number(row.discount_price),
-              products: meta
-                ? {
-                    id: meta.id,
-                    name: meta.name ?? null,
-                    is_active: meta.is_active ?? null,
-                    description: meta.description ?? null,
-                  }
-                : undefined,
-            };
-          });
-        }
-
-        if (cancelled) return;
-        setBranchPriceRows(rows);
-
-        const currentCart = useCartStore.getState().cart;
-        const nextCart = mergeCartWithBranchPrices(currentCart, rows, {
-          omitLinesWithoutPriceWhenBranchHasData: false,
-        });
-
-        const isSame = cartsMergeResultEqual(currentCart, nextCart);
-        const wouldClear =
-          rows.length === 0 && currentCart.length > 0 && nextCart.length < currentCart.length;
-        const setCartFn = useCartStore.getState().setCart;
-        if (!isSame && !wouldClear && typeof setCartFn === "function") {
-          setCartFn(nextCart);
-        }
-      } catch (err) {
-        console.error("Error validando precios:", err);
       }
-    };
 
-    void validatePrices();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedBranchId, cartProductIds, supabase, isHydrated]);
+      return resultRows;
+    },
+    enabled,
+    staleTime: 30_000,
+  });
 
-  return branchPriceRows;
+  // Efecto para actualizar el store de Zustand cuando cambian los precios
+  useEffect(() => {
+    if (!enabled || rows.length === 0) return;
+
+    const currentCart = useCartStore.getState().cart;
+    const nextCart = mergeCartWithBranchPrices(currentCart, rows, {
+      omitLinesWithoutPriceWhenBranchHasData: false,
+    });
+
+    const isSame = cartsMergeResultEqual(currentCart, nextCart);
+    const wouldClear =
+      rows.length === 0 && currentCart.length > 0 && nextCart.length < currentCart.length;
+    const setCartFn = useCartStore.getState().setCart;
+    if (!isSame && !wouldClear && typeof setCartFn === "function") {
+      setCartFn(nextCart);
+    }
+  }, [rows, enabled]);
+
+  return rows;
 }

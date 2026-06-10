@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { getStripeClient } from "../../../../lib/onboarding/stripe";
-import { activateCompanyAddonsFromApplication, activateCompanySubscription } from "../../../../lib/onboarding/billing-activation";
-import { provisionCompanyFromApplication, recordPayment, type OnboardingApplication } from "../../../../lib/onboarding/checkout-service";
+import { getStripeClient } from "@/lib/onboarding/stripe";
+import { activateCompanyAddonsFromApplication, activateCompanySubscription } from "@/lib/onboarding/billing-activation";
+import { provisionCompanyFromApplication, recordPayment, type OnboardingApplication } from "@/lib/onboarding/checkout-service";
 
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 

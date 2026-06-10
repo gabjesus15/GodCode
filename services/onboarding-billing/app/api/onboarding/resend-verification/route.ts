@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getAppUrl } from "@/lib/tenant/app-url";
-import { sendOnboardingEmail } from "../../../../lib/onboarding/emails";
-import { isRateLimited } from "../../../../lib/onboarding/rate-limit";
-import { normalizeEmail } from "../../../../lib/onboarding/trial-eligibility";
+import { sendOnboardingEmail } from "@/lib/onboarding/emails";
+import { isRateLimited } from "@/lib/onboarding/rate-limit";
+import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
@@ -31,10 +31,10 @@ export async function POST(req: NextRequest) {
     }
 
     const ip = getClientIp(req);
-    if (isRateLimited(`resend_verification:ip:${ip}`, 6, 60_000)) {
+    if (await isRateLimited(`resend_verification:ip:${ip}`, 6, 60_000)) {
       return NextResponse.json({ error: "Demasiados intentos. Espera un minuto." }, { status: 429 });
     }
-    if (isRateLimited(`resend_verification:email:${email}`, 3, 10 * 60_000)) {
+    if (await isRateLimited(`resend_verification:email:${email}`, 3, 10 * 60_000)) {
       return NextResponse.json({ error: "Ya se enviaron varios correos. Intenta de nuevo en unos minutos." }, { status: 429 });
     }
 

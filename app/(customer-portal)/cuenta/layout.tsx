@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { getCustomerMembership, getSuperAdminRoleByEmail } from "@/lib/super-admin/account-access";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
+import { QueryProvider } from "@/components/ui/query-provider";
 
 export const metadata: Metadata = {
   robots: {
@@ -40,5 +41,5 @@ export default async function CustomerPortalLayout({
     redirect("/login?error=no-access");
   }
 
-  return <>{children}</>;
+  return <QueryProvider>{children}</QueryProvider>;
 }

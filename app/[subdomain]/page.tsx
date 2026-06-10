@@ -23,17 +23,26 @@ export default async function TenantPage({ params }: TenantPageProps) {
   }
 
   const supabase = createSupabasePublicServerClient();
-  const { data: branches } = await supabase
-    .from("branches")
-    .select("id,name,address,whatsapp_url,instagram_url,map_url")
-    .eq("company_id", company.id)
-    .order("name");
 
-  const { data: openShifts } = await supabase
-    .from("cash_shifts")
-    .select("branch_id")
-    .eq("company_id", company.id)
-    .eq("status", "open");
+  // Run all 3 independent queries in parallel to eliminate waterfall latency.
+  const [{ data: branches }, { data: openShifts }, { data: businessInfo }] =
+    await Promise.all([
+      supabase
+        .from("branches")
+        .select("id,name,address,whatsapp_url,instagram_url,map_url,order_intake_paused,order_intake_pause_message,order_intake_paused_at")
+        .eq("company_id", company.id)
+        .order("name"),
+      supabase
+        .from("cash_shifts")
+        .select("branch_id")
+        .eq("company_id", company.id)
+        .eq("status", "open"),
+      supabase
+        .from("business_info")
+        .select("schedule")
+        .eq("company_id", company.id)
+        .maybeSingle(),
+    ]);
 
   const openBranchIds = (openShifts ?? [])
     .map((shift) => String(shift.branch_id))
@@ -49,12 +58,6 @@ export default async function TenantPage({ params }: TenantPageProps) {
     const name = rawName ? `${rawName} ${suffix}` : suffix;
     return { ...branch, name };
   });
-
-  const { data: businessInfo } = await supabase
-    .from("business_info")
-    .select("schedule")
-    .eq("company_id", company.id)
-    .maybeSingle();
 
   const theme = (company?.theme_config as unknown as TenantPageThemeConfig) ?? {};
   const name = theme.displayName || company.name || resolvedParams.subdomain || "GodCode";

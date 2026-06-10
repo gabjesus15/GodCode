@@ -3,10 +3,10 @@ import { randomUUID } from "crypto";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getAppUrl } from "@/lib/tenant/app-url";
-import { sendOnboardingEmail } from "../../../../lib/onboarding/emails";
-import { verifyRecaptcha } from "../../../../lib/onboarding/recaptcha";
-import { isRateLimited } from "../../../../lib/onboarding/rate-limit";
-import { normalizeEmail } from "../../../../lib/onboarding/trial-eligibility";
+import { sendOnboardingEmail } from "@/lib/onboarding/emails";
+import { verifyRecaptcha } from "@/lib/onboarding/recaptcha";
+import { isRateLimited } from "@/lib/onboarding/rate-limit";
+import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";
@@ -56,10 +56,10 @@ export async function POST(req: NextRequest) {
 		if (!emailRaw || !emailRegex.test(emailRaw)) {
 			return NextResponse.json({ error: "Email inválido" }, { status: 400 });
 		}
-		if (isRateLimited(`onboarding_apply:ip:${ip}`, 12, 60_000)) {
+		if (await isRateLimited(`onboarding_apply:ip:${ip}`, 12, 60_000)) {
 			return NextResponse.json({ error: "Demasiados intentos. Intenta de nuevo en un minuto." }, { status: 429 });
 		}
-		if (isRateLimited(`onboarding_apply:email:${emailRaw}`, 5, 10 * 60_000)) {
+		if (await isRateLimited(`onboarding_apply:email:${emailRaw}`, 5, 10 * 60_000)) {
 			return NextResponse.json({ error: "Demasiados intentos con este correo. Intenta más tarde." }, { status: 429 });
 		}
 

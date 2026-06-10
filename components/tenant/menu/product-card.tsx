@@ -1,25 +1,34 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-// Define ProductType interface based on usage
-interface ProductType {
-  id: string;
-  name: string | null;
-  description?: string | null;
-  image_url?: string | null;
-  is_special?: boolean;
-  has_discount?: boolean;
-  discount_price?: number | null;
-  price: number;
-}
 import Image from "next/image";
 import { Plus, Minus, ChevronDown, X } from "lucide-react";
 import { useCart } from "../cart";
 import { getCloudinaryOptimizedUrl } from "../utils/cloudinary";
-
 import { formatCartMoney } from "../cart/utils/format-cart-money";
+import { normalizeProductCardStyle } from "@/lib/store-theme/theme-config";
+import {
+  PRODUCT_CARD_FALLBACK_IMAGE,
+  useProductCardLogic,
+  type ProductCardProduct,
+} from "./product-card-shared";
+import {
+  CleanCard,
+  DetailedCard,
+  FoodCard,
+  HorizontalCard,
+  RappiCard,
+  SidebarCard,
+  SkewCard,
+  SneakerCard,
+} from "./product-card-layouts";
 
-const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80";
+type ProductType = ProductCardProduct;
 
-export const ProductCard = React.memo(function ProductCard({ product, priority = false, country = "CL", currency = "CLP" }: { product: ProductType; priority?: boolean; country?: string; currency?: string }) {
+const FALLBACK_IMAGE = PRODUCT_CARD_FALLBACK_IMAGE;
+
+// -----------------------------------------------------------------------------
+// LAYOUT 0: Original (Glass)
+// -----------------------------------------------------------------------------
+const GlassCard = React.memo(function GlassCard({ product, priority = false, country = "CL", currency = "CLP", onClick, exchangeRate }: { product: ProductType; priority?: boolean; country?: string; currency?: string; onClick?: () => void; exchangeRate?: number | null }) {
   const { cart, addToCart, decreaseQuantity } = useCart();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -29,8 +38,9 @@ export const ProductCard = React.memo(function ProductCard({ product, priority =
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 0);
-    return () => clearTimeout(timer);
+    // Evitamos el warning del linter sobre llamar setState síncronamente en un effect
+    const t = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(t);
   }, []);
   const CLOSE_ANIMATION_MS = 220;
 
@@ -48,7 +58,6 @@ export const ProductCard = React.memo(function ProductCard({ product, priority =
   const isCloudinary = (product.image_url || "").includes("res.cloudinary.com");
   const fallbackUrl = product.image_url || FALLBACK_IMAGE;
 
-  // Loader personalizado para que Next.js genere múltiples resoluciones (srcset) apuntando a Cloudinary
   const cloudinaryLoader = ({ src, width }: { src: string; width: number }) => {
     return getCloudinaryOptimizedUrl(src, { width, crop: "fill", gravity: "auto" }) || src;
   };
@@ -99,6 +108,10 @@ export const ProductCard = React.memo(function ProductCard({ product, priority =
   }, [decreaseQuantity, product.id]);
 
   const toggleExpand = useCallback(() => {
+    if (onClick) {
+      onClick();
+      return;
+    }
     if (!isLongDesc) return;
     if (isExpanded) {
       closeDetails();
@@ -110,7 +123,7 @@ export const ProductCard = React.memo(function ProductCard({ product, priority =
     }
     setIsClosing(false);
     setIsExpanded(true);
-  }, [closeDetails, isExpanded, isLongDesc]);
+  }, [closeDetails, isExpanded, isLongDesc, onClick]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -120,6 +133,18 @@ export const ProductCard = React.memo(function ProductCard({ product, priority =
   };
 
   const showUSD = country === 'VE' || country === 'Venezuela';
+
+  const formatPrice = (priceVal: number) => {
+    const primaryStr = showUSD
+      ? formatCartMoney(priceVal, "USD")
+      : formatCartMoney(priceVal, currency);
+    if (exchangeRate && exchangeRate > 0 && !showUSD) {
+      const localCode = (currency === "USD" || showUSD) ? "VES" : "USD";
+      const convertedVal = priceVal * exchangeRate;
+      return `${primaryStr} / ${formatCartMoney(convertedVal, localCode)}`;
+    }
+    return primaryStr;
+  };
 
   return (
     <div
@@ -191,21 +216,15 @@ export const ProductCard = React.memo(function ProductCard({ product, priority =
             {product.has_discount && product.discount_price ? (
               <>
                 <span className="product-price discounted">
-                  {showUSD
-                    ? formatCartMoney(product.discount_price, 'USD')
-                    : formatCartMoney(product.discount_price, currency)}
+                  {formatPrice(product.discount_price)}
                 </span>
                 <span className="product-price original">
-                  {showUSD
-                    ? formatCartMoney(product.price, 'USD')
-                    : formatCartMoney(product.price, currency)}
+                  {formatPrice(product.price)}
                 </span>
               </>
             ) : (
               <span className="product-price">
-                {showUSD
-                  ? formatCartMoney(product.price, 'USD')
-                  : formatCartMoney(product.price, currency)}
+                {formatPrice(product.price)}
               </span>
             )}
           </div>
@@ -234,4 +253,56 @@ export const ProductCard = React.memo(function ProductCard({ product, priority =
       </div>
     </div>
   );
+});
+
+// -----------------------------------------------------------------------------
+// MAIN EXPORT
+// -----------------------------------------------------------------------------
+export const ProductCard = React.memo(function ProductCard({ 
+  product, 
+  priority = false, 
+  country = "CL", 
+  currency = "CLP", 
+  cardStyle = "layout-clean",
+  onClick,
+  isFavorite = false,
+  onToggleFavorite,
+  exchangeRate
+}: { 
+  product: ProductType; 
+  priority?: boolean; 
+  country?: string; 
+  currency?: string; 
+  cardStyle?: string;
+  onClick?: () => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
+  exchangeRate?: number | null;
+}) {
+  const logic = useProductCardLogic(product, country);
+  const resolvedStyle = normalizeProductCardStyle(cardStyle);
+
+  const layoutProps = { product, logic, currency, priority, onClick, exchangeRate };
+
+  switch (resolvedStyle) {
+    case "glass":
+      return <GlassCard product={product} currency={currency} priority={priority} country={country} onClick={onClick} exchangeRate={exchangeRate} />;
+    case "layout-detailed":
+      return <DetailedCard {...layoutProps} />;
+    case "layout-horizontal":
+      return <HorizontalCard {...layoutProps} />;
+    case "layout-sidebar":
+      return <SidebarCard {...layoutProps} />;
+    case "layout-rappi":
+      return <RappiCard {...layoutProps} />;
+    case "layout-sneaker":
+      return <SneakerCard {...layoutProps} />;
+    case "layout-skew":
+      return <SkewCard {...layoutProps} />;
+    case "layout-food":
+      return <FoodCard {...layoutProps} isFavorite={isFavorite} onToggleFavorite={onToggleFavorite} />;
+    case "layout-clean":
+    default:
+      return <CleanCard {...layoutProps} />;
+  }
 });

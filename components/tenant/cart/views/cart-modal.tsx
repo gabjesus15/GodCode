@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -42,11 +42,11 @@ import { CartNamedAreaSelect } from "./cart-named-area-select";
 import { CartPaymentFlow } from "./cart-payment-flow";
 import { CartSuccessView } from "./cart-success-view";
 import { buildCartClientSchema } from "../services/cart-validation";
+import { useSubmitOrder } from "../services/order-submission";
 import { mergeCartWithBranchPrices } from "../utils/cart-pricing";
 import { validateImageFile } from "../../utils/cloudinary";
 import { useCart } from "../use-cart";
 import { sanitizeUserText } from "@/utils/sanitize-user-text";
-import { ordersService } from "../../data/orders-service";
 const DeliveryPreviewMap = dynamic(
   () =>
     import("../../delivery/delivery-preview-map").then((mod) => mod.DeliveryPreviewMap),
@@ -59,12 +59,13 @@ import "../../../../app/[subdomain]/styles/CartModal.custom.css";
 export function CartModal({
   businessInfo,
   selectedBranch,
-  currency = "CLP",
+  currency: propCurrency = "CLP",
 }: {
   businessInfo?: BusinessInfo | null;
   selectedBranch?: BranchInfo | null;
   currency?: string;
 }) {
+  const submitOrderMutation = useSubmitOrder();
   const countryCode = businessInfo?.country || "CL";
   const strategy = useMemo(() => getFormStrategy(countryCode), [countryCode]);
 
@@ -123,6 +124,10 @@ export function CartModal({
       branchPriceRows,
       appliedCouponCode,
       appliedCouponDiscount,
+      taxTotal = 0,
+      localTotal = null,
+      exchangeRate,
+      currency = propCurrency,
     } = useCart();
 
 
@@ -656,13 +661,25 @@ export function CartModal({
     }
   }, [paymentMethodKey, checkoutPaymentMethods]);
 
-  const clientSchema = buildCartClientSchema({
-    nameShort: t("validation.nameShort"),
-    nameInvalid: t("validation.nameInvalid"),
-    phoneShort: t("validation.phoneShort"),
-    phoneLong: t("validation.phoneLong"),
-    phoneInvalid: t("validation.phoneInvalid"),
-  });
+  const clientSchema = useMemo(() => {
+    const requiresReceipt = Boolean(
+      paymentMethodKey && PAYMENT_METHOD_CONFIG[paymentMethodKey]?.isOnline
+    );
+    return buildCartClientSchema(
+      {
+        nameShort: t("validation.nameShort"),
+        nameInvalid: t("validation.nameInvalid"),
+        phoneShort: t("validation.phoneShort"),
+        phoneLong: t("validation.phoneLong"),
+        phoneInvalid: t("validation.phoneInvalid"),
+      },
+      {
+        fulfillment: fulfillment === "delivery" ? "delivery" : "pickup",
+        requiresReceipt,
+        validateRut: strategy.validateId,
+      }
+    );
+  }, [t, fulfillment, paymentMethodKey, strategy]);
 
   const form = useForm({
     resolver: zodResolver(clientSchema),
@@ -672,6 +689,15 @@ export function CartModal({
       rut: "",
       receiptFile: null,
       receiptPreview: undefined,
+      fulfillment: fulfillment === "delivery" ? ("delivery" as const) : ("pickup" as const),
+      delivery_address: {
+        address: deliveryLine1,
+        formatted_address: `${deliveryLine1}, ${deliveryCommune}`.trim(),
+        reference: deliveryReference,
+        lat: deliveryLat,
+        lng: deliveryLng,
+        namedAreaId: deliveryNamedAreaId,
+      },
     },
   });
      // Prellenar datos desde localStorage solo en cliente
@@ -686,6 +712,30 @@ export function CartModal({
 
   const { handleSubmit, setValue, getValues, control } = form;
   const formValues = useWatch({ control });
+
+  // Sincronizar fulfillment y datos de delivery al form de react-hook-form
+  useEffect(() => {
+    setValue("fulfillment", fulfillment);
+  }, [fulfillment, setValue]);
+
+  useEffect(() => {
+    setValue("delivery_address", {
+      address: deliveryLine1,
+      formatted_address: `${deliveryLine1}, ${deliveryCommune}`.trim(),
+      reference: deliveryReference,
+      lat: deliveryLat,
+      lng: deliveryLng,
+      namedAreaId: deliveryNamedAreaId,
+    });
+  }, [
+    deliveryLine1,
+    deliveryCommune,
+    deliveryReference,
+    deliveryLat,
+    deliveryLng,
+    deliveryNamedAreaId,
+    setValue,
+  ]);
     const [isShiftLoading, setIsShiftLoading] = useState(false);
   const [isShiftOpen, setIsShiftOpen] = useState(true);
   const selectedBranchId = selectedBranch?.id ?? null;
@@ -755,7 +805,8 @@ export function CartModal({
     };
   }, [selectedBranchId, supabase]);
 
-  const canCheckout = isShiftOpen;
+  const isOrderIntakePaused = selectedBranchForCheckout?.order_intake_paused === true;
+  const canCheckout = isShiftOpen && !isOrderIntakePaused;
 
   const minOrder = deliverySettings.minOrderSubtotal ?? 0;
   const MIN_DRIVER_REFERENCE_LEN = 6;
@@ -844,7 +895,7 @@ export function CartModal({
         : isDeliveryOutOfZone
         ? t("delivery.locationOutsideArea")
         : !meetsMinDelivery
-        ? t("delivery.minOrderForDelivery", { amount: formatCartMoney(minOrder) })
+        ? t("delivery.minOrderForDelivery", { amount: formatCartMoney(minOrder, currency) })
         : deliveryQuoteLoading &&
           (deliveryPriceMode === "distance" || deliveryPriceMode === "external") &&
           isValidCoordsForQuote()
@@ -1348,10 +1399,10 @@ export function CartModal({
         uber_quote_id: uberQuoteId || null,
         coupon_code: appliedCouponCode?.trim() ? appliedCouponCode.trim() : null,
       };
-      const { order: newOrder, receiptUploadFailed } = await ordersService.createOrder(
-        orderPayload,
-        data.receiptFile ?? null
-      );
+      const { order: newOrder, receiptUploadFailed } = await submitOrderMutation.mutateAsync({
+        orderData: orderPayload,
+        receiptFile: data.receiptFile ?? null,
+      });
       const parsed = parseOrderRpcPayload(newOrder);
       setViewState((v) => ({
         ...v,
@@ -1396,6 +1447,9 @@ export function CartModal({
             couponCode: appliedCouponCode?.trim() ? appliedCouponCode.trim() : null,
             couponDiscount:
               appliedCouponDiscount > 0 ? appliedCouponDiscount : undefined,
+            currency: currency,
+            localCurrency: currency === "USD" ? "VES" : "USD",
+            localTotal: localTotal,
           },
           {
             titlePrefix: t("ws.titlePrefix"),
@@ -1447,8 +1501,11 @@ export function CartModal({
     }
   });
 
+  const showBeveragesUpsell = beveragesUpsellEnabledByBranch && enhancementCatalogs.beverages.length > 0;
+  const showExtrasUpsell = extrasEnabledByBranch && enhancementCatalogs.globalExtras.length > 0;
+
   const enhanceTabCount =
-    (beveragesUpsellEnabledByBranch ? 1 : 0) + (extrasEnabledByBranch ? 1 : 0);
+    (showBeveragesUpsell ? 1 : 0) + (showExtrasUpsell ? 1 : 0);
 
 
 
@@ -1566,7 +1623,7 @@ export function CartModal({
             {!viewState.showPaymentInfo &&
             !viewState.showPaymentMethods &&
             !viewState.showForm &&
-            (beveragesUpsellEnabledByBranch || extrasEnabledByBranch) ? (
+            (showBeveragesUpsell || showExtrasUpsell) ? (
               <div className="cart-footer-enhance-container">
                 <div
                   className={`cart-footer-enhance-rail${
@@ -1615,9 +1672,6 @@ export function CartModal({
                               </button>
                             </div>
                           ))}
-                          {enhancementCatalogs.beverages.length === 0 ? (
-                            <p className="cart-geo-hint">No hay bebidas configuradas para upsell.</p>
-                          ) : null}
                         </div>
                       ) : activeEnhancePanel === "extras" ? (
                         <div className="cart-enhance-grid cart-enhance-grid--tiles">
@@ -1668,9 +1722,6 @@ export function CartModal({
                               </div>
                             );
                           })}
-                          {enhancementCatalogs.globalExtras.length === 0 ? (
-                            <p className="cart-geo-hint">No hay extras globales configurados.</p>
-                          ) : null}
                         </div>
                       ) : null}
                     </div>
@@ -1683,14 +1734,14 @@ export function CartModal({
                     }`}
                     role="group"
                     aria-label={
-                      beveragesUpsellEnabledByBranch && extrasEnabledByBranch
+                      showBeveragesUpsell && showExtrasUpsell
                         ? t("catalog.addDrinksOrExtras")
-                        : beveragesUpsellEnabledByBranch
+                        : showBeveragesUpsell
                           ? t("catalog.drinksForOrder")
                           : t("catalog.globalExtrasForOrder")
                     }
                   >
-                    {beveragesUpsellEnabledByBranch ? (
+                    {showBeveragesUpsell ? (
                       <button
                         type="button"
                         className={`cart-enhance-seg ${
@@ -1705,7 +1756,7 @@ export function CartModal({
                         <span>Bebidas</span>
                       </button>
                     ) : null}
-                    {extrasEnabledByBranch ? (
+                    {showExtrasUpsell ? (
                       <button
                         type="button"
                         className={`cart-enhance-seg ${
@@ -1745,33 +1796,78 @@ export function CartModal({
                   cartSubtotal={cartSubtotal}
                   currency={currency}
                 />
-                <div className="total-row">
+                 <div className="total-row">
                   <span>{t("summary.subtotal")}</span>
-                  <span>{formatCartMoney(cartSubtotal, currency)}</span>
+                  <div style={{ textAlign: "right" }}>
+                    <span>{formatCartMoney(cartSubtotal, currency)}</span>
+                    {exchangeRate != null && exchangeRate > 0 && (
+                      <span style={{ display: "block", fontSize: "0.78rem", opacity: 0.6 }}>
+                        ({formatCartMoney(cartSubtotal * exchangeRate, currency === "USD" ? "VES" : "USD")})
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {appliedCouponDiscount > 0 ? (
                   <div className="total-row total-row-discount">
                     <span>{t("summary.discount")}</span>
-                    <span>-{formatCartMoney(appliedCouponDiscount, currency)}</span>
+                    <div style={{ textAlign: "right" }}>
+                      <span>-{formatCartMoney(appliedCouponDiscount, currency)}</span>
+                      {exchangeRate != null && exchangeRate > 0 && (
+                        <span style={{ display: "block", fontSize: "0.78rem", opacity: 0.6 }}>
+                          (-{formatCartMoney(appliedCouponDiscount * exchangeRate, currency === "USD" ? "VES" : "USD")})
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ) : null}
                 {fulfillment === "delivery" && deliverySettings.enabled ? (
                   <div className="total-row total-row-delivery">
                     <span>{t("summary.shipping")}</span>
-                    <span>
-                      {deliveryWaivedFree
-                        ? t("summary.free")
-                        : isDeliveryOutOfZone
-                          ? "—"
-                          : !deliveryShowNumericFee && deliveryExternalHintText
-                            ? deliveryExternalHintText
-                            : formatCartMoney(deliveryFee, currency)}
-                    </span>
+                    <div style={{ textAlign: "right" }}>
+                      <span>
+                        {deliveryWaivedFree
+                          ? t("summary.free")
+                          : isDeliveryOutOfZone
+                            ? "—"
+                            : !deliveryShowNumericFee && deliveryExternalHintText
+                              ? deliveryExternalHintText
+                              : formatCartMoney(deliveryFee, currency)}
+                      </span>
+                      {!deliveryWaivedFree && !isDeliveryOutOfZone && (deliveryShowNumericFee || !deliveryExternalHintText) && exchangeRate != null && exchangeRate > 0 && (
+                        <span style={{ display: "block", fontSize: "0.78rem", opacity: 0.6 }}>
+                          ({formatCartMoney(deliveryFee * exchangeRate, currency === "USD" ? "VES" : "USD")})
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ) : null}
+                {taxTotal > 0 && (
+                  <div className="total-row total-row-tax">
+                    <span>
+                      Impuesto (IVA)
+                      {deliverySettings.taxRate ? ` (${deliverySettings.taxRate}%)` : ""}
+                      {deliverySettings.taxIncluded ? " (Incluido)" : " (Adicional)"}
+                    </span>
+                    <div style={{ textAlign: "right" }}>
+                      <span>{formatCartMoney(taxTotal, currency)}</span>
+                      {exchangeRate != null && exchangeRate > 0 && (
+                        <span style={{ display: "block", fontSize: "0.78rem", opacity: 0.6 }}>
+                          ({formatCartMoney(taxTotal * exchangeRate, currency === "USD" ? "VES" : "USD")})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <div className="total-row total-row-grand">
                   <span>{t("summary.total")}</span>
-                  <span className="total-price">{formatCartMoney(grandTotal, currency)}</span>
+                  <div style={{ textAlign: "right" }}>
+                    <span className="total-price" style={{ display: "block" }}>{formatCartMoney(grandTotal, currency)}</span>
+                    {localTotal != null && localTotal > 0 && (
+                      <span className="total-price-local" style={{ display: "block", fontSize: "0.85rem", opacity: 0.7, marginTop: "2px" }}>
+                        ({formatCartMoney(localTotal, currency === "USD" ? "VES" : "USD")})
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {isShiftLoading ? (
@@ -1782,9 +1878,11 @@ export function CartModal({
                   <div className="cash-closed-banner">
                     <AlertCircle size={16} />
                     <span>
-                      {selectedBranch
-                        ? `Esta sucursal no está recibiendo pedidos. Abre la caja en ${selectedBranch.name} para habilitar compras.`
-                        : `Caja cerrada.${businessInfo?.schedule ? ` Horario: ${businessInfo.schedule}` : ""}`}
+                      {isOrderIntakePaused
+                        ? (selectedBranchForCheckout?.order_intake_pause_message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.")
+                        : selectedBranch
+                          ? `Esta sucursal no está recibiendo pedidos. Abre la caja en ${selectedBranch.name} para habilitar compras.`
+                          : `Caja cerrada.${businessInfo?.schedule ? ` Horario: ${businessInfo.schedule}` : ""}`}
                     </span>
                   </div>
                 ) : (
@@ -2151,7 +2249,7 @@ export function CartModal({
                           : isDeliveryOutOfZone
                             ? t("delivery.locationOutsideArea")
                             : !meetsMinDelivery
-                              ? t("delivery.minAmountForDelivery", { amount: formatCartMoney(minOrder) })
+                              ? t("delivery.minAmountForDelivery", { amount: formatCartMoney(minOrder, currency) })
                               : deliveryQuoteLoading &&
                                   (deliveryPriceMode === "distance" ||
                                     deliveryPriceMode === "external") &&

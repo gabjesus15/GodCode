@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { revalidateMenuCache } from "@/app/actions/revalidate";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -227,6 +228,7 @@ function BranchView({ branch, onEdit }: { branch: Branch, onEdit: () => void }) 
         } else {
             await logAdminAction({ action: "delete_branch", targetType: "branch", targetId: branch.id, companyId: branch.company_id, metadata: { details: `Branch ${branch.name} deleted by ${auth.email}` } });
             setIsDeleting(false);
+            await revalidateMenuCache(branch.company_id);
             router.refresh();
         }
         setIsLoading(false);
@@ -450,6 +452,7 @@ function BranchEditForm({ branch, onCancel }: { branch: Branch, onCancel: () => 
         } else {
             await logAdminAction({ action: "update_branch", targetType: "branch", targetId: branch.id, companyId: branch.company_id, metadata: { details: `Branch ${branch.name} updated by ${auth.email}` } });
             onCancel();
+            await revalidateMenuCache(branch.company_id);
             router.refresh();
         }
     };

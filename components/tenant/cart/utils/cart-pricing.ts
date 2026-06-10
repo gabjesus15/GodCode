@@ -1,3 +1,5 @@
+import currency from "currency.js";
+
 /** Fila típica de `product_prices` + join `products` desde Supabase. */
 export type BranchProductPriceRow = {
   product_id: string;
@@ -72,4 +74,67 @@ export function mergeCartWithBranchPrices<
   }, []);
 
   return merged.filter((item) => item.is_active !== false);
+}
+
+export interface CartTotalsResult {
+  subtotal: number;
+  discountTotal: number;
+  deliveryFee: number;
+  taxTotal: number;
+  total: number;
+  localTotal: number | null;
+}
+
+/**
+ * Realiza los cálculos monetarios precisos del carrito usando currency.js.
+ * Soporta IVA incluido/excluido y conversión dual de divisas.
+ */
+export function calculateCartTotals(params: {
+  subtotal: number;
+  discountAmount: number;
+  deliveryFee: number;
+  taxRate?: number | null;
+  taxIncluded?: boolean | null;
+  exchangeRate?: number | null;
+}) {
+  const sub = currency(params.subtotal);
+  const disc = currency(params.discountAmount);
+  const devFee = currency(params.deliveryFee);
+  const taxRatePercent = params.taxRate ? params.taxRate : 0;
+  const taxIncluded = params.taxIncluded ?? false;
+  const exchangeRate = params.exchangeRate ? params.exchangeRate : 0;
+
+  // Subtotal neto después del descuento
+  const subAfterDiscount = currency(Math.max(0, sub.subtract(disc).value));
+
+  let taxTotal = currency(0);
+  let baseTotal = currency(0);
+
+  if (taxRatePercent > 0) {
+    if (taxIncluded) {
+      // IVA Incluido: tax_total = subtotal_after_discount - (subtotal_after_discount / (1 + tax_rate / 100))
+      const divisor = currency(1).add(currency(taxRatePercent).divide(100));
+      const net = subAfterDiscount.divide(divisor);
+      taxTotal = subAfterDiscount.subtract(net);
+      baseTotal = subAfterDiscount.add(devFee);
+    } else {
+      // IVA Excluido: tax_total = subtotal_after_discount * (tax_rate / 100)
+      taxTotal = subAfterDiscount.multiply(currency(taxRatePercent).divide(100));
+      baseTotal = subAfterDiscount.add(taxTotal).add(devFee);
+    }
+  } else {
+    baseTotal = subAfterDiscount.add(devFee);
+  }
+
+  const total = Math.max(0, baseTotal.value);
+  const localTotalVal = exchangeRate > 0 ? currency(total).multiply(exchangeRate).value : null;
+
+  return {
+    subtotal: sub.value,
+    discountTotal: disc.value,
+    deliveryFee: devFee.value,
+    taxTotal: taxTotal.value,
+    total: total,
+    localTotal: localTotalVal,
+  };
 }

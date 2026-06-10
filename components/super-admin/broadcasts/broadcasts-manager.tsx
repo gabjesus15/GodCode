@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Megaphone, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -65,12 +66,29 @@ const toDatetimeLocal = (iso: string | null) => {
 
 export default function BroadcastsManager() {
   const { readOnly } = useAdminRole();
-  const [items, setItems] = useState<BroadcastItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const { data: broadcastsData, isLoading: loading, error: queryError } = useQuery<BroadcastItem[]>({
+    queryKey: ["super-admin", "broadcasts"],
+    queryFn: async () => {
+      const res = await fetch("/api/super-admin/broadcasts");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudieron cargar los comunicados");
+      return data.broadcasts ?? [];
+    },
+  });
+
+  useEffect(() => {
+    if (queryError) {
+      setMessage({ type: "error", text: queryError instanceof Error ? queryError.message : "No se pudieron cargar los comunicados" });
+    }
+  }, [queryError]);
+
+  const items = broadcastsData ?? [];
 
   const sortedItems = useMemo(
     () =>
@@ -81,24 +99,6 @@ export default function BroadcastsManager() {
       }),
     [items]
   );
-
-  const loadItems = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/super-admin/broadcasts", { cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "No se pudieron cargar los comunicados");
-      setItems(data.broadcasts ?? []);
-    } catch (err) {
-      setMessage({ type: "error", text: err instanceof Error ? err.message : "No se pudieron cargar los comunicados" });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadItems();
-  }, [loadItems]);
 
   const setField = <K extends keyof typeof emptyForm>(key: K, value: (typeof emptyForm)[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -161,7 +161,7 @@ export default function BroadcastsManager() {
 
       setMessage({ type: "success", text: editingId ? "Comunicado actualizado" : "Comunicado creado" });
       resetForm();
-      await loadItems();
+      await queryClient.invalidateQueries({ queryKey: ["super-admin", "broadcasts"] });
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "No se pudo guardar el comunicado" });
     } finally {
@@ -202,7 +202,7 @@ export default function BroadcastsManager() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo eliminar el comunicado");
       setMessage({ type: "success", text: "Comunicado eliminado" });
-      await loadItems();
+      await queryClient.invalidateQueries({ queryKey: ["super-admin", "broadcasts"] });
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "No se pudo eliminar el comunicado" });
     } finally {

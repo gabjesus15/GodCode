@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { revalidateMenuCache } from "@/app/actions/revalidate";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -196,19 +197,26 @@ function UserManagement({ companyId }: { companyId: string }) {
     setLoading(true);
     setError(null);
     try {
-      const supabase = createSupabaseBrowserClient("super-admin");
-      const { data, error } = await supabase
-        .from("users")
-        .select("id,email,role,branch_id,branch:branches(name)")
-        .eq("company_id", companyId);
-      if (error) throw error;
-      const mappedUsers = ((data as Array<Record<string, unknown>>) || []).map((row) => ({
-        id: String(row.id),
-        email: String(row.email),
-        role: String(row.role),
-        branch_id: (row.branch_id as string | null) ?? null,
-        branch_name: ((row.branch as { name?: string | null } | null)?.name ?? null),
-      }));
+      const res = await fetch(`/api/auth/super-admin-user?companyId=${companyId}`, { cache: "no-store" });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || "Error al cargar usuarios");
+      
+      const mappedUsers = (data.users || []).map(
+        (row: {
+          id: string | number;
+          email: string;
+          role: string;
+          branch_id?: string | null;
+          branch?: { name?: string | null } | null;
+        }) => ({
+          id: String(row.id),
+          email: String(row.email),
+          role: String(row.role),
+          branch_id: row.branch_id ?? null,
+          branch_name: row.branch?.name ?? null,
+        })
+      );
       setUsers(mappedUsers);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar usuarios");
@@ -784,6 +792,9 @@ export function CompanyGlobalForm({
           status_changed: initialStatus !== companyForm.subscription_status,
         },
       });
+
+      // Purge Next.js cache for this tenant
+      await revalidateMenuCache(company.id);
 
       router.refresh();
     } catch (err) {

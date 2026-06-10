@@ -8,21 +8,11 @@ interface TenantShellProps {
 
 export function TenantShell({ children }: TenantShellProps) {
   const pathname = usePathname();
-  const [scrollY, setScrollY] = useState(0);
   const bgLayerRef = useRef<HTMLDivElement | null>(null);
   const normalizedPath = String(pathname || "").toLowerCase();
   const hideMenuPatternLayer = normalizedPath.endsWith("/login") || normalizedPath.endsWith("/admin");
 
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
-  useEffect(() => {
-    if (!bgLayerRef.current) return;
-    bgLayerRef.current.style.transform = `translateY(${-scrollY * 0.1}px)`;
-  }, [scrollY]);
 
   useEffect(() => {
     const handleVisualLock = () => {

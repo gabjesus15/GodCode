@@ -132,14 +132,7 @@ function resolveLocaleFromThemeConfig(themeConfig: unknown): AppLocale | null {
   return null;
 }
 
-export async function resolveTenantPreferredLocale(hostHeader: string | null): Promise<AppLocale | null> {
-  if (!hostHeader) return null;
-  if (isMainDomain(hostHeader)) return null;
-
-  const subdomain = getSubdomainFromHost(hostHeader);
-  const slug = subdomain ?? (await resolveTenantSlugFromCustomDomainHost(hostHeader));
-  if (!slug) return null;
-
+async function resolveLocaleBySlug(slug: string): Promise<AppLocale | null> {
   const supabase = createSupabasePublicServerClient();
   const { data: company } = await supabase
     .from("companies")
@@ -153,4 +146,34 @@ export async function resolveTenantPreferredLocale(hostHeader: string | null): P
   if (localeFromBusiness) return localeFromBusiness;
 
   return resolveLocaleFromCountry(company.country);
+}
+
+export async function resolveTenantPreferredLocale(
+  headersOrHost: Headers | string | null
+): Promise<AppLocale | null> {
+  if (!headersOrHost) return null;
+
+  let hostHeader: string | null = null;
+  let tenantSlugHeader: string | null = null;
+
+  if (typeof headersOrHost === "string") {
+    hostHeader = headersOrHost;
+  } else if (typeof headersOrHost.get === "function") {
+    hostHeader = headersOrHost.get("host");
+    tenantSlugHeader = headersOrHost.get("x-tenant-slug");
+  }
+
+  if (tenantSlugHeader) {
+    const locale = await resolveLocaleBySlug(tenantSlugHeader);
+    if (locale) return locale;
+  }
+
+  if (!hostHeader) return null;
+  if (isMainDomain(hostHeader)) return null;
+
+  const subdomain = getSubdomainFromHost(hostHeader);
+  const slug = subdomain ?? (await resolveTenantSlugFromCustomDomainHost(hostHeader));
+  if (!slug) return null;
+
+  return resolveLocaleBySlug(slug);
 }

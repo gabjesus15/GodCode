@@ -812,60 +812,118 @@
 
 .bank-info {
     background: #1e1e1e;
-    padding: 15px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 18px 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
     margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .bank-info h4 {
-    color: var(--accent-secondary);
-    margin: 0 0 15px 0;
+    color: var(--accent-secondary, var(--accent-primary, #fff));
+    margin: 0 0 10px 0;
     text-align: center;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    letter-spacing: 1.5px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    opacity: 0.9;
 }
 
 .bank-details-list {
     list-style: none;
     padding: 0;
-    margin: 10px 0;
+    margin: 0;
 }
 
 .copy-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     cursor: pointer;
+    transition: background-color 0.2s ease;
 }
 .copy-row:last-child { border-bottom: none; }
-.copy-row:hover { background: rgba(255,255,255,0.05); }
+.copy-row:hover { background: rgba(255,255,255,0.02); }
 
-.copy-row span { color: #aaa; font-size: 0.9rem; }
-.copy-row b { color: white; font-family: monospace; }
-
-.copy-row-value {
+.copy-row-info {
     display: flex;
-    align-items: center;
-    gap: 6px;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+    margin-right: 12px;
 }
 
-.copy-badge {
-    font-size: 0.7rem;
-    color: #25d366;
-    background: rgba(37, 211, 102, 0.1);
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-left: 10px;
-    opacity: 0;
-    transition: opacity 0.2s;
+.copy-row-label {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.8rem;
+    font-weight: 500;
 }
-.copy-badge.show { opacity: 1; }
+
+.copy-row-value-text {
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    word-break: break-all;
+}
+
+.copy-row-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--accent-primary, #fff);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.2s ease, opacity 0.2s ease;
+    opacity: 0.8;
+}
+
+.copy-row-btn:hover {
+    opacity: 1;
+}
+
+.copy-row-btn.copied {
+    color: #25d366 !important;
+    text-decoration: none;
+    opacity: 1;
+}
+
+.copy-all-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.copy-all-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #fff;
+    padding: 8px 24px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-all-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.copy-all-btn:active {
+    transform: scale(0.98);
+}
 
 .store-pay-info {
     text-align: center;

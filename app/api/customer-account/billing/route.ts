@@ -185,7 +185,7 @@ export async function GET() {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  if (!checkRateLimit(`billing_get:${ctx.companyId}`, 30, 60000)) {
+  if (!(await checkRateLimit(`billing_get:${ctx.companyId}`, 30, 60000))) {
     logger.warn("Rate limit hit in billing GET", { companyId: ctx.companyId });
     return NextResponse.json({ error: "Demasiadas peticiones" }, { status: 429 });
   }
@@ -227,7 +227,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  if (!checkRateLimit(`billing_post:${ctx.companyId}`, 10, 60000)) {
+  if (!(await checkRateLimit(`billing_post:${ctx.companyId}`, 10, 60000))) {
     logger.warn("Rate limit hit in billing POST", { companyId: ctx.companyId });
     return NextResponse.json({ error: "Demasiadas peticiones. Intenta en un minuto." }, { status: 429 });
   }

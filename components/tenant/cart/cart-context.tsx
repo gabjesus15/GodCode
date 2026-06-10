@@ -72,6 +72,8 @@ interface CartContextType {
   grandTotal: number;
   deliveryFee: number;
   totalItems: number;
+  taxTotal?: number;
+  localTotal?: number | null;
   getPrice: (product: CartProduct) => number;
   orderNote: string;
   setOrderNote: (note: string) => void;
@@ -130,6 +132,9 @@ interface CartContextType {
   appliedCouponDiscount: number;
   setAppliedCoupon: (code: string, discountAmount: number) => void;
   clearAppliedCoupon: () => void;
+  currency: string;
+  country: string;
+  exchangeRate?: number | null;
 }
 
 const CartContext = createContext<CartContextType | null>(null);

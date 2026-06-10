@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { applyScheduledPlanChangesDue, suspendExpiredSubscriptions } from "../../../../lib/onboarding/billing-activation";
-import { processDueBookingReminders } from "../../../../lib/onboarding/booking-notifications";
+import { applyScheduledPlanChangesDue, suspendExpiredSubscriptions } from "@/lib/onboarding/billing-activation";
+import { processDueBookingReminders } from "@/lib/onboarding/booking-notifications";
 
 export async function GET(req: NextRequest) {
 	const secret = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";

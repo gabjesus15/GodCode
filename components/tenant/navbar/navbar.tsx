@@ -22,7 +22,7 @@ export function Navbar({ categories, activeCategory, onCategoryClick }: NavbarPr
         `.tab-item[data-id="${activeCategory}"]`
       ) as HTMLElement | null;
       if (activeElement) {
-        activeElement.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        activeElement.scrollIntoView({ behavior: "auto", block: "nearest", inline: "center" });
       }
     }
   }, [activeCategory]);

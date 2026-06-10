@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, FileText, LifeBuoy, Store, CalendarClock, ArrowRight } from "lucide-react";
+import { CreditCard, FileText, LifeBuoy, Store, CalendarClock, ArrowRight, ExternalLink } from "lucide-react";
 import type {
   AccountActivityItem,
   BranchSummary,
@@ -18,6 +18,8 @@ import { PageHeader } from "../../ui/PageHeader";
 import { SegmentedControl } from "../../ui/SegmentedControl";
 import { StatCard } from "../../ui/StatCard";
 import { EmptyState } from "../../ui/EmptyState";
+import { Button } from "../../ui/Button";
+import { getTenantMenuUrl } from "@/utils/tenant-url";
 
 export type AccountAlert = {
   id: string;
@@ -86,6 +88,9 @@ export function AccountResumenTab({
   setActivityFilter,
   onNavigate,
 }: AccountResumenTabProps) {
+  const menuUrl = company.publicSlug ? getTenantMenuUrl(company.publicSlug, company.customDomain) : "";
+  const checkoutUrl = "https://godcode-panel-v2-0.vercel.app/";
+
   return (
     <div className="space-y-5 sm:space-y-6">
       {/* ── Header ── */}
@@ -169,7 +174,7 @@ export function AccountResumenTab({
             </div>
           </Card>
 
-          {/* Quick actions */}
+          {/* Quick actions & External Links */}
           <Card compact noPadding>
             <p className="px-4 pt-4 text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Accesos rapidos</p>
             <nav className="mt-2 divide-y divide-[#f5f5f7]">
@@ -191,6 +196,42 @@ export function AccountResumenTab({
                 </button>
               ))}
             </nav>
+
+            <div className="border-t border-[#e5e5ea] mt-2 pt-3 pb-1">
+              <p className="px-4 text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Enlaces externos</p>
+              <nav className="mt-2 divide-y divide-[#f5f5f7]">
+                {menuUrl && (
+                  <button
+                    type="button"
+                    onClick={() => window.open(menuUrl, "_blank", "noopener,noreferrer")}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-[#f5f5f7]"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50">
+                      <Store className="h-4 w-4 text-emerald-600" aria-hidden />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-[#1d1d1f]">Ir a menú</p>
+                      <p className="text-xs text-[#a1a1a6]">Ver tu carta digital en vivo</p>
+                    </div>
+                    <ExternalLink className="h-4 w-4 shrink-0 text-[#d2d2d7]" aria-hidden />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => window.open(checkoutUrl, "_blank", "noopener,noreferrer")}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-[#f5f5f7]"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-50">
+                    <CreditCard className="h-4 w-4 text-sky-600" aria-hidden />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-[#1d1d1f]">Ir a caja</p>
+                    <p className="text-xs text-[#a1a1a6]">Punto de venta y facturación</p>
+                  </div>
+                  <ExternalLink className="h-4 w-4 shrink-0 text-[#d2d2d7]" aria-hidden />
+                </button>
+              </nav>
+            </div>
           </Card>
         </div>
 

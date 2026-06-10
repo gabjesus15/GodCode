@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 		return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 	}
 
-	if (!checkRateLimit(`cancel_post:${ctx.companyId}`, 10, 60000)) {
+	if (!(await checkRateLimit(`cancel_post:${ctx.companyId}`, 10, 60000))) {
 		return NextResponse.json({ error: "Demasiadas peticiones. Intenta en un minuto." }, { status: 429 });
 	}
 

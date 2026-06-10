@@ -49,7 +49,7 @@ const nextConfig: NextConfig = {
   async headers() {
     // Detectar si estamos en un dominio de preview de Vercel para añadir noindex.
     // En producción (godcode.me) este bloque no aplica el header.
-    const isVercelPreview = process.env.VERCEL_URL?.includes(".vercel.app") ?? false;
+    const isVercelPreview = process.env.VERCEL_ENV === "preview";
     const previewNoindexHeaders = isVercelPreview
       ? [
           {

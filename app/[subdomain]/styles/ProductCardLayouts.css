@@ -1,0 +1,1506 @@
+/* =========================================================================
+ * Product card layouts (clean, detailed, horizontal, sidebar, rappi, sneaker, skew)
+ * Glass/Cristal lives in ProductCard.css
+ * ========================================================================= */
+
+@keyframes layout-shimmer {
+  0%   { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+
+/* -------------------------------------------------------------------------
+ * SHARED PRIMITIVES
+ * ------------------------------------------------------------------------- */
+
+/* GPU layer for all layout cards — prevents scroll-jank caused by the
+   animated background. Creates an independent compositing layer. */
+[class*="product-layout-"] {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.product-card-media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.product-card-media__skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.09) 45%,
+    rgba(255, 255, 255, 0.03) 90%
+  );
+  background-size: 220% 100%;
+  animation: layout-shimmer 1.4s ease-in-out infinite;
+}
+.product-card-media__img {
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.5s ease;
+  will-change: opacity, transform;
+}
+.product-card-media__img.is-loaded {
+  opacity: 1;
+}
+
+/* Image zoom on hover — applied globally to all layouts */
+[class*="product-layout-"] .detailed-image-container,
+[class*="product-layout-"] .horizontal-image-container,
+[class*="product-layout-"] .sidebar-image-container,
+[class*="product-layout-"] .rappi-image-container,
+[class*="product-layout-"] .card__img,
+[class*="product-layout-"] .imgBox,
+[class*="product-layout-"] .sneaker-img-wrapper {
+  overflow: hidden;
+}
+
+[class*="product-layout-"]:hover .product-card-media__img.is-loaded {
+  transform: scale(1.05);
+}
+.product-layout-clean.card:hover .clean-img {
+  transform: scale(1.06);
+}
+
+/* --- Quantity badges --- */
+.clean-qty-badge,
+.horizontal-qty-badge,
+.sidebar-qty-badge,
+.rappi-qty-badge,
+.sneaker-qty-badge,
+.skew-qty-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 12;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #fff;
+  background: var(--tenant-primary, #ef4444);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Offer badges --- */
+.layout-badge-hot,
+.layout-badge-special,
+.detailed-badge-hot,
+.horizontal-badge,
+.rappi-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 11;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.layout-badge-hot,
+.detailed-badge-hot,
+.horizontal-badge.layout-badge-hot,
+.rappi-badge.layout-badge-hot {
+  background: var(--tenant-primary, #ef4444);
+}
+.layout-badge-special,
+.detailed-badge-hot.layout-badge-special,
+.horizontal-badge.layout-badge-special,
+.rappi-badge.layout-badge-special {
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+}
+
+/* --- Price blocks --- */
+.layout-price-block,
+.card__price-wrap,
+.detailed-prices,
+.horizontal-price-block,
+.sidebar-price-block,
+.rappi-price-block,
+.sneaker-price-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.layout-price-original,
+.card__preci--old,
+.detailed-old-price,
+.sneaker-price-old {
+  font-size: 0.72rem;
+  opacity: 0.5;
+  text-decoration: line-through;
+  line-height: 1.1;
+}
+.layout-price--sale,
+.card__preci--now.layout-price--sale,
+.detailed-new-price.layout-price--sale,
+.horizontal-price.layout-price--sale,
+.sidebar-price.layout-price--sale,
+.rappi-price.layout-price--sale,
+.sneaker-price-label.layout-price--sale {
+  color: var(--discount-color, #25d366);
+}
+
+/* --- Shared stepper --- */
+.card__stepper,
+.detailed-stepper,
+.horizontal-stepper,
+.rappi-stepper,
+.sneaker-stepper,
+.skew-stepper,
+.sidebar-stepper-col {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.card__stepper button,
+.detailed-stepper button,
+.horizontal-stepper button,
+.rappi-stepper button,
+.sneaker-stepper button,
+.skew-stepper button,
+.sidebar-stepper-col button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+  padding: 4px;
+  border-radius: 50%;
+  min-width: 32px;
+  min-height: 32px;
+  touch-action: manipulation;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.card__stepper button:active,
+.detailed-stepper button:active,
+.horizontal-stepper button:active,
+.rappi-stepper button:active,
+.sneaker-stepper button:active,
+.skew-stepper button:active,
+.sidebar-stepper-col button:active {
+  transform: scale(0.92);
+}
+.card__stepper span,
+.detailed-stepper span,
+.horizontal-stepper span,
+.rappi-stepper span,
+.sneaker-stepper span,
+.skew-stepper span,
+.sidebar-stepper-col span {
+  font-weight: 800;
+  min-width: 1.4rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------------------
+ * LAYOUT 1: CLEAN (vertical tab + cover image)
+ * ------------------------------------------------------------------------- */
+.product-layout-clean.card {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 0.72;
+  min-height: 240px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0f0f12;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+/* dark gradient at bottom for legibility */
+.product-layout-clean.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 40%, rgba(0, 0, 0, 0.6) 100%);
+  z-index: 2;
+}
+.product-layout-clean.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+}
+.product-layout-clean .card__img {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.product-layout-clean .clean-img {
+  transition: transform 0.55s ease;
+}
+/* --- Name tag --- */
+.product-layout-clean .card__name {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2.5rem;
+  padding: 14px 4px;
+  background: #f4f4f5;
+  color: #18181b;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.12);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.product-layout-clean.card:hover .card__name {
+  transform: translateX(2px);
+}
+.product-layout-clean .card__name p {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: center;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 100%;
+}
+/* --- Price bar --- */
+.product-layout-clean .card__precis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 14px 14px 16px;
+  margin-left: 2.5rem;
+}
+.product-layout-clean .card__preci--now {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.product-layout-clean .card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 50%;
+  background: #fff;
+  color: #18181b;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.product-layout-clean .card__icon:hover {
+  transform: scale(1.05);
+  background: var(--tenant-primary, #18181b);
+  color: #fff;
+  border-color: transparent;
+}
+.product-layout-clean .layout-badge-hot,
+.product-layout-clean .layout-badge-special {
+  left: auto;
+  right: 10px;
+  top: 10px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  background: #18181b;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.product-layout-clean .layout-badge-hot {
+  background: var(--tenant-primary, #ef4444);
+}
+.product-layout-clean .layout-badge-special {
+  background: #f59e0b;
+}
+.product-layout-clean .card__stepper {
+  background: rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border-radius: 999px;
+  padding: 2px 6px;
+  color: #fff;
+}
+.product-layout-clean .card__stepper button {
+  background: rgba(255, 255, 255, 0.15);
+}
+.product-layout-clean .card__stepper button:last-child {
+  background: var(--tenant-primary, #ef4444);
+  color: #fff;
+}
+
+/* -------------------------------------------------------------------------
+ * LAYOUT 2: DETAILED (tech card — square image + info panel)
+ * ------------------------------------------------------------------------- */
+.product-layout-detailed {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #0d0d0f;
+  color: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+/* colored accent bar top */
+.product-layout-detailed::before {
+  content: "";
+  display: block;
+  height: 3px;
+  flex-shrink: 0;
+  background: var(--tenant-primary, #6366f1);
+}
+.product-layout-detailed:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
+}
+.product-layout-detailed .detailed-image-container {
+  position: relative;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  background: #141416;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.product-layout-detailed .detailed-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 6px;
+  padding: 14px 16px 16px;
+}
+.product-layout-detailed .detailed-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #fff;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-layout-detailed .detailed-desc {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #9ca3af;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+.product-layout-detailed .detailed-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.product-layout-detailed .detailed-new-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+.product-layout-detailed .detailed-new-price.layout-price--sale {
+  color: #10b981;
+}
+.product-layout-detailed .detailed-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  min-height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.product-layout-detailed .detailed-add-btn:hover {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+  transform: translateY(-1px);
+}
+.product-layout-detailed .detailed-add-btn:active {
+  transform: scale(0.97);
+}
+.product-layout-detailed .detailed-stepper {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-radius: 8px;
+  padding: 4px 6px;
+  flex-shrink: 0;
+}
+.product-layout-detailed .detailed-stepper button {
+  background: rgba(255, 255, 255, 0.1);
+  min-width: 28px;
+  min-height: 28px;
+}
+.product-layout-detailed .detailed-stepper button:last-child {
+  background: var(--tenant-primary, #6366f1);
+  color: #fff;
+}
+
+/* -------------------------------------------------------------------------
+ * LAYOUT 3: HORIZONTAL (delivery row card)
+ * ------------------------------------------------------------------------- */
+.product-layout-horizontal {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  min-height: 140px;
+  background: rgba(8, 8, 8, 0.65);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+}
+/* accent stripe */
+.product-layout-horizontal::before {
+  content: "";
+  width: 3px;
+  flex-shrink: 0;
+  background: var(--tenant-primary, #ef4444);
+}
+.product-layout-horizontal:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.38);
+}
+.product-layout-horizontal .horizontal-image-container {
+  position: relative;
+  width: 38%;
+  max-width: 160px;
+  min-width: 110px;
+  flex-shrink: 0;
+  align-self: stretch;
+  background: #1a1a1e;
+}
+.product-layout-horizontal .horizontal-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  padding: 14px 14px 14px 12px;
+  gap: 5px;
+}
+.product-layout-horizontal .horizontal-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #fff;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-layout-horizontal .horizontal-price {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--tenant-primary, #fbbf24);
+}
+.product-layout-horizontal .horizontal-desc {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.55);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-layout-horizontal .horizontal-actions {
+  margin-top: auto;
+  padding-top: 4px;
+  display: flex;
+  justify-content: flex-end;
+}
+.product-layout-horizontal .horizontal-add-btn {
+  padding: 8px 16px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: var(--tenant-primary, #ef4444);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+.product-layout-horizontal .horizontal-add-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+.product-layout-horizontal .horizontal-add-btn:active {
+  transform: scale(0.96);
+}
+.product-layout-horizontal .horizontal-stepper {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.product-layout-horizontal .horizontal-stepper button {
+  min-width: 34px;
+  min-height: 34px;
+}
+.product-layout-horizontal .horizontal-stepper button:first-child {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+}
+.product-layout-horizontal .horizontal-stepper button:first-child:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.product-layout-horizontal .horizontal-stepper span {
+  font-size: 0.95rem;
+  font-weight: 800;
+  min-width: 1.6rem;
+}
+.product-layout-horizontal .horizontal-stepper button:last-child {
+  background: var(--tenant-primary, #ef4444);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+.product-layout-horizontal .horizontal-stepper button:last-child:hover {
+  filter: brightness(1.15);
+}
+
+/* -------------------------------------------------------------------------
+ * LAYOUT 4: SIDEBAR (fashion — slide-in action panel on hover)
+ * ------------------------------------------------------------------------- */
+.product-layout-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #0d0d0f;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: box-shadow 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+.product-layout-sidebar:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+.product-layout-sidebar .sidebar-image-container {
+  position: relative;
+  aspect-ratio: 0.82;
+  overflow: hidden;
+  background: #141416;
+  flex-shrink: 0;
+}
+.product-layout-sidebar .sidebar-actions-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 6px;
+  background: rgba(10, 10, 12, 0.65);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+}
+.product-layout-sidebar.group:hover .sidebar-actions-panel,
+.product-layout-sidebar:focus-within .sidebar-actions-panel {
+  transform: translateX(0);
+  opacity: 1;
+}
+.product-layout-sidebar .sidebar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.product-layout-sidebar .sidebar-btn:hover {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+  transform: scale(1.05);
+}
+.product-layout-sidebar .sidebar-stepper-col {
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 4px 2px;
+  border: 1px solid var(--tenant-primary, rgba(255, 255, 255, 0.12));
+}
+.product-layout-sidebar .sidebar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  flex: 1;
+}
+.product-layout-sidebar .sidebar-title {
+  margin: 0 0 2px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-layout-sidebar .sidebar-desc {
+  margin: 0;
+  font-size: 0.73rem;
+  color: #9ca3af;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-layout-sidebar .sidebar-price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.product-layout-sidebar .tooltip-parent {
+  position: relative;
+}
+.product-layout-sidebar .tooltip {
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #fff;
+  color: #111;
+  font-size: 0.64rem;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(-50%) scale(0.9);
+}
+.product-layout-sidebar .tooltip-parent:hover .tooltip {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}
+
+/* -------------------------------------------------------------------------
+ * LAYOUT 5: RAPPI (delivery compact — white card)
+ * ------------------------------------------------------------------------- */
+.product-layout-rappi {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: rgba(8, 8, 8, 0.65);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 6px 20px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.product-layout-rappi:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 1) inset,
+    0 12px 30px rgba(0, 0, 0, 0.14);
+}
+.product-layout-rappi .rappi-image-container {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  margin: 8px 8px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+.product-layout-rappi .rappi-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px 12px;
+  flex: 1;
+}
+.product-layout-rappi .rappi-text-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.product-layout-rappi .rappi-title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-layout-rappi .rappi-desc {
+  margin: 0;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-layout-rappi .rappi-price {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fff;
+  margin-top: 2px;
+}
+.product-layout-rappi .rappi-actions {
+  flex-shrink: 0;
+  align-self: center;
+}
+.product-layout-rappi .rappi-add-btn {
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: var(--tenant-primary, #00c853);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+.product-layout-rappi .rappi-add-btn:hover {
+  transform: scale(1.08);
+  filter: brightness(1.08);
+}
+.product-layout-rappi .rappi-add-btn:active {
+  transform: scale(0.93);
+}
+.product-layout-rappi .rappi-stepper {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 2px 4px;
+  color: #fff;
+}
+.product-layout-rappi .rappi-stepper button {
+  background: rgba(255, 255, 255, 0.15);
+  min-width: 28px;
+  min-height: 28px;
+}
+.product-layout-rappi .rappi-stepper button:last-child {
+  background: var(--tenant-primary, #00c853);
+  color: #fff;
+}
+
+/* -------------------------------------------------------------------------
+ * LAYOUT 6: SNEAKER (hero + monogram)
+ * ------------------------------------------------------------------------- */
+.product-layout-sneaker {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 300px;
+  background: #0d0d0f;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.product-layout-sneaker:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+}
+.product-layout-sneaker .sneaker-head {
+  position: relative;
+  flex: 1;
+  min-height: 180px;
+  padding: 20px 16px 8px;
+  overflow: hidden;
+}
+.product-layout-sneaker .sneaker-back-text {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(3.5rem, 16vw, 6.5rem);
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  color: rgba(255, 255, 255, 0.025);
+  pointer-events: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  line-height: 1;
+  white-space: nowrap;
+}
+.product-layout-sneaker .sneaker-img-wrapper {
+  position: relative;
+  width: 100%;
+  height: 165px;
+  z-index: 2;
+}
+.product-layout-sneaker .sneaker-img-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140px;
+  height: 140px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+.product-layout-sneaker .sneaker-detail {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  margin-top: 8px;
+  padding: 0 10px;
+}
+.product-layout-sneaker .sneaker-detail h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-layout-sneaker .sneaker-detail p {
+  margin: 3px 0 0;
+  font-size: 0.72rem;
+  color: #9ca3af;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-layout-sneaker .sneaker-body {
+  padding: 12px 14px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(0, 0, 0, 0.15);
+}
+.product-layout-sneaker .sneaker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.product-layout-sneaker .sneaker-price-label {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.product-layout-sneaker .sneaker-price-old {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: line-through;
+}
+.product-layout-sneaker .sneaker-add-btn {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+.product-layout-sneaker .sneaker-add-btn:hover {
+  transform: translateY(-1px);
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+.product-layout-sneaker .sneaker-add-btn:active {
+  transform: scale(0.95);
+}
+.product-layout-sneaker .sneaker-stepper {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-radius: 8px;
+  padding: 4px 6px;
+}
+.product-layout-sneaker .sneaker-stepper button {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  min-width: 28px;
+  min-height: 28px;
+}
+.product-layout-sneaker .sneaker-stepper button:last-child {
+  background: var(--tenant-primary, #ef4444);
+  color: #fff;
+}
+
+/* -------------------------------------------------------------------------
+ * LAYOUT 7: SKEW (gaming — diagonal accents)
+ * ------------------------------------------------------------------------- */
+.product-layout-skew.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 280px;
+  padding: 16px 14px 14px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #09090b;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.product-layout-skew.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--tenant-primary, rgba(255, 255, 255, 0.15));
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.6);
+}
+.product-layout-skew .skew-bg-text {
+  position: absolute;
+  top: 10px;
+  right: -6px;
+  font-size: clamp(2.2rem, 11vw, 4rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.025);
+  letter-spacing: -0.04em;
+  pointer-events: none;
+  line-height: 1;
+  z-index: 0;
+}
+.product-layout-skew .imgBox {
+  position: relative;
+  flex: 1;
+  min-height: 150px;
+  margin: 4px 0 10px;
+  z-index: 1;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.product-layout-skew .imgBox::before {
+  content: "";
+  position: absolute;
+  inset: 12% 8%;
+  background: rgba(255, 255, 255, 0.03);
+  transform: skewY(-8deg);
+  border-radius: 10px;
+  opacity: 1;
+  z-index: 0;
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+.product-layout-skew:hover .imgBox::before {
+  transform: skewY(-8deg) scale(1.02);
+  background: rgba(255, 255, 255, 0.04);
+}
+.product-layout-skew .skew-img {
+  z-index: 1;
+}
+.product-layout-skew .contentBox {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.product-layout-skew .skew-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-layout-skew .contentBox .price {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--tenant-primary, #a855f7);
+  letter-spacing: -0.02em;
+}
+.product-layout-skew .buy.skew-btn {
+  align-self: flex-start;
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  background: var(--tenant-primary, #a855f7);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transform: skewX(-8deg);
+  box-shadow: none;
+  transition: all 0.2s ease;
+}
+.product-layout-skew .buy.skew-btn:hover {
+  transform: skewX(-8deg) translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.1);
+}
+.product-layout-skew .buy.skew-btn:active {
+  transform: skewX(-8deg) scale(0.97);
+}
+.product-layout-skew .skew-stepper {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 4px 6px;
+  transform: skewX(-6deg);
+}
+.product-layout-skew .skew-stepper button {
+  background: rgba(255, 255, 255, 0.1);
+}
+.product-layout-skew .skew-stepper button:last-child {
+  background: var(--tenant-primary, #a855f7);
+  color: #fff;
+}
+
+/* =========================================================================
+ * RESPONSIVE ADJUSTMENTS
+ * ========================================================================= */
+@media (max-width: 768px) {
+  .product-layout-clean.card {
+    aspect-ratio: 0.75;
+    min-height: 190px;
+  }
+  .product-layout-clean .card__name {
+    width: 2.75rem;
+    padding: 10px 6px;
+  }
+  .product-layout-clean .card__precis {
+    margin-left: 2.75rem;
+    padding: 10px 10px 10px 12px;
+  }
+  .product-layout-horizontal {
+    min-height: 118px;
+  }
+  .product-layout-horizontal .horizontal-image-container {
+    min-width: 96px;
+    width: 34%;
+  }
+  .product-layout-horizontal .horizontal-info {
+    padding: 10px 12px 10px 10px;
+  }
+  .product-layout-horizontal .horizontal-title {
+    font-size: 0.9rem;
+  }
+  .product-layout-detailed .detailed-price-row {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  .product-layout-sneaker .sneaker-img-wrapper {
+    height: 140px;
+  }
+  .product-layout-sneaker .sneaker-back-text {
+    font-size: 56px;
+  }
+  .product-layout-sidebar .sidebar-actions-panel {
+    transform: translateX(0);
+    opacity: 1;
+    width: 44px;
+  }
+  .product-layout-skew.card {
+    min-height: 240px;
+  }
+}
+
+@media (max-width: 400px) {
+  .product-layout-rappi .rappi-image-container {
+    margin: 6px 6px 0;
+  }
+  .product-layout-rappi .rappi-info {
+    padding: 8px 10px 10px;
+  }
+  .product-layout-detailed .detailed-info {
+    padding: 10px 12px 12px;
+  }
+}
+
+/* Touch devices — always show sidebar panel */
+@media (hover: none) {
+  .product-layout-sidebar .sidebar-actions-panel {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  [class*="product-layout-"] {
+    transition: none !important;
+    will-change: auto;
+  }
+  [class*="product-layout-"]:hover {
+    transform: none !important;
+  }
+  .product-card-media__img {
+    transition: opacity 0.15s ease !important;
+  }
+  [class*="product-layout-"]:hover .product-card-media__img.is-loaded {
+    transform: none !important;
+  }
+}
+
+/* -------------------------------------------------------------------------
+ * LAYOUT 8: FOOD (Food Deluxe — copia 1 a 1 de comida)
+ * ------------------------------------------------------------------------- */
+.product-layout-food {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 8px; /* Small 8px strip around the image */
+  border-radius: 36px;
+  /* Removed overflow: hidden so it NEVER clips the absolute button! */
+  border: none;
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.35));
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+  cursor: pointer;
+  background: transparent;
+}
+.product-layout-food:hover {
+  transform: translateY(-4px);
+  filter: drop-shadow(0 20px 20px rgba(0, 0, 0, 0.5));
+}
+
+.product-layout-food .food-card-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 36px;
+  transition: all 0.3s ease;
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  
+  /* Flawless "Squircle" Dynamic Island Cutout (Single-Path SVG Vector Mask) */
+  /* Gap: 6px. Convex Radius: 22px. Inverse Radius: 8px. Hole: 54x54 */
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cmask id='m'%3E%3Crect width='100%25' height='100%25' fill='white'/%3E%3Csvg x='100%25' y='100%25' overflow='visible'%3E%3Cpath d='M-62 0 L0 0 L0 -62 A8 8 0 0 1 -8 -54 L-32 -54 A22 22 0 0 0 -54 -32 L-54 -8 A8 8 0 0 1 -62 0 Z' fill='black'/%3E%3C/svg%3E%3C/mask%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='white' mask='url(%23m)'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cmask id='m'%3E%3Crect width='100%25' height='100%25' fill='white'/%3E%3Csvg x='100%25' y='100%25' overflow='visible'%3E%3Cpath d='M-62 0 L0 0 L0 -62 A8 8 0 0 1 -8 -54 L-32 -54 A22 22 0 0 0 -54 -32 L-54 -8 A8 8 0 0 1 -62 0 Z' fill='black'/%3E%3C/svg%3E%3C/mask%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='white' mask='url(%23m)'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+/* Elevate everything above the gradient */
+.product-layout-food .food-favorite-btn,
+.product-layout-food .food-qty-badge,
+.product-layout-food .food-image-wrapper,
+.product-layout-food .food-info,
+.product-layout-food .food-action-wrapper {
+  position: relative;
+  z-index: 2;
+}
+
+.product-layout-food .food-favorite-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+.product-layout-food .food-favorite-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+.product-layout-food .food-favorite-btn.active {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.product-layout-food .food-qty-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: #ffffff;
+  color: #000000;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.product-layout-food .food-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  border-radius: 28px 28px 0 0; /* Flat bottom to harmonize with the card's straight sides */
+  overflow: hidden;
+  background: transparent;
+  box-shadow: none;
+  margin-bottom: 8px; /* Reducido para acercar el titulo a la imagen */
+}
+.product-layout-food .food-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.product-layout-food:hover .food-img {
+  transform: scale(1.05);
+}
+
+.product-layout-food .food-info {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-grow: 1; /* Permite que el contenedor llene el espacio vertical */
+  padding: 0px 12px 0px 16px; /* Sin padding arriba ni abajo para alinear con el boton */
+}
+.product-layout-food .food-title {
+  font-size: 20px; /* Tamaño ajustado */
+  font-weight: 500;
+  color: white;
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  
+  /* Fuerza que todos los titulos ocupen exactamente 2 lineas de alto (48px) para igualar todas las cards */
+  height: 48px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-layout-food .food-price-section {
+  display: flex;
+  flex-direction: column;
+  padding-right: 56px;
+  margin-top: auto; /* Empuja el precio al fondo */
+  min-height: 48px; /* Permite crecer si el texto es muy largo, evitando overlaps */
+  justify-content: flex-end; /* Alinea el texto a la base del boton para que quede exactamente como en la foto de 4500 */
+}
+
+.product-layout-food .food-starting-from {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: capitalize;
+  margin-bottom: 2px;
+  display: block;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.product-layout-food .food-price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-layout-food .food-price {
+  font-size: 24px; /* Ajustado proporcionalmente */
+  font-weight: 600;
+  color: white;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+
+/* 
+ * True Transparent Wrapper 
+ */
+.product-layout-food .food-action-wrapper {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 54px; /* perfectly hugs the 48px button with a 6px gap */
+  height: 54px;
+  z-index: 10;
+  background-color: transparent;
+  display: flex;
+  align-items: flex-end; /* Snaps button to bottom right */
+  justify-content: flex-end;
+}
+
+.product-layout-food .food-add-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  border-bottom-right-radius: 24px;
+  background-color: #E2E8F0;
+  color: #1A202C;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.product-layout-food .food-add-btn svg {
+  width: 26px;
+  height: 26px;
+  stroke-width: 2;
+}
+.product-layout-food .food-add-btn:hover {
+  transform: scale(1.05);
+  background: #ffffff;
+}
+.product-layout-food .food-add-btn:active {
+  transform: scale(0.95);
+}
+
+.product-layout-food .food-stepper {
+  display: flex;
+  align-items: center;
+  background: #e6e6e8;
+  color: #000000;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 36px;
+  padding: 0 4px;
+  height: 60px;
+  min-width: 108px;
+}
+.product-layout-food .food-stepper button {
+  background: transparent;
+  border: none;
+  color: #000000;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: background 0.15s;
+}
+.product-layout-food .food-stepper button svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.5;
+}
+.product-layout-food .food-stepper button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+.product-layout-food .food-stepper span {
+  font-weight: 700;
+  font-size: 1.1rem;
+  width: 24px;
+  text-align: center;
+}

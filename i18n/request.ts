@@ -19,7 +19,7 @@ export default getRequestConfig(async () => {
     locale = normalizeLocale(cookieLocale);
   } else {
     const requestHeaders = await headers();
-    const tenantLocale = await resolveTenantPreferredLocale(requestHeaders.get("host"));
+    const tenantLocale = await resolveTenantPreferredLocale(requestHeaders);
     if (tenantLocale) {
       locale = tenantLocale;
     } else {

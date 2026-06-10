@@ -20,12 +20,12 @@ export default defineConfig({
 				command: "npm run build && npm run start",
 				url: webServerReadyURL,
 				timeout: 180_000,
-				reuseExistingServer: false,
+				reuseExistingServer: true,
 			}
 		: {
 				command: "npm run build && npm run start",
 				url: webServerReadyURL,
 				timeout: 180_000,
-				reuseExistingServer: false,
+				reuseExistingServer: true,
 			},
 });

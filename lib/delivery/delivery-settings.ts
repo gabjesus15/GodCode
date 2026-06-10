@@ -74,6 +74,9 @@ export type DeliverySettingsNormalized = {
 	 * `[]` = ningún método pasa el filtro (checkout sin opciones).
 	 */
 	allowedPaymentMethodsForDelivery: string[] | null;
+	exchangeRate?: number | null;
+	taxRate?: number | null;
+	taxIncluded?: boolean | null;
 };
 
 export type DeliverySettingsPublic = DeliverySettingsNormalized;
@@ -97,6 +100,9 @@ const DEFAULTS: DeliverySettingsNormalized = {
 	zones: [],
 	namedAreas: [],
 	allowedPaymentMethodsForDelivery: null,
+	exchangeRate: null,
+	taxRate: null,
+	taxIncluded: null,
 };
 
 function clampNonNeg(n: number, max: number): number {
@@ -431,6 +437,23 @@ export function normalizeDeliverySettings(raw: unknown): DeliverySettingsNormali
 			const p = parseAllowedPaymentMethodsForDelivery(allowedPayRaw);
 			if (p === null) return null;
 			return p;
+		})(),
+		exchangeRate: (() => {
+			const rate = o.exchange_rate ?? o.exchangeRate;
+			if (rate === null || rate === undefined || rate === "") return null;
+			const num = Number(rate);
+			return Number.isFinite(num) && num > 0 ? num : null;
+		})(),
+		taxRate: (() => {
+			const rate = o.tax_rate ?? o.taxRate;
+			if (rate === null || rate === undefined || rate === "") return null;
+			const num = Number(rate);
+			return Number.isFinite(num) && num >= 0 ? num : null;
+		})(),
+		taxIncluded: (() => {
+			const inc = o.tax_included ?? o.taxIncluded;
+			if (inc === null || inc === undefined || inc === "") return null;
+			return inc === true || inc === "true" || inc === 1 || inc === "1";
 		})(),
 	};
 }

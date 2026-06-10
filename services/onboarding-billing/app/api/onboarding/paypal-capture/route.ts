@@ -10,17 +10,17 @@ import {
 	getBookingContactDate,
 	queueBookingReminder,
 	sendPaymentValidatedNotice,
-} from "../../../../lib/onboarding/booking-notifications";
-import { hashPaymentIdentity, normalizeEmail } from "../../../../lib/onboarding/trial-eligibility";
+} from "@/lib/onboarding/booking-notifications";
+import { hashPaymentIdentity, normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 import {
 	activateCompanyAddonsFromApplication,
 	activateCompanySubscription,
-} from "../../../../lib/onboarding/billing-activation";
+} from "@/lib/onboarding/billing-activation";
 import {
 	provisionCompanyFromApplication,
 	recordPayment,
 	type OnboardingApplication,
-} from "../../../../lib/onboarding/checkout-service";
+} from "@/lib/onboarding/checkout-service";
 
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID ?? "";
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET ?? "";

@@ -1,22 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-
+import { revalidateTag } from "next/cache";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-
-function toThemeConfig(input: unknown) {
-  const value = (input ?? {}) as Record<string, unknown>;
-  return {
-    displayName: String(value.displayName ?? ""),
-    primaryColor: String(value.primaryColor ?? "#111827"),
-    secondaryColor: String(value.secondaryColor ?? value.primaryColor ?? "#111827"),
-    priceColor: String(value.priceColor ?? "#ff4757"),
-    discountColor: String(value.discountColor ?? "#25d366"),
-    hoverColor: String(value.hoverColor ?? "#ff2e40"),
-    backgroundColor: String(value.backgroundColor ?? "#0a0a0a"),
-    backgroundImageUrl: String(value.backgroundImageUrl ?? ""),
-    logoUrl: String(value.logoUrl ?? ""),
-  };
-}
+import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 
 export async function POST(req: NextRequest) {
   const ctx = await getCustomerAccountContext();
@@ -43,7 +29,7 @@ export async function POST(req: NextRequest) {
   if (!draft?.theme_config) return NextResponse.json({ error: "No hay borrador para publicar." }, { status: 400 });
 
   const nowIso = new Date().toISOString();
-  const theme = toThemeConfig(draft.theme_config);
+  const theme = normalizeStoreThemeConfig(draft.theme_config);
 
   const { error: updateCompanyError } = await supabaseAdmin
     .from("companies")
@@ -86,6 +72,9 @@ export async function POST(req: NextRequest) {
     last_message_at: nowIso,
     resolved_at: nowIso,
   });
+
+  // Invalidate menu cache so customers see the updated theme immediately
+  revalidateTag(`menu:${ctx.companyId}`, "max");
 
   return NextResponse.json({ ok: true, message: "Cambios publicados correctamente." });
 }

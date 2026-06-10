@@ -6,21 +6,21 @@ import {
 	activateCompanyAddonsFromApplication,
 	activateCompanySubscription,
 	getMonthsPaidFromPayment,
-} from "../../../../lib/onboarding/billing-activation";
+} from "@/lib/onboarding/billing-activation";
 import {
 	provisionCompanyFromApplication,
 	recordPayment,
 	type OnboardingApplication,
-} from "../../../../lib/onboarding/checkout-service";
+} from "@/lib/onboarding/checkout-service";
 import {
 	provisionOnboardingWelcome,
 	WelcomeProvisioningError,
-} from "../../../../lib/onboarding/welcome-provisioning";
+} from "@/lib/onboarding/welcome-provisioning";
 import {
 	getStripeCardFingerprintFromCheckoutSession,
 	hashCardFingerprint,
 	normalizeEmail,
-} from "../../../../lib/onboarding/trial-eligibility";
+} from "@/lib/onboarding/trial-eligibility";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";

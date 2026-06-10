@@ -4,6 +4,7 @@ import { CustomerAccountClient } from "./CustomerAccountClient";
 import { getCustomerMembership } from "@/lib/super-admin/account-access";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { resolvePlanName } from "@/lib/plans/plan-i18n";
+import { BranchSummary } from "@/components/customer-portal/shared/customer-account-types";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
 import { getCountryConfig } from "@/lib/geo/country-registry";
@@ -63,7 +64,7 @@ export default async function CustomerAccountPage() {
   }
 
   const membership = await getCustomerMembership({ authUserId: user.id, email: user.email });
-  if (!membership) {
+  if (!membership || membership.role !== "ceo") {
     redirect("/login?error=no-access");
   }
 
@@ -72,12 +73,12 @@ export default async function CustomerAccountPage() {
   const [{ data: company }, { data: branches }, { data: payments }, { data: companyAddons }, { data: plans }, { data: addons }, { data: tickets }, { data: branchEntitlements }] = await Promise.all([
     supabaseAdmin
       .from("companies")
-      .select("id,name,public_slug,country,subscription_status,subscription_ends_at,plan_id,plan:plans(name,name_i18n,price,max_branches,max_users)")
+      .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,plan:plans(name,name_i18n,price,max_branches,max_users)")
       .eq("id", companyId)
       .maybeSingle(),
     supabaseAdmin
       .from("branches")
-      .select("id,name,address,is_active")
+      .select("id,name,address,is_active,phone,schedule,instagram_url,whatsapp_url,map_url,origin_lat,origin_lng,payment_methods,pago_movil,zelle,transferencia_bancaria,stripe,mercadopago,paypal")
       .eq("company_id", companyId)
       .order("created_at", { ascending: false }),
     supabaseAdmin
@@ -123,6 +124,7 @@ export default async function CustomerAccountPage() {
     id: String(company?.id ?? companyId),
     name: String(company?.name ?? "Mi cuenta"),
     publicSlug: (company?.public_slug as string | null) ?? null,
+    customDomain: (company?.custom_domain as string | null) ?? null,
     planId: ((company as { plan_id?: string | null } | null)?.plan_id ?? null) as string | null,
     subscriptionStatus: (company?.subscription_status as string | null) ?? null,
     subscriptionEndsAt: (company?.subscription_ends_at as string | null) ?? null,
@@ -196,7 +198,7 @@ export default async function CustomerAccountPage() {
   return (
     <CustomerAccountClient
         company={snapshot}
-        branches={((branches ?? []) as Array<{ id: string; name: string; address: string | null; is_active: boolean | null }>)}
+        branches={(branches ?? []) as BranchSummary[]}
         payments={
           ((payments ?? []) as Array<{
             id: string;

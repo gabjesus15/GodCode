@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { LogOut } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { SaasLogo } from "./SaasLogo";
 
@@ -13,7 +14,19 @@ import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 export function Sidebar() {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
+
+  const { data: solicitudesData } = useQuery<{ pendingCount: number }>({
+    queryKey: ["admin", "solicitudes", "summary"],
+    queryFn: async () => {
+      const res = await fetch("/api/super-admin/solicitudes/summary");
+      if (!res.ok) throw new Error("Failed to load solicitudes summary");
+      return res.json() as Promise<{ pendingCount: number }>;
+    },
+    staleTime: 60_000,  // refetch at most every 60 s (or on window focus)
+    refetchInterval: 60_000,
+  });
+
+  const pendingCount = solicitudesData?.pendingCount ?? 0;
 
   const handleLogout = async () => {
     try {
@@ -26,31 +39,6 @@ export function Sidebar() {
       setLoggingOut(false);
     }
   };
-
-  useEffect(() => {
-	let cancelled = false;
-
-	const loadPendingCount = async () => {
-		try {
-			const res = await fetch("/api/super-admin/solicitudes/summary", { cache: "no-store" });
-			const json = await res.json().catch(() => ({}));
-			if (!res.ok || cancelled) return;
-			setPendingCount(Number(json?.pendingCount) || 0);
-		} catch {
-			if (!cancelled) setPendingCount(0);
-		}
-	};
-
-	void loadPendingCount();
-	const interval = window.setInterval(() => {
-		void loadPendingCount();
-	}, 60000);
-
-	return () => {
-		cancelled = true;
-		window.clearInterval(interval);
-	};
-  }, []);
 
   return (
     <div className="flex h-full flex-col gap-6 md:gap-10">

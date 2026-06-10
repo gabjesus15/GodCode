@@ -7,6 +7,13 @@ import Image from "next/image";
 
 import { STORE_THEME_COLOR_FIELDS, STORE_THEME_COLOR_HELPERS, STORE_THEME_TEMPLATES } from "../../shared/customer-account-store-theme-constants";
 import { StoreThemePreviewPanel } from "../../store-theme/store-theme-preview-panel";
+import {
+  StoreThemeNavbarPicker,
+  StoreThemeProductCardPicker,
+  StoreThemeProductDetailsPicker,
+  StoreThemeProductGridPicker,
+  useStoreThemeLayoutHandlers,
+} from "../../store-theme/store-theme-layout-pickers";
 import type { CompanySnapshot, StoreThemeAssetField, StoreThemeAutosaveStatus, StoreThemeConfig, StoreThemeResponse } from "../../shared/customer-account-types";
 import { fmtDate } from "../../shared/customer-account-format";
 import { Alert } from "../../ui/Alert";
@@ -135,8 +142,13 @@ export function AccountTiendaTab({
   const [qualityOpen, setQualityOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [navbarOpen, setNavbarOpen] = useState(false);
+  const [productCardOpen, setProductCardOpen] = useState(false);
+  const [productDetailsOpen, setProductDetailsOpen] = useState(false);
+  const [productGridOpen, setProductGridOpen] = useState(false);
 
   const busy = storeThemeLoading || storeThemeSaving || storeThemePublishing;
+  const { setNavbarType, setProductCardStyle, setNavigationMode, setProductDetailsMode, setProductGridStyle } = useStoreThemeLayoutHandlers(setStoreThemeDraft);
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -214,6 +226,110 @@ export function AccountTiendaTab({
                 />
               </label>
             </Card>
+
+            {/* Layout y Navegación */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Diseño de Navegación y Catálogo</p>
+              
+              {/* Barra de navegación */}
+              <Card noPadding>
+                <button
+                  type="button"
+                  onClick={() => setNavbarOpen((v) => !v)}
+                  className="flex w-full items-center justify-between px-5 py-4 text-sm font-semibold text-[#1d1d1f]"
+                >
+                  <span>Barra de navegación</span>
+                  <ChevronDown className={`h-4 w-4 text-[#a1a1a6] transition-transform ${navbarOpen ? "rotate-180" : ""}`} aria-hidden />
+                </button>
+                {navbarOpen && (
+                  <div className="space-y-4 px-5 pb-5">
+                    <div>
+                      <p className="mb-2 text-xs font-medium text-[#6e6e73]">Tipo de barra de navegación</p>
+                      <StoreThemeNavbarPicker
+                        value={storeThemeDraft?.navbarType}
+                        onChange={setNavbarType}
+                        disabled={busy}
+                      />
+                    </div>
+                    <label className="block max-w-md text-xs font-medium text-[#6e6e73]">
+                      Modo de navegación
+                      <select
+                        value={storeThemeDraft?.navigationMode ?? "scroll"}
+                        onChange={(e) => setNavigationMode(e.target.value)}
+                        disabled={busy}
+                        className="mt-1.5 h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm text-[#1d1d1f] focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60"
+                      >
+                        <option value="scroll">Scroll continuo (secciones)</option>
+                        <option value="pagination">Paginación (por categoría)</option>
+                      </select>
+                    </label>
+                  </div>
+                )}
+              </Card>
+
+              {/* Estilo de tarjeta de producto */}
+              <Card noPadding>
+                <button
+                  type="button"
+                  onClick={() => setProductCardOpen((v) => !v)}
+                  className="flex w-full items-center justify-between px-5 py-4 text-sm font-semibold text-[#1d1d1f]"
+                >
+                  <span>Estilo de tarjeta de producto</span>
+                  <ChevronDown className={`h-4 w-4 text-[#a1a1a6] transition-transform ${productCardOpen ? "rotate-180" : ""}`} aria-hidden />
+                </button>
+                {productCardOpen && (
+                  <div className="px-5 pb-5">
+                    <StoreThemeProductCardPicker
+                      value={storeThemeDraft?.productCardStyle}
+                      onChange={setProductCardStyle}
+                      disabled={busy}
+                    />
+                  </div>
+                )}
+              </Card>
+
+              {/* Modo de Detalles del Producto */}
+              <Card noPadding>
+                <button
+                  type="button"
+                  onClick={() => setProductDetailsOpen((v) => !v)}
+                  className="flex w-full items-center justify-between px-5 py-4 text-sm font-semibold text-[#1d1d1f]"
+                >
+                  <span>Modo de detalles del producto</span>
+                  <ChevronDown className={`h-4 w-4 text-[#a1a1a6] transition-transform ${productDetailsOpen ? "rotate-180" : ""}`} aria-hidden />
+                </button>
+                {productDetailsOpen && (
+                  <div className="px-5 pb-5">
+                    <StoreThemeProductDetailsPicker
+                      value={storeThemeDraft?.productDetailsMode}
+                      onChange={setProductDetailsMode}
+                      disabled={busy}
+                    />
+                  </div>
+                )}
+              </Card>
+
+              {/* Distribución de cuadrícula de productos */}
+              <Card noPadding>
+                <button
+                  type="button"
+                  onClick={() => setProductGridOpen((v) => !v)}
+                  className="flex w-full items-center justify-between px-5 py-4 text-sm font-semibold text-[#1d1d1f]"
+                >
+                  <span>Distribución de cuadrícula de productos</span>
+                  <ChevronDown className={`h-4 w-4 text-[#a1a1a6] transition-transform ${productGridOpen ? "rotate-180" : ""}`} aria-hidden />
+                </button>
+                {productGridOpen && (
+                  <div className="px-5 pb-5">
+                    <StoreThemeProductGridPicker
+                      value={storeThemeDraft?.productGridStyle}
+                      onChange={setProductGridStyle}
+                      disabled={busy}
+                    />
+                  </div>
+                )}
+              </Card>
+            </div>
 
             {/* Colores */}
             <Card compact>
@@ -409,9 +525,10 @@ export function AccountTiendaTab({
               {advancedOpen && (
                 <div className="space-y-4 px-5 pb-5">
                   <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Plantillas</p>
+                    <label htmlFor="store-theme-template" className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Plantillas</label>
                     <div className="flex gap-2">
                       <select
+                        id="store-theme-template"
                         value={storeThemeSelectedTemplate}
                         onChange={(e) => setStoreThemeSelectedTemplate(e.target.value)}
                         className="h-9 flex-1 rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none"

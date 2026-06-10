@@ -10,6 +10,7 @@ import type { ActiveSessionInfo, CartModalViewState } from "../cart-modal-types"
 import { PAYMENT_METHOD_CONFIG, resolvePaymentMethodLabel } from "../constants";
 import { formatCartMoney } from "../utils/format-cart-money";
 import { CartOnlinePaymentDetails } from "./cart-online-payment-details";
+import { useCart } from "../use-cart";
 
 export function CartPaymentFlow({
   paymentMethodKey,
@@ -56,6 +57,7 @@ export function CartPaymentFlow({
   setViewState: React.Dispatch<React.SetStateAction<CartModalViewState>>;
   strategy: CountryFormStrategy;
 }) {
+  const { currency } = useCart();
   const t = useTranslations("tenant.cart.modal");
   const isOnline = paymentMethodKey && PAYMENT_METHOD_CONFIG[paymentMethodKey]?.isOnline;
   const requiresReceipt = Boolean(
@@ -232,7 +234,7 @@ export function CartPaymentFlow({
                 <p className="text-muted">{t("payment.payInStoreHelp")}</p>
               </div>
               <div className="pay-total">
-                {t("summary.total")}: {formatCartMoney(cartTotal)}
+                {t("summary.total")}: {formatCartMoney(cartTotal, currency)}
               </div>
             </div>
           )}

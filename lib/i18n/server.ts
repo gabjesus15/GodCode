@@ -10,7 +10,7 @@ export async function getCurrentLocale(): Promise<AppLocale> {
   if (cookieLocale) return normalizeLocale(cookieLocale);
 
   const requestHeaders = await headers();
-  const tenantLocale = await resolveTenantPreferredLocale(requestHeaders.get("host"));
+  const tenantLocale = await resolveTenantPreferredLocale(requestHeaders);
   if (tenantLocale) return tenantLocale;
 
   const acceptLanguage = requestHeaders.get("accept-language") ?? "";

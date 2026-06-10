@@ -25,6 +25,20 @@ export type BranchSummary = {
   name: string;
   address: string | null;
   is_active: boolean | null;
+  phone?: string | null;
+  schedule?: string | null;
+  instagram_url?: string | null;
+  whatsapp_url?: string | null;
+  map_url?: string | null;
+  origin_lat?: number | null;
+  origin_lng?: number | null;
+  payment_methods?: string[] | null;
+  pago_movil?: Record<string, unknown> | null;
+  zelle?: Record<string, unknown> | null;
+  transferencia_bancaria?: Record<string, unknown> | null;
+  stripe?: Record<string, unknown> | null;
+  mercadopago?: Record<string, unknown> | null;
+  paypal?: Record<string, unknown> | null;
 };
 
 export type PaymentSummary = {
@@ -97,6 +111,7 @@ export type CompanySnapshot = {
   id: string;
   name: string;
   publicSlug: string | null;
+  customDomain: string | null;
   planId: string | null;
   subscriptionStatus: string | null;
   subscriptionEndsAt: string | null;
@@ -312,6 +327,11 @@ export type StoreThemeConfig = {
   backgroundColor: string;
   backgroundImageUrl: string;
   logoUrl: string;
+  navbarType?: string;
+  navigationMode?: string;
+  productCardStyle?: string;
+  productDetailsMode?: string;
+  productGridStyle?: string;
 };
 
 export type StoreThemeResponse = {

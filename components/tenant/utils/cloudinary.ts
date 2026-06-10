@@ -19,6 +19,7 @@ export const getCloudinaryOptimizedUrl = (
     format?: string;
     crop?: string;
     gravity?: string;
+    background?: string;
   }
 ) => {
   if (!url || !url.includes("res.cloudinary.com")) return url;
@@ -40,12 +41,14 @@ export const getCloudinaryOptimizedUrl = (
   const quality = options?.quality ?? "auto";
   const format = options?.format ?? "auto";
   const gravity = options?.gravity;
+  const background = options?.background;
 
   const transformParts = [`f_${format}`, `q_${quality}`];
   if (width) transformParts.push(`w_${width}`);
   if (height) transformParts.push(`h_${height}`);
   if (crop) transformParts.push(`c_${crop}`);
   if (gravity) transformParts.push(`g_${gravity}`);
+  if (background) transformParts.push(`b_${background}`);
 
   const transform = transformParts.join(",");
   const finalUrl = `${prefix}${transform}/${rest}`;

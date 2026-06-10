@@ -261,6 +261,9 @@ export type Database = {
           transferencia_bancaria: string | null
           whatsapp_url: string | null
           zelle: string | null
+          order_intake_paused: boolean | null
+          order_intake_pause_message: string | null
+          order_intake_paused_at: string | null
         }
         Insert: {
           account_email?: string | null
@@ -296,6 +299,9 @@ export type Database = {
           transferencia_bancaria?: string | null
           whatsapp_url?: string | null
           zelle?: string | null
+          order_intake_paused?: boolean | null
+          order_intake_pause_message?: string | null
+          order_intake_paused_at?: string | null
         }
         Update: {
           account_email?: string | null
@@ -331,6 +337,9 @@ export type Database = {
           transferencia_bancaria?: string | null
           whatsapp_url?: string | null
           zelle?: string | null
+          order_intake_paused?: boolean | null
+          order_intake_pause_message?: string | null
+          order_intake_paused_at?: string | null
         }
         Relationships: [
           {
@@ -2593,6 +2602,7 @@ export type Database = {
           p_delivery_fee?: number
           p_items: Json
           p_note: string
+          p_order_origin?: string | null
           p_order_type?: string
           p_payment_method_specific?: string
           p_payment_ref: string

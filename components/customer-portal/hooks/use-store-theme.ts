@@ -98,7 +98,7 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
     if (!storeThemeDraft || !storeThemePublished) return [];
     return (Object.keys(STORE_THEME_FIELD_LABELS) as Array<keyof StoreThemeConfig>)
       .filter((k) => storeThemeDraft[k] !== storeThemePublished[k])
-      .map((k) => ({ key: k, label: STORE_THEME_FIELD_LABELS[k], draftValue: storeThemeDraft[k], publishedValue: storeThemePublished[k] }));
+      .map((k) => ({ key: k, label: STORE_THEME_FIELD_LABELS[k], draftValue: storeThemeDraft[k] || "", publishedValue: storeThemePublished[k] || "" }));
   }, [storeThemeDraft, storeThemePublished]);
 
   const storeThemeChecklist = useMemo(() => buildStoreThemeChecklist(storeThemeDraft), [storeThemeDraft]);

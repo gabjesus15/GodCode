@@ -2,44 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { isSameStoreTheme, normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
+import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
 
-type ThemeConfig = {
-  displayName: string;
-  primaryColor: string;
-  secondaryColor: string;
-  priceColor: string;
-  discountColor: string;
-  hoverColor: string;
-  backgroundColor: string;
-  backgroundImageUrl: string;
-  logoUrl: string;
-};
-
-const DEFAULT_THEME: ThemeConfig = {
-  displayName: "",
-  primaryColor: "#111827",
-  secondaryColor: "#111827",
-  priceColor: "#ff4757",
-  discountColor: "#25d366",
-  hoverColor: "#ff2e40",
-  backgroundColor: "#0a0a0a",
-  backgroundImageUrl: "",
-  logoUrl: "",
-};
-
-function toThemeConfig(input: unknown): ThemeConfig {
-  const value = (input ?? {}) as Record<string, unknown>;
-  return {
-    displayName: String(value.displayName ?? DEFAULT_THEME.displayName),
-    primaryColor: String(value.primaryColor ?? DEFAULT_THEME.primaryColor),
-    secondaryColor: String(value.secondaryColor ?? value.primaryColor ?? DEFAULT_THEME.secondaryColor),
-    priceColor: String(value.priceColor ?? DEFAULT_THEME.priceColor),
-    discountColor: String(value.discountColor ?? DEFAULT_THEME.discountColor),
-    hoverColor: String(value.hoverColor ?? DEFAULT_THEME.hoverColor),
-    backgroundColor: String(value.backgroundColor ?? DEFAULT_THEME.backgroundColor),
-    backgroundImageUrl: String(value.backgroundImageUrl ?? ""),
-    logoUrl: String(value.logoUrl ?? ""),
-  };
+function toThemeConfig(input: unknown): StoreThemeConfig {
+  return normalizeStoreThemeConfig(input);
 }
 
 export async function GET() {
@@ -85,7 +52,7 @@ export async function GET() {
       theme: draftTheme,
       updatedAt: draft?.updated_at ?? null,
       updatedByEmail: draft?.updated_by_email ?? null,
-      hasUnpublishedChanges: JSON.stringify(draftTheme) !== JSON.stringify(published),
+      hasUnpublishedChanges: !isSameStoreTheme(draftTheme, published),
     },
     versions: (versions ?? []).map((row) => ({
       id: String(row.id),
@@ -117,7 +84,7 @@ export async function PUT(req: NextRequest) {
   }
 
   const published = toThemeConfig(company?.theme_config ?? null);
-  const hasUnpublishedChanges = JSON.stringify(theme) !== JSON.stringify(published);
+  const hasUnpublishedChanges = !isSameStoreTheme(theme, published);
 
   const { error } = await supabaseAdmin
     .from("company_theme_drafts")

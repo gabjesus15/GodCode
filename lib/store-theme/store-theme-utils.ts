@@ -5,6 +5,7 @@
 
 import { DEFAULT_STORE_THEME, STORE_THEME_FIELD_LABELS } from "@/components/customer-portal/shared/customer-account-store-theme-constants";
 import type { StoreThemeAssetField, StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 
 // ─── Color math ──────────────────────────────────────────────────────────────
 
@@ -107,19 +108,7 @@ export function getStoreThemeSignature(theme: StoreThemeConfig | null): string {
 }
 
 export function normalizeStoreThemeInput(input: unknown, fallbackName: string): StoreThemeConfig {
-  const value = (input ?? {}) as Record<string, unknown>;
-  const defaults: StoreThemeConfig = { ...DEFAULT_STORE_THEME, displayName: fallbackName };
-  return {
-    displayName:         String(value.displayName         ?? defaults.displayName),
-    primaryColor:        String(value.primaryColor        ?? defaults.primaryColor),
-    secondaryColor:      String(value.secondaryColor      ?? defaults.secondaryColor),
-    priceColor:          String(value.priceColor          ?? defaults.priceColor),
-    discountColor:       String(value.discountColor       ?? defaults.discountColor),
-    hoverColor:          String(value.hoverColor          ?? defaults.hoverColor),
-    backgroundColor:     String(value.backgroundColor     ?? defaults.backgroundColor),
-    backgroundImageUrl:  String(value.backgroundImageUrl  ?? defaults.backgroundImageUrl),
-    logoUrl:             String(value.logoUrl             ?? defaults.logoUrl),
-  };
+  return normalizeStoreThemeConfig(input, fallbackName);
 }
 
 // ─── Asset validation ─────────────────────────────────────────────────────────

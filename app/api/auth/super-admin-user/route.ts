@@ -41,6 +41,31 @@ async function validateSuperAdminAccess() {
 	return { ok: true as const };
 }
 
+export async function GET(req: NextRequest) {
+	const access = await validateSuperAdminAccess();
+	if (!access.ok) {
+		return access.response;
+	}
+
+	const url = new URL(req.url);
+	const companyId = url.searchParams.get("companyId");
+	
+	if (!companyId) {
+		return NextResponse.json({ error: "Falta companyId" }, { status: 400 });
+	}
+
+	const { data, error } = await supabaseAdmin
+		.from("users")
+		.select("id,email,role,branch_id,branch:branches!users_branch_id_fkey(name)")
+		.eq("company_id", companyId);
+
+	if (error) {
+		return NextResponse.json({ error: error.message }, { status: 400 });
+	}
+
+	return NextResponse.json({ users: data });
+}
+
 export async function POST(req: NextRequest) {
 	const access = await validateSuperAdminAccess();
 	if (!access.ok) {

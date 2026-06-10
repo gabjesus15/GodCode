@@ -6,6 +6,8 @@ export interface BranchInfo {
   name: string | null;
   address: string | null;
   phone: string | null;
+  country?: string | null;
+  currency?: string | null;
   company_id?: string | null;
   bank_name?: string | null;
   account_type?: string | null;
@@ -40,6 +42,9 @@ export interface BranchInfo {
   tarjeta?: unknown;
   origin_lat?: number | null;
   origin_lng?: number | null;
+  order_intake_paused?: boolean | null;
+  order_intake_pause_message?: string | null;
+  order_intake_paused_at?: string | null;
 }
 
 export interface BusinessInfo {

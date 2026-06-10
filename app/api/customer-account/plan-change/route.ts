@@ -347,7 +347,7 @@ export async function GET(req: NextRequest) {
   const ctx = await getCustomerAccountContext();
   if (!ctx) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  if (!checkRateLimit(`plan_change_get:${ctx.companyId}`, 30, 60000)) {
+  if (!(await checkRateLimit(`plan_change_get:${ctx.companyId}`, 30, 60000))) {
     return NextResponse.json({ error: "Demasiadas peticiones" }, { status: 429 });
   }
 
@@ -372,7 +372,7 @@ export async function POST(req: NextRequest) {
   const ctx = await getCustomerAccountContext();
   if (!ctx) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  if (!checkRateLimit(`plan_change_post:${ctx.companyId}`, 10, 60000)) {
+  if (!(await checkRateLimit(`plan_change_post:${ctx.companyId}`, 10, 60000))) {
     return NextResponse.json({ error: "Demasiadas peticiones. Intenta en un minuto." }, { status: 429 });
   }
 

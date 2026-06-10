@@ -6,11 +6,10 @@
 
 import { createHash } from "crypto";
 
+import { kvStore } from "../infra/kv-store";
+
 const UBER_TOKEN_URL = "https://auth.uber.com/oauth/v2/token";
 const UBER_ESTIMATES_URL = "https://api.uber.com/v1/eats/deliveries/estimates";
-
-type TokenCache = { token: string; expiresAtMs: number };
-const tokenCacheByKey = new Map<string, TokenCache>();
 
 const TOKEN_SKEW_MS = 60_000;
 
@@ -75,10 +74,14 @@ export async function getUberDirectAccessToken(
 	}
 
 	const cacheKey = cacheKeyForCredentials(clientId, clientSecret);
-	const now = Date.now();
-	const cached = tokenCacheByKey.get(cacheKey);
-	if (cached && cached.expiresAtMs > now + TOKEN_SKEW_MS) {
-		return { ok: true, accessToken: cached.token };
+	const redisKey = `uber_token:${cacheKey}`;
+	try {
+		const cachedToken = await kvStore.get(redisKey);
+		if (cachedToken) {
+			return { ok: true, accessToken: cachedToken };
+		}
+	} catch (err) {
+		// Fallback silencioso
 	}
 
 	const body = new URLSearchParams({
@@ -101,7 +104,9 @@ export async function getUberDirectAccessToken(
 
 	const j = (await res.json().catch(() => ({}))) as Record<string, unknown>;
 	if (!res.ok) {
-		tokenCacheByKey.delete(cacheKey);
+		try {
+			await kvStore.delete(redisKey);
+		} catch (err) {}
 		const msg =
 			typeof j.error_description === "string"
 				? j.error_description
@@ -117,10 +122,11 @@ export async function getUberDirectAccessToken(
 		return { ok: false, message: "Respuesta de token de Uber inválida." };
 	}
 
-	tokenCacheByKey.set(cacheKey, {
-		token: accessToken,
-		expiresAtMs: now + Math.max(60, expiresIn) * 1000,
-	});
+	const ttlSeconds = Math.max(60, expiresIn) - 60; // Descuenta 1 minuto para evitar expiración en tránsito
+	try {
+		await kvStore.set(redisKey, accessToken, ttlSeconds);
+	} catch (err) {}
+
 	return { ok: true, accessToken };
 }
 
@@ -205,7 +211,10 @@ export async function fetchUberDeliveryEstimate(params: {
 	const j = (await res.json().catch(() => ({}))) as Record<string, unknown>;
 	if (!res.ok) {
 		if (res.status === 401) {
-			tokenCacheByKey.delete(oauthKey);
+			try {
+				const redisKey = `uber_token:${oauthKey}`;
+				await kvStore.delete(redisKey);
+			} catch (err) {}
 		}
 		const msg =
 			typeof j.message === "string"

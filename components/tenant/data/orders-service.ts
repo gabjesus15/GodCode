@@ -41,7 +41,15 @@ interface CreateOrderPayload {
   uber_quote_id?: string | null;
   /** Código de cupón (`discount_coupons`); lo valida `create_order_transaction`. */
   coupon_code?: string | null;
+  /**
+   * Origen del pedido para el RPC (`p_order_origin`).
+   * `web` marca `channel = online` (compra online en panel del negocio).
+   */
+  order_origin?: "web" | null;
 }
+
+/** Pedidos creados desde el menú / carrito del tenant. */
+export const WEB_MENU_ORDER_ORIGIN = "web" as const;
 
 function extractOrderId(newOrder: unknown): string | null {
   if (newOrder == null) return null;
@@ -126,12 +134,16 @@ export const ordersService = {
 
     const { data: branchCfg, error: branchCfgError } = await supabase
       .from("branches")
-      .select("delivery_settings")
+      .select("delivery_settings, order_intake_paused")
       .eq("id", orderData.branch_id)
       .maybeSingle();
 
     if (branchCfgError) {
       throw new Error("No se pudo validar la configuracion de la sucursal. Intenta nuevamente.");
+    }
+
+    if (branchCfg?.order_intake_paused) {
+      throw new Error("ORDER_INTAKE_PAUSED: Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.");
     }
 
     const deliverySettings = normalizeDeliverySettings(branchCfg?.delivery_settings);
@@ -407,6 +419,7 @@ export const ordersService = {
       p_delivery_fee: deliveryMode ? deliveryFee : 0,
       p_delivery_address: deliveryMode ? (orderData.delivery_address as Json) : null,
       ...(couponPayload ? { p_coupon_code: couponPayload } : {}),
+      p_order_origin: orderData.order_origin ?? WEB_MENU_ORDER_ORIGIN,
     };
 
     const { data: newOrder, error: orderError } = await supabase.rpc(
@@ -457,28 +470,28 @@ export const ordersService = {
     }
 
     const orderId = extractOrderId(newOrder);
-    if (orderId && deliveryMode && typeof window !== "undefined") {
+    if (orderId && typeof window !== "undefined") {
       const patchRes = await fetch(`${window.location.origin}/api/tenant/public-order-delivery`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderId,
-          orderType: "delivery",
-          deliveryKm: Number(orderData.delivery_km),
-          deliveryFee,
-          deliveryAddress: orderData.delivery_address ?? null,
-          deliveryLat: orderData.delivery_lat,
-          deliveryLng: orderData.delivery_lng,
+          orderType: deliveryMode ? "delivery" : "pickup",
+          deliveryKm: deliveryMode ? Number(orderData.delivery_km) : 0,
+          deliveryFee: deliveryMode ? deliveryFee : 0,
+          deliveryAddress: deliveryMode ? (orderData.delivery_address ?? null) : null,
+          deliveryLat: deliveryMode ? orderData.delivery_lat : null,
+          deliveryLng: deliveryMode ? orderData.delivery_lng : null,
           namedAreaId:
-            typeof namedId === "string" && namedId.trim()
+            deliveryMode && typeof namedId === "string" && namedId.trim()
               ? namedId.trim()
               : undefined,
-          ...(uberQuoteIdForPatch ? { uberQuoteId: uberQuoteIdForPatch } : {}),
+          ...(deliveryMode && uberQuoteIdForPatch ? { uberQuoteId: uberQuoteIdForPatch } : {}),
         }),
       });
       if (!patchRes.ok) {
         const j = (await patchRes.json().catch(() => ({}))) as { error?: string };
-        throw new Error(j.error || "No se pudo registrar los datos de envio del pedido.");
+        throw new Error(j.error || "No se pudo registrar los datos de facturación del pedido.");
       }
     }
 

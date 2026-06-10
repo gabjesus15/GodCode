@@ -217,6 +217,39 @@ const PUBLIC_DELIVERY_API_PATHS = new Set([
   "/api/tenant/public-order-delivery",
 ]);
 
+const resolveTenantSlugFromPathname = (pathname: string): string | null => {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length === 0) return null;
+
+  const first = segments[0]?.toLowerCase();
+  const reserved = new Set([
+    "login",
+    "dashboard",
+    "companies",
+    "plans",
+    "checkout",
+    "onboarding",
+    "api",
+    "_next",
+    "favicon.ico",
+    "saas-admin",
+    "addons",
+    "plan-payment-methods",
+    "herramientas",
+    "tickets",
+    "cuenta",
+    "fonts",
+    "brand",
+    "tenant",
+    "tenant-hero",
+    "sobre-godcode",
+    "images",
+  ]);
+
+  if (first.includes(".") || reserved.has(first)) return null;
+  return segments[0];
+};
+
 function attachPublicDeliveryApiCors(req: NextRequest, res: NextResponse): NextResponse {
   if (!PUBLIC_DELIVERY_API_PATHS.has(req.nextUrl.pathname)) return res;
   const cors = publicApiCorsHeaders(req);
@@ -234,9 +267,7 @@ export async function proxy(req: NextRequest) {
 }
 
 async function _proxy(req: NextRequest): Promise<NextResponse> {
-
   const { pathname } = req.nextUrl;
-  
 
   const canonicalRedirect = maybeRedirectToCanonicalHost(req);
   if (canonicalRedirect) {
@@ -269,6 +300,12 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
     }
   }
 
+  const resolvedTenantSlug = subdomain || resolveTenantSlugFromPathname(pathname);
+  const requestHeaders = new Headers(req.headers);
+  if (resolvedTenantSlug) {
+    requestHeaders.set("x-tenant-slug", resolvedTenantSlug);
+  }
+
   if (pathname === "/favicon.ico") {
     let tenantSlug = subdomain ?? resolveTenantSlugFromReferer(req.headers.get("referer"));
     if (!tenantSlug && hostHeader) {
@@ -283,14 +320,22 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
     if (tenantSlug) {
       const rewriteUrl = new URL(`/${tenantSlug}/tenant-favicon`, req.nextUrl.origin);
       rewriteUrl.search = req.nextUrl.search;
-      const response = NextResponse.rewrite(rewriteUrl);
+      const response = NextResponse.rewrite(rewriteUrl, {
+        request: {
+          headers: requestHeaders,
+        },
+      });
       return attachPublicDeliveryApiCors(
         req,
         await applySessionRefresh(req, response, "tenant"),
       );
     }
 
-    const response = NextResponse.next({ request: req });
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
     return attachPublicDeliveryApiCors(
       req,
       await applySessionRefresh(req, response, "super-admin"),
@@ -308,7 +353,11 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
       tenantBypassPaths.some((path) => pathname.startsWith(path)) ||
       pathname.includes(".")
     ) {
-      const response = NextResponse.next({ request: req });
+      const response = NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
       return attachPublicDeliveryApiCors(
         req,
         await applySessionRefresh(req, response, "tenant"),
@@ -319,7 +368,11 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
     if (pathname === "/") {
       const rewriteUrl = new URL(`/${subdomain}`, req.url);
       rewriteUrl.search = req.nextUrl.search;
-      const response = NextResponse.rewrite(rewriteUrl);
+      const response = NextResponse.rewrite(rewriteUrl, {
+        request: {
+          headers: requestHeaders,
+        },
+      });
       return attachPublicDeliveryApiCors(
         req,
         await applySessionRefresh(req, response, "tenant"),
@@ -328,7 +381,11 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
 
     // If the pathname already starts with the resolved subdomain, don't rewrite again.
     if (pathname.startsWith(`/${subdomain}`)) {
-      const response = NextResponse.next({ request: req });
+      const response = NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
       return attachPublicDeliveryApiCors(
         req,
         await applySessionRefresh(req, response, "tenant"),
@@ -338,7 +395,11 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
     const prefixedPath = `/${subdomain}${pathname}`;
     const rewriteUrl = new URL(prefixedPath, req.nextUrl.origin);
     rewriteUrl.search = req.nextUrl.search;
-    const response = NextResponse.rewrite(rewriteUrl);
+    const response = NextResponse.rewrite(rewriteUrl, {
+      request: {
+        headers: requestHeaders,
+      },
+    });
     return attachPublicDeliveryApiCors(
       req,
       await applySessionRefresh(req, response, "tenant"),
@@ -346,14 +407,22 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
   }
 
   if (adminPaths.some((path) => pathname.startsWith(path))) {
-    const response = NextResponse.next({ request: req });
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
     return attachPublicDeliveryApiCors(
       req,
       await applySessionRefresh(req, response, "super-admin"),
     );
   }
 
-  const response = NextResponse.next({ request: req });
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
   return attachPublicDeliveryApiCors(
     req,
     await applySessionRefresh(req, response, "super-admin"),

@@ -1,0 +1,148 @@
+/* =========================================
+   BOTTOM FLOATING NAVBAR (GLASSMORPHISM)
+   ========================================= */
+
+.bottom-floating-navbar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 400px;
+    height: 76px;
+    background: rgba(30, 30, 33, 0.76);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    border-radius: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 12px;
+    box-sizing: border-box;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    gap: 6px;
+}
+
+/* Nav Item Base */
+.bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: #8e8e93;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    height: 54px;
+    min-width: 60px;
+    padding: 0;
+    position: relative;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav-item::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.92);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
+    z-index: 0;
+}
+
+.bottom-nav-item svg,
+.bottom-nav-item span {
+    position: relative;
+    z-index: 1;
+}
+
+.bottom-nav-item span {
+    font-size: 0.68rem;
+    font-weight: 600;
+    margin-top: 4px;
+    color: inherit;
+    transition: color 0.2s;
+}
+
+/* Active State layout (White Circle 1-to-1) */
+.bottom-nav-item.active-nav-circle {
+    color: #000000;
+}
+
+.bottom-nav-item.active-nav-circle::before {
+    opacity: 1;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3);
+    transform: translateX(-50%) scale(1);
+}
+
+.bottom-nav-item.active-nav-circle span {
+    display: none; /* Hide label if active in circle as in screenshot */
+}
+
+/* Hover fallback on desktop */
+@media (hover: hover) {
+    .bottom-nav-item:not(.active-nav-circle):hover {
+        color: #ffffff;
+    }
+}
+
+/* Cart Badge on floating bar */
+.bottom-nav-cart-badge {
+    position: absolute;
+    top: -2px;
+    right: 10px;
+    background: #ff4757;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 800;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    border: 1.5px solid rgba(30, 30, 33, 0.95);
+    z-index: 10;
+}
+
+/* Active circle positioning details */
+.bottom-nav-item.active-nav-circle svg {
+    stroke-width: 2.2;
+}
+
+/* Adjust layout on tiny mobile screens */
+@media (max-width: 360px) {
+    .bottom-floating-navbar {
+        height: 72px;
+        bottom: 16px;
+        padding: 0 8px;
+    }
+    .bottom-nav-item {
+        min-width: 50px;
+    }
+    .bottom-nav-item.active-nav-circle {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+    }
+}
+
+/* Page wrapper extra padding when floating bar is present */
+.page-wrapper.navbar-type-floating-bottom,
+.page-wrapper.card-style-layout-food {
+    padding-bottom: 110px !important;
+}
