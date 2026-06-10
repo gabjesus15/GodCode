@@ -470,7 +470,6 @@ export function CartModal({
           if (!SHOW_ADDRESS_SUGGESTIONS && results[0]) {
             const first = results[0];
             if (Date.now() >= suppressLineGeocodeUntilRef.current) {
-              suppressLineGeocodeUntilRef.current = Date.now() + 850;
               setDeliveryCoords(first.lat, first.lng);
               setDeliveryAddressPrecision(
                 first.precision === "exact" ? "exact" : "approx"
@@ -526,10 +525,7 @@ export function CartModal({
       if (rawLine.length < 4 || rawCommune.length < 2) return;
       if (!/\d/.test(rawLine)) return;
 
-      const q =
-        rawLine.trim().length >= 3
-          ? rawLine.trim()
-          : [rawLine.trim(), rawCommune.trim()].filter(Boolean).join(", ");
+      const q = [rawLine.trim(), rawCommune.trim()].filter(Boolean).join(", ");
       if (q.length < 4) return;
 
       let cancelled = false;
