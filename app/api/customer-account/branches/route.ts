@@ -37,6 +37,8 @@ export async function PUT(req: NextRequest) {
     stripe,
     mercadopago,
     paypal,
+    order_intake_paused,
+    order_intake_pause_message,
   } = payload;
 
   if (!id) {
@@ -47,10 +49,10 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "El nombre de la sucursal es requerido" }, { status: 400 });
   }
 
-  // Verify branch ownership
+  // Verify branch ownership and get current pause state
   const { data: branch, error: fetchError } = await supabaseAdmin
     .from("branches")
-    .select("company_id")
+    .select("company_id, order_intake_paused")
     .eq("id", id)
     .maybeSingle();
 
@@ -63,6 +65,22 @@ export async function PUT(req: NextRequest) {
       { error: "No tienes permisos para modificar esta sucursal" },
       { status: 403 }
     );
+  }
+
+  const parsedPaused = !!order_intake_paused;
+  const wasPaused = !!branch.order_intake_paused;
+
+  let finalPausedAt = undefined;
+  let finalPausedBy = undefined;
+
+  if (parsedPaused !== wasPaused) {
+    if (parsedPaused) {
+      finalPausedAt = new Date().toISOString();
+      finalPausedBy = ctx.userId;
+    } else {
+      finalPausedAt = null;
+      finalPausedBy = null;
+    }
   }
 
   // Perform update
@@ -85,6 +103,10 @@ export async function PUT(req: NextRequest) {
       stripe: stripe ? JSON.stringify(stripe) : null,
       mercadopago: mercadopago ? JSON.stringify(mercadopago) : null,
       paypal: paypal ? JSON.stringify(paypal) : null,
+      order_intake_paused: parsedPaused,
+      order_intake_pause_message: parsedPaused ? (order_intake_pause_message ? order_intake_pause_message.trim() : null) : null,
+      ...(finalPausedAt !== undefined ? { order_intake_paused_at: finalPausedAt } : {}),
+      ...(finalPausedBy !== undefined ? { order_intake_paused_by: finalPausedBy } : {}),
     })
     .eq("id", id);
 

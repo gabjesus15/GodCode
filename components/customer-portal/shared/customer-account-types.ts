@@ -39,6 +39,10 @@ export type BranchSummary = {
   stripe?: Record<string, unknown> | null;
   mercadopago?: Record<string, unknown> | null;
   paypal?: Record<string, unknown> | null;
+  order_intake_paused?: boolean | null;
+  order_intake_pause_message?: string | null;
+  order_intake_paused_at?: string | null;
+  order_intake_paused_by?: string | null;
 };
 
 export type PaymentSummary = {

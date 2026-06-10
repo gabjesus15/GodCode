@@ -132,9 +132,15 @@ export function CartModal({
 
 
 
-    type CheckoutLiveBranch = Pick<
+     type CheckoutLiveBranch = Pick<
       BranchInfo,
-      "payment_methods" | "delivery_settings" | "efectivo" | "tarjeta"
+      | "payment_methods"
+      | "delivery_settings"
+      | "efectivo"
+      | "tarjeta"
+      | "order_intake_paused"
+      | "order_intake_pause_message"
+      | "order_intake_paused_at"
     >;
 
     const [checkoutLiveBranch, setCheckoutLiveBranch] = useState<CheckoutLiveBranch | null>(
@@ -177,6 +183,9 @@ export function CartModal({
               delivery_settings: row.delivery_settings as BranchInfo["delivery_settings"],
               efectivo: row.efectivo,
               tarjeta: row.tarjeta,
+              order_intake_paused: row.order_intake_paused as boolean | null | undefined,
+              order_intake_pause_message: row.order_intake_pause_message as string | null | undefined,
+              order_intake_paused_at: row.order_intake_paused_at as string | null | undefined,
             });
           },
         );

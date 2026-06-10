@@ -66,6 +66,8 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
   const [mapUrl, setMapUrl] = useState("");
   const [originLat, setOriginLat] = useState("");
   const [originLng, setOriginLng] = useState("");
+  const [orderIntakePaused, setOrderIntakePaused] = useState(false);
+  const [orderIntakePauseMessage, setOrderIntakePauseMessage] = useState("");
 
   // Payment fields
   const [activeMethods, setActiveMethods] = useState<string[]>([]);
@@ -115,6 +117,8 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
       setMapUrl(branch.map_url || "");
       setOriginLat(branch.origin_lat != null ? String(branch.origin_lat) : "");
       setOriginLng(branch.origin_lng != null ? String(branch.origin_lng) : "");
+      setOrderIntakePaused(branch.order_intake_paused === true);
+      setOrderIntakePauseMessage(branch.order_intake_pause_message || "");
 
       // Load payments
       setActiveMethods(branch.payment_methods || []);
@@ -199,6 +203,8 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
         origin_lat: originLat.trim() ? Number(originLat) : null,
         origin_lng: originLng.trim() ? Number(originLng) : null,
         payment_methods: activeMethods,
+        order_intake_paused: orderIntakePaused,
+        order_intake_pause_message: orderIntakePaused ? (orderIntakePauseMessage.trim() || null) : null,
         pago_movil: activeMethods.includes("pago_movil")
           ? {
               banco: pmBanco.trim() || null,
@@ -473,6 +479,42 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
                     />
                   </div>
                 </div>
+              </div>
+              
+              {/* Sección Pausar Pedidos */}
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#8e8e93] flex items-center gap-1.5 border-b border-[#f5f5f7] pb-1 mt-6">
+                <Clock className="w-3.5 h-3.5" /> Recepción de Pedidos
+              </h4>
+
+              <div className="space-y-3 mt-3">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-[#1d1d1f]">
+                  <input
+                    type="checkbox"
+                    checked={orderIntakePaused}
+                    onChange={(e) => setOrderIntakePaused(e.target.checked)}
+                    className="h-4.5 w-4.5 rounded border-[#d2d2d7] text-indigo-600 focus:ring-indigo-500/20"
+                    disabled={loading}
+                  />
+                  <span>Pausar recepción de pedidos (sobrecarga/demanda)</span>
+                </label>
+
+                {orderIntakePaused && (
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-[#6e6e73]">
+                      Mensaje de pausa personalizado
+                    </label>
+                    <textarea
+                      value={orderIntakePauseMessage}
+                      onChange={(e) => setOrderIntakePauseMessage(e.target.value)}
+                      placeholder="Ej. Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos."
+                      rows={2}
+                      maxLength={180}
+                      className="w-full resize-none rounded-xl border border-[#d2d2d7] bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition duration-150"
+                      disabled={loading}
+                    />
+                    <p className="text-[10px] text-[#8e8e93] mt-1">Este mensaje se mostrará a los clientes al abrir el carrito.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
