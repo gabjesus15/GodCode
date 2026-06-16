@@ -79,6 +79,8 @@ export async function generateMetadata({
   if (!isMainDomain(host)) {
     return {};
   }
+  // Usar siempre la URL canónica fija (www.godcode.me) para evitar
+  // inconsistencias cuando el host es distinto (ej. godcode.me sin www).
   const base = getAppUrl();
   const canonical = `${base}${locale === "es" ? "/" : `/?hl=${locale}`}`;
   const languageAlternates = buildLandingLanguageAlternates(base);

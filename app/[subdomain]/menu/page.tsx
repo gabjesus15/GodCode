@@ -5,7 +5,7 @@ import { createSupabasePublicServerClient } from "../../../utils/supabase/server
 import { MenuClient } from "../../../components/tenant/menu/menu-client";
 import type { HeroBanner } from "../../../components/tenant/home/hero-carousel";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
-import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
+import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedMenuStaticData, getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
 import { getCachedCompany } from "@/utils/tenant-cache";
 
@@ -72,13 +72,10 @@ export async function generateMetadata({
       ? rawDisplayName.trim()
       : company?.name?.trim()) || slugFallback || "Menú";
   const iconVersionSeed = company ? tenantBrandingIconVersionSeed(company) : resolvedParams.subdomain;
-  const icon = `/tenant-favicon?v=${encodeURIComponent(String(iconVersionSeed))}`;
-  const customDomain = company?.custom_domain?.trim();
-  const baseOrigin = customDomain
-    ? `${protocol}://${customDomain.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/$/, "")}`
-    : `${protocol}://${host}`;
+  const icon = `/tenant-favicon?tenant=${encodeURIComponent(resolvedParams.subdomain)}&v=${encodeURIComponent(String(iconVersionSeed))}`;
+  const baseOrigin = `${protocol}://${host}`;
   const resolvedMetadataBase = new URL(baseOrigin);
-  const canonical = `${resolvedMetadataBase.origin}${pathPrefix}/menu`;
+  const canonical = `${baseOrigin}${pathPrefix}/menu`;
 
 	return {
     metadataBase: resolvedMetadataBase,
@@ -345,7 +342,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
     // --- G. Casteo seguro de JSONB (Evita warnings silenciosos) ---
     const themeConfig = company.theme_config as Record<string, unknown> | null;
     const name = (themeConfig?.displayName as string) ?? company.name ?? "GodCode";
-    const logoUrl = (themeConfig?.logoUrl as string) ?? null;
+    const logoUrl = parseThemeLogoUrl(company?.theme_config) || null;
     const navbarType = (themeConfig?.navbarType as string) || "category-tabs";
     const navigationMode = (themeConfig?.navigationMode as string) || "scroll";
     const productCardStyle = (themeConfig?.productCardStyle as string) || "glass";
@@ -387,30 +384,46 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
       };
     }).filter((section) => section.hasMenuItem.length > 0);
 
+    const isMain = isMainDomain(host);
     const menuJsonLd = [
       {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
-        "itemListElement": [
-          {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "GodCode",
-            "item": "https://www.godcode.me"
-          },
-          {
-            "@type": "ListItem",
-            "position": 2,
-            "name": name,
-            "item": tenantBaseUrl
-          },
-          {
-            "@type": "ListItem",
-            "position": 3,
-            "name": "Menú",
-            "item": `${tenantBaseUrl}/menu`
-          }
-        ]
+        "itemListElement": isMain
+          ? [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "GodCode",
+                "item": "https://www.godcode.me"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": name,
+                "item": tenantBaseUrl
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Menú",
+                "item": `${tenantBaseUrl}/menu`
+              }
+            ]
+          : [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": name,
+                "item": tenantBaseUrl
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Menú",
+                "item": `${tenantBaseUrl}/menu`
+              }
+            ]
       },
       {
         "@context": "https://schema.org",

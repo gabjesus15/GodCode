@@ -12,6 +12,7 @@ import { BranchSelectorModal } from "../branch/branch-selector-modal";
 import { Navbar } from "../navbar/navbar";
 import { CartProvider, useCart } from "../cart";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
+import { isCloudinaryUrl } from "../utils/cloudinary";
 import dynamic from "next/dynamic";
 
 const CartFloat = dynamic(
@@ -225,7 +226,7 @@ function ProductInlinePanel({
     0,
   );
   const showUSD = country === "VE" || country === "Venezuela";
-  const isCloudinary = (product.image_url || "").includes("res.cloudinary.com");
+  const isCloudinary = isCloudinaryUrl(product.image_url);
 
   const displayPrice = product.has_discount && product.discount_price
     ? (showUSD ? formatCartMoney(product.discount_price, "USD") : formatCartMoney(product.discount_price, currency))

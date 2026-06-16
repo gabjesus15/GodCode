@@ -10,6 +10,7 @@ import { AdminHeaderClock } from "./admin-header-clock";
 import { AdminShortcutsHelp } from "./admin-shortcuts-help";
 import { SaasLogo } from "./SaasLogo";
 import { Sidebar } from "./sidebar";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 const maintenanceBanner =
 	typeof process !== "undefined" ? process.env.NEXT_PUBLIC_SAAS_ADMIN_MAINTENANCE_BANNER?.trim() ?? "" : "";
@@ -82,6 +83,7 @@ export function AdminShell({ children }: AdminShellProps) {
             <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2">
               <AdminHeaderClock />
               <AdminShortcutsHelp />
+              <ThemeToggle />
               <button
                 type="button"
                 className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 md:hidden"

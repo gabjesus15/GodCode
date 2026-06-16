@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import type { DashboardPeriod } from "@/lib/super-admin/super-admin-dashboard-shared";
 import { DASHBOARD_PERIODS } from "@/lib/super-admin/super-admin-dashboard-shared";
@@ -12,12 +12,13 @@ import {
 } from "@/components/super-admin/shell/admin-tab-styles";
 
 export function DashboardPeriodTabs({ current }: { current: DashboardPeriod }) {
+	const pathname = usePathname();
 	const searchParams = useSearchParams();
 
 	function hrefFor(p: DashboardPeriod): string {
 		const other = new URLSearchParams(searchParams?.toString() ?? "");
 		other.set("period", p);
-		return `/dashboard?${other.toString()}`;
+		return `${pathname}?${other.toString()}`;
 	}
 
 	return (

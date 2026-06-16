@@ -1,14 +1,15 @@
 /* ==========================================================================
-   CONFIGURACIÓN & VARIABLES (TEMA OISHI PREMIUM V2)
+   CONFIGURACIÓN & VARIABLES (TEMA OISHI PREMIUM V2 - SOFT OFF-WHITE)
    ========================================================================== */
 :root {
   /* --- Dimensiones --- */
-  --ticket-radius: 24px;
-  --stub-width: 320px; /* Un poco más ancho para presencia */
-  --cutout-size: 40px; /* Agujeros más definidos */
+  --ticket-radius: 28px;
+  --stub-width: 310px; /* Ancho optimizado para la sección QR */
   
   /* --- Colores & Fondos --- */
-  --bg-dark: #050505; /* Debe coincidir con el fondo detrás del ticket si es sólido */
+  --bg-dark: #eaeef4; /* Gris pizarra suave y frío, más oscuro para mayor contraste */
+  --card-bg: #ffffff; /* Fondo de tarjeta blanco sólido (coincide con la muesca del logo) */
+  --card-bg-solid: #ffffff; /* Blanco sólido para bloquear el banner superior */
   
   /* Gradiente principal basado en el negocio */
   --primary-red-gradient: linear-gradient(
@@ -17,34 +18,26 @@
     var(--accent-hover, var(--accent-primary, #c62828)) 100%
   );
   
-  /* Gradiente de marca para titulares */
-  --gold-gradient: linear-gradient(
-    180deg,
-    #ffffff 0%,
-    #f1f3f5 45%,
-    #cfd4da 100%
-  );
-
+  /* Gradiente de marca para titulares (Carbón Metálico) */
   --title-silver-gradient: linear-gradient(
-    180deg,
-    #ffffff 0%,
-    #ffffff 18%,
-    #fdfefe 30%,
-    #e8edf2 52%,
-    #c2cad3 72%,
-    #8f99a5 100%
+    135deg,
+    #0f172a 0%,
+    #1e293b 50%,
+    #334155 100%
   );
   
   /* --- Glassmorphism Avanzado --- */
-  --glass-surface: rgba(20, 20, 20, 0.75); /* Más oscuro para contraste */
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --glass-highlight: rgba(255, 255, 255, 0.05);
-  --blur-val: blur(24px);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.6); /* Reflejo superior brillante */
+  --blur-val: blur(28px);
 
-  /* --- Sombras --- */
-  --shadow-float: 0 20px 50px -10px rgba(0, 0, 0, 0.8);
-  --shadow-inset: inset 0 0 40px rgba(0,0,0,0.5); /* Profundidad interna */
-  --kitchen-real-bg: url("https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=1200&q=80");
+  /* --- Sombras Elevadas Multicapa (Evita que la tarjeta se vea plana) --- */
+  --shadow-float: 
+    0 40px 80px -15px rgba(15, 23, 42, 0.18),
+    0 20px 40px -10px rgba(15, 23, 42, 0.12),
+    0 8px 16px -8px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+  --shadow-inset: inset 0 0 40px rgba(255,255,255,0.5); /* Profundidad interna clara */
 }
 
 /* Reset */
@@ -61,20 +54,116 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(1rem, 5vw, 2rem);
+  padding: clamp(1rem, 5vw, 2.5rem);
   overflow-x: hidden;
   overflow-y: auto;
-  /* El fondo transparente permite ver la imagen que pongas en App.js */
-  background: transparent; 
-  color: white;
+  background: var(--bg-dark); 
+  color: #0f172a;
 }
 
-/* Overlay Cinematográfico */
+/* Overlay Cinematográfico con Luces de Fondo */
 .home-overlay {
   position: absolute;
   inset: 0;
-  /* Viñeta oscura para centrar la atención en el ticket */
-  background: radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, #000 100%);
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.75) 0%, var(--bg-dark) 100%);
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden; /* Clips the floating blobs */
+}
+
+/* Efecto de Vidrio Esmerilado Texturizado (Noise Overlay) */
+.home-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.022; /* Textura táctil muy sutil de cristal esmerilado */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* Esferas de Luz Dinámicas Estilo Apple (Mesh Gradient Acelerado por GPU - Más Vibrantes) */
+.home-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.14; /* Opacidad pastel bloom */
+  will-change: transform;
+  pointer-events: none;
+}
+
+.home-glow-1 {
+  width: clamp(350px, 45vw, 550px);
+  height: clamp(350px, 45vw, 550px);
+  background: var(--accent-primary, #e53935);
+  top: -10%;
+  left: -10%;
+  animation: float-glow-1 14s ease-in-out infinite alternate;
+}
+
+.home-glow-2 {
+  width: clamp(400px, 50vw, 650px);
+  height: clamp(400px, 50vw, 650px);
+  background: #4f46e5; /* indigo */
+  bottom: -15%;
+  right: -10%;
+  animation: float-glow-2 16s ease-in-out infinite alternate;
+}
+
+.home-glow-3 {
+  width: clamp(300px, 35vw, 450px);
+  height: clamp(300px, 35vw, 450px);
+  background: #d946ef; /* fuchsia neón vibrante */
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: float-glow-3 12s ease-in-out infinite alternate;
+}
+
+@keyframes float-glow-1 {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate(120px, 90px) scale(1.2) rotate(120deg);
+  }
+  100% {
+    transform: translate(-60px, 160px) scale(0.9) rotate(360deg);
+  }
+}
+
+@keyframes float-glow-2 {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate(-140px, -90px) scale(0.8) rotate(-180deg);
+  }
+  100% {
+    transform: translate(90px, -150px) scale(1.15) rotate(-360deg);
+  }
+}
+
+@keyframes float-glow-3 {
+  0% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate(-25%, -30%) scale(1.25) rotate(90deg);
+  }
+  100% {
+    transform: translate(-70%, -70%) scale(0.75) rotate(180deg);
+  }
+}
+
+/* Fondo de Cristal Esmerilado Profundo (Acuarela Claro) */
+.home-background-glass {
+  position: absolute;
+  inset: 0;
+  background-image: var(--tenant-bg-image);
+  background-repeat: repeat;
+  background-size: 800px;
+  opacity: 0.45;
+  filter: blur(24px) brightness(1.05) contrast(0.9) saturate(1.1);
   z-index: 0;
   pointer-events: none;
 }
@@ -88,7 +177,7 @@
 }
 
 /* ==========================================================================
-   BOTÓN DE AJUSTES (Settings) - ESTILO CRISTAL FLOTANTE
+   BOTÓN DE AJUSTES (Settings) - ESTILO CRISTAL FLOTANTE CLARO
    ========================================================================== */
 
 .settings-btn {
@@ -97,177 +186,211 @@
   right: 25px;
   z-index: 50;
   
-  width: 50px;
-  height: 50px;
+  width: 46px;
+  height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
   
-  /* Cristal Frosted */
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.6);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
-  border: 1px solid var(--accent-primary, #e63946);
-  border-radius: 50%; /* Redondo es más moderno para settings */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 50%;
   
   color: var(--accent-primary, #e63946);
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efecto rebote */
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.03), 0 0 0 1px rgba(255,255,255,0.5) inset;
 }
 
 .settings-btn:hover {
   background: var(--accent-primary, #e63946);
   color: white;
-  transform: scale(1.15) rotate(90deg); /* Rota al hacer hover */
+  transform: scale(1.1) rotate(90deg);
   border-color: var(--accent-hover, #c62828);
-  box-shadow: 0 0 20px var(--accent-shadow, rgba(255, 71, 87, 0.35));
+  box-shadow: 0 8px 24px var(--accent-shadow, rgba(255, 71, 87, 0.3));
 }
 
 /* ==========================================================================
-   TICKET WRAPPER (LA TARJETA PREMIUM)
+   TICKET WRAPPER (EL CONTENEDOR UNIFICADO)
    ========================================================================== */
 
 .ticket-wrapper {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 950px; /* Más ancho para elegancia */
+  max-width: 860px; /* Tamaño compacto premium */
   
-  /* Fondo Base + Textura de Ruido (Noise) */
-  background-color: #121212; 
-  background-image: 
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E"),
-    linear-gradient(to bottom right, rgba(255,255,255,0.05), rgba(0,0,0,0.2));
-    
+  background: var(--card-bg);
   -webkit-backdrop-filter: var(--blur-val);
   backdrop-filter: var(--blur-val);
   border: 1px solid var(--glass-border);
-  border-top: 1px solid rgba(255,255,255,0.15); /* Borde superior más brillante (luz cenital) */
+  border-top: 1px solid var(--glass-highlight);
   
   border-radius: var(--ticket-radius);
   box-shadow: var(--shadow-float);
   
   position: relative;
   transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-  overflow: hidden; /* Mantiene la textura dentro */
+  overflow: hidden;
 }
 
-/* Brillo sutil en el borde al hacer hover */
 @media (min-width: 850px) {
+  .ticket-wrapper {
+    flex-direction: row;
+  }
   .ticket-wrapper:hover {
-    transform: translateY(-8px) scale(1.01);
+    transform: translateY(-8px);
     box-shadow: 
-      0 40px 80px -20px rgba(0,0,0,0.9),
-      0 0 0 1px rgba(255, 255, 255, 0.2); /* Resplandor de borde */
+      0 60px 100px -20px rgba(15, 23, 42, 0.22),
+      0 30px 60px -15px rgba(15, 23, 42, 0.14),
+      0 10px 20px -10px rgba(15, 23, 42, 0.10),
+      0 0 0 1px rgba(0, 0, 0, 0.03);
   }
 }
 
 /* ==========================================================================
-   SECCIÓN IZQUIERDA (CONTENIDO)
+   SECCIÓN IZQUIERDA (CONTENIDO PRINCIPAL)
    ========================================================================== */
 
 .ticket-main {
   flex: 1;
-  padding: clamp(2rem, 5vw, 3.5rem);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   position: relative;
   z-index: 2;
-  /* Sombra interna para profundidad */
-  box-shadow: inset -20px 0 30px -20px rgba(0,0,0,0.5);
+  padding: 0 0 2.5rem 0; /* Sin padding superior para que el banner quede flush */
 }
 
-/* --- Branding --- */
-.home-header-centered {
-  margin-bottom: 2.5rem;
+@media (min-width: 850px) {
+  .ticket-main {
+    border-radius: var(--ticket-radius) 0 0 var(--ticket-radius);
+  }
+}
+
+/* Banner Superior */
+.home-banner {
+  position: relative;
   width: 100%;
+  height: 180px;
+  background-image: var(--tenant-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  clip-path: ellipse(110% 70% at 50% 25%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: var(--ticket-radius) 0 0 0;
 }
 
-.brand-container-centered {
+@media (max-width: 849px) {
+  .home-banner {
+    border-radius: var(--ticket-radius) var(--ticket-radius) 0 0 !important;
+  }
+}
+
+.home-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.4) 100%);
+  z-index: 1;
+}
+
+/* Cabecera del Perfil */
+.home-profile-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.2rem;
+  margin-top: -55px; /* Pulls logo up over the banner curve */
+  padding: 0 2rem;
+  position: relative;
+  z-index: 5;
+  width: 100%;
 }
 
-.home-logo-centered {
-  width: 110px;
-  height: 110px;
-  object-fit: contain;
-  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.home-logo-centered.logo-initials {
+/* Muesca Circular Opaca (Flat Mask) */
+.home-logo-wrap {
+  width: 106px;
+  height: 106px;
+  border-radius: 50%;
+  border: 6px solid var(--card-bg-solid, #ffffff); /* Crea la muesca circular de deformación sólida */
+  background: var(--card-bg-solid, #ffffff);
+  padding: 0px; /* Logo uses the full container space */
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #2b2b2b;
-  color: white;
-  font-size: 2rem;
-  font-weight: 800;
-  border-radius: 20px;
+  z-index: 5;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden; /* Clips logo image to a perfect circle */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.home-logo-centered {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover; /* Cover container space completely */
+}
+
+.home-logo-wrap.logo-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.04);
+  color: #0f172a;
+  font-size: 2.2rem;
+  font-weight: 700;
+  border-radius: 50%;
   letter-spacing: 1px;
 }
 
-.home-logo-centered:hover {
-  transform: scale(1.1) rotate(-3deg);
+.home-logo-wrap:hover {
+  transform: scale(1.08) rotate(-2deg);
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
 }
 
-.brand-text-centered h1,
-.brand-text-centered .text-gradient {
-  font-size: clamp(2.8rem, 9vw, 4.2rem);
-  font-weight: 900;
-  line-height: 0.9;
+.home-profile-info {
+  margin-top: 1.2rem;
+  text-align: center;
+}
+
+.home-profile-info h1 {
+  font-size: clamp(1.8rem, 6vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.2;
   margin: 0;
-  letter-spacing: -2px;
+  letter-spacing: -0.02em;
   
   background: var(--title-silver-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 10px rgba(0,0,0,0.45));
-}
-
-.brand-subtitle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-  font-size: 0.8rem;
-  letter-spacing: 0.3em;
-  color: rgba(255, 255, 255, 0.5);
-  margin-top: 0.8rem;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-/* Líneas decorativas elegantes */
-.brand-subtitle::before, .brand-subtitle::after {
-  content: "";
-  height: 1px;
-  width: 30px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
 }
 
 .home-tagline {
-  margin-top: 1rem;
-  font-family: serif; /* Toque de elegancia */
-  font-style: italic;
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.6rem;
+  font-family: inherit;
+  font-style: normal;
+  font-weight: 400;
+  color: rgba(15, 23, 42, 0.65); /* Carbón con contraste */
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.76rem;
 }
 
-/* --- Botones --- */
+/* --- Rejilla de Botones (Nav Grid) --- */
 .home-nav-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 15px;
   width: 100%;
-  max-width: 460px;
+  max-width: 480px;
+  padding: 2rem 2rem 0 2rem;
 }
 
 .home-container .btn {
@@ -275,18 +398,47 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   padding: 0 24px;
-  height: 60px;
-  border-radius: 16px;
+  height: 54px;
+  border-radius: 50px;
   font-weight: 700;
-  font-size: 1rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
   text-transform: uppercase;
-  letter-spacing: 1px;
   overflow: hidden;
+}
+
+.home-container .btn .btn-icon {
+  position: absolute;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  transition: transform 0.3s ease;
+}
+
+.home-container .btn .btn-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 0 15px 0 25px; /* Deja espacio para el icono absoluto a la izquierda */
+  font-size: 0.76rem;
+  letter-spacing: 1.2px;
+  line-height: 1.2;
+  white-space: normal; /* Permite envolver en desktop si el botón es estrecho */
+  word-break: keep-all; /* Evita romper palabras */
+}
+
+@media (min-width: 850px) {
+  .home-container .btn-secondary .btn-label {
+    font-size: 0.7rem !important; /* Más pequeño para que quepa en la cuadrícula de 2 columnas */
+    letter-spacing: 0.8px !important;
+    padding: 0 10px 0 20px !important;
+  }
 }
 
 /* Efecto Brillo (Shine) al pasar el mouse */
@@ -297,8 +449,8 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: 0.5s;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  transition: 0.6s;
 }
 .home-container .btn:hover::after {
   left: 100%;
@@ -307,46 +459,96 @@
 /* Primario */
 .home-container .btn-primary {
   grid-column: 1 / -1;
-  height: 70px;
-  font-size: 1.1rem;
-  background: #e53935;
+  height: 60px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-primary, #e53935) 0%, var(--accent-hover, #d32f2f) 100%);
   color: white;
-  box-shadow: 0 10px 25px rgba(229, 57, 53, 0.35);
-  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 
+    0 10px 24px -4px var(--accent-shadow-strong, rgba(229, 57, 53, 0.4)),
+    0 4px 12px var(--accent-shadow, rgba(229, 57, 53, 0.2)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50px;
 }
 .home-container .btn-primary:hover {
-  transform: translateY(-3px);
-  background: #d32f2f;
-  box-shadow: 0 15px 35px rgba(211, 47, 47, 0.45);
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 
+    0 16px 32px -4px var(--accent-shadow-strong, rgba(229, 57, 53, 0.55)),
+    0 12px 24px -4px var(--accent-shadow-strong, rgba(229, 57, 53, 0.4)),
+    0 6px 20px var(--accent-shadow, rgba(229, 57, 53, 0.3));
 }
 
-/* Secundarios */
+.home-container .btn-primary .btn-label {
+  font-size: 0.85rem !important; /* El botón principal destaca más */
+  letter-spacing: 2px !important;
+}
+
+/* Secundarios Claras */
 .home-container .btn-secondary {
-  background: #242424;
-  border: 1px solid #353535;
-  color: #f1f3f5;
-  font-size: 14px;
+  background: rgba(255, 255, 255, 0.72); /* Cristal translúcido claro */
+  border: 1px solid rgba(0, 0, 0, 0.06); /* Borde sutil oscuro */
+  color: rgba(15, 23, 42, 0.85); /* Texto carbón legible */
+  font-size: 0.8rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 50px;
+  box-shadow: 
+    0 4px 12px rgba(15, 23, 42, 0.05),
+    0 1px 3px rgba(15, 23, 42, 0.02);
 }
-
+ 
 .home-container .btn-secondary:hover {
-  background: #2e2e2e;
-  border-color: #4a4a4a;
-  color: white;
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.45);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #000;
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 20px rgba(15, 23, 42, 0.08),
+    0 2px 6px rgba(15, 23, 42, 0.04);
 }
 
+/* Botón especial GodCode */
+.home-container .btn-godcode {
+  background: rgba(99, 102, 241, 0.06) !important; /* Fondo muy claro de índigo */
+  border: 1px solid rgba(99, 102, 241, 0.25) !important; /* Borde índigo suave */
+  color: #4f46e5 !important; /* Texto índigo oscuro/medio */
+  font-weight: 700 !important;
+  box-shadow: 
+    0 4px 12px rgba(99, 102, 241, 0.05),
+    0 1px 3px rgba(99, 102, 241, 0.02) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.home-container .btn-godcode:hover {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important; /* Gradiente índigo GodCode */
+  border-color: #4f46e5 !important;
+  color: #ffffff !important; /* Texto blanco en hover */
+  transform: translateY(-2px) !important;
+  box-shadow: 
+    0 10px 24px rgba(79, 70, 229, 0.25),
+    0 4px 10px rgba(79, 70, 229, 0.15) !important;
+}
+
+
+@media (max-width: 849px) {
+  .home-nav-grid {
+    grid-template-columns: 1fr !important; /* Stacked vertical stack on mobile */
+    gap: 12px;
+    padding: 1.5rem 1rem 0 1rem;
+  }
+  .home-container .btn-primary {
+    grid-column: auto !important;
+  }
+}
 
 /* ==========================================================================
-   SECCIÓN DERECHA (TICKET STUB - EL TALÓN)
+   SECCIÓN DERECHA (TICKET STUB - EL TALÓN CLARO)
    ========================================================================== */
 
 .ticket-stub {
-  width: 100%;
-  background: rgba(8, 12, 16, 0.32);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  width: var(--stub-width);
+  flex-shrink: 0;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -354,188 +556,22 @@
   justify-content: center;
   padding: 3.5rem 2.5rem;
   overflow: hidden;
-  color: white;
+  color: #0f172a;
+  border-radius: 0 var(--ticket-radius) var(--ticket-radius) 0;
+  border-left: 1px solid rgba(0, 0, 0, 0.06); /* Línea divisoria clara en escritorio */
 }
 
-/* Fondo tipo cocina (acero + azulejo suavizado) */
 .ticket-stub::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: 
-    linear-gradient(180deg, rgba(6, 10, 14, 0.3) 0%, rgba(8, 12, 16, 0.62) 100%),
-    var(--kitchen-real-bg),
-    url("/tenant/kitchen-bg.svg"),
-    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.12) 0%, transparent 34%),
-    radial-gradient(circle at 85% 28%, rgba(255, 255, 255, 0.1) 0%, transparent 30%),
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.05) 0,
-      rgba(255, 255, 255, 0.05) 1px,
-      transparent 1px,
-      transparent 34px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.04) 0,
-      rgba(255, 255, 255, 0.04) 1px,
-      transparent 1px,
-      transparent 34px
-    );
-  background-size: auto, cover, cover, auto, auto, 34px 34px, 34px 34px;
-  background-position: center, center, center, center, center, center, center;
-  filter: saturate(0.9) contrast(1.05) blur(0.4px);
-  opacity: 0.55;
-  z-index: 0;
+  display: none;
 }
 
 .ticket-stub::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.2));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.02));
   z-index: 0;
   pointer-events: none;
-}
-
-.veggie-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.veggie {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: clamp(38px, 4.8vw, 64px);
-  height: clamp(20px, 2.8vw, 36px);
-  opacity: 0.5;
-  background-repeat: no-repeat;
-  background-size: contain;
-  background-position: center;
-  filter: saturate(1.05) drop-shadow(0 3px 8px rgba(0, 0, 0, 0.35));
-  animation-name: veggie-flight;
-  animation-duration: 4.6s;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  animation-direction: normal;
-  will-change: transform;
-  backface-visibility: hidden;
-  transform: translate3d(var(--x-start, -300px), var(--y-start, 0px), 0);
-}
-
-.veggie-1 {
-  --x-start: -300px;
-  --y-start: -140px;
-  --x-end: 300px;
-  --y-end: -140px;
-  --r-start: -18deg;
-  --r-end: 18deg;
-  --arc: 24px;
-  animation-delay: 0s;
-  animation-duration: 4.2s;
-}
-
-.veggie-2 {
-  --x-start: 300px;
-  --y-start: -10px;
-  --x-end: -300px;
-  --y-end: -10px;
-  --r-start: 18deg;
-  --r-end: -18deg;
-  --arc: 20px;
-  animation-delay: -1.1s;
-  animation-duration: 5s;
-}
-
-.veggie-3 {
-  --x-start: -110px;
-  --y-start: -260px;
-  --x-end: -110px;
-  --y-end: 260px;
-  --r-start: -14deg;
-  --r-end: 14deg;
-  --arc: 16px;
-  animation-delay: -2.2s;
-  animation-duration: 4.9s;
-}
-
-.veggie-4 {
-  --x-start: 120px;
-  --y-start: 260px;
-  --x-end: 120px;
-  --y-end: -260px;
-  --r-start: 14deg;
-  --r-end: -14deg;
-  --arc: 16px;
-  animation-delay: -0.7s;
-  animation-duration: 5.3s;
-}
-
-.veggie-5 {
-  --x-start: -300px;
-  --y-start: -220px;
-  --x-end: 300px;
-  --y-end: 220px;
-  --r-start: -22deg;
-  --r-end: 22deg;
-  --arc: 12px;
-  animation-delay: -1.8s;
-  animation-duration: 5.1s;
-}
-
-.veg-lettuce {
-  width: clamp(50px, 6.2vw, 84px);
-  height: clamp(34px, 4.2vw, 56px);
-  background-image: url("/tenant/veg-lettuce.svg");
-}
-
-.veg-carrot {
-  background-image: url("/tenant/veg-carrot.svg");
-  height: clamp(16px, 2.2vw, 26px);
-}
-
-.veg-cucumber {
-  background-image: url("/tenant/veg-cucumber.svg");
-}
-
-.veg-tomato {
-  width: clamp(30px, 3.8vw, 48px);
-  height: clamp(30px, 3.8vw, 48px);
-  background-image: url("/tenant/veg-tomato.svg");
-}
-
-.veg-pepper {
-  width: clamp(44px, 5.4vw, 72px);
-  height: clamp(24px, 3vw, 38px);
-  background-image: url("/tenant/veg-pepper.svg");
-}
-
-@keyframes veggie-flight {
-  0% {
-    transform: translate3d(var(--x-start), var(--y-start), 0) rotate(var(--r-start, -16deg)) scale(0.92);
-  }
-  45% {
-    transform: translate3d(
-      calc((var(--x-start) + var(--x-end)) / 2),
-      calc((var(--y-start) + var(--y-end)) / 2 - var(--arc, 18px)),
-      0
-    ) rotate(0deg) scale(1.03);
-  }
-  100% {
-    transform: translate3d(var(--x-end), var(--y-end), 0) rotate(var(--r-end, 16deg)) scale(0.94);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .veggie {
-    animation: none;
-    transform: translate3d(var(--x-end), var(--y-end), 0);
-    opacity: 0.18;
-  }
 }
 
 .stub-content {
@@ -548,32 +584,40 @@
 }
 
 .stub-badge {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: #fff;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: rgba(15, 23, 42, 0.7);
   padding: 5px 15px;
   border-radius: 50px;
   font-size: 0.65rem;
   font-weight: 900;
   letter-spacing: 2px;
   margin-bottom: 1.5rem;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
 }
 
 .qr-box {
-  background: white;
-  padding: 10px; /* Borde blanco estilo Polaroid */
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 14px;
+  border-radius: 16px;
   box-shadow: 
-    0 20px 40px rgba(0,0,0,0.5), /* Sombra larga */
-    0 0 0 1px rgba(0,0,0,0.1);    /* Borde fino */
-  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-  margin-bottom: 1.5rem;
-  width: clamp(120px, 40vw, 150px);
-  height: clamp(120px, 40vw, 150px);
+    0 24px 48px -8px rgba(15, 23, 42, 0.12),
+    0 8px 16px -8px rgba(15, 23, 42, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin-bottom: 1.8rem;
+  width: clamp(130px, 42vw, 160px);
+  height: clamp(130px, 42vw, 160px);
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  animation: qr-float 6s ease-in-out infinite alternate;
+}
+
+@keyframes qr-float {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-6px) rotate(1deg); }
 }
 
 .qr-box .qr-code {
@@ -594,109 +638,163 @@
 }
 
 .qr-box:hover {
-  transform: scale(1.1) rotate(3deg);
+  transform: scale(1.08) translateY(-4px) rotate(2deg);
+  box-shadow: 
+    0 32px 64px -12px rgba(15, 23, 42, 0.18),
+    0 12px 24px -8px rgba(15, 23, 42, 0.1);
 }
 
 .stub-scan-text {
   font-weight: 900;
   font-size: 1.1rem;
   letter-spacing: 2px;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
-/* Falso Código de Barras Decorativo */
 .stub-footer {
   margin-top: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-.stub-footer::after {
-  content: "|| ||| | ||| || ||";
-  font-family: monospace;
-  font-size: 1.5rem;
-  letter-spacing: -2px;
-  opacity: 0.5;
-  margin-top: 5px;
-  transform: scaleY(0.6);
-}
 
-/* Línea divisoria en Móvil */
-.ticket-stub-line {
-  width: 90%;
-  height: 2px;
-  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.2) 0, rgba(255,255,255,0.2) 10px, transparent 10px, transparent 20px);
-  margin: 10px auto;
+.stub-info {
+  font-size: 0.65rem;
+  letter-spacing: 1.5px;
+  color: rgba(15, 23, 42, 0.45);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-top: 4px;
 }
 
 /* ==========================================================================
-   ESCRITORIO (850px+) - MONTAJE DEL TICKET
+   LUCES DE AMBIENTE INTERNAS DEL QR
    ========================================================================== */
 
-@media (min-width: 850px) {
-  .ticket-wrapper {
-    flex-direction: row;
-    overflow: visible; /* IMPORTANTE: Para que salgan los recortes */
-  }
-  
-  .ticket-stub-line { display: none; }
+.veggie-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+  filter: blur(70px);
+  opacity: 0.25; /* Reducido para no lavar en claro */
+}
 
-  /* Stub Derecho */
-  .ticket-stub {
-    width: var(--stub-width);
-    flex-shrink: 0;
-    border-radius: 0 var(--ticket-radius) var(--ticket-radius) 0;
-    
-    /* LÍNEA DE TROQUELADO REALISTA (Shadow + Dashed) */
-    border-left: 3px dashed rgba(0, 0, 0, 0.3);
-    box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.1); /* Brillo en el corte */
-  }
+.veggie {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: clamp(120px, 15vw, 180px);
+  height: clamp(120px, 15vw, 180px);
+  opacity: 0.7;
+  background-image: none !important;
+  border-radius: 50%;
+  animation-name: veggie-flight;
+  animation-duration: 7s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translate3d(var(--x-start, -100px), var(--y-start, 0px), 0);
+}
 
-  .ticket-main {
-    border-radius: var(--ticket-radius) 0 0 var(--ticket-radius);
-    padding-right: 4rem; /* Espacio antes del corte */
-  }
+.veggie-1 {
+  background: var(--accent-primary, #e53935);
+  --x-start: -80px;
+  --y-start: -60px;
+  --x-end: 80px;
+  --y-end: 40px;
+  --r-start: 0deg;
+  --r-end: 360deg;
+  --arc: 30px;
+  animation-delay: 0s;
+  animation-duration: 6s;
+}
 
-  /* --- LOS RECORTES (MUESCAS) --- */
-  /* [TRUCO] Los círculos deben ser del mismo color que el fondo de la página */
-  .ticket-wrapper::before,
-  .ticket-wrapper::after {
-    content: '';
-    position: absolute;
-    width: var(--cutout-size);
-    height: var(--cutout-size);
-    
-    /* !!! IMPORTANTE !!! 
-       Si usas una foto de fondo, estos círculos se verán negros planos.
-       Si quieres que sea perfecto sobre fotos, avísame (requiere mask-image).
-       Por ahora usamos el color oscuro base.
-    */
-    background-color: #000; /* Color negro puro para simular oscuridad de fondo */
-    
-    border-radius: 50%;
-    z-index: 20;
-    right: calc(var(--stub-width) - (var(--cutout-size) / 2));
-    
-    /* Sombra interna para que el agujero tenga profundidad 3D */
-    box-shadow: 
-      inset 2px 2px 6px rgba(0,0,0,0.9), /* Sombra profunda dentro del hueco */
-      0 0 0 1px rgba(255,255,255,0.05);  /* Borde sutil */
-  }
+.veggie-2 {
+  background: #4f46e5; /* indigo glow */
+  --x-start: 60px;
+  --y-start: 40px;
+  --x-end: -60px;
+  --y-end: -40px;
+  --r-start: 0deg;
+  --r-end: -360deg;
+  --arc: 20px;
+  animation-delay: -2s;
+  animation-duration: 8s;
+}
 
-  .ticket-wrapper::before { top: calc((var(--cutout-size) / 2) * -1); }
-  .ticket-wrapper::after { bottom: calc((var(--cutout-size) / 2) * -1); }
+.veggie-3, .veggie-4, .veggie-5 {
+  display: none;
+}
+
+@keyframes veggie-flight {
+  0% {
+    transform: translate3d(var(--x-start), var(--y-start), 0) rotate(var(--r-start, 0deg));
+  }
+  100% {
+    transform: translate3d(var(--x-end), var(--y-end), 0) rotate(var(--r-end, 0deg));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .veggie {
+    animation: none;
+    transform: translate3d(var(--x-end), var(--y-end), 0);
+    opacity: 0.18;
+  }
 }
 
 /* ==========================================================================
    MÓVIL
    ========================================================================== */
 @media (max-width: 849px) {
-  .home-nav-grid { grid-template-columns: 1fr; }
+  .home-container {
+    padding: 0 !important;
+    align-items: flex-start; /* Permite scroll natural desde la parte superior */
+  }
+  .home-content.container {
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .ticket-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100dvh;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important; /* En pantalla completa móvil no se requiere la sombra flotante exterior */
+  }
+  .home-banner {
+    height: 250px !important; /* Aumentado de 180px a 250px para empujar todo hacia abajo */
+    border-radius: 0 !important;
+    clip-path: ellipse(120% 70% at 50% 20%) !important; /* Curva adaptada al nuevo alto */
+  }
+  .home-profile-info {
+    margin-top: 1.5rem !important; /* Más separación entre logo y título */
+  }
+  .home-tagline {
+    margin-top: 0.8rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  .ticket-main {
+    padding: 0 0 4.5rem 0; /* Espacio extra al final para evitar recortes con la navegación del sistema */
+  }
+  
+  .home-nav-grid { 
+    grid-template-columns: 1fr; 
+    gap: 16px !important; /* Más separación entre botones para ocupar mejor el espacio */
+    padding: 2.5rem 1.5rem 0 1.5rem !important; /* Aumentado padding superior para bajar la botonera */
+  }
   .settings-btn { width: 42px; height: 42px; top: 15px; right: 15px; }
   
   /* En móvil el troquelado es horizontal */
   .ticket-stub { 
-    border-top: 3px dashed rgba(0,0,0,0.3); 
-    box-shadow: inset 0 2px 0 rgba(255,255,255,0.1);
+    border-top: 1px solid rgba(0, 0, 0, 0.06); 
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4);
+    border-left: none;
   }
 }

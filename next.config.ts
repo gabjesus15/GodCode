@@ -95,6 +95,22 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    // 301 permanente: consolida SEO en www.godcode.me.
+    // Vercel aplica un 307 por defecto; este redirect lo overridea con 301.
+    const baseDomain = process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN?.trim() || "";
+    if (!baseDomain || baseDomain.startsWith("www.") || baseDomain.includes("localhost")) {
+      return [];
+    }
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: baseDomain }],
+        destination: `https://www.${baseDomain}/:path*`,
+        permanent: true, // 301
+      },
+    ];
+  },
 
 };
 

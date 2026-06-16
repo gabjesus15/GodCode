@@ -54,9 +54,11 @@ function resolveSlugFromHost(hostHeader: string | null): string | null {
 
 export async function GET(req: NextRequest) {
   const hostHeader = req.headers.get("host");
+  const { searchParams } = new URL(req.url);
+  const querySlug = searchParams.get("tenant")?.trim();
   const customDomainSlug = await resolveTenantSlugFromCustomDomainHost(hostHeader);
   const hostSlug = resolveSlugFromHost(hostHeader);
-  const tenantSlug = customDomainSlug ?? hostSlug;
+  const tenantSlug = querySlug || customDomainSlug || hostSlug;
 
   if (!tenantSlug) {
     try {

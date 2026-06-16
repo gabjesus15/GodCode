@@ -55,7 +55,7 @@ export default async function DashboardPage({
 		fetchMrrFromPlans(),
 		fetchRevenueInPeriod(fromIso),
 		fetchNewCompaniesInPeriod(fromIso),
-		fetchOnboardingFunnelCounts(),
+		fetchOnboardingFunnelCounts(fromIso),
 		fetchOpenTicketsCount(),
 		fetchCompanyStatusCounts(),
 	]);

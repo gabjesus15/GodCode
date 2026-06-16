@@ -12,8 +12,12 @@ const UBER_TOKEN_URL = "https://auth.uber.com/oauth/v2/token";
 const UBER_ESTIMATES_URL = "https://api.uber.com/v1/eats/deliveries/estimates";
 
 function cacheKeyForCredentials(clientId: string, clientSecret: string): string {
-	const h = createHash("sha256").update(clientSecret, "utf8").digest("hex").slice(0, 24);
-	return `${clientId.trim()}::${h}`;
+	let hash = 0x811c9dc5;
+	for (let i = 0; i < clientSecret.length; i++) {
+		hash ^= clientSecret.charCodeAt(i);
+		hash = (hash * 0x01000193) >>> 0;
+	}
+	return `${clientId.trim()}::${clientSecret.length}_${hash.toString(16)}`;
 }
 
 function currencyMinorExponent(currencyCode: string): number {

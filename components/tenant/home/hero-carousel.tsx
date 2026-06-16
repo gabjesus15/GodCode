@@ -5,7 +5,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { getCloudinaryOptimizedUrl } from "../utils/cloudinary";
+import { getCloudinaryOptimizedUrl, isCloudinaryUrl } from "../utils/cloudinary";
 
 const FALLBACK_IMAGE =
 	"https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80";
@@ -28,7 +28,7 @@ function HeroSlide({
 	isFirst: boolean;
 }) {
 	const rawUrl = banner.image_url?.trim() ?? "";
-	const isCloudinary = rawUrl.includes("res.cloudinary.com");
+	const isCloudinary = isCloudinaryUrl(rawUrl);
 	const fallbackUrl = rawUrl || FALLBACK_IMAGE;
 
 	// Loader personalizado para aprovechar srcset (resoluciones dinámicas)

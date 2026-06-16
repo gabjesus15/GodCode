@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { redirect } from "next/navigation";
 
+import "./super-admin.css";
+
 import { AdminRoleProvider } from "../../components/super-admin/shell/admin-role-context";
 import { SaasAdminPwaRegister } from "../../components/super-admin/shell/saas-admin-pwa-register";
 import { AdminShell } from "../../components/super-admin/shell/admin-shell";
-import { ThemeToggle } from "../../components/theme/theme-toggle";
 import { createSupabaseServerClient } from "../../utils/supabase/server";
 import { QueryProvider } from "@/components/ui/query-provider";
 
@@ -67,7 +68,6 @@ export default async function SuperAdminLayout({
 	return (
 		<QueryProvider>
 			<SaasAdminPwaRegister />
-			<ThemeToggle />
 			<AdminRoleProvider role={role}>
 				<AdminShell>{children}</AdminShell>
 			</AdminRoleProvider>

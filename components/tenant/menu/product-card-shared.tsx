@@ -6,7 +6,7 @@ import { Plus, Minus, ShoppingBag } from "lucide-react";
 
 import { useCart } from "../cart";
 import { useCartStore } from "../cart/cart-store";
-import { getCloudinaryOptimizedUrl } from "../utils/cloudinary";
+import { getCloudinaryOptimizedUrl, isCloudinaryUrl } from "../utils/cloudinary";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
 
 export interface ProductCardProduct {
@@ -88,7 +88,7 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const isCloudinary = Boolean(product.image_url?.includes("res.cloudinary.com"));
+  const isCloudinary = isCloudinaryUrl(product.image_url);
   const imageSrc = imageError
     ? PRODUCT_CARD_FALLBACK_IMAGE
     : isCloudinary

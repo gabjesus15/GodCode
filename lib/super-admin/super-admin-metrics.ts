@@ -13,7 +13,8 @@ export async function fetchMrrFromPlans(): Promise<{ mrr: number; activeWithPlan
 	const { data, error } = await supabaseAdmin
 		.from("companies")
 		.select("id, plan_id, plans(price)")
-		.eq("subscription_status", "active");
+		.eq("subscription_status", "active")
+		.limit(10000);
 
 	if (error) {
 		return { mrr: 0, activeWithPlan: 0, error: error.message };
@@ -43,7 +44,8 @@ export async function fetchRevenueInPeriod(fromIso: string | null): Promise<{
 	let q = supabaseAdmin
 		.from("payments_history")
 		.select("amount_paid, status, payment_date")
-		.in("status", ["paid", "approved"]);
+		.in("status", ["paid", "approved"])
+		.limit(20000);
 
 	if (fromIso) {
 		q = q.gte("payment_date", fromIso);
@@ -85,24 +87,30 @@ const ONBOARDING_STATUSES = [
 	"rejected",
 ] as const;
 
-export async function fetchOnboardingFunnelCounts(): Promise<{
+export async function fetchOnboardingFunnelCounts(fromIso: string | null): Promise<{
 	counts: Record<string, number>;
 	total: number;
+	onboardingViews: number;
+	onboardingVisitors: number;
 	error: string | null;
 }> {
 	const results = await Promise.all(
 		ONBOARDING_STATUSES.map(async (status) => {
-			const { count, error } = await supabaseAdmin
+			let q = supabaseAdmin
 				.from("onboarding_applications")
 				.select("id", { count: "exact", head: true })
 				.eq("status", status);
+			if (fromIso) {
+				q = q.gte("created_at", fromIso);
+			}
+			const { count, error } = await q;
 			return { status, count: count ?? 0, error: error?.message ?? null };
 		})
 	);
 
 	const err = results.find((r) => r.error);
 	if (err?.error) {
-		return { counts: {}, total: 0, error: err.error };
+		return { counts: {}, total: 0, onboardingViews: 0, onboardingVisitors: 0, error: err.error };
 	}
 
 	const counts: Record<string, number> = {};
@@ -112,11 +120,15 @@ export async function fetchOnboardingFunnelCounts(): Promise<{
 		total += r.count;
 	}
 
-	const { count: rowTotal, error: totalErr } = await supabaseAdmin
+	let totalQuery = supabaseAdmin
 		.from("onboarding_applications")
 		.select("id", { count: "exact", head: true });
+	if (fromIso) {
+		totalQuery = totalQuery.gte("created_at", fromIso);
+	}
+	const { count: rowTotal, error: totalErr } = await totalQuery;
 	if (totalErr) {
-		return { counts, total, error: totalErr.message };
+		return { counts, total, onboardingViews: 0, onboardingVisitors: 0, error: totalErr.message };
 	}
 	const accounted = total;
 	const other = Math.max(0, (rowTotal ?? 0) - accounted);
@@ -125,7 +137,28 @@ export async function fetchOnboardingFunnelCounts(): Promise<{
 		total = rowTotal ?? accounted;
 	}
 
-	return { counts, total, error: null };
+	// Paso 0: Visitas de onboarding (analytics_events)
+	let viewsQuery = supabaseAdmin
+		.from("analytics_events")
+		.select("visitor_id, path")
+		.ilike("path", "/onboarding%")
+		.limit(50000);
+	if (fromIso) {
+		viewsQuery = viewsQuery.gte("created_at", fromIso);
+	}
+	const { data: viewsData, error: viewsError } = await viewsQuery;
+	if (viewsError) {
+		return { counts, total, onboardingViews: 0, onboardingVisitors: 0, error: viewsError.message };
+	}
+
+	const onboardingEvents = (viewsData ?? []).filter((e) => {
+		const clean = (e.path || "").split("?")[0].replace(/\/$/, "");
+		return clean === "/onboarding";
+	});
+	const onboardingVisitors = new Set(onboardingEvents.map((e) => e.visitor_id).filter(Boolean)).size;
+	const onboardingViews = onboardingEvents.length;
+
+	return { counts, total, onboardingViews, onboardingVisitors, error: null };
 }
 
 export type PaymentHealthRow = {

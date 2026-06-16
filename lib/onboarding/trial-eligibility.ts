@@ -19,6 +19,9 @@ export async function getStripeCardFingerprintFromCheckoutSession(
 	stripeSecret: string,
 ): Promise<string | null> {
 	if (!checkoutSessionId || !stripeSecret) return null;
+	if (checkoutSessionId.length > 100 || !/^[a-zA-Z0-9_-]+$/.test(checkoutSessionId)) {
+		return null;
+	}
 
 	const sessionUrl = new URL(`https://api.stripe.com/v1/checkout/sessions/${checkoutSessionId}`);
 	sessionUrl.searchParams.append("expand[]", "payment_intent.payment_method");

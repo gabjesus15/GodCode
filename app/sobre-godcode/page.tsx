@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 
 import { ArrowRight, ChartNoAxesCombined, ShieldCheck, Sparkles, Users } from "lucide-react";
 
@@ -108,6 +109,9 @@ export async function generateMetadata({
 }: {
   searchParams?: Promise<AboutSearchParams>;
 }): Promise<Metadata> {
+  const hdrs = await headers();
+  const host = hdrs.get("host") || "";
+  // Usar siempre la URL canónica fija para consistencia SEO.
   const base = getAppUrl();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const fallbackLocale = await getCurrentLocale();

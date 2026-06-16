@@ -9,6 +9,52 @@
   --sa-danger: #dc2626;
 }
 
+html.dark,
+html.dark :root {
+  --sa-bg: #09090b;
+  --sa-bg-secondary: #18181b;
+  --sa-surface: rgba(24, 24, 27, 0.85);
+  --sa-border: #27272a;
+  --sa-text: #f4f4f5;
+  --sa-muted: #a1a1aa;
+  --sa-accent: #f4f4f5;
+  --sa-danger: #ef4444;
+}
+
+html.dark .super-admin .sa-icon-button {
+  background: #18181b;
+  color: #f4f4f5;
+  border-color: var(--sa-border);
+}
+html.dark .super-admin .sa-icon-button:hover {
+  background: #27272a;
+}
+html.dark .super-admin .sa-btn--outline {
+  background: #18181b;
+  color: #f4f4f5;
+}
+html.dark .super-admin .sa-btn--outline:hover {
+  background: #27272a;
+}
+html.dark .super-admin .sa-btn--default {
+  background: #f4f4f5;
+  color: #09090b;
+}
+html.dark .super-admin .sa-btn--default:hover {
+  background: #e4e4e7;
+}
+html.dark .super-admin .sa-btn--ghost {
+  color: #a1a1aa;
+}
+html.dark .super-admin .sa-btn--ghost:hover {
+  background: #18181b;
+  color: #f4f4f5;
+}
+html.dark .super-admin .sa-badge--neutral {
+  background: #27272a;
+  color: #f4f4f5;
+}
+
 .super-admin {
   min-height: 100vh;
   color: var(--sa-text);

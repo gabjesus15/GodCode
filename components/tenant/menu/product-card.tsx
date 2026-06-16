@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import Image from "next/image";
 import { Plus, Minus, ChevronDown, X } from "lucide-react";
 import { useCart } from "../cart";
-import { getCloudinaryOptimizedUrl } from "../utils/cloudinary";
+import { getCloudinaryOptimizedUrl, isCloudinaryUrl } from "../utils/cloudinary";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
 import { normalizeProductCardStyle } from "@/lib/store-theme/theme-config";
 import {
@@ -55,7 +55,7 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
   );
 
   const isLongDesc = (product.description || "").length > 60;
-  const isCloudinary = (product.image_url || "").includes("res.cloudinary.com");
+  const isCloudinary = isCloudinaryUrl(product.image_url);
   const fallbackUrl = product.image_url || FALLBACK_IMAGE;
 
   const cloudinaryLoader = ({ src, width }: { src: string; width: number }) => {

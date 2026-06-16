@@ -7,6 +7,17 @@ export const validateImageFile = (file: File | null) => validateImageFileShared(
 export const uploadImage = (file: File, folder = "tenant") =>
 	uploadImageShared(file, folder);
 
+export function isCloudinaryUrl(url: string | null | undefined): boolean {
+	if (!url) return false;
+	try {
+		const absoluteUrl = url.startsWith("//") ? `https:${url}` : url;
+		const parsed = new URL(absoluteUrl);
+		return parsed.hostname === "res.cloudinary.com" || parsed.hostname.endsWith(".res.cloudinary.com");
+	} catch {
+		return false;
+	}
+}
+
 const CLOUDINARY_UPLOAD_SEGMENT = "/image/upload/";
 const TRANSFORM_HINT = /(?:^|,)(w_|h_|c_|q_|f_|g_)/;
 
@@ -22,7 +33,7 @@ export const getCloudinaryOptimizedUrl = (
     background?: string;
   }
 ) => {
-  if (!url || !url.includes("res.cloudinary.com")) return url;
+  if (!url || !isCloudinaryUrl(url)) return url;
 
   const [base, query] = url.split("?");
   const markerIndex = base.indexOf(CLOUDINARY_UPLOAD_SEGMENT);

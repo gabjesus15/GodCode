@@ -104,7 +104,14 @@ const emptyWebhook = {
 const CLOUDINARY_UPLOAD_SEGMENT = "/image/upload/";
 
 function isCloudinaryUrl(url: string): boolean {
-  return url.includes("res.cloudinary.com") && url.includes(CLOUDINARY_UPLOAD_SEGMENT);
+  try {
+    const absoluteUrl = url.startsWith("//") ? `https:${url}` : url;
+    const parsed = new URL(absoluteUrl);
+    const isValidHost = parsed.hostname === "res.cloudinary.com" || parsed.hostname.endsWith(".res.cloudinary.com");
+    return isValidHost && url.includes(CLOUDINARY_UPLOAD_SEGMENT);
+  } catch {
+    return false;
+  }
 }
 
 function replaceCloudinaryTransform(url: string, transform: string | null): string {

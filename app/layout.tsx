@@ -47,6 +47,11 @@ export const metadata: Metadata = {
       process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim() ||
       undefined,
   },
+  icons: {
+    icon: "/brand-icon.png",
+    shortcut: "/brand-icon.png",
+    apple: "/brand-icon.png",
+  },
 };
 
 export default async function RootLayout({

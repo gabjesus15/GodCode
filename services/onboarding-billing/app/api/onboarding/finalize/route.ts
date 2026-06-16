@@ -29,8 +29,9 @@ export async function POST(req: NextRequest) {
 	const ctx = createRequestContext("/api/onboarding/finalize", "POST");
 	try {
 		const ref = req.nextUrl.searchParams.get("ref") ?? (await req.json().catch(() => ({}))).ref;
-		if (!ref || typeof ref !== "string") {
-			return NextResponse.json({ error: "Referencia de pago faltante" }, { status: 400 });
+		if (!ref || typeof ref !== "string" || ref.length > 100 || !/^[a-zA-Z0-9_-]+$/.test(ref)) {
+			logger.warn("Intento de finalización de pago con referencia de formato inválido (posible tampering/SSRF)", ctx, { ref });
+			return NextResponse.json({ error: "Referencia de pago inválida o faltante" }, { status: 400 });
 		}
 
 		const { data: payment, error: payError } = await supabaseAdmin

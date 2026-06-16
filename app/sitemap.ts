@@ -3,7 +3,7 @@ import { getAppUrl } from "@/lib/tenant/app-url";
 import { SUPPORTED_LOCALES } from "@/lib/i18n/config";
 import { createSupabasePublicServerClient } from "../utils/supabase/server";
 
-const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-04-30T00:00:00.000Z";
+const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-06-15T00:00:00.000Z";
 
 function getSitemapLastModified(): Date {
   const fromEnv = process.env.NEXT_PUBLIC_SITEMAP_LAST_MODIFIED?.trim();

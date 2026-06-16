@@ -83,6 +83,7 @@ const branchFormSchema = z.object({
     uberStoreId: z.string().optional(),
     uberShowFeeAmount: z.boolean(),
     uberDisplayText: z.string().optional(),
+    is_active: z.boolean(),
 }).refine(
     (d) =>
         !d.uberExternalEnabled ||
@@ -356,6 +357,7 @@ function BranchEditForm({ branch, onCancel }: { branch: Branch, onCancel: () => 
             uberStoreId: ds.uberDirectStoreId ?? "",
             uberShowFeeAmount: ds.showExternalDeliveryFeeAmount,
             uberDisplayText: ds.externalDeliveryDisplayText ?? "",
+            is_active: branch.is_active !== false,
     };
 
     // Parsear JSON strings a objetos si es necesario
@@ -386,6 +388,7 @@ function BranchEditForm({ branch, onCancel }: { branch: Branch, onCancel: () => 
     const currentCurrency = useWatch({ control, name: "currency" });
     const uberExternalEnabled = useWatch({ control, name: "uberExternalEnabled" });
     const uberShowFeeAmountVal = useWatch({ control, name: "uberShowFeeAmount" });
+    const isActiveVal = useWatch({ control, name: "is_active" });
 
     // Recalcular campos dinámicos solo cuando es necesario
     const paymentFieldsConfig = useMemo(() => {
@@ -511,6 +514,27 @@ function BranchEditForm({ branch, onCancel }: { branch: Branch, onCancel: () => 
                             )}
                         </div>
                     ))}
+                </div>
+
+                <div className="border-t border-zinc-200 pt-4 dark:border-zinc-700">
+                    <h3 className="mb-2 text-base font-semibold text-zinc-800 dark:text-zinc-200 sm:text-lg">
+                        Estado de la sucursal
+                    </h3>
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="is-active"
+                            checked={isActiveVal === true}
+                            onCheckedChange={(v) =>
+                                setValue("is_active", v === true, { shouldDirty: true })
+                            }
+                        />
+                        <label
+                            htmlFor="is-active"
+                            className="cursor-pointer text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                        >
+                            Sucursal Activa (si se desmarca, quedará suspendida/inactiva y no contará para el límite del plan)
+                        </label>
+                    </div>
                 </div>
 
                 <div className="border-t border-zinc-200 pt-4 dark:border-zinc-700">

@@ -4,6 +4,7 @@ import { createSupabasePublicServerClient } from "../../utils/supabase/server";
 import { getCachedCompany } from "../../utils/tenant-cache";
 import { HomeClient } from "../../components/tenant/home/home-client";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
 
 interface TenantPageProps {
   params: Promise<{ subdomain: string }>;
@@ -31,6 +32,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
         .from("branches")
         .select("id,name,address,whatsapp_url,instagram_url,map_url,order_intake_paused,order_intake_pause_message,order_intake_paused_at")
         .eq("company_id", company.id)
+        .eq("is_active", true)
         .order("name"),
       supabase
         .from("cash_shifts")
@@ -61,7 +63,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
 
   const theme = (company?.theme_config as unknown as TenantPageThemeConfig) ?? {};
   const name = theme.displayName || company.name || resolvedParams.subdomain || "GodCode";
-  const logoUrl = theme.logoUrl ?? null;
+  const logoUrl = parseThemeLogoUrl(company?.theme_config) || null;
 
   return (
     <HomeClient

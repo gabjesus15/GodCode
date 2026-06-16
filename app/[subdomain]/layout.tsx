@@ -111,10 +111,7 @@ export async function generateMetadata({
     `${resolvedParams.subdomain}.godcode.me`;
   const protocol = hdrs.get("x-forwarded-proto") ?? "https";
 
-  const customDomain = company?.custom_domain?.trim();
-  const baseOrigin = customDomain
-    ? `${protocol}://${customDomain.replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/$/, "")}`
-    : `${protocol}://${host}`;
+  const baseOrigin = `${protocol}://${host}`;
   const metadataBase = new URL(baseOrigin);
   const pathPrefix = isMainDomain(host) ? `/${resolvedParams.subdomain}` : "";
 
@@ -145,26 +142,10 @@ export async function generateMetadata({
       ? theme.displayName.trim()
       : company.name?.trim()) || slugFallback || "GodCode";
   const versionSeed = tenantBrandingIconVersionSeed(company);
-  const icon = `/tenant-favicon?v=${encodeURIComponent(versionSeed)}`;
+  const icon = `/tenant-favicon?tenant=${encodeURIComponent(resolvedParams.subdomain)}&v=${encodeURIComponent(versionSeed)}`;
   const description = `Pide online en ${name}. Consulta nuestro menu digital, precios y haz tu pedido por WhatsApp con delivery o retiro.`;
-  const appHost = (() => {
-    try {
-      return new URL(getAppUrl()).host.replace(/^www\./, "");
-    } catch {
-      return "";
-    }
-  })();
 
-  const normalizedCustom = String(company.custom_domain ?? "")
-    .replace(/^https?:\/\//i, "")
-    .replace(/^www\./i, "")
-    .replace(/\/$/, "")
-    .toLowerCase();
-  const canonical = normalizedCustom.length > 0
-    ? `https://${normalizedCustom}${pathPrefix}/`
-    : pathPrefix && appHost && !appHost.includes("localhost")
-      ? `https://${resolvedParams.subdomain}.${appHost}/`
-      : `${metadataBase.origin}${pathPrefix}/`;
+  const canonical = `${baseOrigin}${pathPrefix}/`;
 
   return {
     metadataBase,
@@ -172,7 +153,7 @@ export async function generateMetadata({
       canonical,
     },
     title: {
-      default: name,
+      absolute: name,
       template: `%s | ${name}`,
     },
     description: description,
@@ -273,24 +254,33 @@ export default async function TenantLayout({
     "priceRange": "$$"
   };
 
-  // BreadcrumbList para rich results y navegación estructurada
+  const isMain = isMainDomain(host);
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "GodCode",
-        "item": "https://www.godcode.me"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": theme.displayName ?? company?.name ?? "Menú",
-        "item": baseUrl
-      }
-    ]
+    "itemListElement": isMain
+      ? [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "GodCode",
+            "item": "https://www.godcode.me"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": theme.displayName ?? company?.name ?? "Menú",
+            "item": baseUrl
+          }
+        ]
+      : [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": theme.displayName ?? company?.name ?? "Menú",
+            "item": baseUrl
+          }
+        ]
   };
 
   return (

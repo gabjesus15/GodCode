@@ -106,6 +106,7 @@ export const getCachedMenuStaticData = async (
             "id,name,address,phone,schedule,company_id,payment_methods,pago_movil,zelle,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta,delivery_settings,origin_lat,origin_lng,order_intake_paused,order_intake_pause_message,order_intake_paused_at,country,currency",
           )
           .eq("company_id", cId)
+          .eq("is_active", true)
           .order("name"),
         supabase
           .from("business_info")
