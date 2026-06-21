@@ -351,7 +351,10 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
     }
     if (
       tenantBypassPaths.some((path) => pathname.startsWith(path)) ||
-      (pathname.includes(".") && !pathname.startsWith("/menu/"))
+      (pathname.includes(".") &&
+        !pathname.startsWith("/menu/") &&
+        pathname !== "/llms.txt" &&
+        pathname !== "/llms-full.txt")
     ) {
       const response = NextResponse.next({
         request: {
