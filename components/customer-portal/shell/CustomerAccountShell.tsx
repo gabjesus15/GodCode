@@ -135,9 +135,20 @@ export function CustomerAccountShell({
                   {PORTAL_TAB_LABELS[activeTab]}
                 </p>
               </div>
-              <Badge variant={badgeVariant} dot className="shrink-0 text-[11px] sm:text-xs">
-                {subscriptionStatusLabel}
-              </Badge>
+              <div className="flex items-center gap-2 shrink-0">
+                <Badge variant={badgeVariant} dot className="text-[11px] sm:text-xs">
+                  {subscriptionStatusLabel}
+                </Badge>
+                <form action="/api/auth/signout" method="post" className="md:hidden">
+                  <button
+                    type="submit"
+                    title="Cerrar sesión"
+                    className="flex h-8 w-8 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 active:bg-red-100 transition"
+                  >
+                    <LogOut className="h-4 w-4" aria-hidden />
+                  </button>
+                </form>
+              </div>
             </div>
 
           </header>
@@ -162,10 +173,10 @@ export function CustomerAccountShell({
 
       {/* Navegación inferior — solo móvil */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#ececf0] bg-white/[0.97] pb-[env(safe-area-inset-bottom,0px)] pt-0.5 shadow-[0_-1px_0_rgba(0,0,0,0.04),0_-16px_48px_rgba(15,23,42,0.06)] backdrop-blur-lg backdrop-saturate-150 md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#ececf0] bg-white/[0.97] pb-[env(safe-area-inset-bottom,0px)] pt-0.5 shadow-[0_-1px_0_rgba(0,0,0,0.04),0_-16px_48px_rgba(15,23,42,0.06)] backdrop-blur-lg backdrop-saturate-150 md:hidden overflow-x-auto portal-scrollbar-none"
         aria-label="Secciones del portal"
       >
-        <div className="mx-auto flex max-w-7xl items-stretch justify-between px-0.5 sm:px-2">
+        <div className="flex min-w-full items-stretch justify-start gap-1 px-2 py-1 flex-nowrap">
           {PORTAL_TAB_ORDER.map((key) => {
             const Icon = PORTAL_TAB_ICONS[key];
             const active = activeTab === key;
@@ -176,7 +187,7 @@ export function CustomerAccountShell({
                 onClick={() => onTabChange(key)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-0.5 py-2 transition-colors active:bg-[#f5f5f7]/80",
+                  "relative flex min-w-[4.25rem] flex-1 shrink-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 transition-colors active:bg-[#f5f5f7]/80",
                   active ? "text-indigo-600" : "text-[#8e8e93]",
                 )}
               >
