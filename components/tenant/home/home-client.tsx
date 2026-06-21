@@ -198,7 +198,13 @@ export function HomeClient(props: HomeClientProps) {
     primary?: boolean;
     ariaLabel?: string;
   }> => {
-    const list = [
+    const list: Array<{
+      label: string;
+      icon: ReactNode;
+      onClick: () => void;
+      primary?: boolean;
+      ariaLabel?: string;
+    }> = [
       {
         label: "Ver Menú Digital",
         icon: <MenuBookIcon />,
