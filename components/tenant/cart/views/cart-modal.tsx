@@ -1801,7 +1801,7 @@ export function CartModal({
             <div className="cart-footer-stack cart-footer-stack--solo">
             <footer
               className={`cart-footer cart-footer--sheet${
-                viewState.showPaymentInfo && !viewState.showPaymentMethods
+                viewState.showPaymentInfo
                   ? " cart-footer--checkout-fulfillment"
                   : ""
               }`}
