@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import type { CountryFormStrategy } from "@/lib/geo/country-forms";
 import type { ActiveSessionInfo, CartModalViewState } from "../cart-modal-types";
 import { PAYMENT_METHOD_CONFIG, resolvePaymentMethodLabel } from "../constants";
+import { paymentMethodRequiresReceipt } from "../services/menu-order-payment";
 import { formatCartMoney } from "../utils/format-cart-money";
 import { CartOnlinePaymentDetails } from "./cart-online-payment-details";
 import { useCart } from "../use-cart";
@@ -62,9 +63,7 @@ export function CartPaymentFlow({
   const { currency } = useCart();
   const t = useTranslations("tenant.cart.modal");
   const isOnline = paymentMethodKey && PAYMENT_METHOD_CONFIG[paymentMethodKey]?.isOnline;
-  const requiresReceipt = Boolean(
-    paymentMethodKey && PAYMENT_METHOD_CONFIG[paymentMethodKey]?.isOnline,
-  );
+  const requiresReceipt = paymentMethodRequiresReceipt(paymentMethodKey);
   const showNameError = showFieldErrors && !validation.name;
   const showRutError = showFieldErrors && !validation.rut;
   const showPhoneError = showFieldErrors && !validation.phone;

@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
-import { X, MapPin, AlertCircle, Plus, Check, CupSoda, Sparkles, Store, Truck, ArrowLeft } from "lucide-react";
+import { X, MapPin, AlertCircle, Plus, Check, CupSoda, Sparkles, Store, Truck, ArrowLeft, Ticket } from "lucide-react";
 import { formatCartMoney } from "../utils/format-cart-money";
 import { type CartFulfillment, isUpsellBeverageLineId } from "../cart-context";
 import {
@@ -19,11 +19,11 @@ import {
 import { parseUnifiedAddressSearch } from "@/lib/delivery/address-search-query";
 import { generateWSMessage } from "../services/whatsapp-message";
 import { parseOrderRpcPayload } from "../services/order-payload";
+import { paymentMethodRequiresReceipt } from "../services/menu-order-payment";
 import { getFormStrategy } from "@/lib/geo/country-forms";
 import {
   ENHANCE_CATALOG_BEVERAGE_FALLBACK,
   ENHANCE_CATALOG_EXTRA_FALLBACK,
-  PAYMENT_METHOD_CONFIG,
   resolvePaymentMethodLabel,
 } from "../constants";
 import type {
@@ -90,8 +90,7 @@ export function CartModal({
       grandTotal,
       deliveryFee,
       getPrice,
-      orderNote,
-      setOrderNote,
+      setLineNote,
       fulfillment,
       setFulfillment,
       deliveryLine1,
@@ -278,7 +277,7 @@ export function CartModal({
     );
 
     const [activeEnhancePanel, setActiveEnhancePanel] = useState<
-      "none" | "beverages" | "extras"
+      "none" | "beverages" | "extras" | "coupon"
     >("none");
 
     const enhancementCatalogs = useMemo(() => {
@@ -672,9 +671,7 @@ export function CartModal({
   }, [paymentMethodKey, checkoutPaymentMethods]);
 
   const clientSchema = useMemo(() => {
-    const requiresReceipt = Boolean(
-      paymentMethodKey && PAYMENT_METHOD_CONFIG[paymentMethodKey]?.isOnline
-    );
+    const requiresReceipt = paymentMethodRequiresReceipt(paymentMethodKey);
     return buildCartClientSchema(
       {
         nameShort: t("validation.nameShort"),
@@ -1098,11 +1095,7 @@ export function CartModal({
     const nameValue = (values.name || "").trim();
     const namePattern = /^[\p{L} .'-]+$/u;
     const isNameValid = nameValue.length > 2 && namePattern.test(nameValue);
-    const requiresReceipt =
-      Boolean(
-        paymentMethodKey &&
-          PAYMENT_METHOD_CONFIG[paymentMethodKey]?.isOnline
-      );
+    const requiresReceipt = paymentMethodRequiresReceipt(paymentMethodKey);
     const isReceiptValid = requiresReceipt ? !!values.receiptFile : true;
 
     return {
@@ -1320,7 +1313,10 @@ export function CartModal({
         ]
           .filter(Boolean)
           .join(" | ");
-        const fullDesc = [item.description ?? "", item.line_summary ?? "", extrasDesc]
+        const notePart = item.line_note?.trim()
+          ? `Nota: ${sanitizeUserText(item.line_note.trim())}`
+          : "";
+        const fullDesc = [item.description ?? "", item.line_summary ?? "", extrasDesc, notePart]
           .filter(Boolean)
           .join(" | ");
         return {
@@ -1349,7 +1345,6 @@ export function CartModal({
         custom_item: true,
       }));
       const mergedItemsForOrder = [...itemsForOrder, ...globalExtrasLines];
-      const isOnline = paymentMethodKey && PAYMENT_METHOD_CONFIG[paymentMethodKey]?.isOnline;
       const snapFulfillment = fulfillment;
       const snapSubtotal = cartSubtotal;
       const snapFee =
@@ -1384,15 +1379,18 @@ export function CartModal({
                 : {}),
             }
           : null;
+      const lineNotesBlock = (filteredCart as CartLineItem[])
+        .filter((line) => line.line_note?.trim())
+        .map((line) => `${line.name}: ${sanitizeUserText(line.line_note!.trim())}`)
+        .join("\n");
       const orderPayload = {
         client_name: sanitizeUserText(data.name),
         client_phone: String(data.phone ?? "").trim(),
         client_rut: String(data.rut ?? "").trim(),
-        payment_type: isOnline ? ('online' as const) : ('tienda' as const),
         payment_method_specific: paymentMethodKey,
         total: Number(snapGrand) || 0,
         items: mergedItemsForOrder,
-        note: sanitizeUserText(orderNote),
+        note: lineNotesBlock,
         status: "pending",
         receiptFile: data.receiptFile,
         branch_id: selectedBranch.id,
@@ -1439,12 +1437,22 @@ export function CartModal({
         const paymentData = paymentMethodKey
           ? (activeInfo as Record<string, unknown>)[paymentMethodKey]
           : undefined;
+        const wsCart = cart.map((line) => {
+          const lineNote = line.line_note?.trim();
+          const noteInDesc = lineNote ? `Nota: ${lineNote}` : "";
+          const mergedDesc = [line.description, noteInDesc].filter(Boolean).join(" | ");
+          return { ...line, description: mergedDesc || line.description };
+        });
+        const wsLineNotes = cart
+          .filter((line) => line.line_note?.trim())
+          .map((line) => `${line.name}: ${line.line_note!.trim()}`)
+          .join("\n");
         const message = generateWSMessage(
           data,
-          cart,
+          wsCart,
           snapGrand,
           paymentMethodKey,
-          orderNote,
+          wsLineNotes,
           activeInfo.name,
           paymentData,
           {
@@ -1515,9 +1523,18 @@ export function CartModal({
 
   const showBeveragesUpsell = beveragesUpsellEnabledByBranch && enhancementCatalogs.beverages.length > 0;
   const showExtrasUpsell = extrasEnabledByBranch && enhancementCatalogs.globalExtras.length > 0;
+  const showCouponRail = Boolean(selectedBranchId);
 
   const enhanceTabCount =
-    (showBeveragesUpsell ? 1 : 0) + (showExtrasUpsell ? 1 : 0);
+    (showBeveragesUpsell ? 1 : 0) + (showExtrasUpsell ? 1 : 0) + (showCouponRail ? 1 : 0);
+
+  const enhanceGroupAriaLabel = useMemo(() => {
+    const parts: string[] = [];
+    if (showBeveragesUpsell) parts.push(t("catalog.drinksForOrder"));
+    if (showExtrasUpsell) parts.push(t("catalog.globalExtrasForOrder"));
+    if (showCouponRail) parts.push(t("coupon.segLabel"));
+    return parts.length > 0 ? parts.join(", ") : t("catalog.addDrinksOrExtras");
+  }, [showBeveragesUpsell, showExtrasUpsell, showCouponRail, t]);
 
 
 
@@ -1620,18 +1637,9 @@ export function CartModal({
                     onRemove={removeFromCart}
                     onAdd={addToCart}
                     onDecrease={decreaseQuantity}
+                    onLineNoteChange={setLineNote}
                   />
                 ))}
-              </div>
-              <div className="cart-notes">
-                <label>{t("notes.label")}</label>
-                <textarea
-                  className="form-input"
-                  placeholder={t("notes.placeholder")}
-                  value={orderNote}
-                  onChange={(event) => setOrderNote(event.target.value)}
-                  rows={2}
-                />
               </div>
                 </>
               ) : null}
@@ -1644,7 +1652,7 @@ export function CartModal({
             {!viewState.showPaymentInfo &&
             !viewState.showPaymentMethods &&
             !viewState.showForm &&
-            (showBeveragesUpsell || showExtrasUpsell) ? (
+            (showBeveragesUpsell || showExtrasUpsell || showCouponRail) ? (
               <div className="cart-footer-enhance-container">
                 <div
                   className={`cart-footer-enhance-rail${
@@ -1658,6 +1666,15 @@ export function CartModal({
                   hidden={activeEnhancePanel === "none"}
                 >
                   <div className="cart-footer-enhance-scroll">
+                    {activeEnhancePanel === "coupon" ? (
+                      <CartCouponFields
+                        variant="panel"
+                        branchId={selectedBranchId}
+                        cartSubtotal={cartSubtotal}
+                        currency={currency}
+                        clientPhone={formValues.phone || ""}
+                      />
+                    ) : (
                     <div className="cart-enhance-panel glass cart-enhance-panel--in-footer">
                       {activeEnhancePanel === "beverages" ? (
                         <div className="cart-enhance-grid cart-enhance-grid--tiles">
@@ -1746,6 +1763,7 @@ export function CartModal({
                         </div>
                       ) : null}
                     </div>
+                    )}
                   </div>
                 </div>
                 <div className="cart-enhance-segmented-wrap">
@@ -1754,13 +1772,7 @@ export function CartModal({
                       enhanceTabCount === 1 ? " cart-enhance-segmented--single" : ""
                     }`}
                     role="group"
-                    aria-label={
-                      showBeveragesUpsell && showExtrasUpsell
-                        ? t("catalog.addDrinksOrExtras")
-                        : showBeveragesUpsell
-                          ? t("catalog.drinksForOrder")
-                          : t("catalog.globalExtrasForOrder")
-                    }
+                    aria-label={enhanceGroupAriaLabel}
                   >
                     {showBeveragesUpsell ? (
                       <button
@@ -1792,6 +1804,21 @@ export function CartModal({
                         <span>Extras</span>
                       </button>
                     ) : null}
+                    {showCouponRail ? (
+                      <button
+                        type="button"
+                        className={`cart-enhance-seg ${
+                          activeEnhancePanel === "coupon" || appliedCouponCode ? "is-active" : ""
+                        }`}
+                        onClick={() => {
+                          triggerHaptic();
+                          setActiveEnhancePanel((v) => (v === "coupon" ? "none" : "coupon"));
+                        }}
+                      >
+                        <Ticket size={17} aria-hidden />
+                        <span>{t("coupon.segLabel")}</span>
+                      </button>
+                    ) : null}
                   </div>
                 </div>
 
@@ -1812,11 +1839,6 @@ export function CartModal({
             >
             {!viewState.showPaymentInfo ? (
               <>
-                <CartCouponFields
-                  branchId={selectedBranchId}
-                  cartSubtotal={cartSubtotal}
-                  currency={currency}
-                />
                  <div className="total-row">
                   <span>{t("summary.subtotal")}</span>
                   <div style={{ textAlign: "right" }}>

@@ -1,0 +1,17 @@
+packages:
+  - "."
+  - "services/*"
+
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+
+onlyBuiltDependencies:
+  - "@parcel/watcher"
+  - "@swc/core"
+  - esbuild
+  - sharp
+  - unrs-resolver

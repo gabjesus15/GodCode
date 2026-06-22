@@ -115,8 +115,11 @@
           "openMap": "Abrir mapa"
         },
         "notes": {
+          "addTab": "Agregar nota",
+          "editTab": "Editar nota",
           "label": "Notas de cocina",
-          "placeholder": "Ej: Sin sesamo..."
+          "placeholder": "Ej: Sin sesamo...",
+          "inputAria": "Nota para este producto"
         },
         "summary": {
           "subtotal": "Subtotal",
@@ -126,6 +129,7 @@
           "total": "Total"
         },
         "coupon": {
+          "segLabel": "Cupón",
           "title": "¿Tienes un cupón?",
           "placeholder": "Ej: BIENVENIDO",
           "apply": "Aplicar",

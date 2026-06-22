@@ -12,12 +12,16 @@ import {
 	normalizeExtrasPayload,
 	type OrderCatalogLine,
 } from "./orders/build-order-items-from-branch";
+import {
+	buildMenuOrderPaymentPayload,
+	paymentMethodRequiresReceipt,
+} from "../cart/services/menu-order-payment";
 
 interface CreateOrderPayload {
   client_name: string;
   client_phone: string;
   client_rut?: string;
-  payment_type: "online" | "tienda" | null;
+  payment_type?: "pendiente" | "online" | "tienda" | null;
   payment_method_specific?: string | null;
   total: number;
   items: OrderCatalogLine[];
@@ -376,25 +380,31 @@ export const ordersService = {
       }
     }
 
-    let receiptUrl: string | null = null;
-    let receiptUploadFailed = false;
+    const paymentMethod = String(orderData.payment_method_specific ?? "").trim();
+    if (!paymentMethod) {
+      throw new Error("Debes seleccionar un metodo de pago para confirmar el pedido.");
+    }
 
-    if (orderData.payment_type === "online" && receiptFile) {
+    const needsReceipt = paymentMethodRequiresReceipt(paymentMethod);
+    if (needsReceipt && !receiptFile) {
+      throw new Error("Debes adjuntar el comprobante de pago para confirmar el pedido.");
+    }
+
+    let receiptUrl: string | null = null;
+    if (needsReceipt) {
       try {
-        receiptUrl = await uploadImage(receiptFile, "receipts");
+        receiptUrl = await uploadImage(receiptFile!, "receipts");
       } catch {
-        receiptUploadFailed = true;
+        throw new Error("No se pudo subir el comprobante. Intenta nuevamente.");
+      }
+      if (!receiptUrl) {
+        throw new Error("No se pudo subir el comprobante. Intenta nuevamente.");
       }
     }
 
-    const paymentRefFromReceipt = receiptUrl || orderData.payment_ref;
-    const paymentRef =
-      paymentRefFromReceipt ||
-      (orderData.payment_type === "online"
-        ? orderData.payment_method_specific === "transferencia_bancaria"
-          ? "Transferencia pendiente por WhatsApp"
-          : "Comprobante pendiente por WhatsApp"
-        : "Pago Presencial");
+    const menuPayment = buildMenuOrderPaymentPayload(paymentMethod, receiptUrl);
+    const paymentRef = orderData.payment_ref?.trim() || menuPayment.payment_ref;
+    const paymentType = orderData.payment_type ?? menuPayment.payment_type;
 
     let finalNote = orderData.note || "";
     if (orderData.branch_name) {
@@ -410,13 +420,13 @@ export const ordersService = {
       p_client_rut: orderData.client_rut || "",
       p_items: itemsForRpc,
       p_total: totalToUse,
-      p_payment_type: orderData.payment_type,
+      p_payment_type: paymentType,
       p_payment_ref: paymentRef,
       p_note: finalNote,
       p_branch_id: orderData.branch_id,
       p_company_id: orderData.company_id || null,
       p_status: orderData.status || "pending",
-      p_payment_method_specific: orderData.payment_method_specific ?? null,
+      p_payment_method_specific: menuPayment.payment_method_specific,
       // Sin estos campos el RPC asume pickup + fee 0 y compara mal `p_total` (subtotal+envío) → invalid_item_price.
       p_order_type: deliveryMode ? "delivery" : "pickup",
       p_delivery_fee: deliveryMode ? deliveryFee : 0,
@@ -501,6 +511,6 @@ export const ordersService = {
       }
     }
 
-    return { order: newOrder, receiptUploadFailed };
+    return { order: newOrder, receiptUploadFailed: false };
   },
 };

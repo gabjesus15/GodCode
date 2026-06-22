@@ -41,6 +41,7 @@ export interface CartItem extends CartProduct {
   selected_extras?: CartExtraSelection[];
   selected_beverages?: CartUpsellBeverageSelection[];
   line_summary?: string | null;
+  line_note?: string | null;
 }
 
 /** Línea que es solo una bebida del upsell (no un plato con bebida añadida). */
@@ -77,6 +78,7 @@ interface CartContextType {
   getPrice: (product: CartProduct) => number;
   orderNote: string;
   setOrderNote: (note: string) => void;
+  setLineNote: (lineId: string, note: string) => void;
   generateWhatsAppMessage: () => string;
   fulfillment: CartFulfillment;
   setFulfillment: (value: CartFulfillment) => void;

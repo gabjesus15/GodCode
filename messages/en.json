@@ -115,8 +115,11 @@
           "openMap": "Open map"
         },
         "notes": {
+          "addTab": "Add note",
+          "editTab": "Edit note",
           "label": "Kitchen notes",
-          "placeholder": "Ex: No sesame..."
+          "placeholder": "Ex: No sesame...",
+          "inputAria": "Note for this product"
         },
         "summary": {
           "subtotal": "Subtotal",
@@ -126,6 +129,7 @@
           "total": "Total"
         },
         "coupon": {
+          "segLabel": "Coupon",
           "title": "Have a coupon?",
           "placeholder": "e.g. WELCOME",
           "apply": "Apply",

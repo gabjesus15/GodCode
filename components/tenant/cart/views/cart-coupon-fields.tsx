@@ -13,11 +13,13 @@ export function CartCouponFields({
   cartSubtotal,
   clientPhone,
   currency,
+  variant = "panel",
 }: {
   branchId: string | null;
   cartSubtotal: number;
   clientPhone?: string | null;
   currency: string;
+  variant?: "panel";
 }) {
   const t = useTranslations("tenant.cart.modal");
   const {
@@ -138,8 +140,13 @@ export function CartCouponFields({
 
   if (!branchId) return null;
 
+  const rootClassName =
+    variant === "panel"
+      ? "cart-enhance-panel glass cart-enhance-panel--in-footer cart-coupon-panel"
+      : "cart-coupon-block";
+
   return (
-    <div className="cart-coupon-block">
+    <div className={rootClassName}>
       {appliedCouponCode && appliedCouponDiscount > 0 ? (
         <div className="cart-coupon-applied">
           <span className="cart-coupon-applied-text">
@@ -147,7 +154,7 @@ export function CartCouponFields({
           </span>
           <button
             type="button"
-            className="btn btn-text cart-coupon-remove"
+            className="cart-enhance-seg cart-coupon-remove-seg"
             onClick={() => {
               clearAppliedCoupon();
               setLocalError(null);
@@ -163,7 +170,7 @@ export function CartCouponFields({
             className="form-input cart-coupon-input"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder={`${t("coupon.title")} — Colócalo aquí`}
+            placeholder={t("coupon.placeholder")}
             autoCapitalize="characters"
             autoCorrect="off"
             spellCheck={false}
@@ -178,11 +185,11 @@ export function CartCouponFields({
           />
           <button
             type="button"
-            className="btn btn-secondary cart-coupon-apply"
+            className="cart-enhance-seg cart-coupon-apply-seg"
             disabled={busy}
             onClick={() => void onApply()}
           >
-            {busy ? <Loader2 className="cart-coupon-spinner" size={18} aria-hidden /> : null}
+            {busy ? <Loader2 className="cart-coupon-spinner" size={17} aria-hidden /> : null}
             <span>{t("coupon.apply")}</span>
           </button>
         </div>

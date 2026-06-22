@@ -1,7 +1,7 @@
 {
 	"framework": "nextjs",
-	"installCommand": "cd ../.. && npm ci && cd services/onboarding-billing && npm ci",
-	"buildCommand": "npm run build",
+	"installCommand": "cd ../.. && if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else npm ci && cd services/onboarding-billing && npm ci; fi",
+	"buildCommand": "cd ../.. && if [ -f pnpm-lock.yaml ]; then pnpm --filter onboarding-billing-service run build; else cd services/onboarding-billing && npm run build; fi",
 	"headers": [
 		{
 			"source": "/api/(.*)",

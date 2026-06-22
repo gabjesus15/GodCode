@@ -148,6 +148,33 @@
   }
 }
 
+.cart-footer-enhance-scroll .cart-coupon-panel.cart-enhance-panel--in-footer {
+  margin: 0;
+}
+
+.cart-coupon-panel .cart-coupon-apply-seg,
+.cart-coupon-panel .cart-coupon-remove-seg {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent !important;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+.cart-coupon-panel .cart-coupon-apply-seg:hover:not(:disabled),
+.cart-coupon-panel .cart-coupon-remove-seg:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+.cart-coupon-panel .cart-coupon-apply-seg:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .cart-droplet-btn {
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));

@@ -75,6 +75,7 @@ export interface CartLineItem {
   selected_extras?: Array<{ id: string; name: string; price: number; qty: number }>;
   selected_beverages?: Array<{ id: string; name: string; price: number; qty: number }>;
   line_summary?: string | null;
+  line_note?: string | null;
 }
 
 /** Tipo unificado para manejar la información activa */

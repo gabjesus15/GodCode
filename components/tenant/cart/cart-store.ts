@@ -53,6 +53,7 @@ interface CartState {
   removeFromCart?: (id: string) => void;
   clearCart?: () => void;
   setOrderNote?: (note: string) => void;
+  setLineNote?: (lineId: string, note: string) => void;
   setCart?: (cart: CartItem[]) => void;
   setStoredBranchId?: (id: string | null) => void;
   setFulfillment?: (value: CartFulfillment) => void;
@@ -172,6 +173,7 @@ export const useCartStore = create<CartState>()(
             selected_extras: normalizedExtras,
             selected_beverages: normalizedBeverages,
             line_summary: null,
+            line_note: null,
           };
           return { cart: [...state.cart, newItem] };
         }),
@@ -227,6 +229,13 @@ export const useCartStore = create<CartState>()(
         }),
 
       setOrderNote: (note) => set({ orderNote: note }),
+
+      setLineNote: (lineId, note) =>
+        set((state) => ({
+          cart: state.cart.map((item) =>
+            item.lineId === lineId ? { ...item, line_note: note } : item,
+          ),
+        })),
 
       setCart: (newCart) => set({ cart: newCart }),
 

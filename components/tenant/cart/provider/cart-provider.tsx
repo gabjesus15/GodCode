@@ -143,6 +143,20 @@ export function CartProvider({
   }, [isHydrated, selectedBranchId]);
 
   useEffect(() => {
+    if (!isHydrated) return;
+    const { cart, orderNote, setLineNote, setOrderNote } = useCartStore.getState();
+    const legacy = typeof orderNote === "string" ? orderNote.trim() : "";
+    if (!legacy || !Array.isArray(cart) || cart.length === 0) return;
+    if (cart.some((item) => typeof item.line_note === "string" && item.line_note.trim())) {
+      return;
+    }
+    const first = cart[0];
+    if (!first?.lineId || typeof setLineNote !== "function") return;
+    setLineNote(first.lineId, legacy);
+    if (typeof setOrderNote === "function") setOrderNote("");
+  }, [isHydrated]);
+
+  useEffect(() => {
     if (!isHydrated || !selectedBranchId) return;
     const st = useCartStore.getState();
     const setF = st.setFulfillment;
@@ -460,6 +474,9 @@ export function CartProvider({
       }
       if (extrasText) message += `   Extras: ${extrasText}\n`;
       if (beveragesText) message += `   Bebidas: ${beveragesText}\n`;
+      if (typeof item.line_note === "string" && item.line_note.trim()) {
+        message += `   Nota: ${item.line_note.trim()}\n`;
+      }
       message += `   Subtotal: ${formatCartMoney(sub, currencyCode)}\n`;
       message += "--------------------------------\n";
     });
@@ -496,16 +513,10 @@ export function CartProvider({
 
     message += "================================\n";
 
-    if (typeof store.orderNote === "string" && store.orderNote.trim()) {
-      message += "\nNOTA DE COCINA:\n";
-      message += `${store.orderNote}\n`;
-    }
-
     return encodeURIComponent(message);
   }, [
     store.cart,
     store.globalExtras,
-    store.orderNote,
     store.fulfillment,
     store.appliedCouponCode,
     store.appliedCouponDiscount,
@@ -530,6 +541,7 @@ export function CartProvider({
       clearCart: typeof store.clearCart === "function" ? store.clearCart : () => {},
       orderNote: typeof store.orderNote === "string" ? store.orderNote : "",
       setOrderNote: typeof store.setOrderNote === "function" ? store.setOrderNote : () => {},
+      setLineNote: typeof store.setLineNote === "function" ? store.setLineNote : () => {},
       cartTotal: isHydrated ? cartTotal : 0,
       cartSubtotal: isHydrated ? cartSubtotal : 0,
       grandTotal: isHydrated ? grandTotal : 0,

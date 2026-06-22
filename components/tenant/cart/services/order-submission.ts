@@ -8,7 +8,7 @@ export type SubmitOrderParams = {
   client_name: string;
   client_phone: string;
   client_rut?: string;
-  payment_type: "online" | "tienda" | null;
+  payment_type?: "pendiente" | "online" | "tienda" | null;
   payment_method_specific?: string | null;
   total: number;
   items: OrderCatalogLine[];

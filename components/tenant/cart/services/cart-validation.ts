@@ -48,7 +48,7 @@ export function buildCartClientSchema(
       lng: z.number().optional().nullable(),
       namedAreaId: z.string().optional().nullable(),
     }).optional(),
-    payment_type: z.enum(["online", "tienda"]).nullable().optional(),
+    payment_type: z.enum(["pendiente", "online", "tienda"]).nullable().optional(),
     payment_method_specific: z.string().optional().nullable(),
     payment_ref: z.string().optional().nullable(),
   });

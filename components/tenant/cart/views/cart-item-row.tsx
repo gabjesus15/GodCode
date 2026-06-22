@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { CupSoda, Minus, Plus, Trash2 } from "lucide-react";
@@ -17,6 +18,7 @@ export function CartItemRow({
   onRemove,
   onAdd,
   onDecrease,
+  onLineNoteChange,
 }: {
   item: CartLineItem;
   unitPrice: number;
@@ -29,9 +31,14 @@ export function CartItemRow({
     },
   ) => void;
   onDecrease: (id: string) => void;
+  onLineNoteChange: (lineId: string, note: string) => void;
 }) {
   const { currency, exchangeRate } = useCart();
   const t = useTranslations("tenant.cart.modal");
+  const lineId = item.lineId ?? item.id;
+  const hasNote = Boolean(item.line_note?.trim());
+  const [noteOpen, setNoteOpen] = useState(false);
+
   const optimizedSrc = getCloudinaryOptimizedUrl(item.image_url ?? null, {
     width: 120,
     height: 120,
@@ -60,75 +67,102 @@ export function CartItemRow({
   const lineUnitTotal = Math.max(0, unitPrice + extrasTotal + beveragesTotal);
 
   return (
-    <div className="cart-item">
-      {upsellBevOnly ? (
-        <div className="item-thumb item-thumb--upsell-drink" aria-hidden>
-          <CupSoda size={24} strokeWidth={2} />
-        </div>
-      ) : (
-        <Image
-          src={imageSrc}
-          alt={`${item.name || t("item.productFallback")} - ${t("header.title")}`}
-          width={65}
-          height={65}
-          unoptimized
-          className="item-thumb"
-          onError={(event) => {
-            event.currentTarget.src = FALLBACK_IMAGE;
-          }}
-        />
-      )}
-      <div className="item-details item-details-tight">
-        <div className="item-top">
-          <h4 className="item-title">{item.name}</h4>
-          <button
-            onClick={() => onRemove(item.lineId ?? item.id)}
-            className="btn-trash"
-            aria-label={t("item.removeProduct")}
-            title={t("item.removeProduct")}
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
+    <div className="cart-item-shell">
+      <div className="cart-item">
+        {upsellBevOnly ? (
+          <div className="item-thumb item-thumb--upsell-drink" aria-hidden>
+            <CupSoda size={24} strokeWidth={2} />
+          </div>
+        ) : (
+          <Image
+            src={imageSrc}
+            alt={`${item.name || t("item.productFallback")} - ${t("header.title")}`}
+            width={65}
+            height={65}
+            unoptimized
+            className="item-thumb"
+            onError={(event) => {
+              event.currentTarget.src = FALLBACK_IMAGE;
+            }}
+          />
+        )}
+        <div className="item-details item-details-tight">
+          <div className="item-top">
+            <h4 className="item-title">{item.name}</h4>
+            <button
+              onClick={() => onRemove(lineId)}
+              className="btn-trash"
+              aria-label={t("item.removeProduct")}
+              title={t("item.removeProduct")}
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
 
-        <div className="item-bottom item-bottom-tight">
-          <div className="item-price-wrapper">
-            <span className="item-price item-price-strong">
-              {formatCartMoney(lineUnitTotal * item.quantity, currency)}
-            </span>
-            {exchangeRate != null && exchangeRate > 0 && (
-              <span className="item-price-local" style={{ display: "block", fontSize: "0.78rem", opacity: 0.6, marginTop: "1px" }}>
-                {formatCartMoney(lineUnitTotal * item.quantity * exchangeRate, currency === "USD" ? "VES" : "USD")}
+          <div className="item-bottom item-bottom-tight">
+            <div className="item-price-wrapper">
+              <span className="item-price item-price-strong">
+                {formatCartMoney(lineUnitTotal * item.quantity, currency)}
               </span>
-            )}
+              {exchangeRate != null && exchangeRate > 0 && (
+                <span className="item-price-local" style={{ display: "block", fontSize: "0.78rem", opacity: 0.6, marginTop: "1px" }}>
+                  {formatCartMoney(lineUnitTotal * item.quantity * exchangeRate, currency === "USD" ? "VES" : "USD")}
+                </span>
+              )}
+            </div>
+            <div className="qty-control-sm">
+              <button
+                onClick={() => onDecrease(lineId)}
+                aria-label={t("item.decreaseQuantity")}
+                title={t("item.decreaseQuantity")}
+              >
+                <Minus size={12} />
+              </button>
+              <span>{item.quantity}</span>
+              <button
+                onClick={() =>
+                  onAdd(item, {
+                    selectedExtras: item.selected_extras ?? [],
+                    selectedBeverages: item.selected_beverages ?? [],
+                  })
+                }
+                aria-label={t("item.increaseQuantity")}
+                title={t("item.increaseQuantity")}
+              >
+                <Plus size={12} />
+              </button>
+            </div>
           </div>
-          <div className="qty-control-sm">
-            <button
-              onClick={() => onDecrease(item.lineId ?? item.id)}
-              aria-label={t("item.decreaseQuantity")}
-              title={t("item.decreaseQuantity")}
-            >
-              <Minus size={12} />
-            </button>
-            <span>{item.quantity}</span>
-            <button
-              onClick={() =>
-                onAdd(item, {
-                  selectedExtras: item.selected_extras ?? [],
-                  selectedBeverages: item.selected_beverages ?? [],
-                })
-              }
-              aria-label={t("item.increaseQuantity")}
-              title={t("item.increaseQuantity")}
-            >
-              <Plus size={12} />
-            </button>
-          </div>
+          {extrasText ? <p className="cart-geo-hint">Extras: {extrasText}</p> : null}
+          {beveragesText ? <p className="cart-geo-hint">Bebidas: {beveragesText}</p> : null}
+          {item.line_summary ? <p className="cart-geo-hint">{item.line_summary}</p> : null}
+          {hasNote && !noteOpen ? (
+            <p className="cart-item-note-hint">{item.line_note}</p>
+          ) : null}
         </div>
-        {extrasText ? <p className="cart-geo-hint">Extras: {extrasText}</p> : null}
-        {beveragesText ? <p className="cart-geo-hint">Bebidas: {beveragesText}</p> : null}
-        {item.line_summary ? <p className="cart-geo-hint">{item.line_summary}</p> : null}
       </div>
+
+      {noteOpen ? (
+        <div className="cart-item-note-panel">
+          <textarea
+            className="form-input cart-item-note-input"
+            value={item.line_note ?? ""}
+            onChange={(event) => onLineNoteChange(lineId, event.target.value)}
+            placeholder={t("notes.placeholder")}
+            rows={2}
+            aria-label={t("notes.inputAria")}
+          />
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        className={`cart-item-note-tab${noteOpen ? " is-open" : ""}${hasNote ? " is-filled" : ""}`}
+        onClick={() => setNoteOpen((open) => !open)}
+        aria-expanded={noteOpen}
+      >
+        {hasNote ? t("notes.editTab") : t("notes.addTab")}
+      </button>
     </div>
   );
 }
