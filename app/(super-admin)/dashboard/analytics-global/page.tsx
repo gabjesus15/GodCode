@@ -53,25 +53,48 @@ export default async function AnalyticsGlobalPage({
     .order("name", { ascending: true })
     .limit(500);
 
-  let eventsQuery = supabaseAdmin
-    .from("analytics_events")
-    .select("created_at,page_type,visitor_id,company_id,tenant_slug,country_code,event_name")
-    .in("page_type", ["landing", "tenant", "saas"])
-    .limit(50000);
+  const events: EventRow[] = [];
+  let eventsError: any = null;
+  let start = 0;
+  const step = 1000;
+  let keepFetching = true;
 
-  if (fromIso) {
-    eventsQuery = eventsQuery.gte("created_at", fromIso);
+  while (keepFetching) {
+    let q = supabaseAdmin
+      .from("analytics_events")
+      .select("created_at,page_type,visitor_id,company_id,tenant_slug,country_code,event_name")
+      .in("page_type", ["landing", "tenant", "saas"])
+      .order("created_at", { ascending: false })
+      .range(start, start + step - 1);
+
+    if (fromIso) {
+      q = q.gte("created_at", fromIso);
+    }
+
+    if (selectedCompanyId) {
+      q = q.eq("company_id", selectedCompanyId);
+    }
+
+    const { data, error } = await q;
+    if (error) {
+      eventsError = error;
+      break;
+    }
+
+    if (data && data.length > 0) {
+      events.push(...(data as EventRow[]));
+      if (data.length < step || events.length >= 50000) {
+        keepFetching = false;
+      } else {
+        start += step;
+      }
+    } else {
+      keepFetching = false;
+    }
   }
 
-  if (selectedCompanyId) {
-    eventsQuery = eventsQuery.eq("company_id", selectedCompanyId);
-  }
-
-  const [{ data: companiesData, error: companiesError }, { data: eventsData, error: eventsError }] =
-    await Promise.all([companiesQuery, eventsQuery]);
-
+  const { data: companiesData, error: companiesError } = await companiesQuery;
   const companies = (companiesData ?? []) as CompanyOption[];
-  const events = (eventsData ?? []) as EventRow[];
 
   const companyNameById = new Map<string, string>();
   for (const c of companies) {
