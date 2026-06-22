@@ -6,6 +6,7 @@
 	position: relative;
 	width: 100%;
 	max-width: 100%;
+	margin-top: clamp(12px, 2.5vw, 20px);
 	margin-bottom: clamp(12px, 2.5vw, 22px);
 }
 
