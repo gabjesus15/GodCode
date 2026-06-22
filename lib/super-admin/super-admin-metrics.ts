@@ -138,23 +138,53 @@ export async function fetchOnboardingFunnelCounts(fromIso: string | null): Promi
 	}
 
 	// Paso 0: Visitas de onboarding (analytics_events)
-	let viewsQuery = supabaseAdmin
-		.from("analytics_events")
-		.select("visitor_id, path")
-		.ilike("path", "/onboarding%")
-		.limit(50000);
-	if (fromIso) {
-		viewsQuery = viewsQuery.gte("created_at", fromIso);
+	const onboardingEvents: { visitor_id: string | null; path: string | null }[] = [];
+	let start = 0;
+	const step = 1000;
+	let keepFetching = true;
+	let viewsError: any = null;
+	let totalFetched = 0;
+
+	while (keepFetching) {
+		let q = supabaseAdmin
+			.from("analytics_events")
+			.select("visitor_id, path")
+			.ilike("path", "/onboarding%")
+			.order("created_at", { ascending: false })
+			.range(start, start + step - 1);
+
+		if (fromIso) {
+			q = q.gte("created_at", fromIso);
+		}
+
+		const { data, error } = await q;
+		if (error) {
+			viewsError = error;
+			break;
+		}
+
+		if (data && data.length > 0) {
+			totalFetched += data.length;
+			const filtered = data.filter((e) => {
+				const clean = (e.path || "").split("?")[0].replace(/\/$/, "");
+				return clean === "/onboarding";
+			});
+			onboardingEvents.push(...filtered);
+
+			if (data.length < step || totalFetched >= 50000) {
+				keepFetching = false;
+			} else {
+				start += step;
+			}
+		} else {
+			keepFetching = false;
+		}
 	}
-	const { data: viewsData, error: viewsError } = await viewsQuery;
+
 	if (viewsError) {
 		return { counts, total, onboardingViews: 0, onboardingVisitors: 0, error: viewsError.message };
 	}
 
-	const onboardingEvents = (viewsData ?? []).filter((e) => {
-		const clean = (e.path || "").split("?")[0].replace(/\/$/, "");
-		return clean === "/onboarding";
-	});
 	const onboardingVisitors = new Set(onboardingEvents.map((e) => e.visitor_id).filter(Boolean)).size;
 	const onboardingViews = onboardingEvents.length;
 
