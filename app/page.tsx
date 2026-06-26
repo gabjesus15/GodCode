@@ -7,7 +7,7 @@ import { getAppUrl } from "@/lib/tenant/app-url";
 import { SUPPORTED_LOCALES, normalizeLocale, type AppLocale } from "@/lib/i18n/config";
 import { getMessagesForLocale } from "@/lib/i18n/messages";
 import { getCurrentLocale } from "@/lib/i18n/server";
-import { getLandingMediaBundle } from "@/lib/landing/landing-media";
+import { defaultLandingMediaBundle, getLandingMediaBundle } from "@/lib/landing/landing-media";
 import { getPublicPlansForLanding } from "@/lib/plans/public-plans";
 import { getSubdomainFromHost, isMainDomain } from "@/lib/tenant/main-domain-host";
 import { getCountryFromHeaders } from "@/lib/geo/landing-geo-plans";
@@ -292,10 +292,19 @@ export default async function Home({
   if (isMainDomain(host)) {
     const fallbackLocale = await getCurrentLocale();
     const locale = resolveLandingLocale(resolvedSearchParams?.hl, fallbackLocale);
-    const [plans, media] = await Promise.all([
-      getPublicPlansForLanding(locale),
-      getLandingMediaBundle(),
-    ]);
+
+    let plans: Awaited<ReturnType<typeof getPublicPlansForLanding>> = [];
+    let media = defaultLandingMediaBundle;
+
+    try {
+      [plans, media] = await Promise.all([
+        getPublicPlansForLanding(locale),
+        getLandingMediaBundle(),
+      ]);
+    } catch (err) {
+      console.error("[home] failed to load landing data, using defaults:", err);
+    }
+
     return (
       <>
         <JsonLd plans={plans} locale={locale} />
