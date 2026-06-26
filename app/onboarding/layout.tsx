@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { getCurrentMessages } from "@/lib/i18n/server";
 import { LandingLogo } from "@/components/landing/media/landing-logo";
+import { OnboardingRecaptchaProvider } from "@/components/onboarding/recaptcha-provider";
 import "../super-admin.tailwind.css";
 import "./onboarding.css";
 
@@ -46,7 +47,9 @@ export default async function OnboardingLayout({
         </div>
       </header>
 
-      <div className="flex-1">{children}</div>
+      <OnboardingRecaptchaProvider>
+        <div className="flex-1">{children}</div>
+      </OnboardingRecaptchaProvider>
 
       <footer className="border-t border-slate-100 px-5 py-4 text-center text-xs text-slate-400 sm:py-5 sm:text-sm">
         {t.securityFooter}

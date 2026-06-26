@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { useLocale } from "next-intl";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,7 @@ const COPY = {
 export function OnboardingStep1Form() {
 	const locale = useLocale();
 	const t = COPY[locale.toLowerCase().startsWith("es") ? "es" : "en"];
+	const { executeRecaptcha } = useGoogleReCaptcha();
 
 	const [loading, setLoading] = useState(false);
 	const [resending, setResending] = useState(false);
@@ -83,6 +85,11 @@ export function OnboardingStep1Form() {
 		setError(null);
 
 		try {
+			let recaptchaToken = "";
+			if (executeRecaptcha) {
+				recaptchaToken = await executeRecaptcha("onboarding_apply");
+			}
+
 			const res = await fetch("/api/onboarding/apply", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -92,6 +99,7 @@ export function OnboardingStep1Form() {
 					email: form.email,
 					terms_accepted: form.terms_accepted,
 					privacy_accepted: form.privacy_accepted,
+					recaptcha_token: recaptchaToken,
 				}),
 			});
 
