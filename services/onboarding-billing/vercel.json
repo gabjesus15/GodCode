@@ -1,7 +1,7 @@
 {
 	"framework": "nextjs",
-	"installCommand": "cd ../.. && corepack enable && corepack prepare pnpm@11.6.0 --activate && pnpm install --frozen-lockfile",
-	"buildCommand": "cd ../.. && pnpm --filter onboarding-billing-service run build",
+	"installCommand": "cd ../.. && npm ci && cd services/onboarding-billing && npm ci",
+	"buildCommand": "npm run build",
 	"headers": [
 		{
 			"source": "/api/(.*)",
