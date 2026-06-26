@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore, useCallback } from "react";
 import { Moon, Sun } from "lucide-react";
 
 const STORAGE_KEY = "saas-theme";
@@ -19,36 +19,31 @@ function applyTheme(theme: "light" | "dark") {
 	window.localStorage.setItem(STORAGE_KEY, theme);
 }
 
+function subscribe(callback: () => void) {
+	const handler = () => callback();
+	window.addEventListener("storage", handler);
+	return () => window.removeEventListener("storage", handler);
+}
+
 interface ThemeToggleProps {
 	className?: string;
 }
 
 export function ThemeToggle({ className }: ThemeToggleProps) {
-	const [theme, setTheme] = useState<"light" | "dark">("light");
-	const [mounted, setMounted] = useState(false);
+	const theme = useSyncExternalStore<"light" | "dark">(
+		subscribe,
+		getTheme,
+		() => "light",
+	);
 
-	useEffect(() => {
-		setTheme(getTheme());
-		setMounted(true);
-	}, []);
-
-	const toggleTheme = () => {
+	const toggleTheme = useCallback(() => {
 		const nextTheme = theme === "dark" ? "light" : "dark";
 		applyTheme(nextTheme);
-		setTheme(nextTheme);
-	};
+	}, [theme]);
 
-	const defaultClasses = "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 transition";
+	const defaultClasses =
+		"inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800";
 	const activeClass = className !== undefined ? className : defaultClasses;
-
-	if (!mounted) {
-		return (
-			<div
-				className={`${activeClass} opacity-0`}
-				aria-hidden
-			/>
-		);
-	}
 
 	return (
 		<button
@@ -58,7 +53,12 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
 			title="Cambiar tema"
 			className={activeClass}
 		>
-			{theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+			<span className="dark:hidden">
+				<Moon size={18} />
+			</span>
+			<span className="hidden dark:inline">
+				<Sun size={18} />
+			</span>
 		</button>
 	);
 }

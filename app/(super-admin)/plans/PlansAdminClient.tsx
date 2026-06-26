@@ -2,12 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2 } from "lucide-react";
-import { Badge } from "../../../components/ui/badge";
+import { Plus, Trash2, Tag } from "lucide-react";
 import { Button } from "../../../components/ui/button";
-import { Card } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { Textarea } from "../../../components/ui/textarea";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Drawer } from "@/components/ui/drawer";
+import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
+import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
+import { SaasSwitch } from "@/components/super-admin/shared/saas-switch";
+import { SaasCheckbox } from "@/components/super-admin/shared/saas-checkbox";
+import { SaasStatusBadge } from "@/components/super-admin/shared/saas-status-badge";
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type AppLocale } from "../../../lib/i18n/config";
 import {
 	buildPlanMarketingLinesI18nPayload,
@@ -260,8 +266,8 @@ export function PlansAdminClient({
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [notice, setNotice] = useState<string | null>(null);
 	const [form, setForm] = useState<PlanFormState>(emptyForm());
+	const [listRef] = useAutoAnimate<HTMLDivElement>();
 
 	const clearFormFields = () => {
 		setForm(emptyForm());
@@ -271,7 +277,6 @@ export function PlansAdminClient({
 
 	const resetForm = () => {
 		clearFormFields();
-		setNotice(null);
 	};
 
 	const startNew = () => {
@@ -287,7 +292,6 @@ export function PlansAdminClient({
 		const baseDescriptionLines = toDescriptionLines(baseLines);
 		const localizedLines = localeLinesFromUnknown(baseLines, p.marketing_lines_i18n);
 		localizedLines[DEFAULT_LOCALE] = baseDescriptionLines.map((line) => ({ ...line }));
-		setNotice(null);
 		const pricesByContinent = Object.entries(p.prices_by_continent || {}).flatMap(
 			([continent, data]) => {
 				if (!data || typeof data.price !== "number" || typeof data.currency !== "string") {
@@ -387,7 +391,6 @@ export function PlansAdminClient({
 
 		setSaving(true);
 		setError(null);
-		setNotice(null);
 		try {
 			if (editingId) {
 				const res = await fetch(`/api/super-admin/plans/${editingId}`, {
@@ -404,7 +407,11 @@ export function PlansAdminClient({
 					const extra = typeof data.detail === "string" ? ` (${data.detail})` : "";
 					throw new Error((data.error ?? "Error al guardar") + extra);
 				}
-				if (typeof data.warning === "string") setNotice(data.warning);
+				if (typeof data.warning === "string") {
+					toast.warning(data.warning);
+				} else {
+					toast.success("Plan actualizado con éxito.");
+				}
 			} else {
 				const res = await fetch("/api/super-admin/plans", {
 					method: "POST",
@@ -420,12 +427,18 @@ export function PlansAdminClient({
 					const extra = typeof data.detail === "string" ? ` (${data.detail})` : "";
 					throw new Error((data.error ?? "Error al crear") + extra);
 				}
-				if (typeof data.warning === "string") setNotice(data.warning);
+				if (typeof data.warning === "string") {
+					toast.warning(data.warning);
+				} else {
+					toast.success("Plan creado con éxito.");
+				}
 			}
 			router.refresh();
 			clearFormFields();
 		} catch (e) {
-			setError(e instanceof Error ? e.message : "Error");
+			const errMsg = e instanceof Error ? e.message : "Error al procesar la solicitud";
+			setError(errMsg);
+			toast.error(errMsg);
 		} finally {
 			setSaving(false);
 		}
@@ -433,39 +446,30 @@ export function PlansAdminClient({
 
 	return (
 		<div className="flex min-w-0 flex-col gap-4 sm:gap-6">
-			<div className="flex flex-wrap items-center justify-between gap-2">
-				<div>
-					<h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 sm:text-2xl">
-						Planes
-					</h2>
-					<p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-						Precio, sucursales, usuarios, descripciones extra y visibilidad. Las descripciones van debajo del
-						resumen de sucursales y usuarios en la tarjeta y en la landing; al añadir líneas, la tarjeta se
-						alarga.
-					</p>
-				</div>
-				<Button type="button" onClick={startNew} disabled={showNew}>
-					Nuevo plan
-				</Button>
-			</div>
+			<SaasPageHeader
+				title="Planes"
+				description="Precio, sucursales, usuarios, descripciones extra y visibilidad. Las descripciones van debajo del resumen de sucursales y usuarios en la tarjeta y en la landing."
+				icon={Tag}
+				action={
+					<Button type="button" onClick={startNew} disabled={showNew}>
+						Nuevo plan
+					</Button>
+				}
+			/>
 
-			{error && (
-				<div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/60 dark:text-red-300">
-					{error}
-				</div>
-			)}
-
-			{notice && (
-				<div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/50 dark:text-amber-100">
-					{notice}
-				</div>
-			)}
-
-			{(showNew || editingId) && (
-				<Card className="p-4 sm:p-5">
-					<h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-						{editingId ? "Editar plan" : "Nuevo plan"}
-					</h3>
+			<Drawer
+				open={!!(showNew || editingId)}
+				onOpenChange={(open: boolean) => { if (!open) resetForm(); }}
+				contentClassName="max-w-3xl"
+				title={editingId ? "Editar plan" : "Nuevo plan"}
+				description="Configura precios, límites, visibilidad y accesos del plan."
+			>
+				<div className="space-y-4 py-2">
+					{error && (
+						<div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/60 dark:text-red-300">
+							{error}
+						</div>
+					)}
 					<div className="mt-4 grid gap-3 sm:grid-cols-2">
 						<label className="flex flex-col gap-1 text-sm">
 							<span className="font-medium text-zinc-700 dark:text-zinc-300">Nombre</span>
@@ -729,24 +733,18 @@ export function PlansAdminClient({
 								En landing: si es 0 no se añade línea de usuarios; si es mayor, muestra el tope.
 							</span>
 						</label>
-						<label className="flex items-center gap-2 text-sm">
-							<input
-								type="checkbox"
+						<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+							<SaasSwitch
 								checked={form.is_public}
-								onChange={(e) => setForm((p) => ({ ...p, is_public: e.target.checked }))}
-								className="h-4 w-4 rounded border-zinc-300"
+								onChange={(checked) => setForm((p) => ({ ...p, is_public: checked }))}
+								label="Visible en registro y landing"
 							/>
-							<span className="font-medium text-zinc-700 dark:text-zinc-300">Visible en registro y landing</span>
-						</label>
-						<label className="flex items-center gap-2 text-sm">
-							<input
-								type="checkbox"
+							<SaasSwitch
 								checked={form.is_active}
-								onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.checked }))}
-								className="h-4 w-4 rounded border-zinc-300"
+								onChange={(checked) => setForm((p) => ({ ...p, is_active: checked }))}
+								label="Plan activo"
 							/>
-							<span className="font-medium text-zinc-700 dark:text-zinc-300">Plan activo</span>
-						</label>
+						</div>
 
 						<div className="sm:col-span-2 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3 dark:border-zinc-700 dark:bg-zinc-900/40">
 							<p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Politica de extras del plan</p>
@@ -758,56 +756,50 @@ export function PlansAdminClient({
 								<div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/70">
 									<p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Incluidos</p>
 									<div className="mt-2 space-y-2">
-										{addons.map((addon) => {
-											const token = normalizePolicyToken(addon.slug || addon.name);
-											const checked = form.includedAddonTokens.includes(token);
-											return (
-												<label key={`inc-${addon.id}`} className="flex items-center gap-2 text-sm">
-													<input
-														type="checkbox"
-														checked={checked}
-														onChange={(e) => {
-															setForm((prev) => ({
-																...prev,
-																includedAddonTokens: e.target.checked
-																	? [...new Set([...prev.includedAddonTokens, token])]
-																	: prev.includedAddonTokens.filter((t) => t !== token),
-															}));
-														}}
-														className="h-4 w-4 rounded border-zinc-300"
-													/>
-													<span className="text-zinc-700 dark:text-zinc-300">{addon.name}</span>
-												</label>
-											);
-										})}
+									{addons.map((addon) => {
+										const token = normalizePolicyToken(addon.slug || addon.name);
+										const checked = form.includedAddonTokens.includes(token);
+										return (
+											<SaasCheckbox
+												key={`inc-${addon.id}`}
+												checked={checked}
+												onChange={(checked) =>
+													setForm((prev) => ({
+														...prev,
+														includedAddonTokens: checked
+															? [...new Set([...prev.includedAddonTokens, token])]
+															: prev.includedAddonTokens.filter((t) => t !== token),
+													}))
+												}
+												label={addon.name}
+											/>
+										);
+									})}
 									</div>
 								</div>
 
 								<div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/70">
 									<p className="text-xs font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">Bloqueados</p>
 									<div className="mt-2 space-y-2">
-										{addons.map((addon) => {
-											const token = normalizePolicyToken(addon.slug || addon.name);
-											const checked = form.blockedAddonTokens.includes(token);
-											return (
-												<label key={`blk-${addon.id}`} className="flex items-center gap-2 text-sm">
-													<input
-														type="checkbox"
-														checked={checked}
-														onChange={(e) => {
-															setForm((prev) => ({
-																...prev,
-																blockedAddonTokens: e.target.checked
-																	? [...new Set([...prev.blockedAddonTokens, token])]
-																	: prev.blockedAddonTokens.filter((t) => t !== token),
-															}));
-														}}
-														className="h-4 w-4 rounded border-zinc-300"
-													/>
-													<span className="text-zinc-700 dark:text-zinc-300">{addon.name}</span>
-												</label>
-											);
-										})}
+									{addons.map((addon) => {
+										const token = normalizePolicyToken(addon.slug || addon.name);
+										const checked = form.blockedAddonTokens.includes(token);
+										return (
+											<SaasCheckbox
+												key={`blk-${addon.id}`}
+												checked={checked}
+												onChange={(checked) =>
+													setForm((prev) => ({
+														...prev,
+														blockedAddonTokens: checked
+															? [...new Set([...prev.blockedAddonTokens, token])]
+															: prev.blockedAddonTokens.filter((t) => t !== token),
+													}))
+												}
+												label={addon.name}
+											/>
+										);
+									})}
 									</div>
 								</div>
 
@@ -817,28 +809,25 @@ export function PlansAdminClient({
 										Si dejas esta lista vacia, el plan permite todos excepto los bloqueados.
 									</p>
 									<div className="mt-2 space-y-2">
-										{addons.map((addon) => {
-											const token = normalizePolicyToken(addon.slug || addon.name);
-											const checked = form.allowedAddonTokens.includes(token);
-											return (
-												<label key={`allow-${addon.id}`} className="flex items-center gap-2 text-sm">
-													<input
-														type="checkbox"
-														checked={checked}
-														onChange={(e) => {
-															setForm((prev) => ({
-																...prev,
-																allowedAddonTokens: e.target.checked
-																	? [...new Set([...prev.allowedAddonTokens, token])]
-																	: prev.allowedAddonTokens.filter((t) => t !== token),
-															}));
-														}}
-														className="h-4 w-4 rounded border-zinc-300"
-													/>
-													<span className="text-zinc-700 dark:text-zinc-300">{addon.name}</span>
-												</label>
-											);
-										})}
+									{addons.map((addon) => {
+										const token = normalizePolicyToken(addon.slug || addon.name);
+										const checked = form.allowedAddonTokens.includes(token);
+										return (
+											<SaasCheckbox
+												key={`allow-${addon.id}`}
+												checked={checked}
+												onChange={(checked) =>
+													setForm((prev) => ({
+														...prev,
+														allowedAddonTokens: checked
+															? [...new Set([...prev.allowedAddonTokens, token])]
+															: prev.allowedAddonTokens.filter((t) => t !== token),
+													}))
+												}
+												label={addon.name}
+											/>
+										);
+									})}
 									</div>
 								</div>
 							</div>
@@ -854,22 +843,19 @@ export function PlansAdminClient({
 									{TENANT_ADMIN_TAB_OPTIONS.map((tab) => {
 										const checked = form.ceoTabs.includes(tab.id);
 										return (
-											<label key={tab.id} className="flex items-center gap-2 text-sm">
-												<input
-													type="checkbox"
-													checked={checked}
-													onChange={(e) =>
-														setForm((prev) => ({
-															...prev,
-															ceoTabs: e.target.checked
-																? [...prev.ceoTabs, tab.id]
-																: prev.ceoTabs.filter((id) => id !== tab.id),
-														}))
-													}
-													className="h-4 w-4 rounded border-zinc-300"
-												/>
-												<span className="text-zinc-700 dark:text-zinc-300">{tab.label}</span>
-											</label>
+											<SaasCheckbox
+												key={tab.id}
+												checked={checked}
+												onChange={(checked) =>
+													setForm((prev) => ({
+														...prev,
+														ceoTabs: checked
+															? [...prev.ceoTabs, tab.id]
+															: prev.ceoTabs.filter((id) => id !== tab.id),
+													}))
+												}
+												label={tab.label}
+											/>
 										);
 									})}
 								</div>
@@ -924,23 +910,20 @@ export function PlansAdminClient({
 								<p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-2">Aplicar a estas regiones:</p>
 								<div className="grid gap-2 sm:grid-cols-2">
 									{["USA/Canada", "Latinoamérica", "Europe", "Asia", "Africa", "Oceania"].map((region) => (
-										<label key={region} className="flex items-center gap-2 text-sm">
-											<input
-												type="checkbox"
-												checked={form.tempSelectedRegions.includes(region as PriceByContinent["continent"])}
-												onChange={(e) => {
-													const continent = region as PriceByContinent["continent"];
-													setForm((p) => ({
-														...p,
-														tempSelectedRegions: e.target.checked
-															? [...p.tempSelectedRegions, continent]
+										<SaasCheckbox
+											key={region}
+											checked={form.tempSelectedRegions.includes(region as PriceByContinent["continent"])}
+											onChange={(checked) => {
+												const continent = region as PriceByContinent["continent"];
+												setForm((p) => ({
+													...p,
+													tempSelectedRegions: checked
+														? [...p.tempSelectedRegions, continent]
 														: p.tempSelectedRegions.filter((c: PriceByContinent["continent"]) => c !== continent),
-													}));
-												}}
-												className="h-4 w-4 rounded border-zinc-300"
-											/>
-											<span className="text-zinc-700 dark:text-zinc-300">{region}</span>
-										</label>
+												}));
+											}}
+											label={region}
+										/>
 									))}
 								</div>
 							</div>
@@ -1009,7 +992,7 @@ export function PlansAdminClient({
 						)}
 					</div>
 
-					<div className="mt-6 flex gap-2">
+					<div className="mt-6 flex gap-2 pb-6">
 						<Button type="button" onClick={save} disabled={saving}>
 							{saving ? "Guardando…" : editingId ? "Guardar" : "Crear"}
 						</Button>
@@ -1017,64 +1000,57 @@ export function PlansAdminClient({
 							Cancelar
 						</Button>
 					</div>
-				</Card>
-			)}
+				</div>
+			</Drawer>
 
-			<div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-				{plans.map((plan) => (
-					<Card key={plan.id} className="flex min-w-0 flex-col gap-4 p-4 sm:p-5">
-						<div className="flex flex-col gap-2">
-							<div className="flex items-center justify-between">
-								<p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-									{plan.name ?? "Sin nombre"}
-								</p>
-								<Button type="button" variant="outline" size="sm" onClick={() => startEdit(plan)}>
-									Editar
-								</Button>
-							</div>
-							<div className="mt-2 flex flex-wrap items-center gap-2">
-								{(() => {
-									// Buscar precio en orden de preferencia: Latinoamérica (default) o el primero disponible
-									const latinPrice = plan.prices_by_continent?.["Latinoamérica"];
-									const priceData = latinPrice || Object.values(plan.prices_by_continent || {}).find(Boolean);
-									return (
-										<h3 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-											{priceData
-												? currency.format(priceData.price)
-												: "Precio no configurado"} / mes
-										</h3>
-									);
-								})()}
-								{plan.is_public === false ? (
-									<Badge variant="destructive">Solo interno</Badge>
-								) : null}
-								{plan.is_active === false ? (
-									<Badge variant="warning" className="bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">
-										Inactivo
-									</Badge>
-								) : null}
-								{rate && (() => {
-									const latinPrice = plan.prices_by_continent?.["Latinoamérica"];
-									const priceData = latinPrice || Object.values(plan.prices_by_continent || {}).find(Boolean);
-									return priceData ? (
-										<span className="text-xs text-zinc-500">
+			<div ref={listRef} className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+				{plans.map((plan) => {
+					const latinPrice = plan.prices_by_continent?.["Latinoamérica"];
+					const priceData = latinPrice || Object.values(plan.prices_by_continent || {}).find(Boolean);
+
+					return (
+						<Card
+							key={plan.id}
+							className={`flex min-w-0 flex-col gap-4 rounded-3xl border bg-white p-4 dark:bg-zinc-900/80 sm:p-5 ${
+								plan.is_public
+									? "border-indigo-200/60 dark:border-indigo-800/40"
+									: "border-zinc-200/60 dark:border-zinc-800/60"
+							}`}
+						>
+							<div className="flex flex-col gap-2">
+								<div className="flex items-center justify-between">
+									<p className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+										{plan.name ?? "Sin nombre"}
+									</p>
+									<Button type="button" variant="outline" size="sm" onClick={() => startEdit(plan)}>
+										Editar
+									</Button>
+								</div>
+								<div className="mt-2 flex flex-wrap items-center gap-2">
+									<h3 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+										{priceData ? currency.format(priceData.price) : "Precio no configurado"} / mes
+									</h3>
+									{plan.is_public === false && <SaasStatusBadge label="Solo interno" variant="neutral" />}
+									{plan.is_active === false && <SaasStatusBadge label="Inactivo" variant="warning" />}
+									{rate && priceData && (
+										<span className="text-xs text-zinc-500 dark:text-zinc-400">
 											{clpCurrency.format(priceData.price * rate)} aprox
 										</span>
-									) : null;
-								})()}
+									)}
+								</div>
 							</div>
-						</div>
-						<div className="flex flex-col gap-3">
-							<ul className="grid gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-								{planCardLines(plan).map((line, i) => (
-									<li key={`${plan.id}-${i}`} className="whitespace-pre-wrap">
-										{line}
-									</li>
-								))}
-							</ul>
-						</div>
-					</Card>
-				))}
+							<div className="flex flex-col gap-3">
+								<ul className="grid gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+									{planCardLines(plan).map((line, i) => (
+										<li key={`${plan.id}-${i}`} className="whitespace-pre-wrap">
+											{line}
+										</li>
+									))}
+								</ul>
+							</div>
+						</Card>
+					);
+				})}
 			</div>
 		</div>
 	);

@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 
 import { BranchesCreateForm } from "../../../../components/super-admin/branches/branches-create-form";
 import { BranchesTable } from "../../../../components/super-admin/branches/branches-table";
+import { Building2 } from "lucide-react";
 import { CompanyGlobalTab } from "../../../../components/super-admin/companies/company-global-tab";
 import { CompanyTabs } from "../../../../components/super-admin/companies/company-tabs";
+import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
 import { isTenantExternalDeliveryAllowed } from "@/lib/integrations/company-integration-policy";
 import { parseCompanyIntegrationSettingsJson } from "@/lib/integrations/company-integration-json";
 import { createSupabaseServerClient } from "../../../../utils/supabase/server";
@@ -102,15 +104,13 @@ export default async function CompanyDetailPage({
 
     return (
       <div className="flex min-w-0 flex-col gap-4 sm:gap-6">
-        <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-            Empresa
-          </p>
-          <h2 className="truncate text-xl font-semibold text-zinc-900 dark:text-zinc-100 sm:text-2xl">
-            {company.name ?? "Sin nombre"}
-          </h2>
-          <p className="truncate text-sm text-zinc-500 dark:text-zinc-400">ID: {company.id}</p>
-        </div>
+        <SaasPageHeader
+          title={company.name ?? "Sin nombre"}
+          description={`ID: ${company.id}`}
+          icon={Building2}
+          backHref="/companies"
+          backLabel="Volver a empresas"
+        />
 
         <CompanyTabs
           tabs={[

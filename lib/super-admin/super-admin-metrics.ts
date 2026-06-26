@@ -142,7 +142,7 @@ export async function fetchOnboardingFunnelCounts(fromIso: string | null): Promi
 	let start = 0;
 	const step = 1000;
 	let keepFetching = true;
-	let viewsError: any = null;
+	let viewsError: Error | null = null;
 	let totalFetched = 0;
 
 	while (keepFetching) {

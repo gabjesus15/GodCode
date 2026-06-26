@@ -7,6 +7,12 @@
   --sa-muted: #71717a;
   --sa-accent: #18181b;
   --sa-danger: #dc2626;
+  /* Tremor tokens alineados a paleta del panel */
+  --tremor-brand: #6366f1;
+  --tremor-brand-muted: #818cf8;
+  --tremor-success: #10b981;
+  --tremor-danger: #f43f5e;
+  --tremor-warning: #f59e0b;
 }
 
 html.dark,
@@ -19,6 +25,11 @@ html.dark :root {
   --sa-muted: #a1a1aa;
   --sa-accent: #f4f4f5;
   --sa-danger: #ef4444;
+  --tremor-brand: #818cf8;
+  --tremor-brand-muted: #6366f1;
+  --tremor-success: #34d399;
+  --tremor-danger: #fb7185;
+  --tremor-warning: #fbbf24;
 }
 
 html.dark .super-admin .sa-icon-button {

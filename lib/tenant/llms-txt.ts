@@ -4,6 +4,40 @@ import { getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 
+interface MenuCategory {
+  id: string;
+  name: string;
+  order?: number | null;
+}
+
+interface MenuProduct {
+  id: string;
+  name: string;
+  description?: string | null;
+  category_id?: string | null;
+  is_active?: boolean;
+}
+
+interface ProductPrice {
+  product_id: string;
+  price: number | string;
+  has_discount?: boolean;
+  discount_price?: number | string | null;
+}
+
+interface ProductBranchStatus {
+  product_id: string;
+  category_id?: string | null;
+  is_active?: boolean;
+}
+
+interface MenuData {
+  categories?: MenuCategory[];
+  products?: MenuProduct[];
+  product_prices?: ProductPrice[];
+  product_branch?: ProductBranchStatus[];
+}
+
 export async function getLlmsTxtData(subdomain: string, isFullVersion = false) {
   const company = await getCachedCompany(subdomain);
 
@@ -29,22 +63,22 @@ export async function getLlmsTxtData(subdomain: string, isFullVersion = false) {
   const activeBranches = branches || [];
 
   // Fetch menu products and categories from the first active branch (if any)
-  let categories: any[] = [];
-  let products: any[] = [];
+  let categories: MenuCategory[] = [];
+  let products: (MenuProduct & { price?: number; has_discount?: boolean; discount_price?: number | null })[] = [];
 
   const firstBranch = activeBranches[0];
   if (firstBranch) {
     try {
       const rpcData = await getCachedMenuRpcData(company.id, subdomain, firstBranch.id);
-      const menuData = Array.isArray(rpcData.menuData) && rpcData.menuData.length > 0
+      const menuData: MenuData | null = Array.isArray(rpcData.menuData) && rpcData.menuData.length > 0
         ? rpcData.menuData[0]
         : rpcData.menuData;
 
       if (menuData) {
-        const categoriesRaw = (menuData.categories ?? []) as any[];
-        const productsRaw = (menuData.products ?? []) as any[];
-        const branchPrices = (menuData.product_prices ?? []) as any[];
-        const branchStatuses = (menuData.product_branch ?? []) as any[];
+        const categoriesRaw = menuData.categories ?? [];
+        const productsRaw = menuData.products ?? [];
+        const branchPrices = menuData.product_prices ?? [];
+        const branchStatuses = menuData.product_branch ?? [];
 
         categories = [...categoriesRaw].sort(
           (a, b) => (Number(a.order) || 0) - (Number(b.order) || 0)
@@ -78,7 +112,7 @@ export async function getLlmsTxtData(subdomain: string, isFullVersion = false) {
               discount_price: priceData?.discount_price ? Number(priceData.discount_price) : null,
             };
           })
-          .filter(Boolean);
+          .filter(Boolean) as typeof products;
       }
     } catch (e) {
       console.error("Error generating LLMs.txt catalog:", e);

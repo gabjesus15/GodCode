@@ -7,8 +7,9 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SaasSelect } from "@/components/super-admin/shared/saas-select";
+import { CompanySectionCard } from "./company-section-card";
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 import { logAdminAction } from "@/utils/audit";
 import { requireAdminRole, roleSets } from "@/utils/admin";
@@ -35,6 +36,31 @@ interface PlanOption {
 
 interface CompanyFormProps {
   plans: PlanOption[];
+}
+
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+      {label}
+      <div className="flex h-10 items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 dark:border-zinc-700 dark:bg-zinc-900">
+        <input
+          type="color"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className="h-6 w-10 cursor-pointer rounded border-none bg-transparent p-0"
+        />
+        <span className="text-xs text-zinc-500">{value}</span>
+      </div>
+    </label>
+  );
 }
 
 export function CompanyForm({ plans }: CompanyFormProps) {
@@ -180,18 +206,47 @@ export function CompanyForm({ plans }: CompanyFormProps) {
     }
   };
 
-  return (
-    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-      <Card className="flex flex-col gap-5">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-900">Nueva empresa</h2>
-          <p className="text-sm text-zinc-500">
-            Crea un tenant con dominio y configuracion visual.
-          </p>
-        </div>
+  const countryOptions = [
+    { value: "", label: "Selecciona un país" },
+    { value: "Chile", label: "Chile" },
+    { value: "Venezuela", label: "Venezuela" },
+    { value: "Argentina", label: "Argentina" },
+    { value: "Colombia", label: "Colombia" },
+    { value: "México", label: "México" },
+    { value: "Perú", label: "Perú" },
+    { value: "España", label: "España" },
+    { value: "Estados Unidos", label: "Estados Unidos" },
+    { value: "Otro", label: "Otro" },
+  ];
 
+  const currencyOptions = [
+    { value: "", label: "Selecciona una moneda" },
+    { value: "VES", label: "Bolívar (VES)" },
+    { value: "USD", label: "Dólar (USD)" },
+    { value: "COP", label: "Peso Colombiano (COP)" },
+    { value: "ARS", label: "Peso Argentino (ARS)" },
+    { value: "CLP", label: "Peso Chileno (CLP)" },
+    { value: "MXN", label: "Peso Mexicano (MXN)" },
+    { value: "EUR", label: "Euro (EUR)" },
+    { value: "Otro", label: "Otro" },
+  ];
+
+  const planOptions = [
+    { value: "", label: "Selecciona un plan" },
+    ...plans.map((plan) => ({
+      value: plan.id,
+      label: `${plan.name ?? "Plan"} - ${currency.format(Number(plan.price ?? 0))}`,
+    })),
+  ];
+
+  return (
+    <form className="flex flex-col gap-5 sm:gap-6" onSubmit={handleSubmit}>
+      <CompanySectionCard
+        title="Información general"
+        description="Datos básicos del tenant y su dominio."
+      >
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Nombre
             <Input
               value={form.name}
@@ -220,73 +275,16 @@ export function CompanyForm({ plans }: CompanyFormProps) {
                 })
               }
               placeholder="Oishi Sushi"
+              className="h-10 rounded-xl"
               required
             />
-          </label>
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-            País
-            <select
-              value={form.country}
-              onChange={e => setForm(prev => ({ ...prev, country: e.target.value }))}
-              className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-              required
-            >
-              <option value="">Selecciona un país</option>
-              <option value="Chile">Chile</option>
-              <option value="Venezuela">Venezuela</option>
-              <option value="Argentina">Argentina</option>
-              <option value="Colombia">Colombia</option>
-              <option value="México">México</option>
-              <option value="Perú">Perú</option>
-              <option value="España">España</option>
-              <option value="Estados Unidos">Estados Unidos</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </label>
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-            Moneda
-            <select
-              value={form.currency}
-              onChange={e => setForm(prev => ({ ...prev, currency: e.target.value }))}
-              className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-              required
-            >
-              <option value="">Selecciona una moneda</option>
-              <option value="VES">Bolívar (VES)</option>
-              <option value="USD">Dólar (USD)</option>
-              <option value="COP">Peso Colombiano (COP)</option>
-              <option value="ARS">Peso Argentino (ARS)</option>
-              <option value="CLP">Peso Chileno (CLP)</option>
-              <option value="MXN">Peso Mexicano (MXN)</option>
-              <option value="EUR">Euro (EUR)</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </label>
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-            {form.country === 'Chile' ? 'RUT' : form.country === 'Venezuela' ? 'Cédula de Identidad (CI)' : 'Documento'}
-            <Input
-              value={form.document}
-              onChange={e => setForm(prev => ({ ...prev, document: e.target.value }))}
-              placeholder={form.country === 'Chile' ? '12.345.678-9' : form.country === 'Venezuela' ? 'Ej: 12345678' : 'Documento'}
-              type={form.country === 'Venezuela' ? 'number' : 'text'}
-              maxLength={form.country === 'Chile' ? 12 : 20}
-              required
-            />
-            {/* Validación visual */}
-            {form.document.length > 3 && !(
-              (form.country === 'Chile' && rut.validate(form.document)) ||
-              (form.country === 'Venezuela' && /^[0-9]+$/.test(form.document) && form.document.length >= 6 && form.document.length <= 9) ||
-              (form.country !== 'Chile' && form.country !== 'Venezuela' && form.document.length > 4)
-            ) && (
-              <span className="error">Documento inválido</span>
-            )}
           </label>
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Subdominio
-            <div className="flex items-center rounded-xl border border-zinc-200 bg-white px-3">
+            <div className="flex h-10 items-center rounded-xl border border-zinc-200 bg-white px-3 dark:border-zinc-700 dark:bg-zinc-900">
               <Input
-                className="h-11 border-none px-0 focus:border-none"
+                className="h-full border-none bg-transparent px-0 focus:border-none focus-visible:ring-0"
                 value={form.public_slug}
                 onChange={(event) => {
                   if (!slugTouched) {
@@ -305,25 +303,7 @@ export function CompanyForm({ plans }: CompanyFormProps) {
             </div>
           </label>
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-            Plan
-            <select
-              value={form.plan_id}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, plan_id: event.target.value }))
-              }
-              className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-            >
-              <option value="">Selecciona un plan</option>
-              {plans.map((plan) => (
-                <option key={plan.id} value={plan.id}>
-                  {plan.name ?? "Plan"} -� {currency.format(Number(plan.price ?? 0))}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Nombre visible
             <Input
               value={form.display_name}
@@ -331,115 +311,73 @@ export function CompanyForm({ plans }: CompanyFormProps) {
                 setForm((prev) => ({ ...prev, display_name: event.target.value }))
               }
               placeholder={form.name || "Nombre visible"}
+              className="h-10 rounded-xl"
             />
           </label>
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-            Color primario
-            <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2">
-              <input
-                type="color"
-                value={form.primary_color}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, primary_color: event.target.value }))
-                }
-                className="h-8 w-12 cursor-pointer rounded-lg border border-zinc-200"
-              />
-              <span className="text-xs text-zinc-500">{form.primary_color}</span>
-            </div>
-          </label>
+          <SaasSelect
+            label="Plan"
+            options={planOptions}
+            value={form.plan_id}
+            onChange={(value) => setForm((prev) => ({ ...prev, plan_id: value }))}
+          />
+        </div>
+      </CompanySectionCard>
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-            Color secundario
-            <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2">
-              <input
-                type="color"
-                value={form.secondary_color}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    secondary_color: event.target.value,
-                  }))
-                }
-                className="h-8 w-12 cursor-pointer rounded-lg border border-zinc-200"
-              />
-              <span className="text-xs text-zinc-500">{form.secondary_color}</span>
-            </div>
-          </label>
+      <CompanySectionCard
+        title="Ubicación y documento"
+        description="País, moneda y documento de identificación del negocio."
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <SaasSelect
+            label="País"
+            options={countryOptions}
+            value={form.country}
+            onChange={(value) => setForm((prev) => ({ ...prev, country: value }))}
+          />
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-            Color precio
-            <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2">
-              <input
-                type="color"
-                value={form.price_color}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    price_color: event.target.value,
-                  }))
-                }
-                className="h-8 w-12 cursor-pointer rounded-lg border border-zinc-200"
-              />
-              <span className="text-xs text-zinc-500">{form.price_color}</span>
-            </div>
-          </label>
+          <SaasSelect
+            label="Moneda"
+            options={currencyOptions}
+            value={form.currency}
+            onChange={(value) => setForm((prev) => ({ ...prev, currency: value }))}
+          />
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-            Color descuento
-            <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2">
-              <input
-                type="color"
-                value={form.discount_color}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    discount_color: event.target.value,
-                  }))
-                }
-                className="h-8 w-12 cursor-pointer rounded-lg border border-zinc-200"
-              />
-              <span className="text-xs text-zinc-500">{form.discount_color}</span>
-            </div>
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 md:col-span-2">
+            {form.country === 'Chile' ? 'RUT' : form.country === 'Venezuela' ? 'Cédula de Identidad (CI)' : 'Documento'}
+            <Input
+              value={form.document}
+              onChange={e => setForm(prev => ({ ...prev, document: e.target.value }))}
+              placeholder={form.country === 'Chile' ? '12.345.678-9' : form.country === 'Venezuela' ? 'Ej: 12345678' : 'Documento'}
+              type={form.country === 'Venezuela' ? 'number' : 'text'}
+              maxLength={form.country === 'Chile' ? 12 : 20}
+              className="h-10 rounded-xl"
+              required
+            />
+            {form.document.length > 3 && !(
+              (form.country === 'Chile' && rut.validate(form.document)) ||
+              (form.country === 'Venezuela' && /^[0-9]+$/.test(form.document) && form.document.length >= 6 && form.document.length <= 9) ||
+              (form.country !== 'Chile' && form.country !== 'Venezuela' && form.document.length > 4)
+            ) && (
+              <span className="text-xs text-red-600 dark:text-red-400">Documento inválido</span>
+            )}
           </label>
+        </div>
+      </CompanySectionCard>
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-            Color hover botones
-            <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2">
-              <input
-                type="color"
-                value={form.hover_color}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    hover_color: event.target.value,
-                  }))
-                }
-                className="h-8 w-12 cursor-pointer rounded-lg border border-zinc-200"
-              />
-              <span className="text-xs text-zinc-500">{form.hover_color}</span>
-            </div>
-          </label>
+      <CompanySectionCard
+        title="Branding"
+        description="Colores, logo e imagen de fondo del tenant."
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <ColorField label="Color primario" value={form.primary_color} onChange={(v) => setForm((prev) => ({ ...prev, primary_color: v }))} />
+          <ColorField label="Color secundario" value={form.secondary_color} onChange={(v) => setForm((prev) => ({ ...prev, secondary_color: v }))} />
+          <ColorField label="Color precio" value={form.price_color} onChange={(v) => setForm((prev) => ({ ...prev, price_color: v }))} />
+          <ColorField label="Color descuento" value={form.discount_color} onChange={(v) => setForm((prev) => ({ ...prev, discount_color: v }))} />
+          <ColorField label="Color hover botones" value={form.hover_color} onChange={(v) => setForm((prev) => ({ ...prev, hover_color: v }))} />
+          <ColorField label="Fondo principal" value={form.background_color} onChange={(v) => setForm((prev) => ({ ...prev, background_color: v }))} />
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-            Fondo principal
-            <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2">
-              <input
-                type="color"
-                value={form.background_color}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    background_color: event.target.value,
-                  }))
-                }
-                className="h-8 w-12 cursor-pointer rounded-lg border border-zinc-200"
-              />
-              <span className="text-xs text-zinc-500">{form.background_color}</span>
-            </div>
-          </label>
-
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Imagen de fondo (URL)
             <Input
               value={form.background_image_url}
@@ -450,10 +388,11 @@ export function CompanyForm({ plans }: CompanyFormProps) {
                 }))
               }
               placeholder="https://.../background.webp"
+              className="h-10 rounded-xl"
             />
           </label>
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Subir imagen de fondo
             <input
               type="file"
@@ -461,20 +400,20 @@ export function CompanyForm({ plans }: CompanyFormProps) {
               onChange={(event) =>
                 handleBackgroundUpload(event.target.files?.[0] ?? null)
               }
-              className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600"
+              className="h-10 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900"
               disabled={backgroundUploading}
             />
             {backgroundUploading ? (
               <span className="text-xs text-zinc-500">Subiendo...</span>
             ) : null}
             {backgroundUploadError ? (
-              <span className="text-xs text-red-600">
+              <span className="text-xs text-red-600 dark:text-red-400">
                 {backgroundUploadError}
               </span>
             ) : null}
           </label>
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700 md:col-span-2">
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 md:col-span-2">
             Logo URL
             <Input
               value={form.logo_url}
@@ -482,27 +421,30 @@ export function CompanyForm({ plans }: CompanyFormProps) {
                 setForm((prev) => ({ ...prev, logo_url: event.target.value }))
               }
               placeholder="https://.../logo.png"
+              className="h-10 rounded-xl"
             />
           </label>
         </div>
 
-        <BrandingPreview
-          displayName={form.display_name}
-          name={form.name}
-          publicSlug={form.public_slug}
-          primaryColor={form.primary_color}
-          secondaryColor={form.secondary_color}
-          backgroundColor={form.background_color}
-          backgroundImageUrl={form.background_image_url}
-          logoUrl={form.logo_url}
-          priceColor={form.price_color}
-          discountColor={form.discount_color}
-          hoverColor={form.hover_color}
-        />
-      </Card>
+        <div className="mt-6">
+          <BrandingPreview
+            displayName={form.display_name}
+            name={form.name}
+            publicSlug={form.public_slug}
+            primaryColor={form.primary_color}
+            secondaryColor={form.secondary_color}
+            backgroundColor={form.background_color}
+            backgroundImageUrl={form.background_image_url}
+            logoUrl={form.logo_url}
+            priceColor={form.price_color}
+            discountColor={form.discount_color}
+            hoverColor={form.hover_color}
+          />
+        </div>
+      </CompanySectionCard>
 
       {error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/60 dark:text-red-300">
           {error}
         </div>
       ) : null}

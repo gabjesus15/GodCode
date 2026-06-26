@@ -1,10 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import { Card } from "../../../components/ui/card";
-import { Badge } from "../../../components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Drawer } from "@/components/ui/drawer";
+import { toast } from "sonner";
+import { Puzzle } from "lucide-react";
+import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
+import { SaasSwitch } from "@/components/super-admin/shared/saas-switch";
+import { SaasSelect } from "@/components/super-admin/shared/saas-select";
+import { SaasStatusBadge } from "@/components/super-admin/shared/saas-status-badge";
+import { SaasEmptyState } from "@/components/super-admin/shared/saas-empty-state";
+import { SaasFilterBar, SaasSearchInput } from "@/components/super-admin/shared/saas-filter-bar";
+
+import { formatUsd } from "@/lib/super-admin/format-utils";
 
 type Addon = {
 	id: string;
@@ -18,11 +29,10 @@ type Addon = {
 	sort_order: number;
 };
 
-const currency = new Intl.NumberFormat("en-US", {
-	style: "currency",
-	currency: "USD",
-	maximumFractionDigits: 2,
-});
+const typeOptions = [
+	{ value: "one_time", label: "Pago único" },
+	{ value: "monthly", label: "Mensual" },
+];
 
 export default function AddonsPage() {
 	const [addons, setAddons] = useState<Addon[]>([]);
@@ -30,7 +40,9 @@ export default function AddonsPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [showNew, setShowNew] = useState(false);
 	const [editingId, setEditingId] = useState<string | null>(null);
+	const [listRef] = useAutoAnimate<HTMLDivElement>();
 	const [saving, setSaving] = useState(false);
+	const [query, setQuery] = useState("");
 	const [form, setForm] = useState({
 		slug: "",
 		name: "",
@@ -43,6 +55,7 @@ export default function AddonsPage() {
 	});
 
 	const load = () => {
+		setLoading(true);
 		fetch("/api/super-admin/addons")
 			.then((res) => res.json())
 			.then((json: { data?: Addon[] }) => setAddons(json.data ?? []))
@@ -67,6 +80,7 @@ export default function AddonsPage() {
 		});
 		setShowNew(false);
 		setEditingId(null);
+		setError(null);
 	};
 
 	const startNew = () => {
@@ -112,8 +126,11 @@ export default function AddonsPage() {
 			if (!res.ok) throw new Error(data.error ?? "Error al crear");
 			load();
 			resetForm();
+			toast.success("Add-on creado con éxito.");
 		} catch (e) {
-			setError(e instanceof Error ? e.message : "Error al crear");
+			const errMsg = e instanceof Error ? e.message : "Error al crear";
+			setError(errMsg);
+			toast.error(errMsg);
 		} finally {
 			setSaving(false);
 		}
@@ -142,89 +159,124 @@ export default function AddonsPage() {
 			if (!res.ok) throw new Error(data.error ?? "Error al guardar");
 			load();
 			resetForm();
+			toast.success("Add-on guardado con éxito.");
 		} catch (e) {
-			setError(e instanceof Error ? e.message : "Error al guardar");
+			const errMsg = e instanceof Error ? e.message : "Error al guardar";
+			setError(errMsg);
+			toast.error(errMsg);
 		} finally {
 			setSaving(false);
 		}
 	};
 
+	const filteredAddons = useMemo(() => {
+		if (!query.trim()) return addons;
+		const q = query.toLowerCase();
+		return addons.filter(
+			(a) =>
+				a.slug.toLowerCase().includes(q) ||
+				(a.name ?? "").toLowerCase().includes(q) ||
+				(a.description ?? "").toLowerCase().includes(q),
+		);
+	}, [addons, query]);
+
 	if (loading) {
 		return (
-			<div className="flex min-h-[200px] items-center justify-center">
-				<div className="h-10 w-10 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-700" />
+			<div className="flex min-h-[200px] flex-col gap-4">
+				<div className="h-24 animate-pulse rounded-3xl bg-zinc-100 dark:bg-zinc-800" />
+				<div className="grid gap-4">
+					{Array.from({ length: 3 }).map((_, i) => (
+						<div key={i} className="h-28 animate-pulse rounded-3xl bg-zinc-100 dark:bg-zinc-800" />
+					))}
+				</div>
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex min-w-0 flex-col gap-4 sm:gap-6">
-			<div className="flex flex-wrap items-center justify-between gap-2">
-				<div>
-					<h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 sm:text-2xl">
-						Servicios extra (add-ons)
-					</h1>
-					<p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-						Servicios opcionales que los clientes pueden contratar en el registro (dominio propio, personalización, etc.).
-					</p>
-				</div>
-				<Button type="button" onClick={startNew} disabled={showNew}>
-					Nuevo add-on
-				</Button>
-			</div>
+		<div className="flex min-w-0 flex-col gap-5 sm:gap-6">
+			<SaasPageHeader
+				title="Servicios extra"
+				description="Add-ons opcionales que los clientes pueden contratar durante el registro."
+				icon={Puzzle}
+				action={
+					<Button type="button" onClick={startNew} disabled={showNew}>
+						Nuevo add-on
+					</Button>
+				}
+			/>
 
-			{error && (
-				<div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/60 dark:text-red-300">
-					{error}
-				</div>
-			)}
+			<SaasFilterBar>
+				<SaasSearchInput
+					value={query}
+					onChange={(e) => setQuery(e.target.value)}
+					placeholder="Buscar por slug, nombre o descripción…"
+					className="min-w-[260px]"
+				/>
+				<span className="text-xs text-zinc-500">{filteredAddons.length} add-ons</span>
+			</SaasFilterBar>
 
-			{(showNew || editingId) && (
-				<Card className="p-4 sm:p-5">
-					<h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-						{editingId ? "Editar add-on" : "Nuevo add-on"}
-					</h2>
-					<div className="mt-4 grid gap-3 sm:grid-cols-2">
-						<label className="flex flex-col gap-1 text-sm">
+			<Drawer
+				open={!!(showNew || editingId)}
+				onOpenChange={(open: boolean) => {
+					if (!open) resetForm();
+				}}
+				contentClassName="max-w-xl"
+				title={editingId ? "Editar add-on" : "Nuevo add-on"}
+				description="Configura slug, nombre, precio y visibilidad del add-on."
+			>
+				<div className="space-y-5 py-2">
+					{error && (
+						<div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/60 dark:text-red-300">
+							{error}
+						</div>
+					)}
+					<div className="grid gap-4 sm:grid-cols-2">
+						<label className="flex flex-col gap-1.5 text-sm">
 							<span className="font-medium text-zinc-700 dark:text-zinc-300">Slug (único)</span>
 							<Input
 								value={form.slug}
 								onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))}
 								placeholder="custom_domain"
-								className="h-10"
+								className="h-10 rounded-xl"
 								disabled={!!editingId}
 							/>
 						</label>
-						<label className="flex flex-col gap-1 text-sm">
+						<label className="flex flex-col gap-1.5 text-sm">
 							<span className="font-medium text-zinc-700 dark:text-zinc-300">Nombre</span>
 							<Input
 								value={form.name}
 								onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
 								placeholder="Dominio propio"
-								className="h-10"
+								className="h-10 rounded-xl"
 							/>
 						</label>
-						<label className="flex flex-col gap-1 text-sm sm:col-span-2">
+						<label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
 							<span className="font-medium text-zinc-700 dark:text-zinc-300">Descripción</span>
 							<Input
 								value={form.description}
 								onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
 								placeholder="Opcional"
-								className="h-10"
+								className="h-10 rounded-xl"
 							/>
 						</label>
-						<label className="flex flex-col gap-1 text-sm">
-							<span className="font-medium text-zinc-700 dark:text-zinc-300">Tipo</span>
-							<select
-								className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-								value={form.type}
-								onChange={(e) => setForm((p) => ({ ...p, type: e.target.value as "one_time" | "monthly" }))}
-							>
-								<option value="one_time">Pago único</option>
-								<option value="monthly">Mensual</option>
-							</select>
+						<SaasSelect
+							label="Tipo"
+							options={typeOptions}
+							value={form.type}
+							onChange={(value) => setForm((p) => ({ ...p, type: value as "one_time" | "monthly" }))}
+						/>
+						<label className="flex flex-col gap-1.5 text-sm">
+							<span className="font-medium text-zinc-700 dark:text-zinc-300">Orden</span>
+							<Input
+								type="number"
+								min={0}
+								value={form.sort_order}
+								onChange={(e) => setForm((p) => ({ ...p, sort_order: Number(e.target.value) || 0 }))}
+								className="h-10 rounded-xl"
+							/>
 						</label>
-						<label className="flex flex-col gap-1 text-sm">
+						<label className="flex flex-col gap-1.5 text-sm">
 							<span className="font-medium text-zinc-700 dark:text-zinc-300">Precio único (USD)</span>
 							<Input
 								type="number"
@@ -238,11 +290,11 @@ export default function AddonsPage() {
 									}))
 								}
 								placeholder="50"
-								className="h-10"
+								className="h-10 rounded-xl"
 								disabled={form.type === "monthly"}
 							/>
 						</label>
-						<label className="flex flex-col gap-1 text-sm">
+						<label className="flex flex-col gap-1.5 text-sm">
 							<span className="font-medium text-zinc-700 dark:text-zinc-300">Precio mensual (USD)</span>
 							<Input
 								type="number"
@@ -256,31 +308,18 @@ export default function AddonsPage() {
 									}))
 								}
 								placeholder="5"
-								className="h-10"
+								className="h-10 rounded-xl"
 								disabled={form.type === "one_time"}
 							/>
 						</label>
-						<label className="flex flex-col gap-1 text-sm">
-							<span className="font-medium text-zinc-700 dark:text-zinc-300">Orden</span>
-							<Input
-								type="number"
-								min="0"
-								value={form.sort_order}
-								onChange={(e) => setForm((p) => ({ ...p, sort_order: Number(e.target.value) || 0 }))}
-								className="h-10"
-							/>
-						</label>
-						<label className="flex items-center gap-2 text-sm">
-							<input
-								type="checkbox"
-								checked={form.is_active}
-								onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.checked }))}
-								className="h-4 w-4 rounded border-zinc-300"
-							/>
-							<span className="font-medium text-zinc-700 dark:text-zinc-300">Activo (visible en registro)</span>
-						</label>
 					</div>
-					<div className="mt-4 flex gap-2">
+					<SaasSwitch
+						label="Activo (visible en registro)"
+						description="Los add-ons inactivos no aparecen durante el onboarding."
+						checked={form.is_active}
+						onChange={(checked) => setForm((p) => ({ ...p, is_active: checked }))}
+					/>
+					<div className="flex gap-2 pb-2">
 						<Button
 							type="button"
 							onClick={editingId ? saveEdit : saveNew}
@@ -292,29 +331,51 @@ export default function AddonsPage() {
 							Cancelar
 						</Button>
 					</div>
-				</Card>
-			)}
+				</div>
+			</Drawer>
 
-			<div className="grid gap-4">
-				{addons.map((a) => (
-					<Card key={a.id} className="p-4 sm:p-5">
-						<div className="flex flex-wrap items-center justify-between gap-2">
-							<div>
-								<p className="font-medium text-zinc-900 dark:text-zinc-100">{a.name ?? a.slug}</p>
-								<p className="text-xs text-zinc-500">{a.slug}</p>
+			{filteredAddons.length === 0 && !showNew ? (
+				<SaasEmptyState
+					icon={Puzzle}
+					title={query ? "Sin resultados" : "No hay add-ons"}
+					description={
+						query
+							? "Ningún add-on coincide con tu búsqueda."
+							: "Crea tu primer add-on, por ejemplo dominio propio o personalización de marca."
+					}
+					action={
+						!query && (
+							<Button type="button" onClick={startNew}>
+								Nuevo add-on
+							</Button>
+						)
+					}
+				/>
+			) : (
+				<div ref={listRef} className="grid gap-4">
+					{filteredAddons.map((a) => (
+					<Card key={a.id} className="rounded-3xl border-zinc-200/60 bg-white p-4 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-5">
+						<div className="flex flex-wrap items-start justify-between gap-4">
+							<div className="min-w-0 flex-1">
+								<div className="flex flex-wrap items-center gap-2">
+									<p className="font-medium text-zinc-900 dark:text-zinc-100">{a.name ?? a.slug}</p>
+										<SaasStatusBadge label={a.is_active ? "Activo" : "Inactivo"} variant={a.is_active ? "success" : "neutral"} />
+								</div>
+								<p className="mt-0.5 text-xs text-zinc-500">{a.slug}</p>
 								{a.description ? (
-									<p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{a.description}</p>
+									<p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{a.description}</p>
 								) : null}
 							</div>
-							<div className="flex items-center gap-2">
+							<div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
 								{a.type === "monthly" && a.price_monthly != null ? (
-									<Badge variant="neutral">{currency.format(Number(a.price_monthly))}/mes</Badge>
+									<span className="inline-flex items-center rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+										{formatUsd(Number(a.price_monthly))}/mes
+									</span>
 								) : null}
 								{a.type === "one_time" && a.price_one_time != null ? (
-									<Badge variant="neutral">{currency.format(Number(a.price_one_time))} único</Badge>
-								) : null}
-								{!a.is_active ? (
-									<Badge variant="destructive">Oculto</Badge>
+									<span className="inline-flex items-center rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+										{formatUsd(Number(a.price_one_time))} único
+									</span>
 								) : null}
 								<Button type="button" variant="outline" size="sm" onClick={() => startEdit(a)}>
 									Editar
@@ -322,12 +383,7 @@ export default function AddonsPage() {
 							</div>
 						</div>
 					</Card>
-				))}
-			</div>
-
-			{addons.length === 0 && !showNew && (
-				<div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-6 py-10 text-center text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-					No hay add-ons. Clic en &quot;Nuevo add-on&quot; para crear uno (ej. dominio propio, personalización).
+					))}
 				</div>
 			)}
 		</div>

@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-
-import { Input } from "@/components/ui/input";
-import { CompaniesTable } from "./companies-table";
-import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
+import { Building2, Plus } from "lucide-react";
 import Link from "next/link";
+
+import { CompaniesTable } from "./companies-table";
+import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
+import { SaasFilterBar, SaasSearchInput } from "@/components/super-admin/shared/saas-filter-bar";
+import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 
 interface CompaniesViewProps {
   companies: Array<{
@@ -15,6 +17,8 @@ interface CompaniesViewProps {
     custom_domain?: string | null;
     subscription_status: string | null;
     subscription_ends_at?: string | null;
+    country?: string | null;
+    currency?: string | null;
     plans: {
       name: string | null;
       price: number | null;
@@ -29,45 +33,40 @@ export function CompaniesView({ companies }: CompaniesViewProps) {
 
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();
-    if (!term) {
-      return companies;
-    }
-
+    if (!term) return companies;
     return companies.filter((company) =>
       (company.name ?? "").toLowerCase().includes(term)
     );
   }, [companies, query]);
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 sm:text-2xl">
-            Empresas
-          </h2>
-          <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-            Busca y gestiona empresas rápidamente.
-          </p>
-        </div>
-        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-3 md:max-w-lg">
-          <div className="w-full min-w-0 sm:max-w-xs">
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar empresa..."
-              className="w-full"
-            />
-          </div>
-          {!readOnly && (
+    <div className="flex min-w-0 flex-col gap-4 sm:gap-6">
+      <SaasPageHeader
+        title="Empresas"
+        description="Busca y gestiona empresas rápidamente."
+        icon={Building2}
+        action={
+          !readOnly ? (
             <Link
               href="/companies/new"
-              className="inline-flex h-10 min-w-0 items-center justify-center rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 sm:h-11"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
+              <Plus className="h-4 w-4" />
               Nueva empresa
             </Link>
-          )}
-        </div>
-      </div>
+          ) : null
+        }
+      />
+
+      <SaasFilterBar>
+        <SaasSearchInput
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Buscar empresa..."
+          wrapperClassName="w-full sm:w-auto"
+        />
+      </SaasFilterBar>
+
       <div className="min-w-0 overflow-x-auto">
         <CompaniesTable companies={filtered} readOnly={readOnly} />
       </div>

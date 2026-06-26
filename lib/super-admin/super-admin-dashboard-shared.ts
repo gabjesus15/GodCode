@@ -21,3 +21,9 @@ export function periodStartIso(period: DashboardPeriod): string | null {
 	d.setUTCHours(0, 0, 0, 0);
 	return d.toISOString();
 }
+
+export function parseDashboardPeriod(raw: string | undefined): DashboardPeriod {
+	const allowed = new Set(DASHBOARD_PERIODS.map((p) => p.value));
+	if (raw && allowed.has(raw as DashboardPeriod)) return raw as DashboardPeriod;
+	return "30";
+}

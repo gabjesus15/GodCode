@@ -14,9 +14,9 @@ import {
 	MonitorSmartphone,
 	Package,
 	ScrollText,
+	Settings,
 	ShieldAlert,
 	ShieldCheck,
-	Wrench,
 } from "lucide-react";
 
 export type SuperAdminNavItem = {
@@ -39,6 +39,6 @@ export const SUPER_ADMIN_NAV: SuperAdminNavItem[] = [
 	{ href: "/plan-payment-methods", label: "Métodos de pago (plan)", icon: CreditCard, keywords: "planes pago" },
 	{ href: "/tickets", label: "Tickets", icon: LifeBuoy, keywords: "soporte" },
 	{ href: "/landing", label: "Landing", icon: MonitorSmartphone, keywords: "landing leads media webhooks" },
-	{ href: "/herramientas", label: "Herramientas", icon: Wrench, keywords: "tools" },
-	{ href: "/herramientas/autenticador", label: "Autenticador MFA", icon: ShieldCheck, keywords: "totp google authenticator 2fa seguridad" },
+	{ href: "/herramientas", label: "Configuración global", icon: Settings, keywords: "tools roles modulos broadcast seguridad" },
+	{ href: "/herramientas/autenticador", label: "Seguridad MFA", icon: ShieldCheck, keywords: "totp google authenticator 2fa mfa" },
 ];

@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BarChart3, Building2, SlidersHorizontal } from "lucide-react";
 
-import { AnalyticsCountryMapLazy } from "@/components/super-admin/analytics/analytics-country-map-lazy";
-import { DashboardPeriodTabs } from "../../../../components/super-admin/analytics/dashboard-period-tabs";
+import { AnalyticsCountryMap } from "@/components/super-admin/analytics/analytics-country-map";
+import { AnalyticsStatsSection } from "@/components/super-admin/analytics/analytics-stats-section";
+import { TopCountriesSection } from "@/components/super-admin/analytics/top-countries-section";
+import { DashboardPeriodTabs } from "@/components/super-admin/analytics/dashboard-period-tabs";
 import { AnalyticsGlobalChart } from "@/components/super-admin/analytics/analytics-global-chart";
 import {
   DASHBOARD_PERIODS,
@@ -35,6 +37,13 @@ function parsePeriod(raw: string | undefined): DashboardPeriod {
   return "30";
 }
 
+function getDefaultChartFromIso(events: EventRow[]): string {
+  if (events.length > 0) {
+    return events.reduce((earliest, e) => (e.created_at < earliest ? e.created_at : earliest), events[0].created_at);
+  }
+  return new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+}
+
 export default async function AnalyticsGlobalPage({
   searchParams,
 }: {
@@ -54,7 +63,7 @@ export default async function AnalyticsGlobalPage({
     .limit(500);
 
   const events: EventRow[] = [];
-  let eventsError: any = null;
+  let eventsError: { message: string } | null = null;
   let start = 0;
   const step = 1000;
   let keepFetching = true;
@@ -146,7 +155,7 @@ export default async function AnalyticsGlobalPage({
       uniqueVisitors: row.visitors.size,
     }))
     .sort((a, b) => b.views - a.views)
-    .slice(0, 50);
+    .slice(0, 20);
 
   const businessesTop = [...businessAgg.values()]
     .map((row) => ({
@@ -157,181 +166,103 @@ export default async function AnalyticsGlobalPage({
       uniqueVisitors: row.visitors.size,
     }))
     .sort((a, b) => b.views - a.views)
-    .slice(0, 50);
+    .slice(0, 10);
 
   const eventsTop = [...eventAgg.entries()]
     .map(([eventName, count]) => ({ eventName, count }))
     .sort((a, b) => b.count - a.count)
-    .slice(0, 20);
+    .slice(0, 10);
+
+  const chartFromIso = fromIso || getDefaultChartFromIso(events);
 
   return (
     <div className="min-w-0 space-y-6">
-      {/* Header section */}
-      <div>
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Volver al dashboard
-        </Link>
-        <h2 className="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Analytics global</h2>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Tráfico de landing y negocios, con visitantes únicos, top por país y top por negocio.
-        </p>
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1 text-xs font-medium text-zinc-500 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Volver al dashboard
+          </Link>
+          <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-3xl">
+            Analytics
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Tráfico global, visitantes únicos y comportamiento por país y negocio.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 self-start rounded-full border border-zinc-200/60 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:text-zinc-300">
+          <BarChart3 className="h-3.5 w-3.5" />
+          <span>{DASHBOARD_PERIODS.find((p) => p.value === period)?.label ?? period}</span>
+        </div>
       </div>
 
       {/* Filter panel */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/80 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <DashboardPeriodTabs current={period} />
-          <form className="flex flex-wrap items-center gap-2" method="get">
-            <input type="hidden" name="period" value={period} />
-            <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
-              Filtrar por Negocio:
-              <select
-                name="company"
-                defaultValue={selectedCompanyId}
-                className="h-9 min-w-[200px] rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+      <div className="rounded-3xl border border-zinc-200/60 bg-white p-4 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800">
+              <SlidersHorizontal className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+            </div>
+            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Filtros</span>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <DashboardPeriodTabs current={period} />
+            <form className="flex items-center gap-2" method="get">
+              <input type="hidden" name="period" value={period} />
+              <div className="relative">
+                <Building2 className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+                <select
+                  name="company"
+                  defaultValue={selectedCompanyId}
+                  className="h-9 min-w-[200px] appearance-none rounded-xl border border-zinc-200/60 bg-zinc-50 py-1 pl-9 pr-8 text-xs font-medium text-zinc-700 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                >
+                  <option value="">Todos los negocios</option>
+                  {companies.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name || c.public_slug || c.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="submit"
+                className="h-9 rounded-xl bg-zinc-900 px-4 text-xs font-medium text-white transition hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
               >
-                <option value="">Todos los negocios</option>
-                {companies.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name || c.public_slug || c.id}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="submit"
-              className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-xs font-semibold hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800 transition"
-            >
-              Aplicar
-            </button>
-          </form>
+                Aplicar
+              </button>
+            </form>
+          </div>
         </div>
       </div>
 
       {loadError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
           {loadError}
         </div>
       )}
 
-      {/* Metric summaries */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="rounded-2xl border border-zinc-200 bg-white/90 p-4 dark:border-zinc-700 dark:bg-zinc-900/80 shadow-sm">
-          <p className="text-xs font-medium text-zinc-500">Vistas totales</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">{totalViews}</p>
-        </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white/90 p-4 dark:border-zinc-700 dark:bg-zinc-900/80 shadow-sm">
-          <p className="text-xs font-medium text-zinc-500">Visitantes únicos</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">{uniqueVisitors}</p>
-        </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white/90 p-4 dark:border-zinc-700 dark:bg-zinc-900/80 shadow-sm">
-          <p className="text-xs font-medium text-zinc-500">Landing views</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">{landingViews}</p>
-        </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white/90 p-4 dark:border-zinc-700 dark:bg-zinc-900/80 shadow-sm">
-          <p className="text-xs font-medium text-zinc-500">Business views</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">{tenantViews}</p>
-        </div>
-        <div className="rounded-2xl border border-zinc-200 bg-white/90 p-4 dark:border-zinc-700 dark:bg-zinc-900/80 shadow-sm">
-          <p className="text-xs font-medium text-zinc-500">SaaS views</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">{saasViews}</p>
-        </div>
-      </div>
+      {/* KPIs + top negocios/eventos */}
+      <AnalyticsStatsSection
+        totalViews={totalViews}
+        uniqueVisitors={uniqueVisitors}
+        landingViews={landingViews}
+        tenantViews={tenantViews}
+        saasViews={saasViews}
+        businessesTop={businessesTop}
+        eventsTop={eventsTop}
+      />
 
-      {/* Interactive Charts Suite */}
-      {(() => {
-        const chartFromIso = fromIso || (events.length > 0
-          ? events.reduce((earliest, e) => e.created_at < earliest ? e.created_at : earliest, events[0].created_at)
-          : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-        return <AnalyticsGlobalChart events={events} fromIso={chartFromIso} />;
-      })()}
+      {/* Charts */}
+      <AnalyticsGlobalChart events={events} fromIso={chartFromIso} />
 
-      {/* Visual map */}
-      <AnalyticsCountryMapLazy countriesTop={countriesTop} />
+      {/* Map */}
+      <AnalyticsCountryMap countriesTop={countriesTop} />
 
-      {/* Secondary Tables */}
-      <div className="grid gap-6 xl:grid-cols-2">
-        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/90 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
-          <div className="border-b border-zinc-200 px-4 py-3 text-sm font-semibold dark:border-zinc-700">Top países</div>
-          <div className="overflow-x-auto max-h-[300px]">
-            <table className="min-w-full text-left text-xs">
-              <thead className="bg-zinc-50/80 text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
-                <tr>
-                  <th className="px-4 py-2">País</th>
-                  <th className="px-4 py-2">Vistas</th>
-                  <th className="px-4 py-2">Visitantes únicos</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                {countriesTop.length === 0 ? (
-                  <tr><td className="px-4 py-3 text-zinc-500" colSpan={3}>Sin datos todavía.</td></tr>
-                ) : countriesTop.map((row) => (
-                  <tr key={row.countryCode} className="hover:bg-zinc-50/40 dark:hover:bg-zinc-800/40">
-                    <td className="px-4 py-2 font-medium">{row.countryCode}</td>
-                    <td className="px-4 py-2 tabular-nums">{row.views}</td>
-                    <td className="px-4 py-2 tabular-nums">{row.uniqueVisitors}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/90 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
-          <div className="border-b border-zinc-200 px-4 py-3 text-sm font-semibold dark:border-zinc-700">Top negocios por visitas</div>
-          <div className="overflow-x-auto max-h-[300px]">
-            <table className="min-w-full text-left text-xs">
-              <thead className="bg-zinc-50/80 text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
-                <tr>
-                  <th className="px-4 py-2">Negocio</th>
-                  <th className="px-4 py-2">Slug</th>
-                  <th className="px-4 py-2">Vistas</th>
-                  <th className="px-4 py-2">Visitantes únicos</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                {businessesTop.length === 0 ? (
-                  <tr><td className="px-4 py-3 text-zinc-500" colSpan={4}>Sin datos todavía.</td></tr>
-                ) : businessesTop.map((row) => (
-                  <tr key={`${row.companyId ?? row.slug}`} className="hover:bg-zinc-50/40 dark:hover:bg-zinc-800/40">
-                    <td className="px-4 py-2 font-medium text-zinc-900 dark:text-zinc-100">{row.companyName}</td>
-                    <td className="px-4 py-2 text-zinc-500 font-mono">{row.slug}</td>
-                    <td className="px-4 py-2 tabular-nums">{row.views}</td>
-                    <td className="px-4 py-2 tabular-nums">{row.uniqueVisitors}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white/90 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
-        <div className="border-b border-zinc-200 px-4 py-3 text-sm font-semibold dark:border-zinc-700">Eventos más frecuentes</div>
-        <div className="overflow-x-auto max-h-[300px]">
-          <table className="min-w-full text-left text-xs">
-            <thead className="bg-zinc-50/80 text-zinc-500 dark:bg-zinc-800/50 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
-              <tr>
-                <th className="px-4 py-2">Evento</th>
-                <th className="px-4 py-2">Conteo</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {eventsTop.length === 0 ? (
-                <tr><td className="px-4 py-3 text-zinc-500" colSpan={2}>Sin eventos todavía.</td></tr>
-              ) : eventsTop.map((row) => (
-                <tr key={row.eventName} className="hover:bg-zinc-50/40 dark:hover:bg-zinc-800/40">
-                  <td className="px-4 py-2 font-mono text-indigo-600 dark:text-indigo-400">{row.eventName}</td>
-                  <td className="px-4 py-2 tabular-nums font-semibold">{row.count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Top countries — final */}
+      <TopCountriesSection countriesTop={countriesTop} />
     </div>
   );
 }

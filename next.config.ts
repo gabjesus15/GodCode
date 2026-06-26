@@ -18,8 +18,6 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-dialog",
       "@radix-ui/react-accordion",
       "embla-carousel-react",
-      "react-chartjs-2",
-      "chart.js",
     ],
   },
   images: {

@@ -1,5 +1,5 @@
-import { THEME_SCOPE_SCRIPT } from "../../components/theme/saas-theme-scope";
+import { LIGHT_ONLY_THEME_SCRIPT } from "../../components/theme/saas-theme-scope";
 
 export default function Head() {
-	return <script id="saas-theme-scope" dangerouslySetInnerHTML={{ __html: THEME_SCOPE_SCRIPT.trim() }} />;
+	return <script id="saas-theme-scope" dangerouslySetInnerHTML={{ __html: LIGHT_ONLY_THEME_SCRIPT.trim() }} />;
 }

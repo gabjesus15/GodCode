@@ -1,27 +1,35 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { revalidateMenuCache } from "@/app/actions/revalidate";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { CompanyUberCredentialsForm } from "./company-uber-credentials-form";
 import { Input } from "@/components/ui/input";
+import { revalidateMenuCache } from "@/app/actions/revalidate";
+
+import { CompanySectionCard } from "./company-section-card";
+import { CompanyUserManagement } from "./company-user-management";
+import { CompanyUberCredentialsForm } from "./company-uber-credentials-form";
+import { SaasSelect } from "@/components/super-admin/shared/saas-select";
+import { SaasCheckbox } from "@/components/super-admin/shared/saas-checkbox";
+import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 import { logAdminAction } from "@/utils/audit";
 import { requireAdminRole, roleSets } from "@/utils/admin";
 import { getTenantBaseDomainStatic, normalizeBaseDomain } from "@/utils/tenant-url";
 import { slugify } from "@/utils/slugify";
 import { uploadImage } from "@/components/tenant/utils/cloudinary";
-import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 import { TENANT_ADMIN_TAB_OPTIONS } from "@/lib/super-admin/tenant-admin-tabs";
 import {
   buildCompanyPanelAccessFromPlanFeatures,
   normalizeCompanyPanelAccess,
 } from "@/lib/super-admin/company-panel-access";
+import {
+  COUNTRY_OPTIONS,
+  CURRENCY_OPTIONS,
+  SUBSCRIPTION_STATUS_OPTIONS,
+} from "@/lib/super-admin/form-options";
 
 const BrandingPreview = dynamic(
   () =>
@@ -30,10 +38,6 @@ const BrandingPreview = dynamic(
     ),
   { ssr: false }
 );
-
-// ============================================================================
-// INTERFACES
-// ============================================================================
 
 interface PlanOption {
   id: string;
@@ -72,22 +76,6 @@ interface CompanyData {
   } | null;
 }
 
-const ADMIN_TAB_OPTIONS = TENANT_ADMIN_TAB_OPTIONS;
-
-const USER_ROLE_OPTIONS = [
-  { value: "admin", label: "Admin" },
-  { value: "ceo", label: "CEO" },
-  { value: "cashier", label: "Cashier" },
-];
-
-const ROLE_LABELS: Record<string, string> = {
-  admin: "Admin",
-  ceo: "CEO",
-  cashier: "Cashier",
-};
-
-const RESERVED_NON_TENANT_ROLES = new Set(["super_admin", "owner"]);
-
 interface BusinessInfo {
   name: string | null;
   phone: string | null;
@@ -121,400 +109,6 @@ interface CompanyGlobalFormProps {
   };
 }
 
-interface CompanyUser {
-  id: string;
-  email: string;
-  role: string;
-  branch_id?: string | null;
-  branch_name?: string | null;
-}
-
-interface BranchOption {
-  id: string;
-  name: string | null;
-}
-
-// ============================================================================
-// SUB-COMPONENTE: GESTIÓN DE USUARIOS (Sin <form> anidados)
-// ============================================================================
-
-
-
-
-function UserManagement({ companyId }: { companyId: string }) {
-  const { readOnly } = useAdminRole();
-  const [users, setUsers] = useState<CompanyUser[]>([]);
-  const [branches, setBranches] = useState<BranchOption[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [newEmail, setNewEmail] = useState("");
-  const [newRole, setNewRole] = useState("cashier");
-  const [newBranchId, setNewBranchId] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [adding, setAdding] = useState(false);
-  const [removingId, setRemovingId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editEmail, setEditEmail] = useState("");
-  const [editRole, setEditRole] = useState("");
-  const [editBranchId, setEditBranchId] = useState("");
-  const [editPassword, setEditPassword] = useState("");
-  const [roleOptions, setRoleOptions] = useState(USER_ROLE_OPTIONS);
-
-  const editRoleOptions = useMemo(() => {
-    if (!editRole || roleOptions.some((option) => option.value === editRole)) {
-      return roleOptions;
-    }
-
-    return [
-      ...roleOptions,
-      { value: editRole, label: editRole.toUpperCase() },
-    ];
-  }, [editRole, roleOptions]);
-
-  const fetchRoleOptions = useCallback(async () => {
-    try {
-      const res = await fetch("/api/super-admin/roles", { cache: "no-store" });
-      if (!res.ok) return;
-
-      const data = (await res.json()) as {
-        roles?: Array<{ name: string; isSystem: boolean }>;
-      };
-
-      const options = (data.roles ?? [])
-        .filter((role) => !RESERVED_NON_TENANT_ROLES.has(role.name))
-        .map((role) => ({ value: role.name, label: ROLE_LABELS[role.name] ?? role.name.toUpperCase() }));
-
-      if (options.length > 0) {
-        setRoleOptions(options);
-      }
-    } catch {
-      setRoleOptions(USER_ROLE_OPTIONS);
-    }
-  }, []);
-
-
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/auth/super-admin-user?companyId=${companyId}`, { cache: "no-store" });
-      const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.error || "Error al cargar usuarios");
-      
-      const mappedUsers = (data.users || []).map(
-        (row: {
-          id: string | number;
-          email: string;
-          role: string;
-          branch_id?: string | null;
-          branch?: { name?: string | null } | null;
-        }) => ({
-          id: String(row.id),
-          email: String(row.email),
-          role: String(row.role),
-          branch_id: row.branch_id ?? null,
-          branch_name: row.branch?.name ?? null,
-        })
-      );
-      setUsers(mappedUsers);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar usuarios");
-    } finally {
-      setLoading(false);
-    }
-  }, [companyId]);
-
-  const fetchBranches = useCallback(async () => {
-    try {
-      const supabase = createSupabaseBrowserClient("super-admin");
-      const { data, error } = await supabase
-        .from("branches")
-        .select("id,name")
-        .eq("company_id", companyId)
-        .order("name");
-      if (error) throw error;
-      setBranches((data as BranchOption[]) || []);
-    } catch {
-      setBranches([]);
-    }
-  }, [companyId]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  useEffect(() => {
-    fetchBranches();
-  }, [fetchBranches]);
-
-  useEffect(() => {
-    fetchRoleOptions();
-  }, [fetchRoleOptions]);
-
-  async function handleAddUser() {
-    const emailToSave = newEmail.trim();
-    const passwordToSave = newPassword.trim();
-    if (!emailToSave || !passwordToSave) return;
-    setAdding(true);
-    setError(null);
-    try {
-      const branchToSave = newBranchId || null;
-      const res = await fetch("/api/auth/super-admin-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailToSave, password: passwordToSave, role: newRole, company_id: companyId, branch_id: branchToSave })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al agregar usuario");
-      setNewEmail("");
-      setNewRole("cashier");
-      setNewBranchId("");
-      setNewPassword("");
-      await fetchUsers();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al agregar usuario");
-    } finally {
-      setAdding(false);
-    }
-  }
-
-  async function handleRemoveUser(id: string) {
-    if (!window.confirm("¿Estás seguro de quitar este usuario?")) return;
-    setRemovingId(id);
-    setError(null);
-    try {
-      const res = await fetch("/api/auth/super-admin-user", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al quitar usuario");
-      await fetchUsers();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al quitar usuario");
-    } finally {
-      setRemovingId(null);
-    }
-  }
-
-  function startEditUser(user: CompanyUser) {
-    setEditingId(user.id);
-    setEditEmail(user.email);
-    const normalizedRole = user.role.trim().toLowerCase() === "staff" ? "cashier" : user.role.trim().toLowerCase();
-    setEditRole(normalizedRole);
-    setEditBranchId(user.branch_id ?? "");
-    setEditPassword("");
-  }
-
-  async function handleEditUser(id: string) {
-    setError(null);
-    try {
-      const branchToSave = editBranchId || null;
-      const res = await fetch("/api/auth/super-admin-user", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, email: editEmail, role: editRole, password: editPassword, branch_id: branchToSave })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al editar usuario");
-      setEditingId(null);
-      await fetchUsers();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al editar usuario");
-    }
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setEditEmail("");
-    setEditRole("");
-    setEditBranchId("");
-    setEditPassword("");
-  }
-
-  return (
-    <>
-      <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-xs text-zinc-600">
-        Puedes dejar la sucursal en &quot;Todos los locales&quot; para acceso global, o asignar una sucursal fija por correo.
-      </div>
-
-      <div className="overflow-x-auto rounded-lg border border-zinc-200">
-        <table className="min-w-full text-sm">
-          <thead>
-            <tr className="bg-zinc-50 border-b border-zinc-200">
-              <th className="px-4 py-3 text-left font-semibold text-zinc-700">Correo</th>
-              <th className="px-4 py-3 text-left font-semibold text-zinc-700">Rol</th>
-              <th className="px-4 py-3 text-left font-semibold text-zinc-700">Sucursal</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-200">
-            {loading ? (
-              <tr><td colSpan={4} className="px-4 py-4 text-center text-zinc-500">Cargando usuarios...</td></tr>
-            ) : users.length === 0 ? (
-              <tr><td colSpan={4} className="px-4 py-4 text-center text-zinc-400">Sin usuarios registrados</td></tr>
-            ) : users.map((user) => (
-              <tr key={user.id} className="hover:bg-zinc-50 transition-colors">
-                <td className="px-4 py-3 text-zinc-700">{user.email}</td>
-                <td className="px-4 py-3">
-                  <Badge variant="neutral" className="capitalize">{user.role}</Badge>
-                </td>
-                <td className="px-4 py-3 text-zinc-600">{user.branch_name ?? "Todos los locales"}</td>
-                <td className="px-4 py-3 text-right">
-                  <div className="flex flex-wrap justify-end gap-2">
-                  <Button size="sm" type="button" onClick={() => startEditUser(user)} disabled={readOnly}>
-                    {editingId === user.id ? "Editando" : "Editar"}
-                  </Button>
-                  <Button size="sm" variant="destructive" type="button" onClick={() => handleRemoveUser(user.id)} disabled={removingId === user.id || readOnly}>
-                    {removingId === user.id ? "Quitando..." : "Quitar"}
-                  </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {editingId ? (
-        <div className="mt-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-          <div className="mb-4">
-            <h4 className="text-sm font-semibold text-zinc-900">Editar usuario</h4>
-            <p className="text-xs text-zinc-500">Actualiza correo, rol, sucursal y contraseña del usuario seleccionado.</p>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <label className="flex flex-col gap-1 text-sm font-medium text-zinc-700">
-              Correo
-              <Input value={editEmail} onChange={e => setEditEmail(e.target.value)} />
-            </label>
-
-            <label className="flex flex-col gap-1 text-sm font-medium text-zinc-700">
-              Rol
-              <select
-                value={editRole}
-                onChange={e => setEditRole(e.target.value)}
-                className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-              >
-                {editRoleOptions.map((roleOption) => (
-                  <option key={roleOption.value} value={roleOption.value}>{roleOption.label}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-sm font-medium text-zinc-700">
-              Sucursal asignada
-              <select
-                value={editBranchId}
-                onChange={e => setEditBranchId(e.target.value)}
-                className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-              >
-                <option value="">Todos los locales</option>
-                {branches.map((branch) => (
-                  <option key={branch.id} value={branch.id}>{branch.name ?? "Sucursal"}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-sm font-medium text-zinc-700">
-              Nueva contraseña (opcional)
-              <Input
-                type="password"
-                value={editPassword}
-                onChange={e => setEditPassword(e.target.value)}
-                placeholder="Dejar vacío para mantener"
-              />
-            </label>
-          </div>
-
-          <div className="mt-4 flex flex-wrap justify-end gap-2">
-            <Button size="sm" type="button" onClick={() => handleEditUser(editingId)} disabled={readOnly}>
-              Guardar cambios
-            </Button>
-            <Button
-              size="sm"
-              type="button"
-              variant="outline"
-              className="border-zinc-300 bg-zinc-100 text-zinc-800 hover:bg-zinc-200"
-              onClick={cancelEdit}
-            >
-              Cancelar
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      <div className="mt-6 flex flex-wrap items-end gap-3">
-        <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-sm font-medium text-zinc-700">
-          Nuevo correo
-          <Input
-            type="email"
-            placeholder="usuario@empresa.com"
-            value={newEmail}
-            onChange={e => setNewEmail(e.target.value)}
-            disabled={adding}
-          />
-        </label>
-        <label className="flex min-w-[140px] flex-1 flex-col gap-1 text-sm font-medium text-zinc-700">
-          Rol
-          <select
-            className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-400 disabled:opacity-50"
-            value={newRole}
-            onChange={e => setNewRole(e.target.value)}
-            disabled={adding}
-          >
-            {roleOptions.map((roleOption) => (
-              <option key={roleOption.value} value={roleOption.value}>{roleOption.label}</option>
-            ))}
-          </select>
-        </label>
-        <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-sm font-medium text-zinc-700">
-          Sucursal asignada
-          <select
-            className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-400 disabled:opacity-50"
-            value={newBranchId}
-            onChange={e => setNewBranchId(e.target.value)}
-            disabled={adding}
-          >
-            <option value="">Todos los locales</option>
-            {branches.map((branch) => (
-              <option key={branch.id} value={branch.id}>{branch.name ?? "Sucursal"}</option>
-            ))}
-          </select>
-        </label>
-        <label className="flex min-w-[180px] flex-1 flex-col gap-1 text-sm font-medium text-zinc-700">
-          Contraseña
-          <Input
-            type="password"
-            placeholder="Contraseña"
-            value={newPassword}
-            onChange={e => setNewPassword(e.target.value)}
-            disabled={adding}
-          />
-        </label>
-        <div className="flex min-w-[190px] flex-1 items-end">
-          <Button
-            type="button"
-            onClick={handleAddUser}
-            className="w-full"
-            loading={adding}
-            disabled={adding || readOnly || !newEmail.trim() || !newPassword.trim()}
-          >
-            Agregar usuario
-          </Button>
-        </div>
-      </div>
-      {error && <div className="mt-2 text-sm font-medium text-red-600">{error}</div>}
-    </>
-  );
-}
-
-// ============================================================================
-// COMPONENTE PRINCIPAL: FORMULARIO GLOBAL DE EMPRESA
-// ============================================================================
-
 export function CompanyGlobalForm({
   company,
   businessInfo,
@@ -524,6 +118,7 @@ export function CompanyGlobalForm({
 }: CompanyGlobalFormProps) {
   const { readOnly } = useAdminRole();
   const router = useRouter();
+  const baseDomain = getTenantBaseDomainStatic();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -536,7 +131,6 @@ export function CompanyGlobalForm({
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
 
-  // Estados del formulario
   const [companyForm, setCompanyForm] = useState({
     name: company.name ?? "",
     legal_rut: company.legal_rut ?? "",
@@ -551,6 +145,16 @@ export function CompanyGlobalForm({
     currency: company.currency ?? "",
   });
 
+  const [businessForm, setBusinessForm] = useState<BusinessInfo>({
+    name: businessInfo?.name ?? "",
+    phone: businessInfo?.phone ?? "",
+    address: businessInfo?.address ?? "",
+    instagram: businessInfo?.instagram ?? "",
+    schedule: businessInfo?.schedule ?? "",
+    country: businessInfo?.country ?? company.country ?? "",
+    currency: businessInfo?.currency ?? company.currency ?? "",
+  });
+
   const [themeForm, setThemeForm] = useState({
     displayName: company.theme_config?.displayName ?? "",
     primaryColor: company.theme_config?.primaryColor ?? "#111827",
@@ -561,34 +165,31 @@ export function CompanyGlobalForm({
     backgroundColor: company.theme_config?.backgroundColor ?? "#0a0a0a",
     backgroundImageUrl: company.theme_config?.backgroundImageUrl ?? "",
     logoUrl: company.theme_config?.logoUrl ?? "",
-    panelAccess: normalizeCompanyPanelAccess(company.theme_config?.panelAccess ?? company.theme_config?.roleNavPermissions),
-  });
-
-  const [businessForm] = useState({
-    name: businessInfo?.name ?? "",
-    phone: businessInfo?.phone ?? "",
-    address: businessInfo?.address ?? "",
-    instagram: businessInfo?.instagram ?? "",
-    schedule: businessInfo?.schedule ?? "",
-    country: businessInfo?.country ?? "",
-    currency: businessInfo?.currency ?? "",
+    panelAccess: normalizeCompanyPanelAccess(
+      company.theme_config?.panelAccess ?? company.theme_config?.roleNavPermissions
+    ),
   });
 
   const [monthsToAdd, setMonthsToAdd] = useState(1);
   const [monthsToBill, setMonthsToBill] = useState(1);
-  
+
   const initialPlanId = company.plan_id;
   const initialStatus = company.subscription_status;
-  const baseDomain = getTenantBaseDomainStatic();
 
-  // Utilidades y Formateadores
-  const currency = useMemo(() => new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }), []);
+  const currency = useMemo(
+    () =>
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }),
+    []
+  );
 
-  const dateFormatter = useMemo(() => new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }), []);
+  const dateFormatter = useMemo(
+    () => new Intl.DateTimeFormat("es-CL", { dateStyle: "medium" }),
+    []
+  );
 
   const statusMap: Record<string, "success" | "warning" | "destructive" | "neutral"> = {
     paid: "success",
@@ -604,9 +205,38 @@ export function CompanyGlobalForm({
     [plans, companyForm.plan_id]
   );
 
+  const planOptions = useMemo(
+    () => [
+      { value: "", label: "Sin plan" },
+      ...plans.map((plan) => ({
+        value: plan.id,
+        label: `${plan.name ?? "Plan"} - ${currency.format(Number(plan.price ?? 0))}`,
+      })),
+    ],
+    [plans, currency]
+  );
+
   const isDevPlan = selectedPlan?.name?.toLowerCase().includes("dev") ?? false;
   const isBetaPlan = selectedPlan?.name?.toLowerCase().includes("beta") ?? false;
   const currentEndsAt = company.subscription_ends_at ? new Date(company.subscription_ends_at) : null;
+
+  const panelAccessByPlan = useMemo(
+    () => buildCompanyPanelAccessFromPlanFeatures(selectedPlan?.features),
+    [selectedPlan?.features]
+  );
+
+  // Sincronizar businessForm si cambia la prop (refresh)
+  useEffect(() => {
+    setBusinessForm({
+      name: businessInfo?.name ?? "",
+      phone: businessInfo?.phone ?? "",
+      address: businessInfo?.address ?? "",
+      instagram: businessInfo?.instagram ?? "",
+      schedule: businessInfo?.schedule ?? "",
+      country: businessInfo?.country ?? company.country ?? "",
+      currency: businessInfo?.currency ?? company.currency ?? "",
+    });
+  }, [businessInfo, company.country, company.currency]);
 
   const addDays = (date: Date, days: number) => {
     const next = new Date(date);
@@ -614,12 +244,10 @@ export function CompanyGlobalForm({
     return next;
   };
 
-  // Manejadores de subida de imágenes
   const handleBackgroundUpload = async (file: File | null) => {
     if (!file) return;
     setBackgroundUploading(true);
     setBackgroundUploadError(null);
-
     try {
       const url = await uploadImage(file, "tenant");
       setThemeForm((prev) => ({ ...prev, backgroundImageUrl: url }));
@@ -634,7 +262,6 @@ export function CompanyGlobalForm({
     if (!file) return;
     setLogoUploading(true);
     setLogoUploadError(null);
-
     try {
       const url = await uploadImage(file, "tenant");
       setThemeForm((prev) => ({ ...prev, logoUrl: url }));
@@ -645,39 +272,27 @@ export function CompanyGlobalForm({
     }
   };
 
-  const panelAccessByPlan = useMemo(
-    () => buildCompanyPanelAccessFromPlanFeatures(selectedPlan?.features),
-    [selectedPlan?.features]
-  );
-
-  // Manejador de Cobros (Stripe / MP)
   const handleCheckout = async (provider: "stripe" | "mp") => {
     setBillingError(null);
     setBillingLoading(provider);
-
     try {
       const permission = await requireAdminRole(roleSets.billing);
       if (!permission.ok) throw new Error(permission.error);
       if (!selectedPlan?.id) throw new Error("Selecciona un plan antes de cobrar.");
       if (isDevPlan) throw new Error("El plan interno no se puede cobrar.");
-      if (monthsToBill <= 0) throw new Error("Define una cantidad valida de meses.");
+      if (monthsToBill <= 0) throw new Error("Define una cantidad válida de meses.");
 
       const supabase = createSupabaseBrowserClient("super-admin");
       const functionName = provider === "stripe" ? "stripe-checkout" : "mercadopago-preference";
-
-      const { data, error: invokeError } = await supabase.functions.invoke(
-        functionName,
-        {
-          body: {
-            company_id: company.id,
-            plan_id: selectedPlan.id,
-            months: monthsToBill,
-          },
-        }
-      );
+      const { data, error: invokeError } = await supabase.functions.invoke(functionName, {
+        body: {
+          company_id: company.id,
+          plan_id: selectedPlan.id,
+          months: monthsToBill,
+        },
+      });
 
       if (invokeError) throw invokeError;
-
       const url = provider === "stripe" ? (data?.url as string) : (data?.init_point as string);
       if (!url) throw new Error("No se pudo generar el link de pago.");
 
@@ -697,7 +312,6 @@ export function CompanyGlobalForm({
     }
   };
 
-  // Guardar todos los cambios del formulario
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
@@ -708,8 +322,6 @@ export function CompanyGlobalForm({
       if (!permission.ok) throw new Error(permission.error);
 
       const supabase = createSupabaseBrowserClient("super-admin");
-      
-      // Preparar data asegurando limpieza de strings
       const normalizedCustomDomain = normalizeBaseDomain(companyForm.custom_domain);
       let nextSubscriptionEnds: string | null = company.subscription_ends_at ?? null;
 
@@ -739,7 +351,6 @@ export function CompanyGlobalForm({
 
       companyUpdate.custom_domain_expires_at = normalizedCustomDomain ? nextSubscriptionEnds : null;
 
-      // Guardar Empresa y Theme
       const { error: companyError } = await supabase
         .from("companies")
         .update({
@@ -761,27 +372,23 @@ export function CompanyGlobalForm({
 
       if (companyError) throw companyError;
 
-      // Guardar Info Pública de Negocio
-      const { error: businessError } = await supabase
-        .from("business_info")
-        .upsert(
-          {
-            company_id: company.id,
-            name: businessForm.name.trim(),
-            phone: businessForm.phone.trim(),
-            address: businessForm.address.trim(),
-            instagram: businessForm.instagram.trim(),
-            schedule: businessForm.schedule.trim(),
-            country: businessForm.country || null,
-            currency: businessForm.currency || null,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "company_id" }
-        );
+      const { error: businessError } = await supabase.from("business_info").upsert(
+        {
+          company_id: company.id,
+          name: businessForm.name?.trim() || null,
+          phone: businessForm.phone?.trim() || null,
+          address: businessForm.address?.trim() || null,
+          instagram: businessForm.instagram?.trim() || null,
+          schedule: businessForm.schedule?.trim() || null,
+          country: businessForm.country || null,
+          currency: businessForm.currency || null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "company_id" }
+      );
 
       if (businessError) throw businessError;
 
-      // Auditoría
       await logAdminAction({
         action: "company.update",
         targetType: "company",
@@ -793,9 +400,7 @@ export function CompanyGlobalForm({
         },
       });
 
-      // Purge Next.js cache for this tenant
       await revalidateMenuCache(company.id);
-
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudieron guardar los cambios.");
@@ -804,22 +409,18 @@ export function CompanyGlobalForm({
     }
   };
 
-  // Extender suscripción manualmente
   const handleExtend = async () => {
     setExtendLoading(true);
     setExtendError(null);
-
     try {
       const permission = await requireAdminRole(roleSets.billing);
       if (!permission.ok) throw new Error(permission.error);
       if (isDevPlan) throw new Error("El plan interno no requiere vencimiento.");
-      if (monthsToAdd <= 0) throw new Error("Define una cantidad valida de meses.");
+      if (monthsToAdd <= 0) throw new Error("Define una cantidad válida de meses.");
 
       const supabase = createSupabaseBrowserClient("super-admin");
       const now = new Date();
       const baseDate = currentEndsAt && currentEndsAt > now ? currentEndsAt : now;
-
-      // Usamos meses comerciales de 30 dias
       const newEndsAt = addDays(baseDate, monthsToAdd * 30);
       const amount = Number(selectedPlan?.price ?? 0) * monthsToAdd;
 
@@ -837,18 +438,16 @@ export function CompanyGlobalForm({
 
       if (updateError) throw updateError;
 
-      const { error: paymentError } = await supabase
-        .from("payments_history")
-        .insert({
-          company_id: company.id,
-          plan_id: selectedPlan?.id ?? companyForm.plan_id ?? null,
-          amount_paid: amount,
-          payment_method: "manual",
-          payment_reference: "admin-extension",
-          payment_date: now.toISOString(),
-          status: "paid",
-          months_paid: monthsToAdd,
-        });
+      const { error: paymentError } = await supabase.from("payments_history").insert({
+        company_id: company.id,
+        plan_id: selectedPlan?.id ?? companyForm.plan_id ?? null,
+        amount_paid: amount,
+        payment_method: "manual",
+        payment_reference: "admin-extension",
+        payment_date: now.toISOString(),
+        status: "paid",
+        months_paid: monthsToAdd,
+      });
 
       if (paymentError) throw paymentError;
 
@@ -869,59 +468,24 @@ export function CompanyGlobalForm({
   };
 
   return (
-    <form className="mx-auto flex w-full max-w-6xl flex-col gap-8" onSubmit={handleSubmit}>
-      <fieldset disabled={loading} className="flex flex-col gap-8">
-        
-        <Card className="flex flex-col gap-6">
-          <div>
-            <h2 className="text-lg font-semibold text-zinc-900">Empresa</h2>
-            <p className="text-sm text-zinc-500">Datos generales del cliente y su plan actual.</p>
-          </div>
-
+    <form className="mx-auto flex w-full max-w-6xl flex-col gap-6" onSubmit={handleSubmit}>
+      <fieldset disabled={loading} className="flex flex-col gap-6">
+        {/* Datos generales */}
+        <CompanySectionCard title="Datos generales" description="Información fiscal y de contacto del tenant.">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-              País
-              <select
-                value={companyForm.country || ""}
-                onChange={(e) => setCompanyForm((prev) => ({ ...prev, country: e.target.value }))}
-                className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-              >
-                <option value="">Selecciona país</option>
-                <option value="CL">Chile</option>
-                <option value="VE">Venezuela</option>
-                <option value="US">Estados Unidos</option>
-                <option value="MX">México</option>
-                <option value="CO">Colombia</option>
-                <option value="AR">Argentina</option>
-                <option value="PE">Perú</option>
-                <option value="EC">Ecuador</option>
-                <option value="BR">Brasil</option>
-                <option value="ES">España</option>
-                <option value="PA">Panamá</option>
-                <option value="OTRO">Otro</option>
-              </select>
-            </label>
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-              Moneda
-              <select
-                value={companyForm.currency || ""}
-                onChange={(e) => setCompanyForm((prev) => ({ ...prev, currency: e.target.value }))}
-                className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-              >
-                <option value="">Selecciona moneda</option>
-                <option value="CLP">Peso chileno (CLP)</option>
-                <option value="VES">Bolívar (VES)</option>
-                <option value="USD">Dólar estadounidense (USD)</option>
-                <option value="MXN">Peso mexicano (MXN)</option>
-                <option value="COP">Peso colombiano (COP)</option>
-                <option value="ARS">Peso argentino (ARS)</option>
-                <option value="PEN">Sol peruano (PEN)</option>
-                <option value="BRL">Real brasileño (BRL)</option>
-                <option value="EUR">Euro (EUR)</option>
-                <option value="OTRO">Otro</option>
-              </select>
-            </label>
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+            <SaasSelect
+              label="País"
+              value={companyForm.country}
+              onChange={(value) => setCompanyForm((prev) => ({ ...prev, country: value }))}
+              options={COUNTRY_OPTIONS}
+            />
+            <SaasSelect
+              label="Moneda"
+              value={companyForm.currency}
+              onChange={(value) => setCompanyForm((prev) => ({ ...prev, currency: value }))}
+              options={CURRENCY_OPTIONS}
+            />
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Nombre
               <Input
                 value={companyForm.name}
@@ -930,8 +494,7 @@ export function CompanyGlobalForm({
                 required
               />
             </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
               RUT legal
               <Input
                 value={companyForm.legal_rut}
@@ -939,8 +502,7 @@ export function CompanyGlobalForm({
                 placeholder="99.999.999-9"
               />
             </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Email
               <Input
                 type="email"
@@ -949,8 +511,7 @@ export function CompanyGlobalForm({
                 placeholder="contacto@empresa.com"
               />
             </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Teléfono
               <Input
                 value={companyForm.phone}
@@ -958,8 +519,7 @@ export function CompanyGlobalForm({
                 placeholder="+56 9 1234 5678"
               />
             </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Dirección
               <Input
                 value={companyForm.address}
@@ -967,81 +527,108 @@ export function CompanyGlobalForm({
                 placeholder="Av. Siempre Viva 742"
               />
             </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Public slug
-              <div className="flex items-center rounded-xl border border-zinc-200 bg-white px-3">
+              <div className="flex items-center rounded-xl border border-zinc-200 bg-white px-3 dark:border-zinc-700 dark:bg-zinc-900">
                 <Input
-                  className="h-11 border-none px-0 focus:border-none"
+                  className="h-10 border-none px-0 focus:border-none dark:bg-transparent"
                   value={companyForm.public_slug}
-                  onChange={(e) => setCompanyForm((prev) => ({ ...prev, public_slug: slugify(e.target.value) }))}
+                  onChange={(e) =>
+                    setCompanyForm((prev) => ({ ...prev, public_slug: slugify(e.target.value) }))
+                  }
                   placeholder="empresa-demo"
                   required
                 />
                 <span className="text-xs text-zinc-400">.{baseDomain}</span>
               </div>
             </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-              Estado (no se borran empresas, solo se suspenden o reactivan)
-              <select
-                value={companyForm.subscription_status}
-                onChange={(e) => setCompanyForm((prev) => ({ ...prev, subscription_status: e.target.value }))}
-                className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-              >
-                <option value="active">Activo</option>
-                <option value="suspended">Suspendido</option>
-                <option value="payment_pending">Pago pendiente</option>
-                <option value="trial">Prueba</option>
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-              Plan
-              <select
-                value={companyForm.plan_id}
-                onChange={(e) => setCompanyForm((prev) => ({ ...prev, plan_id: e.target.value }))}
-                className="h-11 rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none transition focus:border-zinc-400"
-              >
-                <option value="">Sin plan</option>
-                {plans.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.name ?? "Plan"} - {currency.format(Number(plan.price ?? 0))}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700 md:col-span-2">
+            <SaasSelect
+              label="Estado de suscripción"
+              value={companyForm.subscription_status}
+              onChange={(value) => setCompanyForm((prev) => ({ ...prev, subscription_status: value }))}
+              options={SUBSCRIPTION_STATUS_OPTIONS}
+            />
+            <SaasSelect
+              label="Plan"
+              value={companyForm.plan_id}
+              onChange={(value) => setCompanyForm((prev) => ({ ...prev, plan_id: value }))}
+              options={planOptions}
+            />
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 md:col-span-2">
               Dominio personalizado (opcional)
               <Input
                 value={companyForm.custom_domain}
-                onChange={(e) =>
-                  setCompanyForm((prev) => ({ ...prev, custom_domain: e.target.value }))
-                }
+                onChange={(e) => setCompanyForm((prev) => ({ ...prev, custom_domain: e.target.value }))}
                 placeholder="menu.tunegocio.com (sin https://)"
               />
-              <span className="text-xs font-normal text-zinc-500">
+              <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">
                 Si está vacío, el negocio sigue usando{" "}
-                <span className="font-medium">
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">
                   {companyForm.public_slug}.{baseDomain}
                 </span>
                 . Añade el mismo host en Vercel y en DNS. La vigencia del dominio personalizado sigue la{" "}
-                <span className="font-medium">fecha de vencimiento de la suscripción</span> (sección Suscripción):
-                si la suscripción vence o el estado pasa a suspendido/cancelado, el menú y el proxy vuelven al
-                dominio del SaaS hasta que reactivas y renuevas.
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                  fecha de vencimiento de la suscripción
+                </span>
+                .
               </span>
             </label>
           </div>
-        </Card>
-        <Card className="flex flex-col gap-6">
-          <div>
-            <h3 className="text-lg font-semibold text-zinc-900">Branding</h3>
-            <p className="text-sm text-zinc-500">Configura color y logo para el tenant.</p>
-          </div>
+        </CompanySectionCard>
 
+        {/* Información pública del negocio */}
+        <CompanySectionCard
+          title="Información pública del negocio"
+          description="Datos que se muestran en el menú y la ficha pública del negocio."
+        >
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Nombre público
+              <Input
+                value={businessForm.name ?? ""}
+                onChange={(e) => setBusinessForm((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder={companyForm.name || "Nombre público"}
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Teléfono público
+              <Input
+                value={businessForm.phone ?? ""}
+                onChange={(e) => setBusinessForm((prev) => ({ ...prev, phone: e.target.value }))}
+                placeholder="+56 9 1234 5678"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Dirección pública
+              <Input
+                value={businessForm.address ?? ""}
+                onChange={(e) => setBusinessForm((prev) => ({ ...prev, address: e.target.value }))}
+                placeholder="Av. Siempre Viva 742"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Instagram
+              <Input
+                value={businessForm.instagram ?? ""}
+                onChange={(e) => setBusinessForm((prev) => ({ ...prev, instagram: e.target.value }))}
+                placeholder="@empresa"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 md:col-span-2">
+              Horario
+              <Input
+                value={businessForm.schedule ?? ""}
+                onChange={(e) => setBusinessForm((prev) => ({ ...prev, schedule: e.target.value }))}
+                placeholder="Lun - Dom: 10:00 - 22:00"
+              />
+            </label>
+          </div>
+        </CompanySectionCard>
+
+        {/* Branding */}
+        <CompanySectionCard title="Branding" description="Colores, logo e imagen de fondo del tenant.">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Nombre visible
               <Input
                 value={themeForm.displayName}
@@ -1049,105 +636,55 @@ export function CompanyGlobalForm({
                 placeholder={companyForm.name || "Nombre visible"}
               />
             </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-              Color primario
-              <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2">
-                <input
-                  type="color"
-                  value={themeForm.primaryColor}
-                  onChange={(e) => setThemeForm((prev) => ({ ...prev, primaryColor: e.target.value }))}
-                  className="h-8 w-12 cursor-pointer rounded-lg border border-zinc-200"
-                />
-                <span className="text-xs text-zinc-500">{themeForm.primaryColor}</span>
-              </div>
-            </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-              Color secundario
-              <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2">
-                <input
-                  type="color"
-                  value={themeForm.secondaryColor}
-                  onChange={(e) => setThemeForm((prev) => ({ ...prev, secondaryColor: e.target.value }))}
-                  className="h-8 w-12 cursor-pointer rounded-lg border border-zinc-200"
-                />
-                <span className="text-xs text-zinc-500">{themeForm.secondaryColor}</span>
-              </div>
-            </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-              Color precio
-              <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2">
-                <input
-                  type="color"
-                  value={themeForm.priceColor}
-                  onChange={(e) => setThemeForm((prev) => ({ ...prev, priceColor: e.target.value }))}
-                  className="h-8 w-12 cursor-pointer rounded-lg border border-zinc-200"
-                />
-                <span className="text-xs text-zinc-500">{themeForm.priceColor}</span>
-              </div>
-            </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-              Color descuento
-              <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2">
-                <input
-                  type="color"
-                  value={themeForm.discountColor}
-                  onChange={(e) => setThemeForm((prev) => ({ ...prev, discountColor: e.target.value }))}
-                  className="h-8 w-12 cursor-pointer rounded-lg border border-zinc-200"
-                />
-                <span className="text-xs text-zinc-500">{themeForm.discountColor}</span>
-              </div>
-            </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-              Color hover botones
-              <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2">
-                <input
-                  type="color"
-                  value={themeForm.hoverColor}
-                  onChange={(e) => setThemeForm((prev) => ({ ...prev, hoverColor: e.target.value }))}
-                  className="h-8 w-12 cursor-pointer rounded-lg border border-zinc-200"
-                />
-                <span className="text-xs text-zinc-500">{themeForm.hoverColor}</span>
-              </div>
-            </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
-              Fondo principal
-              <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2">
-                <input
-                  type="color"
-                  value={themeForm.backgroundColor}
-                  onChange={(e) => setThemeForm((prev) => ({ ...prev, backgroundColor: e.target.value }))}
-                  className="h-8 w-12 cursor-pointer rounded-lg border border-zinc-200"
-                />
-                <span className="text-xs text-zinc-500">{themeForm.backgroundColor}</span>
-              </div>
-            </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+            <ColorField
+              label="Color primario"
+              value={themeForm.primaryColor}
+              onChange={(value) => setThemeForm((prev) => ({ ...prev, primaryColor: value }))}
+            />
+            <ColorField
+              label="Color secundario"
+              value={themeForm.secondaryColor}
+              onChange={(value) => setThemeForm((prev) => ({ ...prev, secondaryColor: value }))}
+            />
+            <ColorField
+              label="Color precio"
+              value={themeForm.priceColor}
+              onChange={(value) => setThemeForm((prev) => ({ ...prev, priceColor: value }))}
+            />
+            <ColorField
+              label="Color descuento"
+              value={themeForm.discountColor}
+              onChange={(value) => setThemeForm((prev) => ({ ...prev, discountColor: value }))}
+            />
+            <ColorField
+              label="Color hover botones"
+              value={themeForm.hoverColor}
+              onChange={(value) => setThemeForm((prev) => ({ ...prev, hoverColor: value }))}
+            />
+            <ColorField
+              label="Fondo principal"
+              value={themeForm.backgroundColor}
+              onChange={(value) => setThemeForm((prev) => ({ ...prev, backgroundColor: value }))}
+            />
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Subir imagen de fondo
               <input
                 type="file"
                 accept="image/*"
                 onChange={(e) => handleBackgroundUpload(e.target.files?.[0] ?? null)}
-                className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600"
+                className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900"
                 disabled={backgroundUploading}
               />
               {backgroundUploading && <span className="text-xs text-zinc-500">Subiendo...</span>}
               {backgroundUploadError && <span className="text-xs text-red-600">{backgroundUploadError}</span>}
             </label>
-
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Subir logo
               <input
                 type="file"
                 accept="image/*"
                 onChange={(e) => handleLogoUpload(e.target.files?.[0] ?? null)}
-                className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600"
+                className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900"
                 disabled={logoUploading}
               />
               {logoUploading && <span className="text-xs text-zinc-500">Subiendo...</span>}
@@ -1155,77 +692,55 @@ export function CompanyGlobalForm({
             </label>
           </div>
 
-          <BrandingPreview
-            displayName={themeForm.displayName}
-            name={companyForm.name}
-            publicSlug={companyForm.public_slug}
-            primaryColor={themeForm.primaryColor}
-            secondaryColor={themeForm.secondaryColor}
-            backgroundColor={themeForm.backgroundColor}
-            backgroundImageUrl={themeForm.backgroundImageUrl}
-            logoUrl={themeForm.logoUrl}
-            priceColor={themeForm.priceColor}
-            discountColor={themeForm.discountColor}
-            hoverColor={themeForm.hoverColor}
-          />
-        </Card>
-
-        <Card className="flex flex-col gap-6">
-          <div>
-            <h3 className="text-lg font-semibold text-zinc-900">Accesos del panel de la empresa</h3>
-            <p className="text-sm text-zinc-500">
-              Define qué secciones puede ver la empresa completa según su plan/membresía.
-            </p>
+          <div className="mt-4 rounded-2xl border border-zinc-100 p-3 dark:border-zinc-800">
+            <BrandingPreview
+              displayName={themeForm.displayName}
+              name={companyForm.name}
+              publicSlug={companyForm.public_slug}
+              primaryColor={themeForm.primaryColor}
+              secondaryColor={themeForm.secondaryColor}
+              backgroundColor={themeForm.backgroundColor}
+              backgroundImageUrl={themeForm.backgroundImageUrl}
+              logoUrl={themeForm.logoUrl}
+              priceColor={themeForm.priceColor}
+              discountColor={themeForm.discountColor}
+              hoverColor={themeForm.hoverColor}
+            />
           </div>
+        </CompanySectionCard>
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-            <div className="grid gap-2 sm:grid-cols-2">
-              {ADMIN_TAB_OPTIONS.map((tab) => {
-                const checked = panelAccessByPlan.includes(tab.id);
-                return (
-                  <label key={tab.id} className="flex items-center gap-2 text-sm text-zinc-700">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      readOnly
-                      disabled
-                      className="h-4 w-4 rounded border-zinc-300 accent-zinc-900"
-                    />
-                    <span>{tab.label}</span>
-                  </label>
-                );
-              })}
-            </div>
+        {/* Accesos del panel */}
+        <CompanySectionCard
+          title="Accesos del panel de la empresa"
+          description="Secciones disponibles según el plan seleccionado."
+        >
+          <div className="grid gap-2 sm:grid-cols-2">
+            {TENANT_ADMIN_TAB_OPTIONS.map((tab) => {
+              const checked = panelAccessByPlan.includes(tab.id);
+              return <SaasCheckbox key={tab.id} checked={checked} label={tab.label} disabled readOnly />;
+            })}
           </div>
-
-          <p className="text-xs text-zinc-500">
+          <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
             Para cambiar estos accesos, edita las funciones del plan en la sección de Planes.
           </p>
-        </Card>
+        </CompanySectionCard>
 
         <CompanyUberCredentialsForm
           companyId={company.id}
           initialClientId={uberIntegration.clientId}
           hasClientSecret={uberIntegration.hasClientSecret}
-          initialAllowTenantExternalDelivery={
-            uberIntegration.allowTenantExternalDelivery
-          }
+          initialAllowTenantExternalDelivery={uberIntegration.allowTenantExternalDelivery}
         />
 
-        <Card className="flex flex-col gap-6">
-          <div>
-            <h3 className="text-lg font-semibold text-zinc-900">Suscripción</h3>
-            <p className="text-sm text-zinc-500">
-              Extiende el acceso manualmente usando meses de 30 días. Esta fecha también limita el dominio
-              personalizado (si lo configuraste): al vencer, el cron puede marcar la cuenta como suspendida y
-              el menú público deja de mostrarse hasta renovar.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-600">
-            <span className="font-semibold text-zinc-900">Vence:</span>
+        {/* Suscripción */}
+        <CompanySectionCard
+          title="Suscripción"
+          description="Extiende el acceso manualmente usando meses de 30 días."
+        >
+          <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-600 dark:text-zinc-400">
+            <span className="font-semibold text-zinc-900 dark:text-zinc-100">Vence:</span>
             {isDevPlan ? (
-              <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold text-white">
+              <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">
                 Ilimitado (interno)
               </span>
             ) : currentEndsAt ? (
@@ -1236,7 +751,7 @@ export function CompanyGlobalForm({
           </div>
 
           <div className="grid gap-3 md:grid-cols-3">
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Meses a agregar
               <Input
                 type="number"
@@ -1250,30 +765,31 @@ export function CompanyGlobalForm({
               />
             </label>
             <div className="flex items-end">
-              <Button type="button" onClick={handleExtend} loading={extendLoading} disabled={readOnly || isDevPlan || monthsToAdd <= 0}>
+              <Button
+                type="button"
+                onClick={handleExtend}
+                loading={extendLoading}
+                disabled={readOnly || isDevPlan || monthsToAdd <= 0}
+              >
                 Extender suscripción
               </Button>
             </div>
-            <div className="text-xs text-zinc-500 self-end mb-2">
+            <div className="mb-2 self-end text-xs text-zinc-500 dark:text-zinc-400">
               Se calcula desde hoy o desde la fecha de vencimiento actual.
             </div>
           </div>
 
           {extendError && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/60 dark:text-red-300">
               {extendError}
             </div>
           )}
-        </Card>
+        </CompanySectionCard>
 
-        <Card className="flex flex-col gap-6">
-          <div>
-            <h3 className="text-lg font-semibold text-zinc-900">Cobros</h3>
-            <p className="text-sm text-zinc-500">Genera links de pago con Stripe o MercadoPago.</p>
-          </div>
-
+        {/* Cobros */}
+        <CompanySectionCard title="Cobros" description="Genera links de pago con Stripe o MercadoPago.">
           <div className="grid gap-3 md:grid-cols-3">
-            <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700">
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Meses a cobrar
               <Input
                 type="number"
@@ -1305,63 +821,67 @@ export function CompanyGlobalForm({
                 Pagar con MercadoPago
               </Button>
             </div>
-            <div className="text-xs text-zinc-500 self-end mb-2">
+            <div className="mb-2 self-end text-xs text-zinc-500 dark:text-zinc-400">
               El cobro usa la regla de 30 días por mes.
             </div>
           </div>
 
           {billingError && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/60 dark:text-red-300">
               {billingError}
             </div>
           )}
-        </Card>
+        </CompanySectionCard>
 
-        <Card className="flex flex-col gap-6">
-          <div>
-            <h3 className="text-lg font-semibold text-zinc-900">Historial de pagos</h3>
-            <p className="text-sm text-zinc-500">Últimos movimientos registrados.</p>
-          </div>
-
+        {/* Historial de pagos */}
+        <CompanySectionCard title="Historial de pagos" description="Últimos movimientos registrados.">
           {payments.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500">
+            <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-400">
               No hay pagos registrados.
             </div>
           ) : (
-            <div className="divide-y divide-zinc-200 rounded-xl border border-zinc-200">
+            <div className="divide-y divide-zinc-100 rounded-2xl border border-zinc-100 dark:divide-zinc-800 dark:border-zinc-800">
               {payments.map((payment) => {
                 const statusKey = payment.status?.toLowerCase() ?? "neutral";
                 const badge = statusMap[statusKey] ?? "neutral";
                 return (
-                  <div key={payment.id} className="grid gap-3 px-4 py-3 text-sm md:grid-cols-5">
+                  <div
+                    key={payment.id}
+                    className="grid gap-3 px-4 py-3 text-sm md:grid-cols-5"
+                  >
                     <div>
-                      <p className="text-xs text-zinc-500">Fecha</p>
-                      <p className="font-medium text-zinc-900">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Fecha</p>
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
                         {payment.payment_date ? dateFormatter.format(new Date(payment.payment_date)) : "--"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-zinc-500">Monto</p>
-                      <p className="font-medium text-zinc-900">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Monto</p>
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
                         {currency.format(Number(payment.amount_paid ?? 0))}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-zinc-500">Método</p>
-                      <p className="font-medium text-zinc-900 capitalize">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Método</p>
+                      <p className="font-medium capitalize text-zinc-900 dark:text-zinc-100">
                         {payment.payment_method ?? "--"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-zinc-500">Estado</p>
-                      <Badge variant={badge} className="capitalize">{payment.status ?? "--"}</Badge>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Estado</p>
+                      <Badge variant={badge} className="capitalize">
+                        {payment.status ?? "--"}
+                      </Badge>
                     </div>
                     <div>
-                      <p className="text-xs text-zinc-500">Referencia</p>
-                      <p className="font-medium text-zinc-900 truncate" title={payment.payment_reference ?? ""}>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Referencia</p>
+                      <p
+                        className="truncate font-medium text-zinc-900 dark:text-zinc-100"
+                        title={payment.payment_reference ?? ""}
+                      >
                         {payment.payment_reference ?? "--"}
                       </p>
-                      <p className="text-xs text-zinc-500">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
                         {payment.months_paid ? `${payment.months_paid} mes(es)` : ""}
                       </p>
                       {payment.reference_file_url && (
@@ -1380,28 +900,56 @@ export function CompanyGlobalForm({
               })}
             </div>
           )}
-        </Card>
+        </CompanySectionCard>
 
-        <Card className="flex flex-col gap-6">
-          <div>
-            <h3 className="text-lg font-semibold text-zinc-900">Usuarios y roles</h3>
-            <p className="text-sm text-zinc-500">Gestiona los correos y roles asignados a esta empresa.</p>
-          </div>
-          <UserManagement companyId={company.id} />
-        </Card>
+        {/* Usuarios y roles */}
+        <CompanySectionCard title="Usuarios y roles" description="Gestiona los correos y roles asignados a esta empresa.">
+          <CompanyUserManagement companyId={company.id} />
+        </CompanySectionCard>
 
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/60 dark:text-red-300">
             {error}
           </div>
         )}
       </fieldset>
 
-      <div className="sticky bottom-4 z-10 flex justify-end rounded-2xl border border-zinc-200 bg-white/90 px-4 py-3 shadow-sm backdrop-blur">
-        <Button type="submit" loading={loading} disabled={readOnly} className="shadow-lg shadow-zinc-200" size="lg">
+      <div className="sticky bottom-4 z-10 flex justify-end rounded-2xl border border-zinc-200 bg-white/90 px-4 py-3 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/90">
+        <Button
+          type="submit"
+          loading={loading}
+          disabled={readOnly}
+          className="shadow-lg shadow-zinc-200 dark:shadow-zinc-900"
+          size="lg"
+        >
           Guardar cambios
         </Button>
       </div>
     </form>
+  );
+}
+
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+      {label}
+      <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-8 w-12 cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700"
+        />
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">{value}</span>
+      </div>
+    </label>
   );
 }

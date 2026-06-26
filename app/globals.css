@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@config "../tailwind.config.js";
+@source "../node_modules/@tremor/**/*.{js,ts,jsx,tsx}";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -11,11 +13,16 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --logo-ink: #18181b;
+  --logo-split: #ffffff;
+  --logo-accent: #4f5bff;
 }
 
 .dark {
   --background: #09090b;
   --foreground: #f4f4f5;
+  --logo-ink: #f4f4f5;
+  --logo-split: #09090b;
 }
 
 @theme inline {

@@ -1,33 +1,13 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-  ArcElement
-} from "chart.js";
-import { Line, Bar, Doughnut } from "react-chartjs-2";
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { Activity, Globe2, PieChart } from "lucide-react";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-  ArcElement
-);
+import { AppleAreaChart } from "@/components/super-admin/analytics/apple-area-chart";
+import { AppleBarChart } from "@/components/super-admin/analytics/apple-bar-chart";
+import { AppleDonutChart } from "@/components/super-admin/analytics/apple-donut-chart";
+import { cn } from "@/utils/cn";
 
 type EventRow = {
   created_at: string;
@@ -44,46 +24,115 @@ type Props = {
   fromIso: string;
 };
 
+const IOS_COLORS = [
+  "#007AFF", // Blue
+  "#34C759", // Green
+  "#FF9500", // Orange
+  "#FF2D55", // Pink
+  "#AF52DE", // Purple
+  "#5856D6", // Indigo
+  "#FF3B30", // Red
+  "#5AC8FA", // Teal
+];
+
+function AppleCard({
+  children,
+  className,
+  title,
+  description,
+  icon: Icon,
+  action,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  title?: string;
+  description?: string;
+  icon?: React.ElementType;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-3xl border border-zinc-200/60 bg-white p-5 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-6",
+        className,
+      )}
+    >
+      {(title || description || action) && (
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            {Icon && (
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-50 dark:bg-zinc-800">
+                <Icon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+              </div>
+            )}
+            <div>
+              {title && (
+                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</h3>
+              )}
+              {description && <p className="text-xs text-zinc-500">{description}</p>}
+            </div>
+          </div>
+          {action && <div>{action}</div>}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function SegmentedTabs({
+  options,
+  value,
+  onChange,
+}: {
+  options: { id: string; label: string }[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  return (
+    <div className="inline-flex rounded-xl bg-zinc-100 p-1 dark:bg-zinc-800">
+      {options.map((opt) => (
+        <button
+          key={opt.id}
+          type="button"
+          onClick={() => onChange(opt.id)}
+          className={cn(
+            "relative rounded-lg px-3 py-1.5 text-xs font-medium transition",
+            value === opt.id
+              ? "text-zinc-900 dark:text-zinc-100"
+              : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
+          )}
+        >
+          {value === opt.id && (
+            <motion.div
+              layoutId="chart-tab"
+              className="absolute inset-0 rounded-lg bg-white shadow-sm dark:bg-zinc-700"
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            />
+          )}
+          <span className="relative z-10">{opt.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function AnalyticsGlobalChart({ events, fromIso }: Props) {
-  const [isDark, setIsDark] = useState(false);
   const [activeTab, setActiveTab] = useState<"general" | "type">("general");
 
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains("dark"));
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains("dark"));
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
-
-  // Theme-aware colors
-  const colors = useMemo(() => {
-    return {
-      text: isDark ? "#e4e4e7" : "#3f3f46",
-      grid: isDark ? "rgba(63, 63, 70, 0.3)" : "rgba(228, 228, 231, 0.6)",
-      primary: "#6366f1", // Indigo
-      primaryLight: isDark ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.1)",
-      secondary: "#10b981", // Emerald
-      secondaryLight: isDark ? "rgba(16, 185, 129, 0.2)" : "rgba(16, 185, 129, 0.1)",
-      accent: "#f59e0b", // Amber
-      accentLight: isDark ? "rgba(245, 158, 11, 0.2)" : "rgba(245, 158, 11, 0.1)",
-    };
-  }, [isDark]);
-
-  // Aggregate daily data
   const chartData = useMemo(() => {
-    // Generate dates in range
-    const datesMap = new Map<string, { views: number; visitors: Set<string>; landing: number; tenant: number; saas: number }>();
+    const datesMap = new Map<
+      string,
+      { views: number; visitors: Set<string>; landing: number; tenant: number; saas: number }
+    >();
     const start = new Date(fromIso);
     const end = new Date();
 
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dateStr = d.toISOString().slice(0, 10);
-      datesMap.set(dateStr, { views: 0, visitors: new Set<string>(), landing: 0, tenant: 0, saas: 0 });
+      datesMap.set(dateStr, { views: 0, visitors: new Set(), landing: 0, tenant: 0, saas: 0 });
     }
 
-    // Process events
     for (const e of events) {
       const dateStr = e.created_at.slice(0, 10);
       if (datesMap.has(dateStr)) {
@@ -96,90 +145,36 @@ export function AnalyticsGlobalChart({ events, fromIso }: Props) {
       }
     }
 
-    const labels = [...datesMap.keys()];
-    const dailyData = [...datesMap.values()];
-
-    return {
-      labels: labels.map(l => {
-        const [_, m, d] = l.split("-");
-        return `${d}/${m}`;
-      }),
-      views: dailyData.map(d => d.views),
-      visitors: dailyData.map(d => d.visitors.size),
-      landing: dailyData.map(d => d.landing),
-      tenant: dailyData.map(d => d.tenant),
-      saas: dailyData.map(d => d.saas),
-    };
+    return [...datesMap.entries()].map(([date, row]) => {
+      const [, m, d] = date.split("-");
+      return {
+        date: `${d}/${m}`,
+        views: row.views,
+        visitors: row.visitors.size,
+        landing: row.landing,
+        tenant: row.tenant,
+        saas: row.saas,
+      };
+    });
   }, [events, fromIso]);
 
-  // General chart datasets
-  const generalData = {
-    labels: chartData.labels,
-    datasets: [
-      {
-        label: "Vistas Totales",
-        data: chartData.views,
-        borderColor: colors.primary,
-        backgroundColor: colors.primaryLight,
-        fill: true,
-        tension: 0.3,
-        pointRadius: chartData.labels.length > 30 ? 1 : 3,
-      },
-      {
-        label: "Visitantes Únicos",
-        data: chartData.visitors,
-        borderColor: colors.secondary,
-        backgroundColor: colors.secondaryLight,
-        fill: true,
-        tension: 0.3,
-        pointRadius: chartData.labels.length > 30 ? 1 : 3,
-      }
-    ]
-  };
-
-  // Stacked chart datasets by Page Type
-  const typeData = {
-    labels: chartData.labels,
-    datasets: [
-      {
-        label: "Landing Page",
-        data: chartData.landing,
-        backgroundColor: colors.primary,
-      },
-      {
-        label: "Páginas de Negocios",
-        data: chartData.tenant,
-        backgroundColor: colors.secondary,
-      },
-      {
-        label: "Panel SaaS (Admin)",
-        data: chartData.saas,
-        backgroundColor: colors.accent,
-      }
-    ]
-  };
-
-  // Doughnut metrics: Page Type proportion
-  const doughnutTypeData = useMemo(() => {
-    let landing = 0, tenant = 0, saas = 0;
+  const pageTypeData = useMemo(() => {
+    let landing = 0;
+    let tenant = 0;
+    let saas = 0;
     for (const e of events) {
       if (e.page_type === "landing") landing++;
       else if (e.page_type === "tenant") tenant++;
       else if (e.page_type === "saas") saas++;
     }
-    return {
-      labels: ["Landing", "Negocios", "SaaS Admin"],
-      datasets: [{
-        data: [landing, tenant, saas],
-        backgroundColor: [colors.primary, colors.secondary, colors.accent],
-        borderWidth: isDark ? 1 : 0,
-        borderColor: isDark ? "#1f2937" : "#ffffff",
-      }]
-    };
-  }, [events, colors, isDark]);
+    return [
+      { name: "Landing", value: landing, color: IOS_COLORS[0] },
+      { name: "Negocios", value: tenant, color: IOS_COLORS[1] },
+      { name: "SaaS Admin", value: saas, color: IOS_COLORS[2] },
+    ].filter((d) => d.value > 0);
+  }, [events]);
 
-  // Doughnut metrics: Countries proportion
-  const doughnutCountryData = useMemo(() => {
+  const countryData = useMemo(() => {
     const agg = new Map<string, number>();
     for (const e of events) {
       if (e.country_code) {
@@ -188,134 +183,114 @@ export function AnalyticsGlobalChart({ events, fromIso }: Props) {
       }
     }
     const sorted = [...agg.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-    const labels = sorted.map(([cc]) => cc);
-    const data = sorted.map(([_, count]) => count);
-    
-    // Add others if any
-    const totalTop = data.reduce((sum, n) => sum + n, 0);
+    const totalTop = sorted.reduce((sum, [, n]) => sum + n, 0);
     const others = events.length - totalTop;
+    const rows = sorted.map(([name, value], idx) => ({
+      name,
+      value,
+      color: IOS_COLORS[idx % IOS_COLORS.length],
+    }));
     if (others > 0 && sorted.length > 0) {
-      labels.push("Otros");
-      data.push(others);
+      rows.push({ name: "Otros", value: others, color: "#c7c7cc" });
     }
+    return rows;
+  }, [events]);
 
-    return {
-      labels: labels.length > 0 ? labels : ["Sin Datos"],
-      datasets: [{
-        data: data.length > 0 ? data : [1],
-        backgroundColor: [colors.primary, colors.secondary, colors.accent, "#f43f5e", "#8b5cf6", "#64748b"],
-        borderWidth: isDark ? 1 : 0,
-        borderColor: isDark ? "#1f2937" : "#ffffff",
-      }]
-    };
-  }, [events, colors, isDark]);
+  const totals = useMemo(() => {
+    const landing = events.filter((e) => e.page_type === "landing").length;
+    const tenant = events.filter((e) => e.page_type === "tenant").length;
+    const saas = events.filter((e) => e.page_type === "saas").length;
+    return { landing, tenant, saas };
+  }, [events]);
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        labels: { color: colors.text, font: { family: "Outfit, sans-serif", size: 12 } }
-      },
-      tooltip: {
-        titleFont: { family: "Outfit, sans-serif" },
-        bodyFont: { family: "Outfit, sans-serif" },
-      }
-    },
-    scales: {
-      x: {
-        grid: { color: colors.grid },
-        ticks: { color: colors.text, font: { family: "Outfit, sans-serif" } }
-      },
-      y: {
-        grid: { color: colors.grid },
-        ticks: { color: colors.text, font: { family: "Outfit, sans-serif" } },
-        beginAtZero: true
-      }
-    }
-  };
-
-  const stackedOptions = {
-    ...chartOptions,
-    scales: {
-      x: { ...chartOptions.scales.x, stacked: true },
-      y: { ...chartOptions.scales.y, stacked: true }
-    }
-  };
-
-  const pieOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom" as const,
-        labels: { color: colors.text, font: { family: "Outfit, sans-serif", size: 11 } }
-      }
-    }
-  };
+  const hasData = events.length > 0;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid gap-6 lg:grid-cols-12">
       {/* Main trend chart */}
-      <div className="flex flex-col rounded-2xl border border-zinc-200 bg-white/95 p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80 lg:col-span-2">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Tendencia de Tráfico</h3>
-            <p className="text-xs text-zinc-500">Comportamiento del tráfico global en el periodo seleccionado.</p>
-          </div>
-          <div className="flex rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-800">
-            <button
-              onClick={() => setActiveTab("general")}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition ${
-                activeTab === "general"
-                  ? "bg-white text-indigo-600 shadow-sm dark:bg-zinc-700 dark:text-indigo-400"
-                  : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
-              }`}
-            >
-              General
-            </button>
-            <button
-              onClick={() => setActiveTab("type")}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition ${
-                activeTab === "type"
-                  ? "bg-white text-indigo-600 shadow-sm dark:bg-zinc-700 dark:text-indigo-400"
-                  : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
-              }`}
-            >
-              Por Tipo de Página
-            </button>
-          </div>
-        </div>
-
-        <div className="h-[320px] w-full">
+      <AppleCard
+        className="lg:col-span-8"
+        title="Tendencia de tráfico"
+        description="Vistas y visitantes únicos en el periodo."
+        icon={Activity}
+        action={
+          <SegmentedTabs
+            options={[
+              { id: "general", label: "General" },
+              { id: "type", label: "Por tipo" },
+            ]}
+            value={activeTab}
+            onChange={(id) => setActiveTab(id as "general" | "type")}
+          />
+        }
+      >
+        <div className="h-[320px] sm:h-[360px]">
           {activeTab === "general" ? (
-            <Line data={generalData} options={chartOptions} />
+            <AppleAreaChart data={chartData} className="h-full w-full" />
           ) : (
-            <Bar data={typeData} options={stackedOptions} />
+            <AppleBarChart data={chartData} className="h-full w-full" />
           )}
         </div>
-      </div>
 
-      {/* Doughnut distribution charts */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-1">
-        {/* Page type doughnut */}
-        <div className="rounded-2xl border border-zinc-200 bg-white/95 p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Distribución por Sección</h3>
-          <p className="text-xs text-zinc-500 mb-4">Páginas de procedencia.</p>
-          <div className="h-[180px] w-full">
-            <Doughnut data={doughnutTypeData} options={pieOptions} />
+        {hasData && (
+          <div className="mt-5 grid grid-cols-3 gap-3 border-t border-zinc-100 pt-5 dark:border-zinc-800">
+            <StatPill label="Landing" value={totals.landing} color="#007AFF" />
+            <StatPill label="Negocios" value={totals.tenant} color="#34C759" />
+            <StatPill label="SaaS Admin" value={totals.saas} color="#FF9500" />
           </div>
-        </div>
+        )}
+      </AppleCard>
 
-        {/* Country distribution doughnut */}
-        <div className="rounded-2xl border border-zinc-200 bg-white/95 p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Distribución por País</h3>
-          <p className="text-xs text-zinc-500 mb-4">Top orígenes de tráfico.</p>
-          <div className="h-[180px] w-full">
-            <Doughnut data={doughnutCountryData} options={pieOptions} />
-          </div>
-        </div>
+      {/* Distribution donuts */}
+      <div className="flex flex-col gap-6 lg:col-span-4">
+        <AppleCard
+          title="Distribución por sección"
+          description="Procedencia del tráfico."
+          icon={PieChart}
+          className="flex-1"
+        >
+          <AppleDonutChart
+            data={pageTypeData.length ? pageTypeData : [{ name: "Sin datos", value: 1, color: "#e5e5ea" }]}
+            size={170}
+            strokeWidth={20}
+            className="mx-auto"
+            centerLabel="Total"
+            centerValue={events.length.toLocaleString("es-CL")}
+          />
+        </AppleCard>
+
+        <AppleCard
+          title="Distribución por país"
+          description="Top orígenes de tráfico."
+          icon={Globe2}
+          className="flex-1"
+        >
+          <AppleDonutChart
+            data={countryData.length ? countryData : [{ name: "Sin datos", value: 1, color: "#e5e5ea" }]}
+            size={170}
+            strokeWidth={20}
+            className="mx-auto"
+            centerLabel="Visitas"
+            centerValue={countryData
+              .reduce((sum, d) => sum + d.value, 0)
+              .toLocaleString("es-CL")}
+          />
+        </AppleCard>
       </div>
+    </div>
+  );
+}
+
+function StatPill({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="flex flex-col items-center rounded-2xl bg-zinc-50 px-3 py-3 dark:bg-zinc-800/50">
+      <span className="text-xs text-zinc-500 dark:text-zinc-400">{label}</span>
+      <span
+        className="mt-0.5 text-lg font-semibold tabular-nums tracking-tight"
+        style={{ color }}
+      >
+        {value.toLocaleString("es-CL")}
+      </span>
     </div>
   );
 }

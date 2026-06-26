@@ -1,5 +1,7 @@
+import { Building2 } from "lucide-react";
 import { CompanyForm } from "../../../../components/super-admin/companies/company-form";
 import { createSupabaseServerClient } from "../../../../utils/supabase/server";
+import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +19,14 @@ export default async function CompanyCreatePage() {
     }
 
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-5 sm:gap-6">
+        <SaasPageHeader
+          title="Nueva empresa"
+          description="Crea un tenant con dominio, plan y configuración visual."
+          icon={Building2}
+          backHref="/companies"
+          backLabel="Volver a empresas"
+        />
         <CompanyForm plans={data ?? []} />
       </div>
     );

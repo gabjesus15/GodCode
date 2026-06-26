@@ -1,8 +1,7 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-
+import { Funnel } from "lucide-react";
 import { DashboardPeriodTabs } from "../../../../components/super-admin/analytics/dashboard-period-tabs";
 import { OnboardingFunnelInteractive } from "@/components/super-admin/analytics/onboarding-funnel-interactive";
+import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
 import {
   DASHBOARD_PERIODS,
   type DashboardPeriod,
@@ -41,7 +40,6 @@ export default async function OnboardingEmbudoPage({
 
   const funnel = await fetchOnboardingFunnelCounts(fromIso);
 
-  // Fetch recent applications in the selected period to show the stuck CRM leads list
   let appsQuery = supabaseAdmin
     .from("onboarding_applications")
     .select("id, business_name, responsible_name, email, status, created_at, updated_at")
@@ -59,26 +57,23 @@ export default async function OnboardingEmbudoPage({
 
   return (
     <div className="min-w-0 space-y-6">
-      {/* Header section */}
-      <div>
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Volver al dashboard
-        </Link>
-        <h2 className="mt-2 text-xl font-semibold text-zinc-900 dark:text-zinc-100">Embudo de onboarding</h2>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Analiza el porcentaje de conversión y fuga de tus prospectos desde que visitan la página de inicio hasta que completan su pago de activación.
-        </p>
-      </div>
+      <SaasPageHeader
+        title="Embudo de onboarding"
+        description="Analiza el porcentaje de conversión y fuga de tus prospectos desde que visitan la página de inicio hasta que completan su pago de activación."
+        icon={Funnel}
+        backHref="/dashboard"
+        backLabel="Volver al dashboard"
+      />
 
       {/* Filter panel */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/80 shadow-sm">
+      <div className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <DashboardPeriodTabs current={period} />
-          <div className="text-xs text-zinc-500 font-semibold dark:text-zinc-400">
-            Filtrando solicitudes desde: <span className="text-zinc-800 dark:text-zinc-200 tabular-nums">{fromIso ? new Date(fromIso).toLocaleDateString("es-CL") : "Todo el historial"}</span>
+          <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+            Filtrando solicitudes desde:{" "}
+            <span className="tabular-nums text-zinc-800 dark:text-zinc-200">
+              {fromIso ? new Date(fromIso).toLocaleDateString("es-CL") : "Todo el historial"}
+            </span>
           </div>
         </div>
       </div>
@@ -89,7 +84,6 @@ export default async function OnboardingEmbudoPage({
         </div>
       )}
 
-      {/* Interactive pipeline funnel and stuck leads management CRM */}
       <OnboardingFunnelInteractive
         counts={funnel.counts}
         total={funnel.total}

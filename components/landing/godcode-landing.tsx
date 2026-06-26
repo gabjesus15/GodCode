@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 
+import { GcodeMark } from "@/components/ui/logo";
 import type { LandingMediaBundle } from "@/lib/landing/landing-media-types";
 import type { PublicPlanForLanding } from "@/lib/plans/public-plans";
 import type { CountryCode } from "@/lib/geo/landing-geo-plans";
@@ -35,10 +35,13 @@ export async function GodcodeLanding({ plans, media, country = "OTHER" }: Godcod
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-x-10 sm:gap-y-10 lg:grid-cols-[1.5fr_1fr_1fr_1fr] lg:gap-x-8 lg:gap-y-12">
             {/* Brand */}
             <div className="min-w-0 sm:col-span-2 sm:border-b sm:border-slate-800/60 sm:pb-10 lg:col-span-1 lg:border-b-0 lg:pb-0">
-              <a href="#inicio" className="inline-flex items-center gap-1.5" aria-label="GodCode">
-                <Image src="/logo.png" alt="" width={28} height={28} className="shrink-0" />
-                <span className="text-lg font-bold tracking-tight text-white">
-                  God<span className="text-indigo-400">Code</span>
+              <a href="#inicio" className="inline-flex items-center gap-2" aria-label="Gcode">
+                <GcodeMark ink="#F4F4F5" splitColor="#000000" className="h-10 w-10 shrink-0" />
+                <span
+                  className="hidden text-[28px] font-bold leading-none tracking-tight text-white sm:inline"
+                  style={{ fontFamily: "var(--font-space-grotesk), sans-serif" }}
+                >
+                  <span style={{ color: "var(--logo-accent)" }}>code</span>
                 </span>
               </a>
               <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-slate-500 sm:max-w-xl lg:max-w-xs">

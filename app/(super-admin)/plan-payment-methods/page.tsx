@@ -3,7 +3,15 @@
 import { useEffect, useState } from "react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import { Card } from "../../../components/ui/card";
+import { Card } from "@/components/ui/card";
+import { Drawer } from "@/components/ui/drawer";
+import { useSaasListAnimate } from "@/components/super-admin/shared/use-saas-list-animate";
+import { useSaasBreakpoint } from "@/components/super-admin/shared/use-saas-breakpoint";
+import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
+import { SaasStatusBadge } from "@/components/super-admin/shared/saas-status-badge";
+import { SaasSwitch } from "@/components/super-admin/shared/saas-switch";
+import { SaasEmptyState } from "@/components/super-admin/shared/saas-empty-state";
+import { CreditCard } from "lucide-react";
 
 type Method = {
 	id: string;
@@ -16,10 +24,8 @@ type Method = {
 	config: Record<string, string>;
 };
 
-/** Métodos que se cobran con .env; no tienen formulario de datos */
 const ONLINE_METHOD_SLUGS = ["paypal", "stripe"];
 
-/** Campos por método: solo los que tienen sentido para cada uno (datos que verá el cliente al pagar) */
 const METHOD_FIELDS: Record<string, { key: string; label: string; placeholder?: string }[]> = {
 	pago_movil: [
 		{ key: "banco", label: "Banco", placeholder: "Ej: Mercantil, Banesco" },
@@ -48,7 +54,6 @@ const METHOD_FIELDS: Record<string, { key: string; label: string; placeholder?: 
 	],
 };
 
-/** Si el método no está en METHOD_FIELDS, usamos estos como fallback */
 const FALLBACK_KEYS = [
 	{ key: "phone", label: "Teléfono", placeholder: "Ej: 0412-1234567" },
 	{ key: "email", label: "Correo", placeholder: "Ej: pagos@ejemplo.com" },
@@ -69,6 +74,9 @@ export default function PlanPaymentMethodsPage() {
 	const [editConfig, setEditConfig] = useState<Record<string, string>>({});
 	const [saving, setSaving] = useState(false);
 	const [togglingId, setTogglingId] = useState<string | null>(null);
+	const [listRef] = useSaasListAnimate<HTMLDivElement>();
+	const { isMobile } = useSaasBreakpoint();
+	const [mobileEditId, setMobileEditId] = useState<string | null>(null);
 
 	useEffect(() => {
 		fetch("/api/super-admin/plan-payment-methods")
@@ -81,6 +89,13 @@ export default function PlanPaymentMethodsPage() {
 	const startEdit = (m: Method) => {
 		setEditingId(m.id);
 		setEditConfig({ ...m.config });
+		if (isMobile) setMobileEditId(m.id);
+	};
+
+	const cancelEdit = () => {
+		setEditingId(null);
+		setMobileEditId(null);
+		setEditConfig({});
 	};
 
 	const saveConfig = async () => {
@@ -93,10 +108,8 @@ export default function PlanPaymentMethodsPage() {
 				body: JSON.stringify({ config: editConfig }),
 			});
 			if (!res.ok) throw new Error("Error al guardar");
-			setMethods((prev) =>
-				prev.map((m) => (m.id === editingId ? { ...m, config: { ...editConfig } } : m))
-			);
-			setEditingId(null);
+			setMethods((prev) => prev.map((m) => (m.id === editingId ? { ...m, config: { ...editConfig } } : m)));
+			cancelEdit();
 		} catch {
 			setError("No se pudo guardar");
 		} finally {
@@ -117,10 +130,7 @@ export default function PlanPaymentMethodsPage() {
 			if (!res.ok) {
 				throw new Error(json.error ?? "No se pudo actualizar");
 			}
-
-			setMethods((prev) =>
-				prev.map((m) => (m.id === method.id ? { ...m, is_active: !m.is_active } : m))
-			);
+			setMethods((prev) => prev.map((m) => (m.id === method.id ? { ...m, is_active: !m.is_active } : m)));
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "No se pudo actualizar");
 		} finally {
@@ -130,22 +140,24 @@ export default function PlanPaymentMethodsPage() {
 
 	if (loading) {
 		return (
-			<div className="flex min-h-[200px] items-center justify-center">
-				<div className="h-10 w-10 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-700" />
+			<div className="flex min-h-[200px] flex-col gap-4">
+				<div className="h-24 animate-pulse rounded-3xl bg-zinc-100 dark:bg-zinc-800" />
+				<div className="grid gap-4">
+					{Array.from({ length: 3 }).map((_, i) => (
+						<div key={i} className="h-40 animate-pulse rounded-3xl bg-zinc-100 dark:bg-zinc-800" />
+					))}
+				</div>
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex min-w-0 flex-col gap-4 sm:gap-6">
-			<div>
-				<h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 sm:text-2xl">
-					Métodos de pago del plan
-				</h1>
-				<p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-					Configura los datos que verá el cliente al pagar (teléfono Pago Móvil, email Zelle, banco, etc.).
-				</p>
-			</div>
+		<div className="flex min-w-0 flex-col gap-5 sm:gap-6">
+			<SaasPageHeader
+				title="Métodos de pago del plan"
+				description="Configura los datos que verá el cliente al pagar: teléfono Pago Móvil, email Zelle, banco, etc."
+				icon={CreditCard}
+			/>
 
 			{error && (
 				<div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/60 dark:text-red-300">
@@ -153,102 +165,132 @@ export default function PlanPaymentMethodsPage() {
 				</div>
 			)}
 
-			<div className="grid gap-4">
-				{methods.map((m) => {
-					const isOnline = ONLINE_METHOD_SLUGS.includes(m.slug);
-					const isToggling = togglingId === m.id;
-					return (
-						<Card key={m.id} className="p-4 sm:p-5">
-							<div className="flex flex-wrap items-center justify-between gap-2">
-								<div>
-									<p className="font-medium text-zinc-900 dark:text-zinc-100">{m.name ?? m.slug}</p>
-									<p className="text-xs text-zinc-500">
-										{m.countries?.join(", ") || "—"} · {m.auto_verify ? "Auto-verificación" : "Validación manual"}
-									</p>
-									<p className="mt-1 text-xs">
-										<span className={m.is_active ? "rounded bg-emerald-100 px-2 py-0.5 font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : "rounded bg-zinc-100 px-2 py-0.5 font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"}>
-											{m.is_active ? "Activo" : "Inactivo"}
-										</span>
-									</p>
-								</div>
-								<div className="flex flex-wrap items-center gap-2">
-									{!isOnline && (
-										editingId !== m.id ? (
+			{methods.length === 0 ? (
+				<SaasEmptyState
+					icon={CreditCard}
+					title="No hay métodos configurados"
+					description="Ejecuta la migración de Supabase que crea la tabla plan_payment_methods y el seed."
+				/>
+			) : (
+				<div ref={listRef} className="grid gap-4">
+					{methods.map((m) => {
+						const isOnline = ONLINE_METHOD_SLUGS.includes(m.slug);
+						const isToggling = togglingId === m.id;
+						const isEditing = editingId === m.id;
+						return (
+							<Card
+								key={m.id}
+								className="rounded-3xl border-zinc-200/60 bg-white p-4 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-5"
+							>
+								<div className="flex flex-wrap items-start justify-between gap-4">
+									<div className="min-w-0 flex-1">
+										<div className="flex flex-wrap items-center gap-2">
+											<p className="font-medium text-zinc-900 dark:text-zinc-100">{m.name ?? m.slug}</p>
+											<SaasStatusBadge label={m.is_active ? "Activo" : "Inactivo"} variant={m.is_active ? "success" : "neutral"} />
+											{isOnline && (
+												<SaasStatusBadge label="Online" variant="info" />
+											)}
+										</div>
+										<p className="mt-0.5 text-xs text-zinc-500">
+											{m.countries?.join(", ") || "—"} · {m.auto_verify ? "Auto-verificación" : "Validación manual"}
+										</p>
+									</div>
+									<div className="flex shrink-0 flex-wrap items-center gap-2">
+										{!isOnline && !isEditing && (
 											<Button type="button" variant="outline" size="sm" onClick={() => startEdit(m)}>
 												Editar datos
 											</Button>
-										) : (
-											<div className="flex gap-2">
+										)}
+										{!isOnline && isEditing && (
+											<>
 												<Button type="button" size="sm" onClick={saveConfig} disabled={saving}>
 													{saving ? "Guardando…" : "Guardar"}
 												</Button>
-												<Button
-													type="button"
-													variant="outline"
-													size="sm"
-													onClick={() => {
-														setEditingId(null);
-													}}
-												>
+												<Button type="button" variant="outline" size="sm" onClick={cancelEdit}>
 													Cancelar
 												</Button>
-											</div>
-										)
-									)}
-									<Button
-										type="button"
-										variant={m.is_active ? "outline" : "default"}
-										size="sm"
-										disabled={isToggling}
-										onClick={() => void toggleMethod(m)}
-									>
-										{isToggling ? "Actualizando…" : m.is_active ? "Desactivar" : "Activar"}
-									</Button>
+											</>
+										)}
+										<SaasSwitch
+											checked={m.is_active}
+											onChange={() => void toggleMethod(m)}
+											disabled={isToggling}
+											label={isToggling ? "Actualizando…" : undefined}
+										/>
+									</div>
 								</div>
-							</div>
-							{isOnline ? (
-								<p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-									Se configura con las variables de entorno (.env): {m.slug === "paypal" ? "PAYPAL_CLIENT_ID y PAYPAL_CLIENT_SECRET" : "STRIPE_SECRET_KEY"}. No hace falta cargar datos aquí; el cliente paga en la página de {m.name ?? m.slug}.
-								</p>
-							) : editingId === m.id ? (
-								<div className="mt-4 grid gap-3 sm:grid-cols-2">
-									{getFieldsForMethod(m.slug).map(({ key, label, placeholder }) => (
-										<label key={key} className="flex flex-col gap-1 text-sm">
-											<span className="font-medium text-zinc-700 dark:text-zinc-300">{label}</span>
-											<Input
-												value={editConfig[key] ?? ""}
-												onChange={(e) =>
-													setEditConfig((prev) => ({ ...prev, [key]: e.target.value }))
-												}
-												placeholder={placeholder ?? ""}
-												className="h-10"
-											/>
-										</label>
-									))}
-								</div>
-							) : null}
-							{!isOnline && editingId !== m.id && Object.keys(m.config).length > 0 && (
-								<dl className="mt-3 grid gap-1 text-sm sm:grid-cols-2">
-									{Object.entries(m.config).map(([k, v]) => (
-										v ? (
-											<div key={k}>
-												<dt className="text-zinc-500 capitalize">{k.replace(/_/g, " ")}</dt>
-												<dd className="font-medium text-zinc-900 dark:text-zinc-100">{v}</dd>
-											</div>
-										) : null
-									))}
-								</dl>
-							)}
-						</Card>
-					);
-				})}
-			</div>
 
-			{methods.length === 0 && !loading && (
-				<div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-6 py-10 text-center text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-					No hay métodos configurados. Ejecuta la migración de Supabase que crea la tabla plan_payment_methods y el seed.
+								{isOnline ? (
+									<p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+										Se configura con las variables de entorno (.env):{" "}
+										{m.slug === "paypal" ? "PAYPAL_CLIENT_ID y PAYPAL_CLIENT_SECRET" : "STRIPE_SECRET_KEY"}. No hace falta cargar datos aquí; el cliente paga en la página de {m.name ?? m.slug}.
+									</p>
+								) : isEditing ? (
+									<div className="mt-4 grid gap-3 sm:grid-cols-2">
+										{getFieldsForMethod(m.slug).map(({ key, label, placeholder }) => (
+											<label key={key} className="flex flex-col gap-1.5 text-sm">
+												<span className="font-medium text-zinc-700 dark:text-zinc-300">{label}</span>
+												<Input
+													value={editConfig[key] ?? ""}
+													onChange={(e) => setEditConfig((prev) => ({ ...prev, [key]: e.target.value }))}
+													placeholder={placeholder ?? ""}
+													className="h-10 rounded-xl"
+												/>
+											</label>
+										))}
+									</div>
+								) : null}
+
+								{!isOnline && !isEditing && Object.keys(m.config).length > 0 && (
+									<dl className="mt-3 grid gap-1 text-sm sm:grid-cols-2">
+										{Object.entries(m.config).map(([k, v]) =>
+											v ? (
+												<div key={k}>
+													<dt className="text-zinc-500 capitalize">{k.replace(/_/g, " ")}</dt>
+													<dd className="font-medium text-zinc-900 dark:text-zinc-100">{v}</dd>
+												</div>
+											) : null,
+										)}
+									</dl>
+								)}
+							</Card>
+						);
+					})}
 				</div>
 			)}
+
+			<Drawer
+				open={!!mobileEditId && isMobile}
+				onOpenChange={(open) => !open && setMobileEditId(null)}
+				title="Editar método de pago"
+				description="Completa los datos que verá el cliente al pagar."
+			>
+				{editingId && isMobile ? (
+					<div className="grid gap-3">
+						{getFieldsForMethod(methods.find((m) => m.id === editingId)?.slug ?? "").map(({ key, label, placeholder }) => (
+							<label key={key} className="flex flex-col gap-1 text-sm">
+								<span className="font-medium text-zinc-700 dark:text-zinc-300">{label}</span>
+								<Input
+									value={editConfig[key] ?? ""}
+									onChange={(e) => setEditConfig((prev) => ({ ...prev, [key]: e.target.value }))}
+									placeholder={placeholder ?? ""}
+									className="h-10 rounded-xl"
+								/>
+							</label>
+						))}
+						<Button
+							type="button"
+							onClick={() => {
+								void saveConfig();
+								setMobileEditId(null);
+							}}
+							disabled={saving}
+						>
+							{saving ? "Guardando…" : "Guardar"}
+						</Button>
+					</div>
+				) : null}
+			</Drawer>
 		</div>
 	);
 }

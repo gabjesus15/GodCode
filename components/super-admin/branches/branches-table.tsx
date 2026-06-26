@@ -1,4 +1,7 @@
+"use client";
+
 import { Card } from "@/components/ui/card";
+import { useSaasListAnimate } from "@/components/super-admin/shared/use-saas-list-animate";
 import { BranchRow } from "./branch-row";
 
 interface BranchesTableProps {
@@ -40,15 +43,15 @@ interface BranchesTableProps {
 }
 
 export function BranchesTable({ branches }: BranchesTableProps) {
+  const [listRef] = useSaasListAnimate<HTMLDivElement>();
+
   return (
     <Card className="flex flex-col gap-4">
       <div>
         <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Sucursales</h3>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Gestiona ubicaciones y disponibilidad.
-        </p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Gestiona ubicaciones y disponibilidad.</p>
       </div>
-      <div className="grid gap-4">
+      <div ref={listRef} className="grid gap-4">
         {branches.length === 0 ? (
           <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-6 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
             No hay sucursales registradas.

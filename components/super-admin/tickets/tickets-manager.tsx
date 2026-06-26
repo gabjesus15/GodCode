@@ -1,12 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { LifeBuoy, MessageSquarePlus, Save } from "lucide-react";
-
+import { AlertCircle, Inbox, MessageSquarePlus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
+import { Textarea } from "@/components/ui/textarea";
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
+import { SaasSelect } from "@/components/super-admin/shared/saas-select";
+import { SaasStatusBadge } from "@/components/super-admin/shared/saas-status-badge";
+import { SaasEmptyState } from "@/components/super-admin/shared/saas-empty-state";
+import { MasterDetailLayout } from "@/components/super-admin/shared/master-detail-layout";
+import { TicketDetailPanel } from "./ticket-detail-panel";
+import { ticketStatus, ticketPriority } from "@/lib/super-admin/status-maps";
+import { formatDateTime } from "@/lib/super-admin/format-utils";
+import { toast } from "sonner";
 
 type TicketStatus = "open" | "in_progress" | "waiting_customer" | "resolved" | "closed";
 type TicketPriority = "low" | "medium" | "high" | "critical";
@@ -48,12 +57,47 @@ interface TicketItem {
   createdAt: string;
 }
 
-const STATUS_OPTIONS: TicketStatus[] = ["open", "in_progress", "waiting_customer", "resolved", "closed"];
-const PRIORITY_OPTIONS: TicketPriority[] = ["low", "medium", "high", "critical"];
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "all", label: "Todos los estados" },
+  { value: "open", label: "Abierto" },
+  { value: "in_progress", label: "En progreso" },
+  { value: "waiting_customer", label: "Esperando cliente" },
+  { value: "resolved", label: "Resuelto" },
+  { value: "closed", label: "Cerrado" },
+];
+
+const PRIORITY_OPTIONS: { value: string; label: string }[] = [
+  { value: "all", label: "Todas las prioridades" },
+  { value: "low", label: "Baja" },
+  { value: "medium", label: "Media" },
+  { value: "high", label: "Alta" },
+  { value: "critical", label: "Crítica" },
+];
+
 const CATEGORY_OPTIONS: TicketCategory[] = ["general", "billing", "technical", "product", "account"];
+const CATEGORY_LABELS: Record<TicketCategory, string> = {
+  general: "General",
+  billing: "Facturación",
+  technical: "Técnico",
+  product: "Producto",
+  account: "Cuenta",
+};
+
+const PRIORITY_SELECT: { value: TicketPriority; label: string }[] = [
+  { value: "low", label: "Baja" },
+  { value: "medium", label: "Media" },
+  { value: "high", label: "Alta" },
+  { value: "critical", label: "Crítica" },
+];
+
+function showMessage(type: "success" | "error", text: string) {
+  if (type === "success") toast.success(text);
+  else toast.error(text);
+}
 
 export default function TicketsManager() {
   const { readOnly } = useAdminRole();
+
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -63,26 +107,30 @@ export default function TicketsManager() {
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
-  const [assignedFilter, setAssignedFilter] = useState<string>("all");
+  const [assignedFilter, setAssignedFilter] = useState<string>("");
   const [query, setQuery] = useState("");
 
-  const [assignTo, setAssignTo] = useState("");
-  const [nextStatus, setNextStatus] = useState<TicketStatus>("open");
-  const [responseMessage, setResponseMessage] = useState("");
-  const [internalNote, setInternalNote] = useState(false);
-
+  const [createOpen, setCreateOpen] = useState(false);
   const [newCompanyId, setNewCompanyId] = useState("");
   const [newSubject, setNewSubject] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newCategory, setNewCategory] = useState<TicketCategory>("general");
   const [newPriority, setNewPriority] = useState<TicketPriority>("medium");
 
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
   const selectedTicket = useMemo(
     () => tickets.find((item) => item.id === selectedId) ?? null,
     [selectedId, tickets]
   );
+
+  const slaMetrics = useMemo(() => {
+    const breached = tickets.filter(
+      (t) => t.sla?.resolutionBreached || t.sla?.firstResponseBreached
+    ).length;
+    const criticalOpen = tickets.filter(
+      (t) => t.priority === "critical" && t.status !== "resolved" && t.status !== "closed"
+    ).length;
+    return { breached, criticalOpen };
+  }, [tickets]);
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
@@ -90,14 +138,17 @@ export default function TicketsManager() {
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.set("status", statusFilter);
       if (priorityFilter !== "all") params.set("priority", priorityFilter);
-      if (assignedFilter !== "all") params.set("assignedTo", assignedFilter);
+      if (assignedFilter.trim()) params.set("assignedTo", assignedFilter.trim());
       if (query.trim()) params.set("q", query.trim());
 
-      const res = await fetch(`/api/super-admin/tickets?${params.toString()}`, { cache: "no-store" });
+      const res = await fetch(`/api/super-admin/tickets?${params.toString()}`, {
+        cache: "no-store",
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudieron cargar tickets");
       const items = (data.tickets ?? []) as TicketItem[];
       setTickets(items);
+
       if (!selectedId && items.length > 0) {
         setSelectedId(items[0].id);
       }
@@ -105,7 +156,7 @@ export default function TicketsManager() {
         setSelectedId(items[0]?.id ?? null);
       }
     } catch (err) {
-      setMessage({ type: "error", text: err instanceof Error ? err.message : "No se pudieron cargar tickets" });
+      showMessage("error", err instanceof Error ? err.message : "No se pudieron cargar tickets");
     } finally {
       setLoading(false);
     }
@@ -115,29 +166,22 @@ export default function TicketsManager() {
     void loadTickets();
   }, [loadTickets]);
 
-  useEffect(() => {
-    if (!selectedTicket) return;
-    setAssignTo(selectedTicket.assignedTo ?? "");
-    setNextStatus(selectedTicket.status);
-    setResponseMessage("");
-    setInternalNote(false);
-  }, [selectedTicket]);
-
   const loadMessages = useCallback(async (ticketId: string) => {
     if (!ticketId) {
       setMessages([]);
       return;
     }
-
     setMessagesLoading(true);
     try {
-      const res = await fetch(`/api/super-admin/tickets/${ticketId}/messages`, { cache: "no-store" });
+      const res = await fetch(`/api/super-admin/tickets/${ticketId}/messages`, {
+        cache: "no-store",
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudieron cargar mensajes");
       setMessages((data.messages ?? []) as TicketMessage[]);
     } catch (err) {
       setMessages([]);
-      setMessage({ type: "error", text: err instanceof Error ? err.message : "No se pudieron cargar mensajes" });
+      showMessage("error", err instanceof Error ? err.message : "No se pudieron cargar mensajes");
     } finally {
       setMessagesLoading(false);
     }
@@ -151,68 +195,64 @@ export default function TicketsManager() {
     void loadMessages(selectedId);
   }, [loadMessages, selectedId]);
 
-  const saveTicket = async () => {
-    if (!selectedTicket) return;
+  const saveTicket = useCallback(
+    async (updates: { status: TicketStatus; assignedTo: string | null }) => {
+      if (!selectedTicket) return;
+      setSaving(true);
+      try {
+        const res = await fetch("/api/super-admin/tickets", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: selectedTicket.id,
+            status: updates.status,
+            assignedTo: updates.assignedTo,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "No se pudo guardar el ticket");
+        showMessage("success", "Ticket actualizado correctamente");
+        await loadTickets();
+      } catch (err) {
+        showMessage("error", err instanceof Error ? err.message : "No se pudo guardar el ticket");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [selectedTicket, loadTickets]
+  );
 
-    setSaving(true);
-    try {
-      const res = await fetch("/api/super-admin/tickets", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: selectedTicket.id,
-          status: nextStatus,
-          assignedTo: assignTo.trim() || null,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "No se pudo guardar el ticket");
-
-      setMessage({ type: "success", text: "Ticket actualizado" });
-      await loadTickets();
-    } catch (err) {
-      setMessage({ type: "error", text: err instanceof Error ? err.message : "No se pudo guardar el ticket" });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const sendMessage = async () => {
-    if (!selectedTicket || !responseMessage.trim()) {
-      setMessage({ type: "error", text: "Escribe un mensaje para enviar" });
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/super-admin/tickets/${selectedTicket.id}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: responseMessage.trim(),
-          isInternal: internalNote,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "No se pudo enviar el mensaje");
-
-      setResponseMessage("");
-      setInternalNote(false);
-      setMessage({ type: "success", text: "Mensaje enviado" });
-      await Promise.all([loadTickets(), loadMessages(selectedTicket.id)]);
-    } catch (err) {
-      setMessage({ type: "error", text: err instanceof Error ? err.message : "No se pudo enviar el mensaje" });
-    } finally {
-      setSaving(false);
-    }
-  };
+  const sendMessage = useCallback(
+    async (message: string, isInternal: boolean) => {
+      if (!selectedTicket || !message.trim()) {
+        showMessage("error", "Escribe un mensaje para enviar");
+        return;
+      }
+      setSaving(true);
+      try {
+        const res = await fetch(`/api/super-admin/tickets/${selectedTicket.id}/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: message.trim(), isInternal }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "No se pudo enviar el mensaje");
+        showMessage("success", "Mensaje enviado correctamente");
+        await Promise.all([loadTickets(), loadMessages(selectedTicket.id)]);
+      } catch (err) {
+        showMessage("error", err instanceof Error ? err.message : "No se pudo enviar el mensaje");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [selectedTicket, loadTickets, loadMessages]
+  );
 
   const createTicket = async () => {
     if (!newCompanyId.trim() || !newSubject.trim() || !newDescription.trim()) {
-      setMessage({ type: "error", text: "Completa companyId, asunto y descripción" });
+      showMessage("error", "Completa companyId, asunto y descripción");
       return;
     }
-
     setSaving(true);
     try {
       const res = await fetch("/api/super-admin/tickets", {
@@ -228,280 +268,218 @@ export default function TicketsManager() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo crear el ticket");
-
-      setMessage({ type: "success", text: "Ticket creado" });
+      showMessage("success", "Ticket creado correctamente");
+      setNewCompanyId("");
       setNewSubject("");
       setNewDescription("");
+      setNewCategory("general");
+      setNewPriority("medium");
+      setCreateOpen(false);
       await loadTickets();
       if (data.ticket?.id) {
         setSelectedId(data.ticket.id);
       }
     } catch (err) {
-      setMessage({ type: "error", text: err instanceof Error ? err.message : "No se pudo crear el ticket" });
+      showMessage("error", err instanceof Error ? err.message : "No se pudo crear el ticket");
     } finally {
       setSaving(false);
     }
   };
 
+  const renderListItem = (ticket: TicketItem, selected: boolean) => {
+    const statusBadge = ticketStatus(ticket.status);
+    const priorityBadge = ticketPriority(ticket.priority);
+    const isSlaCritical = ticket.sla?.escalationLevel === "critical";
+
+    return (
+      <div
+        className={`relative px-4 py-3 transition sm:px-5 sm:py-4 ${
+          selected
+            ? "bg-zinc-50 dark:bg-zinc-800/60"
+            : "hover:bg-zinc-50/60 dark:hover:bg-zinc-900/40"
+        }`}
+      >
+        {selected && (
+          <div className="absolute left-0 top-0 bottom-0 w-1 rounded-r bg-zinc-900 dark:bg-zinc-100" />
+        )}
+        {isSlaCritical && (
+          <div className="absolute right-3 top-3 sm:right-4 sm:top-4">
+            <AlertCircle className="h-4 w-4 text-red-500" />
+          </div>
+        )}
+        <div className="flex flex-wrap items-center gap-2 pr-6">
+          <SaasStatusBadge label={statusBadge.label} variant={statusBadge.variant} />
+          <SaasStatusBadge label={priorityBadge.label} variant={priorityBadge.variant} />
+        </div>
+        <p className="mt-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-1">
+          {ticket.subject}
+        </p>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          {ticket.companyName || ticket.companyId} · {ticket.createdByEmail}
+        </p>
+        {ticket.assignedTo && (
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            Asignado: <span className="font-medium text-zinc-700 dark:text-zinc-300">{ticket.assignedTo}</span>
+          </p>
+        )}
+        <p className="mt-2 text-[10px] text-zinc-400 dark:text-zinc-500">
+          {formatDateTime(ticket.lastMessageAt || ticket.createdAt)}
+        </p>
+      </div>
+    );
+  };
+
+  const renderDetail = (ticket: TicketItem) => (
+    <TicketDetailPanel
+      key={ticket.id}
+      ticket={ticket}
+      messages={messages}
+      messagesLoading={messagesLoading}
+      saving={saving}
+      readOnly={readOnly}
+      onSave={saveTicket}
+      onSendMessage={sendMessage}
+    />
+  );
+
   return (
-    <div className="grid min-w-0 gap-4 sm:gap-6 lg:grid-cols-[1.15fr_1fr]">
-      <Card className="min-w-0 rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/80 sm:p-4">
-        <div className="mb-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-5">
-          <select title="Selecciona una opción"
+    <div className="min-w-0 space-y-4 sm:space-y-6">
+      {/* KPIs */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80">
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Total tickets
+          </p>
+          <p className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{tickets.length}</p>
+        </Card>
+        <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80">
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            SLA incumplidos
+          </p>
+          <p className="mt-1 text-2xl font-semibold text-red-600 dark:text-red-400">{slaMetrics.breached}</p>
+        </Card>
+        <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80">
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Críticos abiertos
+          </p>
+          <p className="mt-1 text-2xl font-semibold text-amber-600 dark:text-amber-400">{slaMetrics.criticalOpen}</p>
+        </Card>
+        <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80">
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Sin asignar
+          </p>
+          <p className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+            {tickets.filter((t) => !t.assignedTo && t.status !== "resolved" && t.status !== "closed").length}
+          </p>
+        </Card>
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <SaasSelect
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-          >
-            <option value="all">estado: todos</option>
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-
-          <select title="Selecciona una opción"
+            onChange={setStatusFilter}
+            options={STATUS_OPTIONS}
+          />
+          <SaasSelect
             value={priorityFilter}
-            onChange={(event) => setPriorityFilter(event.target.value)}
-            className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-          >
-            <option value="all">prioridad: todas</option>
-            {PRIORITY_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-
+            onChange={setPriorityFilter}
+            options={PRIORITY_OPTIONS}
+          />
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Buscar asunto/email"
-            className="md:col-span-2"
           />
           <Input
             value={assignedFilter}
             onChange={(event) => setAssignedFilter(event.target.value)}
             placeholder="Asignado a (email)"
-            className="md:col-span-1"
           />
         </div>
-
-        {message ? (
-          <div
-            className={`mb-3 rounded-lg border p-3 text-sm ${
-              message.type === "success"
-                ? "border-green-200 bg-green-50 text-green-800 dark:border-green-900/70 dark:bg-green-950/40 dark:text-green-300"
-                : "border-red-200 bg-red-50 text-red-800 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-300"
-            }`}
-          >
-            {message.text}
-          </div>
-        ) : null}
-
-        <div className="divide-y divide-zinc-200 rounded-xl border border-zinc-200 dark:divide-zinc-700 dark:border-zinc-700">
-          {loading ? <div className="p-4 text-sm text-zinc-500 dark:text-zinc-400">Cargando tickets...</div> : null}
-
-          {!loading && tickets.length === 0 ? (
-            <div className="p-4 text-sm text-zinc-500 dark:text-zinc-400">No hay tickets con esos filtros.</div>
-          ) : null}
-
-          {tickets.map((ticket) => {
-            const active = ticket.id === selectedId;
-            return (
-              <button
-                key={ticket.id}
-                type="button"
-                onClick={() => setSelectedId(ticket.id)}
-                className={`w-full px-4 py-3 text-left transition ${
-                  active ? "bg-zinc-100 dark:bg-zinc-800/70 border-l-4 border-blue-500" : "hover:bg-zinc-50 dark:hover:bg-zinc-900/60"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                      {ticket.subject}
-                      <span className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${
-                        ticket.status === "open" ? "bg-green-100 text-green-700" :
-                        ticket.status === "in_progress" ? "bg-blue-100 text-blue-700" :
-                        ticket.status === "waiting_customer" ? "bg-yellow-100 text-yellow-700" :
-                        ticket.status === "resolved" ? "bg-gray-100 text-gray-700" :
-                        ticket.status === "closed" ? "bg-zinc-300 text-zinc-700" : "bg-zinc-100 text-zinc-700"
-                      }`}>{ticket.status}</span>
-                      <span className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${
-                        ticket.priority === "critical" ? "bg-red-100 text-red-700" :
-                        ticket.priority === "high" ? "bg-orange-100 text-orange-700" :
-                        ticket.priority === "medium" ? "bg-blue-100 text-blue-700" :
-                        ticket.priority === "low" ? "bg-gray-100 text-gray-700" : "bg-zinc-100 text-zinc-700"
-                      }`}>{ticket.priority}</span>
-                    </p>
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      {ticket.companyName || ticket.companyId} · {ticket.createdByEmail}
-                      {ticket.assignedTo ? (
-                        <span className="ml-2 font-semibold text-blue-600 dark:text-blue-300">Asignado: {ticket.assignedTo}</span>
-                      ) : null}
-                    </p>
-                  </div>
-                  <div className="text-right text-xs text-zinc-500 dark:text-zinc-400">
-                    {ticket.sla?.escalationLevel === "critical" ? (
-                      <p className="font-semibold text-red-500">SLA crítico</p>
-                    ) : ticket.sla?.escalationLevel === "warning" ? (
-                      <p className="font-semibold text-amber-500">SLA en riesgo</p>
-                    ) : null}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </Card>
-
-      <div className="grid min-w-0 gap-4 sm:gap-6">
-        <Card className="min-w-0 rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/80 sm:p-4">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">Crear ticket manual</h3>
-          <div className="grid gap-3">
-            <Input value={newCompanyId} onChange={(event) => setNewCompanyId(event.target.value)} placeholder="Company ID" />
-            <Input value={newSubject} onChange={(event) => setNewSubject(event.target.value)} placeholder="Asunto" />
-            <textarea
-              value={newDescription}
-              onChange={(event) => setNewDescription(event.target.value)}
-              rows={3}
-              placeholder="Descripción"
-              className="w-full rounded-xl border border-zinc-200 bg-white p-3 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-900"
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <select title="Selecciona una opción"
-                value={newCategory}
-                onChange={(event) => setNewCategory(event.target.value as TicketCategory)}
-                className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-              >
-                {CATEGORY_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              <select title="Selecciona una opción"
-                value={newPriority}
-                onChange={(event) => setNewPriority(event.target.value as TicketPriority)}
-                className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-              >
-                {PRIORITY_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Button onClick={() => void createTicket()} disabled={saving || readOnly} className="bg-zinc-900 hover:bg-zinc-800">
-              <MessageSquarePlus className="mr-2 h-4 w-4" />
-              Crear ticket
-            </Button>
-          </div>
-        </Card>
-
-        <Card className="min-w-0 rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/80 sm:p-4">
-          {!selectedTicket ? (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Selecciona un ticket para gestionarlo.</p>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">Ticket seleccionado</p>
-                <h3 className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100">{selectedTicket.subject}</h3>
-                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  {selectedTicket.companyName || selectedTicket.companyId} · {selectedTicket.createdByEmail}
-                </p>
-              </div>
-
-              <div className="grid gap-3">
-                <select title="Selecciona una opción"
-                  value={nextStatus}
-                  onChange={(event) => setNextStatus(event.target.value as TicketStatus)}
-                  className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
-                >
-                  {STATUS_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-
-                <Input
-                  value={assignTo}
-                  onChange={(event) => setAssignTo(event.target.value)}
-                  placeholder="Asignar a (email interno)"
-                />
-
-                <textarea
-                  value={responseMessage}
-                  onChange={(event) => setResponseMessage(event.target.value)}
-                  rows={3}
-                  placeholder="Escribe respuesta del soporte"
-                  className="w-full rounded-xl border border-zinc-200 bg-white p-3 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-900"
-                />
-
-                <label className="inline-flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-                  <input
-                    type="checkbox"
-                    checked={internalNote}
-                    onChange={(event) => setInternalNote(event.target.checked)}
-                  />
-                  Nota interna (no visible tenant)
-                </label>
-
-                <Button onClick={() => void sendMessage()} disabled={saving || readOnly} variant="outline">
-                  Enviar mensaje al hilo
-                </Button>
-
-                <Button onClick={() => void saveTicket()} disabled={saving || readOnly} className="bg-zinc-900 hover:bg-zinc-800">
-                  <Save className="mr-2 h-4 w-4" />
-                  Guardar gestión
-                </Button>
-              </div>
-
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900">
-                <p className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">Hilo del ticket</p>
-                {messagesLoading ? (
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Cargando mensajes...</p>
-                ) : messages.length === 0 ? (
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Aún no hay mensajes.</p>
-                ) : (
-                  <div className="grid gap-2">
-                    {messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`rounded-lg border p-2 text-xs ${
-                          msg.is_internal
-                            ? "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-300"
-                            : "border-zinc-200 bg-white text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
-                        }`}
-                      >
-                        <p className="font-semibold">
-                          {msg.author_type} · {msg.author_email || "sistema"}
-                        </p>
-                        <p className="mt-1 whitespace-pre-wrap">{msg.message}</p>
-                        <p className="mt-1 opacity-70">{new Date(msg.created_at).toLocaleString("es-CL")}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
-                <p>Primera respuesta SLA: {selectedTicket.firstResponseDueAt ? new Date(selectedTicket.firstResponseDueAt).toLocaleString("es-CL") : "-"}</p>
-                <p>Resolución SLA: {selectedTicket.resolutionDueAt ? new Date(selectedTicket.resolutionDueAt).toLocaleString("es-CL") : "-"}</p>
-                {selectedTicket.sla?.resolutionBreached ? <p className="font-semibold text-red-500">Incumplimiento crítico de resolución</p> : null}
-                {!selectedTicket.sla?.resolutionBreached && selectedTicket.sla?.firstResponseBreached ? <p className="font-semibold text-amber-500">Incumplimiento de primera respuesta</p> : null}
-              </div>
-            </div>
-          )}
-        </Card>
-
-        <Card className="min-w-0 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-300 sm:p-4">
-          <LifeBuoy className="mr-2 inline h-4 w-4" />
-          Este tab centraliza tickets por empresa en una sola cola y aplica SLA básico por prioridad automáticamente.
-        </Card>
+        <Button
+          onClick={() => setCreateOpen(true)}
+          disabled={readOnly}
+          className="w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 lg:w-auto"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Nuevo ticket
+        </Button>
       </div>
+
+      {/* Master-detail */}
+      {loading && tickets.length === 0 ? (
+        <Card className="rounded-3xl border border-zinc-200/60 bg-white p-8 text-center dark:border-zinc-800/60 dark:bg-zinc-900/80">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Cargando tickets...</p>
+        </Card>
+      ) : (
+        <MasterDetailLayout
+          items={tickets}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          listKey={(ticket) => ticket.id}
+          renderListItem={renderListItem}
+          renderDetail={renderDetail}
+          emptyState={
+            <SaasEmptyState
+              icon={Inbox}
+              title="No hay tickets"
+              description="No se encontraron tickets con los filtros seleccionados."
+            />
+          }
+          className="min-h-[600px] lg:grid-cols-[380px_1fr]"
+        />
+      )}
+
+      {/* Create modal */}
+      <Modal
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Crear ticket manual"
+        description="Abre un ticket de soporte en nombre de un negocio."
+      >
+        <div className="grid gap-4">
+          <Input
+            value={newCompanyId}
+            onChange={(event) => setNewCompanyId(event.target.value)}
+            placeholder="Company ID"
+          />
+          <Input
+            value={newSubject}
+            onChange={(event) => setNewSubject(event.target.value)}
+            placeholder="Asunto"
+          />
+          <Textarea
+            value={newDescription}
+            onChange={(event) => setNewDescription(event.target.value)}
+            rows={3}
+            placeholder="Descripción"
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <SaasSelect
+              label="Categoría"
+              value={newCategory}
+              onChange={(value) => setNewCategory(value as TicketCategory)}
+              options={CATEGORY_OPTIONS.map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))}
+            />
+            <SaasSelect
+              label="Prioridad"
+              value={newPriority}
+              onChange={(value) => setNewPriority(value as TicketPriority)}
+              options={PRIORITY_SELECT}
+            />
+          </div>
+          <Button
+            onClick={() => void createTicket()}
+            disabled={saving || readOnly}
+            className="w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          >
+            <MessageSquarePlus className="mr-2 h-4 w-4" />
+            Crear ticket
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

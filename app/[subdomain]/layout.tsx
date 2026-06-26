@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { headers } from "next/headers";
 
-import { getAppUrl } from "@/lib/tenant/app-url";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedCompany } from "../../utils/tenant-cache";

@@ -1,11 +1,14 @@
 import Link from "next/link";
-
-import { Badge } from "@/components/ui/badge";
+import { ExternalLink } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { CompanyDeleteButton } from "./company-delete-button";
 import { CompanyStatusToggle } from "./company-status-toggle";
+import { SaasStatusBadge } from "@/components/super-admin/shared/saas-status-badge";
+import { CopyFieldButton } from "@/components/super-admin/shared/copy-field-button";
 import { getTenantHost, getTenantUrl } from "@/utils/tenant-url";
 import { getEffectiveCustomDomain } from "@/lib/tenant/tenant-effective-custom-domain";
-import { CopyFieldButton } from "@/components/super-admin/shared/copy-field-button";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { companySubscriptionStatus } from "@/lib/super-admin/status-maps";
 
 type PlanInfo = {
   name: string | null;
@@ -40,54 +43,21 @@ interface CompaniesTableProps {
   readOnly?: boolean;
 }
 
-type StatusVariant = "success" | "warning" | "destructive" | "neutral";
-const VERIFIED_ONBOARDING_STATUSES = new Set([
-  "email_verified",
-  "form_completed",
-  "payment_pending",
-  "payment_validated",
-  "active",
-  "paid",
-  "approved",
-]);
-
-const statusMap: Record<string, { label: string; variant: StatusVariant }> = {
-  active: { label: "Activo", variant: "success" },
-  suspended: { label: "Suspendido", variant: "warning" },
-  trial: { label: "Trial", variant: "neutral" },
-  cancelled: { label: "Cancelado", variant: "warning" },
-  canceled: { label: "Cancelado", variant: "warning" },
-  past_due: { label: "Pago atrasado", variant: "destructive" },
-  unpaid: { label: "Sin pago", variant: "warning" },
-  incomplete: { label: "Incompleto", variant: "neutral" },
-};
-
 const dayMs = 1000 * 60 * 60 * 24;
 
 const getExpiryBadge = (subscriptionEndsAt?: string | null) => {
-  if (!subscriptionEndsAt) {
-    return null;
-  }
-
+  if (!subscriptionEndsAt) return null;
   const diffMs = new Date(subscriptionEndsAt).getTime() - Date.now();
   const days = Math.ceil(diffMs / dayMs);
-
-  if (Number.isNaN(days)) {
-    return null;
-  }
-
-  if (days <= 0) {
-    return { label: "Vencido", variant: "destructive" as const };
-  }
-
-  if (days <= 7) {
-    return { label: `Vence en ${days} dias`, variant: "warning" as const };
-  }
-
-  return { label: `Vence en ${days} dias`, variant: "neutral" as const };
+  if (Number.isNaN(days)) return null;
+  if (days <= 0) return { label: "Vencido", variant: "danger" as const };
+  if (days <= 7) return { label: `Vence en ${days} días`, variant: "warning" as const };
+  return { label: `Vence en ${days} días`, variant: "neutral" as const };
 };
 
 export function CompaniesTable({ companies, readOnly = false }: CompaniesTableProps) {
+  const [listRef] = useAutoAnimate();
+
   const buildTenantHost = (
     slug: string | null | undefined,
     customDomain?: string | null,
@@ -95,11 +65,9 @@ export function CompaniesTable({ companies, readOnly = false }: CompaniesTablePr
     subscriptionStatus?: string | null
   ) =>
     slug
-      ? getTenantHost(
-          slug,
-          getEffectiveCustomDomain(customDomain, subscriptionEndsAt, subscriptionStatus)
-        )
+      ? getTenantHost(slug, getEffectiveCustomDomain(customDomain, subscriptionEndsAt, subscriptionStatus))
       : "";
+
   const buildTenantUrl = (
     slug: string | null | undefined,
     customDomain?: string | null,
@@ -107,112 +75,98 @@ export function CompaniesTable({ companies, readOnly = false }: CompaniesTablePr
     subscriptionStatus?: string | null
   ) =>
     slug
-      ? getTenantUrl(
-          slug,
-          getEffectiveCustomDomain(customDomain, subscriptionEndsAt, subscriptionStatus)
-        )
+      ? getTenantUrl(slug, getEffectiveCustomDomain(customDomain, subscriptionEndsAt, subscriptionStatus))
       : "";
 
-
   return (
-    <div className="flex flex-col gap-6">
+    <div ref={listRef} className="grid gap-4">
       {companies.map((company) => {
         const plan = Array.isArray(company.plans) ? company.plans[0] : company.plans;
-        const status = statusMap[company.subscription_status ?? ""] ?? {
-          label: company.subscription_status ?? "—",
-          variant: "neutral" as const,
-        };
+        const status = companySubscriptionStatus(company.subscription_status);
         const expiry = getExpiryBadge(company.subscription_ends_at);
+        const host = buildTenantHost(
+          company.public_slug,
+          company.custom_domain,
+          company.subscription_ends_at,
+          company.subscription_status
+        );
+
         return (
-          <div
+          <Card
             key={company.id}
-            className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/80 md:px-6 md:py-4"
+            className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-5"
           >
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:items-start md:gap-x-4 md:gap-y-2">
-                      <div className="min-w-0 md:col-span-5">
-                        <Link
-                          href={`/companies/${company.id}`}
-                          className="font-semibold text-zinc-900 hover:underline dark:text-zinc-100"
-                        >
-                          {company.name ?? "Sin nombre"}
-                        </Link>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400">ID: {company.id}</p>
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          <CopyFieldButton value={company.id} label="ID" />
-                          {company.public_slug ? (
-                            <CopyFieldButton value={company.public_slug} label="Slug" />
-                          ) : null}
-                          {company.email ? <CopyFieldButton value={company.email} label="Email" /> : null}
-                        </div>
-                        {company.public_slug ? (
-                          <Link
-                            href={buildTenantUrl(
-                              company.public_slug,
-                              company.custom_domain,
-                              company.subscription_ends_at,
-                              company.subscription_status
-                            )}
-                            className="mt-2 inline-flex items-center rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            {buildTenantHost(
-                              company.public_slug,
-                              company.custom_domain,
-                              company.subscription_ends_at,
-                              company.subscription_status
-                            )}
-                          </Link>
-                        ) : null}
-                      </div>
-                      <div className="min-w-0 md:col-span-4">
-                        <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400 md:normal-case md:tracking-normal md:text-zinc-900 dark:md:text-zinc-100">
-                          Plan
-                        </p>
-                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                          {plan?.name ?? "Sin plan"}
-                        </p>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                          {plan?.price ? `$${plan.price}` : "--"} · {plan?.max_branches ?? 0} sucursales
-                        </p>
-                        {expiry && (
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                            {expiry.label}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:gap-8 md:col-span-3">
-                        <div className="min-w-0 shrink-0">
-                          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400 md:normal-case md:tracking-normal md:text-zinc-900 dark:md:text-zinc-100">Estado</p>
-                          <div className="mt-1 flex flex-wrap gap-2">
-                            <Badge variant={status.variant}>{status.label}</Badge>
-                            {expiry ? <Badge variant={expiry.variant}>{expiry.label}</Badge> : null}
-                          </div>
-                        </div>
-                        <div className="min-w-0 shrink-0">
-                          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400 md:normal-case md:tracking-normal md:text-zinc-900 dark:md:text-zinc-100">Email verificado</p>
-                          <div className="mt-1">
-                            {Boolean(company.email_verified_at || VERIFIED_ONBOARDING_STATUSES.has((company.status ?? "").toLowerCase())) ? (
-                              <span className="text-sm font-medium text-green-600">Sí</span>
-                            ) : (
-                              <span className="text-sm font-medium text-red-600">No</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-12 md:items-start md:gap-x-6">
+              {/* Main info */}
+              <div className="min-w-0 md:col-span-5">
+                <Link
+                  href={`/companies/${company.id}`}
+                  className="text-base font-semibold text-zinc-900 hover:underline dark:text-zinc-100"
+                >
+                  {company.name ?? "Sin nombre"}
+                </Link>
+                <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">ID: {company.id}</p>
+
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <CopyFieldButton value={company.id} label="ID" />
+                  {company.public_slug ? <CopyFieldButton value={company.public_slug} label="Slug" /> : null}
+                  {company.email ? <CopyFieldButton value={company.email} label="Email" /> : null}
+                </div>
+
+                {host && (
+                  <a
+                    href={buildTenantUrl(
+                      company.public_slug,
+                      company.custom_domain,
+                      company.subscription_ends_at,
+                      company.subscription_status
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    {host}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+
+              {/* Plan */}
+              <div className="min-w-0 md:col-span-3">
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Plan</p>
+                <p className="mt-1 font-medium text-zinc-900 dark:text-zinc-100">{plan?.name ?? "Sin plan"}</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {plan?.price ? `$${plan.price}` : "--"} · {plan?.max_branches ?? 0} sucursales
+                </p>
+                {expiry && (
+                  <div className="mt-2">
+                    <SaasStatusBadge label={expiry.label} variant={expiry.variant} />
+                  </div>
+                )}
+              </div>
+
+              {/* Status */}
+              <div className="min-w-0 md:col-span-4">
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Estado</p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <SaasStatusBadge label={status.label} variant={status.variant} />
+                  {expiry && <SaasStatusBadge label={expiry.label} variant={expiry.variant} />}
+                </div>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center justify-start gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-700 md:justify-end">
+
+            {/* Actions */}
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
               <CompanyStatusToggle companyId={company.id} currentStatus={company.subscription_status} />
               <Link
                 href="/dashboard/salud-pagos"
-                className="inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-xl border border-indigo-200 bg-indigo-50/80 px-3 text-xs font-semibold text-indigo-800 transition hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-200 dark:hover:bg-indigo-900/40"
-                title="Salud de pagos"
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Salud pagos
               </Link>
               <Link
                 href={`/companies/${company.id}`}
-                className="inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-xl border border-zinc-200 px-3 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                className="inline-flex h-9 items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
               >
                 Gestionar
               </Link>
@@ -223,7 +177,7 @@ export function CompaniesTable({ companies, readOnly = false }: CompaniesTablePr
                 readOnly={readOnly}
               />
             </div>
-          </div>
+          </Card>
         );
       })}
     </div>

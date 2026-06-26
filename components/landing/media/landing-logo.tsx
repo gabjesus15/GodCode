@@ -1,14 +1,23 @@
-import Image from "next/image";
+import { GcodeMark } from "@/components/ui/logo";
 
-export function LandingLogo({ className, forceLightText = false }: { className?: string; forceLightText?: boolean }) {
+interface LandingLogoProps {
+  className?: string;
+  forceLightText?: boolean;
+}
+
+export function LandingLogo({ className, forceLightText = false }: LandingLogoProps) {
+  const ink = forceLightText ? "#0f172a" : "var(--logo-ink)";
+  const split = forceLightText ? "#ffffff" : "var(--logo-split)";
+  const textColor = forceLightText ? "#0f172a" : "var(--logo-ink)";
+
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 ${className ?? ""}`}
-      aria-label="GodCode"
-    >
-      <Image src="/logo.png" alt="" width={28} height={28} className="shrink-0" priority />
-      <span className={`text-lg font-bold tracking-tight ${forceLightText ? "text-slate-900" : "text-slate-900 dark:text-white"}`}>
-        God<span className="text-indigo-600 dark:text-indigo-400">Code</span>
+    <span className={`inline-flex items-center gap-2 ${className ?? ""}`} aria-label="Gcode">
+      <GcodeMark ink={ink} splitColor={split} className="h-10 w-10 shrink-0" />
+      <span
+        className="hidden text-[28px] font-bold leading-none tracking-tight sm:inline"
+        style={{ color: textColor, fontFamily: "var(--font-space-grotesk), sans-serif" }}
+      >
+        <span style={{ color: "var(--logo-accent)" }}>code</span>
       </span>
     </span>
   );

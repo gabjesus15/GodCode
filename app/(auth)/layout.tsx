@@ -6,12 +6,12 @@ import { SaasAdminPwaRegister } from "../../components/super-admin/shell/saas-ad
 export const metadata: Metadata = {
 	manifest: "/saas-admin/manifest.webmanifest",
 	icons: {
-		icon: "/logo.png",
-		apple: "/logo.png",
+		icon: "/favicon.svg",
+		apple: "/favicon.svg",
 	},
 	appleWebApp: {
 		capable: true,
-		title: "GodCode Admin",
+		title: "Gcode Admin",
 		statusBarStyle: "default",
 	},
 	robots: {

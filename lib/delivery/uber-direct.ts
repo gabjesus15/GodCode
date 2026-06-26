@@ -4,8 +4,6 @@
  * @see https://developer.uber.com/docs/deliveries/direct/api/v1/post-eats-deliveries-estimates
  */
 
-import { createHash } from "crypto";
-
 import { kvStore } from "../infra/kv-store";
 
 const UBER_TOKEN_URL = "https://auth.uber.com/oauth/v2/token";

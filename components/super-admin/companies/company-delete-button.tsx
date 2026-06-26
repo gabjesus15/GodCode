@@ -7,7 +7,7 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Modal } from "@/components/ui/modal";
+import { Drawer } from "@/components/ui/drawer";
 import { requireAdminRole, roleSets } from "@/utils/admin";
 
 type CompanyDeleteButtonProps = {
@@ -95,49 +95,56 @@ export function CompanyDeleteButton({ companyId, companyName, publicSlug, readOn
 				<Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
 				Eliminar
 			</Button>
-			<Modal
-				isOpen={open}
-				onClose={handleClose}
+			<Drawer
+				open={open}
+				onOpenChange={(v: boolean) => !loading && (v ? setOpen(true) : handleClose())}
 				title="Eliminar empresa"
-				description={`Vas a borrar permanentemente «${displayName}». Confirma con el código de 6 dígitos de Google Authenticator (MFA) de tu usuario de administrador.`}
-				className="max-w-md"
+				description={`Vas a borrar permanentemente «${displayName}». Confirma con el código MFA.`}
 			>
 				<div className="space-y-4">
 					<div>
-						<label htmlFor={`totp-${companyId}`} className="mb-1.5 block text-sm font-medium text-zinc-800 dark:text-zinc-200">
-							Código del autenticador (6 dígitos)
-						</label>
-						<Input
-							id={`totp-${companyId}`}
-							value={totpCode}
-							onChange={(e) => setTotpCode(e.target.value.replace(/[^\d\s]/g, ""))}
-							placeholder="000000"
-							inputMode="numeric"
-							autoComplete="one-time-code"
-							maxLength={9}
-							aria-label="Código TOTP de seis dígitos"
-							disabled={loading}
-							className="font-mono tracking-widest dark:border-zinc-600 dark:bg-zinc-950"
-						/>
-						<p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-							El código lo genera la app (Google Authenticator u otra compatible) vinculada a tu cuenta con MFA en Supabase Auth.
+						<h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Eliminar empresa</h3>
+						<p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+							Vas a borrar permanentemente «{displayName}». Confirma con el código de 6 dígitos de Google Authenticator (MFA) de tu usuario de administrador.
 						</p>
 					</div>
-					<label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-						<Checkbox checked={ack} onCheckedChange={(v) => setAck(v === true)} disabled={loading} className="mt-0.5" />
-						<span>Entiendo que esto elimina la empresa de forma permanente y no hay forma de recuperarla.</span>
-					</label>
-					{error ? <p className="rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950/60 dark:text-red-200">{error}</p> : null}
-					<div className="flex justify-end gap-2 pt-1">
-						<Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
-							Cancelar
-						</Button>
-						<Button type="button" variant="destructive" onClick={handleDelete} disabled={!canSubmit}>
-							{loading ? "Eliminando…" : "Eliminar definitivamente"}
-						</Button>
+					<div className="space-y-4">
+						<div>
+							<label htmlFor={`totp-${companyId}`} className="mb-1.5 block text-sm font-medium text-zinc-800 dark:text-zinc-200">
+								Código del autenticador (6 dígitos)
+							</label>
+							<Input
+								id={`totp-${companyId}`}
+								value={totpCode}
+								onChange={(e) => setTotpCode(e.target.value.replace(/[^\d\s]/g, ""))}
+								placeholder="000000"
+								inputMode="numeric"
+								autoComplete="one-time-code"
+								maxLength={9}
+								aria-label="Código TOTP de seis dígitos"
+								disabled={loading}
+								className="font-mono tracking-widest dark:border-zinc-600 dark:bg-zinc-950"
+							/>
+							<p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+								El código lo genera la app (Google Authenticator u otra compatible) vinculada a tu cuenta con MFA en Supabase Auth.
+							</p>
+						</div>
+						<label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+							<Checkbox checked={ack} onCheckedChange={(v) => setAck(v === true)} disabled={loading} className="mt-0.5" />
+							<span>Entiendo que esto elimina la empresa de forma permanente y no hay forma de recuperarla.</span>
+						</label>
+						{error ? <p className="rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950/60 dark:text-red-200">{error}</p> : null}
+						<div className="flex justify-end gap-2 pt-1">
+							<Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
+								Cancelar
+							</Button>
+							<Button type="button" variant="destructive" onClick={handleDelete} disabled={!canSubmit}>
+								{loading ? "Eliminando…" : "Eliminar definitivamente"}
+							</Button>
+						</div>
 					</div>
 				</div>
-			</Modal>
+			</Drawer>
 		</>
 	);
 }

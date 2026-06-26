@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -25,6 +25,13 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["500", "700"],
+});
+
 
 export const viewport: Viewport = {
 	width: "device-width",
@@ -48,9 +55,9 @@ export const metadata: Metadata = {
       undefined,
   },
   icons: {
-    icon: "/brand-icon.png",
-    shortcut: "/brand-icon.png",
-    apple: "/brand-icon.png",
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
   },
 };
 
@@ -77,7 +84,7 @@ export default async function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground antialiased transition-colors duration-200`}
+        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} bg-background text-foreground antialiased transition-colors duration-200`}
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <GlobalAntiZoom />

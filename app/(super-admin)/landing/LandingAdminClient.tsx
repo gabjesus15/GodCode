@@ -2,25 +2,19 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Eye, ImagePlus, LineChart, Mail, MoveDown, MoveUp, RefreshCcw, Save, Wand2, Webhook } from "lucide-react";
-import {
-  CategoryScale,
-  Chart as ChartJS,
-  Legend,
-  LineElement,
-  LinearScale,
-  PointElement,
-  Tooltip,
-} from "chart.js";
-import { Line } from "react-chartjs-2";
-
+import { Eye, LayoutTemplate, MoveDown, MoveUp, RefreshCcw, Save, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SaasMetricCard } from "@/components/super-admin/shared/saas-metric-card";
+import { SaasChartCard } from "@/components/super-admin/shared/saas-chart-card";
+import { AppleMultiAreaChart } from "@/components/super-admin/shared/apple-multi-area-chart";
+import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
+import { SaasSegmentedTabs } from "@/components/super-admin/shared/saas-segmented-tabs";
+import { SaasSelect } from "@/components/super-admin/shared/saas-select";
+import { SaasSwitch } from "@/components/super-admin/shared/saas-switch";
 import { uploadImage } from "@/components/tenant/utils/cloudinary";
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
 type LeadItem = {
   id: string;
@@ -280,58 +274,16 @@ export function LandingAdminClient() {
     }
   }, [orderedMediaRows, selectedMediaKey]);
 
-  const chartData = useMemo(() => {
-    const labels = overview?.series.map((row) => row.date.slice(5)) ?? [];
-    return {
-      labels,
-      datasets: [
-        {
-          label: "Leads",
-          data: overview?.series.map((row) => row.leads) ?? [],
-          borderColor: "rgb(79, 70, 229)",
-          backgroundColor: "rgba(79, 70, 229, 0.2)",
-          tension: 0.3,
-        },
-        {
-          label: "Contactos",
-          data: overview?.series.map((row) => row.contacts) ?? [],
-          borderColor: "rgb(14, 116, 144)",
-          backgroundColor: "rgba(14, 116, 144, 0.2)",
-          tension: 0.3,
-        },
-        {
-          label: "Visitas landing",
-          data: overview?.series.map((row) => row.landingViews ?? 0) ?? [],
-          borderColor: "rgb(16, 185, 129)",
-          backgroundColor: "rgba(16, 185, 129, 0.2)",
-          tension: 0.3,
-        },
-        {
-          label: "Visitas negocios",
-          data: overview?.series.map((row) => row.tenantViews ?? 0) ?? [],
-          borderColor: "rgb(234, 88, 12)",
-          backgroundColor: "rgba(234, 88, 12, 0.2)",
-          tension: 0.3,
-        },
-      ],
-    };
-  }, [overview]);
-
-  const chartOptions = useMemo(
-    () => ({
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: "top" as const },
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { precision: 0 },
-        },
-      },
-    }),
-    [],
+  const tremorSeries = useMemo(
+    () =>
+      (overview?.series ?? []).map((row) => ({
+        date: row.date.slice(5),
+        Leads: row.leads,
+        Contactos: row.contacts,
+        "Visitas landing": row.landingViews ?? 0,
+        "Visitas negocios": row.tenantViews ?? 0,
+      })),
+    [overview],
   );
 
   const onLeadStatus = async (id: string, status: string) => {
@@ -526,14 +478,20 @@ export function LandingAdminClient() {
     }
   };
 
+  const tabs = [
+    { id: "overview", label: "Métricas" },
+    { id: "inbox", label: "Leads & Contactos" },
+    { id: "media", label: "Imágenes landing" },
+    { id: "webhooks", label: "Webhooks" },
+  ];
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 sm:text-2xl">Landing: métricas, assets y notificaciones</h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Gestiona rendimiento del landing, leads/contactos, imágenes y webhooks de Slack/Email desde un solo tab.
-        </p>
-      </div>
+      <SaasPageHeader
+        title="Landing admin"
+        description="Métricas, leads/contactos, assets y notificaciones del landing público."
+        icon={LayoutTemplate}
+      />
 
       {message ? (
         <div
@@ -547,58 +505,53 @@ export function LandingAdminClient() {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap gap-2">
-        {([
-          ["overview", "Métricas", LineChart],
-          ["inbox", "Leads & Contactos", Mail],
-          ["media", "Imágenes landing", ImagePlus],
-          ["webhooks", "Webhooks", Webhook],
-        ] as const).map(([key, label, Icon]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setTab(key)}
-            className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition ${
-              tab === key
-                ? "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300"
-                : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
-            }`}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </button>
-        ))}
-      </div>
+      <SaasSegmentedTabs tabs={tabs} value={tab} onChange={(value) => setTab(value as TabKey)} />
 
       {loading ? <Card className="p-4 text-sm text-zinc-500">Cargando módulo landing...</Card> : null}
 
       {!loading && tab === "overview" && overview ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="p-4"><p className="text-xs text-zinc-500">Inbox total</p><p className="mt-1 text-2xl font-bold">{overview.metrics.inboxTotal}</p></Card>
-          <Card className="p-4"><p className="text-xs text-zinc-500">Leads</p><p className="mt-1 text-2xl font-bold">{overview.metrics.leadsTotal}</p></Card>
-          <Card className="p-4"><p className="text-xs text-zinc-500">Contactos</p><p className="mt-1 text-2xl font-bold">{overview.metrics.contactsTotal}</p></Card>
-          <Card className="p-4"><p className="text-xs text-zinc-500">Últimos 30 días</p><p className="mt-1 text-2xl font-bold">{overview.series.reduce((acc, d) => acc + d.leads + d.contacts, 0)}</p></Card>
-
-          <Card className="p-4"><p className="text-xs text-zinc-500">Visitas landing (30d)</p><p className="mt-1 text-2xl font-bold">{overview.metrics.landingViews30d ?? 0}</p></Card>
-          <Card className="p-4"><p className="text-xs text-zinc-500">Visitantes únicos landing (30d)</p><p className="mt-1 text-2xl font-bold">{overview.metrics.landingUniqueVisitors30d ?? 0}</p></Card>
-          <Card className="p-4"><p className="text-xs text-zinc-500">Visitas negocios (30d)</p><p className="mt-1 text-2xl font-bold">{overview.metrics.tenantViews30d ?? 0}</p></Card>
-          <Card className="p-4"><p className="text-xs text-zinc-500">Visitantes únicos negocios (30d)</p><p className="mt-1 text-2xl font-bold">{overview.metrics.tenantUniqueVisitors30d ?? 0}</p></Card>
-
-          <Card className="p-4 sm:col-span-2">
-            <p className="text-sm font-semibold">Estado de leads</p>
-            <p className="mt-2 text-xs text-zinc-500">new: {overview.metrics.leadsByStatus.new ?? 0} · contacted: {overview.metrics.leadsByStatus.contacted ?? 0} · closed: {overview.metrics.leadsByStatus.closed ?? 0}</p>
+        <div className="space-y-4">
+          <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-5">
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Resumen landing (30 días)</p>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Inbox, tráfico y conversiones del landing público.</p>
           </Card>
-          <Card className="p-4 sm:col-span-2">
-            <p className="text-sm font-semibold">Estado de contactos</p>
-            <p className="mt-2 text-xs text-zinc-500">new: {overview.metrics.contactsByStatus.new ?? 0} · contacted: {overview.metrics.contactsByStatus.contacted ?? 0} · closed: {overview.metrics.contactsByStatus.closed ?? 0}</p>
-          </Card>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <SaasMetricCard label="Inbox total" value={`${overview.metrics.inboxTotal}`} />
+            <SaasMetricCard label="Leads" value={`${overview.metrics.leadsTotal}`} />
+            <SaasMetricCard label="Contactos" value={`${overview.metrics.contactsTotal}`} />
+            <SaasMetricCard
+              label="Actividad inbox (30d)"
+              value={`${overview.series.reduce((acc, d) => acc + d.leads + d.contacts, 0)}`}
+            />
+            <SaasMetricCard label="Visitas landing (30d)" value={`${overview.metrics.landingViews30d ?? 0}`} />
+            <SaasMetricCard label="Visitantes únicos landing (30d)" value={`${overview.metrics.landingUniqueVisitors30d ?? 0}`} />
+            <SaasMetricCard label="Visitas negocios (30d)" value={`${overview.metrics.tenantViews30d ?? 0}`} />
+            <SaasMetricCard label="Visitantes únicos negocios (30d)" value={`${overview.metrics.tenantUniqueVisitors30d ?? 0}`} />
+          </div>
 
-          <Card className="p-4 sm:col-span-2 lg:col-span-4">
-            <p className="text-sm font-semibold">Actividad diaria (30 días): inbox + tráfico</p>
-            <div className="mt-3 h-[320px] rounded-xl border border-zinc-200 p-3 dark:border-zinc-700">
-              <Line data={chartData} options={chartOptions} />
-            </div>
-          </Card>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Card className="p-4 sm:col-span-1">
+              <p className="text-sm font-semibold">Estado de leads</p>
+              <p className="mt-2 text-xs text-zinc-500">new: {overview.metrics.leadsByStatus.new ?? 0} · contacted: {overview.metrics.leadsByStatus.contacted ?? 0} · closed: {overview.metrics.leadsByStatus.closed ?? 0}</p>
+            </Card>
+            <Card className="p-4 sm:col-span-1">
+              <p className="text-sm font-semibold">Estado de contactos</p>
+              <p className="mt-2 text-xs text-zinc-500">new: {overview.metrics.contactsByStatus.new ?? 0} · contacted: {overview.metrics.contactsByStatus.contacted ?? 0} · closed: {overview.metrics.contactsByStatus.closed ?? 0}</p>
+            </Card>
+          </div>
+
+          <SaasChartCard title="Actividad diaria (30 días)" description="Inbox + tráfico landing y negocios">
+            <AppleMultiAreaChart
+              data={tremorSeries}
+              indexKey="date"
+              series={[
+                { key: "Leads", label: "Leads", color: "#6366f1" },
+                { key: "Contactos", label: "Contactos", color: "#06b6d4" },
+                { key: "Visitas landing", label: "Visitas landing", color: "#10b981" },
+                { key: "Visitas negocios", label: "Visitas negocios", color: "#f59e0b" },
+              ]}
+            />
+          </SaasChartCard>
 
           <Card className="p-4 sm:col-span-2 lg:col-span-4">
             <p className="text-sm font-semibold">Top negocios por visitas (30 días)</p>
@@ -670,15 +623,14 @@ export function LandingAdminClient() {
             <div className="mb-3 flex items-center justify-between gap-3">
               <p className="text-sm font-semibold">Leads</p>
               <div className="flex items-center gap-2">
-                <select
+                <SaasSelect
                   value={leadFilter}
-                  onChange={(e) => setLeadFilter(e.target.value)}
-                  className="h-9 rounded-lg border border-zinc-200 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-900"
-                  title="Filtrar leads"
-                >
-                  <option value="all">todos</option>
-                  {STATUS_VALUES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
+                  onChange={setLeadFilter}
+                  options={[
+                    { value: "all", label: "Todos" },
+                    ...STATUS_VALUES.map((s) => ({ value: s, label: s })),
+                  ]}
+                />
                 <Button type="button" size="sm" variant="outline" onClick={() => exportCsv("leads", leadFilter)}>
                   Exportar CSV
                 </Button>
@@ -698,15 +650,12 @@ export function LandingAdminClient() {
                     <tr key={item.id} className="border-t border-zinc-100 dark:border-zinc-800">
                       <td className="px-2 py-2">{item.email}</td>
                       <td className="px-2 py-2">
-                        <select
+                        <SaasSelect
                           value={item.status}
-                          onChange={(e) => void onLeadStatus(item.id, e.target.value)}
+                          onChange={(value) => void onLeadStatus(item.id, value)}
                           disabled={readOnly}
-                          className="h-7 rounded border border-zinc-200 bg-white px-1 text-xs dark:border-zinc-700 dark:bg-zinc-900"
-                          title="Cambiar estado lead"
-                        >
-                          {STATUS_VALUES.map((s) => <option key={s} value={s}>{s}</option>)}
-                        </select>
+                          options={STATUS_VALUES.map((s) => ({ value: s, label: s }))}
+                        />
                       </td>
                       <td className="px-2 py-2">{prettyDate(item.createdAt)}</td>
                     </tr>
@@ -720,15 +669,14 @@ export function LandingAdminClient() {
             <div className="mb-3 flex items-center justify-between gap-3">
               <p className="text-sm font-semibold">Contactos</p>
               <div className="flex items-center gap-2">
-                <select
+                <SaasSelect
                   value={contactFilter}
-                  onChange={(e) => setContactFilter(e.target.value)}
-                  className="h-9 rounded-lg border border-zinc-200 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-900"
-                  title="Filtrar contactos"
-                >
-                  <option value="all">todos</option>
-                  {STATUS_VALUES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
+                  onChange={setContactFilter}
+                  options={[
+                    { value: "all", label: "Todos" },
+                    ...STATUS_VALUES.map((s) => ({ value: s, label: s })),
+                  ]}
+                />
                 <Button type="button" size="sm" variant="outline" onClick={() => exportCsv("contacts", contactFilter)}>
                   Exportar CSV
                 </Button>
@@ -753,15 +701,12 @@ export function LandingAdminClient() {
                       </td>
                       <td className="px-2 py-2">{item.message}</td>
                       <td className="px-2 py-2">
-                        <select
+                        <SaasSelect
                           value={item.status}
-                          onChange={(e) => void onContactStatus(item.id, e.target.value)}
+                          onChange={(value) => void onContactStatus(item.id, value)}
                           disabled={readOnly}
-                          className="h-7 rounded border border-zinc-200 bg-white px-1 text-xs dark:border-zinc-700 dark:bg-zinc-900"
-                          title="Cambiar estado contacto"
-                        >
-                          {STATUS_VALUES.map((s) => <option key={s} value={s}>{s}</option>)}
-                        </select>
+                          options={STATUS_VALUES.map((s) => ({ value: s, label: s }))}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -861,15 +806,12 @@ export function LandingAdminClient() {
                         >
                           <MoveDown className="h-4 w-4" />
                         </button>
-                        <label className="inline-flex items-center gap-1 rounded border border-zinc-200 px-2 py-1 text-xs dark:border-zinc-700">
-                          <input
-                            type="checkbox"
-                            checked={selectedMediaRow.is_active !== false}
-                            onChange={(e) => updateMediaRow(selectedMediaRow.key, { is_active: e.target.checked })}
-                            disabled={readOnly}
-                          />
-                          activo
-                        </label>
+                        <SaasSwitch
+                          checked={selectedMediaRow.is_active !== false}
+                          onChange={(checked) => updateMediaRow(selectedMediaRow.key, { is_active: checked })}
+                          label="Activo"
+                          disabled={readOnly}
+                        />
                         <a
                           href={selectedMediaRow.src}
                           target="_blank"
@@ -938,17 +880,16 @@ export function LandingAdminClient() {
                         Ajustes rápidos (Cloudinary)
                       </div>
                       <div className="grid gap-2 sm:grid-cols-3">
-                        <select
-                          title="Preset"
+                        <SaasSelect
                           value={mediaPreset}
-                          onChange={(e) => setMediaPreset(e.target.value as "hero" | "feature" | "mobile" | "custom")}
-                          className="h-9 rounded border border-zinc-200 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-900"
-                        >
-                          <option value="hero">preset hero</option>
-                          <option value="feature">preset feature</option>
-                          <option value="mobile">preset mobile</option>
-                          <option value="custom">custom</option>
-                        </select>
+                          onChange={(value) => setMediaPreset(value as "hero" | "feature" | "mobile" | "custom")}
+                          options={[
+                            { value: "hero", label: "Preset hero" },
+                            { value: "feature", label: "Preset feature" },
+                            { value: "mobile", label: "Preset mobile" },
+                            { value: "custom", label: "Custom" },
+                          ]}
+                        />
                         <Input value={mediaWidth} onChange={(e) => setMediaWidth(e.target.value)} placeholder="w" className="h-9 text-xs" />
                         <Input value={mediaHeight} onChange={(e) => setMediaHeight(e.target.value)} placeholder="h" className="h-9 text-xs" />
                         <Input value={mediaCrop} onChange={(e) => setMediaCrop(e.target.value)} placeholder="crop" className="h-9 text-xs" />
@@ -1011,27 +952,23 @@ export function LandingAdminClient() {
             <p className="mb-3 text-sm font-semibold">Nuevo / editar webhook</p>
             <div className="space-y-2">
               <Input value={webhookForm.name} onChange={(e) => setWebhookForm((p) => ({ ...p, name: e.target.value }))} placeholder="Nombre" disabled={readOnly} />
-              <select
-                title="Tipo de destino"
+              <SaasSelect
                 value={webhookForm.destinationType}
-                onChange={(e) => setWebhookForm((p) => ({ ...p, destinationType: e.target.value as "slack" | "email" }))}
-                className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                onChange={(value) => setWebhookForm((p) => ({ ...p, destinationType: value as "slack" | "email" }))}
+                options={[
+                  { value: "slack", label: "Slack" },
+                  { value: "email", label: "Email (vía webhook)" },
+                ]}
                 disabled={readOnly}
-              >
-                <option value="slack">slack</option>
-                <option value="email">email (vía webhook)</option>
-              </select>
+              />
               <Input value={webhookForm.url} onChange={(e) => setWebhookForm((p) => ({ ...p, url: e.target.value }))} placeholder="https://..." disabled={readOnly} />
               <Input value={webhookForm.secret} onChange={(e) => setWebhookForm((p) => ({ ...p, secret: e.target.value }))} placeholder="Secret opcional" disabled={readOnly} />
-              <label className="inline-flex items-center gap-2 text-xs text-zinc-600">
-                <input
-                  type="checkbox"
-                  checked={webhookForm.isActive}
-                  onChange={(e) => setWebhookForm((p) => ({ ...p, isActive: e.target.checked }))}
-                  disabled={readOnly}
-                />
-                Activo
-              </label>
+              <SaasSwitch
+                checked={webhookForm.isActive}
+                onChange={(checked) => setWebhookForm((p) => ({ ...p, isActive: checked }))}
+                label="Activo"
+                disabled={readOnly}
+              />
               <div className="flex gap-2">
                 <Button onClick={() => void saveWebhook()} disabled={readOnly}>Guardar webhook</Button>
                 <Button

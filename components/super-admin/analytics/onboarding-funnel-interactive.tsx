@@ -4,6 +4,9 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Copy, Mail, ExternalLink, AlertTriangle, Lightbulb, CheckCircle } from "lucide-react";
 
+import { Card } from "@/components/ui/card";
+import { useSaasListAnimate } from "@/components/super-admin/shared/use-saas-list-animate";
+
 type OnboardingApp = {
   id: string;
   business_name: string | null;
@@ -44,7 +47,6 @@ const STAGES = [
 export function OnboardingFunnelInteractive({
   counts,
   total,
-  onboardingViews,
   onboardingVisitors,
   recentApplications,
   period
@@ -52,6 +54,8 @@ export function OnboardingFunnelInteractive({
   const [viewMode, setViewMode] = useState<"cumulative" | "snapshot">("cumulative");
   const [selectedStage, setSelectedStage] = useState<typeof STAGES[number] | "rejected" | "other" | null>("payment_pending");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [stuckListRef] = useSaasListAnimate<HTMLTableSectionElement>();
+  const [nowTs] = useState(() => Date.now());
 
   // 1. Calculate cumulative funnel steps
   const funnelSteps = useMemo(() => {
@@ -182,6 +186,10 @@ export function OnboardingFunnelInteractive({
 
   return (
     <div className="space-y-6">
+      <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-5">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Embudo de onboarding</h3>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Periodo: {period} — analiza conversión y leads atascados.</p>
+      </Card>
       {/* 1. Automated Insight Box */}
       {bottleneck && bottleneck.dropoff > 20 && (
         <div className="flex items-start gap-3.5 rounded-2xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
@@ -209,7 +217,7 @@ export function OnboardingFunnelInteractive({
       )}
 
       {/* 2. Funnel Visualizer */}
-      <div className="rounded-2xl border border-zinc-200 bg-white/90 p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80">
+      <Card className="rounded-3xl border border-zinc-200/60 bg-white p-5 dark:border-zinc-800/60 dark:bg-zinc-900/80">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Visualización de Conversión</h3>
@@ -240,10 +248,34 @@ export function OnboardingFunnelInteractive({
         </div>
 
         {viewMode === "cumulative" ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          <>
+            <div className="mb-6">
+              <div className="flex h-48 items-end gap-2 sm:gap-4">
+                {funnelSteps.map((step) => {
+                  const maxValue = Math.max(...funnelSteps.map((s) => s.value), 1);
+                  const heightPct = Math.max((step.value / maxValue) * 100, 4);
+                  return (
+                    <div key={step.key} className="flex flex-1 flex-col items-center gap-2">
+                      <div className="relative w-full">
+                        <div
+                          className="w-full rounded-t-lg bg-indigo-500 transition-all dark:bg-indigo-400"
+                          style={{ height: `${heightPct}%` }}
+                        />
+                        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-zinc-700 dark:text-zinc-300">
+                          {step.value}
+                        </span>
+                      </div>
+                      <span className="text-center text-[10px] font-medium text-zinc-500 dark:text-zinc-400 line-clamp-2">
+                        {step.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
             {funnelSteps.map((step, idx) => {
               const isSelected = selectedStage === step.key;
-              const isLast = idx === funnelSteps.length - 1;
               return (
                 <button
                   key={step.key}
@@ -284,6 +316,7 @@ export function OnboardingFunnelInteractive({
               );
             })}
           </div>
+          </>
         ) : (
           <div className="space-y-3">
             {snapshotSteps.map((step) => {
@@ -291,7 +324,7 @@ export function OnboardingFunnelInteractive({
               return (
                 <button
                   key={step.key}
-                  onClick={() => setSelectedStage(step.key as any)}
+                  onClick={() => setSelectedStage(step.key as typeof STAGES[number] | "rejected" | "other")}
                   className={`w-full block text-left rounded-xl border p-3 transition ${
                     isSelected
                       ? "border-indigo-500 bg-indigo-50/40 shadow-sm dark:border-indigo-500 dark:bg-indigo-950/20"
@@ -317,10 +350,10 @@ export function OnboardingFunnelInteractive({
             })}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* 3. stuck applications table */}
-      <div className="rounded-2xl border border-zinc-200 bg-white/90 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80 overflow-hidden">
+      <Card className="overflow-hidden rounded-3xl border border-zinc-200/60 bg-white dark:border-zinc-800/60 dark:bg-zinc-900/80">
         <div className="border-b border-zinc-200 px-5 py-4 dark:border-zinc-700 flex flex-wrap justify-between items-center gap-3 bg-zinc-50/30 dark:bg-zinc-900/30">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -364,10 +397,10 @@ export function OnboardingFunnelInteractive({
                   <th className="px-4 py-3 text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              <tbody ref={stuckListRef} className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {filteredApps.map((app) => {
                   const created = new Date(app.created_at);
-                  const diffDays = Math.max(0, Math.floor((Date.now() - new Date(app.updated_at).getTime()) / (1000 * 60 * 60 * 24)));
+                  const diffDays = Math.max(0, Math.floor((nowTs - new Date(app.updated_at).getTime()) / (1000 * 60 * 60 * 24)));
                   const bizName = app.business_name?.trim() || "(Sin nombre aún)";
                   return (
                     <tr key={app.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition">
@@ -421,7 +454,7 @@ export function OnboardingFunnelInteractive({
             </table>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

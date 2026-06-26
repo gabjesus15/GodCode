@@ -241,13 +241,13 @@ export function HomeClient(props: HomeClientProps) {
     list.push({
       label: "REGISTRAR MI NEGOCIO",
       ariaLabel: "Ir a Registrar mi negocio",
-      icon: (
-        <img
-          src="/logo.png"
-          alt="GodCode Logo"
+        icon: (
+        <Image
+          src="/logo.svg"
+          alt="Gcode Logo"
           width={20}
           height={20}
-          className="w-5 h-5 object-contain"
+          className="h-5 w-5 object-contain"
         />
       ),
       onClick: () => {
