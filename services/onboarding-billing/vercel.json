@@ -1,7 +1,7 @@
 {
 	"framework": "nextjs",
-	"installCommand": "cd ../.. && if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else npm ci && cd services/onboarding-billing && npm ci; fi",
-	"buildCommand": "cd ../.. && if [ -f pnpm-lock.yaml ]; then pnpm --filter onboarding-billing-service run build; else cd services/onboarding-billing && npm run build; fi",
+	"installCommand": "cd ../.. && corepack enable && corepack prepare pnpm@11.6.0 --activate && pnpm install --frozen-lockfile",
+	"buildCommand": "cd ../.. && pnpm --filter onboarding-billing-service run build",
 	"headers": [
 		{
 			"source": "/api/(.*)",
