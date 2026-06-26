@@ -5,22 +5,21 @@ Panel SaaS multi-tenant con Next.js + Supabase.
 ## Requisitos
 
 - Node.js 20+
-- npm 10+ o pnpm 9+
+- npm 10+
 - Proyecto Supabase configurado
 
 ## Desarrollo local
 
 1. Copia variables:
    - Duplicar `.env.example` como `.env.local`
-2. Instala dependencias (elige uno):
+2. Instala dependencias:
    - `npm install`
-   - `pnpm install`
 3. Ejecuta:
-   - `npm run dev` o `pnpm dev`
+   - `npm run dev`
 
 ## Build de producciÃ³n (igual que Vercel)
 
-- `npm run build` o `pnpm build`
+- `npm run build`
 
 ## Variables de entorno para Vercel
 
@@ -51,7 +50,7 @@ Configurar en Project Settings â†’ Environment Variables:
 
 ## Checklist para no fallar en Vercel
 
-- Confirmar que `npm run build` (o `pnpm build`) pasa localmente.
+- Confirmar que `npm run build` pasa localmente.
 - Agregar todas las env vars obligatorias en Vercel para `Production` (y `Preview` si usas previews).
 - Verificar que el dominio base en `NEXT_PUBLIC_TENANT_BASE_DOMAIN` coincide con tu wildcard/subdominios.
 - Elegir una sola variante canÃ³nica del dominio principal (`www` o sin `www`) y usar esa misma variante en `NEXT_PUBLIC_APP_URL`.
