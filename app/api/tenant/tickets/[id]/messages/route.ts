@@ -2,16 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 import { parseJsonBody } from "@/lib/api/response";
+import { getTicketAuthContext } from "@/lib/api/ticket-auth";
 import { tenantTicketMessageBodySchema } from "@/lib/api/schemas/tenant/tickets";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { createSupabaseServerClient } from "@/utils/supabase/server";
-
-type MessageError = { message: string } | null;
-
-type TenantUserRow = {
-  company_id: string;
-  role: string;
-};
 
 type MessageRow = {
   id: string;
@@ -22,33 +15,6 @@ type MessageRow = {
   message: string;
   created_at: string;
 };
-
-const TENANT_ALLOWED_ROLES = new Set(["admin", "ceo", "cashier", "staff"]);
-
-async function getTenantContext(client: SupabaseClient) {
-  const supabase = await createSupabaseServerClient("tenant");
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user?.email) {
-    return { error: "No autenticado" };
-  }
-
-  const email = user.email.trim().toLowerCase();
-  const { data: rows, error } = await client
-    .from("users")
-    .select("company_id,role")
-    .ilike("email", email) as { data: TenantUserRow[] | null; error: MessageError };
-
-  if (error) return { error: error.message };
-
-  const userRow = (rows ?? []).find((row) => TENANT_ALLOWED_ROLES.has(String(row.role || "").toLowerCase()));
-  if (!userRow?.company_id) return { error: "No tienes permisos de panel tenant" };
-
-  return { companyId: userRow.company_id, email };
-}
 
 async function verifyTicketOwnership(client: SupabaseClient, ticketId: string, companyId: string) {
   const { data, error } = await client
@@ -64,7 +30,7 @@ async function verifyTicketOwnership(client: SupabaseClient, ticketId: string, c
 
 export async function GET(_: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const ctx = await getTenantContext(supabaseAdmin);
+    const ctx = await getTicketAuthContext(supabaseAdmin);
     if ("error" in ctx) return NextResponse.json({ error: ctx.error }, { status: 403 });
 
     const params = await context.params;
@@ -92,7 +58,7 @@ export async function GET(_: NextRequest, context: { params: Promise<{ id: strin
 
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const ctx = await getTenantContext(supabaseAdmin);
+    const ctx = await getTicketAuthContext(supabaseAdmin);
     if ("error" in ctx) return NextResponse.json({ error: ctx.error }, { status: 403 });
 
     const params = await context.params;

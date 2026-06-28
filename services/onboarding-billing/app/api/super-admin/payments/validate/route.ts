@@ -19,6 +19,8 @@ import {
 	sendPaymentValidatedNotice,
 } from "@/lib/onboarding/booking-notifications";
 import { provisionOnboardingWelcome } from "@/lib/onboarding/welcome-provisioning";
+import { resolveFirstPaymentPromo } from "@/lib/onboarding/first-payment-promo";
+import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";
@@ -68,6 +70,11 @@ export async function POST(req: NextRequest) {
 
 			const app = appPending as OnboardingApplication;
 			const monthsPaid = getMonthsPaidFromPayment({ months_paid: app.payment_months }, 1);
+			const isPromoEligible = await isFirstPaymentPromoEligible(supabaseAdmin, {
+				email: app.email,
+				excludeCompanyId: app.company_id,
+			});
+			const promo = resolveFirstPaymentPromo(monthsPaid, isPromoEligible);
 			const amountPaid = Number(app.payment_amount ?? 0) || 0;
 			const now = new Date();
 
@@ -94,9 +101,16 @@ export async function POST(req: NextRequest) {
 			await activateCompanySubscription({
 				supabaseAdmin,
 				companyId: companyResult.company.id,
-				monthsPaid,
+				monthsPaid: promo.grantedMonths,
 				now,
 			});
+
+			if (promo.promoApplied) {
+				await supabaseAdmin
+					.from("companies")
+					.update({ first_payment_promo_used_at: now.toISOString() })
+					.eq("id", companyResult.company.id);
+			}
 
 			await supabaseAdmin
 				.from("onboarding_applications")
@@ -138,7 +152,7 @@ export async function POST(req: NextRequest) {
 				supabaseAdmin,
 				applicationId: app.id,
 				companyId: companyResult.company.id,
-				monthsPaid,
+				monthsPaid: promo.grantedMonths,
 				now,
 			});
 
@@ -170,17 +184,21 @@ export async function POST(req: NextRequest) {
 		const isCustomerAddonPurchase = Boolean(addonRefMatch);
 		const isOnboardingFlow = !isCustomerAccountExpansion && !isCustomerPlanChange && !isCustomerAddonPurchase;
 
-		await supabaseAdmin
-			.from("payments_history")
-			.update({ status: "paid", payment_date: now.toISOString() })
-			.eq("id", payment.id);
-
 		const { data: app } = await supabaseAdmin
 			.from("onboarding_applications")
 			.select("id,business_name,responsible_name,email,welcome_email_sent_at")
 			.eq("company_id", payment.company_id)
 			.eq("status", "payment_pending")
 			.maybeSingle();
+
+		let promo = resolveFirstPaymentPromo(monthsPaid, false);
+		if (isOnboardingFlow && app?.email) {
+			const isPromoEligible = await isFirstPaymentPromoEligible(supabaseAdmin, {
+				email: app.email,
+				excludeCompanyId: payment.company_id,
+			});
+			promo = resolveFirstPaymentPromo(monthsPaid, isPromoEligible);
+		}
 
 		if (app && isOnboardingFlow) {
 			try {
@@ -333,6 +351,47 @@ export async function POST(req: NextRequest) {
 			});
 		}
 
+		const { data: paidRow, error: paidError } = await supabaseAdmin
+			.from("payments_history")
+			.update({ status: "paid", payment_date: now.toISOString() })
+			.eq("id", payment.id)
+			.eq("status", "pending_validation")
+			.select("id")
+			.maybeSingle();
+
+		if (paidError || !paidRow) {
+			return NextResponse.json(
+				{ error: "Este pago ya fue validado o no está pendiente de validación" },
+				{ status: 409 },
+			);
+		}
+
+		if (isOnboardingFlow) {
+			await activateCompanySubscription({
+				supabaseAdmin,
+				companyId: payment.company_id,
+				monthsPaid: promo.grantedMonths,
+				now,
+			});
+
+			if (promo.promoApplied) {
+				await supabaseAdmin
+					.from("companies")
+					.update({ first_payment_promo_used_at: now.toISOString() })
+					.eq("id", payment.company_id);
+			}
+
+			if (app?.id) {
+				await activateCompanyAddonsFromApplication({
+					supabaseAdmin,
+					applicationId: app.id,
+					companyId: payment.company_id,
+					monthsPaid: promo.grantedMonths,
+					now,
+				});
+			}
+		}
+
 		logger.info("Pago validado", ctx, {
 			companyId: payment.company_id,
 			welcomeSent,
@@ -348,7 +407,9 @@ export async function POST(req: NextRequest) {
 					? "Pago validado. El extra se activo correctamente."
 				: isCustomerAccountExpansion
 					? "Pago validado. Se registro el extra de sucursal en la cuenta del cliente."
-					: "Pago validado. Quedo pendiente activacion manual tras la configuracion.",
+					: isOnboardingFlow
+						? "Pago validado. La suscripcion quedo activa correctamente."
+						: "Pago validado. Quedo pendiente activacion manual tras la configuracion.",
 			welcome_email_sent: welcomeSent,
 		});
 	} catch (err) {

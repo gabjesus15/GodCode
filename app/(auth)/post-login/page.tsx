@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { getCustomerMembership, getSuperAdminRoleByEmail } from "@/lib/super-admin/account-access";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { resolveTenantPanelLoginUrl } from "@/lib/tenant/panel-url";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +28,17 @@ export default async function PostLoginPage() {
   const membership = await getCustomerMembership({ authUserId: user.id, email });
 
   if (membership) {
-    redirect("/cuenta");
+    if (membership.role === "ceo") {
+      redirect("/cuenta");
+    }
+
+    const { data: company } = await supabaseAdmin
+      .from("companies")
+      .select("public_slug")
+      .eq("id", membership.companyId)
+      .maybeSingle();
+
+    redirect(resolveTenantPanelLoginUrl((company?.public_slug as string | null) ?? null));
   }
 
   redirect("/login?error=no-access");

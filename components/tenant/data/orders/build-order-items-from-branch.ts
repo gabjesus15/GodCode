@@ -1,4 +1,4 @@
-import { createSupabaseBrowserClient } from "../../../../utils/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /** Línea de carrito enviada al servicio (producto catálogo por UUID). */
 export interface OrderCatalogLine {
@@ -34,6 +34,12 @@ function isUuidLike(v: string): boolean {
 	return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 }
 
+/** Línea de catálogo (UUID) enviada al checkout, excluye extras sintéticos del carrito. */
+export function isCatalogOrderLine(item: OrderCatalogLine): boolean {
+	if (item.custom_item === true) return false;
+	return isUuidLike(String(item.id ?? ""));
+}
+
 /** Normaliza extras enviados desde el cliente para RPC / ítems personalizados. */
 export function normalizeExtrasPayload(
 	raw: unknown,
@@ -57,7 +63,7 @@ export function normalizeExtrasPayload(
  * Valida productos contra sucursal en batch (precios + membership + nombres).
  */
 export async function buildOrderItemsFromBranch(
-	supabase: ReturnType<typeof createSupabaseBrowserClient>,
+	supabase: SupabaseClient,
 	branchId: string,
 	items: OrderCatalogLine[],
 ): Promise<OrderCatalogLine[]> {

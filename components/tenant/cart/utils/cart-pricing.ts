@@ -61,12 +61,10 @@ export function mergeCartWithBranchPrices<
       return acc;
     }
     const isSyntheticLine = !isUuidLike(String(cartItem.id));
-    const hasStoredPrice = Number(cartItem.price) > 0;
     if (
       !hasAnyRows ||
       !options.omitLinesWithoutPriceWhenBranchHasData ||
-      isSyntheticLine ||
-      hasStoredPrice
+      isSyntheticLine
     ) {
       acc.push({ ...cartItem });
     }

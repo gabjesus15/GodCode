@@ -67,13 +67,24 @@ export async function POST(req: NextRequest) {
 		}
 
 		const nowIso = new Date().toISOString();
-		const { error: updateError } = await supabaseAdmin
+		const { data: rejectedRow, error: updateError } = await supabaseAdmin
 			.from("payments_history")
 			.update({ status: "rejected", payment_date: nowIso })
-			.eq("id", payment.id);
+			.eq("id", payment.id)
+			.eq("status", "pending_validation")
+			.select("id")
+			.maybeSingle();
 
-		if (updateError) {
+		if (updateError || !rejectedRow) {
 			return NextResponse.json({ error: "No se pudo rechazar el pago" }, { status: 500 });
+		}
+
+		if (payment.company_id) {
+			await supabaseAdmin
+				.from("onboarding_applications")
+				.update({ payment_status: "rejected", updated_at: nowIso })
+				.eq("company_id", payment.company_id)
+				.in("payment_status", ["pending_validation", "pending"]);
 		}
 
 		logger.info("Pago rechazado", ctx, {

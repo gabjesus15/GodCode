@@ -13,7 +13,7 @@
   "landing": {
     "meta": {
       "title": "GodCode - Build your online store in minutes",
-      "description": "Digital menu, cart, delivery, POS, kitchen orders and inventory for your business. No coding, no sales commissions. Start free."
+      "description": "Digital menu, cart, delivery, POS, kitchen orders and inventory for your business. No coding, no sales commissions. Start with +1 free month."
     },
     "nav": {
       "goHome": "Go to home",
@@ -228,7 +228,9 @@
           "completeDeliveryOrMin": "Complete delivery address or review minimum amount.",
           "paymentNotAllowedForDelivery": "This payment method is not allowed for delivery in this branch.",
           "whatsappNotConfigured": "This business has no WhatsApp number configured.",
-          "processOrderTryAgain": "Error processing order. Please try again."
+          "processOrderTryAgain": "Error processing order. Please try again.",
+          "oneProductUnavailableInBranch": "1 item in your cart is not available at this branch.",
+          "productsUnavailableInBranch": "{count} items in your cart are not available at this branch."
         },
         "validation": {
           "nameShort": "Name is too short",

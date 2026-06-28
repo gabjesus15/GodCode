@@ -35,6 +35,7 @@ interface CartProduct {
 
 export function CartProvider({
   children,
+  tenantSlug,
   selectedBranchId,
   branchDeliverySettings,
   branchOriginLat,
@@ -43,6 +44,7 @@ export function CartProvider({
   country = "CL",
 }: {
   children: React.ReactNode;
+  tenantSlug?: string | null;
   selectedBranchId?: string | null;
   branchDeliverySettings?: unknown;
   branchOriginLat?: number | null;
@@ -51,6 +53,7 @@ export function CartProvider({
   country?: string;
 }) {
   const store = useCartStore();
+  const isCartOpen = useCartStore((state) => state.isCartOpen);
   const [isHydrated, setIsHydrated] = useState(false);
   const supabase = useMemo(() => createSupabaseBrowserClient("tenant"), []);
 
@@ -65,26 +68,25 @@ export function CartProvider({
   const [bcvRate, setBcvRate] = useState<number | null>(null);
 
   useEffect(() => {
-    if (isVenezuela) {
-      let active = true;
-      fetch("https://ve.dolarapi.com/v1/dolares/oficial")
-        .then((res) => {
-          if (!res.ok) throw new Error("Failed to fetch BCV rate");
-          return res.json();
-        })
-        .then((data) => {
-          if (active && data && typeof data.promedio === "number") {
-            setBcvRate(data.promedio);
-          }
-        })
-        .catch((err) => {
-          console.error("Error fetching BCV rate from DolarApi:", err);
-        });
-      return () => {
-        active = false;
-      };
-    }
-  }, [isVenezuela]);
+    if (!isVenezuela || !isCartOpen) return;
+    let active = true;
+    fetch("https://ve.dolarapi.com/v1/dolares/oficial")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch BCV rate");
+        return res.json();
+      })
+      .then((data) => {
+        if (active && data && typeof data.promedio === "number") {
+          setBcvRate(data.promedio);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching BCV rate from DolarApi:", err);
+      });
+    return () => {
+      active = false;
+    };
+  }, [isVenezuela, isCartOpen]);
 
   const effectiveExchangeRate = useMemo(() => {
     if (isVenezuela) {
@@ -96,6 +98,28 @@ export function CartProvider({
   const pricingMode = useMemo(() => effectiveDeliveryPricingMode(parsedDelivery), [parsedDelivery]);
 
   const branchFeatureFlags = useCartBranchFeatureFlags(branchDeliverySettings, selectedBranchId);
+
+  useEffect(() => {
+    if (!tenantSlug) return;
+    setIsHydrated(false);
+    const storageKey = `tenant_cart_storage_${tenantSlug}`;
+    const persistApi = (
+      useCartStore as {
+        persist?: {
+          setOptions?: (options: { name: string }) => void;
+          rehydrate?: () => Promise<void> | void;
+        };
+      }
+    ).persist;
+    persistApi?.setOptions?.({ name: storageKey });
+    const finish = () => setIsHydrated(true);
+    const rehydrateResult = persistApi?.rehydrate?.();
+    if (rehydrateResult && typeof (rehydrateResult as Promise<void>).then === "function") {
+      void (rehydrateResult as Promise<void>).then(finish).catch(finish);
+    } else {
+      finish();
+    }
+  }, [tenantSlug]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

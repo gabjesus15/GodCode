@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Plus, Minus, ShoppingBag } from "lucide-react";
 
-import { useCart } from "../cart";
 import { useCartStore } from "../cart/cart-store";
 import { getCloudinaryOptimizedUrl, isCloudinaryUrl } from "../utils/cloudinary";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
@@ -81,12 +80,30 @@ export function useProductCartQuantity(productId: string): number {
   });
 }
 
+export function getProductSalePrice(
+  product: Pick<ProductCardProduct, "price" | "has_discount" | "discount_price">,
+): number {
+  if (
+    product.has_discount &&
+    typeof product.discount_price === "number" &&
+    product.discount_price > 0
+  ) {
+    return product.discount_price;
+  }
+  return Number(product.price) || 0;
+}
+
 export function useProductCardLogic(product: ProductCardProduct, country = "CL") {
-  const { addToCart, decreaseQuantity, getPrice } = useCart();
+  const addToCart = useCartStore((state) => state.addToCart);
+  const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
   const quantity = useProductCartQuantity(product.id);
   const hydrated = useHydrated();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const getPrice = useCallback(
+    (item: ProductCardProduct) => getProductSalePrice(item),
+    [],
+  );
 
   const isCloudinary = isCloudinaryUrl(product.image_url);
   const imageSrc = imageError
@@ -113,7 +130,7 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
     (e: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
       e.stopPropagation();
       e.preventDefault();
-      addToCart(product);
+      addToCart?.(product);
     },
     [addToCart, product],
   );
@@ -122,7 +139,7 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
       e.preventDefault();
-      decreaseQuantity(product.id);
+      decreaseQuantity?.(product.id);
     },
     [decreaseQuantity, product.id],
   );

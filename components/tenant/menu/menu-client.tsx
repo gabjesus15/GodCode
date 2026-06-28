@@ -33,7 +33,8 @@ import { ProductCard } from "./product-card";
 import { HeroCarousel } from "../home/hero-carousel";
 import { OrderIntakePausedBanner } from "./order-intake-paused-banner";
 import type { HeroBanner } from "../home/hero-carousel";
-import { getTenantScopedPath } from "../utils/tenant-route";
+import { getTenantScopedPath, getTenantPrefixFromPathname } from "../utils/tenant-route";
+import { resolveCustomerPortalUrl } from "@/lib/tenant/panel-url";
 import { createSupabaseBrowserClient } from "../../../utils/supabase/client";
 import type { Json } from "../../../types/supabase-database";
 import { normalizeDeliverySettings } from "@/lib/delivery/delivery-settings";
@@ -350,6 +351,7 @@ export function MenuClient({
   const [selectedProductDetails, setSelectedProductDetails] = useState<MenuProduct | null>(null);
   const [expandedInlineProductId, setExpandedInlineProductId] = useState<string | null>(null);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const favoriteSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
   const [activeBottomTab, setActiveBottomTab] = useState<"home" | "favorite" | "cart" | "profile">("home");
 
   const handleToggleFavorite = useCallback((productId: string) => {
@@ -374,14 +376,43 @@ export function MenuClient({
     setExpandedInlineProductId((prev) => (prev === product.id ? null : product.id));
   }, []);
 
-  const getProductOnClick = useCallback((product: MenuProduct) => {
-    if (detailsMode === "modal-premium") return () => setSelectedProductDetails(product);
-    if (detailsMode === "inline" && cardStyle !== "glass") return () => handleInlineProductClick(product);
-    return undefined; // glass handles inline on its own
+  const productsByIdRef = useRef(new Map<string, MenuProduct>());
+  useEffect(() => {
+    productsByIdRef.current = new Map(products.map((product) => [product.id, product]));
+  }, [products]);
+
+  const handleProductClick = useCallback((productId: string) => {
+    const product = productsByIdRef.current.get(productId);
+    if (!product) return;
+    if (detailsMode === "modal-premium") {
+      setSelectedProductDetails(product);
+      return;
+    }
+    if (detailsMode === "inline" && cardStyle !== "glass") {
+      handleInlineProductClick(product);
+    }
   }, [detailsMode, cardStyle, handleInlineProductClick]);
+
+  const productsByCategory = useMemo(() => {
+    const grouped = new Map<string, MenuProduct[]>();
+    for (const product of products) {
+      const categoryId = product.category_id ?? "";
+      const list = grouped.get(categoryId);
+      if (list) {
+        list.push(product);
+      } else {
+        grouped.set(categoryId, [product]);
+      }
+    }
+    return grouped;
+  }, [products]);
 
   const router = useRouter();
   const pathname = usePathname();
+  const tenantSlug = useMemo(() => {
+    const prefix = getTenantPrefixFromPathname(pathname ?? "/");
+    return prefix ? prefix.slice(1).toLowerCase() : null;
+  }, [pathname]);
   const searchParams = useSearchParams();
   const isEmbeddedPreview = searchParams?.get("embedded_preview") === "1";
   const previewThemeParam = searchParams?.get("preview_theme") ?? null;
@@ -530,7 +561,7 @@ export function MenuClient({
 
     refreshTimerRef.current = setTimeout(() => {
       router.refresh();
-    }, 350);
+    }, 2500);
   }, [router]);
 
   useEffect(() => {
@@ -626,15 +657,6 @@ export function MenuClient({
             schema: "public",
             table: "product_upsell_beverages",
             filter: `branch_id=eq.${selectedBranchId}`,
-          },
-          scheduleServerRefresh
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "product_extras_options",
           },
           scheduleServerRefresh
         );
@@ -1125,7 +1147,7 @@ export function MenuClient({
         type="button"
         className={`bottom-nav-item ${activeBottomTab === "profile" ? "active-nav-circle" : ""}`}
         onClick={() => {
-          router.push("/cuenta");
+          window.location.assign(resolveCustomerPortalUrl("/cuenta"));
         }}
         aria-label="Perfil"
       >
@@ -1160,6 +1182,7 @@ export function MenuClient({
 
   return (
     <CartProvider
+      tenantSlug={tenantSlug}
       selectedBranchId={selectedBranch?.id ?? null}
       branchDeliverySettings={selectedBranch?.delivery_settings ?? null}
       branchOriginLat={
@@ -1201,7 +1224,7 @@ export function MenuClient({
                   <>
                     <div className={`product-grid ${productCardGridClass(cardStyle, gridStyle)}`}>
                       {filteredBySearch.map((product) => (
-                        <ProductCard key={product.id} product={product} priority={nextPriority()} country={effectiveCountry} currency={effectiveCurrency} cardStyle={cardStyle} onClick={getProductOnClick(product)} isFavorite={favoriteIds.includes(product.id)} onToggleFavorite={() => handleToggleFavorite(product.id)} exchangeRate={exchangeRate} />
+                        <ProductCard key={product.id} product={product} priority={nextPriority()} country={effectiveCountry} currency={effectiveCurrency} cardStyle={cardStyle} onProductClick={handleProductClick} isFavorite={favoriteSet.has(product.id)} onToggleFavorite={handleToggleFavorite} exchangeRate={exchangeRate} />
                       ))}
                     </div>
                     {detailsMode === "inline" && expandedInlineProductId && (() => {
@@ -1225,7 +1248,7 @@ export function MenuClient({
                   <>
                     <div className={`product-grid ${productCardGridClass(cardStyle, gridStyle)}`}>
                       {products
-                        .filter((p) => favoriteIds.includes(p.id))
+                        .filter((p) => favoriteSet.has(p.id))
                         .map((product) => (
                           <ProductCard
                             key={product.id}
@@ -1234,9 +1257,9 @@ export function MenuClient({
                             country={effectiveCountry}
                             currency={effectiveCurrency}
                             cardStyle={cardStyle}
-                            onClick={getProductOnClick(product)}
+                            onProductClick={handleProductClick}
                             isFavorite={true}
-                            onToggleFavorite={() => handleToggleFavorite(product.id)}
+                            onToggleFavorite={handleToggleFavorite}
                             exchangeRate={exchangeRate}
                           />
                         ))}
@@ -1262,7 +1285,7 @@ export function MenuClient({
                     </h2>
                     <div className={`product-grid ${productCardGridClass(cardStyle, gridStyle)}`}>
                       {specialProducts.map((product) => (
-                        <ProductCard key={product.id} product={product} priority={nextPriority()} country={effectiveCountry} currency={effectiveCurrency} cardStyle={cardStyle} onClick={getProductOnClick(product)} isFavorite={favoriteIds.includes(product.id)} onToggleFavorite={() => handleToggleFavorite(product.id)} exchangeRate={exchangeRate} />
+                        <ProductCard key={product.id} product={product} priority={nextPriority()} country={effectiveCountry} currency={effectiveCurrency} cardStyle={cardStyle} onProductClick={handleProductClick} isFavorite={favoriteSet.has(product.id)} onToggleFavorite={handleToggleFavorite} exchangeRate={exchangeRate} />
                       ))}
                     </div>
                     {detailsMode === "inline" && expandedInlineProductId && (() => {
@@ -1275,9 +1298,7 @@ export function MenuClient({
                 {visibleCategories
                   .filter((cat) => navigationMode === "pagination" ? activeCategory === cat.id : true)
                   .map((category) => {
-                    const categoryProducts = products.filter(
-                      (product) => product.category_id === category.id
-                    );
+                    const categoryProducts = productsByCategory.get(category.id) ?? [];
 
                     return (
                       <section
@@ -1298,7 +1319,7 @@ export function MenuClient({
                         <div className={`product-grid ${productCardGridClass(cardStyle, gridStyle)}`}>
                           {categoryProducts.length > 0
                             ? categoryProducts.map((product) => (
-                                <ProductCard key={product.id} product={product} priority={nextPriority()} country={effectiveCountry} currency={effectiveCurrency} cardStyle={cardStyle} onClick={getProductOnClick(product)} isFavorite={favoriteIds.includes(product.id)} onToggleFavorite={() => handleToggleFavorite(product.id)} exchangeRate={exchangeRate} />
+                                <ProductCard key={product.id} product={product} priority={nextPriority()} country={effectiveCountry} currency={effectiveCurrency} cardStyle={cardStyle} onProductClick={handleProductClick} isFavorite={favoriteSet.has(product.id)} onToggleFavorite={handleToggleFavorite} exchangeRate={exchangeRate} />
                               ))
                             : (
                                 <p className="no-results-text">No hay productos en esta categoría.</p>
@@ -1345,6 +1366,7 @@ export function MenuClient({
               onSelectBranch={handleBranchSelect}
               allowClose={Boolean(selectedBranchId)}
               schedule={businessInfo?.schedule ?? null}
+              businessName={name}
             />
           )}
 

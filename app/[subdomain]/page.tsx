@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { createSupabasePublicServerClient } from "../../utils/supabase/server";
 import { getCachedCompany } from "../../utils/tenant-cache";
+import { getCachedMenuStaticData } from "@/lib/tenant/cached-menu";
 import { HomeClient } from "../../components/tenant/home/home-client";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
@@ -25,32 +26,20 @@ export default async function TenantPage({ params }: TenantPageProps) {
 
   const supabase = createSupabasePublicServerClient();
 
-  // Run all 3 independent queries in parallel to eliminate waterfall latency.
-  const [{ data: branches }, { data: openShifts }, { data: businessInfo }] =
-    await Promise.all([
-      supabase
-        .from("branches")
-        .select("id,name,address,whatsapp_url,instagram_url,map_url,order_intake_paused,order_intake_pause_message,order_intake_paused_at")
-        .eq("company_id", company.id)
-        .eq("is_active", true)
-        .order("name"),
-      supabase
-        .from("cash_shifts")
-        .select("branch_id")
-        .eq("company_id", company.id)
-        .eq("status", "open"),
-      supabase
-        .from("business_info")
-        .select("schedule")
-        .eq("company_id", company.id)
-        .maybeSingle(),
-    ]);
+  const [staticData, { data: openShifts }] = await Promise.all([
+    getCachedMenuStaticData(company.id, resolvedParams.subdomain),
+    supabase
+      .from("cash_shifts")
+      .select("branch_id")
+      .eq("company_id", company.id)
+      .eq("status", "open"),
+  ]);
 
   const openBranchIds = (openShifts ?? [])
     .map((shift) => String(shift.branch_id))
     .filter(Boolean);
 
-  const branchesWithStatus = (branches ?? []).map((branch) => {
+  const branchesWithStatus = staticData.branches.map((branch) => {
     const rawName = branch.name ?? "";
     if (rawName.includes("ABIERTO") || rawName.includes("CERRADO")) {
       return branch;
@@ -69,7 +58,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
     <HomeClient
       name={name}
       logoUrl={logoUrl}
-      schedule={businessInfo?.schedule ?? null}
+      schedule={staticData.businessInfo?.schedule ?? null}
       branches={branchesWithStatus}
       publicSlug={resolvedParams.subdomain}
     />

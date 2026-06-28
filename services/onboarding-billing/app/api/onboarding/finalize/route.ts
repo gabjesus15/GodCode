@@ -16,11 +16,9 @@ import {
 	provisionOnboardingWelcome,
 	WelcomeProvisioningError,
 } from "@/lib/onboarding/welcome-provisioning";
-import {
-	getStripeCardFingerprintFromCheckoutSession,
-	hashCardFingerprint,
-	normalizeEmail,
-} from "@/lib/onboarding/trial-eligibility";
+import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
+import { resolveFirstPaymentPromo } from "@/lib/onboarding/first-payment-promo";
+import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";
@@ -71,6 +69,11 @@ export async function POST(req: NextRequest) {
 
 				const appRecord = app as OnboardingApplication;
 				const monthsPaid = getMonthsPaidFromPayment({ months_paid: app.payment_months }, 1);
+				const isPromoEligible = await isFirstPaymentPromoEligible(supabaseAdmin, {
+					email: app.email,
+					excludeCompanyId: app.company_id,
+				});
+				const promo = resolveFirstPaymentPromo(monthsPaid, isPromoEligible);
 				const amountPaid = Number(session.amount_total ?? app.payment_amount ?? 0) / 100;
 				const companyResult = await provisionCompanyFromApplication(supabaseAdmin, appRecord, false);
 				if (!companyResult.ok) {
@@ -101,15 +104,22 @@ export async function POST(req: NextRequest) {
 				await activateCompanySubscription({
 					supabaseAdmin,
 					companyId: companyResult.company.id,
-					monthsPaid,
+					monthsPaid: promo.grantedMonths,
 					now,
 				});
+
+				if (promo.promoApplied) {
+					await supabaseAdmin
+						.from("companies")
+						.update({ first_payment_promo_used_at: now.toISOString() })
+						.eq("id", companyResult.company.id);
+				}
 
 				await activateCompanyAddonsFromApplication({
 					supabaseAdmin,
 					applicationId: appRecord.id,
 					companyId: companyResult.company.id,
-					monthsPaid,
+					monthsPaid: promo.grantedMonths,
 					now,
 				});
 
@@ -156,7 +166,6 @@ export async function POST(req: NextRequest) {
 			{ months_paid: paymentUpdated?.months_paid },
 			1
 		);
-		const enforceTrialReuseGuard = monthsPaid === 1;
 		if (status !== "paid" && status !== "approved") {
 			return NextResponse.json({ ok: true, message: "Pago aún no confirmado" });
 		}
@@ -169,101 +178,16 @@ export async function POST(req: NextRequest) {
 			.maybeSingle();
 
 		const payerEmail = normalizeEmail(appGuard?.email);
-		if (enforceTrialReuseGuard && payerEmail) {
-			const { data: duplicateEmailCompany } = await supabaseAdmin
-				.from("companies")
-				.select("id")
-				.ilike("email", payerEmail)
-				.neq("id", payment.company_id)
-				.limit(1)
-				.maybeSingle();
+		const isPromoEligible = await isFirstPaymentPromoEligible(supabaseAdmin, {
+			email: payerEmail,
+			excludeCompanyId: payment.company_id,
+		});
+		const promo = resolveFirstPaymentPromo(monthsPaid, isPromoEligible);
 
-			if (duplicateEmailCompany?.id) {
-				return NextResponse.json(
-					{ error: "Este correo ya usó el plan de prueba de 1 mes. Usa una cuenta existente o un plan de pago." },
-					{ status: 409 }
-				);
-			}
-		}
-
-		const stripeSecret = process.env.STRIPE_SECRET_KEY ?? "";
-		let cardFingerprintHash: string | null = null;
-		const isPayPalPayment = (payment.payment_method_slug ?? "").trim().toLowerCase() === "paypal";
-		let paypalPayerIdHash: string | null = null;
-		if (ref.startsWith("cs_") && stripeSecret) {
-			const fingerprint = await getStripeCardFingerprintFromCheckoutSession(ref, stripeSecret);
-			if (fingerprint) {
-				cardFingerprintHash = hashCardFingerprint(fingerprint);
-				if (enforceTrialReuseGuard) {
-					const { data: duplicateCardPayment } = await supabaseAdmin
-						.from("payments_history")
-						.select("id,company_id")
-						.eq("card_fingerprint_hash", cardFingerprintHash)
-						.in("status", ["paid", "approved"])
-						.neq("id", payment.id)
-						.limit(1)
-						.maybeSingle();
-
-					if (duplicateCardPayment?.id && duplicateCardPayment.company_id !== payment.company_id) {
-						return NextResponse.json(
-							{ error: "Esta tarjeta ya fue usada para un plan de prueba de 1 mes. Usa una cuenta existente o un plan de pago." },
-							{ status: 409 }
-						);
-					}
-				}
-			}
-		}
-
-		if (isPayPalPayment) {
-			const storedPayerIdHash = payment.paypal_payer_id_hash?.trim() || null;
-			const storedPayerEmail = normalizeEmail(payment.payer_email_normalized);
-			paypalPayerIdHash = storedPayerIdHash;
-
-			if (enforceTrialReuseGuard && storedPayerIdHash) {
-				const { data: duplicatePaypalPayment } = await supabaseAdmin
-					.from("payments_history")
-					.select("id,company_id")
-					.eq("paypal_payer_id_hash", storedPayerIdHash)
-					.in("status", ["paid", "approved"])
-					.neq("id", payment.id)
-					.limit(1)
-					.maybeSingle();
-
-				if (duplicatePaypalPayment?.id && duplicatePaypalPayment.company_id !== payment.company_id) {
-					return NextResponse.json(
-						{ error: "Esta cuenta de PayPal ya fue usada para un plan de prueba de 1 mes. Usa una cuenta existente o un plan de pago." },
-						{ status: 409 }
-					);
-				}
-			}
-
-			if (enforceTrialReuseGuard && storedPayerEmail) {
-				const { data: duplicatePaypalEmailPayment } = await supabaseAdmin
-					.from("payments_history")
-					.select("id,company_id")
-					.eq("payer_email_normalized", storedPayerEmail)
-					.in("status", ["paid", "approved"])
-					.neq("id", payment.id)
-					.limit(1)
-					.maybeSingle();
-
-				if (duplicatePaypalEmailPayment?.id && duplicatePaypalEmailPayment.company_id !== payment.company_id) {
-					return NextResponse.json(
-						{ error: "Este correo de PayPal ya fue usado para un plan de prueba de 1 mes. Usa una cuenta existente o un plan de pago." },
-						{ status: 409 }
-					);
-				}
-			}
-		}
-
-		if (payerEmail || cardFingerprintHash || paypalPayerIdHash) {
+		if (payerEmail) {
 			await supabaseAdmin
 				.from("payments_history")
-				.update({
-					payer_email_normalized: payerEmail || null,
-					card_fingerprint_hash: cardFingerprintHash,
-					paypal_payer_id_hash: paypalPayerIdHash,
-				})
+				.update({ payer_email_normalized: payerEmail })
 				.eq("id", payment.id);
 		}
 
@@ -271,9 +195,16 @@ export async function POST(req: NextRequest) {
 		await activateCompanySubscription({
 			supabaseAdmin,
 			companyId: payment.company_id,
-			monthsPaid,
+			monthsPaid: promo.grantedMonths,
 			now,
 		});
+
+		if (promo.promoApplied) {
+			await supabaseAdmin
+				.from("companies")
+				.update({ first_payment_promo_used_at: now.toISOString() })
+				.eq("id", payment.company_id);
+		}
 
 		const { data: app, error: appError } = await supabaseAdmin
 			.from("onboarding_applications")
@@ -314,7 +245,7 @@ export async function POST(req: NextRequest) {
 			supabaseAdmin,
 			applicationId: app.id,
 			companyId: payment.company_id,
-			monthsPaid,
+			monthsPaid: promo.grantedMonths,
 			now,
 		});
 

@@ -240,6 +240,9 @@ test.describe.serial("onboarding + pagos + saas admin antifraude", () => {
     const checkoutJson = await checkoutRes.json();
     expect(checkoutJson.ok).toBeTruthy();
     expect(checkoutJson.manual).toBeTruthy();
+    expect(checkoutJson.promo_applied).toBe(true);
+    expect(checkoutJson.granted_months).toBe(2);
+    expect(checkoutJson.months).toBe(1);
     expect(typeof checkoutJson.payment_reference).toBe("string");
     const checkoutPaymentReference = String(checkoutJson.payment_reference ?? "");
 
@@ -302,6 +305,22 @@ test.describe.serial("onboarding + pagos + saas admin antifraude", () => {
 
     expect(company?.id).toBe(companyId);
     expect(company?.subscription_status).toBe("active");
+
+    const { data: companyWithPromo } = await sb
+      .from("companies")
+      .select("first_payment_promo_used_at,subscription_ends_at")
+      .eq("id", companyId)
+      .maybeSingle();
+
+    expect(companyWithPromo?.first_payment_promo_used_at).toBeTruthy();
+    const expectedMinEnd = new Date();
+    expectedMinEnd.setDate(expectedMinEnd.getDate() + 58);
+    const expectedMaxEnd = new Date();
+    expectedMaxEnd.setDate(expectedMaxEnd.getDate() + 65);
+    const endDate = companyWithPromo?.subscription_ends_at ? new Date(companyWithPromo.subscription_ends_at) : null;
+    expect(endDate).toBeTruthy();
+    expect((endDate as Date).getTime()).toBeGreaterThanOrEqual(expectedMinEnd.getTime());
+    expect((endDate as Date).getTime()).toBeLessThanOrEqual(expectedMaxEnd.getTime());
 
     let payment: { id?: string; status?: string | null; payment_method_slug?: string | null } | null = null;
     for (let attempt = 0; attempt < 12; attempt += 1) {

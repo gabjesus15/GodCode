@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { ArrowRight, ChartNoAxesCombined, ShieldCheck, Sparkles, Users } from "lucide-react";
 
-import { LandingLogo } from "@/components/landing/media/landing-logo";
+import { LandingLogo } from "@/components/ui/logo/landing-logo";
 import { normalizeLocale } from "@/lib/i18n/config";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { getCurrentLocale } from "@/lib/i18n/server";

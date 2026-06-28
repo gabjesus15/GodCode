@@ -45,6 +45,7 @@ export interface BranchInfo {
   order_intake_paused?: boolean | null;
   order_intake_pause_message?: string | null;
   order_intake_paused_at?: string | null;
+  schedule?: string | null;
 }
 
 export interface BusinessInfo {

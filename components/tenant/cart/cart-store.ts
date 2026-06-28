@@ -49,7 +49,7 @@ interface CartState {
       forceNewLine?: boolean;
     },
   ) => void;
-  decreaseQuantity?: (productId: string) => void;
+  decreaseQuantity?: (lineId: string) => void;
   removeFromCart?: (id: string) => void;
   clearCart?: () => void;
   setOrderNote?: (note: string) => void;
@@ -178,18 +178,22 @@ export const useCartStore = create<CartState>()(
           return { cart: [...state.cart, newItem] };
         }),
 
-      decreaseQuantity: (productId) =>
+      decreaseQuantity: (lineId) =>
         set((state) => {
-          let decremented = false;
-          const updated = state.cart.map((item) => {
-            if (decremented) return item;
-            if (item.lineId === productId || item.id === productId) {
-              decremented = true;
-              return { ...item, quantity: Math.max(0, item.quantity - 1) };
-            }
-            return item;
-          });
-          return { cart: updated.filter((item) => item.quantity > 0) };
+          const targetIndex = state.cart.findIndex((item) => item.lineId === lineId);
+          if (targetIndex < 0) return {};
+
+          const target = state.cart[targetIndex];
+
+          if (target.quantity <= 1) {
+            return { cart: state.cart.filter((_, index) => index !== targetIndex) };
+          }
+
+          return {
+            cart: state.cart.map((item, index) =>
+              index === targetIndex ? { ...item, quantity: item.quantity - 1 } : item,
+            ),
+          };
         }),
 
       removeFromCart: (id) =>

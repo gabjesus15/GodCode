@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+const STRIPE_SECRET = (process.env.STRIPE_SECRET_KEY ?? "").trim();
+
 const COUNTRY_NORMALIZE: Record<string, string> = {
 	Chile: "CL",
 	Venezuela: "VE",
@@ -46,6 +48,10 @@ export async function GET(req: NextRequest) {
 		list = list.filter((m) => isAvailableForCountry(m, normalized, country?.trim() ?? null));
 	} else {
 		list = list.filter((m) => isAvailableForCountry(m, null, null));
+	}
+
+	if (!STRIPE_SECRET) {
+		list = list.filter((m) => String(m.slug ?? "").trim().toLowerCase() !== "stripe");
 	}
 
 	const withConfig = await Promise.all(

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AlertCircle, Loader2, MapPin, Phone, Store, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { buildBusinessClosedCustomerMessage } from "@/lib/tenant/business-closed-message";
 
 interface BranchData {
   id: string;
@@ -22,6 +23,7 @@ interface BranchSelectorModalProps {
   onSelectBranch: (branch: BranchData) => void;
   allowClose?: boolean;
   schedule?: string | null;
+  businessName?: string | null;
 }
 
 export function BranchSelectorModal({
@@ -33,6 +35,7 @@ export function BranchSelectorModal({
   onSelectBranch,
   allowClose = true,
   schedule,
+  businessName,
 }: BranchSelectorModalProps) {
   const t = useTranslations("tenant.cart.modal");
   const [isMounted, setIsMounted] = useState(false);
@@ -51,7 +54,10 @@ export function BranchSelectorModal({
   };
 
   const hasBranchesWithCaja = branches && branches.length > 0;
-  const hasOtherBranches = allBranches && allBranches.length > 0;
+  const closedDescription = buildBusinessClosedCustomerMessage({
+    businessName,
+    schedule,
+  });
 
   const formatBranchName = (rawName: React.ReactNode) => {
     if (typeof rawName !== "string") return rawName;
@@ -105,13 +111,7 @@ export function BranchSelectorModal({
                 <p className="branch-empty-title">
                   {t("branchSelector.noBranchesReceiving")}
                 </p>
-                <p className="branch-empty-description">
-                  {schedule
-                    ? t("branchSelector.attentionSchedule", { schedule })
-                    : hasOtherBranches
-                    ? t("branchSelector.openCashAnyBranch")
-                    : t("branchSelector.openCash")}
-                </p>
+                <p className="branch-empty-description">{closedDescription}</p>
               </div>
             ) : (
               branches.map((branch) => (

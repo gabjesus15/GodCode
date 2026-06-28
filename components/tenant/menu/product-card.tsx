@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Image from "next/image";
 import { Plus, Minus, ChevronDown, X } from "lucide-react";
-import { useCart } from "../cart";
+import { useCartStore } from "../cart/cart-store";
 import { getCloudinaryOptimizedUrl, isCloudinaryUrl } from "../utils/cloudinary";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
 import { normalizeProductCardStyle } from "@/lib/store-theme/theme-config";
 import {
   PRODUCT_CARD_FALLBACK_IMAGE,
   useProductCardLogic,
+  useProductCartQuantity,
   type ProductCardProduct,
 } from "./product-card-shared";
 import {
@@ -28,8 +29,10 @@ const FALLBACK_IMAGE = PRODUCT_CARD_FALLBACK_IMAGE;
 // -----------------------------------------------------------------------------
 // LAYOUT 0: Original (Glass)
 // -----------------------------------------------------------------------------
-const GlassCard = React.memo(function GlassCard({ product, priority = false, country = "CL", currency = "CLP", onClick, exchangeRate }: { product: ProductType; priority?: boolean; country?: string; currency?: string; onClick?: () => void; exchangeRate?: number | null }) {
-  const { cart, addToCart, decreaseQuantity } = useCart();
+const GlassCard = React.memo(function GlassCard({ product, priority = false, country = "CL", currency = "CLP", onClick, onProductClick, exchangeRate }: { product: ProductType; priority?: boolean; country?: string; currency?: string; onClick?: () => void; onProductClick?: (productId: string) => void; exchangeRate?: number | null }) {
+  const addToCart = useCartStore((state) => state.addToCart);
+  const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
+  const quantity = useProductCartQuantity(product.id);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -43,16 +46,6 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
     return () => clearTimeout(t);
   }, []);
   const CLOSE_ANIMATION_MS = 220;
-
-  const quantity = useMemo(
-    () =>
-      cart.reduce(
-        (sum: number, item: { id: string; quantity: number }) =>
-          item.id === product.id ? sum + (Number(item.quantity) || 0) : sum,
-        0,
-      ),
-    [cart, product.id],
-  );
 
   const isLongDesc = (product.description || "").length > 60;
   const isCloudinary = isCloudinaryUrl(product.image_url);
@@ -97,17 +90,21 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
 
   const handleAdd = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    addToCart(product);
+    addToCart?.(product);
     setIsBumping(true);
     setTimeout(() => setIsBumping(false), 200);
   }, [addToCart, product]);
 
   const handleDecrease = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    decreaseQuantity(product.id);
+    decreaseQuantity?.(product.id);
   }, [decreaseQuantity, product.id]);
 
   const toggleExpand = useCallback(() => {
+    if (onProductClick) {
+      onProductClick(product.id);
+      return;
+    }
     if (onClick) {
       onClick();
       return;
@@ -123,7 +120,7 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
     }
     setIsClosing(false);
     setIsExpanded(true);
-  }, [closeDetails, isExpanded, isLongDesc, onClick]);
+  }, [closeDetails, isExpanded, isLongDesc, onClick, onProductClick, product.id]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -265,6 +262,7 @@ export const ProductCard = React.memo(function ProductCard({
   currency = "CLP", 
   cardStyle = "layout-clean",
   onClick,
+  onProductClick,
   isFavorite = false,
   onToggleFavorite,
   exchangeRate
@@ -275,18 +273,34 @@ export const ProductCard = React.memo(function ProductCard({
   currency?: string; 
   cardStyle?: string;
   onClick?: () => void;
+  onProductClick?: (productId: string) => void;
   isFavorite?: boolean;
-  onToggleFavorite?: () => void;
+  onToggleFavorite?: (productId: string) => void;
   exchangeRate?: number | null;
 }) {
   const logic = useProductCardLogic(product, country);
   const resolvedStyle = normalizeProductCardStyle(cardStyle);
 
-  const layoutProps = { product, logic, currency, priority, onClick, exchangeRate };
+  const stableProductClick = useCallback(() => {
+    onProductClick?.(product.id);
+  }, [onProductClick, product.id]);
+
+  const stableToggleFavorite = useCallback(() => {
+    onToggleFavorite?.(product.id);
+  }, [onToggleFavorite, product.id]);
+
+  const layoutProps = {
+    product,
+    logic,
+    currency,
+    priority,
+    onClick: onProductClick ? stableProductClick : onClick,
+    exchangeRate,
+  };
 
   switch (resolvedStyle) {
     case "glass":
-      return <GlassCard product={product} currency={currency} priority={priority} country={country} onClick={onClick} exchangeRate={exchangeRate} />;
+      return <GlassCard product={product} currency={currency} priority={priority} country={country} onClick={onClick} onProductClick={onProductClick} exchangeRate={exchangeRate} />;
     case "layout-detailed":
       return <DetailedCard {...layoutProps} />;
     case "layout-horizontal":
@@ -300,7 +314,7 @@ export const ProductCard = React.memo(function ProductCard({
     case "layout-skew":
       return <SkewCard {...layoutProps} />;
     case "layout-food":
-      return <FoodCard {...layoutProps} isFavorite={isFavorite} onToggleFavorite={onToggleFavorite} />;
+      return <FoodCard {...layoutProps} isFavorite={isFavorite} onToggleFavorite={stableToggleFavorite} />;
     case "layout-clean":
     default:
       return <CleanCard {...layoutProps} />;

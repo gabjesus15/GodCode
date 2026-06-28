@@ -17,6 +17,8 @@ function getConfigLabel(key: string, labels: Record<string, string>): string {
 type ManualData = {
 	amount_usd: number;
 	months: number;
+	granted_months?: number;
+	promo_applied?: boolean;
 	currency: string;
 	country: string | null;
 	method_slug: string;
@@ -147,6 +149,7 @@ function PagoContent() {
 	const [referenceUploading, setReferenceUploading] = useState(false);
 	const [referenceSubmitted, setReferenceSubmitted] = useState(false);
 	const [planSummary, setPlanSummary] = useState<{ name: string; price: number; addons: Array<{ name: string; price: number }> } | null>(null);
+	const [promoAvailable, setPromoAvailable] = useState(false);
 	const [subscriptionMethod, setSubscriptionMethod] = useState<string>("");
 	const [paypalClientId, setPaypalClientId] = useState<string>("");
 	const [paypalSdkReady, setPaypalSdkReady] = useState(false);
@@ -154,6 +157,13 @@ function PagoContent() {
 
 	const isVenezuela = manualData?.country === "Venezuela" || manualData?.country === "VE";
 	const isPaypalSelected = subscriptionMethod === "paypal";
+	const grantedMonths = promoAvailable ? months + 1 : months;
+
+	function formatPromoDescription(paid: number, granted: number): string {
+		const paidText = `${paid} ${paid === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural}`;
+		const grantedText = `${granted} ${granted === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural}`;
+		return copy.promoDescription.replace("{paid}", paidText).replace("{granted}", grantedText);
+	}
 
 	useEffect(() => {
 		if (!isVenezuela) return;
@@ -172,12 +182,16 @@ function PagoContent() {
 		let cancelled = false;
 		fetch(`/api/onboarding/application?token=${encodeURIComponent(token)}`)
 			.then((r) => r.json())
-			.then((data: { subscription_payment_method?: string | null }) => {
+			.then((data: { subscription_payment_method?: string | null; promo_available?: boolean }) => {
 				if (cancelled) return;
 				setSubscriptionMethod((data.subscription_payment_method ?? "").trim().toLowerCase());
+				setPromoAvailable(data.promo_available === true);
 			})
 			.catch(() => {
-				if (!cancelled) setSubscriptionMethod("");
+				if (!cancelled) {
+					setSubscriptionMethod("");
+					setPromoAvailable(false);
+				}
 			});
 		return () => {
 			cancelled = true;
@@ -361,6 +375,8 @@ function PagoContent() {
 				payment_reference?: string;
 				amount_usd?: number;
 				months?: number;
+				granted_months?: number;
+				promo_applied?: boolean;
 				currency?: string;
 				country?: string | null;
 				method_slug?: string;
@@ -394,6 +410,8 @@ function PagoContent() {
 				setManualData({
 					amount_usd: data.amount_usd ?? 0,
 					months: data.months ?? 1,
+					granted_months: data.granted_months,
+					promo_applied: data.promo_applied,
 					currency: data.currency ?? "USD",
 					country: data.country ?? null,
 					method_slug: data.method_slug ?? "",
@@ -475,15 +493,32 @@ function PagoContent() {
 						</div>
 					) : (
 						<>
-							<div>
-								<p className="text-sm font-medium text-slate-500">{copy.amountLabel}</p>
-								<p className="mt-1 text-2xl font-bold text-slate-900">
-									${manualData.amount_usd.toFixed(2)} USD
-									{manualData.months > 1 && (
-										<span className="ml-2 text-base font-normal text-slate-400">({manualData.months} {manualData.months === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural})</span>
-									)}
+						{manualData.promo_applied && (
+							<div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
+								<div className="flex items-center gap-2">
+									<span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+										{copy.promoBadge}
+									</span>
+									<p className="font-semibold text-indigo-900">{copy.promoTitle}</p>
+								</div>
+								<p className="mt-1 text-sm text-indigo-700">
+									{formatPromoDescription(manualData.months, manualData.granted_months ?? manualData.months + 1)}
 								</p>
 							</div>
+						)}
+
+						<div>
+							<p className="text-sm font-medium text-slate-500">{copy.amountLabel}</p>
+							<p className="mt-1 text-2xl font-bold text-slate-900">
+								${manualData.amount_usd.toFixed(2)} USD
+								<span className="ml-2 text-base font-normal text-slate-400">
+									({manualData.months} {manualData.months === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural} pagados
+									{manualData.promo_applied && (
+										<>, {manualData.granted_months ?? manualData.months + 1} {manualData.granted_months === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural} activos</>
+									)})
+								</span>
+							</p>
+						</div>
 							{isVenezuela && bcvRate != null && (
 								<div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
 									<p className="text-slate-500">{copy.approxLabel}:</p>
@@ -580,6 +615,20 @@ function PagoContent() {
 								</ul>
 							</div>
 						)}
+					</div>
+				)}
+
+				{promoAvailable && (
+					<div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
+						<div className="flex items-center gap-2">
+							<span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+								{copy.promoBadge}
+							</span>
+							<p className="font-semibold text-indigo-900">{copy.promoTitle}</p>
+						</div>
+						<p className="mt-1 text-sm text-indigo-700">
+							{formatPromoDescription(months, grantedMonths)}
+						</p>
 					</div>
 				)}
 

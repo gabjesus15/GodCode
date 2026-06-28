@@ -6,6 +6,7 @@ import { getCurrentLocale } from "@/lib/i18n/server";
 import { resolvePlanName } from "@/lib/plans/plan-i18n";
 import { BranchSummary } from "@/components/customer-portal/shared/customer-account-types";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { resolveTenantPanelLoginUrl } from "@/lib/tenant/panel-url";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
 import { getCountryConfig } from "@/lib/geo/country-registry";
 
@@ -43,10 +44,7 @@ type BranchEntitlementRow = {
 
 function resolveTenantAdminUrl(publicSlug: string | null): string | null {
   if (!publicSlug) return null;
-  const baseDomain = process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN?.trim().replace(/^https?:\/\//, "").replace(/\/$/, "");
-  if (!baseDomain) return `/${publicSlug}`;
-  const protocol = process.env.NEXT_PUBLIC_TENANT_PROTOCOL?.trim() || "https";
-  return `${protocol}://${publicSlug}.${baseDomain}/login`;
+  return resolveTenantPanelLoginUrl(publicSlug);
 }
 
 export const dynamic = "force-dynamic";

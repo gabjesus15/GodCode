@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { computeCouponDiscountAmount } from "@/lib/discount/compute-coupon-discount";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 const bodySchema = z.object({
@@ -9,24 +10,6 @@ const bodySchema = z.object({
   subtotal: z.number().finite().nonnegative(),
   clientPhone: z.string().max(40).optional().nullable(),
 });
-
-function computeDiscountAmount(
-  subtotal: number,
-  discountType: string,
-  discountValue: unknown,
-): number {
-  const v = Number(discountValue);
-  if (!Number.isFinite(v)) return 0;
-  if (discountType === "percent") {
-    const pct = Math.min(100, Math.max(0, v));
-    const raw = (subtotal * pct) / 100;
-    return Math.round(raw * 100) / 100;
-  }
-  if (discountType === "fixed_amount") {
-    return Math.min(subtotal, Math.max(0, v));
-  }
-  return 0;
-}
 
 function coalescePhoneEq(a: string | null | undefined, b: string | null | undefined): boolean {
   return (a ?? "") === (b ?? "");
@@ -124,8 +107,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const discountRaw = computeDiscountAmount(subtotal, String(coupon.discount_type), coupon.discount_value);
-    const discountAmount = Math.round(discountRaw);
+    const discountRaw = computeCouponDiscountAmount(
+      subtotal,
+      String(coupon.discount_type),
+      coupon.discount_value,
+    );
+    const discountAmount = Math.round(discountRaw * 100) / 100;
     if (!Number.isFinite(discountAmount) || discountAmount <= 0) {
       return NextResponse.json({ ok: false as const, error: "invalid_coupon" });
     }

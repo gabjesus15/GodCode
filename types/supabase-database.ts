@@ -807,6 +807,7 @@ export type Database = {
           custom_domain: string | null
           custom_domain_expires_at: string | null
           email: string | null
+          first_payment_promo_used_at: string | null
           id: string
           /** Integraciones por empresa (Uber OAuth cifrado, etc.). */
           integration_settings: Json
@@ -829,6 +830,7 @@ export type Database = {
           custom_domain?: string | null
           custom_domain_expires_at?: string | null
           email?: string | null
+          first_payment_promo_used_at?: string | null
           id?: string
           integration_settings?: Json
           legal_rut?: string | null
@@ -850,6 +852,7 @@ export type Database = {
           custom_domain?: string | null
           custom_domain_expires_at?: string | null
           email?: string | null
+          first_payment_promo_used_at?: string | null
           id?: string
           integration_settings?: Json
           legal_rut?: string | null

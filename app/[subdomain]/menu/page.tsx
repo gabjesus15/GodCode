@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { Illustrated404 } from "@/components/brand/illustrated-404";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
 import { MenuClient } from "../../../components/tenant/menu/menu-client";
 import type { HeroBanner } from "../../../components/tenant/home/hero-carousel";
@@ -47,12 +48,7 @@ export async function generateMetadata({
   const protocol = hdrs.get("x-forwarded-proto") ?? "https";
 
   const pathPrefix = isMainDomain(host) ? `/${resolvedParams.subdomain}` : "";
-	const supabase = createSupabasePublicServerClient();
-	const { data: company } = await supabase
-		.from("companies")
-    .select("id,updated_at,name,theme_config,custom_domain")
-		.eq("public_slug", resolvedParams.subdomain)
-		.maybeSingle();
+	const company = await getCachedCompany(resolvedParams.subdomain);
 
   const rawThemeConfig = company?.theme_config;
   const parsedThemeConfig =
@@ -183,7 +179,15 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
         </div>
       );
     }
-    notFound();
+    return (
+      <Illustrated404
+        oops="Tienda no encontrada"
+        title="Tienda no disponible"
+        subtitle="Esta tienda no existe… o se mudó sin avisar."
+        primaryCta={{ label: "Crear mi propia tienda", href: "/onboarding" }}
+        secondaryCta={{ label: "Conocer GodCode", href: "/" }}
+      />
+    );
   }
 
   const onlineOrderingEnabled = (company.plans as { features?: { online_ordering?: boolean } } | null)?.features?.online_ordering !== false;
@@ -301,15 +305,18 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
       (a, b) => (Number(a.order) || 0) - (Number(b.order) || 0)
     );
 
+    const priceByProductId = new Map(
+      branchPrices.map((price) => [price.product_id, price] as const),
+    );
+    const statusByProductId = new Map(
+      branchStatuses.map((status) => [status.product_id, status] as const),
+    );
+
     // --- F. Mapeo ultra-seguro y validado ---
     const products: MenuProduct[] = productsRaw
       .map((product) => {
-        const priceData = branchPrices.find(
-          (price) => price.product_id === product.id
-        );
-        const statusData = branchStatuses.find(
-          (status) => status.product_id === product.id
-        );
+        const priceData = priceByProductId.get(product.id);
+        const statusData = statusByProductId.get(product.id);
 
         if (!statusData || statusData.is_active !== true || product.is_active !== true) {
           return null;
@@ -333,6 +340,17 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
         };
       })
       .filter((p): p is MenuProduct => p !== null);
+
+    const productsByCategoryId = new Map<string, MenuProduct[]>();
+    for (const product of products) {
+      const categoryId = product.category_id ?? "";
+      const list = productsByCategoryId.get(categoryId);
+      if (list) {
+        list.push(product);
+      } else {
+        productsByCategoryId.set(categoryId, [product]);
+      }
+    }
 
     const heroBanners = heroBannerRows.map((row) => ({
       id: row.id,
@@ -366,7 +384,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
     const tenantBaseUrl = `${protocol}://${host}${pathPrefix}`;
 
     const categoriesWithProducts = categories.map((cat) => {
-      const catProducts = products.filter((p) => p.category_id === cat.id);
+      const catProducts = productsByCategoryId.get(cat.id) ?? [];
       return {
         "@type": "MenuSection",
         "name": cat.name,

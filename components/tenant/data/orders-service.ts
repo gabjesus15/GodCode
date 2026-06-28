@@ -9,9 +9,11 @@ import type { Json } from "../../../types/supabase-database";
 
 import {
 	buildOrderItemsFromBranch,
+	isCatalogOrderLine,
 	normalizeExtrasPayload,
 	type OrderCatalogLine,
 } from "./orders/build-order-items-from-branch";
+import { mergeCustomLinesForRpc } from "@/lib/orders/merge-custom-lines-for-rpc";
 import {
 	buildMenuOrderPaymentPayload,
 	paymentMethodRequiresReceipt,
@@ -55,6 +57,69 @@ interface CreateOrderPayload {
 /** Pedidos creados desde el menú / carrito del tenant. */
 export const WEB_MENU_ORDER_ORIGIN = "web" as const;
 
+const UNAVAILABLE_BRANCH_ITEMS_MESSAGE =
+	"Hay productos del carrito que no estan disponibles para esta sucursal. Actualiza el menu e intenta nuevamente.";
+
+const STALE_CART_MESSAGE =
+	"Tu carrito quedo desactualizado. Vacia el carrito, recarga el menu y vuelve a agregar los productos.";
+
+const TOTAL_MISMATCH_MESSAGE =
+	"No pudimos confirmar el total del pedido. Revisa delivery y extras, o vacia el carrito e intenta de nuevo.";
+
+async function resolveCouponDiscountForOrder(
+	branchId: string,
+	couponCode: string,
+	subtotal: number,
+	clientPhone: string,
+): Promise<number> {
+	if (typeof window === "undefined") return 0;
+
+	const res = await fetch(`${window.location.origin}/api/geo/discount-coupon-preview`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({
+			branchId,
+			code: couponCode,
+			subtotal,
+			clientPhone,
+		}),
+	});
+	const json = (await res.json().catch(() => ({}))) as {
+		ok?: boolean;
+		discountAmount?: number;
+	};
+	if (!res.ok || !json.ok) return 0;
+
+	return Math.max(0, Number(json.discountAmount) || 0);
+}
+
+async function resolveNormalizedCatalogItems(
+	branchId: string,
+	items: OrderCatalogLine[],
+): Promise<OrderCatalogLine[]> {
+	if (typeof window !== "undefined") {
+		const res = await fetch(`${window.location.origin}/api/tenant/order-catalog-items`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ branchId, items }),
+		});
+		const json = (await res.json().catch(() => ({}))) as {
+			ok?: boolean;
+			items?: OrderCatalogLine[];
+			error?: string;
+		};
+		if (!res.ok || !json.ok || !Array.isArray(json.items)) {
+			throw new Error(
+				json.error || "No se pudo validar los productos de la sucursal. Intenta nuevamente.",
+			);
+		}
+		return json.items;
+	}
+
+	const supabase = createSupabaseBrowserClient("tenant");
+	return buildOrderItemsFromBranch(supabase, branchId, items);
+}
+
 function extractOrderId(newOrder: unknown): string | null {
   if (newOrder == null) return null;
   if (typeof newOrder === "string") return newOrder;
@@ -83,8 +148,7 @@ export const ordersService = {
       throw new Error("El pedido debe contener al menos un producto.");
     }
 
-    const normalizedItems = await buildOrderItemsFromBranch(
-      supabase,
+    const normalizedItems = await resolveNormalizedCatalogItems(
       orderData.branch_id,
       orderData.items
     );
@@ -92,7 +156,7 @@ export const ordersService = {
     const customItems = (orderData.items ?? [])
       .filter((it) => it.custom_item === true)
       .map((it, idx) => ({
-        id: `custom_${idx}_${String(it.id ?? "")}`,
+        id: String(it.id ?? `custom_${idx}`),
         name: String(it.name ?? "Extra"),
         quantity: Math.max(1, Number(it.quantity) || 1),
         price: Math.max(0, Math.round(Number(it.price) || 0)),
@@ -101,9 +165,17 @@ export const ordersService = {
         description: it.description ?? null,
         extras_total: 0,
         extras: normalizeExtrasPayload(it.extras),
+        custom_item: true as const,
       }));
 
-    const itemsForRpc = [...normalizedItems, ...customItems];
+    const requestedCatalogLines = (orderData.items ?? []).filter(isCatalogOrderLine);
+    if (requestedCatalogLines.length > normalizedItems.length) {
+      throw new Error(
+        normalizedItems.length === 0 ? STALE_CART_MESSAGE : UNAVAILABLE_BRANCH_ITEMS_MESSAGE,
+      );
+    }
+
+    const itemsForRpc = mergeCustomLinesForRpc(normalizedItems, customItems);
 
     if (itemsForRpc.length === 0) {
       throw new Error(
@@ -369,15 +441,18 @@ export const ordersService = {
       typeof orderData.coupon_code === "string" ? orderData.coupon_code.trim() : "";
     const couponPayload = couponRaw.length > 0 ? couponRaw : null;
 
-    // Sin cupón: `p_total` debe ser ítems + envío (recalculados aquí).
-    // Con cupón: el RPC resta el descuento al subtotal de ítems; `p_total` debe ser ese total final.
-    // El cliente ya lo calculó tras validar el cupón; el RPC vuelve a validar cupón y tolerancia (`invalid_item_price`).
+    // `p_total` debe coincidir con el RPC (ítems + envío − cupón, sin IVA del cliente).
     let totalToUse = serverItemsPlusDelivery;
     if (couponPayload) {
-      const clientTotal = Math.round(Number(orderData.total));
-      if (Number.isFinite(clientTotal) && clientTotal >= 0) {
-        totalToUse = clientTotal;
-      }
+      const couponDiscount = await resolveCouponDiscountForOrder(
+        orderData.branch_id,
+        couponPayload,
+        calculatedItemsTotal,
+        orderData.client_phone,
+      );
+      totalToUse = Math.round(
+        Math.max(0, calculatedItemsTotal - couponDiscount) + deliveryFee,
+      );
     }
 
     const paymentMethod = String(orderData.payment_method_specific ?? "").trim();
@@ -464,9 +539,7 @@ export const ordersService = {
         throw new Error("Este cupón ya fue utilizado el máximo de veces permitidas.");
       }
       if (rpcMessage.includes("invalid_item_price")) {
-        throw new Error(
-          "Hay productos del carrito que no estan disponibles para esta sucursal. Actualiza el menu e intenta nuevamente."
-        );
+        throw new Error(TOTAL_MISMATCH_MESSAGE);
       }
       if (rpcMessage.includes("no_items_available")) {
         throw new Error(

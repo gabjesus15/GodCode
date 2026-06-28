@@ -26,6 +26,7 @@ const eslintConfig = defineConfig([
         "argsIgnorePattern": "^_",
         "destructuredArrayIgnorePattern": "^_",
       }],
+      "no-console": ["warn", { allow: ["warn", "error"] }],
     },
   },
   // Navegación con <a> a rutas internas para forzar recarga completa (evita estilos residuales tras 404/onboarding).

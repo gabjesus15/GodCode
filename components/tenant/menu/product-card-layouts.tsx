@@ -362,60 +362,16 @@ export const FoodCard = React.memo(function FoodCard({ product, logic, currency,
     return sum % 5;
   }, [product.id]);
 
-  const [dominantColor, setDominantColor] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (!logic.imageSrc) return;
-    const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.src = logic.imageSrc;
-    img.onload = () => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = 64;
-        canvas.height = 64;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-        
-        ctx.drawImage(img, 0, 0, 64, 64);
-        const data = ctx.getImageData(0, 0, 64, 64).data;
-        let maxSaturation = -1;
-        let bestColor = null;
-        
-        // Loop through pixels to find the most vibrant/colorful pixel to use as dominant color
-        for (let i = 0; i < data.length; i += 16) {
-          const r = data[i], g = data[i+1], b = data[i+2];
-          const max = Math.max(r, g, b);
-          const min = Math.min(r, g, b);
-          const sat = max - min;
-          
-          if (sat > maxSaturation && max > 40 && min < 220) {
-            maxSaturation = sat;
-            bestColor = `rgb(${r}, ${g}, ${b})`;
-          }
-        }
-        
-        if (bestColor) setDominantColor(bestColor);
-      } catch {
-        // Fallback silently if CORS prevents reading canvas
-      }
-    };
-  }, [logic.imageSrc]);
-
   const gradientStyle = React.useMemo(() => {
-    if (dominantColor) {
-      // Adjusted the spread and stops to be right in the middle of the previous two iterations
-      return { background: `radial-gradient(125% 110% at top right, ${dominantColor} 8%, rgba(15,15,20,0.8) 70%, rgba(10,10,15,0.85) 100%)` };
-    }
     const gradients = [
-      "radial-gradient(125% 110% at top right, #38a192 8%, rgba(22,34,32,0.85) 100%)",    
-      "radial-gradient(125% 110% at top right, #b54638 8%, rgba(41,18,16,0.85) 100%)",    
-      "radial-gradient(125% 110% at top right, #3b5cb8 8%, rgba(18,22,38,0.85) 100%)",    
-      "radial-gradient(125% 110% at top right, #b8863b 8%, rgba(38,26,12,0.85) 100%)",    
-      "radial-gradient(125% 110% at top right, #8b3bb8 8%, rgba(29,13,38,0.85) 100%)",    
+      "radial-gradient(125% 110% at top right, #38a192 8%, rgba(22,34,32,0.85) 100%)",
+      "radial-gradient(125% 110% at top right, #b54638 8%, rgba(41,18,16,0.85) 100%)",
+      "radial-gradient(125% 110% at top right, #3b5cb8 8%, rgba(18,22,38,0.85) 100%)",
+      "radial-gradient(125% 110% at top right, #b8863b 8%, rgba(38,26,12,0.85) 100%)",
+      "radial-gradient(125% 110% at top right, #8b3bb8 8%, rgba(29,13,38,0.85) 100%)",
     ];
     return { background: gradients[stableIndex] };
-  }, [dominantColor, stableIndex]);
+  }, [stableIndex]);
 
   const bgRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {

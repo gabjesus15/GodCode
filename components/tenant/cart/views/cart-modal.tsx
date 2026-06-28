@@ -17,6 +17,7 @@ import {
   stripStaffOnlyDeliverySettings,
 } from "@/lib/delivery/delivery-settings";
 import { parseUnifiedAddressSearch } from "@/lib/delivery/address-search-query";
+import { buildBusinessClosedCustomerMessage } from "@/lib/tenant/business-closed-message";
 import { generateWSMessage } from "../services/whatsapp-message";
 import { parseOrderRpcPayload } from "../services/order-payload";
 import { paymentMethodRequiresReceipt } from "../services/menu-order-payment";
@@ -471,17 +472,6 @@ export function CartModal({
           setAddressSearchConfigError(null);
           setAddressHits(results);
 
-          if (!SHOW_ADDRESS_SUGGESTIONS && results[0]) {
-            const first = results[0];
-            if (Date.now() >= suppressLineGeocodeUntilRef.current) {
-              setDeliveryCoords(first.lat, first.lng);
-              setDeliveryAddressPrecision(
-                first.precision === "exact" ? "exact" : "approx"
-              );
-              setGeoHint(t("delivery.addressFoundReviewFee"));
-              setShowDeliveryReference(true);
-            }
-          }
         })
         .catch(() => {
           if (!cancelled) {
@@ -591,6 +581,10 @@ export function CartModal({
       }),
       [cart, branchPriceRows]
     );
+
+    useEffect(() => {
+      setViewState((prev) => (prev.error ? { ...prev, error: null } : prev));
+    }, [cart, filteredCart.length, selectedBranch?.id]);
 
     // Detectar productos eliminados al cambiar de sucursal
     // const [removedProducts, setRemovedProducts] = useState<string[]>([]);
@@ -814,6 +808,25 @@ export function CartModal({
 
   const isOrderIntakePaused = selectedBranchForCheckout?.order_intake_paused === true;
   const canCheckout = isShiftOpen && !isOrderIntakePaused;
+  const closedBusinessMessage = useMemo(
+    () =>
+      buildBusinessClosedCustomerMessage({
+        businessName: businessInfo?.name,
+        branchName: selectedBranch?.name,
+        schedule: selectedBranch?.schedule ?? businessInfo?.schedule ?? null,
+        timeZone:
+          selectedBranch?.country === "VE" || selectedBranch?.country === "Venezuela"
+            ? "America/Caracas"
+            : "America/Santiago",
+      }),
+    [
+      businessInfo?.name,
+      businessInfo?.schedule,
+      selectedBranch?.country,
+      selectedBranch?.name,
+      selectedBranch?.schedule,
+    ],
+  );
 
   const minOrder = deliverySettings.minOrderSubtotal ?? 0;
   const MIN_DRIVER_REFERENCE_LEN = 6;
@@ -1233,8 +1246,8 @@ export function CartModal({
     if (!canCheckout) {
       const msg = isOrderIntakePaused
         ? (selectedBranchForCheckout?.order_intake_pause_message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.")
-        : selectedBranch
-          ? `Esta sucursal (${selectedBranch.name}) no está recibiendo pedidos. Abre la caja en el admin para habilitar compras.`
+        : !isShiftOpen
+          ? closedBusinessMessage
           : businessInfo?.schedule
             ? `Nuestro horario es: ${businessInfo.schedule}`
             : t("errors.noOrdersNow");
@@ -1278,6 +1291,19 @@ export function CartModal({
     }
     setViewState((v) => ({ ...v, isSaving: true, error: null }));
     try {
+      const omittedLines = cart.length - filteredCart.length;
+      if (omittedLines > 0) {
+        setViewState((v) => ({
+          ...v,
+          isSaving: false,
+          error:
+            omittedLines === 1
+              ? t("errors.oneProductUnavailableInBranch")
+              : t("errors.productsUnavailableInBranch", { count: omittedLines }),
+        }));
+        return;
+      }
+
       // Usar `filteredCart` (ya tiene precios/activos validados contra la sucursal).
       // Evita errores `invalid_item_price` / productos no disponibles al RPC.
       const itemsForOrder = (filteredCart as CartLineItem[]).map((item) => {
@@ -1622,7 +1648,7 @@ export function CartModal({
             isDeliveryFulfillmentFocus ? " cart-body--delivery-step" : ""
           }`}
         >
-          {cart.length === 0 ? (
+          {filteredCart.length === 0 ? (
             <CartEmptyState onMenu={handleCloseCart} />
           ) : (
             <>
@@ -1647,7 +1673,7 @@ export function CartModal({
           )}
         </div>
 
-        {cart.length > 0 ? (
+        {filteredCart.length > 0 ? (
           <>
             {!viewState.showPaymentInfo &&
             !viewState.showPaymentMethods &&
@@ -1924,11 +1950,7 @@ export function CartModal({
                 ) : !isShiftOpen ? (
                   <div className="cash-closed-banner">
                     <AlertCircle size={16} />
-                    <span>
-                      {selectedBranch
-                        ? `Esta sucursal no está recibiendo pedidos. Abre la caja en ${selectedBranch.name} para habilitar compras.`
-                        : `Caja cerrada.${businessInfo?.schedule ? ` Horario: ${businessInfo.schedule}` : ""}`}
-                    </span>
+                    <span>{closedBusinessMessage}</span>
                   </div>
                 ) : (
                   <button

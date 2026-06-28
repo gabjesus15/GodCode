@@ -18,8 +18,8 @@ export default function TenantNotFound() {
   return (
     <Illustrated404
       oops="Tienda no encontrada"
-      title="Esta tienda no existe… o se mudó sin avisar."
-      subtitle="Puede que el dueño todavía no abra, o que la dirección esté un poco torcida."
+      title="Tienda no disponible"
+      subtitle="Esta tienda no existe… o se mudó sin avisar."
       primaryCta={{ label: "Crear mi propia tienda", href: "/onboarding" }}
       secondaryCta={{ label: "Conocer GodCode", href: "/" }}
     />

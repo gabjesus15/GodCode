@@ -31,6 +31,9 @@ export type OnboardingPaymentCopy = {
   uploadHint: string;
   monthSummaryLabel: string;
   supportHint: string;
+  promoTitle: string;
+  promoDescription: string;
+  promoBadge: string;
   configLabels: Record<string, string>;
   errors: {
     createSession: string;
@@ -75,6 +78,9 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
     uploadHint: "Selecciona una imagen o PDF con el comprobante.",
     monthSummaryLabel: "meses",
     supportHint: "Si el problema persiste, revisa tu método de pago o contacta soporte.",
+    promoTitle: "+1 mes gratis en tu primer pago",
+    promoDescription: "Paga {paid} y recibes {granted}.",
+    promoBadge: "Promo activa",
     configLabels: {
       banco: "Banco",
       telefono: "Teléfono",
@@ -136,6 +142,9 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
     uploadHint: "Select an image or PDF with the receipt.",
     monthSummaryLabel: "months",
     supportHint: "If the issue persists, review your payment method or contact support.",
+    promoTitle: "+1 month free on your first payment",
+    promoDescription: "Pay {paid} and get {granted}.",
+    promoBadge: "Active promo",
     configLabels: {
       banco: "Bank",
       telefono: "Phone",
@@ -197,6 +206,9 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
     uploadHint: "Selecione uma imagem ou PDF com o comprovante.",
     monthSummaryLabel: "meses",
     supportHint: "Se o problema persistir, revise seu método de pagamento ou contate o suporte.",
+    promoTitle: "+1 mês grátis no seu primeiro pagamento",
+    promoDescription: "Pague {paid} e receba {granted}.",
+    promoBadge: "Promo ativa",
     configLabels: {
       banco: "Banco",
       telefono: "Telefone",
@@ -258,6 +270,9 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
     uploadHint: "Sélectionnez une image ou un PDF contenant le reçu.",
     monthSummaryLabel: "mois",
     supportHint: "Si le problème persiste, vérifiez votre moyen de paiement ou contactez le support.",
+    promoTitle: "+1 mois gratuit lors de votre premier paiement",
+    promoDescription: "Payez {paid} et recevez {granted}.",
+    promoBadge: "Promo active",
     configLabels: {
       banco: "Banque",
       telefono: "Téléphone",
@@ -318,7 +333,10 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
     uploadSuccessBody: "Wir benachrichtigen Sie per E-Mail, sobald die Zahlung validiert wurde. Sie können diese Seite schließen.",
     uploadHint: "Wählen Sie ein Bild oder PDF mit dem Beleg aus.",
     monthSummaryLabel: "Monate",
-    supportHint: "Wenn das Problem weiterhin besteht, prüfen Sie Ihre Zahlungsmethode oder kontaktieren Sie den Support.",
+    supportHint: "Wenn das Problem weiterhin besteht, prüfe Sie Ihre Zahlungsmethode oder kontaktieren Sie den Support.",
+    promoTitle: "+1 Monat gratis bei Ihrer ersten Zahlung",
+    promoDescription: "Zahlen Sie {paid} und erhalten Sie {granted}.",
+    promoBadge: "Aktive Promo",
     configLabels: {
       banco: "Bank",
       telefono: "Telefon",
@@ -380,6 +398,9 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
     uploadHint: "Seleziona un’immagine o un PDF con la ricevuta.",
     monthSummaryLabel: "mesi",
     supportHint: "Se il problema persiste, controlla il metodo di pagamento o contatta il supporto.",
+    promoTitle: "+1 mese gratis sul tuo primo pagamento",
+    promoDescription: "Paga {paid} e ricevi {granted}.",
+    promoBadge: "Promo attiva",
     configLabels: {
       banco: "Banca",
       telefono: "Telefono",

@@ -3,18 +3,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { logAdminAudit } from "@/lib/super-admin/admin-audit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { logger, createRequestContext } from "@/lib/infra/logger";
-import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
+import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
 import {
 	activateCompanyAddonsFromApplication,
+	activateCompanySubscription,
 	getMonthsPaidFromPayment,
-} from "../../../../../lib/onboarding/billing-activation";
+} from "@/lib/onboarding/billing-activation";
 import {
 	getBookingContactDate,
 	queueBookingReminder,
 	sendPaymentValidatedNotice,
-} from "../../../../../lib/onboarding/booking-notifications";
-import { provisionOnboardingWelcome } from "../../../../../lib/onboarding/welcome-provisioning";
+} from "@/lib/onboarding/booking-notifications";
+import { provisionOnboardingWelcome } from "@/lib/onboarding/welcome-provisioning";
 import { proxyToOnboardingBilling } from "@/lib/onboarding/service-proxy";
+import { resolveFirstPaymentPromo } from "@/lib/onboarding/first-payment-promo";
+import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const RESEND_FROM = process.env.RESEND_FROM?.trim() || "";
@@ -64,10 +67,18 @@ export async function POST(req: NextRequest) {
 		const isCustomerAddonPurchase = Boolean(addonRefMatch);
 		const isOnboardingFlow = !isCustomerAccountExpansion && !isCustomerPlanChange && !isCustomerAddonPurchase;
 
-		await supabaseAdmin
-			.from("payments_history")
-			.update({ status: "paid", payment_date: now.toISOString() })
-			.eq("id", payment.id);
+		let addonForPurchase: { id: string; price_monthly: number | null } | null = null;
+		if (isCustomerAddonPurchase && addonRefMatch) {
+			const { data: addon } = await supabaseAdmin
+				.from("addons")
+				.select("id,price_monthly")
+				.eq("id", addonRefMatch[1])
+				.maybeSingle();
+			if (!addon?.id) {
+				return NextResponse.json({ error: "No se encontro el extra asociado al pago" }, { status: 400 });
+			}
+			addonForPurchase = addon;
+		}
 
 		const { data: app } = await supabaseAdmin
 			.from("onboarding_applications")
@@ -75,6 +86,15 @@ export async function POST(req: NextRequest) {
 			.eq("company_id", payment.company_id)
 			.eq("status", "payment_pending")
 			.maybeSingle();
+
+		let promo = resolveFirstPaymentPromo(monthsPaid, false);
+		if (isOnboardingFlow && app?.email) {
+			const isPromoEligible = await isFirstPaymentPromoEligible(supabaseAdmin, {
+				email: app.email,
+				excludeCompanyId: payment.company_id,
+			});
+			promo = resolveFirstPaymentPromo(monthsPaid, isPromoEligible);
+		}
 
 		if (app && isOnboardingFlow) {
 			try {
@@ -113,30 +133,21 @@ export async function POST(req: NextRequest) {
 					updated_at: now.toISOString(),
 				})
 				.eq("id", payment.company_id);
-		} else if (isCustomerAddonPurchase && addonRefMatch) {
+		} else if (isCustomerAddonPurchase && addonRefMatch && addonForPurchase) {
 			const addonId = addonRefMatch[1];
-			const [{ data: company }, { data: addon }] = await Promise.all([
+			const [{ data: company }] = await Promise.all([
 				supabaseAdmin
 					.from("companies")
 					.select("subscription_ends_at")
 					.eq("id", payment.company_id)
 					.maybeSingle(),
-				supabaseAdmin
-					.from("addons")
-					.select("id,price_monthly")
-					.eq("id", addonId)
-					.maybeSingle(),
 			]);
 
-			if (!addon?.id) {
-				return NextResponse.json({ error: "No se encontro el extra asociado al pago" }, { status: 400 });
-			}
-
-			const isMonthlyAddon = Number(addon.price_monthly ?? 0) > 0;
+			const isMonthlyAddon = Number(addonForPurchase.price_monthly ?? 0) > 0;
 			await supabaseAdmin.from("company_addons").upsert(
 				{
 					company_id: payment.company_id,
-					addon_id: addon.id,
+					addon_id: addonForPurchase.id,
 					status: "active",
 					price_paid: Number(payment.amount_paid ?? 0) || null,
 					expires_at: isMonthlyAddon ? company?.subscription_ends_at ?? null : null,
@@ -231,6 +242,47 @@ export async function POST(req: NextRequest) {
 			});
 		}
 
+		const { data: paidRow, error: paidError } = await supabaseAdmin
+			.from("payments_history")
+			.update({ status: "paid", payment_date: now.toISOString() })
+			.eq("id", payment.id)
+			.eq("status", "pending_validation")
+			.select("id")
+			.maybeSingle();
+
+		if (paidError || !paidRow) {
+			return NextResponse.json(
+				{ error: "Este pago ya fue validado o no está pendiente de validación" },
+				{ status: 409 },
+			);
+		}
+
+		if (isOnboardingFlow) {
+			await activateCompanySubscription({
+				supabaseAdmin,
+				companyId: payment.company_id,
+				monthsPaid: promo.grantedMonths,
+				now,
+			});
+
+			if (promo.promoApplied) {
+				await supabaseAdmin
+					.from("companies")
+					.update({ first_payment_promo_used_at: now.toISOString() })
+					.eq("id", payment.company_id);
+			}
+
+			if (app?.id) {
+				await activateCompanyAddonsFromApplication({
+					supabaseAdmin,
+					applicationId: app.id,
+					companyId: payment.company_id,
+					monthsPaid: promo.grantedMonths,
+					now,
+				});
+			}
+		}
+
 		await logAdminAudit({
 			actorEmail: permission.email ?? "",
 			actorRole: permission.role,
@@ -259,7 +311,9 @@ export async function POST(req: NextRequest) {
 					? "Pago validado. El extra se activo correctamente."
 				: isCustomerAccountExpansion
 					? "Pago validado. Se registro el extra de sucursal en la cuenta del cliente."
-					: "Pago validado. Quedo pendiente activacion manual tras la configuracion.",
+					: isOnboardingFlow
+						? "Pago validado. La suscripcion quedo activa correctamente."
+						: "Pago validado. Quedo pendiente activacion manual tras la configuracion.",
 			welcome_email_sent: welcomeSent,
 		});
 	} catch (err) {

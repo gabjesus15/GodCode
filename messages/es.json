@@ -13,7 +13,7 @@
   "landing": {
     "meta": {
       "title": "GodCode - Crea tu tienda online en minutos",
-      "description": "Menu digital, carrito, delivery, caja, comandas e inventario para tu negocio. Sin programar, sin comisiones por venta. Empieza gratis."
+      "description": "Menu digital, carrito, delivery, caja, comandas e inventario para tu negocio. Sin programar, sin comisiones por venta. Empieza con +1 mes gratis."
     },
     "nav": {
       "goHome": "Ir al inicio",
@@ -228,7 +228,9 @@
           "completeDeliveryOrMin": "Completa la direccion de delivery o revisa el monto minimo.",
           "paymentNotAllowedForDelivery": "El metodo de pago no esta permitido para delivery en esta sucursal. Elige otro.",
           "whatsappNotConfigured": "Este negocio no tiene un numero de WhatsApp configurado.",
-          "processOrderTryAgain": "Error al procesar el pedido. Intenta nuevamente."
+          "processOrderTryAgain": "Error al procesar el pedido. Intenta nuevamente.",
+          "oneProductUnavailableInBranch": "1 producto del carrito no esta disponible en esta sucursal.",
+          "productsUnavailableInBranch": "{count} productos del carrito no estan disponibles en esta sucursal."
         },
         "validation": {
           "nameShort": "Nombre muy corto",

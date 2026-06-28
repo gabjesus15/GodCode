@@ -1,25 +1,15 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 import { parseJsonBody } from "@/lib/api/response";
+import { getTicketAuthContext } from "@/lib/api/ticket-auth";
 import { tenantTicketCreateSchema } from "@/lib/api/schemas/tenant/tickets";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { createSupabaseServerClient } from "@/utils/supabase/server";
 
 type TicketStatus = "open" | "in_progress" | "waiting_customer" | "resolved" | "closed";
 type TicketPriority = "low" | "medium" | "high" | "critical";
 type TicketCategory = "general" | "billing" | "technical" | "product" | "account";
 
-type MessageError = { message: string } | null;
-
-type TenantUserRow = {
-  id: string;
-  company_id: string;
-  role: string;
-};
-
-type TicketRow = {
-  id: string;
+type TicketRow = {  id: string;
   company_id: string;
   created_by_email: string;
   source: "tenant" | "saas";
@@ -38,8 +28,6 @@ type TicketRow = {
   updated_at: string;
 };
 
-const TENANT_ALLOWED_ROLES = new Set(["admin", "ceo", "cashier", "staff"]);
-
 const SLA_HOURS: Record<TicketPriority, { firstResponse: number; resolution: number }> = {
   low: { firstResponse: 24, resolution: 120 },
   medium: { firstResponse: 12, resolution: 48 },
@@ -52,37 +40,6 @@ const addHours = (iso: string, hours: number) => {
   if (Number.isNaN(base.getTime())) return iso;
   return new Date(base.getTime() + hours * 60 * 60 * 1000).toISOString();
 };
-
-async function getTenantContext(client: SupabaseClient) {
-  const supabase = await createSupabaseServerClient("tenant");
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user?.email) {
-    return { error: "No autenticado" };
-  }
-
-  const email = user.email.trim().toLowerCase();
-  const { data: rows, error } = await client
-    .from("users")
-    .select("id,company_id,role")
-    .ilike("email", email) as { data: TenantUserRow[] | null; error: MessageError };
-
-  if (error) return { error: error.message };
-
-  const userRow = (rows ?? []).find((row) => TENANT_ALLOWED_ROLES.has(String(row.role || "").toLowerCase()));
-
-  if (!userRow?.company_id) {
-    return { error: "No tienes permisos de panel tenant" };
-  }
-
-  return {
-    companyId: userRow.company_id,
-    email,
-  };
-}
 
 const toDto = (row: TicketRow) => ({
   id: row.id,
@@ -106,7 +63,7 @@ const toDto = (row: TicketRow) => ({
 
 export async function GET() {
   try {
-    const ctx = await getTenantContext(supabaseAdmin);
+    const ctx = await getTicketAuthContext(supabaseAdmin);
 
     if ("error" in ctx) {
       return NextResponse.json({ error: ctx.error }, { status: 403 });
@@ -130,7 +87,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await getTenantContext(supabaseAdmin);
+    const ctx = await getTicketAuthContext(supabaseAdmin);
 
     if ("error" in ctx) {
       return NextResponse.json({ error: ctx.error }, { status: 403 });

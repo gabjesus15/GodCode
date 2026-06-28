@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 
 export async function GET(req: NextRequest) {
 	const token = req.nextUrl.searchParams.get("token");
@@ -23,5 +24,10 @@ export async function GET(req: NextRequest) {
 		return NextResponse.json({ error: "Solicitud no encontrada" }, { status: 404 });
 	}
 
-	return NextResponse.json(data);
+	const promoAvailable = await isFirstPaymentPromoEligible(supabaseAdmin, {
+		email: data.email,
+		excludeCompanyId: data.company_id,
+	});
+
+	return NextResponse.json({ ...data, promo_available: promoAvailable });
 }

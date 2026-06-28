@@ -1,0 +1,152 @@
+@import "tailwindcss";
+@config "../../tailwind.config.js";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+.landing-v3 {
+  --v3-black: #0d0d0d;
+  --v3-black-soft: #141414;
+  --v3-black-muted: #1a1a1a;
+  --v3-beige: #f0ede6;
+  --v3-beige-dark: #e8e4dc;
+  --v3-accent: #7c3aed;
+  --v3-accent-hover: #6d28d9;
+  --v3-white: #f4f4f5;
+  --v3-gray: #a1a1aa;
+  --v3-gray-dark: #71717a;
+  --v3-border: rgba(244, 244, 245, 0.12);
+}
+
+@theme inline {
+  --color-v3-black: var(--v3-black);
+  --color-v3-black-soft: var(--v3-black-soft);
+  --color-v3-black-muted: var(--v3-black-muted);
+  --color-v3-beige: var(--v3-beige);
+  --color-v3-beige-dark: var(--v3-beige-dark);
+  --color-v3-accent: var(--v3-accent);
+  --color-v3-accent-hover: var(--v3-accent-hover);
+  --color-v3-white: var(--v3-white);
+  --color-v3-gray: var(--v3-gray);
+  --color-v3-gray-dark: var(--v3-gray-dark);
+  --color-v3-border: var(--v3-border);
+  --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-bebas-neue);
+  --font-mono: var(--font-geist-mono);
+}
+
+.landing-v3 {
+  background-color: var(--v3-black);
+  color: var(--v3-white);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.landing-v3 .font-display {
+  font-family: var(--font-bebas-neue), Impact, sans-serif;
+}
+
+.landing-v3 .v3-container {
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .landing-v3 .v3-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-v3 .v3-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.landing-v3 .v3-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--v3-gray);
+}
+
+.landing-v3 .v3-section-dark {
+  background-color: var(--v3-black);
+  color: var(--v3-white);
+}
+
+.landing-v3 .v3-section-beige {
+  background-color: var(--v3-beige);
+  color: var(--v3-black);
+}
+
+.landing-v3 .text-accent {
+  color: var(--v3-accent);
+}
+
+.landing-v3 .bg-accent {
+  background-color: var(--v3-accent);
+}
+
+.landing-v3 .bg-accent-hover:hover {
+  background-color: var(--v3-accent-hover);
+}
+
+/* Feature slide enter */
+@keyframes v3-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.landing-v3 .v3-fade-up {
+  animation: v3-fade-up 0.45s ease-out both;
+}
+
+/* Ticker animation */
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.landing-v3 .ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 24s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-v3 .ticker-track {
+    animation: none;
+  }
+  .landing-v3 * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html:has(.landing-v3) {
+  scroll-behavior: smooth;
+}
+
+/* Compensa el navbar fijo (h-20 = 5rem) al saltar a un ancla */
+.landing-v3 [id] {
+  scroll-margin-top: 6rem;
+}

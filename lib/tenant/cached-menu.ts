@@ -25,6 +25,9 @@ export interface CachedBranch {
   name: string | null;
   address: string | null;
   phone: string | null;
+  whatsapp_url: string | null;
+  instagram_url: string | null;
+  map_url: string | null;
   /** Stored as string (JSON) in DB */
   schedule: string | null;
   company_id: string | null;
@@ -103,7 +106,7 @@ export const getCachedMenuStaticData = async (
         supabase
           .from("branches")
           .select(
-            "id,name,address,phone,schedule,company_id,payment_methods,pago_movil,zelle,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta,delivery_settings,origin_lat,origin_lng,order_intake_paused,order_intake_pause_message,order_intake_paused_at,country,currency",
+            "id,name,address,phone,whatsapp_url,instagram_url,map_url,schedule,company_id,payment_methods,pago_movil,zelle,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta,delivery_settings,origin_lat,origin_lng,order_intake_paused,order_intake_pause_message,order_intake_paused_at,country,currency",
           )
           .eq("company_id", cId)
           .eq("is_active", true)

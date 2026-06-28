@@ -3,8 +3,10 @@
 import { useEffect, useMemo } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
+import { fetchCartBranchPrices } from "@/lib/orders/fetch-cart-branch-prices";
 import { mergeCartWithBranchPrices, type BranchProductPriceRow } from "../utils/cart-pricing";
-import { filterValidProductIds, isValidBranchId } from "../utils/safe-ids";
+import { filterValidProductIds, isValidBranchId, isValidProductId } from "../utils/safe-ids";
+import { isUpsellBeverageLineId } from "../cart-context";
 import { useCartStore } from "../cart-store";
 import type { CartItem } from "../cart-context";
 
@@ -29,56 +31,6 @@ function cartsMergeResultEqual(current: CartItem[], next: CartItem[]): boolean {
   return true;
 }
 
-type LegacyPriceRow = {
-  product_id: string;
-  price: number;
-  has_discount: boolean;
-  discount_price: number;
-  products?:
-    | {
-        id: string;
-        name?: string | null;
-        is_active?: boolean | null;
-        description?: string | null;
-      }
-    | {
-        id: string;
-        name?: string | null;
-        is_active?: boolean | null;
-        description?: string | null;
-      }[]
-    | null;
-};
-
-function normalizeProductJoin(
-  products: LegacyPriceRow["products"],
-): { id: string; name?: string | null; is_active?: boolean | null; description?: string | null } | undefined {
-  if (products == null) return undefined;
-  const row = Array.isArray(products) ? products[0] : products;
-  if (!row || typeof row !== "object") return undefined;
-  return {
-    id: String((row as { id: unknown }).id),
-    name: (row as { name?: string | null }).name ?? null,
-    is_active: (row as { is_active?: boolean | null }).is_active ?? null,
-    description: (row as { description?: string | null }).description ?? null,
-  };
-}
-
-function mapRpcRow(row: Record<string, unknown>): BranchProductPriceRow {
-  return {
-    product_id: String(row.product_id ?? ""),
-    price: Number(row.price),
-    has_discount: Boolean(row.has_discount),
-    discount_price: Number(row.discount_price),
-    products: {
-      id: String(row.product_id ?? ""),
-      name: (row.product_name as string | null | undefined) ?? null,
-      is_active: (row.product_is_active as boolean | null | undefined) ?? null,
-      description: (row.product_description as string | null | undefined) ?? null,
-    },
-  };
-}
-
 export function useBranchPrices(
   isHydrated: boolean,
   selectedBranchId: string | null | undefined,
@@ -99,56 +51,57 @@ export function useBranchPrices(
       isValidBranchId(selectedBranchId),
   );
 
-  const { data: rows = [] } = useQuery<BranchProductPriceRow[]>({
+  const { data: rows = [], isFetched } = useQuery<BranchProductPriceRow[]>({
     queryKey: ["cart-branch-prices", selectedBranchId, cartProductIds],
     queryFn: async () => {
       const ids = filterValidProductIds(cartProductIds.split(","));
       if (ids.length === 0) return [];
 
-      let resultRows: BranchProductPriceRow[] = [];
-
-      const rpc = await supabase.rpc("get_cart_branch_prices", {
-        p_branch_id: selectedBranchId,
-        p_product_ids: ids,
-      });
-
-      if (!rpc.error && Array.isArray(rpc.data)) {
-        resultRows = (rpc.data as Record<string, unknown>[]).map(mapRpcRow);
-      } else {
-        const { data, error } = await supabase
-          .from("product_prices")
-          .select(
-            "product_id, price, has_discount, discount_price, products(id,name,is_active,description)",
-          )
-          .in("product_id", ids)
-          .eq("branch_id", selectedBranchId);
-          
-        if (error) throw error;
-        
-        resultRows = (data || []).map((row: LegacyPriceRow) => {
-          const meta = normalizeProductJoin(row.products);
-          return {
-            product_id: String(row.product_id),
-            price: Number(row.price),
-            has_discount: Boolean(row.has_discount),
-            discount_price: Number(row.discount_price),
-            products: meta
-              ? {
-                  id: meta.id,
-                  name: meta.name ?? null,
-                  is_active: meta.is_active ?? null,
-                  description: meta.description ?? null,
-                }
-              : undefined,
-          };
+      if (typeof window !== "undefined" && selectedBranchId) {
+        const res = await fetch(`${window.location.origin}/api/tenant/cart-branch-prices`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ branchId: selectedBranchId, productIds: ids }),
         });
+        const json = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          rows?: BranchProductPriceRow[];
+        };
+        if (res.ok && json.ok && Array.isArray(json.rows)) {
+          return json.rows;
+        }
       }
 
-      return resultRows;
+      return fetchCartBranchPrices(supabase, selectedBranchId!, ids);
     },
     enabled,
     staleTime: 30_000,
   });
+
+  // Quitar líneas de catálogo que ya no existen en la sucursal (carrito viejo en localStorage).
+  useEffect(() => {
+    if (!enabled || !isFetched) return;
+
+    const requestedIds = filterValidProductIds(cartProductIds.split(","));
+    if (requestedIds.length === 0) return;
+
+    const priceIds = new Set(rows.map((row) => String(row.product_id)));
+    const currentCart = useCartStore.getState().cart;
+    const nextCart = currentCart.filter((item) => {
+      const id = String(item.id ?? "");
+      if (isUpsellBeverageLineId(id)) return true;
+      if (!isValidProductId(id)) return true;
+      if (rows.length === 0) return false;
+      return priceIds.has(id);
+    });
+
+    if (nextCart.length !== currentCart.length) {
+      const setCartFn = useCartStore.getState().setCart;
+      if (typeof setCartFn === "function") {
+        setCartFn(nextCart);
+      }
+    }
+  }, [rows, enabled, isFetched, cartProductIds]);
 
   // Efecto para actualizar el store de Zustand cuando cambian los precios
   useEffect(() => {

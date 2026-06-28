@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { Analytics } from "@vercel/analytics/next";
@@ -8,10 +9,13 @@ import { GlobalAntiZoom } from "../components/theme/global-anti-zoom";
 import { PageAnalyticsTracker } from "../components/analytics/page-analytics-tracker";
 import { getMessagesForLocale } from "@/lib/i18n/messages";
 import { getCurrentLocale } from "@/lib/i18n/server";
+import { LANDING_BRAND_ALTERNATE, LANDING_BRAND_NAME } from "@/lib/landing/brand";
 import { getAppUrl } from "@/lib/tenant/app-url";
 // import Image from 'next/image'; // Eliminado porque no se usa
 
 import "./globals.css";
+
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID?.trim() || "G-RG8T86FJZE";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,11 +47,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(getAppUrl()),
   title: {
-    default: "GodCode | Menú digital y pedidos online para restaurantes",
-    template: "%s · GodCode",
+    default: `${LANDING_BRAND_NAME} | Menú digital y pedidos online para restaurantes`,
+    template: `%s · ${LANDING_BRAND_NAME}`,
   },
   description:
-    "GodCode ayuda a restaurantes y negocios con sucursales a vender online con menú digital, pedidos por WhatsApp, delivery, caja e inventario. Sin comisiones por venta y listo en minutos.",
+    `${LANDING_BRAND_NAME} (${LANDING_BRAND_ALTERNATE}) ayuda a restaurantes y negocios con sucursales a vender online con menú digital, pedidos por WhatsApp, delivery, caja e inventario. Sin comisiones por venta y listo en minutos.`,
   verification: {
     google:
       process.env.GOOGLE_SITE_VERIFICATION?.trim() ||
@@ -81,6 +85,15 @@ export default async function RootLayout({
         <link rel="preload" href="/fonts/Outfit-Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/Outfit-Bold.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="stylesheet" href="/fonts/custom-fonts.css" />
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_ID}');
+          `}
+        </Script>
       </head>
       <body
         suppressHydrationWarning

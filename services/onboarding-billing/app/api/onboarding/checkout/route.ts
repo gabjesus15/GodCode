@@ -16,6 +16,8 @@ import {
 	updateApplicationPaymentState,
 } from "@/lib/onboarding/checkout-service";
 import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
+import { resolveFirstPaymentPromo } from "@/lib/onboarding/first-payment-promo";
+import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 
 const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY ?? "";
 const PAYPAL_CLIENT_ID = (process.env.PAYPAL_CLIENT_ID ?? "").trim();
@@ -63,7 +65,6 @@ export async function POST(req: NextRequest) {
 		const body = (await req.json().catch(() => ({}))) as { token: string; months?: number };
 		const token = typeof body.token === "string" ? body.token.trim() : "";
 		const months = Math.min(12, Math.max(1, Number(body.months) || 1));
-		const isOneMonthTrialAttempt = months === 1;
 
 		if (!token) {
 			return NextResponse.json({ error: "Token faltante" }, { status: 400 });
@@ -82,22 +83,11 @@ export async function POST(req: NextRequest) {
 			return NextResponse.json({ error: "Solicitud no encontrada o incompleta" }, { status: 404 });
 		}
 
-		const normalizedEmail = normalizeEmail(app.email);
-		if (isOneMonthTrialAttempt && normalizedEmail) {
-			const companyQuery = supabaseAdmin
-				.from("companies")
-				.select("id")
-				.ilike("email", normalizedEmail)
-				.limit(1);
-			if (app.company_id) companyQuery.neq("id", app.company_id);
-			const { data: duplicateCompany } = await companyQuery.maybeSingle();
-			if (duplicateCompany?.id) {
-				return NextResponse.json(
-					{ error: "Este correo ya usó el plan de prueba de 1 mes. Inicia sesión o elige un plan de pago." },
-					{ status: 409 }
-				);
-			}
-		}
+		const isPromoEligible = await isFirstPaymentPromoEligible(supabaseAdmin, {
+			email: app.email,
+			excludeCompanyId: app.company_id,
+		});
+		const promo = resolveFirstPaymentPromo(months, isPromoEligible);
 
 		const subscriptionMethod = (app.subscription_payment_method ?? "").trim().toLowerCase();
 		if (!subscriptionMethod) {
@@ -135,13 +125,13 @@ export async function POST(req: NextRequest) {
 		const planPricing = resolveCheckoutPlanPrice(plan, app.country);
 		const chargedPlan = { ...plan, price: planPricing.price };
 
-		const addonsTotalUsd = await calculateAddonsTotalUsd(supabaseAdmin, app.id, months);
+		const addonsTotalUsd = await calculateAddonsTotalUsd(supabaseAdmin, app.id, promo.chargedMonths);
 
-		const amountUsd = Number(chargedPlan.price ?? 0) * months + addonsTotalUsd;
+		const amountUsd = Number(chargedPlan.price ?? 0) * promo.chargedMonths + addonsTotalUsd;
 
 		if (isPayPal) {
 			return handlePayPalCheckout({
-				app, plan: chargedPlan, planPricing, amountUsd, months, token,
+				app, plan: chargedPlan, planPricing, amountUsd, months: promo.chargedMonths, grantedMonths: promo.grantedMonths, promoApplied: promo.promoApplied, token,
 				paypalClientId: PAYPAL_CLIENT_ID,
 				paypalClientSecret: PAYPAL_CLIENT_SECRET,
 			});
@@ -149,12 +139,12 @@ export async function POST(req: NextRequest) {
 
 		if (isManualPayment) {
 			return handleManualCheckout({
-				app, amountUsd, months, subscriptionMethod, plan: chargedPlan, planPricing,
+				app, amountUsd, months: promo.chargedMonths, grantedMonths: promo.grantedMonths, promoApplied: promo.promoApplied, subscriptionMethod, plan: chargedPlan, planPricing,
 			});
 		}
 
 		return handleStripeCheckout({
-			app, plan: chargedPlan, planPricing, amountUsd, addonsTotalUsd, months, token,
+			app, plan: chargedPlan, planPricing, amountUsd, addonsTotalUsd, months: promo.chargedMonths, grantedMonths: promo.grantedMonths, promoApplied: promo.promoApplied, token,
 		});
 	} catch (err) {
 		console.error("onboarding checkout error:", err);
@@ -168,6 +158,8 @@ async function handlePayPalCheckout(params: {
 	planPricing: { continent: string; price: number; currency: string };
 	amountUsd: number;
 	months: number;
+	grantedMonths: number;
+	promoApplied: boolean;
 	token: string;
 	paypalClientId: string;
 	paypalClientSecret: string;
@@ -243,8 +235,11 @@ async function handlePayPalCheckout(params: {
 		paymentOptions:
 			Array.isArray(params.app.payment_methods) && params.app.payment_methods.length > 0
 				? params.app.payment_methods
-				: ["PayPal", "Stripe"],
+				: ["PayPal"],
 		currency: params.app.currency || "USD",
+		months: params.months,
+		granted_months: params.grantedMonths,
+		promo_applied: params.promoApplied,
 	});
 }
 
@@ -254,6 +249,8 @@ async function handleManualCheckout(params: {
 	planPricing: { continent: string; price: number; currency: string };
 	amountUsd: number;
 	months: number;
+	grantedMonths: number;
+	promoApplied: boolean;
 	subscriptionMethod: string;
 }) {
 	const paymentRef = `manual-${params.app.id}-${Date.now()}`;
@@ -275,6 +272,8 @@ async function handleManualCheckout(params: {
 		payment_reference: paymentRef,
 		amount_usd: params.amountUsd,
 		months: params.months,
+		granted_months: params.grantedMonths,
+		promo_applied: params.promoApplied,
 		currency: params.app.currency || "USD",
 		country: params.app.country ?? null,
 		plan_name: params.plan.name,
@@ -300,6 +299,8 @@ async function handleStripeCheckout(params: {
 	amountUsd: number;
 	addonsTotalUsd: number;
 	months: number;
+	grantedMonths: number;
+	promoApplied: boolean;
 	token: string;
 }) {
 	if (!STRIPE_SECRET) {
@@ -370,7 +371,10 @@ async function handleStripeCheckout(params: {
 		plan_currency: params.planPricing.currency,
 		paymentOptions: Array.isArray(params.app.payment_methods) && params.app.payment_methods.length > 0
 			? params.app.payment_methods
-			: (params.app.country === "Venezuela" ? ["Pago Móvil", "Zelle", "Transferencia", "Stripe"] : ["Stripe"]),
+			: (params.app.country === "Venezuela" ? ["Pago Móvil", "Zelle", "Transferencia"] : []),
 		currency: params.app.currency || "USD",
+		months: params.months,
+		granted_months: params.grantedMonths,
+		promo_applied: params.promoApplied,
 	});
 }

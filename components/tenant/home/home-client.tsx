@@ -251,7 +251,7 @@ export function HomeClient(props: HomeClientProps) {
         />
       ),
       onClick: () => {
-        // La landing pública de marketing es `/` (GodcodeLanding). `/landing` es el panel super-admin y pide login.
+        // La landing pública de marketing es `/` (landing v3). `/landing` es el panel super-admin y pide login.
         const base = getAppUrl().replace(/\/$/, "");
         window.location.assign(`${base}/`);
       },
