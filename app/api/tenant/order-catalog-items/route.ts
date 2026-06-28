@@ -1,13 +1,38 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { buildOrderItemsFromBranch } from "@/components/tenant/data/orders/build-order-items-from-branch";
+import {
+	buildOrderItemsFromBranch,
+	type OrderCatalogLine,
+} from "@/components/tenant/data/orders/build-order-items-from-branch";
 import { jsonWithPublicCors, publicApiCorsHeaders } from "@/lib/infra/api-cors";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+const orderCatalogLineSchema = z.object({
+	id: z.string().min(1),
+	name: z.string().optional(),
+	quantity: z.number().int().positive().optional(),
+	price: z.number().optional(),
+	has_discount: z.boolean().optional(),
+	discount_price: z.number().nullable().optional(),
+	description: z.string().nullable().optional(),
+	extras_total: z.number().optional(),
+	extras: z
+		.array(
+			z.object({
+				id: z.string(),
+				name: z.string(),
+				price: z.number(),
+				qty: z.number(),
+			}),
+		)
+		.optional(),
+	custom_item: z.boolean().optional(),
+});
+
 const bodySchema = z.object({
 	branchId: z.string().uuid(),
-	items: z.array(z.record(z.string(), z.unknown())).min(1).max(80),
+	items: z.array(orderCatalogLineSchema).min(1).max(80),
 });
 
 export async function OPTIONS(req: NextRequest) {
@@ -27,7 +52,7 @@ export async function POST(req: NextRequest) {
 		const items = await buildOrderItemsFromBranch(
 			supabaseAdmin,
 			parsed.data.branchId,
-			parsed.data.items as Parameters<typeof buildOrderItemsFromBranch>[2],
+			parsed.data.items as OrderCatalogLine[],
 		);
 
 		return jsonWithPublicCors(req, { ok: true as const, items });

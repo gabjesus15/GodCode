@@ -8,9 +8,9 @@ export const isValidProductId = (id: unknown) => {
   return UUID_REGEX.test(s) || NUMERIC_ID_REGEX.test(s);
 };
 
-export const filterValidProductIds = (ids: unknown[]) => {
-  if (!Array.isArray(ids)) return [];
-  return ids.filter(Boolean).filter(isValidProductId);
+export const filterValidProductIds = (ids: unknown[]): string[] => {
+	if (!Array.isArray(ids)) return [];
+	return ids.filter((id): id is string => isValidProductId(id));
 };
 
 export const isValidBranchId = (id: unknown) => {

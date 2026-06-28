@@ -121,7 +121,9 @@
           "completeDeliveryOrMin": "Complete o endereco ou revise o minimo.",
           "paymentNotAllowedForDelivery": "Metodo de pagamento nao permitido para entrega.",
           "whatsappNotConfigured": "Este negocio nao possui WhatsApp configurado.",
-          "processOrderTryAgain": "Erro ao processar pedido. Tente novamente."
+          "processOrderTryAgain": "Erro ao processar pedido. Tente novamente.",
+          "oneProductUnavailableInBranch": "1 item do carrinho nao esta disponivel nesta filial.",
+          "productsUnavailableInBranch": "{count} itens do carrinho nao estao disponiveis nesta filial."
         },
         "validation": {
           "nameShort": "Nome muito curto", "nameInvalid": "Nome invalido", "phoneShort": "Telefone muito curto",
