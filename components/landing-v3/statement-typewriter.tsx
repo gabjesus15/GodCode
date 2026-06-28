@@ -11,12 +11,41 @@ type StatementTypewriterProps = {
 	className?: string;
 };
 
+type Phase = "idle" | "typing" | "done";
+
+function renderStatementText(count: number) {
+	const plain = LANDING_STATEMENT_TEXT.slice(0, Math.min(count, LANDING_STATEMENT_ACCENT_START));
+	const accent = LANDING_STATEMENT_TEXT.slice(
+		LANDING_STATEMENT_ACCENT_START,
+		Math.min(count, LANDING_STATEMENT_TEXT.length),
+	);
+
+	return (
+		<>
+			{plain}
+			{accent ? <span className="text-[#7c3aed]">{accent}</span> : null}
+		</>
+	);
+}
+
+function TypewriterCursor() {
+	return (
+		<span
+			className="ml-0.5 inline-block w-[2px] motion-safe:animate-pulse bg-[#7c3aed] align-middle"
+			style={{ height: "0.85em" }}
+			aria-hidden
+		/>
+	);
+}
+
 export function StatementTypewriter({ className }: StatementTypewriterProps) {
-	const [visibleCount, setVisibleCount] = useState(LANDING_STATEMENT_TEXT.length);
-	const [started, setStarted] = useState(false);
-	const [done, setDone] = useState(true);
+	const [visibleCount, setVisibleCount] = useState(0);
+	const [phase, setPhase] = useState<Phase>("idle");
 	const rootRef = useRef<HTMLParagraphElement>(null);
 	const playedRef = useRef(false);
+
+	const staticPlain = LANDING_STATEMENT_TEXT.slice(0, LANDING_STATEMENT_ACCENT_START);
+	const staticAccent = LANDING_STATEMENT_TEXT.slice(LANDING_STATEMENT_ACCENT_START);
 
 	useEffect(() => {
 		const node = rootRef.current;
@@ -25,6 +54,8 @@ export function StatementTypewriter({ className }: StatementTypewriterProps) {
 		const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 		if (prefersReduced) {
 			playedRef.current = true;
+			setVisibleCount(LANDING_STATEMENT_TEXT.length);
+			setPhase("done");
 			return;
 		}
 
@@ -34,8 +65,7 @@ export function StatementTypewriter({ className }: StatementTypewriterProps) {
 				if (!entry?.isIntersecting || playedRef.current) return;
 
 				playedRef.current = true;
-				setStarted(true);
-				setDone(false);
+				setPhase("typing");
 				setVisibleCount(0);
 				observer.disconnect();
 			},
@@ -47,10 +77,10 @@ export function StatementTypewriter({ className }: StatementTypewriterProps) {
 	}, []);
 
 	useEffect(() => {
-		if (!started || done) return;
+		if (phase !== "typing") return;
 
 		if (visibleCount >= LANDING_STATEMENT_TEXT.length) {
-			setDone(true);
+			setPhase("done");
 			return;
 		}
 
@@ -61,40 +91,21 @@ export function StatementTypewriter({ className }: StatementTypewriterProps) {
 		}, delay);
 
 		return () => window.clearTimeout(timer);
-	}, [started, visibleCount, done]);
-
-	const plain = LANDING_STATEMENT_TEXT.slice(0, Math.min(visibleCount, LANDING_STATEMENT_ACCENT_START));
-	const accent = LANDING_STATEMENT_TEXT.slice(
-		LANDING_STATEMENT_ACCENT_START,
-		Math.min(visibleCount, LANDING_STATEMENT_TEXT.length),
-	);
-
-	const staticPlain = LANDING_STATEMENT_TEXT.slice(0, LANDING_STATEMENT_ACCENT_START);
-	const staticAccent = LANDING_STATEMENT_TEXT.slice(LANDING_STATEMENT_ACCENT_START);
-	const showAnimationLayer = started && !done;
+	}, [phase, visibleCount]);
 
 	return (
-		<p
-			ref={rootRef}
-			className={`relative ${className ?? ""}`}
-			aria-live={showAnimationLayer ? "polite" : undefined}
-		>
-			<span className={showAnimationLayer ? "sr-only" : undefined}>
-				{staticPlain}
-				<span className="text-[#7c3aed]">{staticAccent}</span>
-			</span>
-
-			{showAnimationLayer ? (
-				<span className="absolute inset-0">
-					{plain}
-					{accent ? <span className="text-[#7c3aed]">{accent}</span> : null}
-					<span
-						className="ml-0.5 inline-block w-[2px] motion-safe:animate-pulse bg-[#7c3aed] align-middle"
-						style={{ height: "0.85em" }}
-						aria-hidden
-					/>
+		<p ref={rootRef} className={className} aria-label={LANDING_STATEMENT_TEXT}>
+			{phase === "idle" ? (
+				<span aria-hidden className="invisible">
+					{staticPlain}
+					<span className="text-[#7c3aed]">{staticAccent}</span>
 				</span>
-			) : null}
+			) : (
+				<span aria-live={phase === "typing" ? "polite" : undefined}>
+					{renderStatementText(phase === "done" ? LANDING_STATEMENT_TEXT.length : visibleCount)}
+					{phase === "typing" ? <TypewriterCursor /> : null}
+				</span>
+			)}
 		</p>
 	);
 }

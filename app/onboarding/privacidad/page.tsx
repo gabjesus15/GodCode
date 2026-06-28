@@ -84,11 +84,35 @@ export default function PrivacidadPage() {
 					</section>
 
 					<section>
-						<h2 className="font-semibold text-slate-800">6. Cookies</h2>
+						<h2 className="font-semibold text-slate-800">6. Cookies y mediciones de uso</h2>
 						<p className="mt-1">
-							Usamos cookies esenciales para el funcionamiento del servicio (autenticación, sesión).
-							No usamos cookies de rastreo publicitario. Puedes configurar tu navegador para bloquear
-							cookies, pero esto puede afectar la funcionalidad del servicio.
+							Usamos cookies esenciales para el funcionamiento del servicio (autenticación, sesión)
+							y cookies o identificadores de analítica para entender cómo se usa la plataforma.
+						</p>
+						<p className="mt-2">
+							En concreto, registramos visitas y navegación mediante:
+						</p>
+						<ul className="ml-5 mt-1 list-disc space-y-0.5">
+							<li>
+								<strong>Google Analytics (GA4)</strong>, servicio de Google LLC, que puede usar cookies
+								y recopilar datos técnicos anónimos o seudonimizados (páginas visitadas, dispositivo,
+								país aproximado, origen del tráfico).
+							</li>
+							<li>
+								<strong>Analítica interna de GodCode</strong>, almacenada en nuestros sistemas para
+								medir el rendimiento de la landing, los menús digitales de cada negocio y el panel
+								super administrador (visitas, rutas, país aproximado, identificadores de sesión
+								seudonimizados).
+							</li>
+						</ul>
+						<p className="mt-2">
+							Estas mediciones aplican tanto a quienes visitan la web pública de GodCode como a los
+							clientes finales que navegan el home y el menú digital de los negocios alojados en la
+							plataforma. No usamos cookies de publicidad comportamental propias.
+						</p>
+						<p className="mt-2">
+							Puedes configurar tu navegador para bloquear cookies; eso puede afectar algunas
+							funciones, pero el servicio principal seguirá operativo.
 						</p>
 					</section>
 

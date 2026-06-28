@@ -1,8 +1,9 @@
 import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
+import { resolveAnalyticsPageContext } from "@/lib/analytics/page-context";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { getSubdomainFromHost, isMainDomain } from "@/lib/tenant/main-domain-host";
+import { isMainDomain } from "@/lib/tenant/main-domain-host";
 
 type EventBody = {
   event?: string;
@@ -60,37 +61,28 @@ export async function POST(req: NextRequest) {
     let tenantSlug: string | null = null;
     let companyId: string | null = null;
 
-    if (host && isMainDomain(host)) {
-      if (path === "/" || path.startsWith("/landing")) pageType = "landing";
-      else pageType = "saas";
-    } else if (host) {
-      const bySubdomain = getSubdomainFromHost(host);
-      if (bySubdomain) {
-        tenantSlug = bySubdomain;
-      }
+    const context = resolveAnalyticsPageContext({ pathname: path, host });
+    pageType = context.pageType;
+    tenantSlug = context.tenantSlug;
 
-      if (!tenantSlug) {
-        const { data: byDomain } = await supabaseAdmin
-          .from("companies")
-          .select("id, public_slug")
-          .eq("custom_domain", host)
-          .maybeSingle();
-        if (byDomain?.public_slug) {
-          tenantSlug = byDomain.public_slug;
-          companyId = byDomain.id;
-        }
+    if (tenantSlug) {
+      const { data: bySlug } = await supabaseAdmin
+        .from("companies")
+        .select("id")
+        .eq("public_slug", tenantSlug)
+        .maybeSingle();
+      companyId = bySlug?.id ?? null;
+    } else if (host && !isMainDomain(host)) {
+      const { data: byDomain } = await supabaseAdmin
+        .from("companies")
+        .select("id, public_slug")
+        .eq("custom_domain", host)
+        .maybeSingle();
+      if (byDomain?.public_slug) {
+        tenantSlug = byDomain.public_slug;
+        companyId = byDomain.id;
+        pageType = "tenant";
       }
-
-      if (tenantSlug && !companyId) {
-        const { data: bySlug } = await supabaseAdmin
-          .from("companies")
-          .select("id")
-          .eq("public_slug", tenantSlug)
-          .maybeSingle();
-        companyId = bySlug?.id ?? null;
-      }
-
-      pageType = tenantSlug ? "tenant" : "unknown";
     }
 
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || null;

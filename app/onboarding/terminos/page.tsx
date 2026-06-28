@@ -80,6 +80,33 @@ export default function TerminosPage() {
 					</section>
 
 					<section>
+						<h2 className="font-semibold text-slate-800">6. Analítica y datos de visitantes de tu menú</h2>
+						<p className="mt-1">
+							Al usar {COMPANY_NAME}, aceptas que la plataforma mida el tráfico de tu landing pública,
+							tu panel de administración y las páginas que tus clientes visitan (home del negocio,
+							menú digital, checkout y páginas relacionadas).
+						</p>
+						<p className="mt-2">
+							Esa información se procesa en dos capas complementarias:
+						</p>
+						<ul className="ml-5 mt-1 list-disc space-y-0.5">
+							<li>
+								Analítica interna del super administrador de {COMPANY_NAME}, para operar la plataforma,
+								detectar incidencias y mostrarte métricas agregadas de uso.
+							</li>
+							<li>
+								Google Analytics (GA4), como proveedor externo de medición agregada del sitio.
+							</li>
+						</ul>
+						<p className="mt-2">
+							Eres responsable de informar a tus clientes finales, cuando la ley de tu país lo exija,
+							que al visitar tu menú digital pueden aplicarse estas mediciones. {COMPANY_NAME} actúa
+							como encargado del tratamiento respecto de los datos técnicos de navegación de esos
+							visitantes.
+						</p>
+					</section>
+
+					<section>
 						<h2 className="font-semibold text-slate-800">7. Limitación de responsabilidad</h2>
 						<p className="mt-1">
 							{COMPANY_NAME} se proporciona &quot;tal cual&quot;. No garantizamos disponibilidad ininterrumpida.

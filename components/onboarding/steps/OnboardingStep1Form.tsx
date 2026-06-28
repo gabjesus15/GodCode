@@ -32,6 +32,8 @@ const COPY = {
 		acceptTermsLink: "términos de servicio",
 		acceptPrivacyPrefix: "Acepto la",
 		acceptPrivacyLink: "política de privacidad",
+		analyticsNotice:
+			"Al registrarte aceptas que GodCode mida el uso de la plataforma (panel super admin y menús públicos) mediante analítica interna y Google Analytics, según se describe en la política de privacidad.",
 		continue: "Continuar",
 	},
 	en: {
@@ -56,6 +58,8 @@ const COPY = {
 		acceptTermsLink: "terms of service",
 		acceptPrivacyPrefix: "I accept the",
 		acceptPrivacyLink: "privacy policy",
+		analyticsNotice:
+			"By signing up you agree that GodCode may measure platform usage (super admin panel and public menus) through internal analytics and Google Analytics, as described in the privacy policy.",
 		continue: "Continue",
 	},
 } as const;
@@ -246,6 +250,7 @@ export function OnboardingStep1Form() {
 							{t.acceptPrivacyPrefix} <Link href="/onboarding/privacidad" className="font-medium text-indigo-600 hover:underline">{t.acceptPrivacyLink}</Link> <span className="text-red-500">*</span>
 						</span>
 					</label>
+					<p className="text-xs leading-relaxed text-slate-500">{t.analyticsNotice}</p>
 				</div>
 			</div>
 

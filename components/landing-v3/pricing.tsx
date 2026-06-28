@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 
 import { popularPlanIndex, type PublicPlanForLanding } from "@/lib/plans/public-plans";
-import { resolveRegionalPlanPrice } from "@/lib/plans/plan-regional-pricing";
+import { filterPlansWithPositiveRegionalPrice, resolveRegionalPlanPrice } from "@/lib/plans/plan-regional-pricing";
 
 type PricingProps = {
   plans: PublicPlanForLanding[];
@@ -22,7 +22,8 @@ function formatPrice(price: number, currency: string): string {
 }
 
 export function Pricing({ plans, country }: PricingProps) {
-  const popularIdx = popularPlanIndex(plans.length);
+  const paidPlans = filterPlansWithPositiveRegionalPrice(plans, country);
+  const popularIdx = popularPlanIndex(paidPlans.length);
   const gridCols = "md:grid-cols-2 lg:grid-cols-3";
 
   return (
@@ -40,13 +41,13 @@ export function Pricing({ plans, country }: PricingProps) {
           </p>
         </div>
 
-        {plans.length === 0 ? (
+        {paidPlans.length === 0 ? (
           <p className="rounded-2xl border border-[rgba(244,244,245,0.12)] bg-[#141414] p-10 text-center text-[#a1a1aa]">
             Estamos actualizando nuestros planes. Escribinos y te contamos los precios al instante.
           </p>
         ) : (
           <div className={`grid grid-cols-1 gap-5 ${gridCols}`}>
-            {plans.map((plan, index) => {
+            {paidPlans.map((plan, index) => {
               const isPopular = index === popularIdx;
               const { price, currency } = resolveRegionalPlanPrice(plan, country);
 

@@ -35,3 +35,11 @@ export function resolveRegionalPlanPrice(plan: {
     source: "fallback",
   };
 }
+
+export function filterPlansWithPositiveRegionalPrice<T extends {
+  price?: number | null;
+  pricesByContinent?: PlanPricingMap | null;
+  prices_by_continent?: PlanPricingMap | null;
+}>(plans: T[], country: string | null | undefined): T[] {
+  return plans.filter((plan) => resolveRegionalPlanPrice(plan, country).price > 0);
+}

@@ -7,6 +7,10 @@ import {
   resolveTenantSlugFromCustomDomainHost,
 } from "@/lib/tenant/custom-domain-resolve";
 import { publicApiCorsHeaders } from "@/lib/infra/api-cors";
+import {
+	MAIN_DOMAIN_RESERVED_PATH_SEGMENTS,
+	resolveTenantSlugFromPathname,
+} from "@/lib/tenant/reserved-path-segments";
 
 const SECURITY_HEADERS: [string, string][] = [
   ["X-Content-Type-Options", "nosniff"],
@@ -189,24 +193,8 @@ const resolveTenantSlugFromReferer = (refererHeader: string | null) => {
     if (segments.length === 0) return null;
 
     const first = segments[0]?.toLowerCase();
-    const reserved = new Set([
-      "login",
-      "dashboard",
-      "companies",
-      "plans",
-      "checkout",
-      "onboarding",
-      "api",
-      "_next",
-      "favicon.ico",
-      "saas-admin",
-      "addons",
-      "plan-payment-methods",
-      "herramientas",
-      "tickets",
-    ]);
 
-    return reserved.has(first) ? null : segments[0];
+    return MAIN_DOMAIN_RESERVED_PATH_SEGMENTS.has(first) ? null : segments[0];
   } catch {
     return null;
   }
@@ -216,39 +204,6 @@ const PUBLIC_DELIVERY_API_PATHS = new Set([
   "/api/geo/delivery-quote",
   "/api/tenant/public-order-delivery",
 ]);
-
-const resolveTenantSlugFromPathname = (pathname: string): string | null => {
-  const segments = pathname.split("/").filter(Boolean);
-  if (segments.length === 0) return null;
-
-  const first = segments[0]?.toLowerCase();
-  const reserved = new Set([
-    "login",
-    "dashboard",
-    "companies",
-    "plans",
-    "checkout",
-    "onboarding",
-    "api",
-    "_next",
-    "favicon.ico",
-    "saas-admin",
-    "addons",
-    "plan-payment-methods",
-    "herramientas",
-    "tickets",
-    "cuenta",
-    "fonts",
-    "brand",
-    "tenant",
-    "tenant-hero",
-    "sobre-godcode",
-    "images",
-  ]);
-
-  if (first.includes(".") || reserved.has(first)) return null;
-  return segments[0];
-};
 
 function attachPublicDeliveryApiCors(req: NextRequest, res: NextResponse): NextResponse {
   if (!PUBLIC_DELIVERY_API_PATHS.has(req.nextUrl.pathname)) return res;
