@@ -10,6 +10,8 @@ import { Pricing } from "./pricing";
 import { Faq } from "./faq";
 import { Ticker } from "./ticker";
 import { Footer } from "./footer";
+import { FloatingSocialDock } from "./floating-social-dock";
+import { getLandingSocialLinks } from "@/lib/landing/contact";
 
 type LandingV3ShellProps = {
   plans: PublicPlanForLanding[];
@@ -26,6 +28,9 @@ function resolveFromPrice(plans: PublicPlanForLanding[], country: string) {
 
 export function LandingV3Shell({ plans, country }: LandingV3ShellProps) {
   const fromPrice = resolveFromPrice(plans, country);
+  const floatingSocialLinks = getLandingSocialLinks().filter(
+    (link) => link.kind === "instagram" || link.kind === "whatsapp",
+  );
 
   return (
     <div className="landing-v3 min-h-screen">
@@ -40,6 +45,7 @@ export function LandingV3Shell({ plans, country }: LandingV3ShellProps) {
         <Ticker />
       </main>
       <Footer />
+      <FloatingSocialDock links={floatingSocialLinks} />
     </div>
   );
 }

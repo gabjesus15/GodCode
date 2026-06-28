@@ -89,7 +89,7 @@ export function Hero({ fromPrice }: { fromPrice: HeroFromPrice }) {
 	const { amount, currency } = formatFromPrice(fromPrice);
 
 	return (
-		<section className="relative min-h-[100dvh] overflow-hidden bg-[#080808] lg:min-h-screen lg:pb-[52px]">
+		<section data-landing-hero className="relative min-h-[100dvh] overflow-hidden bg-[#080808] lg:min-h-screen lg:pb-[52px]">
 			<HeroBackground />
 
 			<div className="v3-container relative flex min-h-[100dvh] flex-col justify-center gap-8 pt-24 pb-10 sm:gap-10 lg:min-h-screen lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-center lg:gap-x-10 lg:gap-y-0 lg:pt-28 lg:pb-12 xl:gap-x-16">
