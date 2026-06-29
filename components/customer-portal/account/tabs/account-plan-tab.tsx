@@ -97,6 +97,9 @@ export type AccountPlanTabProps = {
   acknowledgedAddonImpactIds: string[];
   setAcknowledgedAddonImpactIds: Dispatch<SetStateAction<string[]>>;
   branchEntitlements: BranchEntitlementSummary[];
+  planFeedbackError?: string | null;
+  planFeedbackOk?: string | null;
+  clearPlanFeedback?: () => void;
 };
 
 // ─── Plan change dialog ───────────────────────────────────────────────────────
@@ -327,7 +330,7 @@ export function AccountPlanTab(props: AccountPlanTabProps) {
     addonMethodSlug, setAddonMethodSlug, selectedAddonMethodOption,
     addonEstimatedUnit, addonEstimatedTotal, addonNotes, setAddonNotes,
     handleAddonRequest, addonPurchaseBusy, acknowledgedAddonImpactIds, setAcknowledgedAddonImpactIds,
-    branchEntitlements,
+    branchEntitlements, planFeedbackError, planFeedbackOk, clearPlanFeedback,
   } = props;
 
   const [planDialogOpen,  setPlanDialogOpen]  = useState(false);
@@ -344,6 +347,13 @@ export function AccountPlanTab(props: AccountPlanTabProps) {
   return (
     <div className="space-y-5 sm:space-y-6">
       <PageHeader title="Plan y extras" description="Gestiona tu suscripcion, extras y historial de capacidad." />
+
+      {planFeedbackOk && (
+        <Alert variant="success" onDismiss={clearPlanFeedback}>{planFeedbackOk}</Alert>
+      )}
+      {planFeedbackError && (
+        <Alert variant="danger" onDismiss={clearPlanFeedback}>{planFeedbackError}</Alert>
+      )}
 
       {/* Alerts */}
       {cancellationScheduled && (

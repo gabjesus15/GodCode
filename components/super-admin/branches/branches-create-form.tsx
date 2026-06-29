@@ -5,7 +5,6 @@ import { revalidateMenuCache } from "@/app/actions/revalidate";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 import { logAdminAction } from "@/utils/audit";
 import { requireAdminRole, roleSets } from "@/utils/admin";
 import { slugify } from "@/utils/slugify";
@@ -60,38 +59,38 @@ export function BranchesCreateForm({ companyId, businessInfo }: BranchesCreateFo
       if (!permission.ok) {
         throw new Error(permission.error);
       }
-      const supabase = createSupabaseBrowserClient("super-admin");
       const finalSlug = form.slug.trim() || slugify(form.name);
       if (!finalSlug) {
         throw new Error("Define un slug valido para la sucursal.");
       }
-      if (betaLimitReached) {
-        throw new Error("El plan beta solo permite 2 sucursales.");
-      }
-      const { data, error: insertError } = await supabase
-        .from("branches")
-        .insert({
+
+      const res = await fetch("/api/super-admin/branches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company_id: companyId,
           name: form.name,
           slug: finalSlug,
           address: form.address,
           phone: form.phone,
           is_active: form.is_active,
-          company_id: companyId,
           country: form.country || null,
           currency: form.currency || null,
-        })
-        .select("id")
-        .single();
-      if (insertError) {
-        throw insertError;
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error ?? "No se pudo crear la sucursal");
       }
+
       await logAdminAction({
         action: "branch.create",
         targetType: "branch",
-        targetId: data?.id,
+        targetId: data.branch?.id,
         companyId,
         metadata: { name: form.name, slug: finalSlug },
       });
+      setBetaLimitReached(false);
       setForm({ name: "", slug: "", address: "", phone: "", is_active: true, country: businessInfo?.country ?? "", currency: businessInfo?.currency ?? "" });
       await revalidateMenuCache(companyId);
       router.refresh();

@@ -343,7 +343,7 @@ export function CompanyGlobalForm({
       if (isDevPlan) {
         companyUpdate.subscription_ends_at = null;
         nextSubscriptionEnds = null;
-      } else if (isBetaPlan) {
+      } else if (isBetaPlan && !currentEndsAt) {
         const betaEnd = addDays(new Date(), 30).toISOString();
         companyUpdate.subscription_ends_at = betaEnd;
         nextSubscriptionEnds = betaEnd;

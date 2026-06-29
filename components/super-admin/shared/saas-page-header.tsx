@@ -19,8 +19,8 @@ export function SaasPageHeader({
   action,
 }: SaasPageHeaderProps) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between" data-saas-page-header>
+      <div className="min-w-0 flex-1">
         {backHref && (
           <Link
             href={backHref}
@@ -30,23 +30,23 @@ export function SaasPageHeader({
             {backLabel}
           </Link>
         )}
-        <div className="mt-1.5 flex items-center gap-3">
+        <div className="mt-1.5 flex min-w-0 items-center gap-3">
           {Icon && (
-            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
               <Icon className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
             </div>
           )}
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-3xl">
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-3xl">
               {title}
             </h1>
             {description && (
-              <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">{description}</p>
+              <p className="mt-0.5 line-clamp-2 text-sm text-zinc-500 dark:text-zinc-400">{description}</p>
             )}
           </div>
         </div>
       </div>
-      {action && <div className="shrink-0">{action}</div>}
+      {action && <div className="w-full shrink-0 sm:w-auto">{action}</div>}
     </div>
   );
 }

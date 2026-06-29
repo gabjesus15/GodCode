@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { computeExpansionAmount } from "@/lib/tenant/customer-account-expansion-pricing";
 import type { BillingOptionsResponse, BillingPaymentResponse, BranchEntitlementSummary, CompanySnapshot, PaymentSummary, TicketSummary } from "../shared/customer-account-types";
 import { uploadImage } from "@/components/tenant/utils/cloudinary";
 
@@ -88,7 +89,13 @@ export function useBranchFlow(
   const branchUnitPrice   = billingOptions?.branchExpansionPriceMonthly ?? 0;
   const expansionQtyNumber   = Math.max(1, Number.parseInt(expansionQty,   10) || 1);
   const expansionMonthsNumber = Math.max(1, Number.parseInt(expansionMonths, 10) || 1);
-  const expansionAmount       = Number((branchUnitPrice * expansionQtyNumber * expansionMonthsNumber).toFixed(2));
+  const expansionPricing = computeExpansionAmount({
+    unitPrice: branchUnitPrice,
+    quantity: expansionQtyNumber,
+    months: expansionMonthsNumber,
+    subscriptionEndsAt,
+  });
+  const expansionAmount = expansionPricing.amount;
   const projectedExtraEntitlements = (billingOptions?.extraBranchEntitlements ?? 0) + (canRequestBranchWithoutPayment ? 0 : expansionQtyNumber);
   const projectedEffectiveMaxBranches = billingOptions?.maxBranches == null ? null : billingOptions.maxBranches + projectedExtraEntitlements;
   const projectedActiveBranches = activeBranchesCount + 1;

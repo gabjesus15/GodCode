@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
+import { normalizeCountryCode } from "@/lib/geo/country-registry";
 import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
@@ -48,26 +49,13 @@ type AddonImpact = {
   detail: string;
 };
 
-const COUNTRY_NORMALIZE: Record<string, string> = {
-  Chile: "CL",
-  Venezuela: "VE",
-  CL: "CL",
-  VE: "VE",
-};
-
-function normalizeCountry(country: string | null | undefined): string | null {
-  if (!country) return null;
-  const c = country.trim();
-  return COUNTRY_NORMALIZE[c] ?? c;
-}
-
 function isSingleInstanceAddon(addon: AddonRow): boolean {
   const haystack = `${addon.name} ${addon.slug} ${addon.type ?? ""}`.toLowerCase();
   return haystack.includes("dominio") || haystack.includes("domain") || haystack.includes("custom_domain") || haystack.includes("custom-domain");
 }
 
 async function resolvePaymentMethodsForCountry(country: string | null) {
-  const normalizedCountry = normalizeCountry(country);
+  const normalizedCountry = normalizeCountryCode(country);
   const { data: methods } = await supabaseAdmin
     .from("plan_payment_methods")
     .select("id,slug,name,countries,auto_verify")

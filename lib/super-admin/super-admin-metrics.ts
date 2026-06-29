@@ -83,6 +83,7 @@ const ONBOARDING_STATUSES = [
 	"email_verified",
 	"form_completed",
 	"payment_pending",
+	"payment_validated",
 	"active",
 	"rejected",
 ] as const;
@@ -276,9 +277,10 @@ export async function fetchPaymentHealthRows(limit = 40): Promise<{
 export async function fetchCompanyStatusCounts(): Promise<{
 	active: number;
 	suspended: number;
+	total: number;
 	error: string | null;
 }> {
-	const [a, s] = await Promise.all([
+	const [a, s, t] = await Promise.all([
 		supabaseAdmin
 			.from("companies")
 			.select("id", { count: "exact", head: true })
@@ -287,12 +289,13 @@ export async function fetchCompanyStatusCounts(): Promise<{
 			.from("companies")
 			.select("id", { count: "exact", head: true })
 			.eq("subscription_status", "suspended"),
+		supabaseAdmin.from("companies").select("id", { count: "exact", head: true }),
 	]);
-	const err = a.error?.message ?? s.error?.message ?? null;
+	const err = a.error?.message ?? s.error?.message ?? t.error?.message ?? null;
 	if (err) {
-		return { active: 0, suspended: 0, error: err };
+		return { active: 0, suspended: 0, total: 0, error: err };
 	}
-	return { active: a.count ?? 0, suspended: s.count ?? 0, error: null };
+	return { active: a.count ?? 0, suspended: s.count ?? 0, total: t.count ?? 0, error: null };
 }
 
 export async function fetchOpenTicketsCount(): Promise<{ count: number; error: string | null }> {

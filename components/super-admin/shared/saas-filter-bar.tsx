@@ -33,12 +33,12 @@ interface SaasSearchInputProps extends React.InputHTMLAttributes<HTMLInputElemen
 
 export function SaasSearchInput({ wrapperClassName, className, ...props }: SaasSearchInputProps) {
   return (
-    <div className={cn("relative", wrapperClassName)}>
+    <div className={cn("relative w-full min-w-0 sm:max-w-xs", wrapperClassName)}>
       <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
       <input
         type="text"
         className={cn(
-          "h-9 w-full min-w-[200px] rounded-xl border border-zinc-200/60 bg-zinc-50 py-1 pl-9 pr-3 text-xs font-medium text-zinc-700 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200",
+          "h-9 w-full min-w-0 rounded-xl border border-zinc-200/60 bg-zinc-50 py-1 pl-9 pr-3 text-xs font-medium text-zinc-700 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 sm:min-w-[12rem]",
           className,
         )}
         {...props}

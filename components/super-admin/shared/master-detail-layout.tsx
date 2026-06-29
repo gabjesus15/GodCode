@@ -47,7 +47,7 @@ export function MasterDetailLayout<T>({
   }
 
   return (
-    <div className={cn("grid gap-0 overflow-hidden rounded-3xl border border-zinc-200/60 bg-white shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80", className)}>
+    <div className={cn("grid gap-0 overflow-hidden rounded-3xl border border-zinc-200/60 bg-white shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 lg:grid-cols-[minmax(280px,380px)_1fr]", className)}>
       {/* List */}
       <div
         className={cn(

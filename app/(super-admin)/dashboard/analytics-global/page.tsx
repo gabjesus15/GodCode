@@ -210,14 +210,14 @@ export default async function AnalyticsGlobalPage({
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <DashboardPeriodTabs current={period} />
-            <form className="flex items-center gap-2" method="get">
+            <form className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center" method="get">
               <input type="hidden" name="period" value={period} />
               <div className="relative">
                 <Building2 className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
                 <select
                   name="company"
                   defaultValue={selectedCompanyId}
-                  className="h-9 min-w-[200px] appearance-none rounded-xl border border-zinc-200/60 bg-zinc-50 py-1 pl-9 pr-8 text-xs font-medium text-zinc-700 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
+                  className="h-9 w-full min-w-0 appearance-none rounded-xl border border-zinc-200/60 bg-zinc-50 py-1 pl-9 pr-8 text-xs font-medium text-zinc-700 focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 sm:min-w-[12rem] sm:w-auto"
                 >
                   <option value="">Todos los negocios</option>
                   {companies.map((c) => (

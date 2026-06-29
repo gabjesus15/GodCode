@@ -53,7 +53,7 @@ function whatsappDisplay(url: string): string {
 	return "WhatsApp";
 }
 
-export function getLandingSocialLinks(): LandingSocialLink[] {
+export function getLandingSocialLinksFromEnv(): LandingSocialLink[] {
 	const links: LandingSocialLink[] = [];
 
 	const instagramUrl = normalizeInstagramUrl(
@@ -91,3 +91,10 @@ export function getLandingSocialLinks(): LandingSocialLink[] {
 
 	return links;
 }
+
+export {
+	normalizeInstagramUrl,
+	normalizeWhatsAppUrl,
+	instagramDisplay,
+	whatsappDisplay,
+};

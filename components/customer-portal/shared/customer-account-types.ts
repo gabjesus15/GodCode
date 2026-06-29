@@ -140,6 +140,8 @@ export type CustomerAccountClientProps = {
   availableAddons: AddonOption[];
   initialTickets: TicketSummary[];
   initialBranchEntitlements: BranchEntitlementSummary[];
+  initialBillingOptions?: BillingOptionsResponse | null;
+  initialSyncedAt?: string | null;
 };
 
 export type BillingMethodOption = {
@@ -160,6 +162,11 @@ export type BillingOptionsResponse = {
   branchExpansionPriceMonthly: number;
   coTermWithSubscription?: boolean;
   daysUntilPlanEnd?: number | null;
+  expansionPreview?: {
+    unitPrice: number;
+    firstCycleFactor: number;
+    sampleAmountQty1Months1: number;
+  };
   paymentMethods: BillingMethodOption[];
 };
 

@@ -7,14 +7,15 @@ import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/ser
 import { proxyToOnboardingBilling } from "@/lib/onboarding/service-proxy";
 
 export async function POST(req: NextRequest) {
-	const proxied = await proxyToOnboardingBilling(req, "/api/super-admin/payments/reject");
-	if (proxied) return proxied;
-
-	const ctx = createRequestContext("/api/super-admin/payments/reject", "POST");
 	const permission = await validateAdminRolesOnServer([...SAAS_MUTATE_ROLES]);
 	if (!permission.ok) {
 		return NextResponse.json({ error: permission.error ?? "No autorizado" }, { status: permission.status ?? 403 });
 	}
+
+	const proxied = await proxyToOnboardingBilling(req, "/api/super-admin/payments/reject");
+	if (proxied) return proxied;
+
+	const ctx = createRequestContext("/api/super-admin/payments/reject", "POST");
 
 	try {
 		const body = (await req.json().catch(() => ({}))) as {
@@ -102,6 +103,14 @@ export async function POST(req: NextRequest) {
 
 		if (updateError || !rejectedRow) {
 			return NextResponse.json({ error: "No se pudo rechazar el pago" }, { status: 409 });
+		}
+
+		if (String(payment.payment_reference ?? "").startsWith("CUST-")) {
+			await supabaseAdmin
+				.from("company_branch_extra_entitlements")
+				.update({ status: "cancelled", updated_at: nowIso })
+				.eq("payment_id", payment.id)
+				.in("status", ["pending", "active"]);
 		}
 
 		if (payment.company_id) {

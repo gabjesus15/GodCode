@@ -8,6 +8,7 @@ import { fmtDate } from "../../shared/customer-account-format";
 import { TICKET_CATEGORY_LABELS, TICKET_PRIORITY_LABELS, TICKET_STATUS_LABELS } from "../../shared/customer-account-constants";
 import { getTicketAgeHours, getTicketSlaHours } from "../../shared/customer-account-ticket-utils";
 import { Badge } from "../../ui/Badge";
+import { Alert } from "../../ui/Alert";
 import { Button } from "../../ui/Button";
 import { Card } from "../../ui/Card";
 import { Dialog, DialogFooter } from "../../ui/Dialog";
@@ -40,6 +41,9 @@ export type AccountSoporteTabProps = {
   messageDraft: string;
   setMessageDraft: (v: string) => void;
   onSendMessage: () => void;
+  ticketFeedbackError?: string | null;
+  ticketFeedbackOk?: string | null;
+  clearTicketFeedback?: () => void;
 };
 
 const priorityVariant: Record<SupportPriority, ColorVariant> = {
@@ -77,6 +81,9 @@ export function AccountSoporteTab({
   messageDraft,
   setMessageDraft,
   onSendMessage,
+  ticketFeedbackError,
+  ticketFeedbackOk,
+  clearTicketFeedback,
 }: AccountSoporteTabProps) {
   const [createOpen, setCreateOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -107,6 +114,13 @@ export function AccountSoporteTab({
           Nuevo ticket
         </Button>
       </div>
+
+      {ticketFeedbackOk && (
+        <Alert variant="success" onDismiss={clearTicketFeedback}>{ticketFeedbackOk}</Alert>
+      )}
+      {ticketFeedbackError && (
+        <Alert variant="danger" onDismiss={clearTicketFeedback}>{ticketFeedbackError}</Alert>
+      )}
 
       {/* Master-detail */}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">

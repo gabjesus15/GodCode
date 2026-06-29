@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { HeroPhoneShowcase } from "./hero-phone-showcase";
+import type { LandingV3PhoneSlide } from "@/lib/landing/v3-config";
 
 type HeroFromPrice = {
 	price: number;
@@ -85,7 +86,13 @@ function HeroPriceTag({
 	);
 }
 
-export function Hero({ fromPrice }: { fromPrice: HeroFromPrice }) {
+export function Hero({
+	fromPrice,
+	heroPhones,
+}: {
+	fromPrice: HeroFromPrice;
+	heroPhones: LandingV3PhoneSlide[];
+}) {
 	const { amount, currency } = formatFromPrice(fromPrice);
 
 	return (
@@ -137,7 +144,7 @@ export function Hero({ fromPrice }: { fromPrice: HeroFromPrice }) {
 
 				{/* Teléfonos */}
 				<div className="relative z-10 flex w-full items-center justify-center lg:py-4">
-					<HeroPhoneShowcase />
+					<HeroPhoneShowcase phones={heroPhones} />
 				</div>
 			</div>
 

@@ -64,10 +64,11 @@ export default async function DashboardPage({
     statusCo.error ||
     null;
 
+  const convertedApplications = (funnel.counts.active ?? 0) + (funnel.counts.payment_validated ?? 0);
   const conversionActivePct =
-    funnel.total > 0 ? Math.round((1000 * (funnel.counts.active ?? 0)) / funnel.total) / 10 : 0;
+    funnel.total > 0 ? Math.round((1000 * convertedApplications) / funnel.total) / 10 : 0;
 
-  const totalRegistered = statusCo.active + statusCo.suspended;
+  const totalRegistered = statusCo.total;
   const activeCompaniesPercentage =
     totalRegistered > 0 ? Math.round((statusCo.active / totalRegistered) * 100) : 100;
   const newCompaniesPercentage = Math.min(100, Math.round((newCo.count / 15) * 100));
@@ -136,7 +137,7 @@ export default async function DashboardPage({
               value={`${conversionActivePct}%`}
               helper={
                 funnel.total > 0
-                  ? `${funnel.counts.active ?? 0} activos de ${funnel.total} solicitudes totales.`
+                  ? `${convertedApplications} convertidas (activas + validadas) de ${funnel.total} solicitudes en el periodo.`
                   : "Sin solicitudes en base."
               }
               href="/dashboard/onboarding-embudo"
@@ -145,7 +146,9 @@ export default async function DashboardPage({
               label="Empresas activas / suspendidas"
               value={statusCo.error ? "—" : `${statusCo.active} · ${statusCo.suspended}`}
               helper={
-                statusCo.error ? statusCo.error : "Totales por subscription_status en companies."
+                statusCo.error
+                  ? statusCo.error
+                  : `${statusCo.active} activas de ${statusCo.total} empresas registradas.`
               }
               href="/companies"
             />
@@ -153,8 +156,8 @@ export default async function DashboardPage({
         </div>
 
         {/* Activity Rings Column */}
-        <div className="lg:col-span-1">
-          <Card className="flex h-full flex-col justify-between rounded-3xl border border-zinc-200/60 bg-white p-5 dark:border-zinc-800/60 dark:bg-zinc-900/80">
+        <div className="min-w-0 lg:col-span-1">
+          <Card className="flex h-full min-w-0 flex-col justify-between overflow-visible rounded-3xl border border-zinc-200/60 bg-white p-5 dark:border-zinc-800/60 dark:bg-zinc-900/80">
             <div>
               <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 Objetivos del Negocio
@@ -163,7 +166,7 @@ export default async function DashboardPage({
                 Progreso operativo y de salud general del SaaS en este periodo.
               </p>
             </div>
-            <div className="my-6 flex justify-center">
+            <div className="my-6 min-w-0">
               <ActivityRings
                 rings={[
                   {

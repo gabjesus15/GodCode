@@ -2,7 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Layers, Smartphone, Zap, Quote } from "lucide-react";
 
-export function BentoGrid() {
+import type { LandingV3Config } from "@/lib/landing/v3-config";
+
+type BentoGridProps = {
+	bentoMenuMobile: LandingV3Config["bentoMenuMobile"];
+};
+
+export function BentoGrid({ bentoMenuMobile }: BentoGridProps) {
   return (
     <section id="nosotros" className="v3-section-dark py-28 md:py-36">
       <div className="v3-container">
@@ -31,8 +37,8 @@ export function BentoGrid() {
           <div className="group relative min-h-[560px] overflow-hidden rounded-2xl border border-[rgba(244,244,245,0.12)] bg-[#141414] p-0 md:row-span-3">
             <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-105">
               <Image
-                src="/imagenes para landing/menu_mobil.jpg"
-                alt="Vista previa del menú móvil"
+                src={bentoMenuMobile.src}
+                alt={bentoMenuMobile.alt}
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 33vw"

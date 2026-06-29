@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/utils/cn";
 
 import { PhoneFrame } from "./phone-frame";
+import type { LandingV3Config } from "@/lib/landing/v3-config";
 
 const AUTOPLAY_MS = 7000;
 const SWIPE_THRESHOLD_PX = 48;
@@ -18,8 +19,7 @@ const slides = [
 		rest: "para el servicio rápido",
 		description:
 			"Un punto de venta pensado para la velocidad. Toma pedidos, divide cuentas, gestiona modificadores y envía comandas a cocina en segundos, sin salir de la vista de mesas.",
-		image: "/imagenes para landing/caja_mobil.jpg",
-		imageAlt: "Vista previa del POS de Gcode",
+		imageKey: "pos" as const,
 		aspectRatio: 1220 / 2587,
 	},
 	{
@@ -29,8 +29,7 @@ const slides = [
 		rest: "que venden solos",
 		description:
 			"Menús digitales con fotos, variantes, combos y acceso por QR. Tus clientes navegan, piden y pagan desde su celular mientras tú te quedas con el margen.",
-		image: "/la-parada-menu.png",
-		imageAlt: "Menú digital de La Parada en Gcode",
+		imageKey: "menu" as const,
 		aspectRatio: 390 / 858,
 	},
 	{
@@ -40,13 +39,16 @@ const slides = [
 		rest: "plataforma, todos los canales",
 		description:
 			"Unifica pedidos en sala, delivery, pickup y WhatsApp en un solo dashboard. Inventario en tiempo real, reportes y gestión multi-tenant incluidos.",
-		image: "/imagenes para landing/iventario_mobil.jpg",
-		imageAlt: "Gestión de inventario en Gcode",
+		imageKey: "inventory" as const,
 		aspectRatio: 1220 / 2598,
 	},
 ] as const;
 
-export function FeatureSplit() {
+type FeatureSplitProps = {
+	featureImages: LandingV3Config["featureImages"];
+};
+
+export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 	const [index, setIndex] = useState(0);
 	const [paused, setPaused] = useState(false);
 	const [inView, setInView] = useState(false);
@@ -279,8 +281,8 @@ export function FeatureSplit() {
 									aria-hidden={i !== index}
 								>
 									<PhoneFrame
-										src={item.image}
-										alt={item.imageAlt}
+										src={featureImages[item.imageKey].src}
+										alt={featureImages[item.imageKey].alt}
 										priority={i === 0}
 										imageFit="contain"
 										showSystemChrome={false}

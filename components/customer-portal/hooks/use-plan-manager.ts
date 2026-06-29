@@ -95,7 +95,9 @@ export function usePlanManager(
   subscriptionStatus:  string | null,
   onRefreshSnapshot: () => Promise<void>,
   onSubscriptionStatusChange: (status: string, endsAt: string | null) => void,
+  options?: { previewEnabled?: boolean },
 ): UsePlanManagerReturn {
+  const previewEnabled = options?.previewEnabled !== false;
   // ── Plan state ──
   const [targetPlanId,          setTargetPlanId]          = useState(availablePlans[0]?.id ?? "");
   const [planMonths,            setPlanMonths]            = useState("1");
@@ -237,7 +239,11 @@ export function usePlanManager(
     }
   }, [targetPlanId, planMonthsNumber]);
 
-  useEffect(() => { void loadPlanPreview(); }, [loadPlanPreview]);
+  useEffect(() => {
+    if (!previewEnabled) return undefined;
+    const id = window.setTimeout(() => { void loadPlanPreview(); }, 300);
+    return () => window.clearTimeout(id);
+  }, [loadPlanPreview, previewEnabled]);
 
   const loadAddonPreview = useCallback(async () => {
     if (!targetAddonId) { setAddonPreview(null); return; }
@@ -262,7 +268,11 @@ export function usePlanManager(
     }
   }, [targetAddonId, selectedAddonEffectiveQty, addonMonthsNumber]);
 
-  useEffect(() => { void loadAddonPreview(); }, [loadAddonPreview]);
+  useEffect(() => {
+    if (!previewEnabled) return undefined;
+    const id = window.setTimeout(() => { void loadAddonPreview(); }, 300);
+    return () => window.clearTimeout(id);
+  }, [loadAddonPreview, previewEnabled]);
 
   const handlePlanRequest = async () => {
     if (!planPreview?.targetPlan?.id) { setPlanFeedbackError("No se pudo preparar el cambio de plan."); return; }
@@ -276,7 +286,7 @@ export function usePlanManager(
     try {
       const res  = await fetch("/api/customer-account/plan-change", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetPlanId, months: planMonthsNumber, methodSlug: planPreview.pricing.requiresPayment ? planMethodSlug : undefined, acceptedImpactIds: acknowledgedImpactIds }),
+        body: JSON.stringify({ targetPlanId, months: planMonthsNumber, methodSlug: planPreview.pricing.requiresPayment ? planMethodSlug : undefined, acceptedImpactIds: acknowledgedImpactIds, reason: planReason.trim() || undefined }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string; message?: string; appliedNow?: boolean };
       if (!res.ok) { setPlanFeedbackError(data.error || "No se pudo aplicar el cambio de plan."); return; }

@@ -52,6 +52,7 @@ interface SolicitudRow {
 interface OnboardingSolicitudDetailProps {
   app: SolicitudRow;
   actionKey: string | null;
+  readOnly?: boolean;
   onClose: () => void;
   onDelete: () => void;
   onValidatePayment: (reference: string, action: "validate" | "reject") => void;
@@ -60,6 +61,7 @@ interface OnboardingSolicitudDetailProps {
 export function OnboardingSolicitudDetail({
   app,
   actionKey,
+  readOnly = false,
   onClose,
   onDelete,
   onValidatePayment,
@@ -216,7 +218,7 @@ export function OnboardingSolicitudDetail({
       </div>
 
       <div className="mt-5 flex flex-col gap-2">
-        {canReviewPayment && (
+        {canReviewPayment && !readOnly && (
           <>
             <Button
               type="button"
@@ -241,7 +243,7 @@ export function OnboardingSolicitudDetail({
           type="button"
           variant="ghost"
           size="sm"
-          disabled={!app.can_delete || actionKey === `delete:${app.id}`}
+          disabled={readOnly || !app.can_delete || actionKey === `delete:${app.id}`}
           title={
             !app.can_delete
               ? app.delete_block_reason ?? "Esta solicitud no se puede eliminar"

@@ -326,7 +326,7 @@ export async function POST(req: NextRequest) {
 		}
 
 		let welcomeSent = false;
-		if (app && !isOnboardingFlow && !app.welcome_email_sent_at) {
+		if (app && isOnboardingFlow && !app.welcome_email_sent_at) {
 			try {
 				await provisionOnboardingWelcome({
 					supabaseAdmin,

@@ -18,19 +18,21 @@ interface SaasSegmentedTabsProps {
 
 export function SaasSegmentedTabs({ tabs, value, onChange, className }: SaasSegmentedTabsProps) {
   return (
-    <div
-      className={cn(
-        "inline-flex rounded-xl bg-zinc-100 p-1 dark:bg-zinc-800",
-        className,
-      )}
-    >
+    <div className="max-w-full overflow-x-auto">
+      <div
+        data-saas-segmented-tabs
+        className={cn(
+          "inline-flex min-w-max max-w-full rounded-xl bg-zinc-100 p-1 dark:bg-zinc-800",
+          className,
+        )}
+      >
       {tabs.map((tab) => (
         <button
           key={tab.id}
           type="button"
           onClick={() => onChange(tab.id)}
           className={cn(
-            "relative rounded-lg px-3 py-1.5 text-xs font-medium transition",
+            "relative shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition whitespace-nowrap",
             value === tab.id
               ? "text-zinc-900 dark:text-zinc-100"
               : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200",
@@ -53,6 +55,7 @@ export function SaasSegmentedTabs({ tabs, value, onChange, className }: SaasSegm
           </span>
         </button>
       ))}
+      </div>
     </div>
   );
 }

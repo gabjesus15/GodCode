@@ -18,6 +18,13 @@ export async function POST(req: NextRequest) {
 		? payload.allowedRoles.filter((role): role is string => typeof role === "string" && role.length > 0)
 		: [];
 
+	if (allowedRoles.length === 0) {
+		return NextResponse.json(
+			{ ok: false, error: "Indica allowedRoles con al menos un rol permitido" },
+			{ status: 400 },
+		);
+	}
+
 	const result = await validateAdminRolesOnServer(allowedRoles);
 
 	if (!result.ok) {

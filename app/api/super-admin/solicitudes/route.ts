@@ -105,14 +105,23 @@ export async function GET() {
 						payment_reference: string | null;
 						reference_file_url: string | null;
 					}>();
+					const grouped = new Map<string, NonNullable<typeof payments>>();
 					for (const p of payments ?? []) {
-						if (!p.company_id || byCompany.has(p.company_id)) continue;
-						byCompany.set(p.company_id, {
-							status: p.status ?? "pending",
-							amount_paid: p.amount_paid ?? 0,
-							payment_date: p.payment_date ?? "",
-							payment_reference: p.payment_reference ?? null,
-							reference_file_url: p.reference_file_url ?? null,
+						if (!p.company_id) continue;
+						const list = grouped.get(p.company_id) ?? [];
+						list.push(p);
+						grouped.set(p.company_id, list);
+					}
+					for (const [companyId, list] of grouped) {
+						const pending = list.find((p) => p.status === "pending_validation");
+						const chosen = pending ?? list[0];
+						if (!chosen) continue;
+						byCompany.set(companyId, {
+							status: chosen.status ?? "pending",
+							amount_paid: chosen.amount_paid ?? 0,
+							payment_date: chosen.payment_date ?? "",
+							payment_reference: chosen.payment_reference ?? null,
+							reference_file_url: chosen.reference_file_url ?? null,
 						});
 					}
 					return byCompany;

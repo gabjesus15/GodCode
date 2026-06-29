@@ -1,6 +1,12 @@
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
-import { defaultLandingAssetsRows, type LandingMediaAssetRow } from "@/lib/landing/landing-media";
+import { type LandingMediaAssetRow } from "@/lib/landing/landing-media";
+import {
+	defaultLandingV3AssetsRows,
+	LANDING_V3_CONFIG_TAG,
+	mergeLandingV3AssetRows,
+} from "@/lib/landing/v3-config";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
@@ -28,14 +34,13 @@ export async function GET() {
   const { data, error } = await supabaseAdmin
     .from("landing_media_assets")
     .select("key,src,alt,label,sub,sort_order,is_active")
+    .like("key", "v3.%")
     .order("sort_order", { ascending: true })
     .order("key", { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
-  const rows = ((data ?? []) as LandingMediaAssetRow[]).length > 0
-    ? (data ?? []) as LandingMediaAssetRow[]
-    : defaultLandingAssetsRows();
+  const rows = mergeLandingV3AssetRows((data ?? []) as LandingMediaAssetRow[]);
 
   return NextResponse.json({ rows });
 }
@@ -53,10 +58,11 @@ export async function PUT(req: NextRequest) {
 
   const normalized = rows
     .map((row) => normalizeRow(row))
-    .filter(Boolean) as LandingMediaAssetRow[];
+    .filter((row): row is LandingMediaAssetRow => Boolean(row))
+    .filter((row) => row.key.startsWith("v3."));
 
   if (normalized.length === 0) {
-    return NextResponse.json({ error: "No hay assets válidos para guardar" }, { status: 400 });
+    return NextResponse.json({ error: "No hay assets válidos de landing v3 para guardar" }, { status: 400 });
   }
 
   const { error } = await supabaseAdmin
@@ -76,6 +82,8 @@ export async function PUT(req: NextRequest) {
     );
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  revalidateTag(LANDING_V3_CONFIG_TAG, "max");
 
   return NextResponse.json({ ok: true, saved: normalized.length });
 }

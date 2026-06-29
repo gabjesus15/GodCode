@@ -23,6 +23,7 @@ import { OnboardingSolicitudDetail } from "@/components/super-admin/onboarding/o
 import { useSaasListAnimate } from "@/components/super-admin/shared/use-saas-list-animate";
 import { useSaasBreakpoint } from "@/components/super-admin/shared/use-saas-breakpoint";
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
+import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 import { paymentStatus } from "@/lib/super-admin/status-maps";
 
 interface SolicitudRow {
@@ -95,6 +96,7 @@ export default function OnboardingSolicitudesPage() {
   const [listRef] = useSaasListAnimate<HTMLDivElement>();
   const [chipsRef] = useSaasListAnimate<HTMLDivElement>();
   const { isDesktop } = useSaasBreakpoint();
+  const { readOnly } = useAdminRole();
   const [paymentConfirm, setPaymentConfirm] = useState<{
     reference: string;
     action: "validate" | "reject";
@@ -216,7 +218,7 @@ export default function OnboardingSolicitudesPage() {
           : statusFilter === "pending"
             ? PENDING_STATUSES.includes(row.status ?? "")
             : statusFilter === "payment_pending"
-              ? row.status === "payment_pending"
+              ? row.payment_status === "pending_validation"
               : statusFilter === "with_proof"
                 ? Boolean(row.last_payment?.reference_file_url)
                 : statusFilter === "with_booking"
@@ -304,8 +306,8 @@ export default function OnboardingSolicitudesPage() {
     { id: "pending", label: "Pendientes", count: summary.pending, icon: Clock3 },
     {
       id: "payment_pending",
-      label: "Pago pendiente",
-      count: apps.filter((row) => row.status === "payment_pending").length,
+      label: "Validación pendiente",
+      count: summary.paymentPending,
       icon: ShieldAlert,
     },
     { id: "with_proof", label: "Con comprobante", count: summary.withProof, icon: FileBadge2 },
@@ -360,7 +362,7 @@ export default function OnboardingSolicitudesPage() {
         {[
           { label: "Total", value: `${summary.total}`, helper: "Solicitudes cargadas" },
           { label: "Por revisar", value: `${summary.pending}`, helper: "Estados previos a cobro" },
-          { label: "Pago pendiente", value: `${summary.paymentPending}`, helper: "Listas para validar" },
+          { label: "Validación pendiente", value: `${summary.paymentPending}`, helper: "Listas para validar" },
           { label: "Con comprobante", value: `${summary.withProof}`, helper: "Pago manual subido" },
           { label: "Con agenda", value: `${summary.withBooking}`, helper: "Entrega asignada" },
           { label: "Entregas hoy", value: `${summary.deliveryToday}`, helper: "Vence hoy" },
@@ -520,6 +522,7 @@ export default function OnboardingSolicitudesPage() {
               <OnboardingSolicitudDetail
                 app={selectedApp}
                 actionKey={actionKey}
+                readOnly={readOnly}
                 onClose={() => setSelectedId(null)}
                 onDelete={handleDeleteSelected}
                 onValidatePayment={(reference, action) => setPaymentConfirm({ reference, action })}
@@ -548,6 +551,7 @@ export default function OnboardingSolicitudesPage() {
           <OnboardingSolicitudDetail
             app={selectedApp}
             actionKey={actionKey}
+            readOnly={readOnly}
             onClose={() => setSelectedId(null)}
             onDelete={handleDeleteSelected}
             onValidatePayment={(reference, action) => setPaymentConfirm({ reference, action })}

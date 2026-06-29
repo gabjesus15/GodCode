@@ -4,8 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 import { PhoneFrame } from "./phone-frame";
+import type { LandingV3PhoneSlide } from "@/lib/landing/v3-config";
 
-const phones = [
+const DEFAULT_PHONES: LandingV3PhoneSlide[] = [
 	{
 		src: "/oishi-sushi-bio.png",
 		alt: "Página de enlaces de Oishi Sushi",
@@ -18,14 +19,18 @@ const phones = [
 		label: "Menú digital",
 		priority: true,
 	},
-] as const;
+];
+
+type HeroPhoneShowcaseProps = {
+	phones?: LandingV3PhoneSlide[];
+};
 
 const HERO_SCREEN_ASPECT = 390 / 858;
 
 const SWIPE_THRESHOLD_PX = 48;
 const AUTOPLAY_MS = 5500;
 
-export function HeroPhoneShowcase() {
+export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcaseProps) {
 	const [active, setActive] = useState(0);
 	const [paused, setPaused] = useState(false);
 	const [dragOffset, setDragOffset] = useState(0);

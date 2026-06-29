@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { sendOnboardingEmail } from "../../../../lib/onboarding/emails";
+import { activateCompanySubscription } from "@/lib/onboarding/billing-activation";
 import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
+import { normalizeCountryCode } from "@/lib/geo/country-registry";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { checkRateLimit } from "@/lib/infra/rate-limiter";
 
@@ -69,21 +71,8 @@ type ScheduledPlanChangeRow = {
   status: string;
 };
 
-const COUNTRY_NORMALIZE: Record<string, string> = {
-  Chile: "CL",
-  Venezuela: "VE",
-  CL: "CL",
-  VE: "VE",
-};
-
-function normalizeCountry(country: string | null | undefined): string | null {
-  if (!country) return null;
-  const c = country.trim();
-  return COUNTRY_NORMALIZE[c] ?? c;
-}
-
 async function resolvePaymentMethodsForCountry(country: string | null) {
-  const normalizedCountry = normalizeCountry(country);
+  const normalizedCountry = normalizeCountryCode(country);
   const { data: methods } = await supabaseAdmin
     .from("plan_payment_methods")
     .select("id,slug,name,countries,auto_verify")
@@ -381,11 +370,13 @@ export async function POST(req: NextRequest) {
     months?: number;
     methodSlug?: string;
     acceptedImpactIds?: string[];
+    reason?: string;
   };
 
   const targetPlanId = String(body.targetPlanId ?? "").trim();
   const months = Math.max(1, Math.min(24, Number(body.months ?? 1) || 1));
   const methodSlug = String(body.methodSlug ?? "").trim();
+  const clientReason = String(body.reason ?? "").trim().slice(0, 500);
   const acceptedImpactIds = Array.isArray(body.acceptedImpactIds)
     ? body.acceptedImpactIds.map((id) => String(id).trim()).filter(Boolean)
     : [];
@@ -588,10 +579,15 @@ export async function POST(req: NextRequest) {
       .from("companies")
       .update({
         plan_id: preview.targetPlan.id,
-        subscription_status: "active",
         updated_at: nowIso,
       })
       .eq("id", ctx.companyId);
+    await activateCompanySubscription({
+      supabaseAdmin,
+      companyId: ctx.companyId,
+      monthsPaid: preview.pricing.months,
+      now: new Date(nowIso),
+    });
   }
 
   await supabaseAdmin.from("saas_tickets").insert({
@@ -605,8 +601,9 @@ export async function POST(req: NextRequest) {
       `Monto: ${preview.pricing.amountDue} USD`,
       `Metodo: ${selectedMethod.name}`,
       `Referencia: ${paymentReference}`,
+      clientReason ? `Motivo cliente: ${clientReason}` : null,
       selectedMethod.auto_verify ? "Resultado: cambio aplicado automaticamente." : "Resultado: pendiente de validacion manual.",
-    ].join("\n"),
+    ].filter(Boolean).join("\n"),
     category: "billing",
     priority: "high",
     status: selectedMethod.auto_verify ? "resolved" : "open",

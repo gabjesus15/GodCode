@@ -1,14 +1,43 @@
 import { redirect } from "next/navigation";
+import { unstable_cache } from "next/cache";
 
 import { CustomerAccountClient } from "./CustomerAccountClient";
 import { getCustomerMembership } from "@/lib/super-admin/account-access";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { resolvePlanName } from "@/lib/plans/plan-i18n";
+import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 import { BranchSummary } from "@/components/customer-portal/shared/customer-account-types";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { resolveTenantPanelLoginUrl } from "@/lib/tenant/panel-url";
+import { buildBillingOptionsResponse, getCustomerAccountBillingContext } from "@/lib/tenant/customer-account-billing";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
 import { getCountryConfig } from "@/lib/geo/country-registry";
+
+const getCachedActivePlans = unstable_cache(
+  async () => {
+    const { data } = await supabaseAdmin
+      .from("plans")
+      .select("id,name,name_i18n,price,max_branches,max_users,features,marketing_lines")
+      .eq("is_active", true)
+      .order("price", { ascending: true });
+    return data ?? [];
+  },
+  ["customer-account-plans-catalog"],
+  { revalidate: 600 },
+);
+
+const getCachedActiveAddons = unstable_cache(
+  async () => {
+    const { data } = await supabaseAdmin
+      .from("addons")
+      .select("id,slug,name,description,type,price_monthly,price_one_time")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+    return data ?? [];
+  },
+  ["customer-account-addons-catalog"],
+  { revalidate: 600 },
+);
 
 type TicketRow = {
   id: string;
@@ -67,16 +96,23 @@ export default async function CustomerAccountPage() {
   }
 
   const companyId = membership.companyId;
+  const initialSyncedAt = new Date().toISOString();
 
-  const [{ data: company }, { data: branches }, { data: payments }, { data: companyAddons }, { data: plans }, { data: addons }, { data: tickets }, { data: branchEntitlements }] = await Promise.all([
+  const [plans, addons, billingCtx] = await Promise.all([
+    getCachedActivePlans(),
+    getCachedActiveAddons(),
+    getCustomerAccountBillingContext(companyId),
+  ]);
+
+  const [{ data: company }, { data: branches }, { data: payments }, { data: companyAddons }, { data: tickets }, { data: branchEntitlements }] = await Promise.all([
     supabaseAdmin
       .from("companies")
-      .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,plan:plans(name,name_i18n,price,max_branches,max_users)")
+      .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,plan:plans(id,name,name_i18n,price,max_branches,max_users,features)")
       .eq("id", companyId)
       .maybeSingle(),
     supabaseAdmin
       .from("branches")
-      .select("id,name,address,is_active,phone,schedule,instagram_url,whatsapp_url,map_url,origin_lat,origin_lng,payment_methods,pago_movil,zelle,transferencia_bancaria,stripe,mercadopago,paypal")
+      .select("id,name,address,is_active")
       .eq("company_id", companyId)
       .order("created_at", { ascending: false }),
     supabaseAdmin
@@ -90,16 +126,6 @@ export default async function CustomerAccountPage() {
       .select("id,addon_id,status,expires_at,addon:addons(id,name,slug,type)")
       .eq("company_id", companyId)
       .order("created_at", { ascending: false }),
-    supabaseAdmin
-      .from("plans")
-      .select("id,name,name_i18n,price,max_branches,max_users,features,marketing_lines")
-      .eq("is_active", true)
-      .order("price", { ascending: true }),
-    supabaseAdmin
-      .from("addons")
-      .select("id,slug,name,description,type,price_monthly,price_one_time")
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true }),
     supabaseAdmin
       .from("saas_tickets")
       .select("id,subject,description,category,priority,status,created_at,updated_at,last_message_at")
@@ -193,6 +219,35 @@ export default async function CustomerAccountPage() {
     };
   });
 
+  const companyPlanRow = (company?.plan as {
+    id?: string;
+    name?: string;
+    features?: unknown;
+    max_branches?: number | null;
+    max_users?: number | null;
+  } | null) ?? null;
+  const planOfferSnapshot = companyPlanRow
+    ? {
+        id: snapshot.planId ?? companyPlanRow.id ?? "",
+        name: companyPlanRow.name ?? snapshot.planName ?? "",
+        features: companyPlanRow.features,
+        max_branches: companyPlanRow.max_branches ?? snapshot.planMaxBranches,
+        max_users: companyPlanRow.max_users ?? snapshot.planMaxUsers,
+      }
+    : null;
+
+  const filteredAddons = ((addons ?? []) as Array<{ id: string; slug: string | null; name: string; description: string | null; type: string | null; price_monthly: number | null; price_one_time: number | null }>).filter((addon) => {
+    const decision = resolveAddonOfferForPlan(planOfferSnapshot, {
+      id: addon.id,
+      slug: addon.slug,
+      name: addon.name,
+      type: addon.type,
+    });
+    return decision.status !== "blocked";
+  });
+
+  const initialBillingOptions = billingCtx ? buildBillingOptionsResponse(companyId, billingCtx) : null;
+
   return (
     <CustomerAccountClient
         company={snapshot}
@@ -221,11 +276,11 @@ export default async function CustomerAccountPage() {
             marketing_lines: plan.marketing_lines,
           }))
         }
-        availableAddons={
-          ((addons ?? []) as Array<{ id: string; slug: string | null; name: string; description: string | null; type: string | null; price_monthly: number | null; price_one_time: number | null }>)
-        }
+        availableAddons={filteredAddons}
         initialTickets={initialTickets}
         initialBranchEntitlements={initialBranchEntitlements}
+        initialBillingOptions={initialBillingOptions}
+        initialSyncedAt={initialSyncedAt}
       />
   );
 }

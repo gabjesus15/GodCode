@@ -141,21 +141,28 @@ function replaceCloudinaryTransform(url: string, transform: string | null): stri
   return query ? `${out}?${query}` : out;
 }
 
-function mediaGroupForKey(key: string): "hero" | "features" | "slides" | "otros" {
-  if (key.startsWith("hero.")) return "hero";
-  if (key.startsWith("feature.")) return "features";
-  if (key.startsWith("slide.")) return "slides";
+function mediaGroupForKey(key: string): "hero" | "features" | "bento" | "contacto" | "otros" {
+  if (key.startsWith("v3.hero.")) return "hero";
+  if (key.startsWith("v3.feature.")) return "features";
+  if (key.startsWith("v3.bento.")) return "bento";
+  if (key.startsWith("v3.contact.")) return "contacto";
   return "otros";
 }
 
 function mediaTitleFromKey(key: string): string {
-  if (key === "hero.laptop") return "Hero laptop";
-  if (key === "hero.phone") return "Hero phone";
-  if (key === "feature.menu") return "Feature menu";
-  if (key === "feature.pos") return "Feature POS";
-  if (key === "feature.inventory") return "Feature inventario";
-  if (key.startsWith("slide.")) return `Slide ${key.replace("slide.", "")}`;
+  if (key === "v3.hero.phone.0") return "Hero · teléfono 1";
+  if (key === "v3.hero.phone.1") return "Hero · teléfono 2";
+  if (key === "v3.feature.pos") return "Funciones · POS";
+  if (key === "v3.feature.menu") return "Funciones · menú";
+  if (key === "v3.feature.inventory") return "Funciones · inventario";
+  if (key === "v3.bento.menu_mobile") return "Bento · menú móvil";
+  if (key === "v3.contact.instagram") return "Contacto · Instagram";
+  if (key === "v3.contact.whatsapp") return "Contacto · WhatsApp";
   return key;
+}
+
+function isContactAssetKey(key: string): boolean {
+  return key.startsWith("v3.contact.");
 }
 
 function prettyDate(iso: string): string {
@@ -255,7 +262,8 @@ export function LandingAdminClient() {
     const groups = {
       hero: [] as MediaRow[],
       features: [] as MediaRow[],
-      slides: [] as MediaRow[],
+      bento: [] as MediaRow[],
+      contacto: [] as MediaRow[],
       otros: [] as MediaRow[],
     };
     for (const row of orderedMediaRows) {
@@ -329,7 +337,12 @@ export function LandingAdminClient() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "No se pudieron guardar los assets");
-      setMessage({ type: "success", text: "Assets guardados. La landing ya usa estos valores." });
+      const mediaRes = await fetch("/api/super-admin/landing/media", { cache: "no-store" });
+      const mediaData = await mediaRes.json().catch(() => ({}));
+      if (mediaRes.ok) {
+        setMediaRows((mediaData.rows ?? []) as MediaRow[]);
+      }
+      setMessage({ type: "success", text: "Landing v3 guardada. Los cambios ya están activos en la web pública." });
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "No se pudieron guardar los assets" });
     } finally {
@@ -343,7 +356,10 @@ export function LandingAdminClient() {
 
   const moveMediaRow = useCallback((key: string, dir: -1 | 1) => {
     setMediaRows((prev) => {
-      const list = [...prev].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.key.localeCompare(b.key));
+      const group = mediaGroupForKey(key);
+      const list = [...prev]
+        .filter((row) => mediaGroupForKey(row.key) === group)
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.key.localeCompare(b.key));
       const idx = list.findIndex((row) => row.key === key);
       if (idx < 0) return prev;
       const next = idx + dir;
@@ -351,7 +367,10 @@ export function LandingAdminClient() {
 
       const copy = [...list];
       [copy[idx], copy[next]] = [copy[next], copy[idx]];
-      return copy.map((row, i) => ({ ...row, sort_order: (i + 1) * 10 }));
+      const orderByKey = new Map(copy.map((row, i) => [row.key, (i + 1) * 10]));
+      return prev.map((row) =>
+        orderByKey.has(row.key) ? { ...row, sort_order: orderByKey.get(row.key)! } : row,
+      );
     });
   }, []);
 
@@ -481,15 +500,15 @@ export function LandingAdminClient() {
   const tabs = [
     { id: "overview", label: "Métricas" },
     { id: "inbox", label: "Leads & Contactos" },
-    { id: "media", label: "Imágenes landing" },
+    { id: "media", label: "Landing v3" },
     { id: "webhooks", label: "Webhooks" },
   ];
 
   return (
     <div className="space-y-6">
       <SaasPageHeader
-        title="Landing admin"
-        description="Métricas, leads/contactos, assets y notificaciones del landing público."
+        title="Landing v3"
+        description="Configura imágenes, contacto y revisa métricas del landing público actual."
         icon={LayoutTemplate}
       />
 
@@ -620,9 +639,9 @@ export function LandingAdminClient() {
       {!loading && tab === "inbox" ? (
         <div className="grid gap-4 lg:grid-cols-2">
           <Card className="p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-semibold">Leads</p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <SaasSelect
                   value={leadFilter}
                   onChange={setLeadFilter}
@@ -666,9 +685,9 @@ export function LandingAdminClient() {
           </Card>
 
           <Card className="p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-semibold">Contactos</p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <SaasSelect
                   value={contactFilter}
                   onChange={setContactFilter}
@@ -721,9 +740,9 @@ export function LandingAdminClient() {
         <Card className="p-4 sm:p-5">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-base font-semibold">Editor visual de assets</p>
+              <p className="text-base font-semibold">Editor de landing v3</p>
               <p className="text-xs text-zinc-500">
-                Selecciona una imagen, ajusta su composición, revisa el preview y guarda cambios.
+                Hero, funciones, bento y contacto (Instagram / WhatsApp). Guardá para publicar en godcode.me.
               </p>
             </div>
             <Button onClick={() => void saveMedia()} disabled={readOnly || savingMedia}>
@@ -736,9 +755,9 @@ export function LandingAdminClient() {
             <div className="space-y-4">
               {([
                 ["hero", "Hero"],
-                ["features", "Features"],
-                ["slides", "Slides"],
-                ["otros", "Otros"],
+                ["features", "Funciones"],
+                ["bento", "Bento"],
+                ["contacto", "Contacto"],
               ] as const).map(([groupKey, title]) => {
                 const list = groupedMediaRows[groupKey];
                 if (list.length === 0) return null;
@@ -759,8 +778,14 @@ export function LandingAdminClient() {
                                 : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900"
                             }`}
                           >
-                            <div className="relative h-12 w-16 overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800">
-                              <Image src={row.src} alt={row.alt || row.key} fill sizes="64px" className="object-cover" />
+                            <div className="relative flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded bg-zinc-100 dark:bg-zinc-800">
+                              {isContactAssetKey(row.key) ? (
+                                <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-500">
+                                  {row.key.includes("instagram") ? "IG" : "WA"}
+                                </span>
+                              ) : (
+                                <Image src={row.src} alt={row.alt || row.key} fill sizes="64px" className="object-cover" />
+                              )}
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-xs font-semibold text-zinc-800 dark:text-zinc-100">{mediaTitleFromKey(row.key)}</p>
@@ -824,43 +849,47 @@ export function LandingAdminClient() {
                       </div>
                     </div>
 
-                    <div className="relative mb-3 h-64 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
-                      <Image
-                        src={selectedMediaRow.src}
-                        alt={selectedMediaRow.alt || selectedMediaRow.key}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 720px"
-                        className="object-cover"
-                      />
-                    </div>
+                    {!isContactAssetKey(selectedMediaRow.key) ? (
+                      <div className="relative mb-3 h-64 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
+                        <Image
+                          src={selectedMediaRow.src}
+                          alt={selectedMediaRow.alt || selectedMediaRow.key}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 720px"
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="mb-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-300">
+                        Valor publicado: <span className="font-medium text-zinc-900 dark:text-zinc-100">{selectedMediaRow.src}</span>
+                      </div>
+                    )}
 
                     <div className="mb-3 grid gap-2 sm:grid-cols-2">
                       <Input
                         value={selectedMediaRow.src}
                         onChange={(e) => updateMediaRow(selectedMediaRow.key, { src: e.target.value })}
-                        placeholder="URL imagen"
+                        placeholder={isContactAssetKey(selectedMediaRow.key) ? "URL o número" : "URL imagen"}
                         disabled={readOnly}
                       />
                       <Input
                         value={selectedMediaRow.alt ?? ""}
                         onChange={(e) => updateMediaRow(selectedMediaRow.key, { alt: e.target.value })}
-                        placeholder="Alt"
+                        placeholder="Alt / descripción"
                         disabled={readOnly}
                       />
-                      <Input
-                        value={selectedMediaRow.label ?? ""}
-                        onChange={(e) => updateMediaRow(selectedMediaRow.key, { label: e.target.value })}
-                        placeholder="Label (slides)"
-                        disabled={readOnly}
-                      />
-                      <Input
-                        value={selectedMediaRow.sub ?? ""}
-                        onChange={(e) => updateMediaRow(selectedMediaRow.key, { sub: e.target.value })}
-                        placeholder="Subtexto (slides)"
-                        disabled={readOnly}
-                      />
+                      {selectedMediaRow.key.startsWith("v3.hero.") ? (
+                        <Input
+                          value={selectedMediaRow.label ?? ""}
+                          onChange={(e) => updateMediaRow(selectedMediaRow.key, { label: e.target.value })}
+                          placeholder="Etiqueta del teléfono"
+                          disabled={readOnly}
+                        />
+                      ) : null}
                     </div>
 
+                    {!isContactAssetKey(selectedMediaRow.key) ? (
+                    <>
                     <div className="mb-3 flex flex-wrap items-center gap-2">
                       <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs dark:border-zinc-700">
                         {uploadingKey === selectedMediaRow.key ? "Subiendo..." : "Subir imagen"}
@@ -916,22 +945,24 @@ export function LandingAdminClient() {
                         </Button>
                       </div>
                     </div>
+                    </>
+                    ) : null}
                   </div>
 
                   <div className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-700">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Preview rápido de landing</p>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Preview landing v3</p>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
                         <div className="relative h-32 w-full">
-                          <Image src={(orderedMediaRows.find((r) => r.key === "hero.laptop")?.src) || selectedMediaRow.src} alt="Hero laptop preview" fill sizes="(max-width: 768px) 100vw, 320px" className="object-cover" />
+                          <Image src={(orderedMediaRows.find((r) => r.key === "v3.hero.phone.0")?.src) || selectedMediaRow.src} alt="Hero teléfono 1" fill sizes="(max-width: 768px) 100vw, 320px" className="object-cover" />
                         </div>
-                        <p className="px-2 py-1 text-[11px] text-zinc-500">Hero laptop</p>
+                        <p className="px-2 py-1 text-[11px] text-zinc-500">Hero teléfono 1</p>
                       </div>
                       <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
                         <div className="relative h-32 w-full">
-                          <Image src={(orderedMediaRows.find((r) => r.key === "hero.phone")?.src) || selectedMediaRow.src} alt="Hero phone preview" fill sizes="(max-width: 768px) 100vw, 320px" className="object-cover" />
+                          <Image src={(orderedMediaRows.find((r) => r.key === "v3.feature.menu")?.src) || selectedMediaRow.src} alt="Funciones menú" fill sizes="(max-width: 768px) 100vw, 320px" className="object-cover" />
                         </div>
-                        <p className="px-2 py-1 text-[11px] text-zinc-500">Hero phone</p>
+                        <p className="px-2 py-1 text-[11px] text-zinc-500">Funciones · menú</p>
                       </div>
                     </div>
                   </div>

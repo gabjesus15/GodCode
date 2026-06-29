@@ -23,6 +23,7 @@ export type CustomerAccountShellProps = {
   lastRealtimeSyncAt: string | null;
   /** true mientras la solicitud de snapshot está en vuelo. */
   isSyncing?: boolean;
+  onManualRefresh?: () => void;
   children: React.ReactNode;
 };
 
@@ -34,6 +35,7 @@ export function CustomerAccountShell({
   subscriptionStatusLabel,
   lastRealtimeSyncAt,
   isSyncing = false,
+  onManualRefresh,
   children,
 }: CustomerAccountShellProps) {
   const badgeVariant = subscriptionStatusVariant(subscriptionStatus);
@@ -98,8 +100,12 @@ export function CustomerAccountShell({
                     {subscriptionStatusLabel}
                   </Badge>
                   <div
-                    className={`flex items-center gap-1 text-[10px] text-[#a1a1a6]`}
+                    className={`flex items-center gap-1 text-[10px] text-[#a1a1a6] ${onManualRefresh ? "cursor-pointer hover:text-[#6e6e73]" : ""}`}
                     title={lastRealtimeSyncAt ?? "Sin sync"}
+                    onClick={onManualRefresh}
+                    onKeyDown={onManualRefresh ? (e) => { if (e.key === "Enter" || e.key === " ") onManualRefresh(); } : undefined}
+                    role={onManualRefresh ? "button" : undefined}
+                    tabIndex={onManualRefresh ? 0 : undefined}
                   >
                     <RefreshCw className={`h-2.5 w-2.5 ${isSyncing ? "animate-spin" : ""}`} aria-hidden />
                     <span>{syncLabel}</span>

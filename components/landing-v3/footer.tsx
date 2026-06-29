@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
-import { getLandingSocialLinks, type LandingSocialLink } from "@/lib/landing/contact";
+import type { LandingSocialLink } from "@/lib/landing/contact";
 
 import {
 	LandingInstagramIcon,
@@ -31,8 +31,7 @@ function contactLinkClassName(kind: LandingSocialLink["kind"]) {
 	return `${base} text-[#0d0d0d] hover:text-[#7c3aed]`;
 }
 
-export function Footer() {
-	const socialLinks = getLandingSocialLinks();
+export function Footer({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 	const directSocialLinks = socialLinks.filter((link) => link.kind !== "email");
 
 	return (

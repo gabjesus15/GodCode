@@ -54,7 +54,7 @@ export function useTickets(
   company:        CompanySnapshot,
 ): UseTicketsReturn {
   const [tickets,              setTickets]            = useState(initialTickets);
-  const [selectedTicketId,     setSelectedTicketId]   = useState(initialTickets[0]?.id ?? "");
+  const [selectedTicketId,     setSelectedTicketId]   = useState("");
   const [messages,             setMessages]           = useState<TicketMessage[]>([]);
   const [messageDraft,         setMessageDraft]       = useState("");
   const [messageLoading,       setMessageLoading]     = useState(false);
@@ -86,7 +86,7 @@ export function useTickets(
 
   useEffect(() => {
     if (!isOnSupportTab || !selectedTicketId) return;
-    const id = window.setInterval(() => void loadMessages(selectedTicketId), 10_000);
+    const id = window.setInterval(() => void loadMessages(selectedTicketId), 25_000);
     return () => window.clearInterval(id);
     /*
      * DEUDA TÉCNICA — Fase 8: migración a Supabase Realtime

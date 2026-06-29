@@ -8,6 +8,8 @@ import { buildLandingJsonLd } from "@/lib/landing/json-ld";
 import { buildLandingMetadata } from "@/lib/landing/metadata";
 import { getCountryFromHeaders } from "@/lib/geo/landing-geo-plans";
 import { getPublicPlansForLanding } from "@/lib/plans/public-plans";
+import { getLandingSocialLinks } from "@/lib/landing/contact-server";
+import { loadLandingV3Config } from "@/lib/landing/v3-config";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { getSubdomainFromHost, isMainDomain } from "@/lib/tenant/main-domain-host";
 import { DEFAULT_LOCALE } from "@/lib/i18n/config";
@@ -59,12 +61,16 @@ export default async function Home() {
 	}
 
 	const country = getCountryFromHeaders(hdrs);
-	const plans = await getPublicPlansForLanding(DEFAULT_LOCALE);
+	const [plans, v3Config, socialLinks] = await Promise.all([
+		getPublicPlansForLanding(DEFAULT_LOCALE),
+		loadLandingV3Config(),
+		getLandingSocialLinks(),
+	]);
 
 	return (
 		<>
 			<JsonLd plans={plans} country={country} />
-			<LandingV3Shell plans={plans} country={country} />
+			<LandingV3Shell plans={plans} country={country} v3Config={v3Config} socialLinks={socialLinks} />
 		</>
 	);
 }

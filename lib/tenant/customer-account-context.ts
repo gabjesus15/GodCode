@@ -27,7 +27,7 @@ export async function getCustomerAccountContext(): Promise<CustomerAccountContex
   }
 
   const membership = await getCustomerMembership({ authUserId: user.id, email });
-  if (!membership) return null;
+  if (!membership || membership.role !== "ceo") return null;
 
   return {
     authUserId: user.id,

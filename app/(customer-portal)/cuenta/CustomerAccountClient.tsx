@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { CustomerAccountShell } from "@/components/customer-portal/shell/CustomerAccountShell";
+import { CustomerAccountShellSkeleton } from "@/components/customer-portal/shell/CustomerAccountShellSkeleton";
 import { SUBSCRIPTION_STATUS_LABELS, PAYMENT_STATUS_LABELS, TICKET_CATEGORY_LABELS, TICKET_STATUS_LABELS } from "@/components/customer-portal/shared/customer-account-constants";
 import { displayStatus, fmtMoney, branchEntitlementStatusLabel } from "@/components/customer-portal/shared/customer-account-format";
 
@@ -32,13 +33,17 @@ import type {
 export type { CustomerAccountClientProps } from "@/components/customer-portal/shared/customer-account-types";
 
 export function CustomerAccountClient(props: CustomerAccountClientProps) {
-  const { company, branches, payments, activeAddons, availablePlans, availableAddons, initialTickets, initialBranchEntitlements } = props;
+  const {
+    company, branches, payments, activeAddons, availablePlans, availableAddons,
+    initialTickets, initialBranchEntitlements, initialBillingOptions, initialSyncedAt,
+  } = props;
 
   const [mounted,       setMounted]       = useState(false);
   const [tab,           setTab]           = useState<PortalTab>("resumen");
   const [activityFilter, setActivityFilter] = useState<"all" | "pago" | "ticket" | "extra">("all");
-  const [billingOptions, setBillingOptions] = useState<import("@/components/customer-portal/shared/customer-account-types").BillingOptionsResponse | null>(null);
+  const [billingOptions, setBillingOptions] = useState<import("@/components/customer-portal/shared/customer-account-types").BillingOptionsResponse | null>(initialBillingOptions ?? null);
   const [billingLoading, setBillingLoading] = useState(false);
+  const [billingLoadError, setBillingLoadError] = useState<string | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -49,7 +54,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
   const snapshot = useAccountSnapshot(
     payments, initialTickets, initialBranchEntitlements, activeAddons,
     company.subscriptionStatus, company.subscriptionEndsAt,
-    { enablePolling: tab !== "tienda" && tab !== "seguridad", companyId: company.id },
+    { enablePolling: tab !== "tienda" && tab !== "seguridad", companyId: company.id, initialSyncedAt },
   );
 
   const planManager = usePlanManager(
@@ -57,8 +62,9 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
     billingOptions?.activeBranchCount ?? branches.filter((b) => b.is_active !== false).length,
     snapshot.subscriptionEndsAt,
     snapshot.subscriptionStatus,
-    snapshot.refresh,
+    () => snapshot.refresh("full"),
     (status, endsAt) => { snapshot.setSubscriptionStatus(status); snapshot.setSubscriptionEndsAt(endsAt); },
+    { previewEnabled: tab === "plan" },
   );
 
   const storeTheme = useStoreTheme(
@@ -80,12 +86,13 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
     tickets.setOnNavigateToSupport(() => setTab("soporte"));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const canRequestBranchWithoutPayment = billingOptions?.requiresPaymentForExpansion === false;
+
   const branchFlow = useBranchFlow(
     company, billingOptions,
     billingOptions?.activeBranchCount ?? branches.filter((b) => b.is_active !== false).length,
     snapshot.subscriptionEndsAt,
-    billingOptions?.requiresPaymentForExpansion === false ||
-      (billingOptions?.maxBranches != null && (billingOptions?.activeBranchCount ?? 0) < billingOptions.maxBranches),
+    canRequestBranchWithoutPayment,
     (ticket) => tickets.setTickets((prev) => ticket ? [ticket, ...prev.filter((t) => t.id !== ticket.id)] : prev),
     (payment) => snapshot.setPaymentRows((prev) => [payment, ...prev]),
     (entitlement) => snapshot.setBranchEntitlements((prev) => [entitlement, ...prev]),
@@ -100,20 +107,30 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
 
   const loadBillingOptions = async () => {
     setBillingLoading(true);
+    setBillingLoadError(null);
     try {
       const res  = await fetch("/api/customer-account/billing", { cache: "no-store" });
       const data = (await res.json().catch(() => ({}))) as import("@/components/customer-portal/shared/customer-account-types").BillingOptionsResponse & { error?: string };
-      if (!res.ok) return;
+      if (!res.ok) {
+        setBillingLoadError(data.error || "No se pudo cargar opciones de facturacion.");
+        return;
+      }
       setBillingOptions(data);
       const cur = branchFlow.expansionMethodSlug;
       const next = cur && data.paymentMethods.some((m) => m.slug === cur)
         ? cur
         : data.paymentMethods[0]?.slug ?? "";
       branchFlow.setExpansionMethodSlug(next);
+    } catch {
+      setBillingLoadError("No se pudo cargar opciones de facturacion.");
     } finally { setBillingLoading(false); }
   };
 
-  useEffect(() => { void loadBillingOptions(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if ((tab === "plan" || tab === "sucursales") && !billingOptions && !billingLoading) {
+      void loadBillingOptions();
+    }
+  }, [tab, billingOptions, billingLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Track support tab for ticket polling
   useEffect(() => { tickets.setIsOnSupportTab(tab === "soporte"); }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -170,11 +187,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
     await unsavedGuard.guardedTabChange(nextTab, setTab);
   };
 
-  const canRequestBranchWithoutPayment =
-    billingOptions?.requiresPaymentForExpansion === false ||
-    (billingOptions?.maxBranches != null && activeBranchesCount < billingOptions.maxBranches);
-
-  if (!mounted) return null;
+  if (!mounted) return <CustomerAccountShellSkeleton />;
 
   return (
     <>
@@ -187,6 +200,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
         subscriptionStatusLabel={displayStatus(snapshot.subscriptionStatus, SUBSCRIPTION_STATUS_LABELS)}
         lastRealtimeSyncAt={snapshot.lastRealtimeSyncAt}
         isSyncing={snapshot.isSyncing}
+        onManualRefresh={() => void snapshot.refresh("full")}
       >
         {tab === "resumen" && (
           <AccountResumenTab
@@ -326,6 +340,9 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             acknowledgedAddonImpactIds={planManager.acknowledgedAddonImpactIds}
             setAcknowledgedAddonImpactIds={planManager.setAcknowledgedAddonImpactIds}
             branchEntitlements={snapshot.branchEntitlements}
+            planFeedbackError={planManager.planFeedbackError}
+            planFeedbackOk={planManager.planFeedbackOk}
+            clearPlanFeedback={planManager.clearPlanFeedback}
           />
         )}
 
@@ -425,6 +442,9 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             messageDraft={tickets.messageDraft}
             setMessageDraft={tickets.setMessageDraft}
             onSendMessage={tickets.handleSendMessage}
+            ticketFeedbackError={tickets.ticketFeedbackError}
+            ticketFeedbackOk={tickets.ticketFeedbackOk}
+            clearTicketFeedback={tickets.clearTicketFeedback}
           />
         )}
 
