@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseAuthScope } from "./utils/supabase/auth-scope";
-import { getAppUrl } from "@/lib/tenant/app-url";
+import { getAppHostname, buildAppUrl } from "@/lib/tenant/app-url";
 import {
   normalizeHostForLookup,
   resolveTenantSlugFromCustomDomainHost,
@@ -49,21 +49,7 @@ const tenantBaseDomain = (process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN ?? "")
   .replace(/^https?:\/\//, "")
   .replace(/\/$/, "")
   .toLowerCase();
-const canonicalAppUrl = getAppUrl();
-const canonicalAppHost = (() => {
-  try {
-    return new URL(canonicalAppUrl).host.toLowerCase();
-  } catch {
-    return "";
-  }
-})();
-const canonicalAppProtocol = (() => {
-  try {
-    return new URL(canonicalAppUrl).protocol;
-  } catch {
-    return "https:";
-  }
-})();
+const canonicalAppHost = getAppHostname();
 
 function maybeRedirectToCanonicalHost(req: NextRequest): NextResponse | null {
   if (!canonicalAppHost) return null;
@@ -94,9 +80,7 @@ function maybeRedirectToCanonicalHost(req: NextRequest): NextResponse | null {
     return null;
   }
 
-  const target = req.nextUrl.clone();
-  target.host = canonicalAppHost;
-  target.protocol = canonicalAppProtocol;
+  const target = new URL(buildAppUrl(req.nextUrl.pathname, req.nextUrl.search));
 
   return NextResponse.redirect(target, 308);
 }
@@ -300,8 +284,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
   if (subdomain) {
     // Onboarding es del dominio principal: redirigir a godcode.me/onboarding (o APP_URL)
     if (pathname.startsWith("/onboarding")) {
-      const base = getAppUrl().replace(/\/$/, "");
-      const target = new URL(pathname + req.nextUrl.search, base);
+      const target = new URL(buildAppUrl(pathname, req.nextUrl.search));
       return attachPublicDeliveryApiCors(req, NextResponse.redirect(target, 302));
     }
     if (
