@@ -2,16 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import type { PhotonAddressHit } from "@/lib/delivery/delivery-area-resolve";
 import { photonSearchAddressHits } from "@/lib/delivery/delivery-area-resolve";
-import { deliveryPublicRateOk } from "@/lib/delivery/delivery-public-limiter";
 import { haversineKm, isValidLatLng } from "@/lib/geo/geo";
 import { normalizeDeliverySettings } from "@/lib/delivery/delivery-settings";
+import { assertJsonRateLimit, assertPublicScopedRateLimit } from "@/lib/infra/public-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-
-function clientKey(req: NextRequest): string {
-	const xf = req.headers.get("x-forwarded-for");
-	if (xf) return xf.split(",")[0]?.trim() || "unknown";
-	return "unknown";
-}
 
 /**
  * Si el local no define tope de km, igual acotamos sugerencias para no listar coincidencias muy lejanas.
@@ -47,13 +41,8 @@ export async function GET(req: NextRequest) {
 			return NextResponse.json({ ok: true as const, results: [] });
 		}
 
-		const ip = clientKey(req);
-		if (!deliveryPublicRateOk(`addr-search:${ip}`, 40, 60_000)) {
-			return NextResponse.json(
-				{ error: "Demasiadas consultas. Espera un momento." },
-				{ status: 429 },
-			);
-		}
+		const limited = await assertJsonRateLimit(req, "geo_address_search", 40, 60_000);
+		if (limited) return limited;
 
 		const branchIdRaw = req.nextUrl.searchParams.get("branchId");
 		const branchId =
@@ -68,12 +57,13 @@ export async function GET(req: NextRequest) {
 		let maxKm = DEFAULT_SUGGESTION_RADIUS_KM;
 
 		if (branchId) {
-			if (!deliveryPublicRateOk(`addr-search:branch:${branchId}:${ip}`, 55, 60_000)) {
-				return NextResponse.json(
-					{ error: "Demasiadas consultas para esta sucursal." },
-					{ status: 429 },
-				);
-			}
+			const branchLimited = await assertPublicScopedRateLimit(
+				req,
+				`geo_address_search_branch:${branchId}`,
+				55,
+				60_000,
+			);
+			if (branchLimited) return branchLimited;
 
 			const { data: branch, error } = await supabaseAdmin
 				.from("branches")

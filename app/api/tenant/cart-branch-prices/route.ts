@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 
 import { jsonWithPublicCors, publicApiCorsHeaders } from "@/lib/infra/api-cors";
+import { assertPublicRateLimit } from "@/lib/infra/public-rate-limit";
 import { fetchCartBranchPrices } from "@/lib/orders/fetch-cart-branch-prices";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
@@ -17,6 +18,9 @@ export async function OPTIONS(req: NextRequest) {
 /** Precios de carrito por sucursal (service role; mismo criterio que checkout). */
 export async function POST(req: NextRequest) {
 	try {
+		const limited = await assertPublicRateLimit(req, "tenant_cart_branch_prices", 60, 60_000);
+		if (limited) return limited;
+
 		const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
 		if (!parsed.success) {
 			return jsonWithPublicCors(req, { ok: false as const, error: "bad_request" }, { status: 400 });

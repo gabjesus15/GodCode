@@ -6,6 +6,7 @@ import {
 	type OrderCatalogLine,
 } from "@/components/tenant/data/orders/build-order-items-from-branch";
 import { jsonWithPublicCors, publicApiCorsHeaders } from "@/lib/infra/api-cors";
+import { assertPublicRateLimit } from "@/lib/infra/public-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 const orderCatalogLineSchema = z.object({
@@ -44,6 +45,9 @@ export async function OPTIONS(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
 	try {
+		const limited = await assertPublicRateLimit(req, "tenant_order_catalog_items", 40, 60_000);
+		if (limited) return limited;
+
 		const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
 		if (!parsed.success) {
 			return jsonWithPublicCors(req, { ok: false as const, error: "bad_request" }, { status: 400 });

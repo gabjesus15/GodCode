@@ -80,9 +80,7 @@ export function CartProvider({
           setBcvRate(data.promedio);
         }
       })
-      .catch((err) => {
-        console.error("Error fetching BCV rate from DolarApi:", err);
-      });
+      .catch(() => {});
     return () => {
       active = false;
     };

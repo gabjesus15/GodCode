@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import currency from "currency.js";
 
 import { jsonWithPublicCors, publicApiCorsHeaders } from "@/lib/infra/api-cors";
+import { assertPublicRateLimit } from "@/lib/infra/public-rate-limit";
 import { resolveNamedAreaFromAddress } from "@/lib/delivery/delivery-area-resolve";
 import { UBER_NEEDS_COORDINATES_CODE } from "@/lib/delivery/delivery-quote-contract";
 import {
@@ -61,6 +62,9 @@ async function pickHandoffCode(): Promise<string> {
  */
 export async function POST(req: NextRequest) {
 	try {
+		const limited = await assertPublicRateLimit(req, "tenant_public_order_delivery", 15, 60_000);
+		if (limited) return limited;
+
 		const body = (await req.json().catch(() => ({}))) as {
 			orderId?: unknown;
 			orderType?: unknown;

@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { resolveAnalyticsPageContext } from "@/lib/analytics/page-context";
+import { enforceRateLimit } from "@/lib/infra/api-guard";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 
@@ -37,6 +38,9 @@ function hashIp(ip: string | null): string | null {
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = await enforceRateLimit(req, "analytics_events", 120, 60_000);
+    if (limited) return limited;
+
     const body = (await req.json().catch(() => ({}))) as EventBody;
     const eventName = sanitize(body.event || "page_view", 50) || "page_view";
     const path = sanitize(body.path || "/", 500) || "/";

@@ -4,22 +4,16 @@ import { resolveNamedAreaFromAddress } from "@/lib/delivery/delivery-area-resolv
 import {
 	deliveryGeocodeCacheGet,
 	deliveryGeocodeCacheSet,
-	deliveryPublicRateOk,
 	hashDeliveryAddressKey,
 } from "@/lib/delivery/delivery-public-limiter";
 import {
 	effectiveDeliveryPricingMode,
 	normalizeDeliverySettings,
 } from "@/lib/delivery/delivery-settings";
+import { assertJsonRateLimit, assertPublicScopedRateLimit } from "@/lib/infra/public-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 const CACHE_TTL_MS = 15 * 60 * 1000;
-
-function clientKey(req: NextRequest): string {
-	const xf = req.headers.get("x-forwarded-for");
-	if (xf) return xf.split(",")[0]?.trim() || "unknown";
-	return "unknown";
-}
 
 /**
  * Cotiza zona de envío a partir de dirección en texto (named_areas + address_matched).
@@ -27,6 +21,9 @@ function clientKey(req: NextRequest): string {
  */
 export async function POST(req: NextRequest) {
 	try {
+		const limited = await assertJsonRateLimit(req, "geo_delivery_geocode", 50, 60_000);
+		if (limited) return limited;
+
 		const body = (await req.json().catch(() => ({}))) as {
 			branchId?: unknown;
 			address?: unknown;
@@ -40,22 +37,17 @@ export async function POST(req: NextRequest) {
 		if (!branchId) {
 			return NextResponse.json({ error: "Falta branchId" }, { status: 400 });
 		}
+
+		const branchLimited = await assertPublicScopedRateLimit(
+			req,
+			`geo_delivery_geocode_branch:${branchId}`,
+			35,
+			60_000,
+		);
+		if (branchLimited) return branchLimited;
+
 		if (!Number.isFinite(subtotal) || subtotal < 0) {
 			return NextResponse.json({ error: "Subtotal inválido" }, { status: 400 });
-		}
-
-		const ip = clientKey(req);
-		if (!deliveryPublicRateOk(`geo:${ip}`, 50, 60_000)) {
-			return NextResponse.json(
-				{ error: "Demasiadas consultas. Espera un momento." },
-				{ status: 429 },
-			);
-		}
-		if (!deliveryPublicRateOk(`geo:${ip}:${branchId}`, 35, 60_000)) {
-			return NextResponse.json(
-				{ error: "Demasiadas consultas para esta sucursal." },
-				{ status: 429 },
-			);
 		}
 
 		const cacheKey = `${hashDeliveryAddressKey(branchId, address)}:s${Math.round(subtotal * 100)}`;

@@ -1,13 +1,15 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import Script from "next/script";
 import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { DevServiceWorkerCleanup } from "../components/dev-sw-cleanup";
+import { SilentConsole } from "../components/silent-console";
 import { GlobalAntiZoom } from "../components/theme/global-anti-zoom";
 import { PageAnalyticsTracker } from "../components/analytics/page-analytics-tracker";
-import { getMessagesForLocale } from "@/lib/i18n/messages";
+import { getClientMessagesForPath } from "@/lib/i18n/client-messages";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { LANDING_BRAND_ALTERNATE, LANDING_BRAND_NAME } from "@/lib/landing/brand";
 import { getAppUrl } from "@/lib/tenant/app-url";
@@ -71,7 +73,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getCurrentLocale();
-  const messages = getMessagesForLocale(locale);
+  const hdrs = await headers();
+  const pathname = hdrs.get("x-pathname") || "/";
+  const messages = getClientMessagesForPath(pathname, locale);
 
   return (
     <html lang={locale} suppressHydrationWarning data-scroll-behavior="smooth">
@@ -102,6 +106,7 @@ export default async function RootLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <GlobalAntiZoom />
           {/* Logo y slogan eliminados del layout global por petición del usuario */}
+          {process.env.NODE_ENV === "production" ? <SilentConsole /> : null}
           {process.env.NODE_ENV !== "production" ? <DevServiceWorkerCleanup /> : null}
           {process.env.NODE_ENV === "production" ? <PageAnalyticsTracker /> : null}
           {children}

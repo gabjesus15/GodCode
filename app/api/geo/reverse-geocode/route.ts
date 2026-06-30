@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { assertJsonRateLimit } from "@/lib/infra/public-rate-limit";
 import {
 	openstreetReverseGeocodeLine1Commune,
 } from "@/lib/delivery/openstreet-geocoding";
@@ -9,6 +10,9 @@ import {
  * Uso moderado: una petición por clic del usuario.
  */
 export async function GET(req: NextRequest) {
+	const limited = await assertJsonRateLimit(req, "geo_reverse_geocode", 25, 60_000);
+	if (limited) return limited;
+
 	const lat = Number(req.nextUrl.searchParams.get("lat"));
 	const lng = Number(req.nextUrl.searchParams.get("lng"));
 	if (!Number.isFinite(lat) || !Number.isFinite(lng)) {

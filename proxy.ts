@@ -241,6 +241,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
 
   const resolvedTenantSlug = subdomain || resolveTenantSlugFromPathname(pathname);
   const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", pathname);
   if (resolvedTenantSlug) {
     requestHeaders.set("x-tenant-slug", resolvedTenantSlug);
   }

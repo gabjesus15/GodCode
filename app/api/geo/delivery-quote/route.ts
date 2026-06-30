@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { jsonWithPublicCors, publicApiCorsHeaders } from "@/lib/infra/api-cors";
+import { assertPublicScopedRateLimit, assertPublicRateLimit } from "@/lib/infra/public-rate-limit";
 import { resolveNamedAreaFromAddress } from "@/lib/delivery/delivery-area-resolve";
 import { UBER_NEEDS_COORDINATES_CODE } from "@/lib/delivery/delivery-quote-contract";
 import {
@@ -26,6 +27,9 @@ function roundMoney(n: number): number {
  */
 export async function POST(req: NextRequest) {
 	try {
+		const limited = await assertPublicRateLimit(req, "geo_delivery_quote", 40, 60_000);
+		if (limited) return limited;
+
 		const body = (await req.json().catch(() => ({}))) as {
 			branchId?: unknown;
 			lat?: unknown;
@@ -47,6 +51,15 @@ export async function POST(req: NextRequest) {
 		if (!branchId) {
 			return jsonWithPublicCors(req, { error: "Falta branchId" }, { status: 400 });
 		}
+
+		const branchLimited = await assertPublicScopedRateLimit(
+			req,
+			`geo_delivery_quote_branch:${branchId}`,
+			25,
+			60_000,
+		);
+		if (branchLimited) return branchLimited;
+
 		if (!Number.isFinite(subtotal) || subtotal < 0) {
 			return jsonWithPublicCors(req, { error: "Subtotal inválido" }, { status: 400 });
 		}

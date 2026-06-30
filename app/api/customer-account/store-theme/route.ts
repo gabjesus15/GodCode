@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
+import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isSameStoreTheme, normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
@@ -14,6 +15,9 @@ export async function GET() {
   if (!ctx) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
+
+  const limited = await assertCustomerAccountRateLimit(ctx.companyId, "store_theme_get", 40, 60_000);
+  if (limited) return limited;
 
   const [{ data: company, error: companyError }, { data: draft, error: draftError }, { data: versions, error: versionsError }] = await Promise.all([
     supabaseAdmin
@@ -68,6 +72,9 @@ export async function PUT(req: NextRequest) {
   if (!ctx) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
+
+  const limited = await assertCustomerAccountRateLimit(ctx.companyId, "store_theme_put", 30, 60_000);
+  if (limited) return limited;
 
   const payload = (await req.json().catch(() => ({}))) as { theme?: unknown };
   const theme = toThemeConfig(payload.theme);

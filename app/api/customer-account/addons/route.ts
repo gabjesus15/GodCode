@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
+import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { normalizeCountryCode } from "@/lib/geo/country-registry";
 import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
@@ -229,6 +230,9 @@ export async function GET(req: NextRequest) {
   const ctx = await getCustomerAccountContext();
   if (!ctx) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
+  const limited = await assertCustomerAccountRateLimit(ctx.companyId, "addons_get", 30, 60_000);
+  if (limited) return limited;
+
   const addonId = String(req.nextUrl.searchParams.get("addonId") ?? "").trim();
   const quantity = Math.max(1, Math.min(50, Number(req.nextUrl.searchParams.get("quantity") ?? 1) || 1));
   const months = Math.max(1, Math.min(24, Number(req.nextUrl.searchParams.get("months") ?? 1) || 1));
@@ -252,6 +256,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await getCustomerAccountContext();
   if (!ctx) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
+  const limited = await assertCustomerAccountRateLimit(ctx.companyId, "addons_post", 10, 60_000);
+  if (limited) return limited;
 
   const body = (await req.json().catch(() => ({}))) as {
     addonId?: string;

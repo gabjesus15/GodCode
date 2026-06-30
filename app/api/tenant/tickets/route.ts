@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { parseJsonBody } from "@/lib/api/response";
 import { getTicketAuthContext } from "@/lib/api/ticket-auth";
 import { tenantTicketCreateSchema } from "@/lib/api/schemas/tenant/tickets";
+import { enforceScopedRateLimit } from "@/lib/infra/api-guard";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 type TicketStatus = "open" | "in_progress" | "waiting_customer" | "resolved" | "closed";
@@ -92,6 +93,9 @@ export async function POST(req: NextRequest) {
     if ("error" in ctx) {
       return NextResponse.json({ error: ctx.error }, { status: 403 });
     }
+
+    const limited = await enforceScopedRateLimit(`tenant_tickets_post:${ctx.companyId}`, 10, 60_000);
+    if (limited) return limited;
 
     const parsed = await parseJsonBody(req, tenantTicketCreateSchema);
     if (!parsed.ok) return parsed.response;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
+import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 export async function POST(req: NextRequest) {
@@ -8,6 +9,9 @@ export async function POST(req: NextRequest) {
   if (!ctx) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
+
+  const limited = await assertCustomerAccountRateLimit(ctx.companyId, "billing_reference_post", 15, 60_000);
+  if (limited) return limited;
 
   const body = (await req.json().catch(() => ({}))) as {
     paymentId?: string;

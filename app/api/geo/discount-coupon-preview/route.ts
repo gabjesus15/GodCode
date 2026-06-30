@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { computeCouponDiscountAmount } from "@/lib/discount/compute-coupon-discount";
+import { assertJsonRateLimit } from "@/lib/infra/public-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 const bodySchema = z.object({
@@ -17,6 +18,9 @@ function coalescePhoneEq(a: string | null | undefined, b: string | null | undefi
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = await assertJsonRateLimit(req, "geo_discount_coupon", 30, 60_000);
+    if (limited) return limited;
+
     const parsed = bodySchema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json({ ok: false as const, error: "bad_request" }, { status: 400 });

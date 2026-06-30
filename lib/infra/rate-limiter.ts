@@ -11,7 +11,6 @@ export async function checkRateLimit(
 	try {
 		const currentCount = await kvStore.incr(redisKey, ttlSeconds);
 		if (currentCount > maxRequests) {
-			console.warn(`[RATE_LIMIT_EXCEEDED] Key: ${key} | Max: ${maxRequests} | Window: ${windowMs}ms`);
 			return false;
 		}
 		return true;

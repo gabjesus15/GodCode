@@ -5,8 +5,16 @@ import bundleAnalyzer from "@next/bundle-analyzer";
 
 const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "true" });
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
+const isProduction = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  productionBrowserSourceMaps: false,
+  compiler: isProduction
+    ? {
+        removeConsole: true,
+      }
+    : undefined,
   // Evita que Turbopack infiera `app/` como raíz y luego falle con "Next.js package not found".
   turbopack: {
     root: resolve(__dirname),
@@ -88,6 +96,27 @@ const nextConfig: NextConfig = {
           {
             key: "Cache-Control",
             value: "public, max-age=0, must-revalidate",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+        ],
+      },
+      {
+        source: "/:path*.map",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store",
           },
         ],
       },

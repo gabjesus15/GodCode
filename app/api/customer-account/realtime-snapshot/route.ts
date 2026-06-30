@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
+import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 type SnapshotScope = "company" | "payments" | "tickets" | "addons" | "entitlements" | "full";
@@ -18,6 +19,9 @@ export async function GET(req: NextRequest) {
 	if (!ctx) {
 		return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 	}
+
+	const limited = await assertCustomerAccountRateLimit(ctx.companyId, "snapshot_get", 60, 60_000);
+	if (limited) return limited;
 
 	const scope = parseScope(req.nextUrl.searchParams.get("scope"));
 	const includeCompany = scope === "full" || scope === "company";

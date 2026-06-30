@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
+import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { sendOnboardingEmail } from "../../../../lib/onboarding/emails";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
@@ -33,6 +34,9 @@ export async function POST() {
   if (!ctx) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
+
+  const limited = await assertCustomerAccountRateLimit(ctx.companyId, "reactivate_post", 10, 60_000);
+  if (limited) return limited;
 
   const { data: company, error } = await supabaseAdmin
     .from("companies")
