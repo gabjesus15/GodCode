@@ -1,5 +1,7 @@
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
+import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedCompany } from "../../../../utils/tenant-cache";
 
@@ -7,17 +9,19 @@ type RouteContext = {
 	params: Promise<{ subdomain: string }>;
 };
 
-export async function GET(req: Request, context: RouteContext) {
+export async function GET(_req: Request, context: RouteContext) {
 	const { subdomain } = await context.params;
 	const company = await getCachedCompany(subdomain);
 
-	let baseUrl = "";
-	try {
-		baseUrl = new URL(req.url).origin;
-	} catch {
-		baseUrl = "";
-	}
-	const pathPrefix = baseUrl ? `${baseUrl}/${subdomain}` : `/${subdomain}`;
+	const hdrs = await headers();
+	const host =
+		hdrs.get("x-forwarded-host")?.split(",")[0]?.trim() ??
+		hdrs.get("host") ??
+		"";
+
+	const pathPrefix = isMainDomain(host) ? `/${subdomain}` : "";
+	const startUrl = `${pathPrefix}/menu`;
+	const scope = pathPrefix ? `${pathPrefix}/` : "/";
 
 	const status = company?.subscription_status?.toLowerCase();
 	const isUnavailable = status === "suspended" || status === "cancelled";
@@ -30,11 +34,9 @@ export async function GET(req: Request, context: RouteContext) {
 				"GodCode Menu";
 
 	const iconVersion = encodeURIComponent(
-		company ? tenantBrandingIconVersionSeed(company) : String(name)
+		company ? tenantBrandingIconVersionSeed(company) : String(name),
 	);
-	const tenantIcon = baseUrl ? `${baseUrl}/tenant-favicon?v=${iconVersion}` : `/tenant-favicon?v=${iconVersion}`;
-	const startUrl = baseUrl ? `${pathPrefix}/menu` : `/${subdomain}/menu`;
-	const scope = pathPrefix;
+	const tenantIcon = `/tenant-favicon?tenant=${encodeURIComponent(subdomain)}&v=${iconVersion}`;
 
 	const manifest = {
 		id: startUrl,
@@ -64,6 +66,7 @@ export async function GET(req: Request, context: RouteContext) {
 	return NextResponse.json(manifest, {
 		headers: {
 			"Cache-Control": "public, max-age=300",
+			"Content-Type": "application/manifest+json",
 		},
 	});
 }

@@ -18,6 +18,7 @@ import { getAppUrl } from "@/lib/tenant/app-url";
 import "./globals.css";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID?.trim() || "G-RG8T86FJZE";
+const IS_VERCEL = Boolean(process.env.VERCEL || process.env.VERCEL_ENV);
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -110,7 +111,7 @@ export default async function RootLayout({
           {process.env.NODE_ENV !== "production" ? <DevServiceWorkerCleanup /> : null}
           {process.env.NODE_ENV === "production" ? <PageAnalyticsTracker /> : null}
           {children}
-          {process.env.NODE_ENV === "production" ? (
+          {IS_VERCEL ? (
             <>
               <Analytics />
               <SpeedInsights />
