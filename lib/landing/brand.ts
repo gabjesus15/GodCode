@@ -5,4 +5,4 @@ export const LANDING_BRAND_NAME = "Gcode";
 export const LANDING_BRAND_ALTERNATE = "GodCode";
 
 export const LANDING_SUPPORT_EMAIL =
-	process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "hola@gcode.me";
+	process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "godcode.administrativo@gmail.com";

@@ -6,7 +6,7 @@ describe("getLandingSocialLinksFromEnv", () => {
 	it("normaliza usuario de Instagram y número de WhatsApp", () => {
 		process.env.NEXT_PUBLIC_LANDING_INSTAGRAM_URL = "@gcode.cl";
 		process.env.NEXT_PUBLIC_LANDING_WHATSAPP_URL = "+56912345678";
-		process.env.NEXT_PUBLIC_SUPPORT_EMAIL = "hola@gcode.me";
+		process.env.NEXT_PUBLIC_SUPPORT_EMAIL = "godcode.administrativo@gmail.com";
 
 		const links = getLandingSocialLinksFromEnv();
 
@@ -23,7 +23,7 @@ describe("getLandingSocialLinksFromEnv", () => {
 				}),
 				expect.objectContaining({
 					kind: "email",
-					href: "mailto:hola@gcode.me",
+					href: "mailto:godcode.administrativo@gmail.com",
 				}),
 			]),
 		);

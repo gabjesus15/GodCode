@@ -12,6 +12,7 @@ import { resolveTenantPanelLoginUrl } from "@/lib/tenant/panel-url";
 import { buildBillingOptionsResponse, getCustomerAccountBillingContext } from "@/lib/tenant/customer-account-billing";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
 import { getCountryConfig } from "@/lib/geo/country-registry";
+import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
 
 const getCachedActivePlans = unstable_cache(
   async () => {
@@ -140,7 +141,7 @@ export default async function CustomerAccountPage() {
       .limit(50),
   ]);
 
-  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "hola@godcode.me";
+  const supportEmail = LANDING_SUPPORT_EMAIL;
   const rawCountry = (company as { country?: string | null } | null)?.country ?? null;
   const countryConfig = getCountryConfig(rawCountry);
 

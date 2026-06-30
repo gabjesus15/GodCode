@@ -44,6 +44,12 @@ const slides = [
 	},
 ] as const;
 
+function barFillPercent(i: number, activeIndex: number, progress: number, reducedMotion: boolean): number {
+	if (i < activeIndex) return 100;
+	if (i > activeIndex) return 0;
+	return reducedMotion ? 100 : progress * 100;
+}
+
 type FeatureSplitProps = {
 	featureImages: LandingV3Config["featureImages"];
 };
@@ -166,17 +172,25 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 
 		const startTime = performance.now();
 		let raf = 0;
+		let advanceTimer = 0;
 
 		const tick = (now: number) => {
 			const elapsed = now - startTime;
 			const t = Math.min(elapsed / AUTOPLAY_MS, 1);
 			setSlideProgress(t);
-			if (t >= 1) goNext();
-			else raf = requestAnimationFrame(tick);
+			if (t < 1) {
+				raf = requestAnimationFrame(tick);
+			} else {
+				setSlideProgress(1);
+				advanceTimer = window.setTimeout(() => goNext(), 200);
+			}
 		};
 
 		raf = requestAnimationFrame(tick);
-		return () => cancelAnimationFrame(raf);
+		return () => {
+			cancelAnimationFrame(raf);
+			window.clearTimeout(advanceTimer);
+		};
 	}, [inView, paused, reducedMotion, index, goNext]);
 
 	useEffect(() => {
@@ -323,20 +337,13 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 								{slides.map((item, i) => (
 									<div
 										key={item.id}
-										className="h-1 flex-1 overflow-hidden rounded-full bg-[#1a1a1a]"
+										className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#27272a]"
+										aria-hidden
 									>
 										<div
-											className="h-full bg-[#7c3aed] transition-[width] duration-100 linear"
+											className="h-full w-full origin-left bg-[#7c3aed] will-change-transform"
 											style={{
-												width: reducedMotion
-													? i <= index
-														? "100%"
-														: "0%"
-													: i < index
-														? "100%"
-														: i === index
-															? `${slideProgress * 100}%`
-															: "0%",
+												transform: `scaleX(${barFillPercent(i, index, slideProgress, reducedMotion) / 100})`,
 											}}
 										/>
 									</div>

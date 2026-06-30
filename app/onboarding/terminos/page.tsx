@@ -4,7 +4,9 @@ import Link from "next/link";
 import { getAppUrl } from "@/lib/tenant/app-url";
 
 const COMPANY_NAME = "GodCode";
-const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "hola@godcode.me";
+import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
+
+const SUPPORT_EMAIL = LANDING_SUPPORT_EMAIL;
 
 export const metadata: Metadata = {
 	title: "Términos de servicio · GodCode",
