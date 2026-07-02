@@ -1,6 +1,7 @@
 import {
   CreditCard,
   FileText,
+  Home,
   LayoutDashboard,
   LifeBuoy,
   Palette,
@@ -12,6 +13,7 @@ import type { PortalTab } from "./customer-account-types";
 
 export const PORTAL_TAB_ORDER: PortalTab[] = [
   "resumen",
+  "perfil",
   "tienda",
   "plan",
   "sucursales",
@@ -22,6 +24,7 @@ export const PORTAL_TAB_ORDER: PortalTab[] = [
 
 export const PORTAL_TAB_LABELS: Record<PortalTab, string> = {
   resumen: "Resumen",
+  perfil: "Página de inicio",
   tienda: "Tienda",
   plan: "Plan y extras",
   sucursales: "Sucursales",
@@ -32,7 +35,8 @@ export const PORTAL_TAB_LABELS: Record<PortalTab, string> = {
 
 /** Etiquetas breves para la barra inferior en móvil. */
 export const PORTAL_TAB_MOBILE_LABELS: Record<PortalTab, string> = {
-  resumen: "Inicio",
+  resumen: "Resumen",
+  perfil: "Inicio web",
   tienda: "Tienda",
   plan: "Plan",
   sucursales: "Locales",
@@ -43,6 +47,7 @@ export const PORTAL_TAB_MOBILE_LABELS: Record<PortalTab, string> = {
 
 export const PORTAL_TAB_ICONS: Record<PortalTab, LucideIcon> = {
   resumen: LayoutDashboard,
+  perfil: Home,
   tienda: Palette,
   plan: CreditCard,
   sucursales: Store,

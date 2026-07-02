@@ -31,9 +31,6 @@ export const PRODUCT_CARD_STYLES = [
 
 export type ProductCardStyle = (typeof PRODUCT_CARD_STYLES)[number];
 
-export const PRODUCT_GRID_STYLES = ["auto", "cols-2", "cols-3", "cols-1", "cols-list"] as const;
-export type ProductGridStyle = (typeof PRODUCT_GRID_STYLES)[number];
-
 const PRODUCT_CARD_ALIASES: Record<string, ProductCardStyle> = {
   minimal: "layout-clean",
   flat: "layout-horizontal",
@@ -78,20 +75,8 @@ export function normalizeProductDetailsMode(value: unknown): ProductDetailsMode 
   return "modal-premium"; // Fallback to premium modal
 }
 
-export function normalizeProductGridStyle(value: unknown): ProductGridStyle {
-  const raw = String(value ?? "").trim();
-  if ((PRODUCT_GRID_STYLES as readonly string[]).includes(raw)) {
-    return raw as ProductGridStyle;
-  }
-  return "auto";
-}
-
 /** Clase CSS del grid (`grid-glass`, `grid-layout-clean`, …). */
-export function productCardGridClass(cardStyle: unknown, gridStyle?: unknown): string {
-  const normalizedGrid = normalizeProductGridStyle(gridStyle);
-  if (normalizedGrid !== "auto") {
-    return `grid-${normalizeProductCardStyle(cardStyle)} forced-${normalizedGrid}`;
-  }
+export function productCardGridClass(cardStyle: unknown): string {
   return `grid-${normalizeProductCardStyle(cardStyle)}`;
 }
 
@@ -119,7 +104,6 @@ export function normalizeStoreThemeConfig(
     navigationMode: normalizeNavigationMode(value.navigationMode ?? defaults.navigationMode),
     productCardStyle: normalizeProductCardStyle(value.productCardStyle ?? defaults.productCardStyle),
     productDetailsMode: normalizeProductDetailsMode(value.productDetailsMode ?? defaults.productDetailsMode),
-    productGridStyle: normalizeProductGridStyle(value.productGridStyle ?? defaults.productGridStyle),
   };
 }
 

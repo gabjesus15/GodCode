@@ -22,6 +22,8 @@ import { generateWSMessage } from "../services/whatsapp-message";
 import { parseOrderRpcPayload } from "../services/order-payload";
 import { paymentMethodRequiresReceipt } from "../services/menu-order-payment";
 import { getFormStrategy } from "@/lib/geo/country-forms";
+import { normalizeCountryCode } from "@/lib/geo/country-registry";
+import { paymentMethodUsesBolivaresInVenezuela } from "../utils/venezuela-payment-copy";
 import {
   ENHANCE_CATALOG_BEVERAGE_FALLBACK,
   ENHANCE_CATALOG_EXTRA_FALLBACK,
@@ -67,8 +69,6 @@ export function CartModal({
   currency?: string;
 }) {
   const submitOrderMutation = useSubmitOrder();
-  const countryCode = businessInfo?.country || "CL";
-  const strategy = useMemo(() => getFormStrategy(countryCode), [countryCode]);
 
   const t = useTranslations("tenant.cart.modal");
     const supabase = useMemo(() => createSupabaseBrowserClient("tenant"), []);
@@ -128,6 +128,7 @@ export function CartModal({
       localTotal = null,
       exchangeRate,
       currency = propCurrency,
+      country: cartCountry = "CL",
     } = useCart();
 
 
@@ -265,6 +266,35 @@ export function CartModal({
           fulfillment,
         ),
       [branchPaymentMethods, deliverySettings, fulfillment],
+    );
+
+    const effectiveCountryCode = useMemo(() => {
+      const resolved =
+        normalizeCountryCode(selectedBranchForCheckout?.country) ??
+        normalizeCountryCode(selectedBranch?.country) ??
+        normalizeCountryCode(businessInfo?.country) ??
+        normalizeCountryCode(cartCountry) ??
+        "CL";
+
+      if (resolved === "VE") return "VE";
+
+      const hasBolivarMethod = checkoutPaymentMethods.some((method) =>
+        paymentMethodUsesBolivaresInVenezuela(method),
+      );
+      if (hasBolivarMethod) return "VE";
+
+      return resolved;
+    }, [
+      businessInfo?.country,
+      cartCountry,
+      checkoutPaymentMethods,
+      selectedBranch?.country,
+      selectedBranchForCheckout?.country,
+    ]);
+
+    const strategy = useMemo(
+      () => getFormStrategy(effectiveCountryCode),
+      [effectiveCountryCode],
     );
 
     const deliveryPriceMode = useMemo(
@@ -686,7 +716,7 @@ export function CartModal({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       name: "",
-      phone: "+56 9 ",
+      phone: strategy.phonePrefix,
       rut: "",
       receiptFile: null,
       receiptPreview: undefined,
@@ -712,6 +742,20 @@ export function CartModal({
      }, [form]);
 
   const { handleSubmit, setValue, getValues, control } = form;
+
+  useEffect(() => {
+    const phone = getValues("phone")?.trim() ?? "";
+    const isUnsetOrLegacyDefault =
+      !phone ||
+      phone === "+56 9" ||
+      phone === "+56 9 " ||
+      phone === "+58" ||
+      phone === "+58 ";
+    if (isUnsetOrLegacyDefault) {
+      setValue("phone", strategy.phonePrefix);
+    }
+  }, [effectiveCountryCode, getValues, setValue, strategy.phonePrefix]);
+
   const formValues = useWatch({ control });
 
   // Sincronizar fulfillment y datos de delivery al form de react-hook-form
@@ -1162,12 +1206,12 @@ export function CartModal({
     });
     setPaymentMethodKey(null);
     setValue("name", "");
-    setValue("phone", "+56 9 ");
+    setValue("phone", strategy.phonePrefix);
     setValue("rut", "");
     setValue("receiptFile", null);
     setValue("receiptPreview", undefined);
     setShowFieldErrors(false);
-  }, [setValue]);
+  }, [setValue, strategy.phonePrefix]);
 
   const handleCloseCart = useCallback(() => {
     if (viewState.showSuccess) {
@@ -1496,12 +1540,15 @@ export function CartModal({
             currency: currency,
             localCurrency: currency === "USD" ? "VES" : "USD",
             localTotal: localTotal,
+            country: effectiveCountryCode,
+            exchangeRate: exchangeRate ?? null,
+            paymentMethodKey,
           },
           {
             titlePrefix: t("ws.titlePrefix"),
             businessFallback: t("ws.businessFallback"),
             customer: t("ws.customer"),
-            rut: t("ws.rut"),
+            rut: strategy.idName,
             phone: t("ws.phone"),
             typeLabel: t("ws.typeLabel"),
             typeDelivery: t("ws.typeDelivery"),
@@ -1689,9 +1736,9 @@ export function CartModal({
                   className={`cart-footer-enhance-expand${
                     activeEnhancePanel !== "none" ? " is-open" : ""
                   }`}
-                  hidden={activeEnhancePanel === "none"}
+                  aria-hidden={activeEnhancePanel === "none"}
                 >
-                  <div className="cart-footer-enhance-scroll">
+                  <div className="cart-footer-enhance-scroll" key={activeEnhancePanel}>
                     {activeEnhancePanel === "coupon" ? (
                       <CartCouponFields
                         variant="panel"

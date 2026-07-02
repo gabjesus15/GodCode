@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Image from "next/image";
-import { Plus, Minus, ChevronDown, X } from "lucide-react";
+import { Plus, ChevronDown, X } from "lucide-react";
 import { useCartStore } from "../cart/cart-store";
 import { getCloudinaryOptimizedUrl, isCloudinaryUrl } from "../utils/cloudinary";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
 import { normalizeProductCardStyle } from "@/lib/store-theme/theme-config";
 import {
   PRODUCT_CARD_FALLBACK_IMAGE,
+  ProductOfferBadges,
+  ProductQtyBadge,
   useProductCardLogic,
   useProductCartQuantity,
   type ProductCardProduct,
 } from "./product-card-shared";
+import { TenantButton, TenantStepper } from "./ui/tenant-ui";
 import {
   CleanCard,
   DetailedCard,
@@ -29,7 +32,7 @@ const FALLBACK_IMAGE = PRODUCT_CARD_FALLBACK_IMAGE;
 // -----------------------------------------------------------------------------
 // LAYOUT 0: Original (Glass)
 // -----------------------------------------------------------------------------
-const GlassCard = React.memo(function GlassCard({ product, priority = false, country = "CL", currency = "CLP", onClick, onProductClick, exchangeRate }: { product: ProductType; priority?: boolean; country?: string; currency?: string; onClick?: () => void; onProductClick?: (productId: string) => void; exchangeRate?: number | null }) {
+const GlassCard = React.memo(function GlassCard({ product, priority = false, country = "CL", currency = "CLP", detailsMode = "modal-premium", onClick, onProductClick, inlineDetails = false, exchangeRate }: { product: ProductType; priority?: boolean; country?: string; currency?: string; detailsMode?: string; onClick?: () => void; onProductClick?: (productId: string) => void; inlineDetails?: boolean; exchangeRate?: number | null }) {
   const addToCart = useCartStore((state) => state.addToCart);
   const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
   const quantity = useProductCartQuantity(product.id);
@@ -48,6 +51,8 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
   const CLOSE_ANIMATION_MS = 220;
 
   const isLongDesc = (product.description || "").length > 60;
+  const showDetailsHint = Boolean(onProductClick || onClick) && (inlineDetails || isLongDesc || detailsMode === "modal-premium");
+  const detailsHintLabel = detailsMode === "modal-premium" ? "Ver producto" : "Ver detalles";
   const isCloudinary = isCloudinaryUrl(product.image_url);
   const fallbackUrl = product.image_url || FALLBACK_IMAGE;
 
@@ -69,18 +74,6 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
   }, [isClosing, isExpanded]);
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    if (isExpanded && !isClosing) {
-      timer = setTimeout(() => {
-        closeDetails();
-      }, 8000);
-    }
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [closeDetails, isClosing, isExpanded]);
-
-  useEffect(() => {
     return () => {
       if (closeTimerRef.current) {
         clearTimeout(closeTimerRef.current);
@@ -100,6 +93,8 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
     decreaseQuantity?.(product.id);
   }, [decreaseQuantity, product.id]);
 
+  const isClickableForDetails = !!(onProductClick || onClick || isLongDesc || inlineDetails);
+
   const toggleExpand = useCallback(() => {
     if (onProductClick) {
       onProductClick(product.id);
@@ -109,7 +104,7 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
       onClick();
       return;
     }
-    if (!isLongDesc) return;
+    if (!isLongDesc && !inlineDetails) return;
     if (isExpanded) {
       closeDetails();
       return;
@@ -120,7 +115,7 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
     }
     setIsClosing(false);
     setIsExpanded(true);
-  }, [closeDetails, isExpanded, isLongDesc, onClick, onProductClick, product.id]);
+  }, [closeDetails, inlineDetails, isExpanded, isLongDesc, onClick, onProductClick, product.id]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -145,12 +140,12 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
 
   return (
     <div
-      className={`product-card glass ${(isExpanded || isClosing) ? "is-viewing-info" : ""} ${!isLongDesc ? "cursor-default" : "cursor-pointer"}`}
-      onClick={toggleExpand}
-      {...(isLongDesc ? { role: "button" } : {})}
-      tabIndex={isLongDesc ? 0 : -1}
-      onKeyDown={isLongDesc ? handleKeyDown : undefined}
-      {...(isLongDesc ? { 'aria-expanded': isExpanded } : {})}
+      className={`product-card glass tenant-ui-card ${(isExpanded || isClosing) ? "is-viewing-info" : ""} ${isClickableForDetails ? "cursor-pointer" : "cursor-default"}`}
+      onClick={isClickableForDetails ? toggleExpand : undefined}
+      {...(isClickableForDetails ? { role: "button" } : {})}
+      tabIndex={isClickableForDetails ? 0 : -1}
+      onKeyDown={isClickableForDetails ? handleKeyDown : undefined}
+      {...(isLongDesc || inlineDetails ? { 'aria-expanded': isExpanded } : {})}
       aria-label={`Ver detalles de ${product.name}`}
     >
       <div className={`product-image ${isBumping ? "bump-active" : ""}`}>
@@ -168,12 +163,9 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
           onError={() => setImageLoaded(true)}
         />
 
-        {product.is_special && <span className="badge-special">ESPECIAL</span>}
-        {product.has_discount && <span className="badge-discount">OFERTA</span>}
+        <ProductOfferBadges product={product} />
 
-        {mounted && quantity > 0 && (
-          <div className="qty-badge-overlay animate-bounce-in">{quantity}</div>
-        )}
+        <ProductQtyBadge quantity={quantity} hydrated={mounted} className="qty-badge-overlay animate-bounce-in" />
       </div>
 
       <div className="product-info">
@@ -195,20 +187,21 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
                   <X size={14} />
                 </button>
               </div>
+              <p className="glass-expand-title">{product.name}</p>
               <div className="scroll-area">
-                <p>{product.description}</p>
+                <p className="glass-expand-desc">{product.description}</p>
               </div>
             </div>
           ) : null}
         </div>
 
-        {isLongDesc && !isExpanded && !isClosing && (
+        {(showDetailsHint) && !isExpanded && !isClosing && (
           <div className="info-hint">
-            <ChevronDown size={14} /> Ver detalles
+            <ChevronDown size={14} /> {detailsHintLabel}
           </div>
         )}
 
-        <div className="product-footer">
+        <div className="product-footer" onClick={(e) => e.stopPropagation()}>
           <div className={`price-container ${product.has_discount ? "has-discount" : ""}`}>
             {product.has_discount && product.discount_price ? (
               <>
@@ -227,24 +220,22 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
           </div>
 
           {(!mounted || quantity === 0) ? (
-            <button
-              onClick={handleAdd}
+            <TenantButton
+              variant="default"
               className="btn-add"
+              onClick={handleAdd}
               aria-label={`Agregar ${product.name} al carrito`}
             >
               <Plus size={18} />
               <span>Agregar</span>
-            </button>
+            </TenantButton>
           ) : (
-            <div className="stepper-control animate-fade" onClick={e => e.stopPropagation()}>
-              <button onClick={handleDecrease} className="step-btn minus" aria-label="Disminuir cantidad">
-                <Minus size={16} />
-              </button>
-              <span className="step-count">{quantity}</span>
-              <button onClick={handleAdd} className="step-btn plus" aria-label="Aumentar cantidad">
-                <Plus size={16} />
-              </button>
-            </div>
+            <TenantStepper
+              quantity={quantity}
+              onDecrease={handleDecrease}
+              onIncrease={handleAdd}
+              className="stepper-control animate-fade"
+            />
           )}
         </div>
       </div>
@@ -261,10 +252,10 @@ export const ProductCard = React.memo(function ProductCard({
   country = "CL", 
   currency = "CLP", 
   cardStyle = "layout-clean",
+  detailsMode = "modal-premium",
   onClick,
   onProductClick,
-  isFavorite = false,
-  onToggleFavorite,
+  inlineDetails = false,
   exchangeRate
 }: { 
   product: ProductType; 
@@ -272,10 +263,10 @@ export const ProductCard = React.memo(function ProductCard({
   country?: string; 
   currency?: string; 
   cardStyle?: string;
+  detailsMode?: string;
   onClick?: () => void;
   onProductClick?: (productId: string) => void;
-  isFavorite?: boolean;
-  onToggleFavorite?: (productId: string) => void;
+  inlineDetails?: boolean;
   exchangeRate?: number | null;
 }) {
   const logic = useProductCardLogic(product, country);
@@ -285,22 +276,19 @@ export const ProductCard = React.memo(function ProductCard({
     onProductClick?.(product.id);
   }, [onProductClick, product.id]);
 
-  const stableToggleFavorite = useCallback(() => {
-    onToggleFavorite?.(product.id);
-  }, [onToggleFavorite, product.id]);
-
   const layoutProps = {
     product,
     logic,
     currency,
     priority,
     onClick: onProductClick ? stableProductClick : onClick,
+    detailsMode,
     exchangeRate,
   };
 
   switch (resolvedStyle) {
     case "glass":
-      return <GlassCard product={product} currency={currency} priority={priority} country={country} onClick={onClick} onProductClick={onProductClick} exchangeRate={exchangeRate} />;
+      return <GlassCard product={product} currency={currency} priority={priority} country={country} detailsMode={detailsMode} onClick={onClick} onProductClick={onProductClick} inlineDetails={inlineDetails} exchangeRate={exchangeRate} />;
     case "layout-detailed":
       return <DetailedCard {...layoutProps} />;
     case "layout-horizontal":
@@ -314,7 +302,7 @@ export const ProductCard = React.memo(function ProductCard({
     case "layout-skew":
       return <SkewCard {...layoutProps} />;
     case "layout-food":
-      return <FoodCard {...layoutProps} isFavorite={isFavorite} onToggleFavorite={stableToggleFavorite} />;
+      return <FoodCard {...layoutProps} />;
     case "layout-clean":
     default:
       return <CleanCard {...layoutProps} />;

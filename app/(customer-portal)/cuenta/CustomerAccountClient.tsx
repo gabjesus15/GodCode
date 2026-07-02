@@ -17,6 +17,7 @@ import { useUnsavedGuard }     from "@/components/customer-portal/hooks/use-unsa
 import { useConfirmDialog }    from "@/components/customer-portal/ui/ConfirmDialog";
 
 import { AccountResumenTab }    from "@/components/customer-portal/account/tabs/account-resumen-tab";
+import { AccountPerfilPublicoTab } from "@/components/customer-portal/account/tabs/account-perfil-publico-tab";
 import { AccountTiendaTab }     from "@/components/customer-portal/account/tabs/account-tienda-tab";
 import { AccountPlanTab }       from "@/components/customer-portal/account/tabs/account-plan-tab";
 import { AccountSucursalesTab } from "@/components/customer-portal/account/tabs/account-sucursales-tab";
@@ -34,7 +35,7 @@ export type { CustomerAccountClientProps } from "@/components/customer-portal/sh
 
 export function CustomerAccountClient(props: CustomerAccountClientProps) {
   const {
-    company, branches, payments, activeAddons, availablePlans, availableAddons,
+    company, branches, businessInfo, payments, activeAddons, availablePlans, availableAddons,
     initialTickets, initialBranchEntitlements, initialBillingOptions, initialSyncedAt,
   } = props;
 
@@ -223,6 +224,16 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
           />
         )}
 
+        {tab === "perfil" && (
+          <AccountPerfilPublicoTab
+            company={company}
+            branches={branches}
+            initialBusinessInfo={businessInfo}
+            storeThemePublished={storeTheme.storeThemePublished}
+            onNavigate={handleTabChange}
+          />
+        )}
+
         {tab === "tienda" && (
           <AccountTiendaTab
             company={company}
@@ -270,6 +281,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             importStoreThemeJson={(file) => storeTheme.importStoreThemeJson(file, company.name)}
             exportStoreThemeJson={() => storeTheme.exportStoreThemeJson(company.publicSlug || company.id)}
             discardStoreThemeChanges={storeTheme.discardStoreThemeChanges}
+            previewBranchId={branches[0]?.id ?? null}
           />
         )}
 

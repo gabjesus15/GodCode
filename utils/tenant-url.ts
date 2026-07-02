@@ -52,6 +52,15 @@ const getRuntimeHostBase = () => {
 };
 
 export const getTenantBaseDomain = () => {
+  const runtimeHost = getRuntimeHostBase();
+  if (runtimeHost && isLocalhostLike(runtimeHost)) {
+    return runtimeHost;
+  }
+
+  if (process.env.NODE_ENV === "development" && runtimeHost) {
+    return runtimeHost;
+  }
+
   const raw = process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN;
   if (raw && raw.trim()) {
     const normalizedRaw = normalizeBaseDomain(raw.trim());
@@ -63,7 +72,6 @@ export const getTenantBaseDomain = () => {
     }
   }
 
-  const runtimeHost = getRuntimeHostBase();
   if (runtimeHost) {
     return runtimeHost;
   }
@@ -182,3 +190,62 @@ export const getTenantMenuUrl = (slug: string, customDomain?: string | null) => 
   }
   return `${base}/menu`;
 };
+
+/** URL pública de la página de inicio del tenant (link-in-bio). */
+export const getTenantHomeUrl = (slug: string, customDomain?: string | null) => {
+	const base = getTenantUrl(slug, customDomain).replace(/\/$/, "");
+	return base || "";
+};
+
+/**
+ * URL del menú para el iframe de vista previa en /cuenta.
+ * Usa el mismo origen que el panel (localhost en dev, dominio actual en prod)
+ * para no apuntar a producción cuando el entorno es local.
+ */
+export const getTenantMenuPreviewUrl = (
+	slug: string,
+	customDomain?: string | null,
+	branchId?: string | null,
+) => {
+	const safeSlug = slug.trim();
+	if (!safeSlug) {
+		return "";
+	}
+
+	const custom = customDomain?.trim();
+	let base: string;
+	if (custom) {
+		base = getTenantMenuUrl(safeSlug, custom);
+	} else if (typeof window !== "undefined") {
+		const origin = window.location.origin.replace(/\/$/, "");
+		base = `${origin}/${safeSlug}/menu`;
+	} else {
+		base = getTenantMenuUrl(safeSlug, null);
+	}
+
+	if (!base) return "";
+	const branch = branchId?.trim();
+	if (!branch) return base;
+	const separator = base.includes("?") ? "&" : "?";
+	return `${base}${separator}branch=${encodeURIComponent(branch)}`;
+};
+
+/** Fusiona query params en una ruta de menú sin duplicar `?`. */
+export function mergeMenuPathQuery(
+	menuPath: string,
+	params: Record<string, string | null | undefined>,
+	origin?: string,
+): string {
+	const baseOrigin =
+		origin
+		?? (typeof window !== "undefined" ? window.location.origin : "http://localhost");
+	const url = new URL(menuPath, baseOrigin);
+	for (const [key, value] of Object.entries(params)) {
+		if (value == null || value === "") {
+			url.searchParams.delete(key);
+		} else {
+			url.searchParams.set(key, value);
+		}
+	}
+	return `${url.pathname}${url.search}`;
+}

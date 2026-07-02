@@ -4,7 +4,11 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 import type { ActiveSessionInfo, BranchInfo } from "../cart-modal-types";
-import { formatCartMoney } from "../utils/format-cart-money";
+import {
+	isVenezuelaCountry,
+	resolvePaymentAmountCopyValue,
+	resolvePaymentAmountDisplay,
+} from "../utils/venezuela-payment-copy";
 import { resolvePaymentMethodLabel } from "../constants";
 import { useCart } from "../use-cart";
 
@@ -32,14 +36,6 @@ export function CartOnlinePaymentDetails({
 
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [copiedAll, setCopiedAll] = useState(false);
-
-  const handleCopy = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => {
-      setCopiedKey(null);
-    }, 2000);
-  };
 
   let methodData = activeInfo[methodKey as keyof ActiveSessionInfo];
 
@@ -148,27 +144,46 @@ export function CartOnlinePaymentDetails({
     );
   }
 
-  // Calculate and format the total
-  const primaryTotal = formatCartMoney(cartTotal, currency);
-  let finalTotalValue = primaryTotal;
-  if (exchangeRate != null && exchangeRate > 0) {
-    const secondaryCurrency = currency === "USD" ? "VES" : "USD";
-    const secondaryTotal = formatCartMoney(cartTotal * exchangeRate, secondaryCurrency);
-    finalTotalValue = `${primaryTotal} / ${secondaryTotal}`;
-  }
+  // Calculate and format the total (display vs copy may differ in Venezuela)
+  const displayTotalValue = resolvePaymentAmountDisplay({
+    cartTotal,
+    currency,
+    exchangeRate,
+    country,
+  });
+  const copyTotalValue = resolvePaymentAmountCopyValue({
+    methodKey,
+    cartTotal,
+    currency,
+    exchangeRate,
+    country,
+  });
 
-  const totalLabel = currency === "VES" || country === "VE" ? "Monto" : (t("summary.total") || "Total");
+  const totalLabel = isVenezuelaCountry(country) || currency === "VES"
+    ? "Monto"
+    : (t("summary.total") || "Total");
 
   fields.push({
     key: "total",
     label: totalLabel,
-    value: finalTotalValue,
+    value: displayTotalValue,
   });
 
+  const resolveCopyValue = (field: PaymentDetailField) =>
+    field.key === "total" ? copyTotalValue : field.value;
+
+  const handleCopy = (field: PaymentDetailField) => {
+    const text = resolveCopyValue(field);
+    navigator.clipboard.writeText(text);
+    setCopiedKey(field.key);
+    setTimeout(() => {
+      setCopiedKey(null);
+    }, 2000);
+  };
+
   const handleCopyAll = () => {
-    // Copy all fields formatted nicely
     const textToCopy = fields
-      .map((f) => `${f.label}: ${f.value}`)
+      .map((f) => `${f.label}: ${resolveCopyValue(f)}`)
       .join("\n");
     navigator.clipboard.writeText(textToCopy);
     setCopiedAll(true);
@@ -187,7 +202,7 @@ export function CartOnlinePaymentDetails({
             <li
               key={field.key}
               className="copy-row"
-              onClick={() => handleCopy(field.value, field.key)}
+              onClick={() => handleCopy(field)}
             >
               <div className="copy-row-info">
                 <span className="copy-row-label">{field.label}</span>
@@ -198,7 +213,7 @@ export function CartOnlinePaymentDetails({
                 className={`copy-row-btn ${isCopied ? "copied" : ""}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleCopy(field.value, field.key);
+                  handleCopy(field);
                 }}
               >
                 {isCopied ? "¡Copiado!" : "Copiar"}

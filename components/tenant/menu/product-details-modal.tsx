@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ShoppingBag, Image as ImageIcon, Plus, Minus, ChevronRight } from "lucide-react";
+import { ChevronLeft, Image as ImageIcon, Plus, Minus, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { motion, useAnimation, useMotionValue, useTransform } from "framer-motion";
 import type { PanInfo } from "framer-motion";
@@ -225,9 +225,6 @@ export function ProductDetailsModal({
                   <ChevronRight size={24} />
                 </div>
               </div>
-              <button className="pdm-icon-btn pdm-cart-icon" aria-label="Carrito">
-                <ShoppingBag size={24} strokeWidth={1.5} />
-              </button>
             </div>
           )}
         </div>

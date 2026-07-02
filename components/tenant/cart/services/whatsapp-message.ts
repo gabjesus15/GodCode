@@ -1,5 +1,6 @@
 import type { CartFulfillment } from "../cart-context";
 import { formatCartMoney } from "../utils/format-cart-money";
+import { resolvePaymentAmountMessageValue } from "../utils/venezuela-payment-copy";
 
 export type WsFulfillmentMeta = {
   fulfillment: CartFulfillment;
@@ -18,6 +19,9 @@ export type WsFulfillmentMeta = {
   taxTotal?: number;
   taxRate?: number | null;
   taxIncluded?: boolean | null;
+  country?: string | null;
+  exchangeRate?: number | null;
+  paymentMethodKey?: string | null;
 };
 
 export type WsMessageCopy = {
@@ -141,12 +145,17 @@ export function generateWSMessage(
     }
   });
   
-  // Imprimir total dual
-  if (meta?.localTotal != null && meta.localTotal > 0 && meta.localCurrency) {
-    msg += `\n*${c.total}: ${formatCartMoney(grandTotal, currency)} (${formatCartMoney(meta.localTotal, meta.localCurrency)})*\n`;
-  } else {
-    msg += `\n*${c.total}: ${formatCartMoney(grandTotal, currency)}*\n`;
-  }
+  // Total según moneda del método de pago (Venezuela) o dual en otros países
+  const totalLine = resolvePaymentAmountMessageValue({
+    methodKey: paymentMethodKey ?? meta?.paymentMethodKey ?? null,
+    grandTotal,
+    currency,
+    exchangeRate: meta?.exchangeRate,
+    country: meta?.country,
+    localTotal: meta?.localTotal,
+    localCurrency: meta?.localCurrency,
+  });
+  msg += `\n*${c.total}: ${totalLine}*\n`;
   
   const methodLabel = paymentMethodLabel ?? paymentMethodKey ?? c.paymentUnknown;
   msg += `${c.payment}: ${methodLabel}\n`;

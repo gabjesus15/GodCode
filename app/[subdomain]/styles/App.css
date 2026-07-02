@@ -96,4 +96,9 @@
 .tenant-portal-cart,
 .tenant-portal-modal {
   pointer-events: auto;
+  z-index: var(--z-bottom-chrome, 1000);
+}
+
+#app-ui-layer {
+  z-index: var(--z-sticky-header, 100);
 }

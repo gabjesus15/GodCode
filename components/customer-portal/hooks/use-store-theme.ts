@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { debugIngest } from "@/lib/debug-ingest";
 import type { StoreThemeAssetField, StoreThemeAutosaveStatus, StoreThemeConfig, StoreThemeResponse } from "../shared/customer-account-types";
 import {
   buildContrastSuggestions,
@@ -46,7 +47,7 @@ export type UseStoreThemeReturn = {
   storeThemePublishComment: string;
   setStoreThemePublishComment: (v: string) => void;
   latestPublishedVersion:   StoreThemeResponse["versions"][number] | null;
-  saveStoreDraft:           () => Promise<void>;
+  saveStoreDraft:           () => Promise<boolean>;
   publishStoreTheme:        () => Promise<void>;
   restoreStoreVersion:      (versionId: string) => Promise<void>;
   discardStoreThemeChanges: () => void;
@@ -88,10 +89,10 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
   const storePreviewTheme = storeThemeDraft ?? storeThemePublished;
   const latestPublishedVersion = storeThemeVersions[0] ?? null;
 
-  const publicationStateLabel = !storeThemeHasUnpublished
-    ? "Produccion al dia"
-    : storeThemeHasLocalUnsavedChanges
-      ? "Borrador local sin guardar"
+  const publicationStateLabel = storeThemeHasLocalUnsavedChanges
+    ? "Borrador local sin guardar"
+    : !storeThemeHasUnpublished
+      ? "Produccion al dia"
       : "Borrador guardado pendiente";
 
   const storeThemeDiffRows = useMemo(() => {
@@ -146,27 +147,37 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
     });
   }, [storeThemeAssetLocalPreview.backgroundImageUrl, storeThemeAssetLocalPreview.logoUrl]);
 
-  const persistStoreDraft = useCallback(async (mode: "manual" | "autosave") => {
-    if (!storeThemeDraft) return;
+  const persistStoreDraft = useCallback(async (mode: "manual" | "autosave"): Promise<boolean> => {
+    if (!storeThemeDraft) return false;
     if (mode === "manual") { setStoreThemeSaving(true); setStoreThemeError(null); setStoreThemeOk(null); setStoreThemeAutosaveError(null); }
     else { setStoreThemeAutosaveStatus("saving"); setStoreThemeAutosaveError(null); }
-    setStoreThemeSaving(true);
     try {
       const res  = await fetch("/api/customer-account/store-theme", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ theme: storeThemeDraft }) });
       const data = (await res.json().catch(() => ({}))) as { error?: string; message?: string; draft?: { theme?: StoreThemeConfig; updatedAt?: string | null; updatedByEmail?: string | null; hasUnpublishedChanges?: boolean } };
       if (!res.ok) {
         const err = data.error || "No se pudo guardar el borrador.";
         if (mode === "manual") setStoreThemeError(err); else { setStoreThemeAutosaveStatus("error"); setStoreThemeAutosaveError(err); }
-        return;
+        return false;
       }
       const savedTheme = data.draft?.theme ?? storeThemeDraft;
+      setStoreThemeDraft(savedTheme);
       setStoreThemeLastSavedSignature(getStoreThemeSignature(savedTheme));
+      debugIngest({
+        location: "use-store-theme.ts:persistStoreDraft",
+        message: "draft saved",
+        data: { mode, navbarType: savedTheme.navbarType, primaryColor: savedTheme.primaryColor },
+        hypothesisId: "H6",
+        runId: "post-fix-2",
+      });
       setStoreThemeUpdatedAt(data.draft?.updatedAt ?? new Date().toISOString());
       setStoreThemeUpdatedBy((prev) => data.draft?.updatedByEmail ?? prev);
       setStoreThemeHasUnpublished(Boolean(data.draft?.hasUnpublishedChanges ?? true));
       if (mode === "manual") setStoreThemeOk(data.message || "Borrador guardado.");
       setStoreThemeAutosaveStatus("saved");
-    } finally { setStoreThemeSaving(false); }
+      return true;
+    } finally {
+      if (mode === "manual") setStoreThemeSaving(false);
+    }
   }, [storeThemeDraft]);
 
   // Autosave debounce
@@ -184,6 +195,15 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
   const publishStoreTheme = async () => {
     setStoreThemePublishing(true); setStoreThemeError(null); setStoreThemeOk(null);
     try {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+      if (storeThemeHasLocalUnsavedChanges) {
+        const saved = await persistStoreDraft("manual");
+        if (!saved) return;
+      }
+
       const res  = await fetch("/api/customer-account/store-theme/publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ comment: storeThemePublishComment, changedFields: storeThemeDiffRows.map((r) => r.label) }) });
       const data = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
       if (!res.ok) { setStoreThemeError(data.error || "No se pudo publicar."); return; }
@@ -208,9 +228,25 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
     const ok = await onConfirmDiscard();
     if (!ok) return;
     setStoreThemeError(null);
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
     setStoreThemeDraft(storeThemePublished);
+    const res = await fetch("/api/customer-account/store-theme", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ theme: storeThemePublished }),
+    });
+    const data = (await res.json().catch(() => ({}))) as { error?: string; draft?: { hasUnpublishedChanges?: boolean } };
+    if (!res.ok) {
+      setStoreThemeError(data.error || "No se pudo descartar el borrador.");
+      return;
+    }
+    setStoreThemeLastSavedSignature(getStoreThemeSignature(storeThemePublished));
+    setStoreThemeHasUnpublished(Boolean(data.draft?.hasUnpublishedChanges));
+    setStoreThemeAutosaveStatus("idle");
     setStoreThemeOk("Borrador restaurado a produccion.");
-    setStoreThemeHasUnpublished(false);
   };
 
   const applyStoreThemeTemplate = () => {

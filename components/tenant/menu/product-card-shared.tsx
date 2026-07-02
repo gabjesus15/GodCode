@@ -2,11 +2,18 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { Plus, Minus, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 
 import { useCartStore } from "../cart/cart-store";
 import { getCloudinaryOptimizedUrl, isCloudinaryUrl } from "../utils/cloudinary";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
+import {
+	TenantBadge,
+	TenantButton,
+	TenantOfferBadgeStack,
+	TenantStepper,
+	type TenantButtonVariant,
+} from "./ui/tenant-ui";
 
 export interface ProductCardProduct {
   id: string;
@@ -264,86 +271,120 @@ export const ProductCardImage = React.memo(function ProductCardImage({
 });
 
 export const ProductQtyBadge = React.memo(function ProductQtyBadge({
-  quantity,
-  hydrated,
-  className = "product-card-qty-badge",
+	quantity,
+	hydrated,
+	className = "product-card-qty-badge",
 }: {
-  quantity: number;
-  hydrated: boolean;
-  className?: string;
+	quantity: number;
+	hydrated: boolean;
+	className?: string;
 }) {
-  if (!hydrated || quantity <= 0) return null;
-  return (
-    <div className={className} aria-label={`${quantity} en el carrito`}>
-      {quantity}
-    </div>
-  );
+	if (!hydrated || quantity <= 0) return null;
+	return (
+		<TenantBadge variant="default" className={className} aria-label={`${quantity} en el carrito`}>
+			{quantity}
+		</TenantBadge>
+	);
 });
 
 export function ProductOfferBadges({
-  product,
-  hotClassName = "layout-badge-hot",
-  specialClassName = "layout-badge-special",
+	product,
 }: {
-  product: ProductCardProduct;
-  hotClassName?: string;
-  specialClassName?: string;
+	product: ProductCardProduct;
+	hotClassName?: string;
+	specialClassName?: string;
 }) {
-  if (product.has_discount) {
-    return <span className={hotClassName}>Oferta</span>;
-  }
-  if (product.is_special) {
-    return <span className={specialClassName}>Especial</span>;
-  }
-  return null;
+	if (!product.has_discount && !product.is_special) return null;
+
+	return (
+		<TenantOfferBadgeStack>
+			{product.has_discount ? <TenantBadge variant="destructive">Oferta</TenantBadge> : null}
+			{product.is_special ? <TenantBadge variant="secondary">Especial</TenantBadge> : null}
+		</TenantOfferBadgeStack>
+	);
 }
 
+export const ProductDetailsAffordance = React.memo(function ProductDetailsAffordance({
+  detailsMode,
+  hasDescription,
+  className = "product-details-affordance",
+  subtle = false,
+}: {
+  detailsMode?: string;
+  hasDescription: boolean;
+  className?: string;
+  subtle?: boolean;
+}) {
+  const isModal = detailsMode !== "inline";
+  if (!isModal && !hasDescription) return null;
+  const label = isModal ? "Ver producto" : "Ver más";
+
+  return (
+    <span className={`${className}${subtle ? " is-subtle" : ""}`} aria-hidden>
+      {label}
+    </span>
+  );
+});
+
 type CardCartActionsProps = {
-  logic: ProductCardLogic;
-  addClassName?: string;
-  stepperClassName?: string;
-  addLabel?: string;
-  compact?: boolean;
-  icon?: "plus" | "bag";
-  disableStepper?: boolean;
+	logic: ProductCardLogic;
+	addClassName?: string;
+	stepperClassName?: string;
+	addLabel?: string;
+	compact?: boolean;
+	icon?: "plus" | "bag";
+	addVariant?: TenantButtonVariant;
 };
 
 export const CardCartActions = React.memo(function CardCartActions({
-  logic,
-  addClassName = "layout-add-btn",
-  stepperClassName = "layout-stepper",
-  addLabel = "Agregar",
-  compact = false,
-  icon = "plus",
-  disableStepper = false,
+	logic,
+	addClassName = "layout-add-btn",
+	stepperClassName = "layout-stepper",
+	addLabel = "Agregar",
+	compact = false,
+	icon = "plus",
+	addVariant,
 }: CardCartActionsProps) {
-  const { quantity, hydrated, handleAdd, handleDecrease } = logic;
-  const showStepper = hydrated && quantity > 0 && !disableStepper;
+	const { quantity, hydrated, handleAdd, handleDecrease } = logic;
+	const showStepper = hydrated && quantity > 0;
+	const resolvedVariant = addVariant ?? (compact ? "outline" : "default");
 
-  if (showStepper) {
-    return (
-      <div className={stepperClassName} onClick={(e) => e.stopPropagation()} role="group" aria-label="Cantidad en carrito">
-        <button type="button" onClick={handleDecrease} aria-label="Quitar uno">
-          <Minus size={compact ? 14 : 16} strokeWidth={2.5} />
-        </button>
-        <span aria-live="polite">{quantity}</span>
-        <button type="button" onClick={handleAdd} aria-label="Agregar uno">
-          <Plus size={compact ? 14 : 16} strokeWidth={2.5} />
-        </button>
-      </div>
-    );
-  }
+	if (showStepper) {
+		return (
+			<TenantStepper
+				quantity={quantity}
+				onDecrease={handleDecrease}
+				onIncrease={handleAdd}
+				className={stepperClassName}
+				compact={compact}
+			/>
+		);
+	}
 
-  return (
-    <button type="button" className={addClassName} onClick={handleAdd} aria-label="Agregar al carrito">
-      {compact ? (
-        icon === "bag" ? <ShoppingBag size={20} aria-hidden /> : <Plus size={20} strokeWidth={2.5} aria-hidden />
-      ) : (
-        addLabel
-      )}
-    </button>
-  );
+	return (
+		<TenantButton
+			variant={resolvedVariant}
+			size={compact ? "icon" : "default"}
+			className={addClassName}
+			onClick={handleAdd}
+			aria-label="Agregar al carrito"
+		>
+			{compact ? (
+				icon === "bag" ? <ShoppingBag size={18} aria-hidden /> : <PlusGlyph size={18} />
+			) : (
+				addLabel
+			)}
+		</TenantButton>
+	);
 });
+
+function PlusGlyph({ size }: { size: number }) {
+	return (
+		<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+			<path d="M12 5v14M5 12h14" strokeLinecap="round" />
+		</svg>
+	);
+}
 
 export function ProductPriceBlock({
   pricing,

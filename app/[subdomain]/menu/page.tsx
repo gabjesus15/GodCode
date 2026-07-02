@@ -9,6 +9,7 @@ import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedMenuStaticData, getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
 import { getCachedCompany } from "@/utils/tenant-cache";
+import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 
 // ISR: re-generate at most every 60 s. Menu updates (product edits, theme publish)
 // are pushed instantly via revalidateTag(`menu:${companyId}`) from:
@@ -358,14 +359,13 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
     }));
 
     // --- G. Casteo seguro de JSONB (Evita warnings silenciosos) ---
-    const themeConfig = company.theme_config as Record<string, unknown> | null;
-    const name = (themeConfig?.displayName as string) ?? company.name ?? "GodCode";
-    const logoUrl = parseThemeLogoUrl(company?.theme_config) || null;
-    const navbarType = (themeConfig?.navbarType as string) || "category-tabs";
-    const navigationMode = (themeConfig?.navigationMode as string) || "scroll";
-    const productCardStyle = (themeConfig?.productCardStyle as string) || "glass";
-    const productDetailsMode = (themeConfig?.productDetailsMode as string) || "modal-premium";
-    const productGridStyle = (themeConfig?.productGridStyle as string) || "auto";
+    const theme = normalizeStoreThemeConfig(company.theme_config, company.name ?? "GodCode");
+    const name = theme.displayName || company.name || "GodCode";
+    const logoUrl = theme.logoUrl?.trim() || parseThemeLogoUrl(company?.theme_config) || null;
+    const navbarType = theme.navbarType;
+    const navigationMode = theme.navigationMode;
+    const productCardStyle = theme.productCardStyle;
+    const productDetailsMode = theme.productDetailsMode;
     const businessInfo = {
       name,
       phone: company.phone ?? null,
@@ -477,7 +477,6 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
           navigationMode={navigationMode}
           productCardStyle={productCardStyle}
           productDetailsMode={productDetailsMode}
-          productGridStyle={productGridStyle}
           onlineOrderingEnabled={onlineOrderingEnabled}
         />
       </>

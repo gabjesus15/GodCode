@@ -245,7 +245,9 @@
         "validationItems": {
           "validName": "nombre valido",
           "validRut": "RUT valido",
+          "validId": "{id} valido",
           "validPhone": "telefono completo (+56 9)",
+          "validPhoneVe": "telefono completo (+58)",
           "transferReceipt": "comprobante de transferencia",
           "name": "nombre",
           "phone": "telefono",

@@ -142,7 +142,10 @@ export function CartItemRow({
         </div>
       </div>
 
-      {noteOpen ? (
+      <div
+        className={`cart-item-note-panel-wrap${noteOpen ? " is-open" : ""}`}
+        aria-hidden={!noteOpen}
+      >
         <div className="cart-item-note-panel">
           <textarea
             className="form-input cart-item-note-input"
@@ -151,9 +154,10 @@ export function CartItemRow({
             placeholder={t("notes.placeholder")}
             rows={2}
             aria-label={t("notes.inputAria")}
+            tabIndex={noteOpen ? 0 : -1}
           />
         </div>
-      ) : null}
+      </div>
 
       <button
         type="button"

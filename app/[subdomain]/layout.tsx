@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { headers } from "next/headers";
 
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
+import { buildTenantThemeCssString } from "@/lib/store-theme/apply-theme-css-vars";
+import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedCompany } from "../../utils/tenant-cache";
 import "./styles/ProductCardLayouts.css";
@@ -69,32 +71,6 @@ interface TenantThemeConfig {
   logoUrl?: string;
   imageUrl?: string;
 }
-
-const toRgba = (hex: string, alpha: number, fallback: string) => {
-  if (!hex) return fallback;
-  const normalized = hex.trim();
-  const shortMatch = /^#([a-fA-F0-9]{3})$/.exec(normalized);
-  const longMatch = /^#([a-fA-F0-9]{6})$/.exec(normalized);
-
-  const hexValue = shortMatch
-    ? shortMatch[1]
-        .split("")
-        .map((char) => char + char)
-        .join("")
-    : longMatch
-      ? longMatch[1]
-      : null;
-
-  if (!hexValue) return fallback;
-
-  const r = Number.parseInt(hexValue.slice(0, 2), 16);
-  const g = Number.parseInt(hexValue.slice(2, 4), 16);
-  const b = Number.parseInt(hexValue.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
-
-const sanitizeCssValue = (value: string) =>
-  value.replace(/<|>|"|'|`/g, "").trim();
 
 export async function generateMetadata({
   params,
@@ -203,7 +179,7 @@ export default async function TenantLayout({
   const hdrs = await headers();
   const resolvedParams = await params;
   const company = await getCachedCompany(resolvedParams.subdomain);
-  const theme = (company?.theme_config as unknown as TenantThemeConfig) ?? {};
+  const theme = normalizeStoreThemeConfig(company?.theme_config, company?.name ?? "");
   const host =
     hdrs.get("x-forwarded-host")?.split(",")[0]?.trim() ??
     hdrs.get("host") ??
@@ -212,24 +188,7 @@ export default async function TenantLayout({
   const pathPrefix = isMainDomain(host) ? `/${resolvedParams.subdomain}` : "";
   const baseUrl = `${protocol}://${host}${pathPrefix}`;
 
-  const primaryColor = theme.primaryColor ?? "#111827";
-  const secondaryColor = theme.secondaryColor ?? primaryColor;
-  const priceColor = theme.priceColor ?? "#ff4757";
-  const discountColor = theme.discountColor ?? "#25d366";
-  const hoverColor = theme.hoverColor ?? "#ff2e40";
-  const accentShadow = toRgba(primaryColor, 0.3, "rgba(255, 71, 87, 0.3)");
-  const accentShadowStrong = toRgba(
-    primaryColor,
-    0.5,
-    "rgba(255, 71, 87, 0.5)"
-  );
-  const cardBorder = toRgba(primaryColor, 0.18, "rgba(255, 255, 255, 0.1)");
-  const backgroundColor = theme.backgroundColor ?? "#0a0a0a";
-  const backgroundImageUrl = theme.backgroundImageUrl ?? "/tenant/menu-pattern.webp";
-  const backgroundImage = backgroundImageUrl
-    ? `url(${backgroundImageUrl}), url(/tenant/menu-pattern.webp)`
-    : "url(/tenant/menu-pattern.webp)";
-  const tenantThemeCss = `html, body { background-color: ${sanitizeCssValue(backgroundColor)} !important; } .tenant-theme-vars{--tenant-primary:${sanitizeCssValue(primaryColor)};--accent-primary:${sanitizeCssValue(primaryColor)};--accent-secondary:${sanitizeCssValue(secondaryColor)};--price-color:${sanitizeCssValue(priceColor)};--discount-color:${sanitizeCssValue(discountColor)};--accent-hover:${sanitizeCssValue(hoverColor)};--accent-shadow:${sanitizeCssValue(accentShadow)};--accent-shadow-strong:${sanitizeCssValue(accentShadowStrong)};--card-border:${sanitizeCssValue(cardBorder)};--bg-primary:${sanitizeCssValue(backgroundColor)};--tenant-bg-image:${sanitizeCssValue(backgroundImage)};}`;
+  const tenantThemeCss = buildTenantThemeCssString(theme);
 
   const businessDescription = `Pide online en ${theme.displayName ?? company?.name ?? "GodCode"}. Consulta nuestro menu digital, precios y haz tu pedido por WhatsApp con delivery o retiro.`;
 

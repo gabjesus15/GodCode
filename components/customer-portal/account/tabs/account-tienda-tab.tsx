@@ -11,7 +11,7 @@ import {
   StoreThemeNavbarPicker,
   StoreThemeProductCardPicker,
   StoreThemeProductDetailsPicker,
-  StoreThemeProductGridPicker,
+  getStoreThemeComboWarnings,
   useStoreThemeLayoutHandlers,
 } from "../../store-theme/store-theme-layout-pickers";
 import type { CompanySnapshot, StoreThemeAssetField, StoreThemeAutosaveStatus, StoreThemeConfig, StoreThemeResponse } from "../../shared/customer-account-types";
@@ -75,6 +75,7 @@ export type AccountTiendaTabProps = {
   importStoreThemeJson: (file: File | null) => Promise<void>;
   exportStoreThemeJson: () => void;
   discardStoreThemeChanges: () => void;
+  previewBranchId?: string | null;
 };
 
 const autosaveLabels: Record<StoreThemeAutosaveStatus, string> = {
@@ -138,6 +139,7 @@ export function AccountTiendaTab({
   importStoreThemeJson,
   exportStoreThemeJson,
   discardStoreThemeChanges,
+  previewBranchId,
 }: AccountTiendaTabProps) {
   const [qualityOpen, setQualityOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
@@ -145,10 +147,19 @@ export function AccountTiendaTab({
   const [navbarOpen, setNavbarOpen] = useState(false);
   const [productCardOpen, setProductCardOpen] = useState(false);
   const [productDetailsOpen, setProductDetailsOpen] = useState(false);
-  const [productGridOpen, setProductGridOpen] = useState(false);
+
+  const comboWarnings = getStoreThemeComboWarnings(storeThemeDraft);
+
+  const autosaveBadgeLabel =
+    storeThemeAutosaveStatus === "idle" && storeThemeHasUnpublished
+      ? "Borrador guardado"
+      : autosaveLabels[storeThemeAutosaveStatus];
 
   const busy = storeThemeLoading || storeThemeSaving || storeThemePublishing;
-  const { setNavbarType, setProductCardStyle, setNavigationMode, setProductDetailsMode, setProductGridStyle } = useStoreThemeLayoutHandlers(setStoreThemeDraft);
+  const { setNavbarType, setProductCardStyle, setNavigationMode, setProductDetailsMode } = useStoreThemeLayoutHandlers(
+    setStoreThemeDraft,
+    () => setStoreThemeHasUnpublished(true),
+  );
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -158,7 +169,7 @@ export function AccountTiendaTab({
           <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
             <PageHeader title="Tienda" />
             <Badge variant={autosaveVariant(storeThemeAutosaveStatus)} dot>
-              {autosaveLabels[storeThemeAutosaveStatus]}
+              {autosaveBadgeLabel}
             </Badge>
             {storeThemeHasLocalUnsavedChanges && (
               <span className="text-[11px] text-amber-600 sm:text-xs">Cambios sin enviar</span>
@@ -190,7 +201,7 @@ export function AccountTiendaTab({
               className="w-full justify-center sm:w-auto"
               onClick={publishStoreTheme}
               loading={storeThemePublishing}
-              disabled={busy || !storeThemeHasUnpublished || storeThemeDiffRows.length === 0}
+              disabled={busy || storeThemeDiffRows.length === 0}
             >
               Publicar tienda
             </Button>
@@ -200,6 +211,15 @@ export function AccountTiendaTab({
 
       {/* Status feedback */}
       {storeThemeError       && <Alert variant="danger">{storeThemeError}</Alert>}
+      {comboWarnings.length > 0 && (
+        <Alert variant="warning">
+          <ul className="list-disc space-y-1 pl-4 text-sm">
+            {comboWarnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </Alert>
+      )}
       {storeThemeAutosaveError && <Alert variant="warning">{storeThemeAutosaveError}</Alert>}
       {storeThemeOk          && <Alert variant="success">{storeThemeOk}</Alert>}
 
@@ -255,7 +275,7 @@ export function AccountTiendaTab({
                       Modo de navegación
                       <select
                         value={storeThemeDraft?.navigationMode ?? "scroll"}
-                        onChange={(e) => setNavigationMode(e.target.value)}
+                        onChange={(e) => setNavigationMode(e.target.value as "scroll" | "pagination")}
                         disabled={busy}
                         className="mt-1.5 h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm text-[#1d1d1f] focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60"
                       >
@@ -303,27 +323,6 @@ export function AccountTiendaTab({
                     <StoreThemeProductDetailsPicker
                       value={storeThemeDraft?.productDetailsMode}
                       onChange={setProductDetailsMode}
-                      disabled={busy}
-                    />
-                  </div>
-                )}
-              </Card>
-
-              {/* Distribución de cuadrícula de productos */}
-              <Card noPadding>
-                <button
-                  type="button"
-                  onClick={() => setProductGridOpen((v) => !v)}
-                  className="flex w-full items-center justify-between px-5 py-4 text-sm font-semibold text-[#1d1d1f]"
-                >
-                  <span>Distribución de cuadrícula de productos</span>
-                  <ChevronDown className={`h-4 w-4 text-[#a1a1a6] transition-transform ${productGridOpen ? "rotate-180" : ""}`} aria-hidden />
-                </button>
-                {productGridOpen && (
-                  <div className="px-5 pb-5">
-                    <StoreThemeProductGridPicker
-                      value={storeThemeDraft?.productGridStyle}
-                      onChange={setProductGridStyle}
                       disabled={busy}
                     />
                   </div>
@@ -562,8 +561,10 @@ export function AccountTiendaTab({
                 <StoreThemePreviewPanel
                   theme={storePreviewTheme}
                   companyName={company.name}
-                  previewUrl={company.publicSlug ? `/${company.publicSlug}/menu` : null}
-                  hasUnpublishedChanges={storeThemeHasUnpublished}
+                  menuSlug={company.publicSlug}
+                  customDomain={company.customDomain}
+                  previewBranchId={previewBranchId}
+                  hasUnpublishedChanges={storeThemeHasUnpublished || storeThemeHasLocalUnsavedChanges}
                 />
               ) : (
                 <p className="text-sm text-[#a1a1a6]">Cargando vista previa…</p>

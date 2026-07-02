@@ -270,13 +270,13 @@
     flex-shrink: 0;
     background: transparent !important;
     border-radius: 18px;
-    /* Anclaje abajo (cerca de los tabs): entra/sale suave hacia el listado */
-    transform: translate3d(-50%, 12px, 0);
+    opacity: 0;
+    transform: translate3d(-50%, 24px, 0);
     transform-origin: 50% 100%;
-    /* Cierre: primero baja, luego colapsa (evita “aplastón” final) */
     transition:
-        transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
-        max-height 0.22s cubic-bezier(0.4, 0, 1, 1) 0.12s;
+        opacity 0.28s ease,
+        transform 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+        max-height 0.36s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
 }
 
@@ -290,11 +290,12 @@
     max-width: 100%;
     margin: 0;
     background: transparent !important;
+    opacity: 1;
     transform: translate3d(-50%, 0, 0);
-    /* Apertura: primero expande, acompaña con subida suave */
     transition:
-        max-height 0.52s cubic-bezier(0.32, 0.72, 0, 1),
-        transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+        opacity 0.28s ease,
+        transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+        max-height 0.42s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: auto;
 }
 
@@ -814,11 +815,36 @@
     color: #aaa;
 }
 
+.cart-item-note-panel-wrap {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        grid-template-rows 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.28s ease;
+}
+
+.cart-item-note-panel-wrap.is-open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    pointer-events: auto;
+}
+
 .cart-item-note-panel {
-    padding: 8px 10px 0;
+    overflow: hidden;
+    min-height: 0;
+    padding: 0 10px;
     background: rgba(255, 255, 255, 0.05);
     border-left: 1px solid rgba(255, 255, 255, 0.05);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
+    transform: translateY(-6px);
+    transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cart-item-note-panel-wrap.is-open .cart-item-note-panel {
+    padding: 8px 10px 0;
+    transform: translateY(0);
 }
 
 .cart-item-note-input {
@@ -846,9 +872,16 @@
     text-transform: uppercase;
     cursor: pointer;
     transition:
-        color 0.2s ease,
-        border-color 0.2s ease,
-        background 0.2s ease;
+        color 0.24s ease,
+        border-color 0.24s ease,
+        background 0.24s ease,
+        transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+        padding 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cart-item-note-tab.is-open {
+    transform: translateY(1px);
+    padding-top: 8px;
 }
 
 .cart-item-note-tab:hover {
@@ -870,6 +903,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    transition: opacity 0.22s ease, max-height 0.28s ease;
+    max-height: 2.5rem;
+    opacity: 1;
 }
 
 /* --- 5. BANCO Y PAGOS --- */
@@ -1429,7 +1465,12 @@
 
 @media (prefers-reduced-motion: reduce) {
     .cart-panel,
-    .cart-fulfillment-block--delivery-open .cart-delivery-fields {
+    .cart-fulfillment-block--delivery-open .cart-delivery-fields,
+    .cart-item-note-panel-wrap,
+    .cart-item-note-panel,
+    .cart-item-note-tab,
+    .cart-item-note-hint,
+    .cart-footer-enhance-expand {
         animation: none !important;
         transition: none !important;
     }

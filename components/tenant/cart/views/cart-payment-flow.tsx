@@ -68,11 +68,14 @@ export function CartPaymentFlow({
   const showRutError = showFieldErrors && !validation.rut;
   const showPhoneError = showFieldErrors && !validation.phone;
   const showReceiptError = showFieldErrors && requiresReceipt && !validation.receipt;
+  const phoneValidationLabel = strategy.phonePrefix.startsWith("+58")
+    ? t("validationItems.validPhoneVe")
+    : t("validationItems.validPhone");
   const topValidationMessage = showFieldErrors
     ? [
         showNameError ? t("validationItems.validName") : null,
-        showRutError ? t("validationItems.validRut") : null,
-        showPhoneError ? t("validationItems.validPhone") : null,
+        showRutError ? t("validationItems.validId", { id: strategy.idName }) : null,
+        showPhoneError ? phoneValidationLabel : null,
         showReceiptError ? t("validationItems.transferReceipt") : null,
       ]
         .filter(Boolean)

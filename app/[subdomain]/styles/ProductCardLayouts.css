@@ -227,6 +227,9 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  cursor: default;
+}
+.product-layout-clean.card[role="button"] {
   cursor: pointer;
 }
 /* dark gradient at bottom for legibility */
@@ -329,8 +332,8 @@
 }
 .product-layout-clean .layout-badge-hot,
 .product-layout-clean .layout-badge-special {
-  left: auto;
-  right: 10px;
+  left: 10px;
+  right: auto;
   top: 10px;
   font-size: 0.6rem;
   font-weight: 700;
@@ -843,7 +846,8 @@
 }
 .product-layout-rappi .rappi-actions {
   flex-shrink: 0;
-  align-self: center;
+  align-self: flex-end;
+  min-width: 44px;
 }
 .product-layout-rappi .rappi-add-btn {
   width: 38px;
@@ -1164,37 +1168,105 @@
 }
 
 /* =========================================================================
- * RESPONSIVE ADJUSTMENTS
+ * RESPONSIVE ADJUSTMENTS (container queries por ancho de tarjeta)
  * ========================================================================= */
+@container (max-width: 280px) {
+  .product-layout-clean .card__name {
+    width: 2.35rem;
+    padding: 8px 5px;
+  }
+  .product-layout-clean .card__precis {
+    margin-left: 2.35rem;
+    padding: 8px 8px 8px 10px;
+  }
+  .product-layout-detailed .detailed-price-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .product-layout-horizontal .horizontal-image-container {
+    min-width: 80px;
+    width: 32%;
+  }
+  .product-layout-horizontal .horizontal-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .product-layout-food .food-title {
+    font-size: clamp(0.95rem, 4.5vw, 1.25rem);
+    height: auto;
+    min-height: 2.4rem;
+  }
+  .product-layout-food .food-price-section {
+    padding-right: 0;
+    min-height: 40px;
+  }
+  .product-layout-food:has(.food-stepper) .food-price-section {
+    padding-right: 0;
+  }
+  .product-layout-food .food-action-wrapper {
+    min-width: 0;
+  }
+  .product-layout-food .food-action-wrapper:has(.food-stepper) {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .product-layout-food .food-stepper {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .product-layout-food .food-price {
+    font-size: clamp(1rem, 5vw, 1.5rem);
+  }
+  .card__stepper,
+  .detailed-stepper,
+  .horizontal-stepper,
+  .rappi-stepper,
+  .sneaker-stepper,
+  .skew-stepper,
+  .sidebar-stepper-col {
+    max-width: 100%;
+  }
+  .card__stepper button,
+  .detailed-stepper button,
+  .horizontal-stepper button,
+  .rappi-stepper button,
+  .sneaker-stepper button,
+  .skew-stepper button,
+  .sidebar-stepper-col button {
+    min-width: 28px;
+    min-height: 28px;
+  }
+}
+
+@container (max-width: 220px) {
+  .product-layout-clean.card {
+    min-height: 170px;
+  }
+  .product-layout-horizontal {
+    min-height: 110px;
+  }
+  .product-layout-horizontal .horizontal-title {
+    font-size: 0.85rem;
+  }
+  .product-layout-rappi .rappi-image-container {
+    margin: 6px 6px 0;
+  }
+  .product-layout-rappi .rappi-info {
+    padding: 8px 10px 10px;
+  }
+}
+
+/* Viewport: layouts que dependen del dispositivo, no del ancho de card */
 @media (max-width: 768px) {
   .product-layout-clean.card {
     aspect-ratio: 0.75;
     min-height: 190px;
   }
-  .product-layout-clean .card__name {
-    width: 2.75rem;
-    padding: 10px 6px;
-  }
-  .product-layout-clean .card__precis {
-    margin-left: 2.75rem;
-    padding: 10px 10px 10px 12px;
-  }
   .product-layout-horizontal {
     min-height: 118px;
   }
-  .product-layout-horizontal .horizontal-image-container {
-    min-width: 96px;
-    width: 34%;
-  }
   .product-layout-horizontal .horizontal-info {
     padding: 10px 12px 10px 10px;
-  }
-  .product-layout-horizontal .horizontal-title {
-    font-size: 0.9rem;
-  }
-  .product-layout-detailed .detailed-price-row {
-    flex-wrap: nowrap;
-    gap: 8px;
   }
   .product-layout-sneaker .sneaker-img-wrapper {
     height: 140px;
@@ -1213,12 +1285,6 @@
 }
 
 @media (max-width: 400px) {
-  .product-layout-rappi .rappi-image-container {
-    margin: 6px 6px 0;
-  }
-  .product-layout-rappi .rappi-info {
-    padding: 8px 10px 10px;
-  }
   .product-layout-detailed .detailed-info {
     padding: 10px 12px 12px;
   }
@@ -1263,8 +1329,11 @@
   border: none;
   filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.35));
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
-  cursor: pointer;
+  cursor: default;
   background: transparent;
+}
+.product-layout-food.is-clickable {
+  cursor: pointer;
 }
 .product-layout-food:hover {
   transform: translateY(-4px);
@@ -1393,9 +1462,13 @@
   display: flex;
   flex-direction: column;
   padding-right: 56px;
-  margin-top: auto; /* Empuja el precio al fondo */
-  min-height: 48px; /* Permite crecer si el texto es muy largo, evitando overlaps */
-  justify-content: flex-end; /* Alinea el texto a la base del boton para que quede exactamente como en la foto de 4500 */
+  margin-top: auto;
+  min-height: 48px;
+  justify-content: flex-end;
+}
+
+.product-layout-food:has(.food-stepper) .food-price-section {
+  padding-right: 112px;
 }
 
 .product-layout-food .food-starting-from {
@@ -1415,11 +1488,20 @@
 }
 
 .product-layout-food .food-price {
-  font-size: 24px; /* Ajustado proporcionalmente */
+  font-size: 24px;
   font-weight: 600;
   color: white;
   letter-spacing: -0.04em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-layout-food .food-details-affordance {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.65);
 }
 
 /* 
@@ -1429,13 +1511,22 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 54px; /* perfectly hugs the 48px button with a 6px gap */
+  width: 54px;
+  min-width: 54px;
   height: 54px;
   z-index: 10;
   background-color: transparent;
   display: flex;
-  align-items: flex-end; /* Snaps button to bottom right */
+  align-items: flex-end;
   justify-content: flex-end;
+}
+
+.product-layout-food .food-action-wrapper:has(.food-stepper) {
+  width: auto;
+  min-width: 0;
+  max-width: calc(100% - 8px);
+  height: auto;
+  min-height: 60px;
 }
 
 .product-layout-food .food-add-btn {
@@ -1475,7 +1566,8 @@
   border-bottom-right-radius: 36px;
   padding: 0 4px;
   height: 60px;
-  min-width: 108px;
+  min-width: 0;
+  max-width: 100%;
 }
 .product-layout-food .food-stepper button {
   background: transparent;

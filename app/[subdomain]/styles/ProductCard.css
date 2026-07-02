@@ -3,111 +3,206 @@
    ========================================= */
 
 /* --- GRID DINÁMICO & ADAPTATIVO (FLUIDO) --- */
+.product-grid-container {
+	width: 100%;
+	min-width: 0;
+	container-type: inline-size;
+	container-name: product-catalog;
+	--catalog-cols-2: 520px;
+	--catalog-cols-3: 720px;
+	--catalog-cols-4: 960px;
+	--catalog-cols-5: 1200px;
+}
+
 .product-grid {
   display: grid;
   gap: var(--grid-gap, 24px);
   margin-top: 20px;
   width: 100%;
+  min-width: 0;
   align-items: stretch;
 }
 
-/* 1. Tarjetas pequeñas (Ideal para 2 columnas en móviles) */
-.product-grid.grid-layout-clean, 
-.product-grid.grid-layout-rappi, 
-.product-grid.grid-layout-sneaker,
-.product-grid.grid-minimal {
-  --grid-gap: 16px;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 165px), 1fr));
+.product-grid > * {
+  min-width: 0;
 }
 
-/* Premium Food Layout (Ancho para acomodar el squircle y padding) */
+/*
+ * Grid por estilo de tarjeta — columnas según ancho del catálogo (container queries).
+ */
+
+/* Compactas — clean, rappi, sneaker */
+.product-grid.grid-layout-clean,
+.product-grid.grid-layout-rappi,
+.product-grid.grid-layout-sneaker {
+  --grid-gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@container product-catalog (min-width: 520px) {
+  .product-grid.grid-layout-clean,
+  .product-grid.grid-layout-rappi,
+  .product-grid.grid-layout-sneaker {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container product-catalog (min-width: 720px) {
+  .product-grid.grid-layout-clean,
+  .product-grid.grid-layout-rappi,
+  .product-grid.grid-layout-sneaker {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@container product-catalog (min-width: 1200px) {
+  .product-grid.grid-layout-clean,
+  .product-grid.grid-layout-rappi,
+  .product-grid.grid-layout-sneaker {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/* Food Deluxe */
 .product-grid.grid-layout-food {
   --grid-gap: 16px;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-/* 2. Tarjetas medianas (Glass y Sidebar) */
-.product-grid.grid-layout-sidebar,
-.product-grid.grid-glass {
-  --grid-gap: 20px;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
-}
-
-/* En escritorio, forzamos un ancho mínimo mayor para limitar a un máximo de 4 columnas */
-@media (min-width: 768px) {
-  .product-grid.grid-layout-sidebar,
-  .product-grid.grid-glass {
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+@container product-catalog (min-width: 640px) {
+  .product-grid.grid-layout-food {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-/* 3. Tarjetas detalladas/grandes (1 columna en móviles, 2+ en tablets/desktop) */
-.product-grid.grid-layout-detailed, 
+@container product-catalog (min-width: 960px) {
+  .product-grid.grid-layout-food {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Cristal y sidebar */
+.product-grid.grid-glass,
+.product-grid.grid-layout-sidebar {
+  --grid-gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@container product-catalog (min-width: 720px) {
+  .product-grid.grid-glass,
+  .product-grid.grid-layout-sidebar {
+    --grid-gap: 16px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container product-catalog (min-width: 1024px) {
+  .product-grid.grid-glass,
+  .product-grid.grid-layout-sidebar {
+    --grid-gap: 20px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Detalladas / gaming */
+.product-grid.grid-layout-detailed,
 .product-grid.grid-layout-skew {
   --grid-gap: 24px;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  grid-template-columns: minmax(0, 1fr);
 }
 
-/* 4. Tarjetas horizontales (1 columna en móviles/tablets, 2+ en desktop) */
-.product-grid.grid-layout-horizontal,
-.product-grid.grid-flat {
-  --grid-gap: 24px;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-}
-
-/* --- FORCED GRID OVERRIDES --- */
-.product-grid.forced-cols-1 {
-  grid-template-columns: 1fr !important;
-}
-
-.product-grid.forced-cols-2 {
-  grid-template-columns: repeat(2, 1fr) !important;
-}
-@media (min-width: 768px) {
-  .product-grid.forced-cols-2 {
-    grid-template-columns: repeat(3, 1fr) !important;
-  }
-}
-@media (min-width: 1024px) {
-  .product-grid.forced-cols-2 {
-    grid-template-columns: repeat(4, 1fr) !important;
-  }
-}
-@media (min-width: 1280px) {
-  .product-grid.forced-cols-2 {
-    grid-template-columns: repeat(5, 1fr) !important;
+@container product-catalog (min-width: 560px) {
+  .product-grid.grid-layout-detailed,
+  .product-grid.grid-layout-skew {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-.product-grid.forced-cols-3 {
-  grid-template-columns: repeat(2, 1fr) !important;
-}
-@media (min-width: 480px) {
-  .product-grid.forced-cols-3 {
-    grid-template-columns: repeat(3, 1fr) !important;
-  }
-}
-@media (min-width: 768px) {
-  .product-grid.forced-cols-3 {
-    grid-template-columns: repeat(4, 1fr) !important;
-  }
-}
-@media (min-width: 1024px) {
-  .product-grid.forced-cols-3 {
-    grid-template-columns: repeat(5, 1fr) !important;
-  }
-}
-@media (min-width: 1280px) {
-  .product-grid.forced-cols-3 {
-    grid-template-columns: repeat(6, 1fr) !important;
+@container product-catalog (min-width: 960px) {
+  .product-grid.grid-layout-detailed,
+  .product-grid.grid-layout-skew {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-.product-grid.forced-cols-list {
-  grid-template-columns: 1fr !important;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
+/* Horizontal */
+.product-grid.grid-layout-horizontal {
+  --grid-gap: 20px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@container product-catalog (min-width: 900px) {
+  .product-grid.grid-layout-horizontal {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Preview embebido estrecho */
+.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-clean,
+.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-rappi,
+.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-sneaker,
+.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-glass,
+.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-sidebar,
+.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-food {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-detailed,
+.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-skew,
+.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-horizontal {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+/* Fallback sin container queries */
+@supports not (container-type: inline-size) {
+  @media (min-width: 520px) {
+    .product-grid.grid-layout-clean,
+    .product-grid.grid-layout-rappi,
+    .product-grid.grid-layout-sneaker {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 768px) {
+    .product-grid.grid-layout-clean,
+    .product-grid.grid-layout-rappi,
+    .product-grid.grid-layout-sneaker {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .product-grid.grid-glass,
+    .product-grid.grid-layout-sidebar {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .product-grid.grid-layout-food {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .product-grid.grid-layout-detailed,
+    .product-grid.grid-layout-skew {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1024px) {
+    .product-grid.grid-glass,
+    .product-grid.grid-layout-sidebar,
+    .product-grid.grid-layout-food {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .product-grid.grid-layout-detailed,
+    .product-grid.grid-layout-skew {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1100px) {
+    .product-grid.grid-layout-clean,
+    .product-grid.grid-layout-rappi,
+    .product-grid.grid-layout-sneaker {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 900px) {
+    .product-grid.grid-layout-horizontal {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -286,19 +381,21 @@
 
 /* --- OVERLAY DESCRIPCIÓN --- */
 .product-desc-scrollable {
-  position: relative; /* Cambiado de absolute a relative para que empuje el contenido */
+  position: relative;
   width: 100%;
-  height: 140px; /* FIJO: Evita que estire toda la tarjeta */
+  height: auto;
+  max-height: 160px;
   display: flex;
   flex-direction: column;
-  background: rgba(20, 20, 20, 0.98); /* Casi sólido */
+  background: rgba(20, 20, 20, 0.98);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   z-index: 20;
   border-radius: 8px;
-  padding: 8px; /* Aumentado un poco para que se vea mejor */
+  padding: 8px;
   animation: fadeInText 0.3s ease-out forwards;
-  margin-top: 8px; /* Añadimos margen arriba para separarlo del título si estuviera visible */
+  margin-top: 0;
+  box-sizing: border-box;
 }
 
 .product-desc-scrollable.is-closing {
@@ -321,7 +418,8 @@
 }
 
 .scroll-area {
-  flex-grow: 1;
+  flex: 0 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 8px;
   font-size: 0.9rem;
@@ -329,10 +427,18 @@
   font-style: normal;
 }
 
-.scroll-area p {
+.glass-expand-title {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+}
+
+.glass-expand-desc {
   margin: 0;
-  padding-bottom: 10px;
-  line-height: 1.4;
+  padding-bottom: 4px;
+  line-height: 1.45;
 }
 
 .scroll-area::-webkit-scrollbar {
@@ -388,7 +494,8 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 /* Solo cuando hay descuento, hacemos espacio arriba para el precio viejo */
@@ -403,11 +510,13 @@
 
 .product-price {
   font-weight: 800;
-  font-size: 1.2rem; /* Increased for web version while keeping mobile version at 1.05rem */
+  font-size: clamp(0.9rem, 2.8vw, 1.2rem);
   color: var(--price-color, #ff4757);
   letter-spacing: -0.03em;
-  line-height: 1; 
-  white-space: nowrap;
+  line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .product-price.original {
@@ -431,12 +540,14 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: var(--accent-primary, #ff4757); /* Color Marca Sólido */
+  background: var(--accent-primary, #ff4757);
   color: white;
   border: none;
-  width: 102px; /* Same width as stepper-control */
-  height: 40px; /* Same height as stepper-control */
-  padding: 0; /* Clear default padding for perfect flex centering */
+  width: auto;
+  min-width: 40px;
+  max-width: 102px;
+  height: 40px;
+  padding: 0 12px;
   border-radius: 50px;
   cursor: pointer;
   font-weight: 700;
@@ -538,11 +649,47 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 50px;
   padding: 2px;
-  height: 40px; /* Accommodates 36px buttons + padding */
+  height: 40px;
+  max-width: 100%;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+@container (max-width: 260px) {
+  .product-footer {
+    gap: 6px;
+  }
+
+  .btn-add {
+    width: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 !important;
+  }
+
+  .btn-add span {
+    display: none;
+  }
+
+  .stepper-control {
+    height: 36px;
+    padding: 2px;
+  }
+
+  .step-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .step-count {
+    width: 20px;
+    font-size: 0.85rem;
+  }
 }
 
 .step-btn {
@@ -592,8 +739,8 @@
 
 /* Media Queries adaptativas ahora manejadas en la parte superior */
 
-/* 4. MÃ“VILES - OptimizaciÃ³n UX TÃ¡ctil */
-@media (max-width: 500px) and (pointer: coarse) {
+/* 4. MÓVILES - Optimización UX táctil */
+@media (max-width: 640px) {
   
   /* Tarjeta MÃ³vil */
   .product-card {
@@ -622,26 +769,42 @@
     flex-wrap: wrap;
   }
   
-  .is-viewing-info .product-info,
-  .is-viewing-info .info-content-wrapper {
-    position: static !important;
+  .is-viewing-info .product-info {
+    position: relative;
+    justify-content: flex-start;
   }
 
-  /* Restaurar overlay absoluto para que funcione como antes */
+  .is-viewing-info .info-content-wrapper {
+    position: relative !important;
+    flex-grow: 0;
+    flex-shrink: 0;
+    margin-bottom: 4px;
+  }
+
   .is-viewing-info .product-desc-scrollable {
-    position: absolute; 
-    top: 0;
-    left: 0;
+    position: relative;
+    top: auto;
+    left: auto;
     width: 100%;
-    height: 100%;
-    max-height: none;
-    z-index: 20;
-    padding: 12px;
+    height: auto;
+    max-height: min(200px, 42vh);
+    padding: 10px 12px;
     background: rgba(15, 15, 15, 0.98);
-    border-radius: inherit;
+    border-radius: 10px;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
+    margin-top: 0;
+  }
+
+  .is-viewing-info .scroll-area {
+    max-height: min(150px, 34vh);
+  }
+
+  .is-viewing-info .product-footer {
+    position: relative;
+    z-index: 21;
+    margin-top: auto !important;
   }
 
   .product-name {
@@ -1022,6 +1185,51 @@
 .online-ordering-disabled .qty-badge-overlay,
 .online-ordering-disabled .bottom-nav-cart-badge,
 .online-ordering-disabled .layout-add-btn,
-.online-ordering-disabled .layout-stepper {
+.online-ordering-disabled .layout-stepper,
+.online-ordering-disabled .card__icon,
+.online-ordering-disabled .card__stepper,
+.online-ordering-disabled .card__cart-btn,
+.online-ordering-disabled .detailed-add-btn,
+.online-ordering-disabled .detailed-stepper,
+.online-ordering-disabled .horizontal-add-btn,
+.online-ordering-disabled .horizontal-stepper,
+.online-ordering-disabled .rappi-add-btn,
+.online-ordering-disabled .rappi-stepper,
+.online-ordering-disabled .sneaker-add-btn,
+.online-ordering-disabled .sneaker-stepper,
+.online-ordering-disabled .food-add-btn,
+.online-ordering-disabled .food-stepper,
+.online-ordering-disabled .skew-btn,
+.online-ordering-disabled .skew-stepper,
+.online-ordering-disabled .sidebar-btn,
+.online-ordering-disabled .sidebar-stepper-col,
+.online-ordering-disabled [class*="-qty-badge"] {
   display: none !important;
+}
+
+.glass-expand-price {
+  display: none;
+}
+
+.product-details-affordance {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.02em;
+}
+
+.product-details-affordance.is-subtle {
+  font-size: 0.68rem;
+  margin-top: 4px;
+}
+
+[class*="product-layout-"] .layout-stepper button,
+[class*="product-layout-"] .rappi-stepper button,
+[class*="product-layout-"] .food-stepper button,
+[class*="product-layout-"] .card__stepper button {
+  min-width: 44px;
+  min-height: 44px;
 }

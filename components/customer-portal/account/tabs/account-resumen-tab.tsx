@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, FileText, LifeBuoy, Store, CalendarClock, ArrowRight, ExternalLink } from "lucide-react";
+import { CreditCard, FileText, Home, LifeBuoy, Store, CalendarClock, ArrowRight, ExternalLink } from "lucide-react";
 import type {
   AccountActivityItem,
   BranchSummary,
@@ -64,6 +64,7 @@ const typeIcon: Record<AccountActivityItem["type"], React.ReactNode> = {
 };
 
 const quickActions: Array<{ tab: PortalTab; label: string; sub: string; icon: React.ElementType }> = [
+  { tab: "perfil",       label: "Página de inicio",        sub: "WhatsApp, Instagram, horarios", icon: Home         },
   { tab: "plan",       label: "Plan y extras",           sub: "Cambiar plan, addons",          icon: CreditCard    },
   { tab: "facturacion",label: "Facturacion",             sub: "Ver pagos y comprobantes",       icon: FileText      },
   { tab: "sucursales", label: "Sucursales",              sub: "Solicitar nueva sucursal",       icon: Store         },

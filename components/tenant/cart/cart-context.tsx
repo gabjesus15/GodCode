@@ -63,7 +63,7 @@ interface CartContextType {
       forceNewLine?: boolean;
     },
   ) => void;
-  decreaseQuantity: (lineId: string) => void;
+  decreaseQuantity: (lineIdOrProductId: string) => void;
   removeFromCart: (id: string) => void;
   clearCart: () => void;
   cartTotal: number;

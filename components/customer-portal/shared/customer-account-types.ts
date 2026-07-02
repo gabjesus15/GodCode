@@ -20,6 +20,14 @@ export type AddonOption = {
   price_one_time: number | null;
 };
 
+export type BusinessInfoSummary = {
+  name: string | null;
+  phone: string | null;
+  address: string | null;
+  instagram: string | null;
+  schedule: string | null;
+};
+
 export type BranchSummary = {
   id: string;
   name: string;
@@ -134,6 +142,7 @@ export type CompanySnapshot = {
 export type CustomerAccountClientProps = {
   company: CompanySnapshot;
   branches: BranchSummary[];
+  businessInfo: BusinessInfoSummary | null;
   payments: PaymentSummary[];
   activeAddons: ActiveAddon[];
   availablePlans: PlanOption[];
@@ -342,7 +351,6 @@ export type StoreThemeConfig = {
   navigationMode?: string;
   productCardStyle?: string;
   productDetailsMode?: string;
-  productGridStyle?: string;
 };
 
 export type StoreThemeResponse = {
@@ -369,4 +377,4 @@ export type StoreThemeAutosaveStatus = "idle" | "pending" | "saving" | "saved" |
 
 export type StoreThemeAssetField = "logoUrl" | "backgroundImageUrl";
 
-export type PortalTab = "resumen" | "tienda" | "plan" | "sucursales" | "facturacion" | "soporte" | "seguridad";
+export type PortalTab = "resumen" | "perfil" | "tienda" | "plan" | "sucursales" | "facturacion" | "soporte" | "seguridad";

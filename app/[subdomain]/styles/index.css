@@ -32,6 +32,14 @@ select:focus {
   --shadow-glow: 0 0 20px rgba(230, 57, 70, 0.25);
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --menu-bottom-chrome-h: 130px;
+  --menu-cart-float-h: 120px;
+  --z-card-badge: 10;
+  --z-card-action: 15;
+  --z-sticky-header: 100;
+  --z-bottom-chrome: 1000;
+  --z-modal: 5000;
+  --z-mega-menu: 10500;
 }
 
 * {
@@ -63,6 +71,8 @@ html, body, #root {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  min-width: 0;
+  overflow-x: clip;
 }
 
 .page-wrapper {

@@ -1,28 +1,40 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { StoreThemeConfig } from "../shared/customer-account-types";
+import { encodePreviewThemeParam } from "@/lib/store-theme/preview-theme-codec";
+import { postPreviewThemeToIframe } from "@/lib/store-theme/preview-theme-messaging";
+import { mergeMenuPathQuery, getTenantMenuPreviewUrl } from "@/utils/tenant-url";
 
-export function encodePreviewThemeParam(theme: StoreThemeConfig): string {
-  try {
-    return globalThis.btoa(JSON.stringify(theme));
-  } catch {
-    return "";
-  }
-}
+export { encodePreviewThemeParam };
 
 export function StoreThemePreviewPanel({
   theme,
   companyName,
-  previewUrl,
+  menuSlug,
+  customDomain,
+  previewBranchId,
   hasUnpublishedChanges,
 }: {
   theme: StoreThemeConfig;
   companyName: string;
-  previewUrl: string | null;
+  menuSlug: string | null;
+  customDomain?: string | null;
+  previewBranchId?: string | null;
   hasUnpublishedChanges: boolean;
 }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const draftIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const productionIframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  useEffect(() => {
+    if (!menuSlug) {
+      setPreviewUrl(null);
+      return;
+    }
+    setPreviewUrl(getTenantMenuPreviewUrl(menuSlug, customDomain, previewBranchId));
+  }, [menuSlug, customDomain, previewBranchId]);
   const displayName = theme.displayName.trim() || companyName;
   const tokenRows = [
     ["Primario", theme.primaryColor],
@@ -43,18 +55,37 @@ export function StoreThemePreviewPanel({
   const buildPreviewUrl = useCallback(
     (withDraftTheme: boolean) => {
       if (!previewUrl) return null;
-      const params = new URLSearchParams();
-      params.set("embedded_preview", "1");
-      params.set("preview_device", previewDevice);
+      const params: Record<string, string> = {
+        embedded_preview: "1",
+        preview_device: previewDevice,
+      };
       if (withDraftTheme && encodedDraftTheme) {
-        params.set("preview_theme", encodedDraftTheme);
+        params.preview_theme = encodedDraftTheme;
       }
-      return `${previewUrl}?${params.toString()}`;
+      return mergeMenuPathQuery(previewUrl, params);
     },
     [encodedDraftTheme, previewDevice, previewUrl],
   );
+  /** URL estable del iframe: sin preview_theme para no recargar en cada cambio del editor. */
+  const draftIframeSrc = previewUrl
+    ? mergeMenuPathQuery(previewUrl, {
+        embedded_preview: "1",
+        preview_device: previewDevice,
+      })
+    : null;
+  const draftExternalUrl = useMemo(() => {
+    if (!previewUrl || !encodedDraftTheme) return null;
+    return mergeMenuPathQuery(previewUrl, { preview_theme: encodedDraftTheme });
+  }, [encodedDraftTheme, previewUrl]);
   const productionMenuUrl = buildPreviewUrl(false);
-  const draftMenuUrl = buildPreviewUrl(true);
+
+  const pushDraftThemeToIframe = useCallback(() => {
+    postPreviewThemeToIframe(draftIframeRef.current, theme);
+  }, [theme]);
+
+  useEffect(() => {
+    pushDraftThemeToIframe();
+  }, [pushDraftThemeToIframe]);
   const frameWidthClass =
     previewDevice === "mobile" ? "max-w-[430px]" : previewDevice === "tablet" ? "max-w-[860px]" : "max-w-none";
   const frameHeightClass =
@@ -80,7 +111,9 @@ export function StoreThemePreviewPanel({
             </span>
           </div>
 
-          {productionMenuUrl && draftMenuUrl ? (
+          {!previewUrl ? (
+            <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">Cargando vista previa del menú…</p>
+          ) : productionMenuUrl && draftIframeSrc ? (
             <div className="mt-4 space-y-3">
               <div className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-3 dark:border-zinc-700 dark:bg-zinc-800/40">
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -119,7 +152,7 @@ export function StoreThemePreviewPanel({
                   </button>
 
                   <a
-                    href={draftMenuUrl}
+                    href={draftExternalUrl ?? "#"}
                     target="_blank"
                     rel="noreferrer"
                     className="rounded-lg border border-zinc-300 px-2.5 py-1 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
@@ -137,6 +170,7 @@ export function StoreThemePreviewPanel({
                       className={`mx-auto overflow-hidden rounded-2xl border border-zinc-300 bg-zinc-900 shadow-inner dark:border-zinc-700 ${frameWidthClass}`}
                     >
                       <iframe
+                        ref={productionIframeRef}
                         title="Vista producción"
                         src={productionMenuUrl}
                         className={`${frameHeightClass} w-full bg-white`}
@@ -152,10 +186,11 @@ export function StoreThemePreviewPanel({
                     className={`mx-auto overflow-hidden rounded-2xl border border-zinc-300 bg-zinc-900 shadow-inner dark:border-zinc-700 ${frameWidthClass}`}
                   >
                     <iframe
+                      ref={draftIframeRef}
                       title="Vista borrador"
-                      src={draftMenuUrl}
+                      src={draftIframeSrc}
                       className={`${frameHeightClass} w-full bg-white`}
-                      loading="lazy"
+                      onLoad={pushDraftThemeToIframe}
                     />
                   </div>
                 </div>

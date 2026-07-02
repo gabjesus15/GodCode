@@ -23,7 +23,6 @@ export const STORE_THEME_FIELD_LABELS: Record<keyof StoreThemeConfig, string> = 
   navigationMode: "Modo de Navegación",
   productCardStyle: "Estilo de Tarjeta",
   productDetailsMode: "Modo de Detalles del Producto",
-  productGridStyle: "Distribución de Cuadrícula",
 };
 
 export const DEFAULT_STORE_THEME: StoreThemeConfig = {
@@ -40,7 +39,6 @@ export const DEFAULT_STORE_THEME: StoreThemeConfig = {
   navigationMode: "scroll",
   productCardStyle: "glass",
   productDetailsMode: "modal-premium",
-  productGridStyle: "auto",
 };
 
 export const STORE_THEME_COLOR_HELPERS: Record<

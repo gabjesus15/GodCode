@@ -32,6 +32,12 @@ export async function POST(req: NextRequest) {
   if (draftError) return NextResponse.json({ error: draftError.message }, { status: 500 });
   if (!draft?.theme_config) return NextResponse.json({ error: "No hay borrador para publicar." }, { status: 400 });
 
+  const { data: companyRow } = await supabaseAdmin
+    .from("companies")
+    .select("public_slug")
+    .eq("id", ctx.companyId)
+    .maybeSingle();
+
   const nowIso = new Date().toISOString();
   const theme = normalizeStoreThemeConfig(draft.theme_config);
 
@@ -79,6 +85,10 @@ export async function POST(req: NextRequest) {
 
   // Invalidate menu cache so customers see the updated theme immediately
   revalidateTag(`menu:${ctx.companyId}`, "max");
+  const publicSlug = String(companyRow?.public_slug ?? "").trim();
+  if (publicSlug) {
+    revalidateTag(`company-slug:${publicSlug}`, "max");
+  }
 
   return NextResponse.json({ ok: true, message: "Cambios publicados correctamente." });
 }

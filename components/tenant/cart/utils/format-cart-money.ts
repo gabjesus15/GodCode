@@ -70,3 +70,42 @@ export function formatCartMoney(amount: number, currency: string = "CLP"): strin
 
   return `${c} ${numFormatted}`;
 }
+
+/** Monto numérico sin símbolo de moneda (útil para pegar en apps bancarias). */
+export function formatCartAmountPlain(amount: number, currency: string = "CLP"): string {
+  const c = currency.toUpperCase();
+
+  let locale = "es-CL";
+  let fractionDigits = 0;
+
+  if (c === "USD") {
+    locale = "en-US";
+    fractionDigits = 2;
+  } else if (c === "VES") {
+    locale = "es-VE";
+    fractionDigits = 2;
+  } else if (c === "COP") {
+    locale = "es-CO";
+    fractionDigits = 0;
+  } else if (c === "MXN") {
+    locale = "es-MX";
+    fractionDigits = 2;
+  } else if (c === "ARS") {
+    locale = "es-AR";
+    fractionDigits = 0;
+  } else if (c === "PEN") {
+    locale = "es-PE";
+    fractionDigits = 2;
+  } else if (c === "BRL") {
+    locale = "pt-BR";
+    fractionDigits = 2;
+  } else if (c === "EUR") {
+    locale = "de-DE";
+    fractionDigits = 2;
+  }
+
+  return new Intl.NumberFormat(locale, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(Number(amount) || 0);
+}

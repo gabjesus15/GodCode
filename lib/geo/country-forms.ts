@@ -1,4 +1,5 @@
 import { validateRutChile, formatRutOnInput } from "../../utils/chile-forms";
+import { normalizeCountryCode } from "./country-registry";
 
 export interface CountryFormStrategy {
   idName: string; // RUT, DNI, RIF, etc.
@@ -71,6 +72,6 @@ export const COUNTRY_FORM_STRATEGIES: Record<string, CountryFormStrategy> = {
 };
 
 export function getFormStrategy(countryCode: string | null | undefined): CountryFormStrategy {
-  const code = countryCode?.toUpperCase() || "CL";
-  return COUNTRY_FORM_STRATEGIES[code] || COUNTRY_FORM_STRATEGIES["CL"];
+  const code = normalizeCountryCode(countryCode) ?? "CL";
+  return COUNTRY_FORM_STRATEGIES[code] ?? COUNTRY_FORM_STRATEGIES.CL;
 }

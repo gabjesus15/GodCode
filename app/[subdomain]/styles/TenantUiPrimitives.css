@@ -1,0 +1,282 @@
+/* =========================================================================
+ * Tenant UI — primitivos inspirados en shadcn/ui
+ * Usa variables del tema del comercio (--tenant-primary, --card-border, etc.)
+ * ========================================================================= */
+
+.tenant-theme-vars {
+	--tenant-card-bg: color-mix(in srgb, var(--bg-primary, #0a0a0a) 88%, #ffffff 12%);
+	--tenant-card-fg: #f4f4f5;
+	--tenant-muted: rgba(255, 255, 255, 0.06);
+	--tenant-muted-fg: rgba(255, 255, 255, 0.58);
+	--tenant-ring: color-mix(in srgb, var(--tenant-primary, #ef4444) 45%, transparent);
+}
+
+/* --- Card (shadcn Card) --- */
+.tenant-ui-card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	container-type: inline-size;
+	min-width: 0;
+	border-radius: 12px;
+	border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+	background: var(--tenant-card-bg);
+	color: var(--tenant-card-fg);
+	overflow: hidden;
+	transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.tenant-ui-card:focus-visible {
+	outline: 2px solid var(--tenant-ring);
+	outline-offset: 2px;
+}
+
+[class*="product-layout-"]:is(.tenant-ui-card, .card):hover,
+.tenant-ui-card:hover {
+	border-color: color-mix(in srgb, var(--tenant-primary, #ef4444) 32%, var(--card-border, rgba(255, 255, 255, 0.1)));
+}
+
+.tenant-ui-card__header {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 14px 14px 0;
+}
+
+.tenant-ui-card__title {
+	margin: 0;
+	font-size: 0.95rem;
+	font-weight: 600;
+	line-height: 1.3;
+	letter-spacing: -0.01em;
+	color: var(--tenant-card-fg);
+}
+
+.tenant-ui-card__description {
+	margin: 0;
+	font-size: 0.78rem;
+	line-height: 1.45;
+	color: var(--tenant-muted-fg);
+}
+
+.tenant-ui-card__content {
+	padding: 12px 14px;
+}
+
+.tenant-ui-card__footer {
+	display: flex;
+	align-items: center;
+	padding: 0 14px 14px;
+	gap: 8px;
+}
+
+/* --- Badge (shadcn Badge) --- */
+.tenant-ui-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 999px;
+	border: 1px solid transparent;
+	padding: 2px 10px;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.tenant-ui-badge--default {
+	background: var(--tenant-primary, #ef4444);
+	color: #fff;
+}
+
+.tenant-ui-badge--secondary {
+	background: var(--tenant-muted);
+	color: var(--tenant-card-fg);
+	border-color: rgba(255, 255, 255, 0.08);
+}
+
+.tenant-ui-badge--destructive {
+	background: color-mix(in srgb, var(--price-color, #ff4757) 88%, #000 12%);
+	color: #fff;
+}
+
+.tenant-ui-badge--success {
+	background: color-mix(in srgb, var(--discount-color, #25d366) 85%, #000 15%);
+	color: #fff;
+}
+
+.tenant-ui-badge--outline {
+	background: transparent;
+	color: var(--tenant-card-fg);
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+.tenant-ui-offer-badges {
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	z-index: 11;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	max-width: calc(100% - 20px);
+}
+
+.tenant-ui-offer-badges .tenant-ui-badge {
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	font-size: 0.62rem;
+	padding: 4px 9px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+
+.product-card.glass.tenant-ui-card {
+	border-color: rgba(255, 255, 255, 0.1);
+	background: linear-gradient(135deg, rgba(30, 30, 30, 0.65) 0%, rgba(15, 15, 15, 0.8) 100%);
+}
+
+.product-card.glass .btn-add.tenant-ui-btn {
+	border-radius: 50px;
+	width: 102px;
+	height: 40px;
+	min-height: 40px;
+	padding: 0;
+	background: var(--accent-primary, #ff4757);
+	box-shadow: 0 4px 15px var(--accent-shadow, rgba(255, 71, 87, 0.3));
+}
+
+.product-card.glass .btn-add.tenant-ui-btn:hover {
+	background: var(--accent-hover, #ff2e40);
+	filter: none;
+	transform: translateY(-2px);
+}
+
+.product-card.glass .stepper-control.tenant-ui-stepper {
+	border-radius: 50px;
+	height: 40px;
+	background: rgba(255, 255, 255, 0.08);
+}
+
+.product-card-qty-badge.tenant-ui-badge,
+.clean-qty-badge.tenant-ui-badge,
+.horizontal-qty-badge.tenant-ui-badge,
+.sidebar-qty-badge.tenant-ui-badge,
+.rappi-qty-badge.tenant-ui-badge,
+.sneaker-qty-badge.tenant-ui-badge,
+.skew-qty-badge.tenant-ui-badge {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	z-index: 12;
+	min-width: 22px;
+	height: 22px;
+	padding: 0 6px;
+}
+
+/* --- Button (shadcn Button) --- */
+.tenant-ui-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	border-radius: 8px;
+	border: 1px solid transparent;
+	font-size: 0.82rem;
+	font-weight: 600;
+	line-height: 1;
+	cursor: pointer;
+	white-space: nowrap;
+	touch-action: manipulation;
+	transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.tenant-ui-btn:focus-visible {
+	outline: 2px solid var(--tenant-ring);
+	outline-offset: 2px;
+}
+
+.tenant-ui-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.tenant-ui-btn--default {
+	min-height: 36px;
+	padding: 0 14px;
+	background: var(--tenant-primary, #ef4444);
+	color: #fff;
+}
+
+.tenant-ui-btn--default:hover {
+	filter: brightness(1.08);
+}
+
+.tenant-ui-btn--default:active {
+	transform: scale(0.98);
+}
+
+.tenant-ui-btn--secondary {
+	min-height: 36px;
+	padding: 0 14px;
+	background: var(--tenant-muted);
+	color: var(--tenant-card-fg);
+	border-color: rgba(255, 255, 255, 0.1);
+}
+
+.tenant-ui-btn--secondary:hover {
+	background: rgba(255, 255, 255, 0.12);
+}
+
+.tenant-ui-btn--outline {
+	min-height: 36px;
+	padding: 0 14px;
+	background: transparent;
+	color: var(--tenant-card-fg);
+	border-color: rgba(255, 255, 255, 0.16);
+}
+
+.tenant-ui-btn--outline:hover {
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.28);
+}
+
+.tenant-ui-btn--ghost {
+	min-height: 36px;
+	padding: 0 10px;
+	background: transparent;
+	color: var(--tenant-card-fg);
+}
+
+.tenant-ui-btn--ghost:hover {
+	background: rgba(255, 255, 255, 0.08);
+}
+
+.tenant-ui-btn--sm {
+	min-height: 32px;
+	padding: 0 12px;
+	font-size: 0.75rem;
+	border-radius: 7px;
+}
+
+.tenant-ui-btn--icon {
+	min-width: 36px;
+	min-height: 36px;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	border-radius: 8px;
+}
+
+/* Layout hooks: cards heredan botones shadcn sin perder clases legacy */
+.card__cart-btn.tenant-ui-btn,
+.detailed-add-btn.tenant-ui-btn,
+.horizontal-add-btn.tenant-ui-btn,
+.rappi-add-btn.tenant-ui-btn,
+.sneaker-add-btn.tenant-ui-btn,
+.skew-add-btn.tenant-ui-btn,
+.sidebar-add-btn.tenant-ui-btn,
+.layout-add-btn.tenant-ui-btn {
+	/* reset overrides de layouts viejos cuando llevan tenant-ui-btn */
+}

@@ -6,27 +6,19 @@ import { CheckCircle2 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import {
   type NavbarType,
+  type NavigationMode,
   type ProductCardStyle,
   type ProductDetailsMode,
-  type ProductGridStyle,
   normalizeNavbarType,
+  normalizeNavigationMode,
   normalizeProductCardStyle,
   normalizeProductDetailsMode,
-  normalizeProductGridStyle,
 } from "@/lib/store-theme/theme-config";
 import type { StoreThemeConfig } from "../shared/customer-account-types";
 
 const PRODUCT_DETAILS_OPTIONS: Array<{ value: ProductDetailsMode; label: string; description: string }> = [
-  { value: "modal-premium", label: "Pop-up Premium", description: "Modal a pantalla completa con diseño moderno" },
-  { value: "inline", label: "Expansión clásica", description: "La tarjeta se estira hacia abajo para mostrar detalles" },
-];
-
-const PRODUCT_GRID_OPTIONS: Array<{ value: ProductGridStyle; label: string; description: string }> = [
-  { value: "auto", label: "Adaptativo (Auto)", description: "Se adapta de acuerdo al estilo de tarjeta de producto y tamaño de pantalla" },
-  { value: "cols-2", label: "2 Columnas", description: "Forzar 2 columnas en móviles (ideal para tarjetas compactas)" },
-  { value: "cols-3", label: "3 Columnas", description: "Forzar 3 columnas en móviles grandes / tablets" },
-  { value: "cols-1", label: "1 Columna", description: "Tarjetas grandes ocupando todo el ancho de fila" },
-  { value: "cols-list", label: "Lista vertical", description: "Diseño limpio de lista vertical de una columna fija" },
+  { value: "modal-premium", label: "Pop-up Premium", description: "Modal a pantalla completa con imagen, descripción y agregar al carrito" },
+  { value: "inline", label: "Expansión en tarjeta", description: "Cristal: expande la tarjeta. Otros estilos: panel ancho debajo del producto" },
 ];
 
 const NAVBAR_OPTIONS: Array<{ value: NavbarType; label: string; description: string }> = [
@@ -34,7 +26,7 @@ const NAVBAR_OPTIONS: Array<{ value: NavbarType; label: string; description: str
   { value: "sidebar-categories", label: "Barra lateral", description: "Categorías en panel lateral" },
   { value: "mega-menu", label: "Mega menú", description: "Menú flotante por categorías" },
   { value: "icon-list", label: "Iconos", description: "Categorías en círculos con icono" },
-  { value: "floating-bottom", label: "Barra flotante inferior", description: "Barra flotante de navegación inferior (estilo comida deluxe)" },
+  { value: "floating-bottom", label: "Barra flotante inferior", description: "Categorías arriba + barra de app abajo (Inicio, Favoritos, Carrito, Perfil)" },
 ];
 
 const PRODUCT_CARD_OPTIONS: Array<{ value: ProductCardStyle; label: string }> = [
@@ -466,162 +458,78 @@ export const StoreThemeProductDetailsPicker = memo(function StoreThemeProductDet
   );
 });
 
-function ProductGridPreview({ style }: { style: ProductGridStyle }) {
-  if (style === "cols-2") {
-    return (
-      <div className="relative h-[92px] w-full overflow-hidden rounded-lg bg-slate-100 border border-slate-200/60 p-2 flex flex-col justify-between">
-        <div className="grid grid-cols-2 gap-2 h-full">
-          <div className="rounded bg-slate-300 border border-slate-200/40" />
-          <div className="rounded bg-slate-300 border border-slate-200/40" />
-        </div>
-      </div>
-    );
-  }
-  if (style === "cols-3") {
-    return (
-      <div className="relative h-[92px] w-full overflow-hidden rounded-lg bg-slate-100 border border-slate-200/60 p-2 flex flex-col justify-between">
-        <div className="grid grid-cols-3 gap-1.5 h-full">
-          <div className="rounded bg-slate-300 border border-slate-200/40" />
-          <div className="rounded bg-slate-300 border border-slate-200/40" />
-          <div className="rounded bg-slate-300 border border-slate-200/40" />
-        </div>
-      </div>
-    );
-  }
-  if (style === "cols-1") {
-    return (
-      <div className="relative h-[92px] w-full overflow-hidden rounded-lg bg-slate-100 border border-slate-200/60 p-2 flex flex-col gap-2 justify-center">
-        <div className="rounded bg-slate-300 border border-slate-200/40 h-8" />
-        <div className="rounded bg-slate-300 border border-slate-200/40 h-8 opacity-40" />
-      </div>
-    );
-  }
-  if (style === "cols-list") {
-    return (
-      <div className="relative h-[92px] w-full overflow-hidden rounded-lg bg-slate-100 border border-slate-200/60 p-2 flex flex-col gap-1.5 justify-center">
-        <div className="rounded bg-slate-300 border border-slate-200/40 h-5 flex items-center px-1.5 gap-1.5">
-          <div className="h-3.5 w-3.5 rounded-full bg-slate-400 shrink-0" />
-          <div className="h-1.5 w-2/3 rounded-full bg-slate-400" />
-        </div>
-        <div className="rounded bg-slate-300 border border-slate-200/40 h-5 flex items-center px-1.5 gap-1.5 opacity-60">
-          <div className="h-3.5 w-3.5 rounded-full bg-slate-400 shrink-0" />
-          <div className="h-1.5 w-2/3 rounded-full bg-slate-400" />
-        </div>
-        <div className="rounded bg-slate-300 border border-slate-200/40 h-5 flex items-center px-1.5 gap-1.5 opacity-30">
-          <div className="h-3.5 w-3.5 rounded-full bg-slate-400 shrink-0" />
-          <div className="h-1.5 w-2/3 rounded-full bg-slate-400" />
-        </div>
-      </div>
-    );
-  }
-  // "auto"
-  return (
-    <div className="relative h-[92px] w-full overflow-hidden rounded-lg bg-slate-100 border border-slate-200/60 p-2 flex flex-col justify-between">
-      <div className="grid grid-cols-4 gap-1.5 h-full">
-        <div className="rounded bg-slate-300 border border-slate-200/40" />
-        <div className="rounded bg-slate-300 border border-slate-200/40" />
-        <div className="rounded bg-slate-300 border border-slate-200/40" />
-        <div className="rounded bg-indigo-400/80 border border-indigo-300" />
-      </div>
-    </div>
-  );
-}
-
-type ProductGridPickerProps = {
-  value: string | undefined;
-  onChange: (gridStyle: ProductGridStyle) => void;
-  disabled?: boolean;
-};
-
-export const StoreThemeProductGridPicker = memo(function StoreThemeProductGridPicker({
-  value,
-  onChange,
-  disabled,
-}: ProductGridPickerProps) {
-  const selected = normalizeProductGridStyle(value);
-
-  return (
-    <fieldset className="space-y-2" disabled={disabled}>
-      <legend className="sr-only">Distribución de cuadrícula</legend>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {PRODUCT_GRID_OPTIONS.map((option) => {
-          const isActive = selected === option.value;
-          return (
-            <label
-              key={option.value}
-              className={`group relative flex flex-col overflow-hidden rounded-xl border-2 bg-white transition-colors cursor-pointer ${
-                isActive
-                  ? "border-indigo-500 ring-2 ring-indigo-500/20"
-                  : "border-[#e5e5ea] hover:border-[#d2d2d7]"
-              }`}
-            >
-              <input
-                type="radio"
-                name="productGridStyle"
-                value={option.value}
-                checked={isActive}
-                onChange={() => onChange(option.value)}
-                className="sr-only"
-              />
-              <div className="p-3 w-full">
-                <ProductGridPreview style={option.value} />
-              </div>
-              <div className="w-full border-t border-[#f0f0f5] p-3 text-left">
-                <p className="text-xs font-semibold text-[#1d1d1f]">{option.label}</p>
-                <p className="mt-1 text-[10px] text-[#6e6e73] leading-relaxed">{option.description}</p>
-              </div>
-              {isActive && (
-                <CheckCircle2
-                  size={16}
-                  className="absolute right-2 top-2 text-indigo-500"
-                  aria-hidden
-                />
-              )}
-            </label>
-          );
-        })}
-      </div>
-    </fieldset>
-  );
-});
-
 export function useStoreThemeLayoutHandlers(
   setStoreThemeDraft: Dispatch<SetStateAction<StoreThemeConfig | null>>,
+  onDraftMutated?: () => void,
 ) {
+  const touch = useCallback(() => {
+    onDraftMutated?.();
+  }, [onDraftMutated]);
+
   const setNavbarType = useCallback(
     (navbarType: NavbarType) => {
       setStoreThemeDraft((prev) => (prev ? { ...prev, navbarType } : prev));
+      touch();
     },
-    [setStoreThemeDraft],
+    [setStoreThemeDraft, touch],
   );
 
   const setProductCardStyle = useCallback(
     (productCardStyle: ProductCardStyle) => {
       setStoreThemeDraft((prev) => (prev ? { ...prev, productCardStyle } : prev));
+      touch();
     },
-    [setStoreThemeDraft],
+    [setStoreThemeDraft, touch],
   );
 
   const setNavigationMode = useCallback(
-    (navigationMode: string) => {
-      setStoreThemeDraft((prev) => (prev ? { ...prev, navigationMode } : prev));
+    (navigationMode: NavigationMode) => {
+      setStoreThemeDraft((prev) => (prev ? { ...prev, navigationMode: normalizeNavigationMode(navigationMode) } : prev));
+      touch();
     },
-    [setStoreThemeDraft],
+    [setStoreThemeDraft, touch],
   );
 
   const setProductDetailsMode = useCallback(
     (productDetailsMode: ProductDetailsMode) => {
       setStoreThemeDraft((prev) => (prev ? { ...prev, productDetailsMode } : prev));
+      touch();
     },
-    [setStoreThemeDraft],
+    [setStoreThemeDraft, touch],
   );
 
-  const setProductGridStyle = useCallback(
-    (productGridStyle: ProductGridStyle) => {
-      setStoreThemeDraft((prev) => (prev ? { ...prev, productGridStyle } : prev));
-    },
-    [setStoreThemeDraft],
-  );
+  return { setNavbarType, setProductCardStyle, setNavigationMode, setProductDetailsMode };
+}
 
-  return { setNavbarType, setProductCardStyle, setNavigationMode, setProductDetailsMode, setProductGridStyle };
+export function getStoreThemeComboWarnings(theme: StoreThemeConfig | null | undefined): string[] {
+  if (!theme) return [];
+  const warnings: string[] = [];
+  const navbarType = normalizeNavbarType(theme.navbarType);
+  const productCardStyle = normalizeProductCardStyle(theme.productCardStyle);
+  const navigationMode = normalizeNavigationMode(theme.navigationMode);
+  const productDetailsMode = normalizeProductDetailsMode(theme.productDetailsMode);
+
+  if (navbarType === "mega-menu" && productCardStyle === "layout-food") {
+    warnings.push("Con mega menú y tarjetas Food Deluxe, el botón flotante de categorías se oculta; usa el header o el overlay.");
+  }
+  if (navbarType === "floating-bottom" && productCardStyle !== "layout-food") {
+    warnings.push("La barra inferior también aparece con navbar flotante, no solo con tarjetas Food Deluxe.");
+    warnings.push("Configura WhatsApp, Instagram o ubicación en tus sucursales para que aparezca la pestaña Contacto.");
+  }
+  if (navigationMode === "pagination") {
+    warnings.push("En modo paginación los clientes ven una categoría a la vez.");
+  }
+  if (productDetailsMode === "inline" && productCardStyle !== "glass") {
+    warnings.push("Con expansión en tarjeta (no Cristal), los detalles se abren en un panel debajo del producto.");
+  }
+  if (productDetailsMode === "inline" && ["layout-clean", "layout-skew", "layout-food"].includes(productCardStyle)) {
+    warnings.push("Estas tarjetas muestran poca información antes de abrir el panel de detalles.");
+  }
+  if (productDetailsMode === "modal-premium" && productCardStyle === "glass") {
+    warnings.push("Cristal + modal premium usa un flujo distinto al de otras tarjetas con el mismo ajuste de detalles.");
+  }
+  if (navbarType === "sidebar-categories") {
+    warnings.push("En móvil, la barra lateral usa pestañas horizontales en el header.");
+  }
+  return warnings;
 }

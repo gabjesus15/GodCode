@@ -6,7 +6,7 @@ import { getCustomerMembership } from "@/lib/super-admin/account-access";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { resolvePlanName } from "@/lib/plans/plan-i18n";
 import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
-import { BranchSummary } from "@/components/customer-portal/shared/customer-account-types";
+import { BranchSummary, BusinessInfoSummary } from "@/components/customer-portal/shared/customer-account-types";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { resolveTenantPanelLoginUrl } from "@/lib/tenant/panel-url";
 import { buildBillingOptionsResponse, getCustomerAccountBillingContext } from "@/lib/tenant/customer-account-billing";
@@ -105,7 +105,7 @@ export default async function CustomerAccountPage() {
     getCustomerAccountBillingContext(companyId),
   ]);
 
-  const [{ data: company }, { data: branches }, { data: payments }, { data: companyAddons }, { data: tickets }, { data: branchEntitlements }] = await Promise.all([
+  const [{ data: company }, { data: branches }, { data: businessInfoRaw }, { data: payments }, { data: companyAddons }, { data: tickets }, { data: branchEntitlements }] = await Promise.all([
     supabaseAdmin
       .from("companies")
       .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,plan:plans(id,name,name_i18n,price,max_branches,max_users,features)")
@@ -113,9 +113,16 @@ export default async function CustomerAccountPage() {
       .maybeSingle(),
     supabaseAdmin
       .from("branches")
-      .select("id,name,address,is_active")
+      .select(
+        "id,name,address,is_active,phone,schedule,instagram_url,whatsapp_url,map_url,origin_lat,origin_lng,payment_methods,pago_movil,zelle,transferencia_bancaria,stripe,mercadopago,paypal,order_intake_paused,order_intake_pause_message,order_intake_paused_at,order_intake_paused_by",
+      )
       .eq("company_id", companyId)
       .order("created_at", { ascending: false }),
+    supabaseAdmin
+      .from("business_info")
+      .select("name,phone,address,instagram,schedule")
+      .eq("company_id", companyId)
+      .maybeSingle(),
     supabaseAdmin
       .from("payments_history")
       .select("id,amount_paid,status,payment_date,payment_method,months_paid,payment_reference,reference_file_url")
@@ -249,10 +256,21 @@ export default async function CustomerAccountPage() {
 
   const initialBillingOptions = billingCtx ? buildBillingOptionsResponse(companyId, billingCtx) : null;
 
+  const businessInfo: BusinessInfoSummary | null = businessInfoRaw
+    ? {
+        name: (businessInfoRaw as { name?: string | null }).name ?? null,
+        phone: (businessInfoRaw as { phone?: string | null }).phone ?? null,
+        address: (businessInfoRaw as { address?: string | null }).address ?? null,
+        instagram: (businessInfoRaw as { instagram?: string | null }).instagram ?? null,
+        schedule: (businessInfoRaw as { schedule?: string | null }).schedule ?? null,
+      }
+    : null;
+
   return (
     <CustomerAccountClient
         company={snapshot}
         branches={(branches ?? []) as BranchSummary[]}
+        businessInfo={businessInfo}
         payments={
           ((payments ?? []) as Array<{
             id: string;
