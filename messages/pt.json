@@ -131,7 +131,7 @@
           "reviewFields": "Revise os campos", "completeCorrectly": "Por favor preencha corretamente"
         },
         "validationItems": {
-          "validName": "nome valido", "validRut": "RUT valido", "validPhone": "telefone completo (+56 9)",
+          "validName": "nome valido", "validRut": "RUT valido", "validId": "{id} valido", "validPhone": "telefone completo (+56 9)", "validPhoneVe": "telefone completo (+58)",
           "transferReceipt": "comprovante de transferencia", "name": "nome", "phone": "telefone", "receipt": "comprovante"
         },
         "catalog": {
