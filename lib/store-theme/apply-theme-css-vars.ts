@@ -61,8 +61,8 @@ function resolveOptimizedBackgroundImageUrl(rawBackgroundImageUrl: string): stri
 	}
 	if (isCloudinaryUrl(rawBackgroundImageUrl)) {
 		return getCloudinaryOptimizedUrl(rawBackgroundImageUrl, {
-			width: 1600,
-			quality: "auto",
+			width: 2400,
+			quality: "auto:good",
 			crop: "limit",
 		}) || rawBackgroundImageUrl;
 	}
@@ -81,7 +81,7 @@ export function resolveThemeColors(theme: Partial<StoreThemeConfig>): ResolvedTh
 		? resolveOptimizedBackgroundImageUrl(rawBackgroundImageUrl)
 		: "";
 	const backgroundImage = optimizedBackground ? `url(${optimizedBackground})` : "none";
-	const backgroundLayerOpacity = optimizedBackground ? "0.32" : "0";
+	const backgroundLayerOpacity = optimizedBackground ? "0.38" : "0";
 	const backgroundSize = optimizedBackground ? "1200px" : "auto";
 	const backgroundRepeat = optimizedBackground ? "repeat" : "repeat";
 	return {

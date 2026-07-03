@@ -65,7 +65,9 @@
   background-size: var(--tenant-bg-size, 1200px);
   background-position: center;
   opacity: var(--tenant-bg-layer-opacity, 0);
-  filter: blur(1px) brightness(0.88) contrast(1.06);
+  filter: blur(0.875px) brightness(0.46) contrast(1.05) saturate(0.97);
+  transform: scale(1.06);
+  transition: opacity 0.2s ease-out;
   pointer-events: none;
   will-change: transform;
 }

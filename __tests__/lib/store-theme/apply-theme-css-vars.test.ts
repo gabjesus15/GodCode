@@ -21,7 +21,7 @@ describe("apply-theme-css-vars", () => {
 		const css = buildTenantThemeCssString({
 			backgroundImageUrl: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
 		});
-		expect(css).toContain("--tenant-bg-layer-opacity:0.32");
+		expect(css).toContain("--tenant-bg-layer-opacity:0.38");
 		expect(css).toContain("--tenant-bg-size:1200px");
 		expect(css).toContain("--tenant-bg-repeat:repeat");
 		expect(css).not.toContain("menu-pattern");
