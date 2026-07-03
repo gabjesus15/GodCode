@@ -114,9 +114,20 @@ export function useMenuCategoryScroll({
 	}, [navigationMode, query, setActiveCategory, useVirtualizedCatalog, visibleCategoryIds]);
 
 	useEffect(() => {
-		if (!syncNavbarOnNextActiveRef.current || !activeCategory) return;
+		if (!activeCategory) return;
+		if (navbarType !== "icon-list" && navbarType !== "floating-bottom" && navbarType !== "sidebar-categories") {
+			return;
+		}
+
+		const fromClick = syncNavbarOnNextActiveRef.current;
 		syncNavbarOnNextActiveRef.current = false;
-		syncNavbarCategoryTab(navbarType, activeCategory);
+		const behavior = fromClick ? resolveCategoryScrollBehavior() : "auto";
+
+		const rafId = requestAnimationFrame(() => {
+			syncNavbarCategoryTab(navbarType, activeCategory, behavior);
+		});
+
+		return () => cancelAnimationFrame(rafId);
 	}, [activeCategory, navbarType]);
 
 	useEffect(() => () => {

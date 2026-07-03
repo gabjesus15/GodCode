@@ -61,15 +61,42 @@ export function scheduleScrollSpyRelease(
 	};
 }
 
-export function syncNavbarCategoryTab(navbarType: string, activeCategory: string | null) {
+export function scrollActiveItemIntoHorizontalContainer(
+	container: HTMLElement,
+	activeElement: HTMLElement,
+	behavior: ScrollBehavior = "auto",
+): void {
+	const containerRect = container.getBoundingClientRect();
+	const activeRect = activeElement.getBoundingClientRect();
+	const targetLeft =
+		container.scrollLeft +
+		(activeRect.left - containerRect.left) -
+		containerRect.width / 2 +
+		activeRect.width / 2;
+
+	container.scrollTo({
+		left: Math.max(0, targetLeft),
+		behavior,
+	});
+}
+
+export function syncNavbarCategoryTab(
+	navbarType: string,
+	activeCategory: string | null,
+	behavior: ScrollBehavior = "auto",
+) {
 	if (!activeCategory) return;
 	if (navbarType === "icon-list" || navbarType === "floating-bottom") {
-		const container = document.querySelector(".icon-list-categories");
+		const container = document.querySelector(".icon-list-categories") as HTMLElement | null;
 		const activeElement = container?.querySelector(".icon-list-card.active") as HTMLElement | null;
-		activeElement?.scrollIntoView({ behavior: "auto", block: "nearest", inline: "center" });
+		if (container && activeElement) {
+			scrollActiveItemIntoHorizontalContainer(container, activeElement, behavior);
+		}
 	} else if (navbarType === "sidebar-categories") {
-		const container = document.querySelector(".sidebar-categories-panel");
+		const container = document.querySelector(".sidebar-categories-panel") as HTMLElement | null;
 		const activeElement = container?.querySelector(".sidebar-nav-item.active") as HTMLElement | null;
-		activeElement?.scrollIntoView({ behavior: "auto", block: "nearest", inline: "start" });
+		if (container && activeElement) {
+			activeElement.scrollIntoView({ behavior, block: "nearest", inline: "nearest" });
+		}
 	}
 }
