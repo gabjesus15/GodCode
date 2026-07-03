@@ -3,6 +3,7 @@ import { getCachedCompany } from "@/utils/tenant-cache";
 import { getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
+import { formatLlmsTxtLink } from "@/lib/seo/llms-txt-format";
 
 interface MenuCategory {
   id: string;
@@ -141,41 +142,40 @@ export async function getLlmsTxtData(subdomain: string, isFullVersion = false) {
     markdown += `> ${businessDescription}\n\n`;
     markdown += `Este es el archivo detallado de información para modelos de lenguaje (LLMs) y buscadores de inteligencia artificial. Contiene la lista completa de platos, descripciones, precios y detalles de contacto de ${displayName}.\n\n`;
 
-    markdown += `## Enlaces Canónicos\n`;
-    markdown += `- **Sitio Web Principal**: ${baseUrl}\n`;
-    markdown += `- **Menú Digital y Pedidos**: ${baseUrl}/menu\n`;
-    markdown += `- **Resumen de IA (llms.txt)**: ${baseUrl}/llms.txt\n\n`;
+    markdown += `## Enlaces principales\n`;
+    markdown += `${formatLlmsTxtLink("Sitio web principal", baseUrl, "Página de inicio del negocio")}\n`;
+    markdown += `${formatLlmsTxtLink("Menú digital y pedidos", `${baseUrl}/menu`, "Carta online y checkout")}\n`;
+    markdown += `${formatLlmsTxtLink("Resumen IA (llms.txt)", `${baseUrl}/llms.txt`, "Versión resumida para LLMs")}\n\n`;
   } else {
     markdown += `# ${displayName}\n\n`;
     markdown += `> ${businessDescription}\n\n`;
     markdown += `Este es el archivo resumido de información optimizado para modelos de lenguaje (LLMs) y buscadores de inteligencia artificial (GEO). Ofrece una vista rápida de ${displayName}, sus sucursales y sus secciones de menú.\n\n`;
 
-    markdown += `## Enlaces Canónicos\n`;
-    markdown += `- **Sitio Web Principal**: ${baseUrl}\n`;
-    markdown += `- **Menú Digital y Pedidos**: ${baseUrl}/menu\n`;
-    markdown += `- **Catálogo Completo para IA (llms-full.txt)**: ${baseUrl}/llms-full.txt\n\n`;
+    markdown += `## Enlaces principales\n`;
+    markdown += `${formatLlmsTxtLink("Sitio web principal", baseUrl, "Página de inicio del negocio")}\n`;
+    markdown += `${formatLlmsTxtLink("Menú digital y pedidos", `${baseUrl}/menu`, "Carta online y checkout")}\n`;
+    markdown += `${formatLlmsTxtLink("Catálogo completo para IA (llms-full.txt)", `${baseUrl}/llms-full.txt`, "Productos y precios para LLMs")}\n\n`;
   }
 
   // Add branches info
   if (activeBranches.length > 0) {
-    markdown += `## Sucursales y Contacto\n`;
+    markdown += `## Sucursales y contacto\n`;
     for (const b of activeBranches) {
       const branchName = b.name ?? "Principal";
-      markdown += `### Sucursal: ${branchName}\n`;
-      if (b.address) {
-        markdown += `- **Dirección**: ${b.address}\n`;
-      }
-      if (b.phone) {
-        markdown += `- **Teléfono**: ${b.phone}\n`;
-      }
       if (b.whatsapp_url) {
-        markdown += `- **WhatsApp de Pedidos/Contacto**: ${b.whatsapp_url}\n`;
+        markdown += `${formatLlmsTxtLink(`WhatsApp ${branchName}`, b.whatsapp_url, "Pedidos y contacto")}\n`;
       }
       if (b.instagram_url) {
-        markdown += `- **Instagram**: ${b.instagram_url}\n`;
+        markdown += `${formatLlmsTxtLink(`Instagram ${branchName}`, b.instagram_url, "Red social")}\n`;
       }
       if (b.map_url) {
-        markdown += `- **Ubicación en Google Maps**: ${b.map_url}\n`;
+        markdown += `${formatLlmsTxtLink(`Ubicación ${branchName}`, b.map_url, "Google Maps")}\n`;
+      }
+      const details: string[] = [];
+      if (b.address) details.push(`Dirección: ${b.address}`);
+      if (b.phone) details.push(`Teléfono: ${b.phone}`);
+      if (details.length > 0) {
+        markdown += `${details.join(" · ")}\n`;
       }
       markdown += `\n`;
     }
@@ -210,7 +210,7 @@ export async function getLlmsTxtData(subdomain: string, isFullVersion = false) {
         if (catProducts.length === 0) continue;
         markdown += `- **${cat.name}** (${catProducts.length} productos disponibles)\n`;
       }
-      markdown += `\nPara consultar precios, ingredientes o realizar un pedido, visita el menú digital en: ${baseUrl}/menu o consulta el catálogo completo para IA en: ${baseUrl}/llms-full.txt\n`;
+      markdown += `\nConsulta el menú en ${formatLlmsTxtLink("menú digital", `${baseUrl}/menu`)} o el ${formatLlmsTxtLink("catálogo IA completo", `${baseUrl}/llms-full.txt`)}.\n`;
     }
   }
 

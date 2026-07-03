@@ -7,6 +7,9 @@ import { HomeClient } from "../../components/tenant/home/home-client";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
 
+import "./styles/Home.css";
+import "./styles/BranchSelectorModal.css";
+
 interface TenantPageProps {
   params: Promise<{ subdomain: string }>;
 }

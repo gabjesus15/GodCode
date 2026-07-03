@@ -1,6 +1,5 @@
 "use client";
 
-import "@/app/[subdomain]/styles/BottomNavbar.css";
 import { CartProvider } from "../cart";
 import { MenuClientView } from "./menu-client-view";
 import { MenuLcpPreload } from "./menu-lcp-preload";

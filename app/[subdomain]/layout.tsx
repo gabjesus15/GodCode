@@ -7,7 +7,10 @@ import { buildTenantThemeCssString } from "@/lib/store-theme/apply-theme-css-var
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedCompany } from "../../utils/tenant-cache";
-import "./tenant.css";
+import "./styles/TenantUiPrimitives.css";
+import "./styles/index.css";
+import "./tenant-outfit.css";
+import "./tenant-base.css";
 import { TenantShell } from "../../components/tenant/shell/tenant-shell";
 import { QueryProvider } from "@/components/ui/query-provider";
 

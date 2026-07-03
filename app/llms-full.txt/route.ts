@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getMainDomainLlmsTxt } from "@/lib/landing/llms-txt";
+import { LLMS_TXT_CONTENT_TYPE } from "@/lib/seo/llms-txt-format";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
 	return new NextResponse(markdown, {
 		status: 200,
 		headers: {
-			"Content-Type": "text/plain; charset=utf-8",
+			"Content-Type": LLMS_TXT_CONTENT_TYPE,
 			"Cache-Control": "public, max-age=3600, s-maxage=3600",
 		},
 	});

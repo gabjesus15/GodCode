@@ -7,6 +7,7 @@ import { getAppUrl } from "@/lib/tenant/app-url";
 
 import { LANDING_BRAND_ALTERNATE, LANDING_BRAND_NAME, LANDING_SUPPORT_EMAIL } from "./brand";
 import { LANDING_FAQ } from "./faq";
+import { formatLlmsTxtLink } from "@/lib/seo/llms-txt-format";
 
 function formatPlanPrice(price: number, currency: string): string {
 	try {
@@ -38,14 +39,14 @@ export async function getMainDomainLlmsTxt(isFullVersion = false): Promise<strin
 		markdown += `Resumen optimizado para LLMs y GEO sobre el producto ${LANDING_BRAND_NAME}.\n\n`;
 	}
 
-	markdown += `## Enlaces canónicos\n`;
-	markdown += `- **Sitio principal**: ${base}/\n`;
-	markdown += `- **Registro / onboarding**: ${base}/onboarding\n`;
-	markdown += `- **Sobre la marca**: ${base}/sobre-godcode\n`;
+	markdown += `## Enlaces principales\n`;
+	markdown += `${formatLlmsTxtLink("Sitio principal", `${base}/`, "Página de inicio")}\n`;
+	markdown += `${formatLlmsTxtLink("Registro y onboarding", `${base}/onboarding`, "Crear cuenta nueva")}\n`;
+	markdown += `${formatLlmsTxtLink("Sobre la marca", `${base}/sobre-godcode`, "Información institucional")}\n`;
 	if (isFullVersion) {
-		markdown += `- **Resumen IA (llms.txt)**: ${base}/llms.txt\n`;
+		markdown += `${formatLlmsTxtLink("Resumen IA (llms.txt)", `${base}/llms.txt`, "Versión resumida para LLMs")}\n`;
 	} else {
-		markdown += `- **Catálogo completo para IA (llms-full.txt)**: ${base}/llms-full.txt\n`;
+		markdown += `${formatLlmsTxtLink("Catálogo completo para IA (llms-full.txt)", `${base}/llms-full.txt`, "Versión extendida para LLMs")}\n`;
 	}
 	markdown += `\n`;
 
@@ -79,8 +80,8 @@ export async function getMainDomainLlmsTxt(isFullVersion = false): Promise<strin
 	}
 
 	markdown += `## Contacto y soporte\n`;
-	markdown += `- **Email**: ${LANDING_SUPPORT_EMAIL}\n`;
-	markdown += `- **Registro**: ${base}/onboarding\n`;
+	markdown += `${formatLlmsTxtLink("Soporte por email", `mailto:${LANDING_SUPPORT_EMAIL}`, LANDING_SUPPORT_EMAIL)}\n`;
+	markdown += `${formatLlmsTxtLink("Registro", `${base}/onboarding`, "Alta de nuevos negocios")}\n`;
 
 	return markdown;
 }

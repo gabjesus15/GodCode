@@ -78,6 +78,7 @@ export default async function RootLayout({
   const pathname = hdrs.get("x-pathname") || "/";
   const tenantSlug = hdrs.get("x-tenant-slug");
   const messages = getClientMessagesForPath(pathname, locale, { tenantSlug });
+  const isTenantRoute = Boolean(tenantSlug);
 
   return (
     <html lang={locale} suppressHydrationWarning data-scroll-behavior="smooth">
@@ -87,10 +88,14 @@ export default async function RootLayout({
         {process.env.NEXT_PUBLIC_SUPABASE_URL ? (
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL.replace(/\/$/, "")} crossOrigin="anonymous" />
         ) : null}
-        <link rel="preload" href="/fonts/outfit.css" as="style" />
-        <link rel="preload" href="/fonts/Outfit-Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-        <link rel="preload" href="/fonts/Outfit-Bold.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-        <link rel="stylesheet" href="/fonts/custom-fonts.css" />
+        {!isTenantRoute ? (
+          <>
+            <link rel="preload" href="/fonts/outfit.css" as="style" />
+            <link rel="preload" href="/fonts/Outfit-Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+            <link rel="preload" href="/fonts/Outfit-Bold.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+            <link rel="stylesheet" href="/fonts/custom-fonts.css" />
+          </>
+        ) : null}
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
@@ -103,7 +108,11 @@ export default async function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} bg-background text-foreground antialiased transition-colors duration-200`}
+        className={
+          isTenantRoute
+            ? "bg-background text-foreground antialiased transition-colors duration-200"
+            : `${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} bg-background text-foreground antialiased transition-colors duration-200`
+        }
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <GlobalAntiZoom />
