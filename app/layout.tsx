@@ -8,6 +8,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { DevServiceWorkerCleanup } from "../components/dev-sw-cleanup";
 import { SilentConsole } from "../components/silent-console";
 import { GlobalAntiZoom } from "../components/theme/global-anti-zoom";
+import { LIGHT_ONLY_THEME_SCRIPT } from "@/components/theme/saas-theme-scope";
 import { PageAnalyticsTracker } from "../components/analytics/page-analytics-tracker";
 import { getClientMessagesForPath } from "@/lib/i18n/client-messages";
 import { getCurrentLocale } from "@/lib/i18n/server";
@@ -96,6 +97,11 @@ export default async function RootLayout({
             <link rel="stylesheet" href="/fonts/custom-fonts.css" />
           </>
         ) : null}
+        <Script
+          id="saas-theme-light-only"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: LIGHT_ONLY_THEME_SCRIPT.trim() }}
+        />
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
           {`

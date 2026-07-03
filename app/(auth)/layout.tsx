@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
-import "../super-admin.tailwind.css";
+import { SaasThemeEnforcer } from "../../components/theme/saas-theme-enforcer";
 import { SaasAdminPwaRegister } from "../../components/super-admin/shell/saas-admin-pwa-register";
 
 export const metadata: Metadata = {
@@ -37,6 +37,7 @@ export default function AuthLayout({
 }) {
 	return (
 		<>
+			<SaasThemeEnforcer />
 			<SaasAdminPwaRegister />
 			{children}
 		</>

@@ -6,6 +6,7 @@ import "./super-admin.css";
 import { AdminRoleProvider } from "../../components/super-admin/shell/admin-role-context";
 import { SaasAdminPwaRegister } from "../../components/super-admin/shell/saas-admin-pwa-register";
 import { AdminShell } from "../../components/super-admin/shell/admin-shell";
+import { SaasThemeEnforcer } from "../../components/theme/saas-theme-enforcer";
 import { createSupabaseServerClient } from "../../utils/supabase/server";
 import { QueryProvider } from "@/components/ui/query-provider";
 
@@ -67,6 +68,7 @@ export default async function SuperAdminLayout({
 
 	return (
 		<QueryProvider>
+			<SaasThemeEnforcer />
 			<SaasAdminPwaRegister />
 			<AdminRoleProvider role={role}>
 				<AdminShell>{children}</AdminShell>
