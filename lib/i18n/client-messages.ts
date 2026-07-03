@@ -11,11 +11,20 @@ function isTenantPublicPath(pathname: string): boolean {
 	return !MAIN_DOMAIN_RESERVED_PATH_SEGMENTS.has(first);
 }
 
-/** Solo envía al cliente los namespaces que usan componentes client. */
-export function getClientMessagesForPath(pathname: string, locale: AppLocale): ClientI18nMessages {
-	const all = getMessagesForLocale(locale);
+export type ClientMessagesOptions = {
+	tenantSlug?: string | null;
+};
 
-	if (isTenantPublicPath(pathname)) {
+/** Solo envía al cliente los namespaces que usan componentes client. */
+export function getClientMessagesForPath(
+	pathname: string,
+	locale: AppLocale,
+	options?: ClientMessagesOptions,
+): ClientI18nMessages {
+	const all = getMessagesForLocale(locale);
+	const tenantSlug = options?.tenantSlug?.trim();
+
+	if (tenantSlug || isTenantPublicPath(pathname)) {
 		return all;
 	}
 

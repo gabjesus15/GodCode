@@ -76,7 +76,8 @@ export default async function RootLayout({
   const locale = await getCurrentLocale();
   const hdrs = await headers();
   const pathname = hdrs.get("x-pathname") || "/";
-  const messages = getClientMessagesForPath(pathname, locale);
+  const tenantSlug = hdrs.get("x-tenant-slug");
+  const messages = getClientMessagesForPath(pathname, locale, { tenantSlug });
 
   return (
     <html lang={locale} suppressHydrationWarning data-scroll-behavior="smooth">
