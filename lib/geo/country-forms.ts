@@ -75,3 +75,17 @@ export function getFormStrategy(countryCode: string | null | undefined): Country
   const code = normalizeCountryCode(countryCode) ?? "CL";
   return COUNTRY_FORM_STRATEGIES[code] ?? COUNTRY_FORM_STRATEGIES.CL;
 }
+
+/** País del checkout según sucursal, negocio o carrito (sin inferir por método de pago). */
+export function resolveCheckoutCountryCode(params: {
+  branchCountry?: string | null;
+  businessCountry?: string | null;
+  cartCountry?: string | null;
+}): string {
+  return (
+    normalizeCountryCode(params.branchCountry) ??
+    normalizeCountryCode(params.businessCountry) ??
+    normalizeCountryCode(params.cartCountry) ??
+    "CL"
+  );
+}

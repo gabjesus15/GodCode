@@ -21,9 +21,7 @@ import { buildBusinessClosedCustomerMessage } from "@/lib/tenant/business-closed
 import { generateWSMessage } from "../services/whatsapp-message";
 import { parseOrderRpcPayload } from "../services/order-payload";
 import { paymentMethodRequiresReceipt } from "../services/menu-order-payment";
-import { getFormStrategy } from "@/lib/geo/country-forms";
-import { normalizeCountryCode } from "@/lib/geo/country-registry";
-import { paymentMethodUsesBolivaresInVenezuela } from "../utils/venezuela-payment-copy";
+import { getFormStrategy, resolveCheckoutCountryCode } from "@/lib/geo/country-forms";
 import {
   ENHANCE_CATALOG_BEVERAGE_FALLBACK,
   ENHANCE_CATALOG_EXTRA_FALLBACK,
@@ -268,29 +266,20 @@ export function CartModal({
       [branchPaymentMethods, deliverySettings, fulfillment],
     );
 
-    const effectiveCountryCode = useMemo(() => {
-      const resolved =
-        normalizeCountryCode(selectedBranchForCheckout?.country) ??
-        normalizeCountryCode(selectedBranch?.country) ??
-        normalizeCountryCode(businessInfo?.country) ??
-        normalizeCountryCode(cartCountry) ??
-        "CL";
-
-      if (resolved === "VE") return "VE";
-
-      const hasBolivarMethod = checkoutPaymentMethods.some((method) =>
-        paymentMethodUsesBolivaresInVenezuela(method),
-      );
-      if (hasBolivarMethod) return "VE";
-
-      return resolved;
-    }, [
-      businessInfo?.country,
-      cartCountry,
-      checkoutPaymentMethods,
-      selectedBranch?.country,
-      selectedBranchForCheckout?.country,
-    ]);
+    const effectiveCountryCode = useMemo(
+      () =>
+        resolveCheckoutCountryCode({
+          branchCountry: selectedBranchForCheckout?.country ?? selectedBranch?.country,
+          businessCountry: businessInfo?.country,
+          cartCountry,
+        }),
+      [
+        businessInfo?.country,
+        cartCountry,
+        selectedBranch?.country,
+        selectedBranchForCheckout?.country,
+      ],
+    );
 
     const strategy = useMemo(
       () => getFormStrategy(effectiveCountryCode),
