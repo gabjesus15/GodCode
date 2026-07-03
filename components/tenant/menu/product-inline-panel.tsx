@@ -105,7 +105,7 @@ export function ProductInlinePanel({
 								<button
 									type="button"
 									className="product-inline-panel__add-btn"
-									onClick={() => addToCart(product)}
+									onClick={() => addToCart?.(product)}
 									aria-label={`Agregar ${product.name} al carrito`}
 								>
 									<Plus size={16} />
@@ -115,7 +115,7 @@ export function ProductInlinePanel({
 								<div className="product-inline-panel__stepper">
 									<button
 										type="button"
-										onClick={() => decreaseQuantity(product.id)}
+										onClick={() => decreaseQuantity?.(product.id)}
 										aria-label="Disminuir cantidad"
 									>
 										<Minus size={14} />
@@ -123,7 +123,7 @@ export function ProductInlinePanel({
 									<span>{quantity}</span>
 									<button
 										type="button"
-										onClick={() => addToCart(product)}
+										onClick={() => addToCart?.(product)}
 										aria-label="Aumentar cantidad"
 									>
 										<Plus size={14} />
