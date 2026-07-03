@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -9,10 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { SaasLogo } from "./SaasLogo";
 
 import { SUPER_ADMIN_NAV } from "@/lib/super-admin/super-admin-nav";
-import { createSupabaseBrowserClient } from "@/utils/supabase/client";
+import { signOutAndRedirect } from "@/lib/auth/sign-out-client";
 
 export function Sidebar() {
-  const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
 
   const { data: solicitudesData } = useQuery<{ pendingCount: number }>({
@@ -31,10 +29,7 @@ export function Sidebar() {
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
-      const supabase = createSupabaseBrowserClient("super-admin");
-      await supabase.auth.signOut();
-      router.push("/login");
-      router.refresh();
+      await signOutAndRedirect("/login");
     } finally {
       setLoggingOut(false);
     }

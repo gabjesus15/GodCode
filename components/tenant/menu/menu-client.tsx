@@ -3,6 +3,7 @@
 import "@/app/[subdomain]/styles/BottomNavbar.css";
 import { CartProvider } from "../cart";
 import { MenuClientView } from "./menu-client-view";
+import { MenuLcpPreload } from "./menu-lcp-preload";
 import type { MenuClientProps } from "./menu-types";
 import { useMenuClientController } from "./use-menu-client-controller";
 
@@ -19,6 +20,7 @@ export function MenuClient(props: MenuClientProps) {
 			currency={vm.effectiveCurrency}
 			country={vm.effectiveCountry}
 		>
+			<MenuLcpPreload banners={props.banners ?? []} />
 			<MenuClientView
 				mounted={vm.mounted}
 				pageClassName={vm.pageClassName}
@@ -74,6 +76,9 @@ export function MenuClient(props: MenuClientProps) {
 				closeContactUi={vm.closeContactUi}
 				onContactChannelSelect={vm.handleContactChannelSelect}
 				onContactBranchSelect={vm.handleContactBranchSelect}
+				catalogScrollRef={vm.catalogScrollRef}
+				observerBlockRef={vm.observerBlockRef}
+				onActiveSectionChange={vm.handleScrollSpyCategoryChange}
 			/>
 		</CartProvider>
 	);

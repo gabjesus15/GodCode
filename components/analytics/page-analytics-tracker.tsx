@@ -69,54 +69,71 @@ export function PageAnalyticsTracker() {
 	useEffect(() => {
 		if (!pathname) return;
 
-		const qs = searchParams?.toString() || "";
-		const path = qs ? `${pathname}?${qs}` : pathname;
-		const dedupeKey = `page_view:${path}`;
-		if (wasAlreadySent(dedupeKey)) return;
+		const runTracking = () => {
+			const qs = searchParams?.toString() || "";
+			const path = qs ? `${pathname}?${qs}` : pathname;
+			const dedupeKey = `page_view:${path}`;
+			if (wasAlreadySent(dedupeKey)) return;
 
-		const host = typeof window !== "undefined" ? window.location.host : null;
-		const { pageType, tenantSlug } = resolveAnalyticsPageContext({ pathname: path, host });
-		const title = typeof document !== "undefined" ? document.title || null : null;
+			const host = typeof window !== "undefined" ? window.location.host : null;
+			const { pageType, tenantSlug } = resolveAnalyticsPageContext({ pathname: path, host });
+			const title = typeof document !== "undefined" ? document.title || null : null;
 
-		trackGaPageView({
-			path,
-			title,
-			pageType,
-			tenantSlug,
-		});
+			trackGaPageView({
+				path,
+				title,
+				pageType,
+				tenantSlug,
+			});
 
-		const payload = {
-			event: "page_view",
-			path,
-			referrer: typeof document !== "undefined" ? document.referrer || null : null,
-			title,
-			visitorId: getOrCreateVisitorId(),
-			sessionId: getOrCreateSessionId(),
-			metadata: {
-				page_type: pageType,
-				tenant_slug: tenantSlug,
-			},
+			const payload = {
+				event: "page_view",
+				path,
+				referrer: typeof document !== "undefined" ? document.referrer || null : null,
+				title,
+				visitorId: getOrCreateVisitorId(),
+				sessionId: getOrCreateSessionId(),
+				metadata: {
+					page_type: pageType,
+					tenant_slug: tenantSlug,
+				},
+			};
+
+			const body = JSON.stringify(payload);
+
+			try {
+				if (navigator.sendBeacon) {
+					const blob = new Blob([body], { type: "application/json" });
+					navigator.sendBeacon("/api/analytics/events", blob);
+					return;
+				}
+			} catch {
+				// Fallback to fetch below.
+			}
+
+			void fetch("/api/analytics/events", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body,
+				keepalive: true,
+				cache: "no-store",
+			}).catch(() => {});
 		};
 
-		const body = JSON.stringify(payload);
-
-		try {
-			if (navigator.sendBeacon) {
-				const blob = new Blob([body], { type: "application/json" });
-				navigator.sendBeacon("/api/analytics/events", blob);
-				return;
-			}
-		} catch {
-			// Fallback to fetch below.
+		let idleId: ReturnType<typeof setTimeout> | number = 0;
+		if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+			idleId = window.requestIdleCallback(() => runTracking(), { timeout: 2500 });
+		} else {
+			idleId = setTimeout(runTracking, 1200);
 		}
 
-		void fetch("/api/analytics/events", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body,
-			keepalive: true,
-			cache: "no-store",
-		}).catch(() => {});
+		return () => {
+			if (typeof window !== "undefined" && "cancelIdleCallback" in window && typeof idleId === "number") {
+				window.cancelIdleCallback(idleId);
+			} else {
+				clearTimeout(idleId as ReturnType<typeof setTimeout>);
+			}
+		};
 	}, [pathname, searchParams]);
 
 	return null;

@@ -1,11 +1,9 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import dynamic from "next/dynamic";
 
 import type { HeroBanner } from "../home/hero-carousel";
 import { HeroCarousel } from "../home/hero-carousel";
-import { BranchSelectorModal } from "../branch/branch-selector-modal";
 import { OrderIntakePausedBanner } from "./order-intake-paused-banner";
 import { MegaMenuFab, MegaMenuOverlay, SidebarCategoriesPanel } from "./menu-category-nav";
 import { MenuCatalog } from "./menu-catalog";
@@ -13,16 +11,12 @@ import { MenuContactChannelSheet } from "./menu-contact-channel-sheet";
 import type { BranchInfo, BranchModalItem, CategoryListItem, MenuProduct } from "./menu-types";
 import type { BranchContactChannel } from "@/lib/tenant/menu/menu-helpers";
 import { branchHasContactChannel } from "@/lib/tenant/menu/menu-helpers";
-
-const ProductDetailsModal = dynamic(
-	() => import("./product-details-modal").then((mod) => mod.ProductDetailsModal),
-	{ ssr: false },
-);
-
-const ContactBranchModal = dynamic(
-	() => import("../branch/contact-branch-modal").then((mod) => mod.ContactBranchModal),
-	{ ssr: false },
-);
+import {
+	LazyBranchSelectorModal,
+	LazyContactBranchModal,
+	LazyProductDetailsModal,
+} from "@/lib/tenant/lazy/tenant-dynamic";
+import type { MenuCatalogScrollController } from "@/lib/tenant/menu/menu-catalog-scroll-controller";
 
 export type MenuClientViewProps = {
 	mounted: boolean;
@@ -79,6 +73,9 @@ export type MenuClientViewProps = {
 	closeContactUi: () => void;
 	onContactChannelSelect: (channel: BranchContactChannel) => void;
 	onContactBranchSelect: (branch: Pick<BranchInfo, "id" | "whatsapp_url" | "instagram_url" | "map_url">) => void;
+	catalogScrollRef: React.RefObject<MenuCatalogScrollController | null>;
+	observerBlockRef: React.RefObject<boolean>;
+	onActiveSectionChange: (sectionId: string) => void;
 };
 
 export function MenuClientView(props: MenuClientViewProps) {
@@ -137,6 +134,9 @@ export function MenuClientView(props: MenuClientViewProps) {
 		closeContactUi,
 		onContactChannelSelect,
 		onContactBranchSelect,
+		catalogScrollRef,
+		observerBlockRef,
+		onActiveSectionChange,
 	} = props;
 
 	const contactBranches = pendingContactChannel
@@ -177,7 +177,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 						query={query}
 						searchQuery={searchQuery}
 						navigationMode={navigationMode}
-						activeCategory={activeCategory}
+						activeCategory={navigationMode === "pagination" ? activeCategory : null}
 						specialProducts={specialProducts}
 						visibleCategories={visibleCategories}
 						productsByCategory={productsByCategory}
@@ -192,6 +192,9 @@ export function MenuClientView(props: MenuClientViewProps) {
 						onCloseInline={onCloseInline}
 						inlinePanelRef={inlinePanelRef}
 						onlineOrderingEnabled={onlineOrderingEnabled}
+						catalogScrollRef={catalogScrollRef}
+						observerBlockRef={observerBlockRef}
+						onActiveSectionChange={onActiveSectionChange}
 					/>
 				</main>
 
@@ -199,9 +202,9 @@ export function MenuClientView(props: MenuClientViewProps) {
 					? createPortal(cartUi, document.getElementById("cart-portal-root") as Element)
 					: null}
 
-				{mounted && (
-					<ProductDetailsModal
-						isOpen={!!selectedProductDetails}
+				{mounted && selectedProductDetails ? (
+					<LazyProductDetailsModal
+						isOpen
 						onClose={onCloseModal}
 						product={selectedProductDetails}
 						country={effectiveCountry}
@@ -209,11 +212,11 @@ export function MenuClientView(props: MenuClientViewProps) {
 						onlineOrderingEnabled={onlineOrderingEnabled}
 						exchangeRate={exchangeRate}
 					/>
-				)}
+				) : null}
 
-				{!isEmbeddedPreview && (
-					<BranchSelectorModal
-						isOpen={isLocationModalOpen}
+				{!isEmbeddedPreview && isLocationModalOpen ? (
+					<LazyBranchSelectorModal
+						isOpen
 						onClose={onCloseLocationModal}
 						branches={modalBranches}
 						allBranches={allBranches}
@@ -223,7 +226,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 						schedule={businessSchedule ?? null}
 						businessName={businessName}
 					/>
-				)}
+				) : null}
 
 				<MegaMenuOverlay
 					isOpen={isMegaMenuOpen}
@@ -242,14 +245,16 @@ export function MenuClientView(props: MenuClientViewProps) {
 					onSelectChannel={onContactChannelSelect}
 				/>
 
-				<ContactBranchModal
-					isOpen={isContactBranchModalOpen}
-					onClose={closeContactUi}
-					branches={contactBranches}
-					isLoading={false}
-					onSelectBranch={onContactBranchSelect}
-					action={pendingContactChannel}
-				/>
+				{isContactBranchModalOpen ? (
+					<LazyContactBranchModal
+						isOpen
+						onClose={closeContactUi}
+						branches={contactBranches}
+						isLoading={false}
+						onSelectBranch={onContactBranchSelect}
+						action={pendingContactChannel}
+					/>
+				) : null}
 			</div>
 		</div>
 	);

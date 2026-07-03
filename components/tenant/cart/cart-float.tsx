@@ -9,7 +9,7 @@ import "../../../app/[subdomain]/styles/CartFloat.css";
 
 export function CartFloat({ currency = "CLP" }: { currency?: string }) {
   const t = useTranslations("tenant.cart.float");
-  const { totalItems, grandTotal, toggleCart } = useCart();
+  const { totalItems, grandTotal, isCartOpen, openCart, closeCart } = useCart();
   const hasItems = totalItems > 0;
   const [isIdle, setIsIdle] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -76,7 +76,10 @@ export function CartFloat({ currency = "CLP" }: { currency?: string }) {
   return (
     <button
       suppressHydrationWarning
-      onClick={toggleCart}
+      onClick={() => {
+        if (isCartOpen) closeCart();
+        else openCart();
+      }}
       className={["cart-float", mounted && hasItems ? "has-items" : "", mounted && isIdle && hasItems ? "pulse-urgent" : ""]
         .filter(Boolean)
         .join(" ")}

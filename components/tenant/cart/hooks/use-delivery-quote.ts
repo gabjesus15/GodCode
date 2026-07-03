@@ -30,10 +30,12 @@ export function useDeliveryQuote(params: {
   maxDeliveryKm?: number | null;
   namedAreaResolution?: string;
   enabledSettings?: boolean;
+  checkoutActive?: boolean;
 }) {
   const isDelivery = params.fulfillment === "delivery";
   const hasBranch = !!params.branchId;
-  const isEnabled = isDelivery && hasBranch && params.enabledSettings !== false;
+  const checkoutActive = params.checkoutActive !== false;
+  const isEnabled = isDelivery && hasBranch && params.enabledSettings !== false && checkoutActive;
 
   // Validar si el subtotal cumple con el pedido mínimo antes de consultar
   const minOk =

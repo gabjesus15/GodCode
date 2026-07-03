@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { debugIngest } from "@/lib/debug-ingest";
 import type { StoreThemeAssetField, StoreThemeAutosaveStatus, StoreThemeConfig, StoreThemeResponse } from "../shared/customer-account-types";
 import {
   buildContrastSuggestions,
@@ -162,13 +161,6 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
       const savedTheme = data.draft?.theme ?? storeThemeDraft;
       setStoreThemeDraft(savedTheme);
       setStoreThemeLastSavedSignature(getStoreThemeSignature(savedTheme));
-      debugIngest({
-        location: "use-store-theme.ts:persistStoreDraft",
-        message: "draft saved",
-        data: { mode, navbarType: savedTheme.navbarType, primaryColor: savedTheme.primaryColor },
-        hypothesisId: "H6",
-        runId: "post-fix-2",
-      });
       setStoreThemeUpdatedAt(data.draft?.updatedAt ?? new Date().toISOString());
       setStoreThemeUpdatedBy((prev) => data.draft?.updatedByEmail ?? prev);
       setStoreThemeHasUnpublished(Boolean(data.draft?.hasUnpublishedChanges ?? true));

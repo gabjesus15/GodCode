@@ -9,6 +9,11 @@ import type {
   CartItem,
   CartUpsellBeverageSelection,
 } from "./cart-context";
+import {
+  DEFAULT_CHECKOUT_SESSION,
+  resetCheckoutSessionToSummary,
+  type CheckoutSessionState,
+} from "@/lib/tenant/mobile/checkout-session";
 
 interface CartProduct {
   id: string;
@@ -40,6 +45,12 @@ interface CartState {
   deliveryKmManual: string;
   showDeliveryReference: boolean;
   globalExtras: CartGlobalExtraSelection[];
+  checkoutSession: CheckoutSessionState;
+  setCheckoutSession?: (session: CheckoutSessionState) => void;
+  patchCheckoutSession?: (patch: Partial<CheckoutSessionState>) => void;
+  resetCheckoutSession?: () => void;
+  closeCart?: () => void;
+  openCart?: () => void;
   toggleCart?: () => void;
   addToCart?: (
     product: CartProduct,
@@ -119,12 +130,27 @@ export const useCartStore = create<CartState>()(
       deliveryKmManual: "",
       showDeliveryReference: false,
       globalExtras: [],
+      checkoutSession: { ...DEFAULT_CHECKOUT_SESSION },
+
+      openCart: () => set({ isCartOpen: true }),
+      closeCart: () => set({ isCartOpen: false }),
 
       toggleCart: () => set((state) => ({ isCartOpen: !state.isCartOpen })),
 
+      setCheckoutSession: (session) => set({ checkoutSession: session }),
+
+      patchCheckoutSession: (patch) =>
+        set((state) => ({
+          checkoutSession: { ...state.checkoutSession, ...patch },
+        })),
+
+      resetCheckoutSession: () =>
+        set({ checkoutSession: { ...DEFAULT_CHECKOUT_SESSION } }),
+
       addToCart: (product, options) =>
         set((state) => {
-          if (!product?.id) return {};
+          const checkoutSession = resetCheckoutSessionToSummary(state.checkoutSession);
+          if (!product?.id) return { checkoutSession };
           const normalizedExtras = (options?.selectedExtras ?? [])
             .filter((x) => x && typeof x.id === "string")
             .map((x) => ({
@@ -152,8 +178,9 @@ export const useCartStore = create<CartState>()(
                   lineSelectionsKey(item.selected_extras, item.selected_beverages) === selectionKey,
               );
           if (existing) {
-            if (existing.quantity >= 20) return {};
+            if (existing.quantity >= 20) return { checkoutSession };
             return {
+              checkoutSession,
               cart: state.cart.map((item) =>
                 item.lineId === existing.lineId ? { ...item, quantity: item.quantity + 1 } : item,
               ),
@@ -175,11 +202,12 @@ export const useCartStore = create<CartState>()(
             line_summary: null,
             line_note: null,
           };
-          return { cart: [...state.cart, newItem] };
+          return { checkoutSession, cart: [...state.cart, newItem] };
         }),
 
       decreaseQuantity: (lineIdOrProductId) =>
         set((state) => {
+          const checkoutSession = resetCheckoutSessionToSummary(state.checkoutSession);
           let targetIndex = state.cart.findIndex((item) => item.lineId === lineIdOrProductId);
           if (targetIndex < 0) {
             for (let i = state.cart.length - 1; i >= 0; i -= 1) {
@@ -194,10 +222,14 @@ export const useCartStore = create<CartState>()(
           const target = state.cart[targetIndex];
 
           if (target.quantity <= 1) {
-            return { cart: state.cart.filter((_, index) => index !== targetIndex) };
+            return {
+              checkoutSession,
+              cart: state.cart.filter((_, index) => index !== targetIndex),
+            };
           }
 
           return {
+            checkoutSession,
             cart: state.cart.map((item, index) =>
               index === targetIndex ? { ...item, quantity: item.quantity - 1 } : item,
             ),
@@ -206,6 +238,7 @@ export const useCartStore = create<CartState>()(
 
       removeFromCart: (id) =>
         set((state) => ({
+          checkoutSession: resetCheckoutSessionToSummary(state.checkoutSession),
           cart: state.cart.filter((item) => item.lineId !== id && item.id !== id),
         })),
 
@@ -226,6 +259,7 @@ export const useCartStore = create<CartState>()(
           globalExtras: [],
           appliedCouponCode: null,
           appliedCouponDiscount: 0,
+          checkoutSession: { ...DEFAULT_CHECKOUT_SESSION },
         }),
 
       setAppliedCoupon: (code, discountAmount) =>

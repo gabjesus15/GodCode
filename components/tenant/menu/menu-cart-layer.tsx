@@ -1,22 +1,13 @@
 "use client";
 
 import { memo } from "react";
-import dynamic from "next/dynamic";
+import { useCartStore } from "../cart/cart-store";
+import { LazyCartFloat, LazyCartModal } from "@/lib/tenant/lazy/tenant-dynamic";
 
 import { resolveMenuCartUiMode } from "@/lib/tenant/menu/menu-helpers";
 import type { BranchInfo } from "./menu-types";
 import { MenuBottomNav } from "./menu-bottom-nav";
 import type { BottomNavTab } from "./menu-types";
-
-const CartFloat = dynamic(
-	() => import("../cart").then((mod) => mod.CartFloat),
-	{ ssr: false },
-);
-
-const CartModal = dynamic(
-	() => import("../cart").then((mod) => mod.CartModal),
-	{ ssr: false },
-);
 
 type MenuCartLayerProps = {
 	selectedBranch: BranchInfo | null;
@@ -58,6 +49,7 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 	onCart,
 	onContact,
 }: MenuCartLayerProps) {
+	const isCartOpen = useCartStore((state) => state.isCartOpen);
 	const mode = resolveMenuCartUiMode({
 		hasBranch: Boolean(selectedBranch),
 		onlineOrderingEnabled,
@@ -78,30 +70,30 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 		/>
 	) : null;
 
+	const cartModalProps = selectedBranch
+		? {
+			businessInfo: { name: businessName, ...(businessInfo ?? {}) },
+			selectedBranch,
+			currency: effectiveCurrency,
+		}
+		: null;
+
 	if (mode === "bottom-nav-only") return bottomNav;
 
-	if (mode === "bottom-nav" && selectedBranch) {
+	if (mode === "bottom-nav" && cartModalProps) {
 		return (
 			<>
 				{bottomNav}
-				<CartModal
-					businessInfo={{ name: businessName, ...(businessInfo ?? {}) }}
-					selectedBranch={selectedBranch}
-					currency={effectiveCurrency}
-				/>
+				{isCartOpen ? <LazyCartModal {...cartModalProps} /> : null}
 			</>
 		);
 	}
 
-	if (mode === "float-with-modal" && selectedBranch) {
+	if (mode === "float-with-modal" && cartModalProps) {
 		return (
 			<>
-				<CartFloat currency={effectiveCurrency} />
-				<CartModal
-					businessInfo={{ name: businessName, ...(businessInfo ?? {}) }}
-					selectedBranch={selectedBranch}
-					currency={effectiveCurrency}
-				/>
+				<LazyCartFloat currency={effectiveCurrency} />
+				{isCartOpen ? <LazyCartModal {...cartModalProps} /> : null}
 			</>
 		);
 	}

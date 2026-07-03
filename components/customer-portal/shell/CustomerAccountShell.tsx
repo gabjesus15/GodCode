@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { LogOut, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -12,6 +13,7 @@ import {
   PORTAL_TAB_ORDER,
 } from "../shared/customer-account-constants";
 import { cn } from "@/utils/cn";
+import { signOutAndRedirect } from "@/lib/auth/sign-out-client";
 import type { PortalTab } from "../shared/customer-account-types";
 
 export type CustomerAccountShellProps = {
@@ -39,6 +41,17 @@ export function CustomerAccountShell({
   children,
 }: CustomerAccountShellProps) {
   const badgeVariant = subscriptionStatusVariant(subscriptionStatus);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleSignOut = async () => {
+    if (loggingOut) return;
+    try {
+      setLoggingOut(true);
+      await signOutAndRedirect("/login");
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   const syncLabel = isSyncing
     ? "Sincronizando…"
@@ -114,15 +127,15 @@ export function CustomerAccountShell({
                 <p className="mt-1.5 truncate text-xs font-medium text-[#1d1d1f]">{companyName}</p>
               </div>
 
-              <form action="/api/auth/signout" method="post">
-                <button
-                  type="submit"
-                  className="group flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
-                >
-                  <LogOut className="h-4 w-4 shrink-0 transition-transform group-hover:-translate-x-0.5" aria-hidden />
-                  <span>Cerrar sesión</span>
-                </button>
-              </form>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                disabled={loggingOut}
+                className="group flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <LogOut className="h-4 w-4 shrink-0 transition-transform group-hover:-translate-x-0.5" aria-hidden />
+                <span>{loggingOut ? "Cerrando..." : "Cerrar sesión"}</span>
+              </button>
             </div>
           </div>
         </aside>
@@ -145,15 +158,15 @@ export function CustomerAccountShell({
                 <Badge variant={badgeVariant} dot className="text-[11px] sm:text-xs">
                   {subscriptionStatusLabel}
                 </Badge>
-                <form action="/api/auth/signout" method="post" className="md:hidden">
-                  <button
-                    type="submit"
-                    title="Cerrar sesión"
-                    className="flex h-8 w-8 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 active:bg-red-100 transition"
-                  >
-                    <LogOut className="h-4 w-4" aria-hidden />
-                  </button>
-                </form>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  disabled={loggingOut}
+                  title="Cerrar sesión"
+                  className="flex h-8 w-8 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 active:bg-red-100 transition disabled:cursor-not-allowed disabled:opacity-60 md:hidden"
+                >
+                  <LogOut className="h-4 w-4" aria-hidden />
+                </button>
               </div>
             </div>
 

@@ -1,4 +1,3 @@
-import { debugIngest } from "@/lib/debug-ingest";
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
 
 export const PREVIEW_THEME_MESSAGE_TYPE = "godcode:preview-theme" as const;
@@ -19,14 +18,6 @@ export function postPreviewThemeToIframe(
 	theme: StoreThemeConfig,
 	origin: string = typeof window !== "undefined" ? window.location.origin : "",
 ) {
-	const hasWindow = !!iframe?.contentWindow;
-	debugIngest({
-		location: "preview-theme-messaging.ts:postPreviewThemeToIframe",
-		message: "parent postMessage",
-		data: { hasWindow, navbarType: theme.navbarType, primaryColor: theme.primaryColor },
-		hypothesisId: "H3",
-		runId: "post-fix-2",
-	});
 	if (!iframe?.contentWindow || !origin) return;
 	iframe.contentWindow.postMessage({ type: PREVIEW_THEME_MESSAGE_TYPE, theme } satisfies PreviewThemeMessage, origin);
 }

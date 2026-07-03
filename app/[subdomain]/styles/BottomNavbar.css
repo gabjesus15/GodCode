@@ -393,3 +393,11 @@
         animation: none;
     }
 }
+
+@media (max-width: 768px) {
+    .bottom-floating-navbar {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: rgba(30, 30, 33, 0.94);
+    }
+}

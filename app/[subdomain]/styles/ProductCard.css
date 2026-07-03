@@ -1233,3 +1233,19 @@
   min-width: 44px;
   min-height: 44px;
 }
+
+/* Performance: menos pintura en móvil y listas largas */
+.product-card,
+[class*="product-layout-"] {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 280px;
+}
+
+@media (max-width: 768px) {
+  .product-card.glass-card,
+  .product-inline-panel,
+  [class*="product-layout-"] .layout-card {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

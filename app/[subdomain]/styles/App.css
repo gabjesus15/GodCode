@@ -46,7 +46,7 @@
   width: 100%;
   max-width: 100vw;
   min-height: 100dvh;
-  background: #0a0a0a;
+  background: var(--bg-primary, #0a0a0a);
   touch-action: pan-x pan-y;
   overflow-x: hidden;
 }
@@ -60,12 +60,12 @@
   position: fixed;
   inset: -200% -50%;
   z-index: 0;
-  background-image: var(--tenant-bg-image, url(/tenant/menu-pattern.webp));
-  background-repeat: repeat;
-  background-size: 1200px;
-  opacity: 0.22;
-  filter: brightness(0.7) contrast(1.08) blur(0.9px);
-  transition: transform 0.1s ease-out, opacity 0.2s ease-out;
+  background-image: var(--tenant-bg-image, none);
+  background-repeat: var(--tenant-bg-repeat, repeat);
+  background-size: var(--tenant-bg-size, 1200px);
+  background-position: center;
+  opacity: var(--tenant-bg-layer-opacity, 0);
+  filter: blur(1px) brightness(0.88) contrast(1.06);
   pointer-events: none;
   will-change: transform;
 }

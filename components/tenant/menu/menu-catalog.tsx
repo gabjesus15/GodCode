@@ -1,10 +1,16 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useEffect, useMemo } from "react";
 import Image from "next/image";
 
 import { FIRE_ICON, isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
+import { buildPriorityProductIdSet } from "@/lib/tenant/images/resolve-product-priority";
+import { collectCatalogProductIdsInRenderOrder } from "@/lib/tenant/menu/collect-catalog-product-ids";
+import { countVisibleCatalogProducts, shouldVirtualizeMenuCatalog } from "@/lib/tenant/menu/menu-catalog-virtualization";
+import type { MenuCatalogScrollController } from "@/lib/tenant/menu/menu-catalog-scroll-controller";
+import { resolveCategoryScrollBehavior } from "@/lib/tenant/menu/menu-scroll";
 import { ProductGrid } from "./product-grid";
+import { VirtualizedMenuCatalog } from "./virtualized-menu-catalog";
 import type { MenuCategory, MenuProduct } from "./menu-types";
 
 type MenuCatalogProps = {
@@ -26,6 +32,9 @@ type MenuCatalogProps = {
 	onCloseInline: () => void;
 	inlinePanelRef?: React.RefObject<HTMLDivElement | null>;
 	onlineOrderingEnabled?: boolean;
+	catalogScrollRef: React.RefObject<MenuCatalogScrollController | null>;
+	observerBlockRef: React.RefObject<boolean>;
+	onActiveSectionChange: (sectionId: string) => void;
 };
 
 export const MenuCatalog = memo(function MenuCatalog({
@@ -47,7 +56,31 @@ export const MenuCatalog = memo(function MenuCatalog({
 	onCloseInline,
 	inlinePanelRef,
 	onlineOrderingEnabled,
+	catalogScrollRef,
+	observerBlockRef,
+	onActiveSectionChange,
 }: MenuCatalogProps) {
+	const priorityProductIds = useMemo(() => {
+		const orderedIds = collectCatalogProductIdsInRenderOrder({
+			query,
+			navigationMode,
+			activeCategory,
+			specialProducts,
+			visibleCategories,
+			productsByCategory,
+			filteredBySearch,
+		});
+		return buildPriorityProductIdSet(orderedIds);
+	}, [
+		activeCategory,
+		filteredBySearch,
+		navigationMode,
+		productsByCategory,
+		query,
+		specialProducts,
+		visibleCategories,
+	]);
+
 	const gridProps = {
 		cardStyle,
 		detailsMode,
@@ -59,7 +92,39 @@ export const MenuCatalog = memo(function MenuCatalog({
 		onCloseInline,
 		inlinePanelRef,
 		onlineOrderingEnabled,
+		priorityProductIds,
 	};
+
+	const catalogProductCount = useMemo(
+		() => countVisibleCatalogProducts(specialProducts.length, visibleCategories, productsByCategory),
+		[productsByCategory, specialProducts.length, visibleCategories],
+	);
+
+	const useVirtualizedScroll = shouldVirtualizeMenuCatalog(query, navigationMode, catalogProductCount);
+
+	// Catálogo clásico: registrar scroll por sección en DOM
+	useEffect(() => {
+		if (useVirtualizedScroll || query) {
+			return;
+		}
+
+		catalogScrollRef.current = {
+			isVirtualized: false,
+			scrollToSection(sectionId: string, behavior?: ScrollBehavior) {
+				const element = document.getElementById(`section-${sectionId}`);
+				element?.scrollIntoView({
+					behavior: behavior ?? resolveCategoryScrollBehavior(),
+					block: "start",
+				});
+			},
+		};
+
+		return () => {
+			if (catalogScrollRef.current && !catalogScrollRef.current.isVirtualized) {
+				catalogScrollRef.current = null;
+			}
+		};
+	}, [catalogScrollRef, query, useVirtualizedScroll, visibleCategories, specialProducts.length]);
 
 	if (query) {
 		return (
@@ -71,6 +136,20 @@ export const MenuCatalog = memo(function MenuCatalog({
 					<p className="no-results-text">No hay platos con ese nombre.</p>
 				)}
 			</section>
+		);
+	}
+
+	if (useVirtualizedScroll) {
+		return (
+			<VirtualizedMenuCatalog
+				specialProducts={specialProducts}
+				visibleCategories={visibleCategories}
+				productsByCategory={productsByCategory}
+				gridProps={gridProps}
+				catalogScrollRef={catalogScrollRef}
+				observerBlockRef={observerBlockRef}
+				onActiveSectionChange={onActiveSectionChange}
+			/>
 		);
 	}
 

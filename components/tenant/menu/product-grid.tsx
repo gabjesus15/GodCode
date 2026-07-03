@@ -3,6 +3,7 @@
 import React, { memo } from "react";
 
 import { productCardGridClass } from "@/lib/store-theme/theme-config";
+import { buildPriorityProductIdSet, isPriorityProductImage } from "@/lib/tenant/images/resolve-product-priority";
 import { useProductDetailsInteraction } from "./use-product-details-interaction";
 import { ProductCard } from "./product-card";
 import { ProductInlinePanel } from "./product-inline-panel";
@@ -20,6 +21,7 @@ export type ProductGridProps = {
 	onCloseInline: () => void;
 	inlinePanelRef?: React.RefObject<HTMLDivElement | null>;
 	onlineOrderingEnabled?: boolean;
+	priorityProductIds: ReadonlySet<string>;
 };
 
 export const ProductGrid = memo(function ProductGrid({
@@ -34,18 +36,19 @@ export const ProductGrid = memo(function ProductGrid({
 	onCloseInline,
 	inlinePanelRef,
 	onlineOrderingEnabled,
+	priorityProductIds,
 }: ProductGridProps) {
 	const interaction = useProductDetailsInteraction(detailsMode, cardStyle, onProductClick);
 
 	return (
 		<div className="product-grid-container">
 			<div className={`product-grid ${productCardGridClass(cardStyle)}`}>
-			{products.flatMap((product, index) => {
+			{products.flatMap((product) => {
 				const card = (
 					<ProductCard
 						key={product.id}
 						product={product}
-						priority={index < 6}
+						priority={isPriorityProductImage(product.id, priorityProductIds)}
 						country={country}
 						currency={currency}
 						cardStyle={cardStyle}

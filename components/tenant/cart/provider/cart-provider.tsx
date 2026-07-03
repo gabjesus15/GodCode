@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import CartContext from "../cart-context";
 import type { CartItem } from "../cart-context";
 import { isUpsellBeverageLineId } from "../cart-context";
@@ -52,8 +53,48 @@ export function CartProvider({
   currency?: string;
   country?: string;
 }) {
-  const store = useCartStore();
-  const isCartOpen = useCartStore((state) => state.isCartOpen);
+  const store = useCartStore(
+    useShallow((state) => ({
+      cart: state.cart,
+      isCartOpen: state.isCartOpen,
+      toggleCart: state.toggleCart,
+      openCart: state.openCart,
+      closeCart: state.closeCart,
+      addToCart: state.addToCart,
+      decreaseQuantity: state.decreaseQuantity,
+      removeFromCart: state.removeFromCart,
+      clearCart: state.clearCart,
+      orderNote: state.orderNote,
+      setOrderNote: state.setOrderNote,
+      setLineNote: state.setLineNote,
+      fulfillment: state.fulfillment,
+      setFulfillment: state.setFulfillment,
+      deliveryLine1: state.deliveryLine1,
+      setDeliveryLine1: state.setDeliveryLine1,
+      deliveryCommune: state.deliveryCommune,
+      setDeliveryCommune: state.setDeliveryCommune,
+      deliveryRegion: state.deliveryRegion,
+      setDeliveryRegion: state.setDeliveryRegion,
+      deliveryReference: state.deliveryReference,
+      setDeliveryReference: state.setDeliveryReference,
+      deliveryLat: state.deliveryLat,
+      deliveryLng: state.deliveryLng,
+      setDeliveryCoords: state.setDeliveryCoords,
+      deliveryNamedAreaId: state.deliveryNamedAreaId,
+      setDeliveryNamedAreaId: state.setDeliveryNamedAreaId,
+      deliveryKmManual: state.deliveryKmManual,
+      setDeliveryKmManual: state.setDeliveryKmManual,
+      showDeliveryReference: state.showDeliveryReference,
+      setShowDeliveryReference: state.setShowDeliveryReference,
+      globalExtras: state.globalExtras,
+      setGlobalExtras: state.setGlobalExtras,
+      appliedCouponCode: state.appliedCouponCode,
+      appliedCouponDiscount: state.appliedCouponDiscount,
+      setAppliedCoupon: state.setAppliedCoupon,
+      clearAppliedCoupon: state.clearAppliedCoupon,
+    })),
+  );
+  const isCartOpen = store.isCartOpen;
   const [isHydrated, setIsHydrated] = useState(false);
   const supabase = useMemo(() => createSupabaseBrowserClient("tenant"), []);
 
@@ -268,6 +309,7 @@ export function CartProvider({
     maxDeliveryKm: parsedDelivery.maxDeliveryKm,
     namedAreaResolution: parsedDelivery.namedAreaResolution,
     enabledSettings: parsedDelivery.enabled,
+    checkoutActive: isCartOpen,
   });
 
   const quoteData = deliveryQuoteQuery.data;
@@ -557,6 +599,8 @@ export function CartProvider({
       cart: isHydrated && Array.isArray(store.cart) ? store.cart : [],
       isCartOpen: !!store.isCartOpen,
       toggleCart: typeof store.toggleCart === "function" ? store.toggleCart : () => {},
+      openCart: typeof store.openCart === "function" ? store.openCart : () => {},
+      closeCart: typeof store.closeCart === "function" ? store.closeCart : () => {},
       addToCart: typeof store.addToCart === "function" ? store.addToCart : () => {},
       decreaseQuantity: typeof store.decreaseQuantity === "function" ? store.decreaseQuantity : () => {},
       removeFromCart: typeof store.removeFromCart === "function" ? store.removeFromCart : () => {},

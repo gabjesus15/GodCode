@@ -143,7 +143,9 @@ export const MenuNavbar = memo(function MenuNavbar({
 				/>
 			)}
 			{(navbarType === "icon-list" || navbarType === "floating-bottom") && (
-				<IconListCategories categories={categories} activeCategory={activeCategory} onCategoryClick={onCategoryClick} />
+				<div className="container icon-list-categories-shell">
+					<IconListCategories categories={categories} activeCategory={activeCategory} onCategoryClick={onCategoryClick} />
+				</div>
 			)}
 		</header>
 	);

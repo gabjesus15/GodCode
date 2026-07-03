@@ -27,8 +27,9 @@ export interface ProductCardProduct {
   category_id?: string | null;
 }
 
-export const PRODUCT_CARD_FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80";
+import { TENANT_PRODUCT_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
+
+export const PRODUCT_CARD_FALLBACK_IMAGE = TENANT_PRODUCT_FALLBACK_IMAGE;
 
 /** Tamaños responsive para next/image según layout del grid */
 export const PRODUCT_IMAGE_SIZES = {

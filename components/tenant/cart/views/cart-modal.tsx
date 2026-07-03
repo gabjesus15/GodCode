@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 import { X, MapPin, AlertCircle, Plus, Check, CupSoda, Sparkles, Store, Truck, ArrowLeft, Ticket } from "lucide-react";
@@ -48,11 +47,11 @@ import { mergeCartWithBranchPrices } from "../utils/cart-pricing";
 import { validateImageFile } from "../../utils/cloudinary";
 import { useCart } from "../use-cart";
 import { sanitizeUserText } from "@/utils/sanitize-user-text";
-const DeliveryPreviewMap = dynamic(
-  () =>
-    import("../../delivery/delivery-preview-map").then((mod) => mod.DeliveryPreviewMap),
-  { ssr: false },
-);
+import { useCartCheckoutFlow } from "../hooks/use-cart-checkout-flow";
+import { useDismissKeyboardOnOutsideTap } from "@/lib/tenant/mobile/use-dismiss-keyboard";
+import { useTenantMounted } from "@/lib/tenant/hooks/use-tenant-mounted";
+import { TENANT_UI_CONFIG } from "@/lib/tenant/config/tenant-ui-config";
+import { LazyDeliveryPreviewMap } from "@/lib/tenant/lazy/tenant-dynamic";
 
 import "../../../../app/[subdomain]/styles/CartModal.css";
 import "../../../../app/[subdomain]/styles/CartModal.custom.css";
@@ -71,16 +70,13 @@ export function CartModal({
   const t = useTranslations("tenant.cart.modal");
     const supabase = useMemo(() => createSupabaseBrowserClient("tenant"), []);
 
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => {
-      const timer = setTimeout(() => setMounted(true), 0);
-      return () => clearTimeout(timer);
-    }, []);
+    const mounted = useTenantMounted();
 
     const {
       cart,
       isCartOpen,
-      toggleCart,
+      openCart,
+      closeCart,
       addToCart,
       decreaseQuantity,
       removeFromCart,
@@ -155,7 +151,7 @@ export function CartModal({
     // Real-time: mantener actualizados los métodos de pago (y restricción delivery) del checkout
     // cuando el admin edita la sucursal en el panel.
     useEffect(() => {
-      if (!selectedBranch?.id) {
+      if (!selectedBranch?.id || !isCartOpen) {
         queueMicrotask(() => setCheckoutLiveBranch(null));
         return;
       }
@@ -193,7 +189,7 @@ export function CartModal({
       return () => {
         supabase.removeChannel(channel);
       };
-    }, [supabase, selectedBranch?.id]);
+    }, [supabase, selectedBranch?.id, isCartOpen]);
 
     const deliverySettings = useMemo(
       () =>
@@ -295,10 +291,6 @@ export function CartModal({
       () => deliveryPriceMode === "distance" || deliveryPriceMode === "external",
       [deliveryPriceMode],
     );
-
-    const [activeEnhancePanel, setActiveEnhancePanel] = useState<
-      "none" | "beverages" | "extras" | "coupon"
-    >("none");
 
     const enhancementCatalogs = useMemo(() => {
       const raw =
@@ -420,7 +412,7 @@ export function CartModal({
         const { line1, commune } = parseUnifiedAddressSearch(unifiedAddressSearch);
         setDeliveryLine1(line1);
         setDeliveryCommune(commune);
-      }, 420);
+      }, TENANT_UI_CONFIG.cartAddressDebounceMs);
       return () => window.clearTimeout(t);
     }, [
       unifiedAddressSearch,
@@ -437,7 +429,7 @@ export function CartModal({
           line1: deliveryLine1.trim(),
           commune: deliveryCommune.trim(),
         });
-      }, 520);
+      }, TENANT_UI_CONFIG.cartGeocodeDebounceMs);
       return () => clearTimeout(t);
     }, [deliveryLine1, deliveryCommune]);
 
@@ -632,12 +624,34 @@ export function CartModal({
     lastOrderSuccess: null,
   });
 
+  const {
+    checkoutSession,
+    patchCheckoutSession,
+    resetCheckoutSession,
+    stepFlags,
+    goBackCheckoutStep,
+    dismissCart,
+    paymentMethodKey,
+    setPaymentMethodKey,
+    activeEnhancePanel,
+    setActiveEnhancePanel,
+  } = useCartCheckoutFlow({
+    isCartOpen,
+    showSuccess: viewState.showSuccess,
+  });
+
+  const showPaymentInfo = stepFlags.showPaymentInfo;
+  const showPaymentMethods = stepFlags.showPaymentMethods;
+  const showForm = checkoutSession.showForm;
+
   const [showFieldErrors, setShowFieldErrors] = useState(false);
 
-  const [paymentMethodKey, setPaymentMethodKey] = useState<string | null>(null);
   const fulfillmentScrollRef = useRef<HTMLDivElement | null>(null);
   const fulfillmentChoiceRef = useRef<HTMLDivElement | null>(null);
   const cartPanelRef = useRef<HTMLDivElement | null>(null);
+  const wasCartOpenRef = useRef(false);
+
+  useDismissKeyboardOnOutsideTap(cartPanelRef);
 
   useEffect(() => {
     if (!isCartOpen) return;
@@ -745,6 +759,19 @@ export function CartModal({
     }
   }, [effectiveCountryCode, getValues, setValue, strategy.phonePrefix]);
 
+  useEffect(() => {
+    const justOpened = isCartOpen && !wasCartOpenRef.current;
+    wasCartOpenRef.current = isCartOpen;
+    if (!justOpened) return;
+    const draft = checkoutSession.clientDraft;
+    if (draft.name.trim()) setValue("name", draft.name);
+    if (draft.rut.trim()) setValue("rut", draft.rut);
+    const phone = draft.phone.trim();
+    if (phone && phone !== "+56 9" && phone !== "+56 9 " && phone !== "+58" && phone !== "+58 ") {
+      setValue("phone", phone);
+    }
+  }, [checkoutSession.clientDraft, isCartOpen, setValue]);
+
   const formValues = useWatch({ control });
 
   // Sincronizar fulfillment y datos de delivery al form de react-hook-form
@@ -775,7 +802,7 @@ export function CartModal({
   const selectedBranchId = selectedBranch?.id ?? null;
 
   useEffect(() => {
-    if (!selectedBranchId) {
+    if (!isCartOpen || !selectedBranchId) {
       Promise.resolve().then(() => {
         setIsShiftOpen(false);
         setIsShiftLoading(false);
@@ -837,7 +864,7 @@ export function CartModal({
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [selectedBranchId, supabase]);
+  }, [isCartOpen, selectedBranchId, supabase]);
 
   const isOrderIntakePaused = selectedBranchForCheckout?.order_intake_paused === true;
   const canCheckout = isShiftOpen && !isOrderIntakePaused;
@@ -959,14 +986,14 @@ export function CartModal({
       : null;
 
   const checkoutPhase = useMemo((): "summary" | "fulfillment" | "payment" => {
-    if (!viewState.showPaymentInfo) return "summary";
-    if (!viewState.showPaymentMethods) return "fulfillment";
+    if (!showPaymentInfo) return "summary";
+    if (!showPaymentMethods) return "fulfillment";
     return "payment";
-  }, [viewState.showPaymentInfo, viewState.showPaymentMethods]);
+  }, [showPaymentInfo, showPaymentMethods]);
 
   const isDeliveryFulfillmentFocus =
-    viewState.showPaymentInfo &&
-    !viewState.showPaymentMethods &&
+    showPaymentInfo &&
+    !showPaymentMethods &&
     fulfillment === "delivery" &&
     deliverySettings.enabled;
 
@@ -1159,7 +1186,15 @@ export function CartModal({
     if (field === "phone") value = strategy.normalizePhone(value);
     setValue(field as keyof typeof clientSchema.shape, value);
     setViewState((prev) => ({ ...prev, error: null }));
-  }, [setValue, clientSchema, strategy]);
+    if (field === "name" || field === "phone" || field === "rut") {
+      patchCheckoutSession?.({
+        clientDraft: {
+          ...checkoutSession.clientDraft,
+          [field]: value,
+        },
+      });
+    }
+  }, [checkoutSession.clientDraft, patchCheckoutSession, setValue, clientSchema, strategy]);
 
   const handleFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1193,23 +1228,18 @@ export function CartModal({
       receiptUploadFailed: false,
       lastOrderSuccess: null,
     });
-    setPaymentMethodKey(null);
+    resetCheckoutSession?.();
     setValue("name", "");
     setValue("phone", strategy.phonePrefix);
     setValue("rut", "");
     setValue("receiptFile", null);
     setValue("receiptPreview", undefined);
     setShowFieldErrors(false);
-  }, [setValue, strategy.phonePrefix]);
+  }, [resetCheckoutSession, setValue, strategy.phonePrefix]);
 
   const handleCloseCart = useCallback(() => {
-    if (viewState.showSuccess) {
-      toggleCart();
-      return;
-    }
-    toggleCart();
-    setTimeout(resetFlow, 300);
-  }, [viewState.showSuccess, toggleCart, resetFlow]);
+    dismissCart();
+  }, [dismissCart]);
 
   const triggerHaptic = useCallback((duration = 8) => {
     if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
@@ -1711,9 +1741,9 @@ export function CartModal({
 
         {filteredCart.length > 0 ? (
           <>
-            {!viewState.showPaymentInfo &&
-            !viewState.showPaymentMethods &&
-            !viewState.showForm &&
+            {!showPaymentInfo &&
+            !showPaymentMethods &&
+            !showForm &&
             (showBeveragesUpsell || showExtrasUpsell || showCouponRail) ? (
               <div className="cart-footer-enhance-container">
                 <div
@@ -1844,7 +1874,9 @@ export function CartModal({
                         }`}
                         onClick={() => {
                           triggerHaptic();
-                          setActiveEnhancePanel((v) => (v === "beverages" ? "none" : "beverages"));
+                          setActiveEnhancePanel(
+                            activeEnhancePanel === "beverages" ? "none" : "beverages",
+                          );
                         }}
                       >
                         <CupSoda size={17} aria-hidden />
@@ -1859,7 +1891,9 @@ export function CartModal({
                         }`}
                         onClick={() => {
                           triggerHaptic();
-                          setActiveEnhancePanel((v) => (v === "extras" ? "none" : "extras"));
+                          setActiveEnhancePanel(
+                            activeEnhancePanel === "extras" ? "none" : "extras",
+                          );
                         }}
                       >
                         <Sparkles size={17} aria-hidden />
@@ -1874,7 +1908,9 @@ export function CartModal({
                         }`}
                         onClick={() => {
                           triggerHaptic();
-                          setActiveEnhancePanel((v) => (v === "coupon" ? "none" : "coupon"));
+                          setActiveEnhancePanel(
+                            activeEnhancePanel === "coupon" ? "none" : "coupon",
+                          );
                         }}
                       >
                         <Ticket size={17} aria-hidden />
@@ -1890,16 +1926,16 @@ export function CartModal({
             <div className="cart-footer-stack cart-footer-stack--solo">
             <footer
               className={`cart-footer cart-footer--sheet${
-                viewState.showPaymentInfo
+                showPaymentInfo
                   ? " cart-footer--checkout-fulfillment"
                   : ""
               }`}
             >
             <div
-              key={viewState.showPaymentInfo ? "checkout" : "summary"}
+              key={showPaymentInfo ? "checkout" : "summary"}
               className="cart-footer-pane"
             >
-            {!viewState.showPaymentInfo ? (
+            {!showPaymentInfo ? (
               <>
                  <div className="total-row">
                   <span>{t("summary.subtotal")}</span>
@@ -1993,11 +2029,11 @@ export function CartModal({
                     onClick={() => {
                       triggerHaptic(12);
                       setActiveEnhancePanel("none");
-                      setViewState((v) => ({
-                        ...v,
+                      patchCheckoutSession?.({
                         showPaymentInfo: true,
                         showPaymentMethods: false,
-                      }));
+                        showForm: false,
+                      });
                     }}
                     className="btn btn-primary btn-block btn-lg"
                   >
@@ -2005,7 +2041,7 @@ export function CartModal({
                   </button>
                 )}
               </>
-            ) : !viewState.showPaymentMethods ? (
+            ) : !showPaymentMethods ? (
               <>
                 <div className="cart-footer-fulfillment-expand">
                   <div className="cart-footer-fulfillment-scroll" ref={fulfillmentScrollRef}>
@@ -2271,7 +2307,7 @@ export function CartModal({
 
                           {fulfillment === "delivery" &&
                           mapAddressMode ? (
-                            <DeliveryPreviewMap lat={deliveryLat} lng={deliveryLng} />
+                            <LazyDeliveryPreviewMap lat={deliveryLat} lng={deliveryLng} />
                           ) : null}
 
                           <label className="cart-field-label">
@@ -2373,7 +2409,7 @@ export function CartModal({
                   <button
                     onClick={() => {
                       triggerHaptic(12);
-                      setViewState((v) => ({ ...v, showPaymentMethods: true }));
+                      patchCheckoutSession?.({ showPaymentMethods: true });
                     }}
                     className="btn btn-primary btn-block btn-lg"
                   >
@@ -2381,13 +2417,7 @@ export function CartModal({
                   </button>
                 )}
                 <button
-                  onClick={() =>
-                    setViewState((v) => ({
-                      ...v,
-                      showPaymentInfo: false,
-                      showPaymentMethods: false,
-                    }))
-                  }
+                  onClick={() => goBackCheckoutStep()}
                   className="btn btn-text btn-block mt-2"
                 >
                   <ArrowLeft size={16} className="mr-5" />
@@ -2400,8 +2430,8 @@ export function CartModal({
                 paymentMethodKey={paymentMethodKey}
                 setPaymentMethodKey={setPaymentMethodKey}
                 paymentMethodsForCheckout={checkoutPaymentMethods}
-                showForm={viewState.showForm}
-                setShowForm={(value: boolean) => setViewState((v) => ({ ...v, showForm: value }))}
+                showForm={showForm}
+                setShowForm={(value: boolean) => patchCheckoutSession?.({ showForm: value })}
                 formData={{
                       name: formValues.name || "",
                       phone: formValues.phone || "",
@@ -2417,13 +2447,7 @@ export function CartModal({
                 showFieldErrors={showFieldErrors}
                 setShowFieldErrors={setShowFieldErrors}
                 cartTotal={grandTotal}
-                onBack={() =>
-                  setViewState((v) => ({
-                    ...v,
-                    showPaymentMethods: false,
-                    showForm: false,
-                  }))
-                }
+                onBack={() => goBackCheckoutStep()}
                 activeInfo={activeInfo}
                 setViewState={setViewState}
                 strategy={strategy}

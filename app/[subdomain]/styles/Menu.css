@@ -234,7 +234,7 @@
 }
 
 section {
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     overflow-anchor: none;
 }
 
@@ -300,6 +300,30 @@ section {
 
     .category-section {
         scroll-margin-top: calc(116px + env(safe-area-inset-top));
+    }
+
+    .icon-list-categories {
+        scroll-padding-inline: 8px;
+    }
+
+    .icon-list-container {
+        gap: 14px;
+        padding-inline: 8px;
+    }
+
+    .icon-list-card {
+        min-width: 62px;
+        max-width: 76px;
+    }
+
+    .icon-list-card-image-wrapper {
+        width: 50px;
+        height: 50px;
+    }
+
+    .icon-list-card-name {
+        font-size: 0.66rem;
+        max-width: 76px;
     }
 }
 
@@ -612,43 +636,52 @@ html, body {
 
 /* Layout: Icon List (Rappi Style) */
 .page-wrapper.navbar-type-icon-list .menu-spacer {
-    height: calc(160px + env(safe-area-inset-top));
+    height: calc(168px + env(safe-area-inset-top));
 }
 
 .page-wrapper.navbar-type-floating-bottom .menu-spacer {
-    height: calc(160px + env(safe-area-inset-top));
+    height: calc(168px + env(safe-area-inset-top));
+}
+
+.icon-list-categories-shell {
+    min-width: 0;
+    padding-inline: 0;
 }
 
 .icon-list-categories {
     width: 100%;
     background: transparent;
-    padding: 12px 4px 8px;
+    padding: 6px 0 10px;
     box-sizing: border-box;
     overflow-x: auto;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
     touch-action: pan-x pan-y;
     scroll-behavior: smooth;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 12px;
+    text-align: center;
 }
 
 .icon-list-categories::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+    display: none;
 }
 
 .icon-list-container {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    width: max-content;
-    padding: 8px 6px;
+    display: inline-flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 18px;
+    padding: 8px 12px 6px;
+    text-align: left;
 }
 
 @media (min-width: 768px) {
     .icon-list-container {
-        margin: 0 auto;
-        gap: 24px;
+        gap: 22px;
+        padding-inline: 16px;
     }
 }
 
@@ -656,11 +689,15 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     background: transparent;
     border: none;
     cursor: pointer;
     flex-shrink: 0;
+    min-width: 68px;
+    max-width: 84px;
+    padding: 0;
+    scroll-snap-align: center;
     transition: transform 0.2s ease;
 }
 
@@ -673,8 +710,8 @@ html, body {
 }
 
 .icon-list-card-image-wrapper {
-    width: 52px;
-    height: 52px;
+    width: 54px;
+    height: 54px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -682,13 +719,14 @@ html, body {
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    transition: all 0.25s ease;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+    box-sizing: border-box;
 }
 
 .icon-list-card.active .icon-list-card-image-wrapper {
-    border-color: transparent;
-    box-shadow: 0 0 0 2px rgba(10, 10, 10, 0.8), 0 0 0 4px var(--accent-primary, #ff4e50), 0 4px 12px var(--accent-shadow, rgba(255, 78, 80, 0.3));
-    transform: scale(1.05);
+    border-color: var(--accent-primary, #ff4e50);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary, #ff4e50) 35%, transparent);
+    transform: scale(1.04);
 }
 
 .icon-list-card-image {
@@ -711,14 +749,17 @@ html, body {
 }
 
 .icon-list-card-name {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.62);
     transition: color 0.2s ease;
-    max-width: 75px;
+    width: 100%;
+    max-width: 84px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    text-align: center;
+    line-height: 1.2;
 }
 
 .icon-list-card.active .icon-list-card-name {

@@ -2,7 +2,15 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
+import type { MenuCatalogScrollController } from "@/lib/tenant/menu/menu-catalog-scroll-controller";
 import { resolveHomeCategoryId } from "@/lib/tenant/menu/menu-helpers";
+import { resolveActiveSectionIdFromDom } from "@/lib/tenant/menu/menu-scroll-spy";
+import {
+	getMenuScrollAnchorPx,
+	resolveCategoryScrollBehavior,
+	scheduleScrollSpyRelease,
+	syncNavbarCategoryTab,
+} from "@/lib/tenant/menu/menu-scroll";
 import type { BottomNavTab } from "./menu-types";
 
 type UseMenuCategoryScrollArgs = {
@@ -15,6 +23,8 @@ type UseMenuCategoryScrollArgs = {
 	setActiveCategory: (id: string) => void;
 	onNavigate?: () => void;
 	setActiveBottomTab: (tab: BottomNavTab) => void;
+	catalogScrollRef: React.RefObject<MenuCatalogScrollController | null>;
+	useVirtualizedCatalog: boolean;
 };
 
 export function useMenuCategoryScroll({
@@ -27,67 +37,91 @@ export function useMenuCategoryScroll({
 	setActiveCategory,
 	onNavigate,
 	setActiveBottomTab,
+	catalogScrollRef,
+	useVirtualizedCatalog,
 }: UseMenuCategoryScrollArgs) {
 	const observerBlockRef = useRef(false);
+	const releaseSpyRef = useRef<(() => void) | null>(null);
+	const syncNavbarOnNextActiveRef = useRef(false);
+	const activeCategoryRef = useRef(activeCategory);
+	activeCategoryRef.current = activeCategory;
 
-	const scrollToCategory = useCallback((id: string) => {
+	const blockScrollSpy = useCallback((behavior: ScrollBehavior = "auto") => {
+		releaseSpyRef.current?.();
+		observerBlockRef.current = true;
+		releaseSpyRef.current = scheduleScrollSpyRelease(() => {
+			observerBlockRef.current = false;
+		}, behavior);
+	}, []);
+
+	const scrollToCategory = useCallback((id: string, options?: { syncNavbar?: boolean }) => {
 		setActiveCategory(id);
 		setActiveBottomTab("home");
 		onNavigate?.();
 
+		if (options?.syncNavbar) {
+			syncNavbarOnNextActiveRef.current = true;
+		}
+
 		if (navigationMode === "pagination") return;
 
-		observerBlockRef.current = true;
+		const behavior = resolveCategoryScrollBehavior();
+		blockScrollSpy(behavior);
+
+		const controller = catalogScrollRef.current;
+		if (controller) {
+			controller.scrollToSection(id, behavior);
+			return;
+		}
+
 		const element = document.getElementById(`section-${id}`);
 		if (element) {
-			element.scrollIntoView({ behavior: "smooth", block: "start" });
-			setTimeout(() => {
-				observerBlockRef.current = false;
-			}, 800);
-		} else {
-			observerBlockRef.current = false;
+			element.scrollIntoView({ behavior, block: "start" });
 		}
-	}, [navigationMode, onNavigate, setActiveBottomTab, setActiveCategory]);
+	}, [blockScrollSpy, catalogScrollRef, navigationMode, onNavigate, setActiveBottomTab, setActiveCategory]);
 
 	const scrollToHome = useCallback(() => {
 		const homeId = resolveHomeCategoryId(specialProductsCount, visibleCategoryIds);
-		if (homeId) scrollToCategory(homeId);
+		if (homeId) scrollToCategory(homeId, { syncNavbar: true });
 	}, [scrollToCategory, specialProductsCount, visibleCategoryIds]);
 
+	// Scroll-spy en catálogo NO virtualizado (el virtualizado lo resuelve en su componente)
 	useEffect(() => {
-		if (query || navigationMode === "pagination") return;
+		if (query || navigationMode === "pagination" || useVirtualizedCatalog) return;
 
-		const observer = new IntersectionObserver(
-			(entries) => {
-				if (observerBlockRef.current) return;
-				const sorted = entries
-					.filter((entry) => entry.isIntersecting)
-					.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-				if (sorted.length > 0) {
-					const id = sorted[0].target.id.replace("section-", "");
-					setActiveCategory(id);
-				}
-			},
-			{ root: null, rootMargin: "-80px 0px -80% 0px", threshold: 0 },
-		);
+		let rafId = 0;
 
-		const sections = document.querySelectorAll(".category-section");
-		sections.forEach((section) => observer.observe(section));
-		return () => observer.disconnect();
-	}, [query, navigationMode, setActiveCategory, visibleCategoryIds]);
+		const resolveActiveSection = () => {
+			if (observerBlockRef.current) return;
+			const id = resolveActiveSectionIdFromDom(getMenuScrollAnchorPx());
+			if (id && id !== activeCategoryRef.current) {
+				setActiveCategory(id);
+			}
+		};
+
+		const onScroll = () => {
+			cancelAnimationFrame(rafId);
+			rafId = requestAnimationFrame(resolveActiveSection);
+		};
+
+		window.addEventListener("scroll", onScroll, { passive: true });
+		resolveActiveSection();
+
+		return () => {
+			cancelAnimationFrame(rafId);
+			window.removeEventListener("scroll", onScroll);
+		};
+	}, [navigationMode, query, setActiveCategory, useVirtualizedCatalog, visibleCategoryIds]);
 
 	useEffect(() => {
-		if (!activeCategory) return;
-		if (navbarType === "icon-list" || navbarType === "floating-bottom") {
-			const container = document.querySelector(".icon-list-categories");
-			const activeElement = container?.querySelector(".icon-list-card.active") as HTMLElement | null;
-			activeElement?.scrollIntoView({ behavior: "auto", block: "nearest", inline: "center" });
-		} else if (navbarType === "sidebar-categories") {
-			const container = document.querySelector(".sidebar-categories-panel");
-			const activeElement = container?.querySelector(".sidebar-nav-item.active") as HTMLElement | null;
-			activeElement?.scrollIntoView({ behavior: "auto", block: "nearest", inline: "start" });
-		}
+		if (!syncNavbarOnNextActiveRef.current || !activeCategory) return;
+		syncNavbarOnNextActiveRef.current = false;
+		syncNavbarCategoryTab(navbarType, activeCategory);
 	}, [activeCategory, navbarType]);
 
-	return { scrollToCategory, scrollToHome };
+	useEffect(() => () => {
+		releaseSpyRef.current?.();
+	}, []);
+
+	return { scrollToCategory, scrollToHome, observerBlockRef };
 }

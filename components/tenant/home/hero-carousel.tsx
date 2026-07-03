@@ -5,10 +5,8 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { TENANT_HERO_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
 import { getCloudinaryOptimizedUrl, isCloudinaryUrl } from "../utils/cloudinary";
-
-const FALLBACK_IMAGE =
-	"https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80";
 
 /** Misma duración que la barra de progreso (CSS) */
 const HERO_CAROUSEL_AUTOPLAY_MS = 4000;
@@ -22,16 +20,17 @@ function HeroSlide({
 	banner,
 	isActive,
 	isFirst,
+	shouldRenderImage,
 }: {
 	banner: HeroBanner;
 	isActive: boolean;
 	isFirst: boolean;
+	shouldRenderImage: boolean;
 }) {
 	const rawUrl = banner.image_url?.trim() ?? "";
 	const isCloudinary = isCloudinaryUrl(rawUrl);
-	const fallbackUrl = rawUrl || FALLBACK_IMAGE;
+	const fallbackUrl = rawUrl || TENANT_HERO_FALLBACK_IMAGE;
 
-	// Loader personalizado para aprovechar srcset (resoluciones dinámicas)
 	const cloudinaryLoader = ({ src, width }: { src: string; width: number }) => {
 		return (
 			getCloudinaryOptimizedUrl(src, {
@@ -48,28 +47,31 @@ function HeroSlide({
 			className={`hero-slide hero-slide--image-only${isActive ? " hero-slide--active" : ""}`}
 		>
 			<div className="hero-slide-media">
-				{isCloudinary ? (
-					<Image
-						src={isCloudinary ? rawUrl : fallbackUrl}
-						alt="Promoción"
-						fill
-						sizes="100vw"
-						className="hero-slide-image"
-						priority={isFirst}
-						loader={isCloudinary ? cloudinaryLoader : undefined}
-						unoptimized={!isCloudinary}
-					/>
-				) : (
-					// eslint-disable-next-line @next/next/no-img-element -- rutas /public y dominios del tenant no están en images.remotePatterns
-					<img
-						src={fallbackUrl}
-						alt="Promoción"
-						className="hero-slide-image"
-						loading={isFirst ? "eager" : "lazy"}
-						fetchPriority={isFirst ? "high" : "auto"}
-						decoding="async"
-					/>
-				)}
+				{shouldRenderImage ? (
+					isCloudinary ? (
+						<Image
+							src={isCloudinary ? rawUrl : fallbackUrl}
+							alt="Promoción"
+							fill
+							sizes="100vw"
+							className="hero-slide-image"
+							priority={isFirst}
+							loading={isFirst ? "eager" : "lazy"}
+							loader={isCloudinary ? cloudinaryLoader : undefined}
+							unoptimized={!isCloudinary}
+						/>
+					) : (
+						// eslint-disable-next-line @next/next/no-img-element -- rutas /public y dominios del tenant no están en images.remotePatterns
+						<img
+							src={fallbackUrl}
+							alt="Promoción"
+							className="hero-slide-image"
+							loading={isFirst ? "eager" : "lazy"}
+							fetchPriority={isFirst ? "high" : "auto"}
+							decoding="async"
+						/>
+					)
+				) : null}
 			</div>
 		</div>
 	);
@@ -83,7 +85,6 @@ export function HeroCarousel({ banners }: { banners: HeroBanner[] }) {
 		{ loop: multi, align: "center", duration: 24 },
 		multi
 			? [
-					/* stopOnInteraction:false: el plugin registra mouseleave y pointerUp; con true el autoplay se quedaba parado tras hover o drag. */
 					Autoplay({
 						delay: HERO_CAROUSEL_AUTOPLAY_MS,
 						stopOnInteraction: false,
@@ -149,11 +150,19 @@ export function HeroCarousel({ banners }: { banners: HeroBanner[] }) {
 
 					<div className="hero-carousel-viewport" ref={emblaRef}>
 						<div className="hero-carousel-container">
-							{safeBanners.map((banner, i) => (
-								<div className="hero-carousel-slide" key={banner.id}>
-									<HeroSlide banner={banner} isActive={i === selectedIndex} isFirst={i === 0} />
-								</div>
-							))}
+							{safeBanners.map((banner, i) => {
+								const shouldRenderImage = i === 0 || Math.abs(i - selectedIndex) <= 1;
+								return (
+									<div className="hero-carousel-slide" key={banner.id}>
+										<HeroSlide
+											banner={banner}
+											isActive={i === selectedIndex}
+											isFirst={i === 0}
+											shouldRenderImage={shouldRenderImage}
+										/>
+									</div>
+								);
+							})}
 						</div>
 					</div>
 

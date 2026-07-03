@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useCartStore } from "../cart/cart-store";
 import { getTenantScopedPath, getTenantPrefixFromPathname } from "../utils/tenant-route";
 import { normalizeDeliverySettings } from "@/lib/delivery/delivery-settings";
-import { debugIngest } from "@/lib/debug-ingest";
 import { mergeMenuPathQuery } from "@/utils/tenant-url";
 import { readEmbeddedPreviewFromLocation } from "@/lib/store-theme/preview-theme-messaging";
 import { FIRE_ICON, branchHasContactChannel, getAvailableContactChannels, getBranchesWithContactChannel, openBranchContactUrl, resolveContactFlowStep, resolveMenuCartUiMode, shouldShowBottomNav, shouldShowContactTab, type BranchContactChannel } from "@/lib/tenant/menu/menu-helpers";
@@ -16,8 +15,14 @@ import { MenuNavbar } from "./menu-navbar";
 import type { BranchInfo, BranchModalItem, MenuClientProps } from "./menu-types";
 import { useMenuCatalogData } from "./use-menu-catalog-data";
 import { useMenuCategoryScroll } from "./use-menu-category-scroll";
+import type { MenuCatalogScrollController } from "@/lib/tenant/menu/menu-catalog-scroll-controller";
+import { countVisibleCatalogProducts, shouldVirtualizeMenuCatalog } from "@/lib/tenant/menu/menu-catalog-virtualization";
 import { useMenuPreviewTheme } from "./use-menu-preview-theme";
 import { useMenuRealtime } from "./use-menu-realtime";
+import { useMenuOverlayHistory } from "@/lib/tenant/mobile/use-menu-overlay-history";
+import { useOverlayHistoryDepthSync } from "@/lib/tenant/mobile/overlay-history";
+import { TENANT_OVERLAY_PRIORITIES } from "@/lib/tenant/config/tenant-ui-config";
+import { useTenantMounted } from "@/lib/tenant/hooks/use-tenant-mounted";
 
 export function useMenuClientController(props: MenuClientProps) {
 	const {
@@ -38,7 +43,7 @@ export function useMenuClientController(props: MenuClientProps) {
 		onlineOrderingEnabled,
 	} = props;
 
-	const [mounted, setMounted] = useState(false);
+	const mounted = useTenantMounted();
 	const [navbarType, setNavbarType] = useState(initialNavbarType);
 	const [navigationMode, setNavigationMode] = useState(initialNavigationMode);
 	const [cardStyle, setCardStyle] = useState(initialProductCardStyle);
@@ -70,17 +75,6 @@ export function useMenuClientController(props: MenuClientProps) {
 	const previewThemeParam = searchParams?.get("preview_theme") ?? null;
 	const previewDevice = searchParams?.get("preview_device") ?? null;
 
-	useEffect(() => {
-		const locEmbedded = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("embedded_preview") : null;
-		debugIngest({
-			location: "use-menu-client-controller.tsx:embeddedFlags",
-			message: "embedded preview flags",
-			data: { isEmbeddedFromSearchParams: isEmbeddedPreview, locEmbedded, navbarType, cardStyle },
-			hypothesisId: "H1",
-			runId: "post-fix-2",
-		});
-	}, [isEmbeddedPreview, navbarType, cardStyle, initialNavbarType, initialProductCardStyle]);
-
 	const tenantSlug = useMemo(() => {
 		const prefix = getTenantPrefixFromPathname(pathname ?? "/");
 		return prefix ? prefix.slice(1).toLowerCase() : null;
@@ -93,11 +87,6 @@ export function useMenuClientController(props: MenuClientProps) {
 
 	const hasOpenBranches = (openBranchIds ?? []).length > 0;
 	const [isLocationModalOpen, setIsLocationModalOpen] = useState(!isEmbeddedPreview && !selectedBranchId);
-
-	useEffect(() => {
-		const t = setTimeout(() => setMounted(true), 0);
-		return () => clearTimeout(t);
-	}, []);
 
 	useEffect(() => {
 		productsByIdRef.current = new Map(products.map((product) => [product.id, product]));
@@ -193,7 +182,21 @@ export function useMenuClientController(props: MenuClientProps) {
 		categoriesList,
 	} = useMenuCatalogData(products, categories, searchQuery, visibleCategories, setActiveCategory);
 
-	const { scrollToCategory, scrollToHome } = useMenuCategoryScroll({
+	const catalogProductCount = useMemo(
+		() => countVisibleCatalogProducts(specialProducts.length, visibleCategories, productsByCategory),
+		[productsByCategory, specialProducts.length, visibleCategories],
+	);
+	const useVirtualizedCatalog = shouldVirtualizeMenuCatalog(query, navigationMode, catalogProductCount);
+
+	const handleScrollSpyCategoryChange = useCallback((id: string) => {
+		startTransition(() => {
+			setActiveCategory(id);
+		});
+	}, []);
+
+	const catalogScrollRef = useRef<MenuCatalogScrollController | null>(null);
+
+	const { scrollToCategory, scrollToHome, observerBlockRef } = useMenuCategoryScroll({
 		navigationMode,
 		navbarType,
 		query,
@@ -203,18 +206,79 @@ export function useMenuClientController(props: MenuClientProps) {
 		setActiveCategory,
 		onNavigate: resetInlineOnNavigation,
 		setActiveBottomTab,
+		catalogScrollRef,
+		useVirtualizedCatalog,
 	});
 
 	const handleCategoryClick = useCallback((id: string) => {
 		resetInlineOnNavigation();
-		scrollToCategory(id);
+		scrollToCategory(id, { syncNavbar: true });
 	}, [resetInlineOnNavigation, scrollToCategory]);
 
 	const totalItems = useCartStore((state) =>
 		state.cart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0),
 	);
 	const isCartOpen = useCartStore((state) => state.isCartOpen);
-	const toggleCart = useCartStore((state) => state.toggleCart);
+	const openCart = useCartStore((state) => state.openCart);
+	const closeCart = useCartStore((state) => state.closeCart);
+
+	const handleCartToggle = useCallback(() => {
+		if (isCartOpen) closeCart?.();
+		else openCart?.();
+	}, [closeCart, isCartOpen, openCart]);
+
+	const menuOverlayDepth =
+		(isContactChannelSheetOpen ? 1 : 0)
+		+ (isContactBranchModalOpen ? 1 : 0)
+		+ (selectedProductDetails ? 1 : 0)
+		+ (isLocationModalOpen ? 1 : 0)
+		+ (isMegaMenuOpen ? 1 : 0);
+
+	useOverlayHistoryDepthSync(menuOverlayDepth, "menu-overlays");
+
+	useMenuOverlayHistory([
+		{
+			id: "contact-sheet",
+			priority: TENANT_OVERLAY_PRIORITIES.contactSheet,
+			isOpen: isContactChannelSheetOpen,
+			onClose: () => {
+				setIsContactChannelSheetOpen(false);
+				setActiveBottomTab((tab) => (tab === "contact" ? "home" : tab));
+			},
+		},
+		{
+			id: "contact-branch",
+			priority: TENANT_OVERLAY_PRIORITIES.contactBranch,
+			isOpen: isContactBranchModalOpen,
+			onClose: () => {
+				setIsContactBranchModalOpen(false);
+				setPendingContactChannel(null);
+			},
+		},
+		{
+			id: "product-details",
+			priority: TENANT_OVERLAY_PRIORITIES.productDetails,
+			isOpen: Boolean(selectedProductDetails),
+			onClose: () => setSelectedProductDetails(null),
+		},
+		{
+			id: "branch-selector",
+			priority: TENANT_OVERLAY_PRIORITIES.branchSelector,
+			isOpen: isLocationModalOpen,
+			onClose: () => setIsLocationModalOpen(false),
+		},
+		{
+			id: "mega-menu",
+			priority: TENANT_OVERLAY_PRIORITIES.megaMenu,
+			isOpen: isMegaMenuOpen,
+			onClose: () => setIsMegaMenuOpen(false),
+		},
+	]);
+
+	useEffect(() => {
+		const onMenu = (pathname ?? "").split("?")[0].endsWith("/menu");
+		if (!onMenu && isCartOpen) closeCart?.();
+	}, [closeCart, isCartOpen, pathname]);
 
 	useEffect(() => {
 		setActiveBottomTab((tab) => {
@@ -287,14 +351,7 @@ export function useMenuClientController(props: MenuClientProps) {
 				}
 				: {}),
 		});
-		debugIngest({
-			location: "use-menu-client-controller.tsx:handleBranchSelect",
-			message: "branch navigate",
-			data: { embedded, nextPath, branchId: branch.id },
-			hypothesisId: "H7",
-			runId: "branch-fix",
-		});
-		router.push(nextPath);
+		router.replace(nextPath);
 	}, [isEmbeddedPreview, menuPath, previewDevice, router]);
 
 	const previewDeviceClass = isEmbeddedPreview
@@ -352,7 +409,7 @@ export function useMenuClientController(props: MenuClientProps) {
 			activeBottomTab={activeBottomTab}
 			showContactTab={showContactTab}
 			onHome={scrollToHome}
-			onCart={() => toggleCart?.()}
+			onCart={handleCartToggle}
 			onContact={handleContactClick}
 		/>
 	);
@@ -374,6 +431,10 @@ export function useMenuClientController(props: MenuClientProps) {
 		categoriesList,
 		activeCategory,
 		handleCategoryClick,
+		handleScrollSpyCategoryChange,
+		catalogScrollRef,
+		observerBlockRef,
+		setActiveCategory,
 		navbar,
 		cartUi,
 		query,

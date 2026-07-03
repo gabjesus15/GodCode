@@ -12,5 +12,18 @@ describe("apply-theme-css-vars", () => {
 		expect(css).toContain("--accent-shadow");
 		expect(css).toContain("--card-border");
 		expect(css).toContain("#ff0000");
+		expect(css).toContain("--tenant-bg-image:none");
+		expect(css).toContain("--tenant-bg-layer-opacity:0");
+		expect(css).not.toContain("menu-pattern");
+	});
+
+	it("uses only the tenant background image when configured", () => {
+		const css = buildTenantThemeCssString({
+			backgroundImageUrl: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+		});
+		expect(css).toContain("--tenant-bg-layer-opacity:0.32");
+		expect(css).toContain("--tenant-bg-size:1200px");
+		expect(css).toContain("--tenant-bg-repeat:repeat");
+		expect(css).not.toContain("menu-pattern");
 	});
 });

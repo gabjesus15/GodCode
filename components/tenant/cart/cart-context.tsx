@@ -55,6 +55,8 @@ interface CartContextType {
   cart: CartItem[];
   isCartOpen: boolean;
   toggleCart: () => void;
+  openCart: () => void;
+  closeCart: () => void;
   addToCart: (
     product: CartProduct,
     options?: {

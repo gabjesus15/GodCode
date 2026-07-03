@@ -6,12 +6,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { Settings, QrCode } from "lucide-react";
 import Image from "next/image";
 
-import dynamic from "next/dynamic";
-
-const ContactBranchModal = dynamic(
-  () => import("../branch/contact-branch-modal").then((mod) => mod.ContactBranchModal),
-  { ssr: false }
-);
+import { LazyContactBranchModal } from "@/lib/tenant/lazy/tenant-dynamic";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { getTenantScopedPath } from "../utils/tenant-route";
 
@@ -383,7 +378,7 @@ export function HomeClient(props: HomeClientProps) {
       </main>
 
       {/* MODAL DE SUCURSALES (Ahora solo se usa para WhatsApp, Instgram y Ubicación) */}
-      <ContactBranchModal
+      <LazyContactBranchModal
         isOpen={showModal}
         onClose={() => {
           setShowModal(false);
