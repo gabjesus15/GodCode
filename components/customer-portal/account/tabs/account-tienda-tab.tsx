@@ -23,6 +23,8 @@ import { Card } from "../../ui/Card";
 import { EmptyState } from "../../ui/EmptyState";
 import { PageHeader } from "../../ui/PageHeader";
 import { Skeleton } from "../../ui/Skeleton";
+import { MenuOrderSettingsCard } from "../menu-order-settings-card";
+import type { OrderChannelMode } from "@/lib/tenant/menu-settings";
 
 export type StoreThemeChecklistItem = { id: string; title: string; ok: boolean; detail: string };
 export type StoreThemeContrastChange = { key: keyof StoreThemeConfig; label: string; from: string; to: string; ratio: number | null; min: number };
@@ -76,6 +78,17 @@ export type AccountTiendaTabProps = {
   exportStoreThemeJson: () => void;
   discardStoreThemeChanges: () => void;
   previewBranchId?: string | null;
+  menuSettingsLoading: boolean;
+  menuSettingsSaving: boolean;
+  menuSettingsError: string | null;
+  menuSettingsOk: string | null;
+  menuSettingsCartEnabled: boolean;
+  menuSettingsOrderChannel: OrderChannelMode;
+  menuSettingsPlanAllowsOnlineOrdering: boolean;
+  menuSettingsDirty: boolean;
+  onMenuSettingsCartEnabledChange: (enabled: boolean) => void;
+  onMenuSettingsOrderChannelChange: (channel: OrderChannelMode) => void;
+  onSaveMenuSettings: () => void;
 };
 
 const autosaveLabels: Record<StoreThemeAutosaveStatus, string> = {
@@ -140,6 +153,17 @@ export function AccountTiendaTab({
   exportStoreThemeJson,
   discardStoreThemeChanges,
   previewBranchId,
+  menuSettingsLoading,
+  menuSettingsSaving,
+  menuSettingsError,
+  menuSettingsOk,
+  menuSettingsCartEnabled,
+  menuSettingsOrderChannel,
+  menuSettingsPlanAllowsOnlineOrdering,
+  menuSettingsDirty,
+  onMenuSettingsCartEnabledChange,
+  onMenuSettingsOrderChannelChange,
+  onSaveMenuSettings,
 }: AccountTiendaTabProps) {
   const [qualityOpen, setQualityOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
@@ -163,6 +187,20 @@ export function AccountTiendaTab({
 
   return (
     <div className="space-y-4 sm:space-y-5">
+      <MenuOrderSettingsCard
+        loading={menuSettingsLoading}
+        saving={menuSettingsSaving}
+        error={menuSettingsError}
+        ok={menuSettingsOk}
+        cartEnabled={menuSettingsCartEnabled}
+        orderChannel={menuSettingsOrderChannel}
+        planAllowsOnlineOrdering={menuSettingsPlanAllowsOnlineOrdering}
+        dirty={menuSettingsDirty}
+        onCartEnabledChange={onMenuSettingsCartEnabledChange}
+        onOrderChannelChange={onMenuSettingsOrderChannelChange}
+        onSave={onSaveMenuSettings}
+      />
+
       {/* ── Sticky top bar ── */}
       <div className="sticky top-0 z-10 -mx-4 bg-[#fbfbfd]/95 px-4 pb-2 pt-1 backdrop-blur-md md:-mx-5 md:px-5 lg:-mx-8 lg:px-8">
         <div className="flex flex-col gap-3 rounded-2xl border border-[#e5e5ea] bg-white px-3.5 py-3 shadow-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-4 sm:py-3">

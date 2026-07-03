@@ -4,6 +4,7 @@ import { memo } from "react";
 import { useCartStore } from "../cart/cart-store";
 import { LazyCartFloat, LazyCartModal } from "@/lib/tenant/lazy/tenant-dynamic";
 
+import type { OrderChannelMode } from "@/lib/tenant/menu-settings";
 import { resolveMenuCartUiMode } from "@/lib/tenant/menu/menu-helpers";
 import type { BranchInfo } from "./menu-types";
 import { MenuBottomNav } from "./menu-bottom-nav";
@@ -13,6 +14,7 @@ type MenuCartLayerProps = {
 	selectedBranch: BranchInfo | null;
 	showBottomNav: boolean;
 	onlineOrderingEnabled?: boolean;
+	orderChannel?: OrderChannelMode;
 	effectiveCurrency: string;
 	businessName: string;
 	businessInfo?: {
@@ -39,6 +41,7 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 	selectedBranch,
 	showBottomNav,
 	onlineOrderingEnabled,
+	orderChannel = "both",
 	effectiveCurrency,
 	businessName,
 	businessInfo,
@@ -75,6 +78,7 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 			businessInfo: { name: businessName, ...(businessInfo ?? {}) },
 			selectedBranch,
 			currency: effectiveCurrency,
+			orderChannel,
 		}
 		: null;
 

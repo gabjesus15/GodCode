@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Image from "next/image";
 import { Minus, Plus, X } from "lucide-react";
 
-import { useCart } from "../cart";
+import { useCartStore } from "../cart/cart-store";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
 import { isCloudinaryUrl } from "../utils/cloudinary";
 import type { MenuProduct } from "./menu-types";
@@ -26,7 +26,9 @@ export function ProductInlinePanel({
 	onClose: () => void;
 	panelRef?: React.RefObject<HTMLDivElement | null>;
 }) {
-	const { addToCart, decreaseQuantity, cart } = useCart();
+	const addToCart = useCartStore((state) => state.addToCart);
+	const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
+	const cart = useCartStore((state) => state.cart);
 	const quantity = cart.reduce(
 		(sum: number, item: { id: string; quantity: number }) =>
 			item.id === product.id ? sum + (Number(item.quantity) || 0) : sum,

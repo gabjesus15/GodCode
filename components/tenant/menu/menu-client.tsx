@@ -7,19 +7,15 @@ import { MenuLcpPreload } from "./menu-lcp-preload";
 import type { MenuClientProps } from "./menu-types";
 import { useMenuClientController } from "./use-menu-client-controller";
 
-export function MenuClient(props: MenuClientProps) {
-	const vm = useMenuClientController(props);
-
+function MenuClientViewFromVm({
+	vm,
+	props,
+}: {
+	vm: ReturnType<typeof useMenuClientController>;
+	props: MenuClientProps;
+}) {
 	return (
-		<CartProvider
-			tenantSlug={vm.tenantSlug}
-			selectedBranchId={vm.selectedBranch?.id ?? null}
-			branchDeliverySettings={vm.selectedBranch?.delivery_settings ?? null}
-			branchOriginLat={vm.selectedBranch?.origin_lat != null && Number.isFinite(Number(vm.selectedBranch.origin_lat)) ? Number(vm.selectedBranch.origin_lat) : null}
-			branchOriginLng={vm.selectedBranch?.origin_lng != null && Number.isFinite(Number(vm.selectedBranch.origin_lng)) ? Number(vm.selectedBranch.origin_lng) : null}
-			currency={vm.effectiveCurrency}
-			country={vm.effectiveCountry}
-		>
+		<>
 			<MenuLcpPreload banners={props.banners ?? []} />
 			<MenuClientView
 				mounted={vm.mounted}
@@ -80,6 +76,29 @@ export function MenuClient(props: MenuClientProps) {
 				observerBlockRef={vm.observerBlockRef}
 				onActiveSectionChange={vm.handleScrollSpyCategoryChange}
 			/>
+		</>
+	);
+}
+
+export function MenuClient(props: MenuClientProps) {
+	const vm = useMenuClientController(props);
+	const cartEnabled = vm.onlineOrderingEnabled !== false;
+
+	if (!cartEnabled) {
+		return <MenuClientViewFromVm vm={vm} props={props} />;
+	}
+
+	return (
+		<CartProvider
+			tenantSlug={vm.tenantSlug}
+			selectedBranchId={vm.selectedBranch?.id ?? null}
+			branchDeliverySettings={vm.selectedBranch?.delivery_settings ?? null}
+			branchOriginLat={vm.selectedBranch?.origin_lat != null && Number.isFinite(Number(vm.selectedBranch.origin_lat)) ? Number(vm.selectedBranch.origin_lat) : null}
+			branchOriginLng={vm.selectedBranch?.origin_lng != null && Number.isFinite(Number(vm.selectedBranch.origin_lng)) ? Number(vm.selectedBranch.origin_lng) : null}
+			currency={vm.effectiveCurrency}
+			country={vm.effectiveCountry}
+		>
+			<MenuClientViewFromVm vm={vm} props={props} />
 		</CartProvider>
 	);
 }

@@ -10,6 +10,7 @@ import { displayStatus, fmtMoney, branchEntitlementStatusLabel } from "@/compone
 import { useAccountSnapshot }  from "@/components/customer-portal/hooks/use-account-snapshot";
 import { usePlanManager }      from "@/components/customer-portal/hooks/use-plan-manager";
 import { useStoreTheme }       from "@/components/customer-portal/hooks/use-store-theme";
+import { useMenuSettings }     from "@/components/customer-portal/hooks/use-menu-settings";
 import { useBranchFlow }       from "@/components/customer-portal/hooks/use-branch-flow";
 import { useBillingFilters }   from "@/components/customer-portal/hooks/use-billing-filters";
 import { useTickets }          from "@/components/customer-portal/hooks/use-tickets";
@@ -76,6 +77,8 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
       tone:         "danger",
     })
   );
+
+  const menuSettings = useMenuSettings(tab === "tienda");
 
   const tickets = useTickets(snapshot.tickets, company);
 
@@ -282,6 +285,17 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             exportStoreThemeJson={() => storeTheme.exportStoreThemeJson(company.publicSlug || company.id)}
             discardStoreThemeChanges={storeTheme.discardStoreThemeChanges}
             previewBranchId={branches[0]?.id ?? null}
+            menuSettingsLoading={menuSettings.menuSettingsLoading}
+            menuSettingsSaving={menuSettings.menuSettingsSaving}
+            menuSettingsError={menuSettings.menuSettingsError}
+            menuSettingsOk={menuSettings.menuSettingsOk}
+            menuSettingsCartEnabled={menuSettings.menuSettings.cartEnabled}
+            menuSettingsOrderChannel={menuSettings.menuSettings.orderChannel}
+            menuSettingsPlanAllowsOnlineOrdering={menuSettings.planAllowsOnlineOrdering}
+            menuSettingsDirty={menuSettings.menuSettingsDirty}
+            onMenuSettingsCartEnabledChange={menuSettings.setCartEnabled}
+            onMenuSettingsOrderChannelChange={menuSettings.setOrderChannel}
+            onSaveMenuSettings={() => { void menuSettings.saveMenuSettings(); }}
           />
         )}
 

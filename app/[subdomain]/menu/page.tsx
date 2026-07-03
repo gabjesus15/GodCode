@@ -10,6 +10,10 @@ import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/t
 import { getCachedMenuStaticData, getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
 import { getCachedCompany } from "@/utils/tenant-cache";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
+import {
+	extractMenuSettingsFromIntegration,
+	resolveOnlineOrderingEnabled,
+} from "@/lib/tenant/menu-settings";
 
 // ISR: re-generate at most every 60 s. Menu updates (product edits, theme publish)
 // are pushed instantly via revalidateTag(`menu:${companyId}`) from:
@@ -191,7 +195,10 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
     );
   }
 
-  const onlineOrderingEnabled = (company.plans as { features?: { online_ordering?: boolean } } | null)?.features?.online_ordering !== false;
+  const planFeatures = (company.plans as { features?: unknown } | null)?.features ?? null;
+  const menuSettings = extractMenuSettingsFromIntegration(company.integration_settings);
+  const onlineOrderingEnabled = resolveOnlineOrderingEnabled(planFeatures, menuSettings);
+  const orderChannel = menuSettings.orderChannel;
 
   const status = company.subscription_status?.toLowerCase();
   if (status === "suspended" || status === "cancelled") {
@@ -478,6 +485,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
           productCardStyle={productCardStyle}
           productDetailsMode={productDetailsMode}
           onlineOrderingEnabled={onlineOrderingEnabled}
+          orderChannel={orderChannel}
         />
       </>
     );

@@ -52,6 +52,12 @@ import { useDismissKeyboardOnOutsideTap } from "@/lib/tenant/mobile/use-dismiss-
 import { useTenantMounted } from "@/lib/tenant/hooks/use-tenant-mounted";
 import { TENANT_UI_CONFIG } from "@/lib/tenant/config/tenant-ui-config";
 import { LazyDeliveryPreviewMap } from "@/lib/tenant/lazy/tenant-dynamic";
+import type { OrderChannelMode } from "@/lib/tenant/menu-settings";
+import {
+	requiresOpenShiftForCheckout,
+	shouldOpenWhatsAppOnCheckout,
+	shouldPersistOrderToPanel,
+} from "@/lib/tenant/menu-settings";
 
 import "../../../../app/[subdomain]/styles/CartModal.css";
 import "../../../../app/[subdomain]/styles/CartModal.custom.css";
@@ -60,10 +66,12 @@ export function CartModal({
   businessInfo,
   selectedBranch,
   currency: propCurrency = "CLP",
+  orderChannel = "both",
 }: {
   businessInfo?: BusinessInfo | null;
   selectedBranch?: BranchInfo | null;
   currency?: string;
+  orderChannel?: OrderChannelMode;
 }) {
   const submitOrderMutation = useSubmitOrder();
 
@@ -867,7 +875,10 @@ export function CartModal({
   }, [isCartOpen, selectedBranchId, supabase]);
 
   const isOrderIntakePaused = selectedBranchForCheckout?.order_intake_paused === true;
-  const canCheckout = isShiftOpen && !isOrderIntakePaused;
+  const canCheckout =
+    (requiresOpenShiftForCheckout(orderChannel) ? isShiftOpen : true) && !isOrderIntakePaused;
+  const persistsToPanel = shouldPersistOrderToPanel(orderChannel);
+  const opensWhatsApp = shouldOpenWhatsAppOnCheckout(orderChannel);
   const closedBusinessMessage = useMemo(
     () =>
       buildBusinessClosedCustomerMessage({
@@ -1498,11 +1509,16 @@ export function CartModal({
         uber_quote_id: uberQuoteId || null,
         coupon_code: appliedCouponCode?.trim() ? appliedCouponCode.trim() : null,
       };
-      const { order: newOrder, receiptUploadFailed } = await submitOrderMutation.mutateAsync({
-        orderData: orderPayload,
-        receiptFile: data.receiptFile ?? null,
-      });
-      const parsed = parseOrderRpcPayload(newOrder);
+      let parsed: ReturnType<typeof parseOrderRpcPayload> = null;
+      let receiptUploadFailed = false;
+      if (persistsToPanel) {
+        const submitResult = await submitOrderMutation.mutateAsync({
+          orderData: orderPayload,
+          receiptFile: data.receiptFile ?? null,
+        });
+        parsed = parseOrderRpcPayload(submitResult.order);
+        receiptUploadFailed = submitResult.receiptUploadFailed ?? false;
+      }
       setViewState((v) => ({
         ...v,
         showSuccess: true,
@@ -1522,90 +1538,96 @@ export function CartModal({
         snapFulfillment === "delivery" && deliverySnapshot
           ? `${t("delivery.addressLabel")}: ${deliverySnapshot.line1}, ${deliverySnapshot.commune}`
           : undefined;
-      setTimeout(() => {
-        const paymentData = paymentMethodKey
-          ? (activeInfo as Record<string, unknown>)[paymentMethodKey]
-          : undefined;
-        const wsCart = cart.map((line) => {
-          const lineNote = line.line_note?.trim();
-          const noteInDesc = lineNote ? `Nota: ${lineNote}` : "";
-          const mergedDesc = [line.description, noteInDesc].filter(Boolean).join(" | ");
-          return { ...line, description: mergedDesc || line.description };
-        });
-        const wsLineNotes = cart
-          .filter((line) => line.line_note?.trim())
-          .map((line) => `${line.name}: ${line.line_note!.trim()}`)
-          .join("\n");
-        const message = generateWSMessage(
-          data,
-          wsCart,
-          snapGrand,
-          paymentMethodKey,
-          wsLineNotes,
-          activeInfo.name,
-          paymentData,
-          {
-            fulfillment: snapFulfillment,
-            cartSubtotal: snapSubtotal,
-            deliveryFee: snapFee,
-            grandTotal: snapGrand,
-            deliverySummary,
-            orderId: parsed?.id ?? null,
-            orderNumber: parsed?.order_number ?? null,
-            handoffCode: parsed?.handoff_code ?? null,
-            couponCode: appliedCouponCode?.trim() ? appliedCouponCode.trim() : null,
-            couponDiscount:
-              appliedCouponDiscount > 0 ? appliedCouponDiscount : undefined,
-            currency: currency,
-            localCurrency: currency === "USD" ? "VES" : "USD",
-            localTotal: localTotal,
-            country: effectiveCountryCode,
-            exchangeRate: exchangeRate ?? null,
+      const finalizeCheckout = () => {
+        if (opensWhatsApp) {
+          const paymentData = paymentMethodKey
+            ? (activeInfo as Record<string, unknown>)[paymentMethodKey]
+            : undefined;
+          const wsCart = cart.map((line) => {
+            const lineNote = line.line_note?.trim();
+            const noteInDesc = lineNote ? `Nota: ${lineNote}` : "";
+            const mergedDesc = [line.description, noteInDesc].filter(Boolean).join(" | ");
+            return { ...line, description: mergedDesc || line.description };
+          });
+          const wsLineNotes = cart
+            .filter((line) => line.line_note?.trim())
+            .map((line) => `${line.name}: ${line.line_note!.trim()}`)
+            .join("\n");
+          const message = generateWSMessage(
+            data,
+            wsCart,
+            snapGrand,
             paymentMethodKey,
-          },
-          {
-            titlePrefix: t("ws.titlePrefix"),
-            businessFallback: t("ws.businessFallback"),
-            customer: t("ws.customer"),
-            rut: strategy.idName,
-            phone: t("ws.phone"),
-            typeLabel: t("ws.typeLabel"),
-            typeDelivery: t("ws.typeDelivery"),
-            typePickup: t("ws.typePickup"),
-            shipping: t("ws.shipping"),
-            subtotalProducts: t("ws.subtotalProducts"),
-            orderNumber: t("ws.orderNumber"),
-            orderId: t("ws.orderId"),
-            handoffCode: t("ws.handoffCode"),
-            detail: t("ws.detail"),
-            doLabel: t("ws.doLabel"),
-            total: t("ws.total"),
-            couponLabel: t("ws.couponLabel"),
-            payment: t("ws.payment"),
-            paymentUnknown: t("paymentMethods.unknown"),
-            bankTransferTitle: t("ws.bankTransferTitle"),
-            bank: t("ws.bank"),
-            accountType: t("ws.accountType"),
-            account: t("ws.account"),
-            holder: t("ws.holder"),
-            bankTransferHint: t("ws.bankTransferHint"),
-            note: t("ws.note"),
-          },
-          resolvePaymentMethodLabel(paymentMethodKey, t),
-        );
-        const rawPhone = (activeInfo.phone || "").replace(/\D/g, "");
-        if (!rawPhone) {
-          setViewState((v) => ({
-            ...v,
-            isSaving: false,
-            error: t("errors.whatsappNotConfigured"),
-          }));
-          return;
+            wsLineNotes,
+            activeInfo.name,
+            paymentData,
+            {
+              fulfillment: snapFulfillment,
+              cartSubtotal: snapSubtotal,
+              deliveryFee: snapFee,
+              grandTotal: snapGrand,
+              deliverySummary,
+              orderId: parsed?.id ?? null,
+              orderNumber: parsed?.order_number ?? null,
+              handoffCode: parsed?.handoff_code ?? null,
+              couponCode: appliedCouponCode?.trim() ? appliedCouponCode.trim() : null,
+              couponDiscount:
+                appliedCouponDiscount > 0 ? appliedCouponDiscount : undefined,
+              currency: currency,
+              localCurrency: currency === "USD" ? "VES" : "USD",
+              localTotal: localTotal,
+              country: effectiveCountryCode,
+              exchangeRate: exchangeRate ?? null,
+              paymentMethodKey,
+            },
+            {
+              titlePrefix: t("ws.titlePrefix"),
+              businessFallback: t("ws.businessFallback"),
+              customer: t("ws.customer"),
+              rut: strategy.idName,
+              phone: t("ws.phone"),
+              typeLabel: t("ws.typeLabel"),
+              typeDelivery: t("ws.typeDelivery"),
+              typePickup: t("ws.typePickup"),
+              shipping: t("ws.shipping"),
+              subtotalProducts: t("ws.subtotalProducts"),
+              orderNumber: t("ws.orderNumber"),
+              orderId: t("ws.orderId"),
+              handoffCode: t("ws.handoffCode"),
+              detail: t("ws.detail"),
+              doLabel: t("ws.doLabel"),
+              total: t("ws.total"),
+              couponLabel: t("ws.couponLabel"),
+              payment: t("ws.payment"),
+              paymentUnknown: t("paymentMethods.unknown"),
+              bankTransferTitle: t("ws.bankTransferTitle"),
+              bank: t("ws.bank"),
+              accountType: t("ws.accountType"),
+              account: t("ws.account"),
+              holder: t("ws.holder"),
+              bankTransferHint: t("ws.bankTransferHint"),
+              note: t("ws.note"),
+            },
+            resolvePaymentMethodLabel(paymentMethodKey, t),
+          );
+          const rawPhone = (activeInfo.phone || "").replace(/\D/g, "");
+          if (!rawPhone) {
+            setViewState((v) => ({
+              ...v,
+              isSaving: false,
+              error: t("errors.whatsappNotConfigured"),
+            }));
+            return;
+          }
+          window.open(`https://wa.me/${rawPhone}?text=${encodeURIComponent(message)}`, "_blank");
         }
-        const targetPhone = rawPhone;
-        window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`, "_blank");
         clearCart();
-      }, 1500);
+      };
+      if (opensWhatsApp) {
+        setTimeout(finalizeCheckout, 1500);
+      } else {
+        finalizeCheckout();
+      }
     } catch (error: unknown) {
       const errorRecord = (error ?? {}) as Record<string, unknown>;
       const message = String(errorRecord.message || t("errors.processOrderTryAgain"));
@@ -2019,7 +2041,7 @@ export function CartModal({
                   <button className="btn btn-primary btn-block btn-lg" disabled>
                     Pedidos pausados
                   </button>
-                ) : !isShiftOpen ? (
+                ) : requiresOpenShiftForCheckout(orderChannel) && !isShiftOpen ? (
                   <div className="cash-closed-banner">
                     <AlertCircle size={16} />
                     <span>{closedBusinessMessage}</span>

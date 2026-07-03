@@ -41,6 +41,7 @@ export function useMenuClientController(props: MenuClientProps) {
 		productCardStyle: initialProductCardStyle = "glass",
 		productDetailsMode: initialProductDetailsMode = "modal-premium",
 		onlineOrderingEnabled,
+		orderChannel = "both",
 	} = props;
 
 	const mounted = useTenantMounted();
@@ -402,6 +403,7 @@ export function useMenuClientController(props: MenuClientProps) {
 			selectedBranch={selectedBranch}
 			showBottomNav={showBottomNav}
 			onlineOrderingEnabled={onlineOrderingEnabled}
+			orderChannel={orderChannel}
 			effectiveCurrency={effectiveCurrency}
 			businessName={name}
 			businessInfo={businessInfo}
