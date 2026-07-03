@@ -5,6 +5,7 @@ import Image from "next/image";
 
 import { FIRE_ICON, isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
 import { buildPriorityProductIdSet } from "@/lib/tenant/images/resolve-product-priority";
+import { useMenuPerfProfile } from "@/lib/tenant/menu/menu-perf-context";
 import { collectCatalogProductIdsInRenderOrder } from "@/lib/tenant/menu/collect-catalog-product-ids";
 import { countVisibleCatalogProducts, shouldVirtualizeMenuCatalog } from "@/lib/tenant/menu/menu-catalog-virtualization";
 import type { MenuCatalogScrollController } from "@/lib/tenant/menu/menu-catalog-scroll-controller";
@@ -60,6 +61,8 @@ export const MenuCatalog = memo(function MenuCatalog({
 	observerBlockRef,
 	onActiveSectionChange,
 }: MenuCatalogProps) {
+	const { priorityImageMax } = useMenuPerfProfile();
+
 	const priorityProductIds = useMemo(() => {
 		const orderedIds = collectCatalogProductIdsInRenderOrder({
 			query,
@@ -70,11 +73,12 @@ export const MenuCatalog = memo(function MenuCatalog({
 			productsByCategory,
 			filteredBySearch,
 		});
-		return buildPriorityProductIdSet(orderedIds);
+		return buildPriorityProductIdSet(orderedIds, priorityImageMax);
 	}, [
 		activeCategory,
 		filteredBySearch,
 		navigationMode,
+		priorityImageMax,
 		productsByCategory,
 		query,
 		specialProducts,

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Plus, ChevronDown, X } from "lucide-react";
 import { useCartStore } from "../cart/cart-store";
 import { getCloudinaryOptimizedUrl, isCloudinaryUrl } from "../utils/cloudinary";
+import { useMenuPerfProfile } from "@/lib/tenant/menu/menu-perf-context";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
 import { normalizeProductCardStyle } from "@/lib/store-theme/theme-config";
 import {
@@ -56,8 +57,9 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
   const isCloudinary = isCloudinaryUrl(product.image_url);
   const fallbackUrl = product.image_url || FALLBACK_IMAGE;
 
+  const { maxCloudinaryWidth } = useMenuPerfProfile();
   const cloudinaryLoader = ({ src, width }: { src: string; width: number }) => {
-    return getCloudinaryOptimizedUrl(src, { width, crop: "fill", gravity: "auto" }) || src;
+    return getCloudinaryOptimizedUrl(src, { width: Math.min(width, maxCloudinaryWidth), crop: "fill", gravity: "auto" }) || src;
   };
 
   const closeDetails = useCallback(() => {

@@ -14,6 +14,7 @@ import {
 	TenantStepper,
 	type TenantButtonVariant,
 } from "./ui/tenant-ui";
+import { useMenuPerfProfile } from "@/lib/tenant/menu/menu-perf-context";
 
 export interface ProductCardProduct {
   id: string;
@@ -58,6 +59,14 @@ export function createLayoutCloudinaryLoader(aspect: LayoutImageAspect = "square
       crop: "fill",
       gravity: "auto",
     }) || src;
+}
+
+function capCloudinaryLoader(
+	loader: ({ src, width }: { src: string; width: number }) => string,
+	maxWidth: number,
+) {
+	return ({ src, width }: { src: string; width: number }) =>
+		loader({ src, width: Math.min(width, maxWidth) });
 }
 
 export function truncateText(text: string | null | undefined, maxLength: number): string {
@@ -106,6 +115,7 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
   const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
   const quantity = useProductCartQuantity(product.id);
   const hydrated = useHydrated();
+  const { maxCloudinaryWidth } = useMenuPerfProfile();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const getPrice = useCallback(
@@ -122,8 +132,8 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
 
   const cloudinaryLoader = useCallback(
     ({ src, width }: { src: string; width: number }) =>
-      getCloudinaryOptimizedUrl(src, { width, crop: "fill", gravity: "auto" }) || src,
-    [],
+      getCloudinaryOptimizedUrl(src, { width: Math.min(width, maxCloudinaryWidth), crop: "fill", gravity: "auto" }) || src,
+    [maxCloudinaryWidth],
   );
 
   useEffect(() => {
@@ -248,7 +258,11 @@ export const ProductCardImage = React.memo(function ProductCardImage({
   objectPosition = "center",
   layoutLoader,
 }: ProductCardImageProps) {
-  const resolvedLoader = isCloudinary ? (layoutLoader ?? cloudinaryLoader) : undefined;
+  const { maxCloudinaryWidth } = useMenuPerfProfile();
+  const baseLoader = isCloudinary ? (layoutLoader ?? cloudinaryLoader) : undefined;
+  const resolvedLoader = baseLoader
+    ? capCloudinaryLoader(baseLoader, maxCloudinaryWidth)
+    : undefined;
 
   return (
     <div className={`product-card-media ${className}`.trim()}>

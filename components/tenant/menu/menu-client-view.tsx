@@ -17,6 +17,7 @@ import {
 	LazyProductDetailsModal,
 } from "@/lib/tenant/lazy/tenant-dynamic";
 import type { MenuCatalogScrollController } from "@/lib/tenant/menu/menu-catalog-scroll-controller";
+import { useMenuPerfProfile } from "@/lib/tenant/menu/menu-perf-context";
 
 export type MenuClientViewProps = {
 	mounted: boolean;
@@ -79,6 +80,7 @@ export type MenuClientViewProps = {
 };
 
 export function MenuClientView(props: MenuClientViewProps) {
+	const { heroAutoplay } = useMenuPerfProfile();
 	const {
 		mounted,
 		pageClassName,
@@ -170,7 +172,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 					: navbar}
 
 				<div className="menu-spacer" />
-				{banners.length > 0 && <HeroCarousel banners={banners} />}
+				{banners.length > 0 && <HeroCarousel banners={banners} autoplayEnabled={heroAutoplay} />}
 
 				<main className="container">
 					<MenuCatalog

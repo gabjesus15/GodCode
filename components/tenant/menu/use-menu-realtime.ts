@@ -10,6 +10,7 @@ export function useMenuRealtime(
 	companyId: string | null,
 	selectedBranchId: string | null | undefined,
 	router: AppRouterInstance,
+	options?: { deferMs?: number },
 ) {
 	const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const supabase = useMemo(() => createSupabaseBrowserClient("tenant"), []);
@@ -50,7 +51,7 @@ export function useMenuRealtime(
 			channel.subscribe();
 		};
 
-		const deferMs = TENANT_UI_CONFIG.menuRealtimeDeferMs;
+		const deferMs = options?.deferMs ?? TENANT_UI_CONFIG.menuRealtimeDeferMs;
 		const idleCallback = typeof window !== "undefined" ? window.requestIdleCallback : undefined;
 		const deferId = idleCallback
 			? idleCallback(() => subscribe(), { timeout: deferMs })
@@ -66,5 +67,5 @@ export function useMenuRealtime(
 			}
 			if (channel) supabase.removeChannel(channel);
 		};
-	}, [supabase, companyId, selectedBranchId, router]);
+	}, [supabase, companyId, selectedBranchId, router, options?.deferMs]);
 }

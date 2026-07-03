@@ -77,13 +77,19 @@ function HeroSlide({
 	);
 }
 
-export function HeroCarousel({ banners }: { banners: HeroBanner[] }) {
+export function HeroCarousel({
+	banners,
+	autoplayEnabled = true,
+}: {
+	banners: HeroBanner[];
+	autoplayEnabled?: boolean;
+}) {
 	const safeBanners = banners?.length ? banners : [];
 	const multi = safeBanners.length > 1;
 
 	const [emblaRef, emblaApi] = useEmblaCarousel(
 		{ loop: multi, align: "center", duration: 24 },
-		multi
+		multi && autoplayEnabled
 			? [
 					Autoplay({
 						delay: HERO_CAROUSEL_AUTOPLAY_MS,
@@ -166,23 +172,25 @@ export function HeroCarousel({ banners }: { banners: HeroBanner[] }) {
 						</div>
 					</div>
 
-					{multi && <div className="hero-carousel-scrim" aria-hidden />}
+					{multi && autoplayEnabled && <div className="hero-carousel-scrim" aria-hidden />}
 
 					{multi && (
 						<div className="hero-carousel-chrome">
-							<div
-								className="hero-progress-track"
-								role="presentation"
-								aria-hidden
-							>
+							{autoplayEnabled ? (
 								<div
-									key={selectedIndex}
-									className="hero-progress-fill"
-									style={{
-										animationDuration: `${HERO_CAROUSEL_AUTOPLAY_MS}ms`,
-									}}
-								/>
-							</div>
+									className="hero-progress-track"
+									role="presentation"
+									aria-hidden
+								>
+									<div
+										key={selectedIndex}
+										className="hero-progress-fill"
+										style={{
+											animationDuration: `${HERO_CAROUSEL_AUTOPLAY_MS}ms`,
+										}}
+									/>
+								</div>
+							) : null}
 							<div className="hero-dots">
 								{safeBanners.map((_, i) => (
 									<button

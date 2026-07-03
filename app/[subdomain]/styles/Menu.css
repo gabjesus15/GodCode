@@ -163,6 +163,8 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     position: relative;
     scroll-margin-top: calc(180px + env(safe-area-inset-top));
+    content-visibility: auto;
+    contain-intrinsic-size: auto 520px;
     /* Asegura que el título no quede tapado por el header */
 }
 
@@ -231,6 +233,17 @@
 .fire-icon-lg {
     width: 26px;
     height: 34px;
+}
+
+/* Gama baja (p. ej. Samsung A50): menos animaciones y sombras costosas */
+.page-wrapper.low-end-device .fire-icon {
+    animation: none;
+    will-change: auto;
+    filter: none;
+}
+
+.page-wrapper.low-end-device .category-title::after {
+    box-shadow: none;
 }
 
 section {

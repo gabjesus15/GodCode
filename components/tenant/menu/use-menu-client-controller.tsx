@@ -23,6 +23,8 @@ import { useMenuOverlayHistory } from "@/lib/tenant/mobile/use-menu-overlay-hist
 import { useOverlayHistoryDepthSync } from "@/lib/tenant/mobile/overlay-history";
 import { TENANT_OVERLAY_PRIORITIES } from "@/lib/tenant/config/tenant-ui-config";
 import { useTenantMounted } from "@/lib/tenant/hooks/use-tenant-mounted";
+import { useLowEndDevice } from "@/lib/tenant/hooks/use-low-end-device";
+import { resolveEffectiveNavigationMode } from "@/lib/tenant/menu/resolve-effective-navigation-mode";
 
 export function useMenuClientController(props: MenuClientProps) {
 	const {
@@ -45,6 +47,7 @@ export function useMenuClientController(props: MenuClientProps) {
 	} = props;
 
 	const mounted = useTenantMounted();
+	const isLowEnd = useLowEndDevice();
 	const [navbarType, setNavbarType] = useState(initialNavbarType);
 	const [navigationMode, setNavigationMode] = useState(initialNavigationMode);
 	const [cardStyle, setCardStyle] = useState(initialProductCardStyle);
@@ -142,7 +145,9 @@ export function useMenuClientController(props: MenuClientProps) {
 		[selectedBranch],
 	);
 
-	useMenuRealtime(isEmbeddedPreview ? null : companyId, isEmbeddedPreview ? null : selectedBranchId, router);
+	useMenuRealtime(isEmbeddedPreview ? null : companyId, isEmbeddedPreview ? null : selectedBranchId, router, {
+		deferMs: isLowEnd ? 8000 : undefined,
+	});
 
 	const displayName = previewDisplayName || name;
 	const effectiveLogoUrl = previewLogoUrl || logoUrl;
@@ -187,7 +192,11 @@ export function useMenuClientController(props: MenuClientProps) {
 		() => countVisibleCatalogProducts(specialProducts.length, visibleCategories, productsByCategory),
 		[productsByCategory, specialProducts.length, visibleCategories],
 	);
-	const useVirtualizedCatalog = shouldVirtualizeMenuCatalog(query, navigationMode, catalogProductCount);
+	const effectiveNavigationMode = useMemo(
+		() => resolveEffectiveNavigationMode(navigationMode, catalogProductCount, isLowEnd),
+		[catalogProductCount, isLowEnd, navigationMode],
+	);
+	const useVirtualizedCatalog = shouldVirtualizeMenuCatalog(query, effectiveNavigationMode, catalogProductCount);
 
 	const handleScrollSpyCategoryChange = useCallback((id: string) => {
 		startTransition(() => {
@@ -198,7 +207,7 @@ export function useMenuClientController(props: MenuClientProps) {
 	const catalogScrollRef = useRef<MenuCatalogScrollController | null>(null);
 
 	const { scrollToCategory, scrollToHome, observerBlockRef } = useMenuCategoryScroll({
-		navigationMode,
+		navigationMode: effectiveNavigationMode,
 		navbarType,
 		query,
 		visibleCategoryIds: visibleCategories.map((c) => c.id),
@@ -363,7 +372,7 @@ export function useMenuClientController(props: MenuClientProps) {
 				: "preview-device-mobile"
 		: "";
 
-	const pageClassName = `page-wrapper navbar-type-${navbarType} nav-mode-${navigationMode} card-style-${cardStyle} cart-ui-${cartUiMode}${onlineOrderingEnabled === false ? " online-ordering-disabled" : ""}${previewDeviceClass ? ` ${previewDeviceClass}` : ""}${isEmbeddedPreview ? " embedded-preview" : ""}`;
+	const pageClassName = `page-wrapper navbar-type-${navbarType} nav-mode-${effectiveNavigationMode} card-style-${cardStyle} cart-ui-${cartUiMode}${onlineOrderingEnabled === false ? " online-ordering-disabled" : ""}${isLowEnd ? " low-end-device" : ""}${previewDeviceClass ? ` ${previewDeviceClass}` : ""}${isEmbeddedPreview ? " embedded-preview" : ""}`;
 
 	const navbar = (
 		<MenuNavbar
@@ -424,7 +433,8 @@ export function useMenuClientController(props: MenuClientProps) {
 		mounted,
 		pageClassName,
 		navbarType,
-		navigationMode,
+		navigationMode: effectiveNavigationMode,
+		isLowEnd,
 		displayName,
 		effectiveLogoUrl,
 		logoError,
