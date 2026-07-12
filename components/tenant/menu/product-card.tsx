@@ -1,18 +1,16 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { Plus, ChevronDown, X } from "lucide-react";
 import { useCartStore } from "../cart/cart-store";
-import { getCloudinaryOptimizedUrl, isCloudinaryUrl } from "../utils/cloudinary";
-import { useMenuPerfProfile } from "@/lib/tenant/menu/menu-perf-context";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
 import { normalizeProductCardStyle } from "@/lib/store-theme/theme-config";
 import {
-  PRODUCT_CARD_FALLBACK_IMAGE,
   ProductOfferBadges,
   ProductQtyBadge,
   useProductCardLogic,
   useProductCartQuantity,
   type ProductCardProduct,
+  type ProductCardLogic,
 } from "./product-card-shared";
 import { TenantButton, TenantStepper } from "./ui/tenant-ui";
 import {
@@ -28,18 +26,15 @@ import {
 
 type ProductType = ProductCardProduct;
 
-const FALLBACK_IMAGE = PRODUCT_CARD_FALLBACK_IMAGE;
-
 // -----------------------------------------------------------------------------
 // LAYOUT 0: Original (Glass)
 // -----------------------------------------------------------------------------
-const GlassCard = React.memo(function GlassCard({ product, priority = false, country = "CL", currency = "CLP", detailsMode = "modal-premium", onClick, onProductClick, inlineDetails = false, exchangeRate }: { product: ProductType; priority?: boolean; country?: string; currency?: string; detailsMode?: string; onClick?: () => void; onProductClick?: (productId: string) => void; inlineDetails?: boolean; exchangeRate?: number | null }) {
+const GlassCard = React.memo(function GlassCard({ product, logic, priority = false, country = "CL", currency = "CLP", detailsMode = "modal-premium", onClick, onProductClick, inlineDetails = false, exchangeRate }: { product: ProductType; logic: ProductCardLogic; priority?: boolean; country?: string; currency?: string; detailsMode?: string; onClick?: () => void; onProductClick?: (productId: string) => void; inlineDetails?: boolean; exchangeRate?: number | null }) {
   const addToCart = useCartStore((state) => state.addToCart);
   const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
   const quantity = useProductCartQuantity(product.id);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [isBumping, setIsBumping] = useState(false);
   const [mounted, setMounted] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,13 +49,6 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
   const isLongDesc = (product.description || "").length > 60;
   const showDetailsHint = Boolean(onProductClick || onClick) && (inlineDetails || isLongDesc || detailsMode === "modal-premium");
   const detailsHintLabel = detailsMode === "modal-premium" ? "Ver producto" : "Ver detalles";
-  const isCloudinary = isCloudinaryUrl(product.image_url);
-  const fallbackUrl = product.image_url || FALLBACK_IMAGE;
-
-  const { maxCloudinaryWidth } = useMenuPerfProfile();
-  const cloudinaryLoader = ({ src, width }: { src: string; width: number }) => {
-    return getCloudinaryOptimizedUrl(src, { width: Math.min(width, maxCloudinaryWidth), crop: "fill", gravity: "auto" }) || src;
-  };
 
   const closeDetails = useCallback(() => {
     if (!isExpanded || isClosing) return;
@@ -151,18 +139,18 @@ const GlassCard = React.memo(function GlassCard({ product, priority = false, cou
       aria-label={`Ver detalles de ${product.name}`}
     >
       <div className={`product-image ${isBumping ? "bump-active" : ""}`}>
-        {!imageLoaded ? <div className="skeleton-loader absolute inset-0" /> : null}
+        {!logic.imageLoaded ? <div className="skeleton-loader absolute inset-0" /> : null}
         <Image
-          src={isCloudinary ? product.image_url! : fallbackUrl}
+          src={logic.imageSrc}
           alt={product.name ?? "Producto"}
           fill
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           priority={priority}
-          loader={isCloudinary ? cloudinaryLoader : undefined}
-          unoptimized={!isCloudinary}
-          onLoad={() => setImageLoaded(true)}
-          className={!imageLoaded ? "opacity-0" : "opacity-100 transition-opacity duration-500"}
-          onError={() => setImageLoaded(true)}
+          loader={logic.isCloudinary ? logic.cloudinaryLoader : undefined}
+          unoptimized={!logic.isCloudinary}
+          onLoad={() => logic.setImageLoaded(true)}
+          className={!logic.imageLoaded ? "opacity-0" : "opacity-100 transition-opacity duration-500"}
+          onError={() => logic.setImageError(true)}
         />
 
         <ProductOfferBadges product={product} />
@@ -290,7 +278,7 @@ export const ProductCard = React.memo(function ProductCard({
 
   switch (resolvedStyle) {
     case "glass":
-      return <GlassCard product={product} currency={currency} priority={priority} country={country} detailsMode={detailsMode} onClick={onClick} onProductClick={onProductClick} inlineDetails={inlineDetails} exchangeRate={exchangeRate} />;
+      return <GlassCard product={product} logic={logic} currency={currency} priority={priority} country={country} detailsMode={detailsMode} onClick={onClick} onProductClick={onProductClick} inlineDetails={inlineDetails} exchangeRate={exchangeRate} />;
     case "layout-detailed":
       return <DetailedCard {...layoutProps} />;
     case "layout-horizontal":
