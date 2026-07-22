@@ -1,11 +1,12 @@
 import type { NextConfig } from "next";
+import { createRequire } from "module";
 import { resolve } from "path";
 import createNextIntlPlugin from "next-intl/plugin";
-import bundleAnalyzer from "@next/bundle-analyzer";
 
-const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "true" });
+const require = createRequire(import.meta.url);
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 const isProduction = process.env.NODE_ENV === "production";
+const shouldAnalyze = process.env.ANALYZE === "true";
 
 const supabaseStoragePattern = (() => {
   const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -162,4 +163,6 @@ const nextConfig: NextConfig = {
 
 };
 
-export default withBundleAnalyzer(withNextIntl(nextConfig));
+const config = withNextIntl(nextConfig);
+
+export default shouldAnalyze ? require("@next/bundle-analyzer")({ enabled: true })(config) : config;

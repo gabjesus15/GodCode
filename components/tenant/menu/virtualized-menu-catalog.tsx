@@ -107,16 +107,6 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 		overscan: 5,
 		scrollMargin: scrollAnchor,
 		gap: 40,
-		shouldAdjustScrollPositionOnItemSizeChange: (item, delta, instance) => {
-			if (instance.isScrolling && instance.scrollDirection === "backward") {
-				return false;
-			}
-			if (instance.isScrolling && delta > 0) {
-				return false;
-			}
-			const scrollOffset = instance.scrollOffset ?? 0;
-			return item.start < scrollOffset;
-		},
 	});
 
 	useEffect(() => {

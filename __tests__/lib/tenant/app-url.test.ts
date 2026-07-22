@@ -10,16 +10,22 @@ describe("getAppUrl", () => {
 	});
 
 	it("strips internal container port in production", () => {
-		process.env.NODE_ENV = "production";
-		process.env.NEXT_PUBLIC_APP_URL = "https://www.godcode.me:3000";
+		process.env = {
+			...originalEnv,
+			NODE_ENV: "production",
+			NEXT_PUBLIC_APP_URL: "https://www.godcode.me:3000",
+		};
 
 		expect(getAppUrl()).toBe("https://www.godcode.me");
 		expect(getAppHostname()).toBe("www.godcode.me");
 	});
 
 	it("buildAppUrl never includes :3000 in production", () => {
-		process.env.NODE_ENV = "production";
-		process.env.NEXT_PUBLIC_APP_URL = "https://www.godcode.me:3000";
+		process.env = {
+			...originalEnv,
+			NODE_ENV: "production",
+			NEXT_PUBLIC_APP_URL: "https://www.godcode.me:3000",
+		};
 
 		expect(buildAppUrl("/", "?utm=1")).toBe("https://www.godcode.me/?utm=1");
 	});
