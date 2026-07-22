@@ -90,7 +90,10 @@ export function useOverlayHistoryDepthSync(depth: number, sourceId: string) {
 
 export function useOverlayHistoryHandler(handler: OverlayHistoryHandler) {
 	const handlerRef = useRef(handler);
-	handlerRef.current = handler;
+
+	useEffect(() => {
+		handlerRef.current = handler;
+	}, [handler]);
 
 	useEffect(() => {
 		return registerOverlayHistoryHandler({

@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  console.log(`[revalidate-menu] tag="${tag}" companySlugTag="${companySlugRevalidated || 'none'}" table="${table}" at=${new Date().toISOString()}`);
+  console.warn(`[revalidate-menu] tag="${tag}" companySlugTag="${companySlugRevalidated || 'none'}" table="${table}" at=${new Date().toISOString()}`);
 
   return NextResponse.json({
     revalidated: true,

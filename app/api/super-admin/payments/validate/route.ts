@@ -316,7 +316,6 @@ export async function POST(req: NextRequest) {
 			now,
 		});
 	} else if (isCustomerAddonPurchase && addonRefMatch && addonForPurchase) {
-			const addonId = addonRefMatch[1];
 			const [{ data: company }] = await Promise.all([
 				supabaseAdmin
 					.from("companies")

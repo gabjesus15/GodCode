@@ -43,7 +43,7 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 	const goTo = useCallback((index: number) => {
 		const next = ((index % phones.length) + phones.length) % phones.length;
 		setActive(next);
-	}, []);
+	}, [phones.length]);
 
 	const goNext = useCallback(() => goTo(active + 1), [active, goTo]);
 	const goPrev = useCallback(() => goTo(active - 1), [active, goTo]);
@@ -125,7 +125,7 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 			setActive((i) => (i + 1) % phones.length);
 		}, AUTOPLAY_MS);
 		return () => window.clearInterval(timer);
-	}, [paused]);
+	}, [paused, phones.length]);
 
 	useEffect(() => {
 		return () => {

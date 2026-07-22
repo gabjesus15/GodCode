@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable no-console */
+
 import { useEffect } from "react";
 
 /** Silencia console.* en el navegador (solo producción). */

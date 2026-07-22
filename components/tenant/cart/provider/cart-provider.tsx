@@ -140,7 +140,7 @@ export function CartProvider({
 
   useEffect(() => {
     if (!tenantSlug) return;
-    setIsHydrated(false);
+    queueMicrotask(() => setIsHydrated(false));
     const storageKey = `tenant_cart_storage_${tenantSlug}`;
     const persistApi = (
       useCartStore as {

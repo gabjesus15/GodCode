@@ -40,18 +40,22 @@ export const MenuContactChannelSheet = memo(function MenuContactChannelSheet({
 	const [isClosing, setIsClosing] = useState(false);
 
 	useEffect(() => {
-		setPortalReady(true);
+		const timer = window.setTimeout(() => setPortalReady(true), 0);
+		return () => window.clearTimeout(timer);
 	}, []);
 
 	useEffect(() => {
 		if (isOpen && channels.length > 0) {
-			setIsRendered(true);
-			setIsClosing(false);
-			return;
+			const timer = window.setTimeout(() => {
+				setIsRendered(true);
+				setIsClosing(false);
+			}, 0);
+			return () => window.clearTimeout(timer);
 		}
 
 		if (isRendered && !isOpen) {
-			setIsClosing(true);
+			const timer = window.setTimeout(() => setIsClosing(true), 0);
+			return () => window.clearTimeout(timer);
 		}
 	}, [channels.length, isOpen, isRendered]);
 

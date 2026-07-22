@@ -29,7 +29,7 @@ async function resolveTenantSlug(): Promise<string | null> {
 }
 
 async function resolveTenantSession(
-	client: SupabaseClient,
+	_client: SupabaseClient,
 ): Promise<TicketAuthContext | { error: string }> {
 	const supabase = await createSupabaseServerClient("tenant");
 	const {
@@ -74,7 +74,7 @@ async function resolveTenantSession(
 }
 
 async function resolveCustomerPortalSession(
-	client: SupabaseClient,
+	_client: SupabaseClient,
 ): Promise<TicketAuthContext | { error: string }> {
 	const supabase = await createSupabaseServerClient("super-admin");
 	const {

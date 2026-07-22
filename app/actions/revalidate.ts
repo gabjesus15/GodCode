@@ -27,7 +27,7 @@ export async function revalidateMenuCache(companyId: string) {
     // If it's a super-admin, allow revalidating any company
     if (superAdminRole === "super_admin" || superAdminRole === "support") {
       revalidateTag(`menu:${companyId}`, "max");
-      console.log(`[revalidateMenuCache] Super-admin revalidated menu:${companyId}`);
+      console.warn(`[revalidateMenuCache] Super-admin revalidated menu:${companyId}`);
       return { success: true };
     }
 
@@ -38,7 +38,7 @@ export async function revalidateMenuCache(companyId: string) {
     }
 
     revalidateTag(`menu:${companyId}`, "max");
-    console.log(`[revalidateMenuCache] Customer ${user.id} revalidated menu:${companyId}`);
+    console.warn(`[revalidateMenuCache] Customer ${user.id} revalidated menu:${companyId}`);
     return { success: true };
   } catch (err) {
     console.error("Error in revalidateMenuCache:", err);

@@ -56,12 +56,15 @@ export function useMenuPreviewTheme({
 		productCardStyle: initialProductCardStyle,
 		productDetailsMode: initialProductDetailsMode,
 	});
-	initialRef.current = {
-		navbarType: initialNavbarType,
-		navigationMode: initialNavigationMode,
-		productCardStyle: initialProductCardStyle,
-		productDetailsMode: initialProductDetailsMode,
-	};
+
+	useEffect(() => {
+		initialRef.current = {
+			navbarType: initialNavbarType,
+			navigationMode: initialNavigationMode,
+			productCardStyle: initialProductCardStyle,
+			productDetailsMode: initialProductDetailsMode,
+		};
+	}, [initialNavbarType, initialNavigationMode, initialProductCardStyle, initialProductDetailsMode]);
 
 	const embeddedLivePreviewRef = useRef(false);
 	const revertCssRef = useRef<(() => void) | null>(null);
@@ -70,7 +73,10 @@ export function useMenuPreviewTheme({
 		isEmbeddedPreview
 		|| (typeof window !== "undefined" && readEmbeddedPreviewFromLocation());
 	const isReallyEmbeddedRef = useRef(isReallyEmbedded);
-	isReallyEmbeddedRef.current = isReallyEmbedded;
+
+	useEffect(() => {
+		isReallyEmbeddedRef.current = isReallyEmbedded;
+	}, [isReallyEmbedded]);
 
 	const applyPreviewTheme = useCallback((previewTheme: PreviewThemePayload, _source: string) => {
 		const initial = initialRef.current;

@@ -30,7 +30,7 @@ export function BranchSelectorModal({
   isOpen,
   onClose,
   branches,
-  allBranches,
+  allBranches: _allBranches,
   isLoadingCaja,
   onSelectBranch,
   allowClose = true,

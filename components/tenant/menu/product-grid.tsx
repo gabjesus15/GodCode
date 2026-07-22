@@ -3,7 +3,7 @@
 import React, { memo } from "react";
 
 import { productCardGridClass } from "@/lib/store-theme/theme-config";
-import { buildPriorityProductIdSet, isPriorityProductImage } from "@/lib/tenant/images/resolve-product-priority";
+import { isPriorityProductImage } from "@/lib/tenant/images/resolve-product-priority";
 import { useProductDetailsInteraction } from "./use-product-details-interaction";
 import { ProductCard } from "./product-card";
 import { ProductInlinePanel } from "./product-inline-panel";

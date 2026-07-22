@@ -183,7 +183,7 @@ export const HorizontalCard = React.memo(function HorizontalCard({ product, logi
 });
 
 /** Moda — panel lateral al hover */
-export const SidebarCard = React.memo(function SidebarCard({ product, logic, currency, priority, onClick, detailsMode, exchangeRate }: LayoutCardProps) {
+export const SidebarCard = React.memo(function SidebarCard({ product, logic, currency, priority, onClick, detailsMode: _detailsMode, exchangeRate }: LayoutCardProps) {
   const pricing = useProductPricing(product, currency, logic, exchangeRate);
   const description = truncateText(product.description, 80);
 

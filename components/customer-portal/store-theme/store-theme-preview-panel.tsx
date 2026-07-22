@@ -24,17 +24,12 @@ export function StoreThemePreviewPanel({
   previewBranchId?: string | null;
   hasUnpublishedChanges: boolean;
 }) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const previewUrl = useMemo(
+    () => (menuSlug ? getTenantMenuPreviewUrl(menuSlug, customDomain, previewBranchId) : null),
+    [menuSlug, customDomain, previewBranchId],
+  );
   const draftIframeRef = useRef<HTMLIFrameElement | null>(null);
   const productionIframeRef = useRef<HTMLIFrameElement | null>(null);
-
-  useEffect(() => {
-    if (!menuSlug) {
-      setPreviewUrl(null);
-      return;
-    }
-    setPreviewUrl(getTenantMenuPreviewUrl(menuSlug, customDomain, previewBranchId));
-  }, [menuSlug, customDomain, previewBranchId]);
   const displayName = theme.displayName.trim() || companyName;
   const tokenRows = [
     ["Primario", theme.primaryColor],

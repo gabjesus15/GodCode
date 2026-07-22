@@ -54,9 +54,11 @@ export function StatementTypewriter({ className }: StatementTypewriterProps) {
 		const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 		if (prefersReduced) {
 			playedRef.current = true;
-			setVisibleCount(LANDING_STATEMENT_TEXT.length);
-			setPhase("done");
-			return;
+			const timer = window.setTimeout(() => {
+				setVisibleCount(LANDING_STATEMENT_TEXT.length);
+				setPhase("done");
+			}, 0);
+			return () => window.clearTimeout(timer);
 		}
 
 		const observer = new IntersectionObserver(
@@ -80,8 +82,8 @@ export function StatementTypewriter({ className }: StatementTypewriterProps) {
 		if (phase !== "typing") return;
 
 		if (visibleCount >= LANDING_STATEMENT_TEXT.length) {
-			setPhase("done");
-			return;
+			const timer = window.setTimeout(() => setPhase("done"), 0);
+			return () => window.clearTimeout(timer);
 		}
 
 		const delay =

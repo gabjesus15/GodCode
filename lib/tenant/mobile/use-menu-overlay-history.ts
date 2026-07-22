@@ -12,7 +12,11 @@ export type MenuOverlayConfig = {
 
 export function useMenuOverlayHistory(overlays: MenuOverlayConfig[]) {
 	const overlaysRef = useRef(overlays);
-	overlaysRef.current = overlays;
+	const overlaySignature = overlays.map((overlay) => `${overlay.id}:${overlay.priority}`).join("|");
+
+	useEffect(() => {
+		overlaysRef.current = overlays;
+	}, [overlays]);
 
 	useEffect(() => {
 		const disposers = overlaysRef.current.map((overlay) =>
@@ -34,5 +38,5 @@ export function useMenuOverlayHistory(overlays: MenuOverlayConfig[]) {
 		return () => {
 			for (const dispose of disposers) dispose();
 		};
-	}, [overlays.map((overlay) => `${overlay.id}:${overlay.priority}`).join("|")]);
+	}, [overlaySignature]);
 }

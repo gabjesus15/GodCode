@@ -50,12 +50,6 @@ export function StatementMetrics() {
 	useEffect(() => {
 		if (!started) return;
 
-		const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-		if (prefersReduced) {
-			setProgress(1);
-			return;
-		}
-
 		const startTime = performance.now();
 		let raf = 0;
 

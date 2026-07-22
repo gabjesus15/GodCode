@@ -40,7 +40,6 @@ export default async function Image({ params }: { params: Promise<{ subdomain: s
 
 				<div className="z-10 flex flex-col items-center justify-center rounded-[30px] border border-[#334155] bg-white/5 px-[60px] py-10">
 					{logoUrl ? (
-						// eslint-disable-next-line @next/next/no-img-element
 						<img
 							src={logoUrl}
 							alt="Logo"

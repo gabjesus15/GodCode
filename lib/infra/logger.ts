@@ -66,12 +66,12 @@ export const logger: Logger = {
 
     if (process.env.NODE_ENV === "development") {
       const color = level === "error" ? "\x1b[31m" : level === "warn" ? "\x1b[33m" : "\x1b[32m";
-      console.log(`${color}[${level.toUpperCase()}]\x1b[0m ${message}`, context || "");
+      console.warn(`${color}[${level.toUpperCase()}]\x1b[0m ${message}`, context || "");
     } else {
       const line = JSON.stringify(payload);
       if (level === "error") console.error(line);
       else if (level === "warn") console.warn(line);
-      else console.log(line);
+      else console.warn(line);
     }
   },
 };

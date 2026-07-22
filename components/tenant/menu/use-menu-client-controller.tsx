@@ -8,7 +8,7 @@ import { getTenantScopedPath, getTenantPrefixFromPathname } from "../utils/tenan
 import { normalizeDeliverySettings } from "@/lib/delivery/delivery-settings";
 import { mergeMenuPathQuery } from "@/utils/tenant-url";
 import { readEmbeddedPreviewFromLocation } from "@/lib/store-theme/preview-theme-messaging";
-import { FIRE_ICON, branchHasContactChannel, getAvailableContactChannels, getBranchesWithContactChannel, openBranchContactUrl, resolveContactFlowStep, resolveMenuCartUiMode, shouldShowBottomNav, shouldShowContactTab, type BranchContactChannel } from "@/lib/tenant/menu/menu-helpers";
+import { FIRE_ICON, getAvailableContactChannels, getBranchesWithContactChannel, openBranchContactUrl, resolveContactFlowStep, resolveMenuCartUiMode, shouldShowBottomNav, shouldShowContactTab, type BranchContactChannel } from "@/lib/tenant/menu/menu-helpers";
 import { buildModalBranchItems } from "./menu-branch-items";
 import { MenuCartLayer } from "./menu-cart-layer";
 import { MenuNavbar } from "./menu-navbar";
@@ -127,7 +127,7 @@ export function useMenuClientController(props: MenuClientProps) {
 
 	useEffect(() => {
 		if (isEmbeddedPreview) return;
-		if (!selectedBranchId) setIsLocationModalOpen(true);
+		if (!selectedBranchId) queueMicrotask(() => setIsLocationModalOpen(true));
 	}, [isEmbeddedPreview, selectedBranchId]);
 
 	const selectedBranch = useMemo(
@@ -291,11 +291,11 @@ export function useMenuClientController(props: MenuClientProps) {
 	}, [closeCart, isCartOpen, pathname]);
 
 	useEffect(() => {
-		setActiveBottomTab((tab) => {
+		queueMicrotask(() => setActiveBottomTab((tab) => {
 			if (isCartOpen) return "cart";
 			if (tab === "cart") return "home";
 			return tab;
-		});
+		}));
 	}, [isCartOpen]);
 
 	const closeContactUi = useCallback(() => {

@@ -45,7 +45,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
   const [activityFilter, setActivityFilter] = useState<"all" | "pago" | "ticket" | "extra">("all");
   const [billingOptions, setBillingOptions] = useState<import("@/components/customer-portal/shared/customer-account-types").BillingOptionsResponse | null>(initialBillingOptions ?? null);
   const [billingLoading, setBillingLoading] = useState(false);
-  const [billingLoadError, setBillingLoadError] = useState<string | null>(null);
+  const [_billingLoadError, setBillingLoadError] = useState<string | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 

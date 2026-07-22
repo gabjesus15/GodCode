@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { type LandingMediaAssetRow } from "@/lib/landing/landing-media";
 import {
-	defaultLandingV3AssetsRows,
 	LANDING_V3_CONFIG_TAG,
 	mergeLandingV3AssetRows,
 } from "@/lib/landing/v3-config";

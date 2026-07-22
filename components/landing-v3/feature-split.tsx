@@ -67,7 +67,9 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 	const pointerId = useRef<number | null>(null);
 	const resumeTimer = useRef<number | null>(null);
 
-	const [reducedMotion, setReducedMotion] = useState(false);
+	const [reducedMotion] = useState(
+		() => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+	);
 
 	const slide = slides[index];
 
@@ -150,10 +152,6 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 		if (pointerId.current !== event.pointerId) return;
 		finishDrag(0);
 	};
-
-	useEffect(() => {
-		setReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-	}, []);
 
 	useEffect(() => {
 		const node = sectionRef.current;

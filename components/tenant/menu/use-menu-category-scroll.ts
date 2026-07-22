@@ -44,7 +44,10 @@ export function useMenuCategoryScroll({
 	const releaseSpyRef = useRef<(() => void) | null>(null);
 	const syncNavbarOnNextActiveRef = useRef(false);
 	const activeCategoryRef = useRef(activeCategory);
-	activeCategoryRef.current = activeCategory;
+
+	useEffect(() => {
+		activeCategoryRef.current = activeCategory;
+	}, [activeCategory]);
 
 	const blockScrollSpy = useCallback((behavior: ScrollBehavior = "auto") => {
 		releaseSpyRef.current?.();

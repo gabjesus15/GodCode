@@ -54,7 +54,10 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 	const [scrollAnchor, setScrollAnchor] = useState(() => getMenuScrollAnchorPx());
 	const activeSectionRef = useRef<string | null>(null);
 	const onActiveSectionChangeRef = useRef(onActiveSectionChange);
-	onActiveSectionChangeRef.current = onActiveSectionChange;
+
+	useEffect(() => {
+		onActiveSectionChangeRef.current = onActiveSectionChange;
+	}, [onActiveSectionChange]);
 
 	const sections = useMemo(() => {
 		const items: VirtualSection[] = [];
@@ -104,10 +107,7 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 		overscan: 5,
 		scrollMargin: scrollAnchor,
 		gap: 40,
-	});
-
-	useEffect(() => {
-		virtualizer.shouldAdjustScrollPositionOnItemSizeChange = (item, delta, instance) => {
+		shouldAdjustScrollPositionOnItemSizeChange: (item, delta, instance) => {
 			if (instance.isScrolling && instance.scrollDirection === "backward") {
 				return false;
 			}
@@ -116,8 +116,8 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 			}
 			const scrollOffset = instance.scrollOffset ?? 0;
 			return item.start < scrollOffset;
-		};
-	}, [virtualizer]);
+		},
+	});
 
 	useEffect(() => {
 		const syncAnchor = () => setScrollAnchor(getMenuScrollAnchorPx());

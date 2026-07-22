@@ -83,8 +83,6 @@ export function CartModal({
     const {
       cart,
       isCartOpen,
-      openCart,
-      closeCart,
       addToCart,
       decreaseQuantity,
       removeFromCart,
@@ -601,10 +599,6 @@ export function CartModal({
       [cart, branchPriceRows]
     );
 
-    useEffect(() => {
-      setViewState((prev) => (prev.error ? { ...prev, error: null } : prev));
-    }, [cart, filteredCart.length, selectedBranch?.id]);
-
     // Detectar productos eliminados al cambiar de sucursal
     // const [removedProducts, setRemovedProducts] = useState<string[]>([]);
     // useEffect(() => {
@@ -631,6 +625,12 @@ export function CartModal({
     receiptUploadFailed: false,
     lastOrderSuccess: null,
   });
+
+    useEffect(() => {
+      queueMicrotask(() => {
+        setViewState((prev) => (prev.error ? { ...prev, error: null } : prev));
+      });
+    }, [cart, filteredCart.length, selectedBranch?.id]);
 
   const {
     checkoutSession,
@@ -703,7 +703,7 @@ export function CartModal({
     if (!checkoutPaymentMethods.includes(paymentMethodKey)) {
       queueMicrotask(() => setPaymentMethodKey(null));
     }
-  }, [paymentMethodKey, checkoutPaymentMethods]);
+  }, [paymentMethodKey, checkoutPaymentMethods, setPaymentMethodKey]);
 
   const clientSchema = useMemo(() => {
     const requiresReceipt = paymentMethodRequiresReceipt(paymentMethodKey);
