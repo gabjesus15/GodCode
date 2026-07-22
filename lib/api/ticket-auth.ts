@@ -29,7 +29,7 @@ async function resolveTenantSlug(): Promise<string | null> {
 }
 
 async function resolveTenantSession(
-	_client: SupabaseClient,
+	client: SupabaseClient,
 ): Promise<TicketAuthContext | { error: string }> {
 	const supabase = await createSupabaseServerClient("tenant");
 	const {

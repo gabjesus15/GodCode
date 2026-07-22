@@ -1,5 +1,7 @@
 export type LogLevel = "info" | "warn" | "error" | "debug";
 
+/* eslint-disable no-console */
+
 export interface LogContext {
   companyId?: string;
   userId?: string;
@@ -66,12 +68,14 @@ export const logger: Logger = {
 
     if (process.env.NODE_ENV === "development") {
       const color = level === "error" ? "\x1b[31m" : level === "warn" ? "\x1b[33m" : "\x1b[32m";
-      console.warn(`${color}[${level.toUpperCase()}]\x1b[0m ${message}`, context || "");
+      if (level === "error") console.error(`${color}[${level.toUpperCase()}]\x1b[0m ${message}`, context || "");
+      else if (level === "warn") console.warn(`${color}[${level.toUpperCase()}]\x1b[0m ${message}`, context || "");
+      else console.log(`${color}[${level.toUpperCase()}]\x1b[0m ${message}`, context || "");
     } else {
       const line = JSON.stringify(payload);
       if (level === "error") console.error(line);
       else if (level === "warn") console.warn(line);
-      else console.warn(line);
+      else console.log(line);
     }
   },
 };
