@@ -3,8 +3,6 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 
-import { getCloudinaryOptimizedUrl } from "../../utils/cloudinary";
-
 export function CartEnhanceCatalogGlyph({
   imageUrl,
   fallbackSrc,
@@ -15,13 +13,6 @@ export function CartEnhanceCatalogGlyph({
   const resolved = useMemo(() => {
     const raw = typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null;
     if (!raw) return null;
-    const o = getCloudinaryOptimizedUrl(raw, {
-      width: 88,
-      height: 88,
-      crop: "fill",
-      gravity: "auto",
-    });
-    if (typeof o === "string" && o.trim()) return o.trim();
     return raw;
   }, [imageUrl]);
 

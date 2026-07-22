@@ -6,7 +6,6 @@ import { Minus, Plus, X } from "lucide-react";
 
 import { useCartStore } from "../cart/cart-store";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
-import { isCloudinaryUrl } from "../utils/cloudinary";
 import type { MenuProduct } from "./menu-types";
 
 export function ProductInlinePanel({
@@ -35,7 +34,6 @@ export function ProductInlinePanel({
 		0,
 	);
 	const showUSD = country === "VE" || country === "Venezuela";
-	const isCloudinary = isCloudinaryUrl(product.image_url);
 
 	const formatPrice = (priceVal: number) => {
 		const primaryStr = showUSD
@@ -76,7 +74,7 @@ export function ProductInlinePanel({
 							fill
 							className="product-inline-panel__img"
 							sizes="160px"
-							unoptimized={!isCloudinary}
+							unoptimized
 						/>
 					</div>
 				)}

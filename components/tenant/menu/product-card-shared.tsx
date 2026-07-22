@@ -5,7 +5,6 @@ import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
 
 import { useCartStore } from "../cart/cart-store";
-import { getCloudinaryOptimizedUrl, isCloudinaryUrl } from "../utils/cloudinary";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
 import {
 	TenantBadge,
@@ -14,7 +13,6 @@ import {
 	TenantStepper,
 	type TenantButtonVariant,
 } from "./ui/tenant-ui";
-import { useMenuPerfProfile } from "@/lib/tenant/menu/menu-perf-context";
 
 export interface ProductCardProduct {
   id: string;
@@ -38,36 +36,6 @@ export const PRODUCT_IMAGE_SIZES = {
   horizontal: "(max-width: 640px) 42vw, (max-width: 1024px) 22vw, 200px",
   tall: "(max-width: 480px) 48vw, (max-width: 768px) 44vw, 260px",
 } as const;
-
-/** Proporción alto/ancho para recorte Cloudinary alineado al contenedor de cada layout */
-export type LayoutImageAspect = "square" | "portrait" | "tall" | "landscape" | "wide";
-
-const LAYOUT_ASPECT_HEIGHT_RATIO: Record<LayoutImageAspect, number> = {
-  square: 1,
-  portrait: 1.2,
-  tall: 1.35,
-  landscape: 0.85,
-  wide: 0.75,
-};
-
-export function createLayoutCloudinaryLoader(aspect: LayoutImageAspect = "square") {
-  const heightRatio = LAYOUT_ASPECT_HEIGHT_RATIO[aspect];
-  return ({ src, width }: { src: string; width: number }) =>
-    getCloudinaryOptimizedUrl(src, {
-      width,
-      height: Math.max(1, Math.round(width * heightRatio)),
-      crop: "fill",
-      gravity: "auto",
-    }) || src;
-}
-
-function capCloudinaryLoader(
-	loader: ({ src, width }: { src: string; width: number }) => string,
-	maxWidth: number,
-) {
-	return ({ src, width }: { src: string; width: number }) =>
-		loader({ src, width: Math.min(width, maxWidth) });
-}
 
 export function truncateText(text: string | null | undefined, maxLength: number): string {
   const value = String(text ?? "").trim();
@@ -115,7 +83,6 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
   const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
   const quantity = useProductCartQuantity(product.id);
   const hydrated = useHydrated();
-  const { maxCloudinaryWidth } = useMenuPerfProfile();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const getPrice = useCallback(
@@ -123,18 +90,9 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
     [],
   );
 
-  const isCloudinary = isCloudinaryUrl(product.image_url);
   const imageSrc = imageError
     ? PRODUCT_CARD_FALLBACK_IMAGE
-    : isCloudinary
-      ? product.image_url!
-      : product.image_url || PRODUCT_CARD_FALLBACK_IMAGE;
-
-  const cloudinaryLoader = useCallback(
-    ({ src, width }: { src: string; width: number }) =>
-      getCloudinaryOptimizedUrl(src, { width: Math.min(width, maxCloudinaryWidth), crop: "fill", gravity: "auto" }) || src,
-    [maxCloudinaryWidth],
-  );
+    : product.image_url || PRODUCT_CARD_FALLBACK_IMAGE;
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -173,8 +131,6 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
     imageError,
     setImageError,
     imageSrc,
-    isCloudinary,
-    cloudinaryLoader,
     handleAdd,
     handleDecrease,
     showUSD,
@@ -227,8 +183,6 @@ export function useProductPricing(
 type ProductCardImageProps = {
   src: string;
   alt: string;
-  isCloudinary: boolean;
-  cloudinaryLoader: ProductCardLogic["cloudinaryLoader"];
   priority?: boolean;
   sizes?: string;
   className?: string;
@@ -238,15 +192,11 @@ type ProductCardImageProps = {
   onError: () => void;
   objectFit?: "cover" | "contain";
   objectPosition?: string;
-  /** Recorte Cloudinary alineado al contenedor del layout (sustituye al loader genérico) */
-  layoutLoader?: ProductCardLogic["cloudinaryLoader"];
 };
 
 export const ProductCardImage = React.memo(function ProductCardImage({
   src,
   alt,
-  isCloudinary,
-  cloudinaryLoader,
   priority = false,
   sizes = PRODUCT_IMAGE_SIZES.grid,
   className = "",
@@ -256,14 +206,7 @@ export const ProductCardImage = React.memo(function ProductCardImage({
   onError,
   objectFit = "cover",
   objectPosition = "center",
-  layoutLoader,
 }: ProductCardImageProps) {
-  const { maxCloudinaryWidth } = useMenuPerfProfile();
-  const baseLoader = isCloudinary ? (layoutLoader ?? cloudinaryLoader) : undefined;
-  const resolvedLoader = baseLoader
-    ? capCloudinaryLoader(baseLoader, maxCloudinaryWidth)
-    : undefined;
-
   return (
     <div className={`product-card-media ${className}`.trim()}>
       {!loaded ? <div className="skeleton-loader product-card-media__skeleton" aria-hidden /> : null}
@@ -274,8 +217,7 @@ export const ProductCardImage = React.memo(function ProductCardImage({
         sizes={sizes}
         priority={priority}
         loading={priority ? "eager" : "lazy"}
-        loader={resolvedLoader}
-        unoptimized={!isCloudinary}
+        unoptimized
         onLoad={onLoaded}
         onError={onError}
         className={`product-card-media__img product-card-media__img--fill ${imageClassName} ${loaded ? "is-loaded" : "is-loading"}`.trim()}

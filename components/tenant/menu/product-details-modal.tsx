@@ -7,9 +7,8 @@ import Image from "next/image";
 import { motion, useAnimation, useMotionValue, useTransform } from "framer-motion";
 import type { PanInfo } from "framer-motion";
 import type { ProductCardProduct } from "./product-card-shared";
-import { useProductCardLogic } from "./product-card-shared";
+import { PRODUCT_CARD_FALLBACK_IMAGE, useProductCardLogic } from "./product-card-shared";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
-import { getCloudinaryOptimizedUrl } from "../utils/cloudinary";
 import "../../../app/[subdomain]/styles/ProductDetailsModal.css";
 
 interface ProductDetailsModalProps {
@@ -86,22 +85,8 @@ export function ProductDetailsModal({
   };
   if (!isOpen || !mounted || !product) return null;
 
-  const { quantity, hydrated, handleAdd, handleDecrease, imageSrc, isCloudinary } = logic;
+  const { quantity, hydrated, handleAdd, handleDecrease, imageSrc } = logic;
   const showStepper = hydrated && quantity > 0;
-
-  // Custom loader that requests a 2:3 aspect ratio image at high quality
-  // to prevent blurriness when object-fit: cover stretches it vertically on tall phones.
-  const heroLoader = ({ src, width }: { src: string; width: number }) => {
-    return (
-      getCloudinaryOptimizedUrl(src, {
-        width: Math.max(width, 800), // Request at least 800px width for sharpness
-        height: Math.max(Math.floor(width * 1.5), 1200), // Match typical mobile height
-        crop: "fill",
-        gravity: "auto",
-        quality: "auto:best" // Prioritize quality over size for the hero image
-      }) || src
-    );
-  };
 
   // Framer-motion MotionValues must be passed via style — cannot be CSS class
   const trackFillStyle = { width: fillWidth };
@@ -140,13 +125,12 @@ export function ProductDetailsModal({
         {/* Main Hero Image */}
         <div className="pdm-hero">
           <Image
-            src={imageSrc || "https://res.cloudinary.com/djp1w9f0a/image/upload/v1726071375/empty-product_sps3a6.webp"}
+            src={imageSrc || PRODUCT_CARD_FALLBACK_IMAGE}
             alt={product.name || "Producto"}
             fill
             className="pdm-hero-img"
             sizes="(max-width: 768px) 100vw, 500px"
-            unoptimized={!isCloudinary}
-            loader={isCloudinary ? heroLoader : undefined}
+            unoptimized
             priority
           />
         </div>

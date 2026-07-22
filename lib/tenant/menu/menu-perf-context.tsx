@@ -6,7 +6,6 @@ import { TENANT_UI_CONFIG } from "@/lib/tenant/config/tenant-ui-config";
 
 export type MenuPerfProfile = {
 	isLowEnd: boolean;
-	maxCloudinaryWidth: number;
 	priorityImageMax: number;
 	heroAutoplay: boolean;
 	menuRealtimeDeferMs: number;
@@ -14,7 +13,6 @@ export type MenuPerfProfile = {
 
 export const DEFAULT_MENU_PERF_PROFILE: MenuPerfProfile = {
 	isLowEnd: false,
-	maxCloudinaryWidth: 600,
 	priorityImageMax: TENANT_UI_CONFIG.priorityImageMax,
 	heroAutoplay: true,
 	menuRealtimeDeferMs: TENANT_UI_CONFIG.menuRealtimeDeferMs,
@@ -22,7 +20,6 @@ export const DEFAULT_MENU_PERF_PROFILE: MenuPerfProfile = {
 
 export const LOW_END_MENU_PERF_PROFILE: MenuPerfProfile = {
 	isLowEnd: true,
-	maxCloudinaryWidth: 360,
 	priorityImageMax: 3,
 	heroAutoplay: false,
 	menuRealtimeDeferMs: 8000,

@@ -8,7 +8,6 @@ import { CupSoda, Minus, Plus, Trash2 } from "lucide-react";
 import { type CartLineItem } from "../cart-modal-types";
 import { FALLBACK_IMAGE } from "../constants";
 import { formatCartMoney } from "../utils/format-cart-money";
-import { getCloudinaryOptimizedUrl } from "../../utils/cloudinary";
 import { isUpsellBeverageLineId } from "../cart-context";
 import { useCart } from "../use-cart";
 
@@ -39,15 +38,9 @@ export function CartItemRow({
   const hasNote = Boolean(item.line_note?.trim());
   const [noteOpen, setNoteOpen] = useState(false);
 
-  const optimizedSrc = getCloudinaryOptimizedUrl(item.image_url ?? null, {
-    width: 120,
-    height: 120,
-    crop: "fill",
-    gravity: "auto",
-  });
   const imageSrc =
-    typeof optimizedSrc === "string" && optimizedSrc.trim().length > 0
-      ? optimizedSrc
+    typeof item.image_url === "string" && item.image_url.trim().length > 0
+      ? item.image_url.trim()
       : FALLBACK_IMAGE;
   const upsellBevOnly = isUpsellBeverageLineId(item.id);
   const extrasText = (item.selected_extras ?? []).map((ex) => `${ex.qty}x ${ex.name}`).join(", ");

@@ -7,6 +7,26 @@ const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "tr
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 const isProduction = process.env.NODE_ENV === "production";
 
+const supabaseStoragePattern = (() => {
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (!rawUrl) return null;
+
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+
+    const basePath = url.pathname.replace(/\/$/, "");
+    return {
+      protocol: url.protocol.slice(0, -1) as "http" | "https",
+      hostname: url.hostname,
+      port: url.port,
+      pathname: `${basePath}/storage/v1/object/public/menu/**`,
+    };
+  } catch {
+    return null;
+  }
+})();
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
@@ -33,6 +53,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
+      ...(supabaseStoragePattern ? [supabaseStoragePattern] : []),
     ],
   },
   webpack: (config, { dev }) => {

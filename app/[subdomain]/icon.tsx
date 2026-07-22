@@ -46,8 +46,6 @@ export default async function Icon(props: { params: Promise<{ subdomain: string 
 			crop: "fill",
 			gravity: "auto",
 		});
-
-		// Verificamos que optimizedLogo sea un string antes de operar con él
 		if (typeof optimizedLogo === "string") {
 			// fetch en el servidor requiere una URL con protocolo (https:).
 			const finalLogoUrl = optimizedLogo.startsWith("//") ? `https:${optimizedLogo}` : optimizedLogo;

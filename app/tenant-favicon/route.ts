@@ -4,9 +4,9 @@ import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 
 import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
+import { getCloudinaryOptimizedUrl } from "@/components/tenant/utils/cloudinary";
 import { resolveTenantSlugFromCustomDomainHost } from "@/lib/tenant/custom-domain-resolve";
 import { getCachedCompany } from "@/utils/tenant-cache";
-import { getCloudinaryOptimizedUrl } from "@/components/tenant/utils/cloudinary";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

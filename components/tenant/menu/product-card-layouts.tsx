@@ -11,7 +11,6 @@ import {
   ProductPriceBlock,
   ProductQtyBadge,
   PRODUCT_IMAGE_SIZES,
-  createLayoutCloudinaryLoader,
   truncateText,
   useProductPricing,
   type ProductCardLogic,
@@ -60,9 +59,6 @@ export const CleanCard = React.memo(function CleanCard({ product, logic, currenc
         <ProductCardImage
           src={logic.imageSrc}
           alt={product.name ?? "Producto"}
-          isCloudinary={logic.isCloudinary}
-          cloudinaryLoader={logic.cloudinaryLoader}
-          layoutLoader={createLayoutCloudinaryLoader("tall")}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.tall}
           imageClassName="clean-img"
@@ -114,9 +110,6 @@ export const DetailedCard = React.memo(function DetailedCard({ product, logic, c
         <ProductCardImage
           src={logic.imageSrc}
           alt={product.name ?? "Producto"}
-          isCloudinary={logic.isCloudinary}
-          cloudinaryLoader={logic.cloudinaryLoader}
-          layoutLoader={createLayoutCloudinaryLoader("square")}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.grid}
           imageClassName="detailed-img"
@@ -162,9 +155,6 @@ export const HorizontalCard = React.memo(function HorizontalCard({ product, logi
         <ProductCardImage
           src={logic.imageSrc}
           alt={product.name ?? "Producto"}
-          isCloudinary={logic.isCloudinary}
-          cloudinaryLoader={logic.cloudinaryLoader}
-          layoutLoader={createLayoutCloudinaryLoader("landscape")}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.horizontal}
           imageClassName="horizontal-img"
@@ -204,9 +194,6 @@ export const SidebarCard = React.memo(function SidebarCard({ product, logic, cur
         <ProductCardImage
           src={logic.imageSrc}
           alt={product.name ?? "Producto"}
-          isCloudinary={logic.isCloudinary}
-          cloudinaryLoader={logic.cloudinaryLoader}
-          layoutLoader={createLayoutCloudinaryLoader("portrait")}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.tall}
           imageClassName="sidebar-img"
@@ -260,9 +247,6 @@ export const RappiCard = React.memo(function RappiCard({ product, logic, currenc
         <ProductCardImage
           src={logic.imageSrc}
           alt={product.name ?? "Producto"}
-          isCloudinary={logic.isCloudinary}
-          cloudinaryLoader={logic.cloudinaryLoader}
-          layoutLoader={createLayoutCloudinaryLoader("wide")}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.grid}
           imageClassName="rappi-img"
@@ -311,9 +295,6 @@ export const SneakerCard = React.memo(function SneakerCard({ product, logic, cur
           <ProductCardImage
             src={logic.imageSrc}
             alt={product.name ?? "Producto"}
-            isCloudinary={logic.isCloudinary}
-            cloudinaryLoader={logic.cloudinaryLoader}
-            layoutLoader={createLayoutCloudinaryLoader("tall")}
             priority={priority}
             sizes={PRODUCT_IMAGE_SIZES.tall}
             imageClassName="sneaker-img"
@@ -366,9 +347,6 @@ export const SkewCard = React.memo(function SkewCard({ product, logic, currency,
         <ProductCardImage
           src={logic.imageSrc}
           alt={product.name ?? "Producto"}
-          isCloudinary={logic.isCloudinary}
-          cloudinaryLoader={logic.cloudinaryLoader}
-          layoutLoader={createLayoutCloudinaryLoader("portrait")}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.tall}
           imageClassName="skew-img"
@@ -454,9 +432,6 @@ export const FoodCard = React.memo(function FoodCard({ product, logic, currency,
         <ProductCardImage
           src={logic.imageSrc}
           alt={product.name ?? "Producto"}
-          isCloudinary={logic.isCloudinary}
-          cloudinaryLoader={logic.cloudinaryLoader}
-          layoutLoader={createLayoutCloudinaryLoader("square")}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.grid}
           imageClassName="food-img"

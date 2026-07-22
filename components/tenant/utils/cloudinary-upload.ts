@@ -50,9 +50,7 @@ export async function uploadImage(file: File, folder = "tenant"): Promise<string
 	}
 
 	const validation = validateImageFile(file);
-	if (!validation.valid) {
-		throw new Error(validation.error);
-	}
+	if (!validation.valid) throw new Error(validation.error);
 
 	const formData = new FormData();
 	formData.append("file", file);
@@ -66,9 +64,7 @@ export async function uploadImage(file: File, folder = "tenant"): Promise<string
 			body: formData,
 		});
 	} catch {
-		throw new Error(
-			"No se pudo conectar con Cloudinary. Revisa conexion, firewall o bloqueadores de red.",
-		);
+		throw new Error("No se pudo conectar con Cloudinary. Revisa conexion, firewall o bloqueadores de red.");
 	}
 
 	let payload: unknown = null;
@@ -77,15 +73,9 @@ export async function uploadImage(file: File, folder = "tenant"): Promise<string
 	} catch {
 		payload = null;
 	}
-
-	if (!response.ok) {
-		throw new Error(getCloudinaryUploadErrorMessage(payload));
-	}
+	if (!response.ok) throw new Error(getCloudinaryUploadErrorMessage(payload));
 
 	const secureUrl = String((payload as { secure_url?: unknown })?.secure_url ?? "").trim();
-	if (!secureUrl) {
-		throw new Error("Cloudinary no devolvio secure_url.");
-	}
-
+	if (!secureUrl) throw new Error("Cloudinary no devolvio secure_url.");
 	return secureUrl;
 }

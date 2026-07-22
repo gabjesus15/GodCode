@@ -3,10 +3,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TENANT_HERO_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
-import { getCloudinaryOptimizedUrl, isCloudinaryUrl } from "../utils/cloudinary";
 
 /** Misma duración que la barra de progreso (CSS) */
 const HERO_CAROUSEL_AUTOPLAY_MS = 4000;
@@ -28,19 +26,7 @@ function HeroSlide({
 	shouldRenderImage: boolean;
 }) {
 	const rawUrl = banner.image_url?.trim() ?? "";
-	const isCloudinary = isCloudinaryUrl(rawUrl);
 	const fallbackUrl = rawUrl || TENANT_HERO_FALLBACK_IMAGE;
-
-	const cloudinaryLoader = ({ src, width }: { src: string; width: number }) => {
-		return (
-			getCloudinaryOptimizedUrl(src, {
-				width,
-				crop: "fill",
-				gravity: "auto",
-				quality: "auto",
-			}) || src
-		);
-	};
 
 	return (
 		<div
@@ -48,29 +34,15 @@ function HeroSlide({
 		>
 			<div className="hero-slide-media">
 				{shouldRenderImage ? (
-					isCloudinary ? (
-						<Image
-							src={isCloudinary ? rawUrl : fallbackUrl}
-							alt="Promoción"
-							fill
-							sizes="100vw"
-							className="hero-slide-image"
-							priority={isFirst}
-							loading={isFirst ? "eager" : "lazy"}
-							loader={isCloudinary ? cloudinaryLoader : undefined}
-							unoptimized={!isCloudinary}
-						/>
-					) : (
-						// eslint-disable-next-line @next/next/no-img-element -- rutas /public y dominios del tenant no están en images.remotePatterns
-						<img
-							src={fallbackUrl}
-							alt="Promoción"
-							className="hero-slide-image"
-							loading={isFirst ? "eager" : "lazy"}
-							fetchPriority={isFirst ? "high" : "auto"}
-							decoding="async"
-						/>
-					)
+					// eslint-disable-next-line @next/next/no-img-element -- banners can use tenant-configured URLs
+					<img
+						src={fallbackUrl}
+						alt="Promoción"
+						className="hero-slide-image"
+						loading={isFirst ? "eager" : "lazy"}
+						fetchPriority={isFirst ? "high" : "auto"}
+						decoding="async"
+					/>
 				) : null}
 			</div>
 		</div>

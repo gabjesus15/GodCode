@@ -56,9 +56,7 @@ export type ResolvedThemeColors = {
 };
 
 function resolveOptimizedBackgroundImageUrl(rawBackgroundImageUrl: string): string {
-	if (rawBackgroundImageUrl.startsWith("/")) {
-		return rawBackgroundImageUrl;
-	}
+	if (rawBackgroundImageUrl.startsWith("/")) return rawBackgroundImageUrl;
 	if (isCloudinaryUrl(rawBackgroundImageUrl)) {
 		return getCloudinaryOptimizedUrl(rawBackgroundImageUrl, {
 			width: 2400,

@@ -121,22 +121,17 @@ function replaceCloudinaryTransform(url: string, transform: string | null): stri
 
   let versionSegment = "";
   let current = parts[0] || "";
-
   if (/^v\d+$/.test(current)) {
     versionSegment = current;
     parts.shift();
     current = parts[0] || "";
   }
-
-  if (current.includes("_") || current.includes(",")) {
-    parts.shift();
-  }
+  if (current.includes("_") || current.includes(",")) parts.shift();
 
   const rebuilt = [prefix.replace(/\/$/, "")];
   if (transform?.trim()) rebuilt.push(transform.trim());
   if (versionSegment) rebuilt.push(versionSegment);
   rebuilt.push(...parts);
-
   const out = rebuilt.join("/");
   return query ? `${out}?${query}` : out;
 }
@@ -376,20 +371,11 @@ export function LandingAdminClient() {
 
   const applyMediaPreset = () => {
     if (mediaPreset === "hero") {
-      setMediaWidth("1920");
-      setMediaHeight("1080");
-      setMediaCrop("fill");
-      setMediaGravity("auto");
+      setMediaWidth("1920"); setMediaHeight("1080"); setMediaCrop("fill"); setMediaGravity("auto");
     } else if (mediaPreset === "feature") {
-      setMediaWidth("1400");
-      setMediaHeight("900");
-      setMediaCrop("fill");
-      setMediaGravity("auto");
+      setMediaWidth("1400"); setMediaHeight("900"); setMediaCrop("fill"); setMediaGravity("auto");
     } else if (mediaPreset === "mobile") {
-      setMediaWidth("900");
-      setMediaHeight("1800");
-      setMediaCrop("fill");
-      setMediaGravity("auto");
+      setMediaWidth("900"); setMediaHeight("1800"); setMediaCrop("fill"); setMediaGravity("auto");
     }
   };
 
@@ -399,7 +385,6 @@ export function LandingAdminClient() {
       setMessage({ type: "error", text: "Esta herramienta de ajuste funciona con URLs de Cloudinary." });
       return;
     }
-
     const parts = [
       mediaFormat ? `f_${mediaFormat}` : null,
       mediaQuality ? `q_${mediaQuality}` : null,
@@ -408,17 +393,13 @@ export function LandingAdminClient() {
       mediaCrop ? `c_${mediaCrop}` : null,
       mediaGravity ? `g_${mediaGravity}` : null,
     ].filter(Boolean) as string[];
-
-    const updatedSrc = replaceCloudinaryTransform(selectedMediaRow.src, parts.join(","));
-    updateMediaRow(selectedMediaRow.key, { src: updatedSrc });
+    updateMediaRow(selectedMediaRow.key, { src: replaceCloudinaryTransform(selectedMediaRow.src, parts.join(",")) });
     setMessage({ type: "success", text: "Ajustes aplicados en URL. Revisa visualmente y guarda assets." });
   };
 
   const resetCloudinaryAdjustments = () => {
-    if (!selectedMediaRow) return;
-    if (!isCloudinaryUrl(selectedMediaRow.src)) return;
-    const updatedSrc = replaceCloudinaryTransform(selectedMediaRow.src, null);
-    updateMediaRow(selectedMediaRow.key, { src: updatedSrc });
+    if (!selectedMediaRow || !isCloudinaryUrl(selectedMediaRow.src)) return;
+    updateMediaRow(selectedMediaRow.key, { src: replaceCloudinaryTransform(selectedMediaRow.src, null) });
     setMessage({ type: "success", text: "Transformaciones removidas para este asset." });
   };
 
@@ -945,6 +926,7 @@ export function LandingAdminClient() {
                         </Button>
                       </div>
                     </div>
+
                     </>
                     ) : null}
                   </div>

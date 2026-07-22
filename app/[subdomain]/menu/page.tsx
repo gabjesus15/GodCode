@@ -10,6 +10,7 @@ import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/t
 import { getCachedMenuStaticData, getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
 import { getCachedCompany } from "@/utils/tenant-cache";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
+import { resolveMenuImageUrl } from "@/lib/tenant/images/resolve-menu-image-url";
 import {
 	extractMenuSettingsFromIntegration,
 	resolveOnlineOrderingEnabled,
@@ -339,7 +340,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
           id: product.id,
           name: product.name ?? null,
           description: product.description ?? null,
-          image_url: product.image_url ?? null,
+          image_url: resolveMenuImageUrl(product.image_url),
           category_id: statusData.category_id ?? product.category_id ?? null,
           price,
           has_discount: Boolean(priceData?.has_discount),
@@ -490,4 +491,3 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
       </>
     );
 }
-
