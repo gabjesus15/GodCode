@@ -139,7 +139,6 @@ export async function validateStoreThemeAssetFile(
       const ratio = width / height;
       if (ratio < 0.7 || ratio > 1.4) return { ok: true, hint: "Recomendacion: usa un logo casi cuadrado para mejor encuadre en navbar." };
     } else {
-      if (width < 1200 || height < 675) return { ok: false, error: "El fondo debe tener al menos 1200x675 px para evitar pixelado." };
       if (width / height < 1.5) return { ok: true, hint: "Recomendacion: usa imagen panoramica (16:9 aprox) para mejor resultado." };
     }
     return { ok: true };
