@@ -4,6 +4,38 @@ import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+function defaultPaymentPolicy(method: string) {
+  const normalized = method.toLowerCase();
+  const rail = ["efectivo", "cash", "tienda", "cash_usd", "cash_ves"].includes(normalized)
+    ? "cash"
+    : ["tarjeta", "card", "stripe", "mercadopago"].includes(normalized)
+      ? "card"
+      : "online";
+  const requiresReceipt = ["pago_movil", "zelle", "paypal", "transferencia_bancaria"].includes(normalized);
+  return {
+    method_name: method,
+    display_name: method.replaceAll("_", " "),
+    is_active: true,
+    requires_receipt: requiresReceipt,
+    rail,
+    settlement_trigger: rail === "cash"
+      ? "cash_confirmation"
+      : ["tarjeta", "card"].includes(normalized)
+        ? "pos_confirmation"
+        : ["stripe", "mercadopago"].includes(normalized)
+          ? "gateway_webhook"
+          : requiresReceipt
+            ? "evidence_uploaded"
+            : "manual_verification",
+    settlement_currency: normalized === "pago_movil"
+      ? "VES"
+      : normalized === "zelle"
+        ? "USD"
+        : null,
+    allow_mixed_payment: true,
+  };
+}
+
 export async function PUT(req: NextRequest) {
   const ctx = await getCustomerAccountContext();
   
@@ -116,6 +148,37 @@ export async function PUT(req: NextRequest) {
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  const activePaymentMethods = Array.isArray(payment_methods)
+    ? payment_methods.map((method) => String(method).trim()).filter(Boolean)
+    : [];
+  if (activePaymentMethods.length > 0) {
+    const { data: existingDefinitions } = await supabaseAdmin
+      .from("payment_methods")
+      .select("method_name")
+      .eq("company_id", ctx.companyId)
+      .in("method_name", activePaymentMethods);
+    const existingNames = new Set(
+      (existingDefinitions ?? []).map((row) => row.method_name.toLowerCase()),
+    );
+    const missingDefinitions = activePaymentMethods
+      .filter((method) => !existingNames.has(method.toLowerCase()))
+      .map((method) => ({
+        company_id: ctx.companyId,
+        ...defaultPaymentPolicy(method),
+      }));
+    if (missingDefinitions.length > 0) {
+      const { error: policyError } = await supabaseAdmin
+        .from("payment_methods")
+        .insert(missingDefinitions);
+      if (policyError) {
+        return NextResponse.json(
+          { error: `Sucursal guardada, pero falló la política de pago: ${policyError.message}` },
+          { status: 500 },
+        );
+      }
+    }
   }
 
   // Purge menu cache for this tenant

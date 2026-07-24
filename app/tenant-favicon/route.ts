@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCloudinaryOptimizedUrl } from "@/components/tenant/utils/cloudinary";
+import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 import { resolveTenantSlugFromCustomDomainHost } from "@/lib/tenant/custom-domain-resolve";
 import { getCachedCompany } from "@/utils/tenant-cache";
 
@@ -84,7 +85,10 @@ export async function GET(req: NextRequest) {
   const displayName = typeof theme?.displayName === "string" ? theme.displayName.trim() : "";
   const name = displayName || company?.name || "GodCode";
   const primaryColor = (typeof theme?.primaryColor === "string" && theme.primaryColor.trim()) || "#111827";
-  const logoUrl = parseThemeLogoUrl(company?.theme_config);
+  const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
+  const logoUrl = company?.id
+    ? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id))
+    : storedLogoUrl;
   const status = company?.subscription_status?.toLowerCase();
 
   if (logoUrl && status !== "suspended" && status !== "cancelled") {

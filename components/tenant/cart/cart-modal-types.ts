@@ -95,6 +95,8 @@ export type CartModalViewState = {
     order_number: number | null;
     handoff_code: string | null;
     fulfillment: CartFulfillment;
+    paymentStatus?: string | null;
+    evidenceStatus?: string | null;
   } | null;
 };
 

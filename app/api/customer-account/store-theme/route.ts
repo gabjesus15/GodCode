@@ -5,6 +5,7 @@ import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-ra
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isSameStoreTheme, normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 
 function toThemeConfig(input: unknown): StoreThemeConfig {
   return normalizeStoreThemeConfig(input);
@@ -44,6 +45,12 @@ export async function GET() {
 
   const published = toThemeConfig(company?.theme_config ?? null);
   const draftTheme = draft?.theme_config ? toThemeConfig(draft.theme_config) : published;
+  const [publishedLogo, publishedBackground, draftLogo, draftBackground] = await Promise.all([
+    createStorefrontAssetSignedUrl(published.logoUrl, ctx.companyId),
+    createStorefrontAssetSignedUrl(published.backgroundImageUrl, ctx.companyId),
+    createStorefrontAssetSignedUrl(draftTheme.logoUrl, ctx.companyId),
+    createStorefrontAssetSignedUrl(draftTheme.backgroundImageUrl, ctx.companyId),
+  ]);
 
   return NextResponse.json({
     ok: true,
@@ -64,6 +71,16 @@ export async function GET() {
       createdAt: row.created_at,
       createdByEmail: row.created_by_email,
     })),
+    assetUrls: {
+      published: {
+        logoUrl: publishedLogo || null,
+        backgroundImageUrl: publishedBackground || null,
+      },
+      draft: {
+        logoUrl: draftLogo || null,
+        backgroundImageUrl: draftBackground || null,
+      },
+    },
   });
 }
 

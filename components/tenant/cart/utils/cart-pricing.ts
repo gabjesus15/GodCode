@@ -26,16 +26,13 @@ function isUuidLike(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-function hasValidCartPrice(value: number | null | undefined): boolean {
-  return typeof value === "number" && Number.isFinite(value);
-}
-
 /**
  * Une el carrito con precios y metadatos de producto por sucursal.
  * Filtra `is_active === false` al final.
  */
 export function mergeCartWithBranchPrices<
   T extends {
+    lineId?: string;
     id: string;
     name?: string | null;
     description?: string | null;
@@ -65,11 +62,20 @@ export function mergeCartWithBranchPrices<
       return acc;
     }
     const isSyntheticLine = !isUuidLike(String(cartItem.id));
+    // A partial branch-price response must not make an already priced cart
+    // line disappear. The atomic order RPC still revalidates catalog price and
+    // availability before persisting, so preserving it here is UX-safe.
+    const hasUsableCartPrice =
+      !cartItem.lineId
+      &&
+      Number.isFinite(Number(cartItem.price))
+      && Number(cartItem.price) >= 0
+      && cartItem.is_active !== false;
     if (
       !hasAnyRows ||
       !options.omitLinesWithoutPriceWhenBranchHasData ||
       isSyntheticLine ||
-      (cartItem.is_active === true && hasValidCartPrice(cartItem.price))
+      hasUsableCartPrice
     ) {
       acc.push({ ...cartItem });
     }

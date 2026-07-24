@@ -1,5 +1,6 @@
 import { getCachedCompany } from "../../utils/tenant-cache";
 import { getCloudinaryOptimizedUrl } from "../../components/tenant/utils/cloudinary";
+import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 
 function getInitials(name: string) {
 	const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -37,7 +38,10 @@ export default async function Icon(props: { params: Promise<{ subdomain: string 
 	const isUnavailable = status === "suspended" || status === "cancelled";
 
 	// Búsqueda del logo en la configuración del tema
-	const logoUrl = (theme_config?.logoUrl || theme_config?.imageUrl) as string | undefined;
+	const storedLogoUrl = (theme_config?.logoUrl || theme_config?.imageUrl) as string | undefined;
+	const logoUrl = company?.id
+		? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id))
+		: storedLogoUrl;
 
 	if (logoUrl && typeof logoUrl === "string" && logoUrl.trim() && !isUnavailable) {
 		const optimizedLogo = getCloudinaryOptimizedUrl(logoUrl.trim(), {

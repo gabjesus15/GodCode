@@ -245,6 +245,7 @@ export type Database = {
           instagram: string | null
           instagram_url: string | null
           is_active: boolean | null
+          manual_order_settings: Json | null
           map_url: string | null
           mercadopago: string | null
           name: string
@@ -283,6 +284,7 @@ export type Database = {
           instagram?: string | null
           instagram_url?: string | null
           is_active?: boolean | null
+          manual_order_settings?: Json | null
           map_url?: string | null
           mercadopago?: string | null
           name: string
@@ -321,6 +323,7 @@ export type Database = {
           instagram?: string | null
           instagram_url?: string | null
           is_active?: boolean | null
+          manual_order_settings?: Json | null
           map_url?: string | null
           mercadopago?: string | null
           name?: string
@@ -425,9 +428,11 @@ export type Database = {
       cash_movements: {
         Row: {
           amount: number | null
+          amount_minor: number | null
           company_id: string | null
           created_at: string | null
           created_by: string | null
+          currency: string | null
           description: string | null
           id: string
           order_id: number | null
@@ -437,9 +442,11 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
+          amount_minor?: number | null
           company_id?: string | null
           created_at?: string | null
           created_by?: string | null
+          currency?: string | null
           description?: string | null
           id?: string
           order_id?: number | null
@@ -449,9 +456,11 @@ export type Database = {
         }
         Update: {
           amount?: number | null
+          amount_minor?: number | null
           company_id?: string | null
           created_at?: string | null
           created_by?: string | null
+          currency?: string | null
           description?: string | null
           id?: string
           order_id?: number | null
@@ -1559,6 +1568,7 @@ export type Database = {
           client_id: string | null
           client_name: string | null
           client_phone: string | null
+          client_request_id: string | null
           client_rut: string | null
           closed_at: string | null
           company_id: string | null
@@ -1567,24 +1577,35 @@ export type Database = {
           currency: string | null
           delivery_address: Json | null
           delivery_fee: number | null
+          delivery_fee_minor: number | null
           discount_total: number | null
+          discount_total_minor: number | null
           handoff_code: string | null
           id: number
           items: Json | null
           note: string | null
+          manual_order_mode: string | null
           order_number: number | null
           order_type: string | null
+          operator_reference: string | null
           paid_status: string | null
+          payment_balance_minor: number | null
+          payment_evidence_status: string | null
+          payment_lines: Json | null
           payment_method_specific: string | null
           payment_ref: string | null
+          payment_status: string | null
+          payment_timing: string | null
           payment_type: string | null
           scheduled_for: string | null
           status: string | null
           subtotal: number | null
+          subtotal_minor: number | null
           table_number: string | null
           tax_total: number | null
           tip_amount: number | null
           total: number | null
+          total_minor: number | null
           updated_at: string | null
         }
         Insert: {
@@ -1593,6 +1614,7 @@ export type Database = {
           client_id?: string | null
           client_name?: string | null
           client_phone?: string | null
+          client_request_id?: string | null
           client_rut?: string | null
           closed_at?: string | null
           company_id?: string | null
@@ -1601,24 +1623,35 @@ export type Database = {
           currency?: string | null
           delivery_address?: Json | null
           delivery_fee?: number | null
+          delivery_fee_minor?: number | null
           discount_total?: number | null
+          discount_total_minor?: number | null
           handoff_code?: string | null
           id?: number
           items?: Json | null
           note?: string | null
+          manual_order_mode?: string | null
           order_number?: number | null
           order_type?: string | null
+          operator_reference?: string | null
           paid_status?: string | null
+          payment_balance_minor?: number | null
+          payment_evidence_status?: string | null
+          payment_lines?: Json | null
           payment_method_specific?: string | null
           payment_ref?: string | null
+          payment_status?: string | null
+          payment_timing?: string | null
           payment_type?: string | null
           scheduled_for?: string | null
           status?: string | null
           subtotal?: number | null
+          subtotal_minor?: number | null
           table_number?: string | null
           tax_total?: number | null
           tip_amount?: number | null
           total?: number | null
+          total_minor?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -1627,6 +1660,7 @@ export type Database = {
           client_id?: string | null
           client_name?: string | null
           client_phone?: string | null
+          client_request_id?: string | null
           client_rut?: string | null
           closed_at?: string | null
           company_id?: string | null
@@ -1635,24 +1669,35 @@ export type Database = {
           currency?: string | null
           delivery_address?: Json | null
           delivery_fee?: number | null
+          delivery_fee_minor?: number | null
           discount_total?: number | null
+          discount_total_minor?: number | null
           handoff_code?: string | null
           id?: number
           items?: Json | null
           note?: string | null
+          manual_order_mode?: string | null
           order_number?: number | null
           order_type?: string | null
+          operator_reference?: string | null
           paid_status?: string | null
+          payment_balance_minor?: number | null
+          payment_evidence_status?: string | null
+          payment_lines?: Json | null
           payment_method_specific?: string | null
           payment_ref?: string | null
+          payment_status?: string | null
+          payment_timing?: string | null
           payment_type?: string | null
           scheduled_for?: string | null
           status?: string | null
           subtotal?: number | null
+          subtotal_minor?: number | null
           table_number?: string | null
           tax_total?: number | null
           tip_amount?: number | null
           total?: number | null
+          total_minor?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -1686,35 +1731,187 @@ export type Database = {
           },
         ]
       }
+      order_payment_evidence: {
+        Row: {
+          company_id: string
+          created_at: string
+          error: string | null
+          id: string
+          method_id: string
+          order_id: number
+          payment_line_id: string | null
+          status: string
+          storage_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          method_id: string
+          order_id: number
+          payment_line_id?: string | null
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          method_id?: string
+          order_id?: number
+          payment_line_id?: string | null
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_payment_evidence_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_payment_lines: {
+        Row: {
+          amount_minor: number
+          change_amount_minor: number | null
+          company_id: string
+          created_at: string
+          currency: string
+          evidence_policy: string
+          exchange_rate: string | null
+          id: string
+          method_id: string
+          order_id: number
+          rail: string
+          settlement_amount_minor: number | null
+          settlement_currency: string | null
+          tendered_amount_minor: number | null
+          tendered_currency: string | null
+        }
+        Insert: {
+          amount_minor: number
+          change_amount_minor?: number | null
+          company_id: string
+          created_at?: string
+          currency: string
+          evidence_policy?: string
+          exchange_rate?: string | null
+          id?: string
+          method_id: string
+          order_id: number
+          rail: string
+          settlement_amount_minor?: number | null
+          settlement_currency?: string | null
+          tendered_amount_minor?: number | null
+          tendered_currency?: string | null
+        }
+        Update: {
+          amount_minor?: number
+          change_amount_minor?: number | null
+          company_id?: string
+          created_at?: string
+          currency?: string
+          evidence_policy?: string
+          exchange_rate?: string | null
+          id?: string
+          method_id?: string
+          order_id?: number
+          rail?: string
+          settlement_amount_minor?: number | null
+          settlement_currency?: string | null
+          tendered_amount_minor?: number | null
+          tendered_currency?: string | null
+        }
+        Relationships: []
+      }
+      order_payment_refunds: {
+        Row: {
+          amount_minor: number
+          client_request_id: string
+          company_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          order_id: number
+          payment_line_id: string | null
+          reason: string
+        }
+        Insert: {
+          amount_minor: number
+          client_request_id: string
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          id?: string
+          order_id: number
+          payment_line_id?: string | null
+          reason: string
+        }
+        Update: {
+          amount_minor?: number
+          client_request_id?: string
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          order_id?: number
+          payment_line_id?: string | null
+          reason?: string
+        }
+        Relationships: []
+      }
       payment_methods: {
         Row: {
+          allow_mixed_payment: boolean
           company_id: string
           created_at: string
           display_name: string | null
           id: string
           is_active: boolean
           method_name: string
+          rail: string | null
           requires_receipt: boolean
+          settlement_currency: string | null
+          settlement_trigger: string | null
           updated_at: string
         }
         Insert: {
+          allow_mixed_payment?: boolean
           company_id: string
           created_at?: string
           display_name?: string | null
           id?: string
           is_active?: boolean
           method_name: string
+          rail?: string | null
           requires_receipt?: boolean
+          settlement_currency?: string | null
+          settlement_trigger?: string | null
           updated_at?: string
         }
         Update: {
+          allow_mixed_payment?: boolean
           company_id?: string
           created_at?: string
           display_name?: string | null
           id?: string
           is_active?: boolean
           method_name?: string
+          rail?: string | null
           requires_receipt?: boolean
+          settlement_currency?: string | null
+          settlement_trigger?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2612,6 +2809,35 @@ export type Database = {
           p_payment_type: string
           p_status: string
           p_total: number
+        }
+        Returns: Json
+      }
+      attach_public_order_evidence_v1: {
+        Args: {
+          p_client_request_id: string
+          p_evidence_id: string
+          p_error?: string | null
+          p_order_id: number
+          p_storage_path: string | null
+        }
+        Returns: Json
+      }
+      create_menu_order_atomic_v1: {
+        Args: {
+          p_branch_id: string
+          p_client_name: string
+          p_client_phone: string
+          p_client_request_id: string
+          p_client_rut: string
+          p_coupon_code?: string | null
+          p_currency: string
+          p_delivery_address?: Json | null
+          p_delivery_fee_minor?: number
+          p_items: Json
+          p_note?: string | null
+          p_order_type?: string
+          p_payment_method_specific: string
+          p_total_minor: number
         }
         Returns: Json
       }

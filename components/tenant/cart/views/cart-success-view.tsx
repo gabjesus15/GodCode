@@ -22,6 +22,8 @@ export function CartSuccessView({
     order_number: number | null;
     handoff_code: string | null;
     fulfillment: CartFulfillment;
+    paymentStatus?: string | null;
+    evidenceStatus?: string | null;
   } | null;
 }) {
   const t = useTranslations("tenant.cart.modal");
@@ -49,6 +51,16 @@ export function CartSuccessView({
       {receiptUploadFailed ? (
         <p className="cart-receipt-fallback cart-receipt-fallback-warning">
           {t("success.receiptUploadFailed")}
+        </p>
+      ) : null}
+      {!receiptUploadFailed && lastOrder?.paymentStatus === "paid" ? (
+        <p className="cart-receipt-fallback">
+          Pago confirmado y registrado.
+        </p>
+      ) : null}
+      {!receiptUploadFailed && lastOrder?.paymentStatus === "pending_verification" ? (
+        <p className="cart-receipt-fallback cart-receipt-fallback-warning">
+          Comprobante recibido. El pago está pendiente de verificación.
         </p>
       ) : null}
       {showDeliveryCodes ? (

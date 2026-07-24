@@ -10,6 +10,7 @@ describe("paymentMethodRequiresReceipt", () => {
     expect(paymentMethodRequiresReceipt("transferencia_bancaria")).toBe(true);
     expect(paymentMethodRequiresReceipt("pago_movil")).toBe(true);
     expect(paymentMethodRequiresReceipt("zelle")).toBe(true);
+    expect(paymentMethodRequiresReceipt("paypal")).toBe(true);
   });
 
   it("returns false for in-store and gateway methods", () => {
@@ -25,21 +26,21 @@ describe("buildMenuOrderPaymentPayload", () => {
     expect(buildMenuOrderPaymentPayload("efectivo")).toEqual({
       payment_type: "pendiente",
       payment_method_specific: "efectivo",
-      payment_ref: "Pago Presencial",
+      payment_ref: null,
     });
     expect(buildMenuOrderPaymentPayload("tarjeta")).toEqual({
       payment_type: "pendiente",
       payment_method_specific: "tarjeta",
-      payment_ref: "Pago Presencial",
+      payment_ref: null,
     });
   });
 
-  it("builds online payload when receipt URL is present", () => {
+  it("keeps the order pending when a receipt path is present", () => {
     const url = "https://cdn.example.com/receipts/abc.jpg";
     expect(buildMenuOrderPaymentPayload("transferencia_bancaria", url)).toEqual({
-      payment_type: "online",
+      payment_type: "pendiente",
       payment_method_specific: "transferencia_bancaria",
-      payment_ref: url,
+      payment_ref: null,
     });
   });
 
@@ -47,7 +48,7 @@ describe("buildMenuOrderPaymentPayload", () => {
     expect(buildMenuOrderPaymentPayload("stripe")).toEqual({
       payment_type: "pendiente",
       payment_method_specific: "stripe",
-      payment_ref: "Pago Presencial",
+      payment_ref: null,
     });
   });
 });

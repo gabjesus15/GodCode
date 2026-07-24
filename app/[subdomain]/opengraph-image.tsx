@@ -1,7 +1,8 @@
 import { ImageResponse } from 'next/og';
 import { getCachedCompany } from '../../utils/tenant-cache';
+import { createStorefrontAssetSignedUrl } from '@/lib/storage/storefront-branding';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 export const alt = 'Menú Digital';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
@@ -19,7 +20,10 @@ export default async function Image({ params }: { params: Promise<{ subdomain: s
 	const theme: OGThemeConfig = (company?.theme_config as unknown as OGThemeConfig) || {};
 	const primaryColor = theme.primaryColor ?? '#111827';
 	const name = theme.displayName ?? company?.name ?? 'GodCode';
-	const logoUrl = theme.logoUrl ?? theme.imageUrl;
+	const storedLogoUrl = theme.logoUrl ?? theme.imageUrl;
+	const logoUrl = company?.id
+		? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id))
+		: storedLogoUrl;
 
 	return new ImageResponse(
 		(

@@ -147,6 +147,9 @@ export function CartModal({
     const [checkoutLiveBranch, setCheckoutLiveBranch] = useState<CheckoutLiveBranch | null>(
       null,
     );
+    const [receiptRequiredMethods, setReceiptRequiredMethods] = useState<Set<string> | null>(
+      null,
+    );
 
     const selectedBranchForCheckout = useMemo<BranchInfo | null>(() => {
       if (!selectedBranch) return null;
@@ -196,6 +199,42 @@ export function CartModal({
         supabase.removeChannel(channel);
       };
     }, [supabase, selectedBranch?.id, isCartOpen]);
+
+    useEffect(() => {
+      if (!selectedBranch?.id || !isCartOpen) {
+        return;
+      }
+      let cancelled = false;
+      queueMicrotask(() => {
+        if (!cancelled) setReceiptRequiredMethods(null);
+      });
+      fetch(`/api/tenant/payment-method-policies?branchId=${encodeURIComponent(selectedBranch.id)}`)
+        .then(async (response) => {
+          if (!response.ok) throw new Error("payment_method_policies_unavailable");
+          return response.json() as Promise<{
+            methods?: Array<{ id?: string; requiresReceipt?: boolean }>;
+          }>;
+        })
+        .then((payload) => {
+          if (cancelled) return;
+          setReceiptRequiredMethods(new Set(
+            (payload.methods ?? [])
+              .filter((method) => method.requiresReceipt)
+              .map((method) => String(method.id ?? "").trim())
+              .filter(Boolean),
+          ));
+        })
+        .catch(() => {
+          if (!cancelled) setReceiptRequiredMethods(null);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [
+      isCartOpen,
+      selectedBranch?.id,
+      selectedBranchForCheckout?.payment_methods,
+    ]);
 
     const deliverySettings = useMemo(
       () =>
@@ -626,11 +665,17 @@ export function CartModal({
     lastOrderSuccess: null,
   });
 
-    useEffect(() => {
-      queueMicrotask(() => {
+  useEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
         setViewState((prev) => (prev.error ? { ...prev, error: null } : prev));
-      });
-    }, [cart, filteredCart.length, selectedBranch?.id]);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [cart, filteredCart.length, selectedBranch?.id]);
 
   const {
     checkoutSession,
@@ -658,6 +703,7 @@ export function CartModal({
   const fulfillmentChoiceRef = useRef<HTMLDivElement | null>(null);
   const cartPanelRef = useRef<HTMLDivElement | null>(null);
   const wasCartOpenRef = useRef(false);
+  const [orderRequestId, setOrderRequestId] = useState(() => crypto.randomUUID());
 
   useDismissKeyboardOnOutsideTap(cartPanelRef);
 
@@ -705,8 +751,15 @@ export function CartModal({
     }
   }, [paymentMethodKey, checkoutPaymentMethods, setPaymentMethodKey]);
 
+  const selectedPaymentRequiresReceipt = useMemo(
+    () => paymentMethodRequiresReceipt(
+      paymentMethodKey,
+      receiptRequiredMethods,
+    ),
+    [paymentMethodKey, receiptRequiredMethods],
+  );
+
   const clientSchema = useMemo(() => {
-    const requiresReceipt = paymentMethodRequiresReceipt(paymentMethodKey);
     return buildCartClientSchema(
       {
         nameShort: t("validation.nameShort"),
@@ -717,11 +770,11 @@ export function CartModal({
       },
       {
         fulfillment: fulfillment === "delivery" ? "delivery" : "pickup",
-        requiresReceipt,
+        requiresReceipt: selectedPaymentRequiresReceipt,
         validateRut: strategy.validateId,
       }
     );
-  }, [t, fulfillment, paymentMethodKey, strategy]);
+  }, [t, fulfillment, selectedPaymentRequiresReceipt, strategy]);
 
   const form = useForm({
     resolver: zodResolver(clientSchema),
@@ -1179,8 +1232,7 @@ export function CartModal({
     const nameValue = (values.name || "").trim();
     const namePattern = /^[\p{L} .'-]+$/u;
     const isNameValid = nameValue.length > 2 && namePattern.test(nameValue);
-    const requiresReceipt = paymentMethodRequiresReceipt(paymentMethodKey);
-    const isReceiptValid = requiresReceipt ? !!values.receiptFile : true;
+    const isReceiptValid = selectedPaymentRequiresReceipt ? !!values.receiptFile : true;
 
     return {
       rut: isRutValid,
@@ -1189,7 +1241,7 @@ export function CartModal({
       receipt: isReceiptValid,
       isReady: isNameValid && isPhoneValid && isRutValid && isReceiptValid,
     };
-  }, [formValues, paymentMethodKey, strategy]); // CORRECTO: Depende de los valores reactivos
+  }, [formValues, selectedPaymentRequiresReceipt, strategy]); // CORRECTO: Depende de los valores reactivos
 
   // Usar setValue de react-hook-form para cambios
   const handleInputChange = useCallback((field: string, value: string) => {
@@ -1484,6 +1536,7 @@ export function CartModal({
         .map((line) => `${line.name}: ${sanitizeUserText(line.line_note!.trim())}`)
         .join("\n");
       const orderPayload = {
+        client_request_id: orderRequestId,
         client_name: sanitizeUserText(data.name),
         client_phone: String(data.phone ?? "").trim(),
         client_rut: String(data.rut ?? "").trim(),
@@ -1496,6 +1549,8 @@ export function CartModal({
         branch_id: selectedBranch.id,
         branch_name: selectedBranch.name || t("common.unknown"),
         company_id: selectedBranch.company_id || null,
+        currency: selectedBranch.currency || currency || null,
+        requires_receipt: selectedPaymentRequiresReceipt,
         order_type:
           snapFulfillment === "delivery" && deliverySettings.enabled
             ? ("delivery" as const)
@@ -1511,6 +1566,8 @@ export function CartModal({
       };
       let parsed: ReturnType<typeof parseOrderRpcPayload> = null;
       let receiptUploadFailed = false;
+      let paymentStatus: string | null = null;
+      let evidenceStatus: string | null = null;
       if (persistsToPanel) {
         const submitResult = await submitOrderMutation.mutateAsync({
           orderData: orderPayload,
@@ -1518,6 +1575,9 @@ export function CartModal({
         });
         parsed = parseOrderRpcPayload(submitResult.order);
         receiptUploadFailed = submitResult.receiptUploadFailed ?? false;
+        paymentStatus = submitResult.paymentStatus ?? null;
+        evidenceStatus = submitResult.evidenceStatus ?? null;
+        setOrderRequestId(crypto.randomUUID());
       }
       setViewState((v) => ({
         ...v,
@@ -1525,12 +1585,14 @@ export function CartModal({
         isSaving: false,
         receiptUploadFailed: receiptUploadFailed ?? false,
         lastOrderSuccess: parsed
-          ? { ...parsed, fulfillment: snapFulfillment }
+          ? { ...parsed, fulfillment: snapFulfillment, paymentStatus, evidenceStatus }
           : {
               id: 0,
               order_number: null,
               handoff_code: null,
               fulfillment: snapFulfillment,
+              paymentStatus,
+              evidenceStatus,
             },
       }));
       setShowFieldErrors(false);
@@ -2452,6 +2514,7 @@ export function CartModal({
                 paymentMethodKey={paymentMethodKey}
                 setPaymentMethodKey={setPaymentMethodKey}
                 paymentMethodsForCheckout={checkoutPaymentMethods}
+                receiptRequiredMethods={receiptRequiredMethods}
                 showForm={showForm}
                 setShowForm={(value: boolean) => patchCheckoutSession?.({ showForm: value })}
                 formData={{

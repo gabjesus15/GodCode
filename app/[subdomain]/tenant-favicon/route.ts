@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
 import { getCloudinaryOptimizedUrl } from "@/components/tenant/utils/cloudinary";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
+import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,10 @@ export async function GET(
   const name = displayName || company?.name || "GodCode";
   const primaryColor =
     (typeof theme?.primaryColor === "string" && theme.primaryColor.trim()) || "#111827";
-  const logoUrl = parseThemeLogoUrl(company?.theme_config);
+  const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
+  const logoUrl = company?.id
+    ? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id))
+    : storedLogoUrl;
   const status = company?.subscription_status?.toLowerCase();
 
   if (logoUrl && status !== "suspended" && status !== "cancelled") {

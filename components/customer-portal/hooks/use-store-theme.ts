@@ -10,7 +10,6 @@ import {
   validateStoreThemeAssetFile,
 } from "@/lib/store-theme/store-theme-utils";
 import { STORE_THEME_FIELD_LABELS, STORE_THEME_TEMPLATES } from "../shared/customer-account-store-theme-constants";
-import { uploadImage } from "@/components/tenant/utils/cloudinary";
 
 export type UseStoreThemeReturn = {
   storeThemeLoading:        boolean;
@@ -85,7 +84,21 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
 
   const storeThemeDraftSignature = useMemo(() => getStoreThemeSignature(storeThemeDraft), [storeThemeDraft]);
   const storeThemeHasLocalUnsavedChanges = Boolean(storeThemeDraft) && storeThemeDraftSignature !== storeThemeLastSavedSignature;
-  const storePreviewTheme = storeThemeDraft ?? storeThemePublished;
+  const storePreviewTheme = useMemo(() => {
+    const theme = storeThemeDraft ?? storeThemePublished;
+    if (!theme) return null;
+    return {
+      ...theme,
+      logoUrl: storeThemeAssetLocalPreview.logoUrl || theme.logoUrl,
+      backgroundImageUrl:
+        storeThemeAssetLocalPreview.backgroundImageUrl || theme.backgroundImageUrl,
+    };
+  }, [
+    storeThemeAssetLocalPreview.backgroundImageUrl,
+    storeThemeAssetLocalPreview.logoUrl,
+    storeThemeDraft,
+    storeThemePublished,
+  ]);
   const latestPublishedVersion = storeThemeVersions[0] ?? null;
 
   const publicationStateLabel = storeThemeHasLocalUnsavedChanges
@@ -134,8 +147,10 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
       setStoreThemeLastSavedSignature(getStoreThemeSignature(data.draft.theme));
       setStoreThemeAutosaveStatus("idle");
       setStoreThemeAutosaveError(null);
+      setStoreThemeLocalPreview("logoUrl", data.assetUrls?.draft.logoUrl ?? null);
+      setStoreThemeLocalPreview("backgroundImageUrl", data.assetUrls?.draft.backgroundImageUrl ?? null);
     } finally { setStoreThemeLoading(false); }
-  }, []);
+  }, [setStoreThemeLocalPreview]);
 
   useEffect(() => { void loadStoreTheme(); }, [loadStoreTheme]);
 
@@ -239,6 +254,7 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
     setStoreThemeHasUnpublished(Boolean(data.draft?.hasUnpublishedChanges));
     setStoreThemeAutosaveStatus("idle");
     setStoreThemeOk("Borrador restaurado a produccion.");
+    await loadStoreTheme();
   };
 
   const applyStoreThemeTemplate = () => {
@@ -280,11 +296,35 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
     setStoreThemeLocalPreview(field, URL.createObjectURL(file));
     setStoreThemeAssetUploading(field); setStoreThemeError(null); setStoreThemeOk(null);
     try {
-      const url = await uploadImage(file, "tenant");
-      setStoreThemeDraft((prev) => (prev ? { ...prev, [field]: url } : prev));
-      setStoreThemeHasUnpublished(true);
-      setStoreThemeOk("Imagen cargada en borrador. Se guardara automaticamente en breve.");
-      setStoreThemeLocalPreview(field, null);
+      const form = new FormData();
+      form.set("field", field);
+      form.set("file", file);
+      const res = await fetch("/api/customer-account/store-theme/assets", {
+        method: "POST",
+        body: form,
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+        signedUrl?: string;
+        draft?: {
+          theme?: StoreThemeConfig;
+          updatedAt?: string | null;
+          updatedByEmail?: string | null;
+          hasUnpublishedChanges?: boolean;
+        };
+      };
+      if (!res.ok || !data.draft?.theme) {
+        throw new Error(data.error || "No se pudo guardar la imagen.");
+      }
+      setStoreThemeDraft(data.draft.theme);
+      setStoreThemeLastSavedSignature(getStoreThemeSignature(data.draft.theme));
+      setStoreThemeUpdatedAt(data.draft.updatedAt ?? new Date().toISOString());
+      setStoreThemeUpdatedBy((prev) => data.draft?.updatedByEmail ?? prev);
+      setStoreThemeHasUnpublished(Boolean(data.draft.hasUnpublishedChanges ?? true));
+      setStoreThemeAutosaveStatus("saved");
+      setStoreThemeOk(data.message || "Imagen guardada en el borrador.");
+      setStoreThemeLocalPreview(field, data.signedUrl || null);
     } catch (error) {
       setStoreThemeError(error instanceof Error ? error.message : "No se pudo subir el archivo.");
     } finally {

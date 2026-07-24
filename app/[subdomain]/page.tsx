@@ -6,6 +6,7 @@ import { getCachedMenuStaticData } from "@/lib/tenant/cached-menu";
 import { HomeClient } from "../../components/tenant/home/home-client";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
+import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 
 import "./styles/Home.css";
 import "./styles/BranchSelectorModal.css";
@@ -55,7 +56,8 @@ export default async function TenantPage({ params }: TenantPageProps) {
 
   const theme = (company?.theme_config as unknown as TenantPageThemeConfig) ?? {};
   const name = theme.displayName || company.name || resolvedParams.subdomain || "GodCode";
-  const logoUrl = parseThemeLogoUrl(company?.theme_config) || null;
+  const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
+  const logoUrl = await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id)) || null;
 
   return (
     <HomeClient

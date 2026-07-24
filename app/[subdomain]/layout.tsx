@@ -13,6 +13,7 @@ import "./tenant-outfit.css";
 import "./tenant-base.css";
 import { TenantShell } from "../../components/tenant/shell/tenant-shell";
 import { QueryProvider } from "@/components/ui/query-provider";
+import { resolveStorefrontThemeAssets } from "@/lib/storage/storefront-branding";
 
 export const revalidate = 60; // ISR: regenera cada 60 segundos → HTML pre-renderizado para Googlebot
 
@@ -181,7 +182,10 @@ export default async function TenantLayout({
   const hdrs = await headers();
   const resolvedParams = await params;
   const company = await getCachedCompany(resolvedParams.subdomain);
-  const theme = normalizeStoreThemeConfig(company?.theme_config, company?.name ?? "");
+  const storedTheme = normalizeStoreThemeConfig(company?.theme_config, company?.name ?? "");
+  const theme = company?.id
+    ? await resolveStorefrontThemeAssets(storedTheme, String(company.id))
+    : storedTheme;
   const host =
     hdrs.get("x-forwarded-host")?.split(",")[0]?.trim() ??
     hdrs.get("host") ??

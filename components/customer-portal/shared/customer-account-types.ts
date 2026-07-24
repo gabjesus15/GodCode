@@ -371,6 +371,10 @@ export type StoreThemeResponse = {
     createdAt: string;
     createdByEmail: string | null;
   }>;
+  assetUrls?: {
+    published: Record<StoreThemeAssetField, string | null>;
+    draft: Record<StoreThemeAssetField, string | null>;
+  };
 };
 
 export type StoreThemeAutosaveStatus = "idle" | "pending" | "saving" | "saved" | "error";

@@ -11,6 +11,7 @@ import { getCachedMenuStaticData, getCachedMenuRpcData } from "@/lib/tenant/cach
 import { getCachedCompany } from "@/utils/tenant-cache";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { resolveMenuImageUrl } from "@/lib/tenant/images/resolve-menu-image-url";
+import { resolveStorefrontThemeAssets } from "@/lib/storage/storefront-branding";
 import {
 	extractMenuSettingsFromIntegration,
 	resolveOnlineOrderingEnabled,
@@ -367,7 +368,8 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
     }));
 
     // --- G. Casteo seguro de JSONB (Evita warnings silenciosos) ---
-    const theme = normalizeStoreThemeConfig(company.theme_config, company.name ?? "GodCode");
+    const storedTheme = normalizeStoreThemeConfig(company.theme_config, company.name ?? "GodCode");
+    const theme = await resolveStorefrontThemeAssets(storedTheme, String(company.id));
     const name = theme.displayName || company.name || "GodCode";
     const logoUrl = theme.logoUrl?.trim() || parseThemeLogoUrl(company?.theme_config) || null;
     const navbarType = theme.navbarType;

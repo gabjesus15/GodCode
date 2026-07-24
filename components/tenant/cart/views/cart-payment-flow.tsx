@@ -17,6 +17,7 @@ export function CartPaymentFlow({
   paymentMethodKey,
   setPaymentMethodKey,
   paymentMethodsForCheckout,
+  receiptRequiredMethods,
   showForm,
   setShowForm,
   formData,
@@ -37,6 +38,7 @@ export function CartPaymentFlow({
   paymentMethodKey: string | null;
   setPaymentMethodKey: (value: string | null) => void;
   paymentMethodsForCheckout: string[];
+  receiptRequiredMethods: ReadonlySet<string> | null;
   showForm: boolean;
   setShowForm: (value: boolean) => void;
   formData: {
@@ -63,7 +65,10 @@ export function CartPaymentFlow({
   const { currency } = useCart();
   const t = useTranslations("tenant.cart.modal");
   const isOnline = paymentMethodKey && PAYMENT_METHOD_CONFIG[paymentMethodKey]?.isOnline;
-  const requiresReceipt = paymentMethodRequiresReceipt(paymentMethodKey);
+  const requiresReceipt = paymentMethodRequiresReceipt(
+    paymentMethodKey,
+    receiptRequiredMethods,
+  );
   const showNameError = showFieldErrors && !validation.name;
   const showRutError = showFieldErrors && !validation.rut;
   const showPhoneError = showFieldErrors && !validation.phone;

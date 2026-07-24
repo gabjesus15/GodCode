@@ -28,6 +28,9 @@ export type SubmitOrderParams = {
   uber_quote_id?: string | null;
   coupon_code?: string | null;
   order_origin?: "web" | null;
+  client_request_id: string;
+  currency?: string | null;
+  requires_receipt?: boolean;
 };
 
 /**
