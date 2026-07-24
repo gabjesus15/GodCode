@@ -140,7 +140,10 @@ export function CartProvider({
 
   useEffect(() => {
     if (!tenantSlug) return;
-    queueMicrotask(() => setIsHydrated(false));
+    let cancelled = false;
+    // Sync: queueMicrotask(set false) after a sync finish() left isHydrated stuck
+    // false on path tenants (godcode.me/la-parada) while custom domains (null slug) skipped this effect.
+    setIsHydrated(false);
     const storageKey = `tenant_cart_storage_${tenantSlug}`;
     const persistApi = (
       useCartStore as {
@@ -151,13 +154,18 @@ export function CartProvider({
       }
     ).persist;
     persistApi?.setOptions?.({ name: storageKey });
-    const finish = () => setIsHydrated(true);
+    const finish = () => {
+      if (!cancelled) setIsHydrated(true);
+    };
     const rehydrateResult = persistApi?.rehydrate?.();
     if (rehydrateResult && typeof (rehydrateResult as Promise<void>).then === "function") {
       void (rehydrateResult as Promise<void>).then(finish).catch(finish);
     } else {
       finish();
     }
+    return () => {
+      cancelled = true;
+    };
   }, [tenantSlug]);
 
   useEffect(() => {

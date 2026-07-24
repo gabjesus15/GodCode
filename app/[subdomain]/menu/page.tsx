@@ -488,6 +488,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
           productDetailsMode={productDetailsMode}
           onlineOrderingEnabled={onlineOrderingEnabled}
           orderChannel={orderChannel}
+          tenantSlug={resolvedParams.subdomain}
         />
       </>
     );

@@ -114,6 +114,8 @@ export interface MenuClientProps {
 	productDetailsMode?: string;
 	onlineOrderingEnabled?: boolean;
 	orderChannel?: OrderChannelMode;
+	/** public_slug del negocio (path o dominio custom). */
+	tenantSlug?: string | null;
 }
 
 export type PreviewThemePayload = {

@@ -44,6 +44,7 @@ export function useMenuClientController(props: MenuClientProps) {
 		productDetailsMode: initialProductDetailsMode = "modal-premium",
 		onlineOrderingEnabled,
 		orderChannel = "both",
+		tenantSlug: tenantSlugProp = null,
 	} = props;
 
 	const mounted = useTenantMounted();
@@ -80,9 +81,11 @@ export function useMenuClientController(props: MenuClientProps) {
 	const previewDevice = searchParams?.get("preview_device") ?? null;
 
 	const tenantSlug = useMemo(() => {
+		const fromProp = typeof tenantSlugProp === "string" ? tenantSlugProp.trim().toLowerCase() : "";
+		if (fromProp) return fromProp;
 		const prefix = getTenantPrefixFromPathname(pathname ?? "/");
 		return prefix ? prefix.slice(1).toLowerCase() : null;
-	}, [pathname]);
+	}, [pathname, tenantSlugProp]);
 
 	const homePath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/"), [pathname]);
 	const menuPath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/menu"), [pathname]);
