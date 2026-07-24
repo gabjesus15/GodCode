@@ -68,8 +68,9 @@ export function minorToMajor(
 }
 
 export function sumMinor(values: Array<number | bigint>): number {
-  return assertSafeMinor(values.reduce(
+  const total = values.reduce<number>(
     (sum, value) => sum + assertSafeMinor(toFiniteNumber(value)),
     0,
-  ));
+  );
+  return assertSafeMinor(total);
 }
