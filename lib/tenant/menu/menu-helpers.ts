@@ -30,6 +30,45 @@ export function resolveMenuCartUiMode(input: {
 	return input.showBottomNav ? "bottom-nav-only" : "none";
 }
 
+/**
+ * Resuelve la sucursal activa del menú público.
+ * - Respeta `?branch=` si es válida (y abierta, cuando hay cajas abiertas).
+ * - Si no hay query y la elección es inequívoca (1 caja abierta, o 1 sucursal
+ *   sin cajas abiertas), la auto-selecciona para habilitar el carrito.
+ * - Si hay `?branch=` inválida/cerrada, no fuerza otra (el modal pide elegir).
+ */
+export function resolveSelectedMenuBranch<T extends { id: string }>(input: {
+	branches: T[];
+	openBranchIds: string[];
+	requestedBranchId?: string | null;
+}): T | null {
+	const branches = Array.isArray(input.branches) ? input.branches : [];
+	const openSet = new Set((input.openBranchIds ?? []).map(String).filter(Boolean));
+	const hasOpen = openSet.size > 0;
+	const requestedId = input.requestedBranchId ? String(input.requestedBranchId) : "";
+	const requested = requestedId
+		? branches.find((branch) => String(branch.id) === requestedId) ?? null
+		: null;
+
+	if (requestedId) {
+		if (requested && (!hasOpen || openSet.has(String(requested.id)))) {
+			return requested;
+		}
+		return null;
+	}
+
+	if (hasOpen && openSet.size === 1) {
+		const onlyOpenId = [...openSet][0];
+		return branches.find((branch) => String(branch.id) === onlyOpenId) ?? null;
+	}
+
+	if (!hasOpen && branches.length === 1) {
+		return branches[0] ?? null;
+	}
+
+	return null;
+}
+
 export type BranchContactChannel = "whatsapp" | "instagram" | "location";
 
 export type BranchContactSource = {

@@ -4,6 +4,7 @@ import {
 	getAvailableContactChannels,
 	resolveContactFlowStep,
 	resolveMenuCartUiMode,
+	resolveSelectedMenuBranch,
 	shouldShowBottomNav,
 	shouldShowContactTab,
 } from "@/lib/tenant/menu/menu-helpers";
@@ -23,6 +24,45 @@ describe("menu-helpers", () => {
 		expect(resolveMenuCartUiMode({ hasBranch: true, onlineOrderingEnabled: true, showBottomNav: false })).toBe("float-with-modal");
 		expect(resolveMenuCartUiMode({ hasBranch: true, onlineOrderingEnabled: true, showBottomNav: true })).toBe("bottom-nav");
 		expect(resolveMenuCartUiMode({ hasBranch: true, onlineOrderingEnabled: false, showBottomNav: true })).toBe("bottom-nav-only");
+	});
+
+	it("resolveSelectedMenuBranch auto-selects unambiguous open branch", () => {
+		const branches = [{ id: "a" }, { id: "b" }];
+		expect(
+			resolveSelectedMenuBranch({
+				branches,
+				openBranchIds: ["a"],
+				requestedBranchId: null,
+			})?.id,
+		).toBe("a");
+		expect(
+			resolveSelectedMenuBranch({
+				branches,
+				openBranchIds: ["a", "b"],
+				requestedBranchId: null,
+			}),
+		).toBeNull();
+		expect(
+			resolveSelectedMenuBranch({
+				branches: [{ id: "solo" }],
+				openBranchIds: [],
+				requestedBranchId: null,
+			})?.id,
+		).toBe("solo");
+		expect(
+			resolveSelectedMenuBranch({
+				branches,
+				openBranchIds: ["a"],
+				requestedBranchId: "b",
+			}),
+		).toBeNull();
+		expect(
+			resolveSelectedMenuBranch({
+				branches,
+				openBranchIds: ["a", "b"],
+				requestedBranchId: "b",
+			})?.id,
+		).toBe("b");
 	});
 
 	it("contact channels respect selected branch", () => {

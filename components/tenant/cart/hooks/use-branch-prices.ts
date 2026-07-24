@@ -51,7 +51,7 @@ export function useBranchPrices(
       isValidBranchId(selectedBranchId),
   );
 
-  const { data: rows = [], isFetched } = useQuery<BranchProductPriceRow[]>({
+  const { data: rows = [], isFetched, isError, isSuccess } = useQuery<BranchProductPriceRow[]>({
     queryKey: ["cart-branch-prices", selectedBranchId, cartProductIds],
     queryFn: async () => {
       const ids = filterValidProductIds(cartProductIds.split(","));
@@ -76,14 +76,18 @@ export function useBranchPrices(
     },
     enabled,
     staleTime: 30_000,
+    retry: 1,
   });
 
   // Quitar líneas de catálogo que ya no existen en la sucursal (carrito viejo en localStorage).
   useEffect(() => {
-    if (!enabled || !isFetched) return;
+    if (!enabled || !isFetched || isError || !isSuccess) return;
 
     const requestedIds = filterValidProductIds(cartProductIds.split(","));
     if (requestedIds.length === 0) return;
+
+    // Fail-open: payload vacío = fallo o catálogo incompleto; no vaciar el carrito.
+    if (!Array.isArray(rows) || rows.length === 0) return;
 
     const priceIds = new Set(rows.map((row) => String(row.product_id)));
     const currentCart = useCartStore.getState().cart;
@@ -91,7 +95,6 @@ export function useBranchPrices(
       const id = String(item.id ?? "");
       if (isUpsellBeverageLineId(id)) return true;
       if (!isValidProductId(id)) return true;
-      if (rows.length === 0) return false;
       return priceIds.has(id);
     });
 
@@ -101,7 +104,7 @@ export function useBranchPrices(
         setCartFn(nextCart);
       }
     }
-  }, [rows, enabled, isFetched, cartProductIds]);
+  }, [rows, enabled, isFetched, isError, isSuccess, cartProductIds]);
 
   // Efecto para actualizar el store de Zustand cuando cambian los precios
   useEffect(() => {

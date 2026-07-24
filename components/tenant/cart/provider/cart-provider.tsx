@@ -199,6 +199,12 @@ export function CartProvider({
       }
       return;
     }
+    // Primera asignación de sucursal (null → id): no vaciar. Si el usuario agregó
+    // productos antes de hidratar/persistir la sucursal, clearCart los borraba.
+    if (storedBranchId == null) {
+      if (typeof setStoredBranchId === "function") setStoredBranchId(selectedBranchId);
+      return;
+    }
     if (storedBranchId !== selectedBranchId) {
       if (typeof clearCart === "function") clearCart();
       if (typeof setStoredBranchId === "function") setStoredBranchId(selectedBranchId);

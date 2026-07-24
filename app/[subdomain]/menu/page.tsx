@@ -16,6 +16,7 @@ import {
 	extractMenuSettingsFromIntegration,
 	resolveOnlineOrderingEnabled,
 } from "@/lib/tenant/menu-settings";
+import { resolveSelectedMenuBranch } from "@/lib/tenant/menu/menu-helpers";
 
 // ISR: re-generate at most every 60 s. Menu updates (product edits, theme publish)
 // are pushed instantly via revalidateTag(`menu:${companyId}`) from:
@@ -252,13 +253,11 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
 
     const hasOpenBranches = openBranchIds.length > 0;
     const requestedBranchId = resolvedSearchParams?.branch;
-    const requestedBranch = requestedBranchId
-      ? safeBranches.find((branch) => branch.id === requestedBranchId) ?? null
-      : null;
-    const selectedBranch =
-      requestedBranch && (!hasOpenBranches || openBranchIdSet.has(String(requestedBranch.id)))
-        ? requestedBranch
-        : null;
+    const selectedBranch = resolveSelectedMenuBranch({
+      branches: safeBranches,
+      openBranchIds,
+      requestedBranchId: requestedBranchId ?? null,
+    });
     const menuBranch =
       selectedBranch ??
       (hasOpenBranches

@@ -364,6 +364,15 @@ export function useMenuClientController(props: MenuClientProps) {
 		router.replace(nextPath);
 	}, [isEmbeddedPreview, menuPath, previewDevice, router]);
 
+	// Si el servidor no auto-seleccionó (p. ej. navegación cliente) y solo hay
+	// una sucursal elegible, elegirla para habilitar el carrito.
+	useEffect(() => {
+		if (isEmbeddedPreview || selectedBranchId) return;
+		const enabled = modalBranches.filter((branch) => !branch.disabled);
+		if (enabled.length !== 1) return;
+		handleBranchSelect(enabled[0]);
+	}, [handleBranchSelect, isEmbeddedPreview, modalBranches, selectedBranchId]);
+
 	const previewDeviceClass = isEmbeddedPreview
 		? previewDevice === "tablet"
 			? "preview-device-tablet"
