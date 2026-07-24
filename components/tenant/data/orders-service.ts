@@ -1,11 +1,11 @@
 import { createSupabaseBrowserClient } from "../../../utils/supabase/client";
+import { uploadImage } from "../utils/cloudinary";
 import {
 	computeDeliveryFee,
 	effectiveDeliveryPricingMode,
 	normalizeDeliverySettings,
 } from "@/lib/delivery/delivery-settings";
 import type { Json } from "../../../types/supabase-database";
-import { majorToMinor, minorToMajor, sumMinor } from "@/lib/money/minor-units";
 
 import {
 	buildOrderItemsFromBranch,
@@ -14,7 +14,10 @@ import {
 	type OrderCatalogLine,
 } from "./orders/build-order-items-from-branch";
 import { mergeCustomLinesForRpc } from "@/lib/orders/merge-custom-lines-for-rpc";
-import { paymentMethodRequiresReceipt } from "../cart/services/menu-order-payment";
+import {
+	buildMenuOrderPaymentPayload,
+	paymentMethodRequiresReceipt,
+} from "../cart/services/menu-order-payment";
 
 interface CreateOrderPayload {
   client_name: string;
@@ -49,10 +52,13 @@ interface CreateOrderPayload {
    * `web` marca `channel = online` (compra online en panel del negocio).
    */
   order_origin?: "web" | null;
-  client_request_id: string;
+  client_request_id?: string;
   currency?: string | null;
   requires_receipt?: boolean;
 }
+
+/** Pedidos creados desde el menú / carrito del tenant. */
+export const WEB_MENU_ORDER_ORIGIN = "web" as const;
 
 const UNAVAILABLE_BRANCH_ITEMS_MESSAGE =
 	"Hay productos del carrito que no estan disponibles para esta sucursal. Actualiza el menu e intenta nuevamente.";
@@ -156,7 +162,7 @@ export const ordersService = {
         id: String(it.id ?? `custom_${idx}`),
         name: String(it.name ?? "Extra"),
         quantity: Math.max(1, Number(it.quantity) || 1),
-        price: Math.max(0, Number(it.price) || 0),
+        price: Math.max(0, Math.round(Number(it.price) || 0)),
         has_discount: false,
         discount_price: null,
         description: it.description ?? null,
@@ -193,9 +199,21 @@ export const ordersService = {
       );
     }
 
+    const calculatedItemsTotal = Math.round(
+      itemsForRpc.reduce((sum, item) => {
+        const price =
+          item.has_discount && item.discount_price && Number(item.discount_price) > 0
+            ? Number(item.discount_price)
+            : Number(item.price || 0);
+        const extrasTotal = Math.max(0, Number(item.extras_total) || 0);
+        const qty = Math.max(1, Number(item.quantity) || 1);
+        return sum + (price + extrasTotal) * qty;
+      }, 0)
+    );
+
     const { data: branchCfg, error: branchCfgError } = await supabase
       .from("branches")
-      .select("company_id, currency, delivery_settings, order_intake_paused, order_intake_pause_message")
+      .select("delivery_settings, order_intake_paused, order_intake_pause_message")
       .eq("id", orderData.branch_id)
       .maybeSingle();
 
@@ -209,27 +227,6 @@ export const ordersService = {
         "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos."
       );
     }
-
-    const accountingCurrency = String(
-      branchCfg?.currency || orderData.currency || "CLP",
-    ).trim().toUpperCase();
-    const calculatedItemsTotalMinor = sumMinor(itemsForRpc.map((item) => {
-      const price = item.has_discount
-        && item.discount_price
-        && Number(item.discount_price) > 0
-        ? Number(item.discount_price)
-        : Number(item.price || 0);
-      const extrasTotal = Math.max(0, Number(item.extras_total) || 0);
-      const qty = Math.max(1, Number(item.quantity) || 1);
-      return (
-        majorToMinor(price, accountingCurrency)
-        + majorToMinor(extrasTotal, accountingCurrency)
-      ) * qty;
-    }));
-    const calculatedItemsTotal = minorToMajor(
-      calculatedItemsTotalMinor,
-      accountingCurrency,
-    );
 
     const deliverySettings = normalizeDeliverySettings(branchCfg?.delivery_settings);
     const deliveryMode = isDeliveryOrderType(orderData.order_type);
@@ -321,7 +318,7 @@ export const ordersService = {
         if (r.fee === -4) {
           throw new Error("La zona de entrega seleccionada no es valida.");
         }
-        deliveryFee = r.fee < 0 ? 0 : r.fee;
+        deliveryFee = Math.round(Number(r.fee < 0 ? 0 : r.fee) || 0);
       } else if (priceMode === "external") {
         const dlat = orderData.delivery_lat;
         const dlng = orderData.delivery_lng;
@@ -372,7 +369,7 @@ export const ordersService = {
           );
         }
         const showAmt = qJson.showDeliveryFeeAmount !== false;
-        deliveryFee = showAmt ? Math.max(0, Number(qJson.fee) || 0) : 0;
+        deliveryFee = showAmt ? Math.round(Math.max(0, Number(qJson.fee) || 0)) : 0;
         uberQuoteIdForPatch = showAmt
           ? typeof qJson.uberQuoteId === "string" && qJson.uberQuoteId.trim()
             ? qJson.uberQuoteId.trim()
@@ -409,7 +406,7 @@ export const ordersService = {
                 "No se pudo validar el envio por distancia. Verifica que estes dentro del area de reparto.",
             );
           }
-          deliveryFee = Math.max(0, Number(qJson.fee) || 0);
+          deliveryFee = Math.round(Math.max(0, Number(qJson.fee) || 0));
         } else {
           if (
             deliverySettings.maxDeliveryKm != null &&
@@ -435,21 +432,20 @@ export const ordersService = {
           if (r.fee === -4) {
             throw new Error("La zona de entrega seleccionada no es valida.");
           }
-          deliveryFee = r.fee < 0 ? 0 : r.fee;
+          deliveryFee = Math.round(Number(r.fee < 0 ? 0 : r.fee) || 0);
         }
       }
     }
 
-    const deliveryFeeMinor = majorToMinor(deliveryFee, accountingCurrency);
-    deliveryFee = minorToMajor(deliveryFeeMinor, accountingCurrency);
-    const serverItemsPlusDeliveryMinor = calculatedItemsTotalMinor + deliveryFeeMinor;
+    deliveryFee = Math.round(Number(deliveryFee) || 0);
+    const serverItemsPlusDelivery = calculatedItemsTotal + deliveryFee;
 
     const couponRaw =
       typeof orderData.coupon_code === "string" ? orderData.coupon_code.trim() : "";
     const couponPayload = couponRaw.length > 0 ? couponRaw : null;
 
     // `p_total` debe coincidir con el RPC (ítems + envío − cupón, sin IVA del cliente).
-    let totalToUseMinor = serverItemsPlusDeliveryMinor;
+    let totalToUse = serverItemsPlusDelivery;
     if (couponPayload) {
       const couponDiscount = await resolveCouponDiscountForOrder(
         orderData.branch_id,
@@ -457,12 +453,9 @@ export const ordersService = {
         calculatedItemsTotal,
         orderData.client_phone,
       );
-      const couponMinor = Math.min(
-        calculatedItemsTotalMinor,
-        majorToMinor(couponDiscount, accountingCurrency),
+      totalToUse = Math.round(
+        Math.max(0, calculatedItemsTotal - couponDiscount) + deliveryFee,
       );
-      totalToUseMinor = Math.max(0, calculatedItemsTotalMinor - couponMinor)
-        + deliveryFeeMinor;
     }
 
     const paymentMethod = String(orderData.payment_method_specific ?? "").trim();
@@ -476,56 +469,53 @@ export const ordersService = {
       throw new Error("Debes adjuntar el comprobante de pago para confirmar el pedido.");
     }
 
+    let receiptUrl: string | null = null;
+    if (needsReceipt) {
+      try {
+        receiptUrl = await uploadImage(receiptFile!, "receipts");
+      } catch {
+        throw new Error("No se pudo subir el comprobante. Intenta nuevamente.");
+      }
+      if (!receiptUrl) {
+        throw new Error("No se pudo subir el comprobante. Intenta nuevamente.");
+      }
+    }
+
+    const menuPayment = buildMenuOrderPaymentPayload(paymentMethod, receiptUrl);
+    const paymentRef = orderData.payment_ref?.trim() || menuPayment.payment_ref;
+    const paymentType = orderData.payment_type ?? menuPayment.payment_type;
+
     let finalNote = orderData.note || "";
     if (orderData.branch_name) {
       finalNote = `[Sucursal: ${orderData.branch_name}] \n${finalNote}`.trim();
     }
     if (deliveryMode && deliveryFee > 0) {
-      finalNote = `${finalNote}\n[Envio: ${deliveryFee.toLocaleString("es-CL")}]`.trim();
+      finalNote = `${finalNote}\n[Envio: $${Math.round(deliveryFee).toLocaleString("es-CL")}]`.trim();
     }
 
-    const deliveryAddressForRpc = deliveryMode
-      ? {
-          ...(orderData.delivery_address ?? {}),
-          delivery_km: Number.isFinite(Number(orderData.delivery_km))
-            ? Number(orderData.delivery_km)
-            : null,
-          ...(namedId ? { named_area_id: namedId } : {}),
-          ...(Number.isFinite(Number(orderData.delivery_lat))
-            && Number.isFinite(Number(orderData.delivery_lng))
-            ? {
-                lat: Number(orderData.delivery_lat),
-                lng: Number(orderData.delivery_lng),
-              }
-            : {}),
-          ...(uberQuoteIdForPatch
-            ? {
-                delivery_provider: "uber_direct",
-                uber_quote_id: uberQuoteIdForPatch,
-              }
-            : {}),
-        }
-      : null;
-
     const rpcArgs = {
-      p_client_request_id: orderData.client_request_id,
       p_client_name: orderData.client_name,
       p_client_phone: orderData.client_phone,
       p_client_rut: orderData.client_rut || "",
       p_items: itemsForRpc,
-      p_total_minor: totalToUseMinor,
-      p_currency: accountingCurrency,
-      p_payment_method_specific: paymentMethod,
+      p_total: totalToUse,
+      p_payment_type: paymentType,
+      p_payment_ref: paymentRef,
       p_note: finalNote,
       p_branch_id: orderData.branch_id,
+      p_company_id: orderData.company_id || null,
+      p_status: orderData.status || "pending",
+      p_payment_method_specific: menuPayment.payment_method_specific,
+      // Sin estos campos el RPC asume pickup + fee 0 y compara mal `p_total` (subtotal+envío) → invalid_item_price.
       p_order_type: deliveryMode ? "delivery" : "pickup",
-      p_delivery_fee_minor: deliveryMode ? deliveryFeeMinor : 0,
-      p_delivery_address: deliveryMode ? (deliveryAddressForRpc as Json) : null,
+      p_delivery_fee: deliveryMode ? deliveryFee : 0,
+      p_delivery_address: deliveryMode ? (orderData.delivery_address as Json) : null,
       ...(couponPayload ? { p_coupon_code: couponPayload } : {}),
+      p_order_origin: orderData.order_origin ?? WEB_MENU_ORDER_ORIGIN,
     };
 
-    const { data: transactionResult, error: orderError } = await supabase.rpc(
-      "create_menu_order_atomic_v1",
+    const { data: newOrder, error: orderError } = await supabase.rpc(
+      "create_order_transaction",
       rpcArgs
     );
 
@@ -566,64 +556,38 @@ export const ordersService = {
       if (rpcMessage.includes("handoff_code_collision")) {
         throw new Error("No se pudo generar el codigo de entrega. Intenta nuevamente.");
       }
-      if (rpcMessage.includes("cash_shift_required")) {
-        throw new Error("El local no esta recibiendo pedidos en este momento (Caja Cerrada).");
-      }
-      if (rpcMessage.includes("payment_method_not_allowed")) {
-        throw new Error("El metodo de pago ya no esta habilitado. Elige otro.");
-      }
-      if (rpcMessage.includes("idempotency_conflict")) {
-        throw new Error("Este intento de pedido cambio. Actualiza el carrito e intenta nuevamente.");
-      }
-      if (rpcMessage.includes("branch_currency_required")) {
-        throw new Error("La moneda de la sucursal cambio. Recarga el menu.");
-      }
       throw orderError;
     }
 
-    const wrapped = transactionResult as {
-      order?: unknown;
-      evidenceId?: string | null;
-      receiptRequired?: boolean;
-      idempotentReplay?: boolean;
-    } | null;
-    const newOrder = wrapped?.order ?? transactionResult;
     const orderId = extractOrderId(newOrder);
-    let receiptUploadFailed = false;
-    let paymentStatus: string | null = null;
-    let evidenceStatus: string | null = null;
-
-    if (wrapped?.receiptRequired && receiptFile && orderId && wrapped.evidenceId) {
-      try {
-        const form = new FormData();
-        form.set("file", receiptFile);
-        form.set("orderId", orderId);
-        form.set("evidenceId", wrapped.evidenceId);
-        form.set("clientRequestId", orderData.client_request_id);
-        const upload = await fetch(`${window.location.origin}/api/tenant/order-payment-evidence`, {
-          method: "POST",
-          body: form,
-        });
-        if (!upload.ok) throw new Error("receipt_upload_failed");
-        const uploadResult = await upload.json().catch(() => null) as {
-          paymentStatus?: string | null;
-          status?: string | null;
-        } | null;
-        paymentStatus = uploadResult?.paymentStatus ?? null;
-        evidenceStatus = uploadResult?.status ?? null;
-      } catch {
-        receiptUploadFailed = true;
+    if (orderId && typeof window !== "undefined") {
+      const patchRes = await fetch(`${window.location.origin}/api/tenant/public-order-delivery`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId,
+          orderType: deliveryMode ? "delivery" : "pickup",
+          deliveryKm: deliveryMode ? Number(orderData.delivery_km) : 0,
+          deliveryFee: deliveryMode ? deliveryFee : 0,
+          deliveryAddress: deliveryMode ? (orderData.delivery_address ?? null) : null,
+          deliveryLat: deliveryMode ? orderData.delivery_lat : null,
+          deliveryLng: deliveryMode ? orderData.delivery_lng : null,
+          namedAreaId:
+            deliveryMode && typeof namedId === "string" && namedId.trim()
+              ? namedId.trim()
+              : undefined,
+          ...(deliveryMode && uberQuoteIdForPatch ? { uberQuoteId: uberQuoteIdForPatch } : {}),
+        }),
+      });
+      if (!patchRes.ok) {
+        const j = (await patchRes.json().catch(() => ({}))) as { error?: string; message?: string };
+        const msg = j.error === "ORDER_INTAKE_PAUSED"
+          ? (j.message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.")
+          : (j.error || "No se pudo registrar los datos de facturación del pedido.");
+        throw new Error(msg);
       }
-    } else if (wrapped?.receiptRequired) {
-      receiptUploadFailed = true;
     }
 
-    return {
-      order: newOrder,
-      receiptUploadFailed,
-      paymentStatus,
-      evidenceStatus,
-      idempotentReplay: Boolean(wrapped?.idempotentReplay),
-    };
+    return { order: newOrder, receiptUploadFailed: false, paymentStatus: null, evidenceStatus: null };
   },
 };

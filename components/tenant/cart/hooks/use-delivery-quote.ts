@@ -110,7 +110,7 @@ export function useDeliveryQuote(params: {
         fee: Math.round(Number(data.fee) || 0),
         waivedFree: Boolean(data.waivedFreeShipping),
         namedLabel: data.label || null,
-        quotedRouteKm: data.distanceKm != null ? Math.round(data.distanceKm) : null,
+        quotedRouteKm: data.distanceKm != null ? Math.round(Number(data.distanceKm) || 0) : null,
         outOfZone: false,
         uberQuoteId: data.uberQuoteId || null,
       };

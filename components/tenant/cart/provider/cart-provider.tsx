@@ -247,11 +247,17 @@ export function CartProvider({
 
   const getPrice = useCallback((product: CartProduct | CartItem) => {
     if (typeof product !== "object" || product == null) return 0;
-    if (product.has_discount && typeof product.discount_price === "number" && product.discount_price > 0) {
-      return product.discount_price;
-    }
-    if (typeof product.price === "number") return product.price;
-    return 0;
+    const coerce = (v: unknown): number => {
+      if (typeof v === "bigint") {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      }
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const discount = coerce(product.discount_price);
+    if (product.has_discount && discount > 0) return discount;
+    return coerce(product.price);
   }, []);
 
   const cartTotal = useMemo(() => {

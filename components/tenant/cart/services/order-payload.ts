@@ -1,3 +1,13 @@
+function toFiniteNumber(value: unknown): number | null {
+  if (typeof value === "bigint") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function parseOrderRpcPayload(data: unknown): {
   id: number;
   order_number: number | null;
@@ -5,14 +15,14 @@ export function parseOrderRpcPayload(data: unknown): {
 } | null {
   if (!data || typeof data !== "object") return null;
   const o = data as Record<string, unknown>;
-  const id = Number(o.id);
-  if (!Number.isFinite(id)) return null;
-  const order_number =
-    o.order_number != null && o.order_number !== "" ? Number(o.order_number) : null;
+  // orders.id is Postgres bigint — may arrive as number, string, or bigint.
+  const id = toFiniteNumber(o.id);
+  if (id == null) return null;
+  const order_number = toFiniteNumber(o.order_number);
   const handoff_code = typeof o.handoff_code === "string" ? o.handoff_code : null;
   return {
     id,
-    order_number: order_number != null && Number.isFinite(order_number) ? order_number : null,
+    order_number,
     handoff_code,
   };
 }

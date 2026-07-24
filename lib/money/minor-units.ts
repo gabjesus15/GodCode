@@ -7,6 +7,18 @@ function assertSafeMinor(value: number): number {
   return value;
 }
 
+/** Coerce number | string | bigint without Math.* on raw bigint (throws in JS). */
+function toFiniteNumber(value: unknown): number {
+  if (typeof value === "bigint") {
+    const n = Number(value);
+    if (!Number.isFinite(n)) throw new TypeError("Monto inválido.");
+    return n;
+  }
+  const n = Number(value);
+  if (!Number.isFinite(n)) throw new TypeError("Monto inválido.");
+  return n;
+}
+
 export function isoFractionDigits(currency: string, override?: number | null): number {
   if (override != null && Number.isInteger(Number(override))) {
     const digits = Number(override);
@@ -38,27 +50,26 @@ function canonicalDecimalToMinor(value: string | number, fractionDigits: number)
 }
 
 export function majorToMinor(
-  value: string | number,
+  value: string | number | bigint,
   currency: string,
   fractionDigits?: number | null,
 ): number {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) throw new TypeError("Monto inválido.");
-  return canonicalDecimalToMinor(String(value), isoFractionDigits(currency, fractionDigits));
+  const numeric = toFiniteNumber(value);
+  return canonicalDecimalToMinor(String(numeric), isoFractionDigits(currency, fractionDigits));
 }
 
 export function minorToMajor(
-  value: number,
+  value: number | bigint,
   currency: string,
   fractionDigits?: number | null,
 ): number {
   const digits = isoFractionDigits(currency, fractionDigits);
-  return assertSafeMinor(Number(value)) / (10 ** digits);
+  return assertSafeMinor(toFiniteNumber(value)) / (10 ** digits);
 }
 
-export function sumMinor(values: number[]): number {
+export function sumMinor(values: Array<number | bigint>): number {
   return assertSafeMinor(values.reduce(
-    (sum, value) => sum + assertSafeMinor(Number(value)),
+    (sum, value) => sum + assertSafeMinor(toFiniteNumber(value)),
     0,
   ));
 }
