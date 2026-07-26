@@ -1241,11 +1241,22 @@
   contain-intrinsic-size: auto 280px;
 }
 
+/* Móvil: apagar glass. El selector anterior usaba `.glass-card` pero el DOM usa `.glass`. */
 @media (max-width: 768px) {
+  .product-card.glass,
   .product-card.glass-card,
   .product-inline-panel,
-  [class*="product-layout-"] .layout-card {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+  [class*="product-layout-"],
+  [class*="product-layout-"] .layout-card,
+  [class*="product-layout-"].product-layout-horizontal,
+  [class*="product-layout-"].product-layout-rappi,
+  [class*="product-layout-"].product-layout-food {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  [class*="product-layout-"] {
+    will-change: auto;
+    transform: none;
   }
 }

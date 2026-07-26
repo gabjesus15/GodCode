@@ -72,6 +72,22 @@
   will-change: transform;
 }
 
+/* Móvil / sin GPU: el filter en capa fija cuesta mucho en Android Chrome. */
+@media (max-width: 768px) {
+  .tenant-shell-bg-layer {
+    filter: brightness(0.46) contrast(1.05) saturate(0.97);
+    will-change: auto;
+    transform: none;
+    inset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tenant-shell-bg-layer {
+    will-change: auto;
+  }
+}
+
 .tenant-shell-bg-layer.is-hidden {
   background-image: none;
   opacity: 0;

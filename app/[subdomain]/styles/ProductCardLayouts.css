@@ -13,10 +13,13 @@
  * ------------------------------------------------------------------------- */
 
 /* GPU layer for all layout cards — prevents scroll-jank caused by the
-   animated background. Creates an independent compositing layer. */
-[class*="product-layout-"] {
-  will-change: transform;
-  transform: translateZ(0);
+   animated background. Creates an independent compositing layer.
+   En móvil se desactiva (ProductCard.css @768px): demasiadas capas en Android. */
+@media (min-width: 769px) {
+  [class*="product-layout-"] {
+    will-change: transform;
+    transform: translateZ(0);
+  }
 }
 
 .product-card-media {

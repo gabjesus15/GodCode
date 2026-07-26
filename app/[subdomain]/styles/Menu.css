@@ -246,6 +246,37 @@
     box-shadow: none;
 }
 
+/* Low-end / Android débil: sin backdrop-filter (el mayor coste al scrollear). */
+.page-wrapper.low-end-device .navbar-sticky,
+.page-wrapper.low-end-device .product-card,
+.page-wrapper.low-end-device [class*="product-layout-"],
+.page-wrapper.low-end-device .sidebar-categories,
+.page-wrapper.low-end-device .mega-menu-overlay,
+.page-wrapper.low-end-device .bottom-floating-navbar {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+.page-wrapper.low-end-device [class*="product-layout-"] {
+    will-change: auto !important;
+    transform: none !important;
+}
+
+/* Móvil: navbar fijo sin blur (mismo patrón que bottom nav). iOS/PC desktop siguen con glass. */
+@media (max-width: 768px) {
+    .navbar-sticky {
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+        background: rgba(12, 12, 14, 0.94) !important;
+    }
+
+    .fire-icon {
+        animation: none;
+        will-change: auto;
+        filter: none;
+    }
+}
+
 section {
     scroll-behavior: auto;
     overflow-anchor: none;
