@@ -28,6 +28,7 @@
   position: absolute;
   inset: 0;
   z-index: 1;
+  pointer-events: none;
   background: linear-gradient(
     105deg,
     rgba(255, 255, 255, 0.03) 0%,
@@ -37,10 +38,15 @@
   background-size: 220% 100%;
   animation: layout-shimmer 1.4s ease-in-out infinite;
 }
+/* No usar opacity:0 en la img: Safari iOS puede no disparar la descarga/lazy-load. */
 .product-card-media__img {
-  opacity: 0;
-  transition: opacity 0.3s ease, transform 0.5s ease;
-  will-change: opacity, transform;
+  opacity: 1;
+  transition: transform 0.5s ease;
+  will-change: transform;
+}
+.product-card-media__img.is-loading {
+  /* visible para el motor de layout/red; el skeleton tapa visualmente */
+  opacity: 1;
 }
 .product-card-media__img.is-loaded {
   opacity: 1;

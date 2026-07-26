@@ -6,6 +6,7 @@ import { ShoppingBag } from "lucide-react";
 
 import { useCartStore } from "../cart/cart-store";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
+import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import {
 	TenantBadge,
 	TenantButton,
@@ -214,9 +215,23 @@ export const ProductCardImage = React.memo(function ProductCardImage({
   objectFit = "cover",
   objectPosition = "center",
 }: ProductCardImageProps) {
-  const handleLoadingComplete = useCallback(() => {
-    onLoaded();
-  }, [onLoaded]);
+  const onLoadedRef = React.useRef(onLoaded);
+  const onErrorRef = React.useRef(onError);
+  onLoadedRef.current = onLoaded;
+  onErrorRef.current = onError;
+
+  const markLoaded = useCallback(() => {
+    onLoadedRef.current();
+  }, []);
+
+  // Timeout de seguridad: si el evento no llega (Safari + lazy), quitar skeleton.
+  useEffect(() => {
+    if (loaded) return;
+    const timer = window.setTimeout(() => {
+      markLoaded();
+    }, 12_000);
+    return () => window.clearTimeout(timer);
+  }, [src, loaded, markLoaded]);
 
   return (
     <div className={`product-card-media ${className}`.trim()}>
@@ -230,9 +245,12 @@ export const ProductCardImage = React.memo(function ProductCardImage({
         quality={75}
         priority={priority}
         loading={priority ? "eager" : "lazy"}
-        onLoad={handleLoadingComplete}
-        onLoadingComplete={handleLoadingComplete}
-        onError={onError}
+        unoptimized={shouldUnoptimizeImageSrc(src)}
+        onLoad={markLoaded}
+        onLoadingComplete={(img) => {
+          if (img.naturalWidth > 0) markLoaded();
+        }}
+        onError={() => onErrorRef.current()}
         className={`product-card-media__img product-card-media__img--fill ${imageClassName} ${loaded ? "is-loaded" : "is-loading"}`.trim()}
         style={{ objectFit, objectPosition }}
       />

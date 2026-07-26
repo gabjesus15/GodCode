@@ -139,7 +139,7 @@ const GlassCard = React.memo(function GlassCard({ product, logic, priority = fal
       aria-label={`Ver detalles de ${product.name}`}
     >
       <div className={`product-image ${isBumping ? "bump-active" : ""}`}>
-        {!logic.imageLoaded ? <div className="skeleton-loader absolute inset-0" /> : null}
+        {!logic.imageLoaded ? <div className="skeleton-loader absolute inset-0 z-[1] pointer-events-none" /> : null}
         <Image
           key={logic.imageSrc}
           src={logic.imageSrc}
@@ -150,7 +150,7 @@ const GlassCard = React.memo(function GlassCard({ product, logic, priority = fal
           priority={priority}
           onLoad={() => logic.setImageLoaded(true)}
           onLoadingComplete={() => logic.setImageLoaded(true)}
-          className={!logic.imageLoaded ? "opacity-0" : "opacity-100 transition-opacity duration-500"}
+          className="opacity-100 transition-opacity duration-500"
           onError={() => logic.setImageError(true)}
         />
 
