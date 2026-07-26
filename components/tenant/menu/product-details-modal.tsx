@@ -42,6 +42,8 @@ export function ProductDetailsModal({
   const fillWidth = useTransform(x, (val) => `calc(130px + ${val}px)`);
 
   const logic = useProductCardLogic(product || ({} as ProductCardProduct), country);
+  // Misma regla que las cards: VE muestra precios en USD.
+  const effectiveShowUSD = showUSD || logic.showUSD;
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 0);
@@ -169,11 +171,11 @@ export function ProductDetailsModal({
               <span className="pdm-price">
                 {(() => {
                   const priceVal = product.discount_price || product.price;
-                  const primaryPriceStr = showUSD
+                  const primaryPriceStr = effectiveShowUSD
                     ? formatCartMoney(priceVal, "USD")
                     : formatCartMoney(priceVal, currency);
-                  if (exchangeRate && exchangeRate > 0 && !showUSD) {
-                    const localCode = (currency === "USD" || showUSD) ? "VES" : "USD";
+                  if (exchangeRate && exchangeRate > 0 && !effectiveShowUSD) {
+                    const localCode = currency === "USD" ? "VES" : "USD";
                     const convertedVal = priceVal * exchangeRate;
                     return `${primaryPriceStr} / ${formatCartMoney(convertedVal, localCode)}`;
                   }
