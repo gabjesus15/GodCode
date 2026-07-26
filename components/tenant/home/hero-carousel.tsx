@@ -6,7 +6,6 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TENANT_HERO_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
-import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 
 /** Misma duración que la barra de progreso (CSS) */
 const HERO_CAROUSEL_AUTOPLAY_MS = 4000;
@@ -41,10 +40,10 @@ function HeroSlide({
 						alt="Promoción"
 						fill
 						sizes="100vw"
-						quality={80}
 						priority={isFirst}
 						loading={isFirst ? "eager" : "lazy"}
-						unoptimized={shouldUnoptimizeImageSrc(fallbackUrl)}
+						// Carrusel: servir el archivo subido tal cual (sin recomprimir con next/image).
+						unoptimized
 						className="hero-slide-image"
 						style={{ objectFit: "cover" }}
 					/>
