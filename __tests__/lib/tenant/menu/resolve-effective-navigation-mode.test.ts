@@ -4,18 +4,15 @@ import { resolveEffectiveNavigationMode } from "@/lib/tenant/menu/resolve-effect
 
 describe("resolveEffectiveNavigationMode", () => {
 	it("respeta pagination configurado", () => {
-		expect(resolveEffectiveNavigationMode("pagination", 100, false)).toBe("pagination");
+		expect(resolveEffectiveNavigationMode("pagination")).toBe("pagination");
 	});
 
-	it("usa pagination en gama baja con catálogo largo", () => {
-		expect(resolveEffectiveNavigationMode("scroll", 40, true)).toBe("pagination");
+	it("usa scroll por defecto", () => {
+		expect(resolveEffectiveNavigationMode("scroll")).toBe("scroll");
 	});
 
-	it("mantiene scroll en gama baja con pocos productos", () => {
-		expect(resolveEffectiveNavigationMode("scroll", 12, true)).toBe("scroll");
-	});
-
-	it("mantiene scroll en flagship con catálogo largo", () => {
-		expect(resolveEffectiveNavigationMode("scroll", 80, false)).toBe("scroll");
+	it("trata valores desconocidos como scroll", () => {
+		expect(resolveEffectiveNavigationMode("")).toBe("scroll");
+		expect(resolveEffectiveNavigationMode("other")).toBe("scroll");
 	});
 });

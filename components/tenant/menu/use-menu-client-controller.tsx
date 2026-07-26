@@ -196,8 +196,8 @@ export function useMenuClientController(props: MenuClientProps) {
 		[productsByCategory, specialProducts.length, visibleCategories],
 	);
 	const effectiveNavigationMode = useMemo(
-		() => resolveEffectiveNavigationMode(navigationMode, catalogProductCount, isLowEnd),
-		[catalogProductCount, isLowEnd, navigationMode],
+		() => resolveEffectiveNavigationMode(navigationMode),
+		[navigationMode],
 	);
 	const useVirtualizedCatalog = shouldVirtualizeMenuCatalog(query, effectiveNavigationMode, catalogProductCount);
 
