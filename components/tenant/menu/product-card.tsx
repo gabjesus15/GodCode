@@ -141,6 +141,7 @@ const GlassCard = React.memo(function GlassCard({ product, logic, priority = fal
       <div className={`product-image ${isBumping ? "bump-active" : ""}`}>
         {!logic.imageLoaded ? <div className="skeleton-loader absolute inset-0" /> : null}
         <Image
+          key={logic.imageSrc}
           src={logic.imageSrc}
           alt={product.name ?? "Producto"}
           fill
@@ -148,6 +149,7 @@ const GlassCard = React.memo(function GlassCard({ product, logic, priority = fal
           quality={75}
           priority={priority}
           onLoad={() => logic.setImageLoaded(true)}
+          onLoadingComplete={() => logic.setImageLoaded(true)}
           className={!logic.imageLoaded ? "opacity-0" : "opacity-100 transition-opacity duration-500"}
           onError={() => logic.setImageError(true)}
         />

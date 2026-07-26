@@ -83,8 +83,12 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
   const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
   const quantity = useProductCartQuantity(product.id);
   const hydrated = useHydrated();
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
+  // Identidad de la imagen: evita race donde un reset async borra un onLoad ya disparado (caché).
+  const imageIdentity = `${product.id}::${product.image_url ?? ""}`;
+  const [loadedFor, setLoadedFor] = useState("");
+  const [errorFor, setErrorFor] = useState("");
+  const imageError = errorFor === imageIdentity;
+  const imageLoaded = loadedFor === imageIdentity;
   const getPrice = useCallback(
     (item: ProductCardProduct) => getProductSalePrice(item),
     [],
@@ -94,13 +98,15 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
     ? PRODUCT_CARD_FALLBACK_IMAGE
     : product.image_url || PRODUCT_CARD_FALLBACK_IMAGE;
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setImageLoaded(false);
-      setImageError(false);
-    }, 0);
-    return () => clearTimeout(t);
-  }, [product.id, product.image_url]);
+  const setImageLoaded = useCallback((_value: boolean | ((prev: boolean) => boolean) = true) => {
+    // Callers always mark loaded=true; identity mismatch already means "not loaded".
+    setLoadedFor(imageIdentity);
+  }, [imageIdentity]);
+
+  const setImageError = useCallback((_value: boolean | ((prev: boolean) => boolean) = true) => {
+    setErrorFor(imageIdentity);
+    setLoadedFor(imageIdentity); // quita skeleton aunque falle
+  }, [imageIdentity]);
 
   const handleAdd = useCallback(
     (e: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
@@ -131,6 +137,7 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
     imageError,
     setImageError,
     imageSrc,
+    imageIdentity,
     handleAdd,
     handleDecrease,
     showUSD,
@@ -207,10 +214,15 @@ export const ProductCardImage = React.memo(function ProductCardImage({
   objectFit = "cover",
   objectPosition = "center",
 }: ProductCardImageProps) {
+  const handleLoadingComplete = useCallback(() => {
+    onLoaded();
+  }, [onLoaded]);
+
   return (
     <div className={`product-card-media ${className}`.trim()}>
       {!loaded ? <div className="skeleton-loader product-card-media__skeleton" aria-hidden /> : null}
       <Image
+        key={src}
         src={src}
         alt={alt}
         fill
@@ -218,7 +230,8 @@ export const ProductCardImage = React.memo(function ProductCardImage({
         quality={75}
         priority={priority}
         loading={priority ? "eager" : "lazy"}
-        onLoad={onLoaded}
+        onLoad={handleLoadingComplete}
+        onLoadingComplete={handleLoadingComplete}
         onError={onError}
         className={`product-card-media__img product-card-media__img--fill ${imageClassName} ${loaded ? "is-loaded" : "is-loading"}`.trim()}
         style={{ objectFit, objectPosition }}
