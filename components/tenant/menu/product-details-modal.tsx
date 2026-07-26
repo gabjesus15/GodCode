@@ -124,16 +124,16 @@ export function ProductDetailsModal({
           </button>
         </div>
 
-        {/* Main Hero Image */}
+        {/* Main Hero Image — calidad completa solo aquí (cards del menú siguen optimizadas). */}
         <div className="pdm-hero">
           <Image
             src={imageSrc || PRODUCT_CARD_FALLBACK_IMAGE}
             alt={product.name || "Producto"}
             fill
             className="pdm-hero-img"
-            sizes="(max-width: 768px) 100vw, 500px"
-            quality={80}
+            sizes="100vw"
             priority
+            unoptimized
           />
         </div>
 
