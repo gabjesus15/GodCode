@@ -57,6 +57,8 @@ export type MenuClientViewProps = {
 	onlineOrderingEnabled?: boolean;
 	isLocationModalOpen: boolean;
 	onCloseLocationModal: () => void;
+	onGoHome?: () => void;
+	hasOpenBranches?: boolean;
 	modalBranches: BranchModalItem[];
 	allBranches: BranchInfo[];
 	onSelectBranch: (branch: BranchModalItem) => void;
@@ -119,6 +121,8 @@ export function MenuClientView(props: MenuClientViewProps) {
 		onlineOrderingEnabled,
 		isLocationModalOpen,
 		onCloseLocationModal,
+		onGoHome,
+		hasOpenBranches = true,
 		modalBranches,
 		allBranches,
 		onSelectBranch,
@@ -227,6 +231,8 @@ export function MenuClientView(props: MenuClientViewProps) {
 						allowClose={Boolean(selectedBranchId)}
 						schedule={businessSchedule ?? null}
 						businessName={businessName}
+						onGoHome={onGoHome}
+						allBranchesClosed={!hasOpenBranches && allBranches.length > 0}
 					/>
 				) : null}
 

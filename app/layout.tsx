@@ -96,9 +96,9 @@ export default async function RootLayout({
             <link rel="stylesheet" href="/fonts/custom-fonts.css" />
           </>
         ) : null}
-        <Script
+        {/* Script nativo: evita el warning de React 19 con next/script + beforeInteractive en <head>. */}
+        <script
           id="saas-theme-light-only"
-          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: LIGHT_ONLY_THEME_SCRIPT.trim() }}
         />
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />

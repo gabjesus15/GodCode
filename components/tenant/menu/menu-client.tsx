@@ -53,6 +53,8 @@ function MenuClientViewFromVm({
 				onlineOrderingEnabled={vm.onlineOrderingEnabled}
 				isLocationModalOpen={vm.isLocationModalOpen}
 				onCloseLocationModal={() => { if (vm.selectedBranchId) vm.setIsLocationModalOpen(false); }}
+				onGoHome={vm.goHomeFromMenu}
+				hasOpenBranches={vm.hasOpenBranches}
 				modalBranches={vm.modalBranches}
 				allBranches={vm.branches}
 				onSelectBranch={vm.handleBranchSelect}

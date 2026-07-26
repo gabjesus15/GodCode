@@ -240,14 +240,22 @@ export function useMenuClientController(props: MenuClientProps) {
 		else openCart?.();
 	}, [closeCart, isCartOpen, openCart]);
 
+	const isBranchSelectorMandatory = !isEmbeddedPreview && !selectedBranchId;
+
 	const menuOverlayDepth =
 		(isContactChannelSheetOpen ? 1 : 0)
 		+ (isContactBranchModalOpen ? 1 : 0)
 		+ (selectedProductDetails ? 1 : 0)
-		+ (isLocationModalOpen ? 1 : 0)
+		// Modal obligatorio sin sucursal: no pushState extra (1er atrás = home).
+		+ (isLocationModalOpen && !isBranchSelectorMandatory ? 1 : 0)
 		+ (isMegaMenuOpen ? 1 : 0);
 
 	useOverlayHistoryDepthSync(menuOverlayDepth, "menu-overlays");
+
+	const goHomeFromMenu = useCallback(() => {
+		if (isEmbeddedPreview || readEmbeddedPreviewFromLocation()) return;
+		router.replace(homePath);
+	}, [homePath, isEmbeddedPreview, router]);
 
 	useMenuOverlayHistory([
 		{
@@ -277,7 +285,8 @@ export function useMenuClientController(props: MenuClientProps) {
 		{
 			id: "branch-selector",
 			priority: TENANT_OVERLAY_PRIORITIES.branchSelector,
-			isOpen: isLocationModalOpen,
+			// Solo participa en overlay history cuando el usuario ya eligió sucursal.
+			isOpen: isLocationModalOpen && !isBranchSelectorMandatory,
 			onClose: () => setIsLocationModalOpen(false),
 		},
 		{
@@ -398,7 +407,7 @@ export function useMenuClientController(props: MenuClientProps) {
 			onOpenBranchModal={() => setIsLocationModalOpen(true)}
 			onBackHome={() => {
 				if (isEmbeddedPreview || readEmbeddedPreviewFromLocation()) return;
-				router.push(homePath);
+				router.replace(homePath);
 			}}
 			searchQuery={searchQuery}
 			searchExpanded={searchExpanded}
@@ -480,6 +489,8 @@ export function useMenuClientController(props: MenuClientProps) {
 		onlineOrderingEnabled,
 		isLocationModalOpen,
 		setIsLocationModalOpen,
+		goHomeFromMenu,
+		hasOpenBranches,
 		modalBranches,
 		branches,
 		handleBranchSelect,

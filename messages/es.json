@@ -101,7 +101,9 @@
           "openCashAnyBranch": "Abre la caja en el panel de administracion de alguna sucursal para habilitar compras.",
           "openCash": "Abre la caja en el panel de administracion para habilitar compras.",
           "openBadge": "ABIERTO",
-          "closedBadge": "CERRADO"
+          "closedBadge": "CERRADO",
+          "goHome": "Volver al inicio",
+          "allBranchesClosed": "Ningun local esta recibiendo pedidos ahora"
         },
         "contactBranch": {
           "title": "Elige tu Sucursal",

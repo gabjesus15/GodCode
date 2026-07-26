@@ -101,7 +101,9 @@
           "openCashAnyBranch": "Open the register in the admin panel of any branch to enable orders.",
           "openCash": "Open the register in the admin panel to enable orders.",
           "openBadge": "OPEN",
-          "closedBadge": "CLOSED"
+          "closedBadge": "CLOSED",
+          "goHome": "Back to home",
+          "allBranchesClosed": "No locations are taking orders right now"
         },
         "contactBranch": {
           "title": "Choose your branch",

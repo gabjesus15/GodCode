@@ -58,6 +58,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
       { protocol: "https", hostname: "fonts.gstatic.com", pathname: "/**" },
+      // Logos/branding legacy aún en theme_config (migración a Storage pendiente).
+      { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },
       ...(supabaseStoragePattern ? [supabaseStoragePattern] : []),
     ],
   },
