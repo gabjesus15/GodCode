@@ -28,15 +28,25 @@ describe("apply-theme-css-vars", () => {
 		expect(css).not.toContain("menu-pattern");
 	});
 
-	it("shows natural background image colors when color opacity is 0", () => {
+	it("shows natural background brightness without changing pattern size when color opacity is 0", () => {
 		const css = buildTenantThemeCssString({
 			backgroundColor: "rgba(10, 10, 10, 0)",
 			backgroundImageUrl: "https://supabase.ghamnas.online/storage/v1/object/public/menu/company/bg.jpg",
 		});
 		expect(css).toContain("--tenant-bg-layer-opacity:1");
-		expect(css).toContain("--tenant-bg-size:cover");
-		expect(css).toContain("--tenant-bg-repeat:no-repeat");
-		expect(css).toContain("--tenant-bg-layer-filter:none");
+		expect(css).toContain("--tenant-bg-size:1200px");
+		expect(css).toContain("--tenant-bg-repeat:repeat");
+		expect(css).toContain("brightness(1)");
+		expect(css).not.toContain("--tenant-bg-size:cover");
+	});
+
+	it("applies custom background brightness", () => {
+		const css = buildTenantThemeCssString({
+			backgroundColor: "rgba(10, 10, 10, 0)",
+			backgroundBrightness: 1.25,
+			backgroundImageUrl: "https://supabase.ghamnas.online/storage/v1/object/public/menu/company/bg.jpg",
+		});
+		expect(css).toContain("brightness(1.25)");
 	});
 
 	it("preserves background color opacity as rgba", () => {

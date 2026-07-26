@@ -17,6 +17,7 @@ export const STORE_THEME_FIELD_LABELS: Record<keyof StoreThemeConfig, string> = 
   discountColor: "Color descuento",
   hoverColor: "Color hover",
   backgroundColor: "Color fondo",
+  backgroundBrightness: "Brillo del fondo",
   backgroundImageUrl: "URL de fondo",
   logoUrl: "URL de logo",
   navbarType: "Tipo de Navbar",
@@ -33,6 +34,7 @@ export const DEFAULT_STORE_THEME: StoreThemeConfig = {
   discountColor: "#25d366",
   hoverColor: "#ff2e40",
   backgroundColor: "#0a0a0a",
+  backgroundBrightness: null,
   backgroundImageUrl: "",
   logoUrl: "",
   navbarType: "category-tabs",
@@ -50,7 +52,7 @@ export const STORE_THEME_COLOR_HELPERS: Record<
   priceColor: "Color del precio destacado en cards de producto.",
   discountColor: "Color de badges de descuento y ahorro.",
   hoverColor: "Color al pasar mouse sobre CTA y acciones.",
-  backgroundColor: "Fondo base del menú. A 0% de opacidad se quita el tint y la imagen de fondo se ve a color natural.",
+  backgroundColor: "Fondo base del menú. A 0% se quita el tint; el patrón mantiene su formato. Ajustá el brillo aparte.",
 };
 
 export const STORE_THEME_TEMPLATES: Array<{

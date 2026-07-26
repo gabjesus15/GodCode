@@ -128,13 +128,31 @@ export type ResolvedThemeColors = {
 	cardBorder: string;
 };
 
-/** Modo patrón oscuro sobre color sólido (comportamiento histórico). */
-const BG_LAYER_FILTER_TINTED =
-	"blur(0.875px) brightness(0.46) contrast(1.05) saturate(0.97)";
-const BG_LAYER_FILTER_NATURAL = "none";
+/** Modo patrón sobre color sólido (comportamiento histórico). */
+const BG_BRIGHTNESS_TINTED_DEFAULT = 0.46;
+const BG_BRIGHTNESS_NATURAL_DEFAULT = 1;
 
 function resolveOptimizedBackgroundImageUrl(rawBackgroundImageUrl: string): string {
 	return rawBackgroundImageUrl;
+}
+
+function resolveBackgroundBrightness(
+	theme: Partial<StoreThemeConfig>,
+	naturalBackground: boolean,
+): number {
+	const raw = theme.backgroundBrightness;
+	if (typeof raw === "number" && Number.isFinite(raw)) {
+		return Math.min(1.8, Math.max(0.2, raw));
+	}
+	return naturalBackground ? BG_BRIGHTNESS_NATURAL_DEFAULT : BG_BRIGHTNESS_TINTED_DEFAULT;
+}
+
+function buildBackgroundLayerFilter(brightness: number, naturalBackground: boolean): string {
+	const b = Math.round(brightness * 100) / 100;
+	if (naturalBackground) {
+		return `brightness(${b})`;
+	}
+	return `blur(0.875px) brightness(${b}) contrast(1.05) saturate(0.97)`;
 }
 
 export function resolveThemeColors(theme: Partial<StoreThemeConfig>): ResolvedThemeColors {
@@ -151,22 +169,17 @@ export function resolveThemeColors(theme: Partial<StoreThemeConfig>): ResolvedTh
 		: "";
 	const backgroundImage = optimizedBackground ? `url(${optimizedBackground})` : "none";
 
-	// Sin tint de color (opacidad ~0): mostrar la imagen de fondo a color natural.
+	// Sin tint de color: imagen a pleno; se mantiene el mismo tamaño/tile del patrón.
 	const naturalBackground = Boolean(optimizedBackground) && backgroundParsed.alpha <= 0.08;
+	const brightness = resolveBackgroundBrightness(theme, naturalBackground);
 	const backgroundLayerOpacity = !optimizedBackground
 		? "0"
 		: naturalBackground
 			? "1"
 			: "0.38";
-	const backgroundSize = !optimizedBackground
-		? "auto"
-		: naturalBackground
-			? "cover"
-			: "1200px";
-	const backgroundRepeat = naturalBackground ? "no-repeat" : "repeat";
-	const backgroundLayerFilter = naturalBackground
-		? BG_LAYER_FILTER_NATURAL
-		: BG_LAYER_FILTER_TINTED;
+	const backgroundSize = optimizedBackground ? "1200px" : "auto";
+	const backgroundRepeat = "repeat";
+	const backgroundLayerFilter = buildBackgroundLayerFilter(brightness, naturalBackground);
 
 	return {
 		primaryColor,

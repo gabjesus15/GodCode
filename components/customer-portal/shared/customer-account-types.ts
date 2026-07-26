@@ -345,6 +345,8 @@ export type StoreThemeConfig = {
   discountColor: string;
   hoverColor: string;
   backgroundColor: string;
+  /** Brillo de la imagen de fondo (0.2–1.8). `null` = automático según opacidad del color. */
+  backgroundBrightness: number | null;
   backgroundImageUrl: string;
   logoUrl: string;
   navbarType?: string;

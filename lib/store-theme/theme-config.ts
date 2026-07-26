@@ -80,6 +80,13 @@ export function productCardGridClass(cardStyle: unknown): string {
   return `grid-${normalizeProductCardStyle(cardStyle)}`;
 }
 
+export function normalizeBackgroundBrightness(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return null;
+  return Math.min(1.8, Math.max(0.2, Math.round(n * 100) / 100));
+}
+
 export function normalizeStoreThemeConfig(
   input: unknown,
   fallbackName = "",
@@ -98,6 +105,9 @@ export function normalizeStoreThemeConfig(
     discountColor: String(value.discountColor ?? defaults.discountColor),
     hoverColor: String(value.hoverColor ?? defaults.hoverColor),
     backgroundColor: String(value.backgroundColor ?? defaults.backgroundColor),
+    backgroundBrightness: normalizeBackgroundBrightness(
+      value.backgroundBrightness ?? defaults.backgroundBrightness,
+    ),
     backgroundImageUrl: String(value.backgroundImageUrl ?? defaults.backgroundImageUrl),
     logoUrl: String(value.logoUrl ?? defaults.logoUrl),
     navbarType: normalizeNavbarType(value.navbarType ?? defaults.navbarType),

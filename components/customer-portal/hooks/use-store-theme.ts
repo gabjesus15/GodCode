@@ -336,7 +336,7 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
   const restoreStoreThemeColorsFromProduction = () => {
     if (!storeThemeDraft || !storeThemePublished) return;
     setStoreThemeError(null);
-    setStoreThemeDraft((prev) => prev ? { ...prev, primaryColor: storeThemePublished.primaryColor, secondaryColor: storeThemePublished.secondaryColor, priceColor: storeThemePublished.priceColor, discountColor: storeThemePublished.discountColor, hoverColor: storeThemePublished.hoverColor, backgroundColor: storeThemePublished.backgroundColor } : prev);
+    setStoreThemeDraft((prev) => prev ? { ...prev, primaryColor: storeThemePublished.primaryColor, secondaryColor: storeThemePublished.secondaryColor, priceColor: storeThemePublished.priceColor, discountColor: storeThemePublished.discountColor, hoverColor: storeThemePublished.hoverColor, backgroundColor: storeThemePublished.backgroundColor, backgroundBrightness: storeThemePublished.backgroundBrightness } : prev);
     setStoreThemeHasUnpublished(true);
     setStoreThemeOk("Colores restaurados desde produccion. Guarda borrador para conservarlos.");
   };

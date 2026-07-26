@@ -415,29 +415,66 @@ export function AccountTiendaTab({
                         </span>
                       </div>
                       {isBackground ? (
-                        <div className="flex items-center gap-2">
-                          <span className="shrink-0 text-[10px] text-[#a1a1a6]">Opacidad</span>
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            step={1}
-                            value={opacityPct}
-                            onChange={(e) => {
-                              const nextAlpha = Number(e.target.value) / 100;
-                              setStoreThemeDraft((prev) => {
-                                if (!prev) return prev;
-                                const { hex } = parseThemeColor(prev.backgroundColor);
-                                return { ...prev, backgroundColor: formatThemeColor(hex, nextAlpha) };
-                              });
-                            }}
-                            className="h-1.5 w-full cursor-pointer accent-indigo-500"
-                            aria-label="Opacidad del color de fondo"
-                          />
-                          <span className="w-10 shrink-0 text-right font-mono text-[10px] text-[#6e6e73]">
-                            {opacityPct}%
-                          </span>
-                        </div>
+                        <>
+                          <div className="flex items-center gap-2">
+                            <span className="shrink-0 text-[10px] text-[#a1a1a6]">Opacidad</span>
+                            <input
+                              type="range"
+                              min={0}
+                              max={100}
+                              step={1}
+                              value={opacityPct}
+                              onChange={(e) => {
+                                const nextAlpha = Number(e.target.value) / 100;
+                                setStoreThemeDraft((prev) => {
+                                  if (!prev) return prev;
+                                  const { hex } = parseThemeColor(prev.backgroundColor);
+                                  return { ...prev, backgroundColor: formatThemeColor(hex, nextAlpha) };
+                                });
+                              }}
+                              className="h-1.5 w-full cursor-pointer accent-indigo-500"
+                              aria-label="Opacidad del color de fondo"
+                            />
+                            <span className="w-10 shrink-0 text-right font-mono text-[10px] text-[#6e6e73]">
+                              {opacityPct}%
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="shrink-0 text-[10px] text-[#a1a1a6]">Brillo</span>
+                            <input
+                              type="range"
+                              min={20}
+                              max={180}
+                              step={1}
+                              value={Math.round(
+                                (storeThemeDraft.backgroundBrightness
+                                  ?? (opacityPct <= 8 ? 1 : 0.46)) * 100,
+                              )}
+                              onChange={(e) => {
+                                const next = Number(e.target.value) / 100;
+                                setStoreThemeDraft((prev) =>
+                                  prev
+                                    ? {
+                                        ...prev,
+                                        backgroundBrightness: Math.min(
+                                          1.8,
+                                          Math.max(0.2, Math.round(next * 100) / 100),
+                                        ),
+                                      }
+                                    : prev,
+                                );
+                              }}
+                              className="h-1.5 w-full cursor-pointer accent-indigo-500"
+                              aria-label="Brillo de la imagen de fondo"
+                            />
+                            <span className="w-10 shrink-0 text-right font-mono text-[10px] text-[#6e6e73]">
+                              {Math.round(
+                                (storeThemeDraft.backgroundBrightness
+                                  ?? (opacityPct <= 8 ? 1 : 0.46)) * 100,
+                              )}%
+                            </span>
+                          </div>
+                        </>
                       ) : null}
                     </div>
                     <p className="mt-1 text-[10px] text-[#a1a1a6]">{STORE_THEME_COLOR_HELPERS[key]}</p>
