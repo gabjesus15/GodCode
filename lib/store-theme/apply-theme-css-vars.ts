@@ -8,6 +8,78 @@ export function sanitizeHexColor(value: string | undefined, fallback: string): s
 	return fallback;
 }
 
+/** Normaliza #RGB / #RRGGBB a #rrggbb. */
+function expandHex6(hex: string, fallback: string): string {
+	const normalized = String(hex ?? "").trim();
+	const short = /^#([a-fA-F0-9]{3})$/.exec(normalized);
+	if (short) {
+		return `#${short[1].split("").map((c) => c + c).join("").toLowerCase()}`;
+	}
+	const long = /^#([a-fA-F0-9]{6})$/.exec(normalized);
+	if (long) return `#${long[1].toLowerCase()}`;
+	return sanitizeHexColor(fallback, "#0a0a0a");
+}
+
+/**
+ * Parsea hex / rgba / transparent a RGB + alpha.
+ * Usado por el color de fondo (permite opacidad 0 = sin tint).
+ */
+export function parseThemeColor(
+	value: string | undefined,
+	fallbackHex = "#0a0a0a",
+): { hex: string; alpha: number } {
+	const raw = String(value ?? "").trim();
+	const fallback = expandHex6(fallbackHex, "#0a0a0a");
+	if (!raw) return { hex: fallback, alpha: 1 };
+
+	if (raw.toLowerCase() === "transparent") {
+		return { hex: fallback, alpha: 0 };
+	}
+
+	const rgba = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*([0-9]*\.?[0-9]+))?\s*\)$/i.exec(raw);
+	if (rgba) {
+		const r = Math.min(255, Math.max(0, Number(rgba[1])));
+		const g = Math.min(255, Math.max(0, Number(rgba[2])));
+		const b = Math.min(255, Math.max(0, Number(rgba[3])));
+		const alphaRaw = rgba[4] != null ? Number(rgba[4]) : 1;
+		const alpha = Number.isFinite(alphaRaw) ? Math.min(1, Math.max(0, alphaRaw)) : 1;
+		const hex = `#${[r, g, b].map((n) => n.toString(16).padStart(2, "0")).join("")}`;
+		return { hex, alpha };
+	}
+
+	const hexMatch = /^#([a-fA-F0-9]{3}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})$/.exec(raw);
+	if (hexMatch) {
+		let h = hexMatch[1];
+		if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+		if (h.length === 8) {
+			const alpha = Number.parseInt(h.slice(6, 8), 16) / 255;
+			return {
+				hex: `#${h.slice(0, 6).toLowerCase()}`,
+				alpha: Number.isFinite(alpha) ? alpha : 1,
+			};
+		}
+		return { hex: `#${h.toLowerCase()}`, alpha: 1 };
+	}
+
+	return { hex: fallback, alpha: 1 };
+}
+
+/** Serializa color de tema: hex sólido o `rgba(...)` (incluye alpha 0). */
+export function formatThemeColor(hex: string, alpha: number): string {
+	const a = Math.min(1, Math.max(0, Number.isFinite(alpha) ? alpha : 1));
+	const solid = expandHex6(hex, "#0a0a0a");
+	if (a >= 0.995) return solid;
+	return hexToRgba(solid, Math.round(a * 1000) / 1000, solid);
+}
+
+export function sanitizeThemeBackgroundColor(
+	value: string | undefined,
+	fallback = "#0a0a0a",
+): string {
+	const parsed = parseThemeColor(value, fallback);
+	return formatThemeColor(parsed.hex, parsed.alpha);
+}
+
 export function sanitizeThemeImageUrl(value: string | undefined): string {
 	const normalized = String(value ?? "").trim();
 	if (!normalized) return "";
@@ -64,7 +136,7 @@ export function resolveThemeColors(theme: Partial<StoreThemeConfig>): ResolvedTh
 	const priceColor = sanitizeHexColor(theme.priceColor, "#ff4757");
 	const discountColor = sanitizeHexColor(theme.discountColor, "#25d366");
 	const hoverColor = sanitizeHexColor(theme.hoverColor, "#ff2e40");
-	const backgroundColor = sanitizeHexColor(theme.backgroundColor, "#0a0a0a");
+	const backgroundColor = sanitizeThemeBackgroundColor(theme.backgroundColor, "#0a0a0a");
 	const rawBackgroundImageUrl = sanitizeThemeImageUrl(theme.backgroundImageUrl);
 	const optimizedBackground = rawBackgroundImageUrl
 		? resolveOptimizedBackgroundImageUrl(rawBackgroundImageUrl)

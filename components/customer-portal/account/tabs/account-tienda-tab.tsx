@@ -7,6 +7,7 @@ import Image from "next/image";
 
 import { STORE_THEME_COLOR_FIELDS, STORE_THEME_COLOR_HELPERS, STORE_THEME_TEMPLATES } from "../../shared/customer-account-store-theme-constants";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
+import { formatThemeColor, parseThemeColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { StoreThemePreviewPanel } from "../../store-theme/store-theme-preview-panel";
 import {
   StoreThemeNavbarPicker,
@@ -378,21 +379,71 @@ export function AccountTiendaTab({
                 </Button>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                {storeThemeDraft && STORE_THEME_COLOR_FIELDS.map(([key, label]) => (
+                {storeThemeDraft && STORE_THEME_COLOR_FIELDS.map(([key, label]) => {
+                  const isBackground = key === "backgroundColor";
+                  const parsedBg = isBackground
+                    ? parseThemeColor(storeThemeDraft.backgroundColor)
+                    : null;
+                  const colorInputValue = isBackground
+                    ? parsedBg!.hex
+                    : storeThemeDraft[key];
+                  const opacityPct = isBackground
+                    ? Math.round((parsedBg?.alpha ?? 1) * 100)
+                    : 100;
+
+                  return (
                   <label key={key} className="block text-xs font-medium text-[#6e6e73]">
                     {label}
-                    <div className="mt-1.5 flex items-center gap-2 rounded-xl border border-[#d2d2d7] bg-white px-3 py-2">
-                      <input
-                        type="color"
-                        value={storeThemeDraft[key]}
-                        onChange={(e) => setStoreThemeDraft((prev) => prev ? { ...prev, [key]: e.target.value } : prev)}
-                        className="h-8 w-10 cursor-pointer rounded-md border border-[#d2d2d7] bg-transparent"
-                      />
-                      <span className="font-mono text-xs text-[#6e6e73]">{storeThemeDraft[key]}</span>
+                    <div className="mt-1.5 flex flex-col gap-2 rounded-xl border border-[#d2d2d7] bg-white px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={/^#[a-fA-F0-9]{6}$/.test(colorInputValue) ? colorInputValue : "#0a0a0a"}
+                          onChange={(e) => {
+                            const nextHex = e.target.value;
+                            setStoreThemeDraft((prev) => {
+                              if (!prev) return prev;
+                              if (!isBackground) return { ...prev, [key]: nextHex };
+                              const alpha = parseThemeColor(prev.backgroundColor).alpha;
+                              return { ...prev, backgroundColor: formatThemeColor(nextHex, alpha) };
+                            });
+                          }}
+                          className="h-8 w-10 cursor-pointer rounded-md border border-[#d2d2d7] bg-transparent"
+                        />
+                        <span className="font-mono text-xs text-[#6e6e73]">
+                          {isBackground ? storeThemeDraft.backgroundColor : storeThemeDraft[key]}
+                        </span>
+                      </div>
+                      {isBackground ? (
+                        <div className="flex items-center gap-2">
+                          <span className="shrink-0 text-[10px] text-[#a1a1a6]">Opacidad</span>
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            step={1}
+                            value={opacityPct}
+                            onChange={(e) => {
+                              const nextAlpha = Number(e.target.value) / 100;
+                              setStoreThemeDraft((prev) => {
+                                if (!prev) return prev;
+                                const { hex } = parseThemeColor(prev.backgroundColor);
+                                return { ...prev, backgroundColor: formatThemeColor(hex, nextAlpha) };
+                              });
+                            }}
+                            className="h-1.5 w-full cursor-pointer accent-indigo-500"
+                            aria-label="Opacidad del color de fondo"
+                          />
+                          <span className="w-10 shrink-0 text-right font-mono text-[10px] text-[#6e6e73]">
+                            {opacityPct}%
+                          </span>
+                        </div>
+                      ) : null}
                     </div>
                     <p className="mt-1 text-[10px] text-[#a1a1a6]">{STORE_THEME_COLOR_HELPERS[key]}</p>
                   </label>
-                ))}
+                  );
+                })}
               </div>
             </Card>
 

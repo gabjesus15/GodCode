@@ -26,4 +26,17 @@ describe("apply-theme-css-vars", () => {
 		expect(css).toContain("--tenant-bg-repeat:repeat");
 		expect(css).not.toContain("menu-pattern");
 	});
+
+	it("preserves background color opacity as rgba", () => {
+		const faded = buildTenantThemeCssString({
+			backgroundColor: "rgba(10, 10, 10, 0.4)",
+		});
+		expect(faded).toContain("rgba(10, 10, 10, 0.4)");
+
+		const clear = buildTenantThemeCssString({
+			backgroundColor: "rgba(10, 10, 10, 0)",
+		});
+		expect(clear).toContain("rgba(10, 10, 10, 0)");
+		expect(clear).toContain("--bg-primary:rgba(10, 10, 10, 0)");
+	});
 });

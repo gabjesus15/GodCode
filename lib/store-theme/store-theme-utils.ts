@@ -5,18 +5,17 @@
 
 import { STORE_THEME_FIELD_LABELS } from "@/components/customer-portal/shared/customer-account-store-theme-constants";
 import type { StoreThemeAssetField, StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import { parseThemeColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 
 // ─── Color math ──────────────────────────────────────────────────────────────
 
 export function hexToRgb(hex: string): [number, number, number] | null {
-  const normalized = String(hex ?? "").trim();
-  const shortMatch = /^#([a-fA-F0-9]{3})$/.exec(normalized);
-  const longMatch  = /^#([a-fA-F0-9]{6})$/.exec(normalized);
-  const expanded   = shortMatch
-    ? shortMatch[1].split("").map((ch) => ch + ch).join("")
-    : longMatch ? longMatch[1] : null;
-  if (!expanded) return null;
+  const parsed = parseThemeColor(hex);
+  // Fondo transparente: no hay contraste útil contra el color.
+  if (parsed.alpha < 0.05) return null;
+  const expanded = parsed.hex.slice(1);
+  if (expanded.length !== 6) return null;
   return [
     Number.parseInt(expanded.slice(0, 2), 16),
     Number.parseInt(expanded.slice(2, 4), 16),
