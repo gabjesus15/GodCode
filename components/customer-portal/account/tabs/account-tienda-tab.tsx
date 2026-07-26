@@ -6,6 +6,7 @@ import { CheckCircle2, ChevronDown, Download, History, Upload, XCircle } from "l
 import Image from "next/image";
 
 import { STORE_THEME_COLOR_FIELDS, STORE_THEME_COLOR_HELPERS, STORE_THEME_TEMPLATES } from "../../shared/customer-account-store-theme-constants";
+import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { StoreThemePreviewPanel } from "../../store-theme/store-theme-preview-panel";
 import {
   StoreThemeNavbarPicker,
@@ -424,7 +425,7 @@ export function AccountTiendaTab({
                           </div>
                           {previewUrl ? (
                             <div className="relative mb-2 h-24 w-full overflow-hidden rounded-lg border border-[#e5e5ea]">
-                              <Image src={previewUrl} alt={`Vista previa ${title}`} fill sizes="(max-width: 640px) 100vw, 380px" className="object-cover" unoptimized />
+                              <Image src={previewUrl} alt={`Vista previa ${title}`} fill sizes="(max-width: 640px) 100vw, 380px" className="object-cover" quality={75} unoptimized={shouldUnoptimizeImageSrc(previewUrl)} />
                             </div>
                           ) : (
                             <div className="mb-2 flex h-24 items-center justify-center rounded-lg border border-dashed border-[#d2d2d7] bg-[#fbfbfd] text-xs text-[#a1a1a6]">

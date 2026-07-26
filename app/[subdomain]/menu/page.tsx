@@ -361,10 +361,13 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
       }
     }
 
-    const heroBanners = heroBannerRows.map((row) => ({
-      id: row.id,
-      image_url: row.image_url.trim(),
-    }));
+    const heroBanners = heroBannerRows
+      .map((row) => {
+        const resolved = resolveMenuImageUrl(row.image_url) ?? row.image_url.trim();
+        if (!resolved) return null;
+        return { id: row.id, image_url: resolved };
+      })
+      .filter((row): row is { id: string; image_url: string } => Boolean(row));
 
     // --- G. Casteo seguro de JSONB (Evita warnings silenciosos) ---
     const storedTheme = normalizeStoreThemeConfig(company.theme_config, company.name ?? "GodCode");

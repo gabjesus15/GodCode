@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { Settings, QrCode } from "lucide-react";
 import Image from "next/image";
+import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 
 import { LazyContactBranchModal } from "@/lib/tenant/lazy/tenant-dynamic";
 import { getAppUrl } from "@/lib/tenant/app-url";
@@ -301,9 +302,11 @@ export function HomeClient(props: HomeClientProps) {
                     className="home-logo-centered"
                     width={106}
                     height={106}
+                    quality={80}
                     onError={() => setLogoError(true)}
                     loading="eager"
-                    unoptimized
+                    priority
+                    unoptimized={shouldUnoptimizeImageSrc(logoUrl)}
                   />
                 ) : (
                   <div

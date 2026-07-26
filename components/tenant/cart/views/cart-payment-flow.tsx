@@ -2,6 +2,7 @@
 
 import type React from "react";
 import Image from "next/image";
+import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { ArrowLeft, CheckCircle2, MessageCircle, Store, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -179,7 +180,7 @@ export function CartPaymentFlow({
                       alt={t("payment.fields.receipt")}
                       width={40}
                       height={40}
-                      unoptimized
+                      unoptimized={shouldUnoptimizeImageSrc(formData.receiptPreview)}
                     />
                     <span>{t("payment.fields.imageLoaded")}</span>
                   </div>

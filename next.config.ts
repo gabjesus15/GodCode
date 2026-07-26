@@ -21,7 +21,8 @@ const supabaseStoragePattern = (() => {
       protocol: url.protocol.slice(0, -1) as "http" | "https",
       hostname: url.hostname,
       port: url.port,
-      pathname: `${basePath}/storage/v1/object/public/menu/**`,
+      // public + signed URLs del bucket menu (productos, branding, uploads)
+      pathname: `${basePath}/storage/v1/object/**`,
     };
   } catch {
     return null;
@@ -50,12 +51,13 @@ const nextConfig: NextConfig = {
     ],
   },
   images: {
-    // Menú: next/image redimensiona según `sizes` (WebP/AVIF) en vez de servir PNG/JPEG originales de Storage.
+    // next/image: WebP/AVIF + resize según sizes (menú, hero, logos, landing).
     formats: ["image/avif", "image/webp"],
     qualities: [70, 75, 80, 92, 95],
     minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
+      { protocol: "https", hostname: "fonts.gstatic.com", pathname: "/**" },
       ...(supabaseStoragePattern ? [supabaseStoragePattern] : []),
     ],
   },

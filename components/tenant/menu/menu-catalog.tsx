@@ -4,6 +4,7 @@ import { memo, useEffect, useMemo } from "react";
 import Image from "next/image";
 
 import { FIRE_ICON, isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
+import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { buildPriorityProductIdSet } from "@/lib/tenant/images/resolve-product-priority";
 import { useMenuPerfProfile } from "@/lib/tenant/menu/menu-perf-context";
 import { collectCatalogProductIdsInRenderOrder } from "@/lib/tenant/menu/collect-catalog-product-ids";
@@ -162,7 +163,7 @@ export const MenuCatalog = memo(function MenuCatalog({
 			{(navigationMode === "pagination" ? activeCategory === "special" : true) && specialProducts.length > 0 ? (
 				<section id="section-special" className="category-section">
 					<h2 className="category-title">
-						<Image src={FIRE_ICON} className="category-icon" alt="🔥" width={24} height={24} unoptimized />
+						<Image src={FIRE_ICON} className="category-icon" alt="🔥" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
 						Solo por hoy
 					</h2>
 					<ProductGrid products={specialProducts} {...gridProps} />
@@ -179,7 +180,7 @@ export const MenuCatalog = memo(function MenuCatalog({
 								{isPromocionesCategoryName(category.name) ? (
 									<>
 										{category.name}
-										<Image src={FIRE_ICON} className="category-icon" alt="🔥" width={24} height={24} unoptimized />
+										<Image src={FIRE_ICON} className="category-icon" alt="🔥" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
 									</>
 								) : (
 									category.name

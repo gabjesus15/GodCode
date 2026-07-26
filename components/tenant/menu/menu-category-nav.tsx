@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ChevronDown, Compass, Grid, MapPin, X } from "lucide-react";
 
 import { isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
+import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { Navbar } from "../navbar/navbar";
 import type { BranchInfo, CategoryListItem } from "./menu-types";
 
@@ -75,8 +76,11 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 						className="sidebar-logo"
 						width={44}
 						height={44}
+						quality={75}
 						onError={onLogoError}
-						unoptimized
+						unoptimized={shouldUnoptimizeImageSrc(
+							logoError ? "/tenant/logo-placeholder.svg" : logoUrl || "/tenant/logo-placeholder.svg",
+						)}
 					/>
 					<div className="sidebar-brand-info">
 						<h3 className="sidebar-brand-title">{displayName}</h3>
@@ -214,7 +218,14 @@ export const CategoryTabsNav = memo(function CategoryTabsNav({
 						id: "special",
 						name: (
 							<span className="flex items-center gap-1.5">
-								<Image src={fireIcon} className="fire-inline-icon" alt="🔥" width={16} height={16} unoptimized />
+								<Image
+									src={fireIcon}
+									className="fire-inline-icon"
+									alt="🔥"
+									width={16}
+									height={16}
+									unoptimized={shouldUnoptimizeImageSrc(fireIcon)}
+								/>
 								<span>Solo por hoy</span>
 							</span>
 						),
@@ -227,7 +238,15 @@ export const CategoryTabsNav = memo(function CategoryTabsNav({
 						name: (
 							<span className="flex items-center gap-1.5">
 								{catIcon && (
-									<Image src={catIcon} alt="" width={16} height={16} className="tab-item-icon-img" unoptimized />
+									<Image
+										src={catIcon}
+										alt=""
+										width={16}
+										height={16}
+										className="tab-item-icon-img"
+										quality={70}
+										unoptimized={shouldUnoptimizeImageSrc(catIcon)}
+									/>
 								)}
 								<span>{cat.name}</span>
 							</span>

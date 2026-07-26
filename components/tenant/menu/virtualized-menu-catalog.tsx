@@ -5,6 +5,7 @@ import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import Image from "next/image";
 
 import { FIRE_ICON, isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
+import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import type { MenuCatalogScrollController } from "@/lib/tenant/menu/menu-catalog-scroll-controller";
 import {
 	resolveActiveSectionIdFromDom,
@@ -67,7 +68,7 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 				id: "special",
 				title: (
 					<>
-						<Image src={FIRE_ICON} className="category-icon" alt="🔥" width={24} height={24} unoptimized />
+						<Image src={FIRE_ICON} className="category-icon" alt="🔥" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
 						Solo por hoy
 					</>
 				),
@@ -82,7 +83,7 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 				title: isPromocionesCategoryName(category.name) ? (
 					<>
 						{category.name}
-						<Image src={FIRE_ICON} className="category-icon" alt="🔥" width={24} height={24} unoptimized />
+						<Image src={FIRE_ICON} className="category-icon" alt="🔥" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
 					</>
 				) : (
 					category.name

@@ -3,7 +3,6 @@
 import { CartProvider } from "../cart";
 import { MenuPerfProvider } from "@/lib/tenant/menu/menu-perf-context";
 import { MenuClientView } from "./menu-client-view";
-import { MenuLcpPreload } from "./menu-lcp-preload";
 import type { MenuClientProps } from "./menu-types";
 import { useMenuClientController } from "./use-menu-client-controller";
 
@@ -16,7 +15,6 @@ function MenuClientViewFromVm({
 }) {
 	return (
 		<>
-			<MenuLcpPreload banners={props.banners ?? []} />
 			<MenuClientView
 				mounted={vm.mounted}
 				pageClassName={vm.pageClassName}

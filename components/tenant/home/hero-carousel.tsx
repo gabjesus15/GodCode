@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TENANT_HERO_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
+import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 
 /** Misma duración que la barra de progreso (CSS) */
 const HERO_CAROUSEL_AUTOPLAY_MS = 4000;
@@ -34,14 +36,17 @@ function HeroSlide({
 		>
 			<div className="hero-slide-media">
 				{shouldRenderImage ? (
-					// eslint-disable-next-line @next/next/no-img-element -- banners can use tenant-configured URLs
-					<img
+					<Image
 						src={fallbackUrl}
 						alt="Promoción"
-						className="hero-slide-image"
+						fill
+						sizes="100vw"
+						quality={80}
+						priority={isFirst}
 						loading={isFirst ? "eager" : "lazy"}
-						fetchPriority={isFirst ? "high" : "auto"}
-						decoding="async"
+						unoptimized={shouldUnoptimizeImageSrc(fallbackUrl)}
+						className="hero-slide-image"
+						style={{ objectFit: "cover" }}
 					/>
 				) : null}
 			</div>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 
 export function CartEnhanceCatalogGlyph({
   imageUrl,
@@ -26,7 +27,8 @@ export function CartEnhanceCatalogGlyph({
         alt=""
         width={44}
         height={44}
-        unoptimized
+        quality={70}
+        unoptimized={shouldUnoptimizeImageSrc(src)}
         className="cart-enhance-tile-img"
         onError={() => setSrc(fallbackSrc)}
       />
