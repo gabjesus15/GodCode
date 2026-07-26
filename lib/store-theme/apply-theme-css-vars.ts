@@ -121,10 +121,17 @@ export type ResolvedThemeColors = {
 	backgroundLayerOpacity: string;
 	backgroundSize: string;
 	backgroundRepeat: string;
+	/** Filtro de la capa de imagen: oscurecido (tint) o none (colores naturales). */
+	backgroundLayerFilter: string;
 	accentShadow: string;
 	accentShadowStrong: string;
 	cardBorder: string;
 };
+
+/** Modo patrón oscuro sobre color sólido (comportamiento histórico). */
+const BG_LAYER_FILTER_TINTED =
+	"blur(0.875px) brightness(0.46) contrast(1.05) saturate(0.97)";
+const BG_LAYER_FILTER_NATURAL = "none";
 
 function resolveOptimizedBackgroundImageUrl(rawBackgroundImageUrl: string): string {
 	return rawBackgroundImageUrl;
@@ -136,15 +143,31 @@ export function resolveThemeColors(theme: Partial<StoreThemeConfig>): ResolvedTh
 	const priceColor = sanitizeHexColor(theme.priceColor, "#ff4757");
 	const discountColor = sanitizeHexColor(theme.discountColor, "#25d366");
 	const hoverColor = sanitizeHexColor(theme.hoverColor, "#ff2e40");
-	const backgroundColor = sanitizeThemeBackgroundColor(theme.backgroundColor, "#0a0a0a");
+	const backgroundParsed = parseThemeColor(theme.backgroundColor, "#0a0a0a");
+	const backgroundColor = formatThemeColor(backgroundParsed.hex, backgroundParsed.alpha);
 	const rawBackgroundImageUrl = sanitizeThemeImageUrl(theme.backgroundImageUrl);
 	const optimizedBackground = rawBackgroundImageUrl
 		? resolveOptimizedBackgroundImageUrl(rawBackgroundImageUrl)
 		: "";
 	const backgroundImage = optimizedBackground ? `url(${optimizedBackground})` : "none";
-	const backgroundLayerOpacity = optimizedBackground ? "0.38" : "0";
-	const backgroundSize = optimizedBackground ? "1200px" : "auto";
-	const backgroundRepeat = optimizedBackground ? "repeat" : "repeat";
+
+	// Sin tint de color (opacidad ~0): mostrar la imagen de fondo a color natural.
+	const naturalBackground = Boolean(optimizedBackground) && backgroundParsed.alpha <= 0.08;
+	const backgroundLayerOpacity = !optimizedBackground
+		? "0"
+		: naturalBackground
+			? "1"
+			: "0.38";
+	const backgroundSize = !optimizedBackground
+		? "auto"
+		: naturalBackground
+			? "cover"
+			: "1200px";
+	const backgroundRepeat = naturalBackground ? "no-repeat" : "repeat";
+	const backgroundLayerFilter = naturalBackground
+		? BG_LAYER_FILTER_NATURAL
+		: BG_LAYER_FILTER_TINTED;
+
 	return {
 		primaryColor,
 		secondaryColor,
@@ -156,6 +179,7 @@ export function resolveThemeColors(theme: Partial<StoreThemeConfig>): ResolvedTh
 		backgroundLayerOpacity,
 		backgroundSize,
 		backgroundRepeat,
+		backgroundLayerFilter,
 		accentShadow: hexToRgba(primaryColor, 0.3, "rgba(255, 71, 87, 0.3)"),
 		accentShadowStrong: hexToRgba(primaryColor, 0.5, "rgba(255, 71, 87, 0.5)"),
 		cardBorder: hexToRgba(primaryColor, 0.18, "rgba(255, 255, 255, 0.1)"),
@@ -164,7 +188,7 @@ export function resolveThemeColors(theme: Partial<StoreThemeConfig>): ResolvedTh
 
 export function buildTenantThemeCssString(theme: Partial<StoreThemeConfig>): string {
 	const colors = resolveThemeColors(theme);
-	return `html, body { background-color: ${sanitizeCssValue(colors.backgroundColor)} !important; } .tenant-theme-vars{--tenant-primary:${sanitizeCssValue(colors.primaryColor)};--accent-primary:${sanitizeCssValue(colors.primaryColor)};--accent-secondary:${sanitizeCssValue(colors.secondaryColor)};--price-color:${sanitizeCssValue(colors.priceColor)};--discount-color:${sanitizeCssValue(colors.discountColor)};--accent-hover:${sanitizeCssValue(colors.hoverColor)};--accent-shadow:${sanitizeCssValue(colors.accentShadow)};--accent-shadow-strong:${sanitizeCssValue(colors.accentShadowStrong)};--card-border:${sanitizeCssValue(colors.cardBorder)};--bg-primary:${sanitizeCssValue(colors.backgroundColor)};--tenant-bg-image:${sanitizeCssValue(colors.backgroundImage)};--tenant-bg-layer-opacity:${sanitizeCssValue(colors.backgroundLayerOpacity)};--tenant-bg-size:${sanitizeCssValue(colors.backgroundSize)};--tenant-bg-repeat:${sanitizeCssValue(colors.backgroundRepeat)};}`;
+	return `html, body { background-color: ${sanitizeCssValue(colors.backgroundColor)} !important; } .tenant-theme-vars{--tenant-primary:${sanitizeCssValue(colors.primaryColor)};--accent-primary:${sanitizeCssValue(colors.primaryColor)};--accent-secondary:${sanitizeCssValue(colors.secondaryColor)};--price-color:${sanitizeCssValue(colors.priceColor)};--discount-color:${sanitizeCssValue(colors.discountColor)};--accent-hover:${sanitizeCssValue(colors.hoverColor)};--accent-shadow:${sanitizeCssValue(colors.accentShadow)};--accent-shadow-strong:${sanitizeCssValue(colors.accentShadowStrong)};--card-border:${sanitizeCssValue(colors.cardBorder)};--bg-primary:${sanitizeCssValue(colors.backgroundColor)};--tenant-bg-image:${sanitizeCssValue(colors.backgroundImage)};--tenant-bg-layer-opacity:${sanitizeCssValue(colors.backgroundLayerOpacity)};--tenant-bg-size:${sanitizeCssValue(colors.backgroundSize)};--tenant-bg-repeat:${sanitizeCssValue(colors.backgroundRepeat)};--tenant-bg-layer-filter:${sanitizeCssValue(colors.backgroundLayerFilter)};}`;
 }
 
 export const THEME_CSS_VAR_NAMES = [
@@ -182,6 +206,7 @@ export const THEME_CSS_VAR_NAMES = [
 	"--tenant-bg-layer-opacity",
 	"--tenant-bg-size",
 	"--tenant-bg-repeat",
+	"--tenant-bg-layer-filter",
 ] as const;
 
 export function themeColorsToCssVarEntries(theme: Partial<StoreThemeConfig>): Array<[string, string]> {
@@ -201,6 +226,7 @@ export function themeColorsToCssVarEntries(theme: Partial<StoreThemeConfig>): Ar
 		["--tenant-bg-layer-opacity", colors.backgroundLayerOpacity],
 		["--tenant-bg-size", colors.backgroundSize],
 		["--tenant-bg-repeat", colors.backgroundRepeat],
+		["--tenant-bg-layer-filter", colors.backgroundLayerFilter],
 	];
 }
 

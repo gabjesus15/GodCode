@@ -24,7 +24,19 @@ describe("apply-theme-css-vars", () => {
 		expect(css).toContain("--tenant-bg-layer-opacity:0.38");
 		expect(css).toContain("--tenant-bg-size:1200px");
 		expect(css).toContain("--tenant-bg-repeat:repeat");
+		expect(css).toContain("brightness(0.46)");
 		expect(css).not.toContain("menu-pattern");
+	});
+
+	it("shows natural background image colors when color opacity is 0", () => {
+		const css = buildTenantThemeCssString({
+			backgroundColor: "rgba(10, 10, 10, 0)",
+			backgroundImageUrl: "https://supabase.ghamnas.online/storage/v1/object/public/menu/company/bg.jpg",
+		});
+		expect(css).toContain("--tenant-bg-layer-opacity:1");
+		expect(css).toContain("--tenant-bg-size:cover");
+		expect(css).toContain("--tenant-bg-repeat:no-repeat");
+		expect(css).toContain("--tenant-bg-layer-filter:none");
 	});
 
 	it("preserves background color opacity as rgba", () => {

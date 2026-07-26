@@ -50,7 +50,7 @@ export const STORE_THEME_COLOR_HELPERS: Record<
   priceColor: "Color del precio destacado en cards de producto.",
   discountColor: "Color de badges de descuento y ahorro.",
   hoverColor: "Color al pasar mouse sobre CTA y acciones.",
-  backgroundColor: "Fondo base del menú. Bajá la opacidad a 0% para quitar el tint (útil con imagen de fondo).",
+  backgroundColor: "Fondo base del menú. A 0% de opacidad se quita el tint y la imagen de fondo se ve a color natural.",
 };
 
 export const STORE_THEME_TEMPLATES: Array<{

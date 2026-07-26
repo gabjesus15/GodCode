@@ -65,7 +65,10 @@
   background-size: var(--tenant-bg-size, 1200px);
   background-position: center;
   opacity: var(--tenant-bg-layer-opacity, 0);
-  filter: blur(0.875px) brightness(0.46) contrast(1.05) saturate(0.97);
+  filter: var(
+    --tenant-bg-layer-filter,
+    blur(0.875px) brightness(0.46) contrast(1.05) saturate(0.97)
+  );
   transform: scale(1.06);
   transition: opacity 0.2s ease-out;
   pointer-events: none;
@@ -75,7 +78,11 @@
 /* Móvil / sin GPU: el filter en capa fija cuesta mucho en Android Chrome. */
 @media (max-width: 768px) {
   .tenant-shell-bg-layer {
-    filter: brightness(0.46) contrast(1.05) saturate(0.97);
+    /* Si el tema pide colores naturales (filter: none), no forzar brightness oscuro. */
+    filter: var(
+      --tenant-bg-layer-filter,
+      brightness(0.46) contrast(1.05) saturate(0.97)
+    );
     will-change: auto;
     transform: none;
     inset: 0;
