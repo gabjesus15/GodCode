@@ -6,7 +6,6 @@ import { ChevronDown, ChevronLeft, Compass, MapPin, Search, X } from "lucide-rea
 
 import { CategoryTabsNav, IconListCategories } from "./menu-category-nav";
 import type { BranchInfo, CategoryListItem } from "./menu-types";
-import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 
 type MenuNavbarProps = {
 	navbarType: string;
@@ -70,11 +69,9 @@ export const MenuNavbar = memo(function MenuNavbar({
 						className="nav-logo"
 						width={40}
 						height={40}
-						quality={75}
 						onError={onLogoError}
-						unoptimized={shouldUnoptimizeImageSrc(
-							logoError ? "/tenant/logo-placeholder.svg" : logoUrl || "/tenant/logo-placeholder.svg",
-						)}
+						// Branding: servir el logo original sin recomprimir.
+						unoptimized
 					/>
 					<div className="nav-brand-info">
 						<h2 className="nav-brand-title">{displayName}</h2>

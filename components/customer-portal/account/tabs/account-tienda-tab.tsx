@@ -425,7 +425,15 @@ export function AccountTiendaTab({
                           </div>
                           {previewUrl ? (
                             <div className="relative mb-2 h-24 w-full overflow-hidden rounded-lg border border-[#e5e5ea]">
-                              <Image src={previewUrl} alt={`Vista previa ${title}`} fill sizes="(max-width: 640px) 100vw, 380px" className="object-cover" quality={75} unoptimized={shouldUnoptimizeImageSrc(previewUrl)} />
+                              <Image
+                                src={previewUrl}
+                                alt={`Vista previa ${title}`}
+                                fill
+                                sizes="(max-width: 640px) 100vw, 380px"
+                                className="object-cover"
+                                quality={75}
+                                unoptimized={field === "logoUrl" || shouldUnoptimizeImageSrc(previewUrl)}
+                              />
                             </div>
                           ) : (
                             <div className="mb-2 flex h-24 items-center justify-center rounded-lg border border-dashed border-[#d2d2d7] bg-[#fbfbfd] text-xs text-[#a1a1a6]">

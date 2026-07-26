@@ -76,11 +76,9 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 						className="sidebar-logo"
 						width={44}
 						height={44}
-						quality={75}
 						onError={onLogoError}
-						unoptimized={shouldUnoptimizeImageSrc(
-							logoError ? "/tenant/logo-placeholder.svg" : logoUrl || "/tenant/logo-placeholder.svg",
-						)}
+						// Branding: servir el logo original sin recomprimir.
+						unoptimized
 					/>
 					<div className="sidebar-brand-info">
 						<h3 className="sidebar-brand-title">{displayName}</h3>

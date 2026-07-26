@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 
-import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { getTenantHost } from "@/utils/tenant-url";
 
 interface BrandingPreviewProps {
@@ -77,10 +76,9 @@ export function BrandingPreview({
                   alt="Logo"
                   fill
                   sizes="40px"
-                  quality={75}
                   className="object-contain"
                   onError={() => setLogoError(true)}
-                  unoptimized={shouldUnoptimizeImageSrc(logoUrl)}
+                  unoptimized
                 />
               ) : (
                 <span className="text-xs font-semibold text-white">{getInitials(safeName)}</span>
@@ -126,10 +124,9 @@ export function BrandingPreview({
                             alt="Logo"
                             fill
                             sizes="28px"
-                            quality={75}
                             className="object-contain"
                             onError={() => setLogoError(true)}
-                            unoptimized={shouldUnoptimizeImageSrc(logoUrl)}
+                            unoptimized
                           />
                         ) : (
                           <span className="grid h-full w-full place-items-center text-[10px] font-bold text-white">
