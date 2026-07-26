@@ -19,7 +19,7 @@ describe("apply-theme-css-vars", () => {
 
 	it("uses only the tenant background image when configured", () => {
 		const css = buildTenantThemeCssString({
-			backgroundImageUrl: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+			backgroundImageUrl: "https://supabase.ghamnas.online/storage/v1/object/public/menu/company/bg.jpg",
 		});
 		expect(css).toContain("--tenant-bg-layer-opacity:0.38");
 		expect(css).toContain("--tenant-bg-size:1200px");

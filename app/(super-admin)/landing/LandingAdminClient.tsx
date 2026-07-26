@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Eye, LayoutTemplate, MoveDown, MoveUp, RefreshCcw, Save, Wand2 } from "lucide-react";
+import { Eye, LayoutTemplate, MoveDown, MoveUp, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header
 import { SaasSegmentedTabs } from "@/components/super-admin/shared/saas-segmented-tabs";
 import { SaasSelect } from "@/components/super-admin/shared/saas-select";
 import { SaasSwitch } from "@/components/super-admin/shared/saas-switch";
-import { uploadImage } from "@/components/tenant/utils/cloudinary";
+import { uploadImage } from "@/lib/storage/upload-image-client";
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 
 type LeadItem = {
@@ -95,47 +95,6 @@ const emptyWebhook = {
   secret: "",
 };
 
-const CLOUDINARY_UPLOAD_SEGMENT = "/image/upload/";
-
-function isCloudinaryUrl(url: string): boolean {
-  try {
-    const absoluteUrl = url.startsWith("//") ? `https:${url}` : url;
-    const parsed = new URL(absoluteUrl);
-    const isValidHost = parsed.hostname === "res.cloudinary.com" || parsed.hostname.endsWith(".res.cloudinary.com");
-    return isValidHost && url.includes(CLOUDINARY_UPLOAD_SEGMENT);
-  } catch {
-    return false;
-  }
-}
-
-function replaceCloudinaryTransform(url: string, transform: string | null): string {
-  if (!isCloudinaryUrl(url)) return url;
-  const [base, query] = url.split("?");
-  const idx = base.indexOf(CLOUDINARY_UPLOAD_SEGMENT);
-  if (idx < 0) return url;
-
-  const prefix = base.slice(0, idx + CLOUDINARY_UPLOAD_SEGMENT.length);
-  const tail = base.slice(idx + CLOUDINARY_UPLOAD_SEGMENT.length);
-  const parts = tail.split("/").filter(Boolean);
-  if (parts.length === 0) return url;
-
-  let versionSegment = "";
-  let current = parts[0] || "";
-  if (/^v\d+$/.test(current)) {
-    versionSegment = current;
-    parts.shift();
-    current = parts[0] || "";
-  }
-  if (current.includes("_") || current.includes(",")) parts.shift();
-
-  const rebuilt = [prefix.replace(/\/$/, "")];
-  if (transform?.trim()) rebuilt.push(transform.trim());
-  if (versionSegment) rebuilt.push(versionSegment);
-  rebuilt.push(...parts);
-  const out = rebuilt.join("/");
-  return query ? `${out}?${query}` : out;
-}
-
 function mediaGroupForKey(key: string): "hero" | "features" | "bento" | "contacto" | "otros" {
   if (key.startsWith("v3.hero.")) return "hero";
   if (key.startsWith("v3.feature.")) return "features";
@@ -182,13 +141,6 @@ export function LandingAdminClient() {
   const [webhooks, setWebhooks] = useState<WebhookItem[]>([]);
   const [webhookForm, setWebhookForm] = useState(emptyWebhook);
   const [selectedMediaKey, setSelectedMediaKey] = useState<string>("");
-  const [mediaPreset, setMediaPreset] = useState<"hero" | "feature" | "mobile" | "custom">("feature");
-  const [mediaWidth, setMediaWidth] = useState<string>("1400");
-  const [mediaHeight, setMediaHeight] = useState<string>("900");
-  const [mediaCrop, setMediaCrop] = useState<string>("fill");
-  const [mediaGravity, setMediaGravity] = useState<string>("auto");
-  const [mediaQuality, setMediaQuality] = useState<string>("auto");
-  const [mediaFormat, setMediaFormat] = useState<string>("auto");
 
   const [leadFilter, setLeadFilter] = useState<string>("all");
   const [contactFilter, setContactFilter] = useState<string>("all");
@@ -368,40 +320,6 @@ export function LandingAdminClient() {
       );
     });
   }, []);
-
-  const applyMediaPreset = () => {
-    if (mediaPreset === "hero") {
-      setMediaWidth("1920"); setMediaHeight("1080"); setMediaCrop("fill"); setMediaGravity("auto");
-    } else if (mediaPreset === "feature") {
-      setMediaWidth("1400"); setMediaHeight("900"); setMediaCrop("fill"); setMediaGravity("auto");
-    } else if (mediaPreset === "mobile") {
-      setMediaWidth("900"); setMediaHeight("1800"); setMediaCrop("fill"); setMediaGravity("auto");
-    }
-  };
-
-  const applyCloudinaryAdjustments = () => {
-    if (!selectedMediaRow) return;
-    if (!isCloudinaryUrl(selectedMediaRow.src)) {
-      setMessage({ type: "error", text: "Esta herramienta de ajuste funciona con URLs de Cloudinary." });
-      return;
-    }
-    const parts = [
-      mediaFormat ? `f_${mediaFormat}` : null,
-      mediaQuality ? `q_${mediaQuality}` : null,
-      mediaWidth ? `w_${mediaWidth}` : null,
-      mediaHeight ? `h_${mediaHeight}` : null,
-      mediaCrop ? `c_${mediaCrop}` : null,
-      mediaGravity ? `g_${mediaGravity}` : null,
-    ].filter(Boolean) as string[];
-    updateMediaRow(selectedMediaRow.key, { src: replaceCloudinaryTransform(selectedMediaRow.src, parts.join(",")) });
-    setMessage({ type: "success", text: "Ajustes aplicados en URL. Revisa visualmente y guarda assets." });
-  };
-
-  const resetCloudinaryAdjustments = () => {
-    if (!selectedMediaRow || !isCloudinaryUrl(selectedMediaRow.src)) return;
-    updateMediaRow(selectedMediaRow.key, { src: replaceCloudinaryTransform(selectedMediaRow.src, null) });
-    setMessage({ type: "success", text: "Transformaciones removidas para este asset." });
-  };
 
   const uploadAsset = async (key: string, file: File | null) => {
     if (!file || readOnly) return;
@@ -870,7 +788,6 @@ export function LandingAdminClient() {
                     </div>
 
                     {!isContactAssetKey(selectedMediaRow.key) ? (
-                    <>
                     <div className="mb-3 flex flex-wrap items-center gap-2">
                       <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs dark:border-zinc-700">
                         {uploadingKey === selectedMediaRow.key ? "Subiendo..." : "Subir imagen"}
@@ -883,51 +800,6 @@ export function LandingAdminClient() {
                         />
                       </label>
                     </div>
-
-                    <div className="rounded-xl border border-dashed border-zinc-300 p-3 dark:border-zinc-700">
-                      <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200">
-                        <Wand2 className="h-3.5 w-3.5" />
-                        Ajustes rápidos (Cloudinary)
-                      </div>
-                      <div className="grid gap-2 sm:grid-cols-3">
-                        <SaasSelect
-                          value={mediaPreset}
-                          onChange={(value) => setMediaPreset(value as "hero" | "feature" | "mobile" | "custom")}
-                          options={[
-                            { value: "hero", label: "Preset hero" },
-                            { value: "feature", label: "Preset feature" },
-                            { value: "mobile", label: "Preset mobile" },
-                            { value: "custom", label: "Custom" },
-                          ]}
-                        />
-                        <Input value={mediaWidth} onChange={(e) => setMediaWidth(e.target.value)} placeholder="w" className="h-9 text-xs" />
-                        <Input value={mediaHeight} onChange={(e) => setMediaHeight(e.target.value)} placeholder="h" className="h-9 text-xs" />
-                        <Input value={mediaCrop} onChange={(e) => setMediaCrop(e.target.value)} placeholder="crop" className="h-9 text-xs" />
-                        <Input value={mediaGravity} onChange={(e) => setMediaGravity(e.target.value)} placeholder="gravity" className="h-9 text-xs" />
-                        <Input value={mediaQuality} onChange={(e) => setMediaQuality(e.target.value)} placeholder="quality" className="h-9 text-xs" />
-                      </div>
-                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                        <Input value={mediaFormat} onChange={(e) => setMediaFormat(e.target.value)} placeholder="format" className="h-9 text-xs" />
-                        <button
-                          type="button"
-                          className="inline-flex h-9 items-center justify-center rounded border border-zinc-200 text-xs font-medium dark:border-zinc-700"
-                          onClick={applyMediaPreset}
-                        >
-                          aplicar preset
-                        </button>
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <Button type="button" size="sm" variant="outline" onClick={applyCloudinaryAdjustments} disabled={readOnly}>
-                          Aplicar ajuste
-                        </Button>
-                        <Button type="button" size="sm" variant="outline" onClick={resetCloudinaryAdjustments} disabled={readOnly}>
-                          <RefreshCcw className="mr-1 h-3.5 w-3.5" />
-                          Limpiar transform
-                        </Button>
-                      </div>
-                    </div>
-
-                    </>
                     ) : null}
                   </div>
 

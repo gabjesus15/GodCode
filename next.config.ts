@@ -50,9 +50,11 @@ const nextConfig: NextConfig = {
     ],
   },
   images: {
-    qualities: [75, 92, 95],
+    // Menú: next/image redimensiona según `sizes` (WebP/AVIF) en vez de servir PNG/JPEG originales de Storage.
+    formats: ["image/avif", "image/webp"],
+    qualities: [70, 75, 80, 92, 95],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
-      { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
       ...(supabaseStoragePattern ? [supabaseStoragePattern] : []),
     ],

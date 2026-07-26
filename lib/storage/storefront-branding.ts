@@ -45,7 +45,7 @@ export async function createStorefrontAssetSignedUrl(
   const asset = String(value ?? "").trim();
   if (!asset) return "";
 
-  // Compatibilidad temporal para los assets historicos alojados en Cloudinary.
+  // URLs externas (http/https o path absoluto) se usan tal cual.
   if (isExternalStorefrontAsset(asset) || asset.startsWith("/")) return asset;
   if (!isCompanyStorefrontAssetPath(asset, companyId)) return "";
 

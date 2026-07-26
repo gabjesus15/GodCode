@@ -74,7 +74,7 @@ export function ProductInlinePanel({
 							fill
 							className="product-inline-panel__img"
 							sizes="160px"
-							unoptimized
+							quality={75}
 						/>
 					</div>
 				)}

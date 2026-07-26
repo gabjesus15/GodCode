@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
-import { getCloudinaryOptimizedUrl } from "@/components/tenant/utils/cloudinary";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
 import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 
@@ -44,18 +43,7 @@ export async function GET(
 
   if (logoUrl && status !== "suspended" && status !== "cancelled") {
     try {
-      const optimizedLogo = getCloudinaryOptimizedUrl(logoUrl, {
-        width: 128,
-        height: 128,
-        crop: "fill",
-        gravity: "auto",
-      });
-      const normalizedLogoUrl =
-        typeof optimizedLogo === "string" && optimizedLogo.startsWith("//")
-          ? `https:${optimizedLogo}`
-          : optimizedLogo;
-
-      const upstream = await fetch(String(normalizedLogoUrl), {
+      const upstream = await fetch(String(logoUrl), {
         cache: "no-store",
         redirect: "follow",
         headers: {

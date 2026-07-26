@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
 
+import { eachUtcDayKeys, utcDateKey } from "@/lib/analytics/date-buckets";
+import { fetchAnalyticsEventsPaged } from "@/lib/analytics/fetch-analytics-events";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
 type Status = "new" | "contacted" | "closed";
-
-type AnalyticsEventRow = {
-  created_at: string;
-  page_type: "landing" | "tenant" | "saas" | "unknown";
-  visitor_id: string | null;
-  company_id: string | null;
-  tenant_slug: string | null;
-  country_code: string | null;
-};
 
 async function countRows(table: "landing_leads" | "landing_contacts", status?: Status): Promise<number> {
   let query = supabaseAdmin.from(table).select("id", { head: true, count: "exact" });
@@ -22,8 +15,30 @@ async function countRows(table: "landing_leads" | "landing_contacts", status?: S
   return count ?? 0;
 }
 
-function dateKey(iso: string): string {
-  return new Date(iso).toISOString().slice(0, 10);
+async function fetchCreatedAtPaged(
+  table: "landing_leads" | "landing_contacts",
+  fromIso: string,
+): Promise<string[]> {
+  const dates: string[] = [];
+  let start = 0;
+  const pageSize = 1000;
+  while (true) {
+    const { data, error } = await supabaseAdmin
+      .from(table)
+      .select("created_at")
+      .gte("created_at", fromIso)
+      .order("created_at", { ascending: true })
+      .range(start, start + pageSize - 1);
+    if (error) throw new Error(error.message);
+    const batch = data ?? [];
+    if (batch.length === 0) break;
+    for (const row of batch) {
+      if (row.created_at) dates.push(String(row.created_at));
+    }
+    if (batch.length < pageSize) break;
+    start += pageSize;
+  }
+  return dates;
 }
 
 export async function GET() {
@@ -34,7 +49,8 @@ export async function GET() {
 
   try {
     const fromDate = new Date();
-    fromDate.setDate(fromDate.getDate() - 29);
+    fromDate.setUTCDate(fromDate.getUTCDate() - 29);
+    fromDate.setUTCHours(0, 0, 0, 0);
     const fromIso = fromDate.toISOString();
 
     const [
@@ -46,9 +62,9 @@ export async function GET() {
       contactsNew,
       contactsContacted,
       contactsClosed,
-      recentLeads,
-      recentContacts,
-      recentAnalytics,
+      recentLeadDates,
+      recentContactDates,
+      analyticsResult,
     ] = await Promise.all([
       countRows("landing_leads"),
       countRows("landing_contacts"),
@@ -58,36 +74,31 @@ export async function GET() {
       countRows("landing_contacts", "new"),
       countRows("landing_contacts", "contacted"),
       countRows("landing_contacts", "closed"),
-      supabaseAdmin.from("landing_leads").select("created_at").gte("created_at", fromIso).order("created_at", { ascending: true }),
-      supabaseAdmin.from("landing_contacts").select("created_at").gte("created_at", fromIso).order("created_at", { ascending: true }),
-      supabaseAdmin
-        .from("analytics_events")
-        .select("created_at,page_type,visitor_id,company_id,tenant_slug,country_code")
-        .gte("created_at", fromIso)
-        .in("page_type", ["landing", "tenant"]),
+      fetchCreatedAtPaged("landing_leads", fromIso),
+      fetchCreatedAtPaged("landing_contacts", fromIso),
+      fetchAnalyticsEventsPaged({
+        fromIso,
+        pageTypes: ["landing", "tenant"],
+      }),
     ]);
 
-    if (recentLeads.error) throw new Error(recentLeads.error.message);
-    if (recentContacts.error) throw new Error(recentContacts.error.message);
-
-    const analyticsRows: AnalyticsEventRow[] = recentAnalytics?.error
-      ? []
-      : ((recentAnalytics?.data ?? []) as AnalyticsEventRow[]);
-
-    const dailyMap = new Map<string, { leads: number; contacts: number; landingViews: number; tenantViews: number }>();
-    for (let i = 0; i < 30; i += 1) {
-      const d = new Date(fromDate);
-      d.setDate(fromDate.getDate() + i);
-      dailyMap.set(d.toISOString().slice(0, 10), { leads: 0, contacts: 0, landingViews: 0, tenantViews: 0 });
+    if (analyticsResult.error) {
+      throw new Error(analyticsResult.error);
     }
 
-    for (const row of recentLeads.data ?? []) {
-      const key = dateKey(row.created_at);
+    const analyticsRows = analyticsResult.rows;
+    const dailyMap = new Map<string, { leads: number; contacts: number; landingViews: number; tenantViews: number }>();
+    for (const key of eachUtcDayKeys(fromIso)) {
+      dailyMap.set(key, { leads: 0, contacts: 0, landingViews: 0, tenantViews: 0 });
+    }
+
+    for (const createdAt of recentLeadDates) {
+      const key = utcDateKey(createdAt);
       const bucket = dailyMap.get(key);
       if (bucket) bucket.leads += 1;
     }
-    for (const row of recentContacts.data ?? []) {
-      const key = dateKey(row.created_at);
+    for (const createdAt of recentContactDates) {
+      const key = utcDateKey(createdAt);
       const bucket = dailyMap.get(key);
       if (bucket) bucket.contacts += 1;
     }
@@ -98,7 +109,7 @@ export async function GET() {
     const countryAgg = new Map<string, { views: number; visitors: Set<string> }>();
 
     for (const row of analyticsRows) {
-      const key = dateKey(row.created_at);
+      const key = utcDateKey(row.created_at);
       const bucket = dailyMap.get(key);
       if (!bucket) continue;
 

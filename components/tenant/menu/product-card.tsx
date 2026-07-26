@@ -145,8 +145,8 @@ const GlassCard = React.memo(function GlassCard({ product, logic, priority = fal
           alt={product.name ?? "Producto"}
           fill
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+          quality={75}
           priority={priority}
-          unoptimized
           onLoad={() => logic.setImageLoaded(true)}
           className={!logic.imageLoaded ? "opacity-0" : "opacity-100 transition-opacity duration-500"}
           onError={() => logic.setImageError(true)}

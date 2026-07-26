@@ -11,6 +11,7 @@ import {
   type DashboardPeriod,
   periodStartIso,
 } from "@/lib/super-admin/super-admin-metrics";
+import { fetchAnalyticsEventsPaged } from "@/lib/analytics/fetch-analytics-events";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 export const dynamic = "force-dynamic";
@@ -62,45 +63,14 @@ export default async function AnalyticsGlobalPage({
     .order("name", { ascending: true })
     .limit(500);
 
-  const events: EventRow[] = [];
-  let eventsError: { message: string } | null = null;
-  let start = 0;
-  const step = 1000;
-  let keepFetching = true;
-
-  while (keepFetching) {
-    let q = supabaseAdmin
-      .from("analytics_events")
-      .select("created_at,page_type,visitor_id,company_id,tenant_slug,country_code,event_name")
-      .in("page_type", ["landing", "tenant", "saas"])
-      .order("created_at", { ascending: false })
-      .range(start, start + step - 1);
-
-    if (fromIso) {
-      q = q.gte("created_at", fromIso);
-    }
-
-    if (selectedCompanyId) {
-      q = q.eq("company_id", selectedCompanyId);
-    }
-
-    const { data, error } = await q;
-    if (error) {
-      eventsError = error;
-      break;
-    }
-
-    if (data && data.length > 0) {
-      events.push(...(data as EventRow[]));
-      if (data.length < step || events.length >= 50000) {
-        keepFetching = false;
-      } else {
-        start += step;
-      }
-    } else {
-      keepFetching = false;
-    }
-  }
+  const { rows: fetchedEvents, error: eventsFetchError } = await fetchAnalyticsEventsPaged({
+    fromIso,
+    pageTypes: ["landing", "tenant", "saas"],
+    companyId: selectedCompanyId || null,
+    columns: "created_at,page_type,visitor_id,company_id,tenant_slug,country_code,event_name",
+  });
+  const events = fetchedEvents as EventRow[];
+  const eventsError = eventsFetchError ? { message: eventsFetchError } : null;
 
   const { data: companiesData, error: companiesError } = await companiesQuery;
   const companies = (companiesData ?? []) as CompanyOption[];

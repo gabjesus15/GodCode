@@ -29,7 +29,7 @@ export const IconListCategories = memo(function IconListCategories({
 					>
 						<div className="icon-list-card-image-wrapper">
 							{cat.icon ? (
-								<Image src={cat.icon} className="icon-list-card-image" alt="" width={40} height={40} unoptimized />
+								<Image src={cat.icon} className="icon-list-card-image" alt="" width={40} height={40} quality={70} />
 							) : (
 								<span className="icon-list-card-initial">{cat.name.charAt(0).toUpperCase()}</span>
 							)}
@@ -109,7 +109,7 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 						className={`sidebar-nav-item ${activeCategory === cat.id ? "active" : ""}`}
 					>
 						{cat.icon ? (
-							<Image src={cat.icon} className="sidebar-item-icon" alt="" width={16} height={16} unoptimized />
+							<Image src={cat.icon} className="sidebar-item-icon" alt="" width={16} height={16} quality={70} />
 						) : (
 							<Grid size={14} className="sidebar-item-icon opacity-60" />
 						)}
@@ -164,7 +164,7 @@ export const MegaMenuOverlay = memo(function MegaMenuOverlay({
 										alt=""
 										width={44}
 										height={44}
-										unoptimized
+										quality={70}
 									/>
 								) : (
 									<span className="mega-menu-item-initial">{cat.name.charAt(0).toUpperCase()}</span>

@@ -64,7 +64,10 @@ export function AppleMultiAreaChart({
 
   if (!hasData) {
     return (
-      <div className={`flex h-[${height}px] flex-col items-center justify-center gap-2 text-zinc-400 ${className}`}>
+      <div
+        className={`flex flex-col items-center justify-center gap-2 text-zinc-400 ${className}`}
+        style={{ height }}
+      >
         <p className="text-sm">Sin datos suficientes</p>
       </div>
     );

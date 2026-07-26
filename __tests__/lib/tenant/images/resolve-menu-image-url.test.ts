@@ -21,11 +21,6 @@ describe("resolveMenuImageUrl", () => {
 		expect(resolveMenuImageUrl(url, SUPABASE_URL)).toBe(url);
 	});
 
-	it("rejects a Cloudinary URL so the menu uses its fallback", () => {
-		const url = "https://res.cloudinary.com/demo/image/upload/menu/product.png";
-		expect(resolveMenuImageUrl(url, SUPABASE_URL)).toBeNull();
-	});
-
 	it("keeps an existing Supabase public URL unchanged", () => {
 		const url = `${SUPABASE_URL}/storage/v1/object/public/menu/company/product.png`;
 		expect(resolveMenuImageUrl(url, SUPABASE_URL)).toBe(url);

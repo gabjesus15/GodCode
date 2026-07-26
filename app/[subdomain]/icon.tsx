@@ -1,5 +1,4 @@
 import { getCachedCompany } from "../../utils/tenant-cache";
-import { getCloudinaryOptimizedUrl } from "../../components/tenant/utils/cloudinary";
 import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 
 function getInitials(name: string) {
@@ -44,31 +43,20 @@ export default async function Icon(props: { params: Promise<{ subdomain: string 
 		: storedLogoUrl;
 
 	if (logoUrl && typeof logoUrl === "string" && logoUrl.trim() && !isUnavailable) {
-		const optimizedLogo = getCloudinaryOptimizedUrl(logoUrl.trim(), {
-			width: 64,
-			height: 64,
-			crop: "fill",
-			gravity: "auto",
-		});
-		if (typeof optimizedLogo === "string") {
-			// fetch en el servidor requiere una URL con protocolo (https:).
-			const finalLogoUrl = optimizedLogo.startsWith("//") ? `https:${optimizedLogo}` : optimizedLogo;
-
-			try {
-				const res = await fetch(finalLogoUrl);
-				if (res.ok) {
-					const contentType = res.headers.get("content-type") || "image/png";
-					const buffer = await res.arrayBuffer();
-					return new Response(new Uint8Array(buffer), {
-						headers: {
-							"Content-Type": contentType,
-							"Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
-						},
-					});
-				}
-			} catch (error) {
-				console.error("[Icon] Error fetching logo:", error);
+		try {
+			const res = await fetch(logoUrl.trim());
+			if (res.ok) {
+				const contentType = res.headers.get("content-type") || "image/png";
+				const buffer = await res.arrayBuffer();
+				return new Response(new Uint8Array(buffer), {
+					headers: {
+						"Content-Type": contentType,
+						"Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+					},
+				});
 			}
+		} catch (error) {
+			console.error("[Icon] Error fetching logo:", error);
 		}
 	}
 

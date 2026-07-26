@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { computeExpansionAmount } from "@/lib/tenant/customer-account-expansion-pricing";
 import type { BillingOptionsResponse, BillingPaymentResponse, BranchEntitlementSummary, CompanySnapshot, PaymentSummary, TicketSummary } from "../shared/customer-account-types";
-import { uploadImage } from "@/components/tenant/utils/cloudinary";
+import { uploadImage } from "@/lib/storage/upload-image-client";
 
 async function postTicket(payload: {
   subject:     string;

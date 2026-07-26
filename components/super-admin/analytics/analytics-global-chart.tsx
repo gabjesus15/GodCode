@@ -7,6 +7,7 @@ import { Activity, Globe2, PieChart } from "lucide-react";
 import { AppleAreaChart } from "@/components/super-admin/analytics/apple-area-chart";
 import { AppleBarChart } from "@/components/super-admin/analytics/apple-bar-chart";
 import { AppleDonutChart } from "@/components/super-admin/analytics/apple-donut-chart";
+import { eachUtcDayKeys, utcDateKey } from "@/lib/analytics/date-buckets";
 import { cn } from "@/utils/cn";
 
 type EventRow = {
@@ -125,16 +126,13 @@ export function AnalyticsGlobalChart({ events, fromIso }: Props) {
       string,
       { views: number; visitors: Set<string>; landing: number; tenant: number; saas: number }
     >();
-    const start = new Date(fromIso);
-    const end = new Date();
 
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().slice(0, 10);
+    for (const dateStr of eachUtcDayKeys(fromIso)) {
       datesMap.set(dateStr, { views: 0, visitors: new Set(), landing: 0, tenant: 0, saas: 0 });
     }
 
     for (const e of events) {
-      const dateStr = e.created_at.slice(0, 10);
+      const dateStr = utcDateKey(e.created_at);
       if (datesMap.has(dateStr)) {
         const data = datesMap.get(dateStr)!;
         data.views += 1;
@@ -176,15 +174,16 @@ export function AnalyticsGlobalChart({ events, fromIso }: Props) {
 
   const countryData = useMemo(() => {
     const agg = new Map<string, number>();
+    let withCountry = 0;
     for (const e of events) {
-      if (e.country_code) {
-        const cc = e.country_code.toUpperCase();
-        agg.set(cc, (agg.get(cc) ?? 0) + 1);
-      }
+      if (!e.country_code) continue;
+      withCountry += 1;
+      const cc = e.country_code.toUpperCase();
+      agg.set(cc, (agg.get(cc) ?? 0) + 1);
     }
     const sorted = [...agg.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
     const totalTop = sorted.reduce((sum, [, n]) => sum + n, 0);
-    const others = events.length - totalTop;
+    const others = Math.max(0, withCountry - totalTop);
     const rows = sorted.map(([name, value], idx) => ({
       name,
       value,
@@ -261,7 +260,11 @@ export function AnalyticsGlobalChart({ events, fromIso }: Props) {
 
         <AppleCard
           title="Distribución por país"
-          description="Top orígenes de tráfico."
+          description={
+            countryData.length
+              ? "Top orígenes de tráfico."
+              : "Sin país detectado aún (el VPS no envía geo; se resuelve por IP en nuevos eventos)."
+          }
           icon={Globe2}
           className="flex-1"
         >

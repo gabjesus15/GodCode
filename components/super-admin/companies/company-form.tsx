@@ -15,7 +15,7 @@ import { logAdminAction } from "@/utils/audit";
 import { requireAdminRole, roleSets } from "@/utils/admin";
 import { getTenantBaseDomainStatic } from "@/utils/tenant-url";
 import { slugify } from "@/utils/slugify";
-import { uploadImage } from "@/components/tenant/utils/cloudinary";
+import { uploadImage } from "@/lib/storage/upload-image-client";
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
 

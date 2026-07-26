@@ -215,9 +215,9 @@ export const ProductCardImage = React.memo(function ProductCardImage({
         alt={alt}
         fill
         sizes={sizes}
+        quality={75}
         priority={priority}
         loading={priority ? "eager" : "lazy"}
-        unoptimized
         onLoad={onLoaded}
         onError={onError}
         className={`product-card-media__img product-card-media__img--fill ${imageClassName} ${loaded ? "is-loaded" : "is-loading"}`.trim()}

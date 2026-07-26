@@ -1,6 +1,3 @@
-const MENU_STORAGE_BUCKET = "menu";
-const CLOUDINARY_HOST = "res.cloudinary.com";
-
 function isHttpUrl(value: string): boolean {
 	try {
 		const url = new URL(value);
@@ -19,8 +16,6 @@ export function resolveMenuImageUrl(
 
 	if (/^https?:\/\//i.test(rawValue)) {
 		if (!isHttpUrl(rawValue)) return null;
-		const hostname = new URL(rawValue).hostname.toLowerCase();
-		if (hostname === CLOUDINARY_HOST || hostname.endsWith(`.${CLOUDINARY_HOST}`)) return null;
 		return rawValue;
 	}
 
@@ -38,6 +33,7 @@ export function resolveMenuImageUrl(
 		return null;
 	}
 
+	const MENU_STORAGE_BUCKET = "menu";
 	const objectPath = pathSegments.map(encodeURIComponent).join("/");
 	return `${rawBaseUrl}/storage/v1/object/public/${MENU_STORAGE_BUCKET}/${objectPath}`;
 }

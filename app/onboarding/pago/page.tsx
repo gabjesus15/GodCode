@@ -7,7 +7,7 @@ import { useLocale } from "next-intl";
 
 import { Button } from "../../../components/ui/button";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
-import { uploadImage } from "../../../components/tenant/utils/cloudinary";
+import { uploadImage } from "@/lib/storage/upload-image-client";
 import { getOnboardingPaymentCopy } from "@/lib/plans/onboarding-payment-copy";
 
 function getConfigLabel(key: string, labels: Record<string, string>): string {

@@ -7,6 +7,7 @@ import { AdminRoleProvider } from "../../components/super-admin/shell/admin-role
 import { SaasAdminPwaRegister } from "../../components/super-admin/shell/saas-admin-pwa-register";
 import { AdminShell } from "../../components/super-admin/shell/admin-shell";
 import { SaasThemeEnforcer } from "../../components/theme/saas-theme-enforcer";
+import { getSuperAdminRoleByEmail } from "@/lib/super-admin/account-access";
 import { createSupabaseServerClient } from "../../utils/supabase/server";
 import { QueryProvider } from "@/components/ui/query-provider";
 
@@ -52,17 +53,12 @@ export default async function SuperAdminLayout({
 		redirect("/login");
 	}
 
-	// Comentario: validamos que el email exista en admin_users antes de mostrar el panel.
-	const { data: adminUser, error: adminError } = await supabase
-		.from("admin_users")
-		.select("id,role")
-		.ilike("email", user.email)
-		.maybeSingle();
-
-	const role = String(adminUser?.role ?? "").toLowerCase();
+	// Service role (igual que /post-login): un super_admin sin fila en public.users
+	// no debe depender de RLS de admin_users para entrar al panel.
+	const role = (await getSuperAdminRoleByEmail(user.email)) ?? "";
 	const allowedRoles = new Set(["super_admin", "support"]);
 
-	if (adminError || !adminUser || !allowedRoles.has(role)) {
+	if (!allowedRoles.has(role)) {
 		redirect("/login");
 	}
 

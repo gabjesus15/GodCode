@@ -4,7 +4,6 @@ import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 
 import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
-import { getCloudinaryOptimizedUrl } from "@/components/tenant/utils/cloudinary";
 import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 import { resolveTenantSlugFromCustomDomainHost } from "@/lib/tenant/custom-domain-resolve";
 import { getCachedCompany } from "@/utils/tenant-cache";
@@ -93,18 +92,7 @@ export async function GET(req: NextRequest) {
 
   if (logoUrl && status !== "suspended" && status !== "cancelled") {
     try {
-      const optimizedLogo = getCloudinaryOptimizedUrl(logoUrl, {
-        width: 128,
-        height: 128,
-        crop: "fill",
-        gravity: "auto",
-      });
-      const normalizedLogoUrl =
-        typeof optimizedLogo === "string" && optimizedLogo.startsWith("//")
-          ? `https:${optimizedLogo}`
-          : optimizedLogo;
-
-      const upstream = await fetch(String(normalizedLogoUrl), {
+      const upstream = await fetch(String(logoUrl), {
         cache: "no-store",
         redirect: "follow",
         headers: {

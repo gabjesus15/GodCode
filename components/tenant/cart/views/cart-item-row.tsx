@@ -72,7 +72,7 @@ export function CartItemRow({
             alt={`${item.name || t("item.productFallback")} - ${t("header.title")}`}
             width={65}
             height={65}
-            unoptimized
+            quality={70}
             className="item-thumb"
             onError={(event) => {
               event.currentTarget.src = FALLBACK_IMAGE;

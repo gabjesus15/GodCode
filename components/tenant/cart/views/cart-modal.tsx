@@ -44,7 +44,7 @@ import { CartSuccessView } from "./cart-success-view";
 import { buildCartClientSchema } from "../services/cart-validation";
 import { useSubmitOrder } from "../services/order-submission";
 import { mergeCartWithBranchPrices } from "../utils/cart-pricing";
-import { validateImageFile } from "../../utils/cloudinary";
+import { validateImageFile } from "@/lib/storage/upload-image-client";
 import { useCart } from "../use-cart";
 import { sanitizeUserText } from "@/utils/sanitize-user-text";
 import { useCartCheckoutFlow } from "../hooks/use-cart-checkout-flow";

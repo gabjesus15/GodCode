@@ -1,5 +1,5 @@
 import { createSupabaseBrowserClient } from "../../../utils/supabase/client";
-import { uploadImage } from "../utils/cloudinary";
+import { uploadImage } from "@/lib/storage/upload-image-client";
 import {
 	computeDeliveryFee,
 	effectiveDeliveryPricingMode,

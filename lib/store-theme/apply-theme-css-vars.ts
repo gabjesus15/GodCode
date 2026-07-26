@@ -1,5 +1,4 @@
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
-import { getCloudinaryOptimizedUrl, isCloudinaryUrl } from "@/components/tenant/utils/cloudinary";
 
 export function sanitizeHexColor(value: string | undefined, fallback: string): string {
 	const normalized = String(value ?? "").trim();
@@ -56,14 +55,6 @@ export type ResolvedThemeColors = {
 };
 
 function resolveOptimizedBackgroundImageUrl(rawBackgroundImageUrl: string): string {
-	if (rawBackgroundImageUrl.startsWith("/")) return rawBackgroundImageUrl;
-	if (isCloudinaryUrl(rawBackgroundImageUrl)) {
-		return getCloudinaryOptimizedUrl(rawBackgroundImageUrl, {
-			width: 2400,
-			quality: "auto:good",
-			crop: "limit",
-		}) || rawBackgroundImageUrl;
-	}
 	return rawBackgroundImageUrl;
 }
 

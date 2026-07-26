@@ -130,7 +130,7 @@ export function ProductDetailsModal({
             fill
             className="pdm-hero-img"
             sizes="(max-width: 768px) 100vw, 500px"
-            unoptimized
+            quality={80}
             priority
           />
         </div>

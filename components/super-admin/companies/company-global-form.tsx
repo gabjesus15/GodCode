@@ -19,7 +19,7 @@ import { logAdminAction } from "@/utils/audit";
 import { requireAdminRole, roleSets } from "@/utils/admin";
 import { getTenantBaseDomainStatic, normalizeBaseDomain } from "@/utils/tenant-url";
 import { slugify } from "@/utils/slugify";
-import { uploadImage } from "@/components/tenant/utils/cloudinary";
+import { uploadImage } from "@/lib/storage/upload-image-client";
 import { TENANT_ADMIN_TAB_OPTIONS } from "@/lib/super-admin/tenant-admin-tabs";
 import {
   buildCompanyPanelAccessFromPlanFeatures,

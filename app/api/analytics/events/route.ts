@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { resolveAnalyticsPageContext } from "@/lib/analytics/page-context";
+import { resolveAnalyticsCountryCode } from "@/lib/analytics/resolve-country-code";
 import { enforceRateLimit } from "@/lib/infra/api-guard";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
@@ -55,11 +56,8 @@ export async function POST(req: NextRequest) {
     }
 
     const host = normalizeHost(req.headers.get("x-forwarded-host") || req.headers.get("host"));
-    const countryCodeRaw = sanitize(
-      req.headers.get("x-vercel-ip-country") || req.headers.get("cf-ipcountry") || req.headers.get("x-country-code"),
-      8,
-    );
-    const countryCode = countryCodeRaw ? countryCodeRaw.toUpperCase() : null;
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || null;
+    const countryCode = await resolveAnalyticsCountryCode(req.headers, ip);
 
     let pageType: "landing" | "tenant" | "saas" | "unknown" = "unknown";
     let tenantSlug: string | null = null;
@@ -89,7 +87,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || null;
     const ipHash = hashIp(ip);
 
     const { error } = await supabaseAdmin.from("analytics_events").insert({
