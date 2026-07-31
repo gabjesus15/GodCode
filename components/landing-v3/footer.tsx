@@ -13,6 +13,7 @@ import {
 const footerLinks = [
 	{ label: "Funciones", href: "#funciones" },
 	{ label: "Precios", href: "#precios" },
+	{ label: "FAQ", href: "#faq" },
 	{ label: "Sobre Gcode", href: "/sobre-godcode" },
 	{ label: "Crear tienda", href: "/onboarding" },
 	{ label: "Negocios", href: "/onboarding/negocios" },

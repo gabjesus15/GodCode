@@ -10,6 +10,7 @@ import { cn } from "@/utils/cn";
 const navLinks = [
 	{ label: "Funciones", href: "#funciones" },
 	{ label: "Precios", href: "#precios" },
+	{ label: "FAQ", href: "#faq" },
 	{ label: "Sobre Gcode", href: "/sobre-godcode" },
 	{ label: "Contacto", href: "#contacto" },
 ];

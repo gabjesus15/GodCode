@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Store, ExternalLink } from "lucide-react";
 
 import { LANDING_BRAND_NAME } from "@/lib/landing/brand";
+import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
+import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getCurrentLocale } from "../../../lib/i18n/server";
@@ -71,17 +73,28 @@ async function fetchPublicCompanies(): Promise<CompanyPublic[]> {
 			return [];
 		}
 
-		return data
+		const mapped = data
 			.map((row) => {
 				const theme = (row.theme_config as ThemeConfig) ?? null;
+				const id = row.id as string;
 				return {
-					id: row.id as string,
+					id,
 					name: theme?.displayName ?? row.name ?? "Negocio",
 					slug: (row.public_slug as string | null) ?? "",
-					logoUrl: theme?.logoUrl ?? null,
+					rawLogo: theme?.logoUrl ?? null,
 				};
 			})
 			.filter((item) => item.slug);
+
+		return Promise.all(
+			mapped.map(async ({ rawLogo, ...rest }) => {
+				if (!rawLogo || isCloudinaryImageUrl(rawLogo)) {
+					return { ...rest, logoUrl: null };
+				}
+				const logoUrl = (await createStorefrontAssetSignedUrl(rawLogo, rest.id)) || null;
+				return { ...rest, logoUrl };
+			}),
+		);
 	} catch {
 		return [];
 	}
