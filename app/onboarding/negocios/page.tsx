@@ -77,10 +77,18 @@ async function fetchPublicCompanies(): Promise<CompanyPublic[]> {
 			.map((row) => {
 				const theme = (row.theme_config as ThemeConfig) ?? null;
 				const id = row.id as string;
+				const slug = (row.public_slug as string | null) ?? "";
+				const displayName = String(theme?.displayName ?? "").trim();
+				const companyName = String(row.name ?? "").trim();
+				const slugName = slug
+					.split(/[-_]+/)
+					.filter(Boolean)
+					.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+					.join(" ");
 				return {
 					id,
-					name: theme?.displayName ?? row.name ?? "Negocio",
-					slug: (row.public_slug as string | null) ?? "",
+					name: displayName || companyName || slugName || "Negocio",
+					slug,
 					rawLogo: theme?.logoUrl ?? null,
 				};
 			})
