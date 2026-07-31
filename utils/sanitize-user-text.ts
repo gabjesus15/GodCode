@@ -13,11 +13,3 @@ export function sanitizeUserText(text: string | null | undefined): string {
 	if (!trimmed) return "";
 	return purifyPlainText(trimmed);
 }
-
-/**
- * Igual que sanitizeUserText pero sin trim (p. ej. nota mientras se escribe).
- */
-export function sanitizeUserTextNoTrim(text: string | null | undefined): string {
-	if (text == null || text === "") return "";
-	return purifyPlainText(String(text));
-}

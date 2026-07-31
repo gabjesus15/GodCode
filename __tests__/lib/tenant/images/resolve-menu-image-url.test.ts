@@ -26,6 +26,15 @@ describe("resolveMenuImageUrl", () => {
 		expect(resolveMenuImageUrl(url, SUPABASE_URL)).toBe(url);
 	});
 
+	it("returns null for Cloudinary legacy URLs", () => {
+		expect(
+			resolveMenuImageUrl(
+				"https://res.cloudinary.com/dzdgrm4ub/image/upload/v1/menu/product.jpg",
+				SUPABASE_URL,
+			),
+		).toBeNull();
+	});
+
 	it.each([null, undefined, "", "   ", "data:image/png;base64,abc", "../secret.png"])(
 		"returns null for an empty or invalid value: %s",
 		(value) => {

@@ -6,6 +6,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TENANT_HERO_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
+import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
 
 /** Misma duración que la barra de progreso (CSS) */
 const HERO_CAROUSEL_AUTOPLAY_MS = 4000;
@@ -27,7 +28,8 @@ function HeroSlide({
 	shouldRenderImage: boolean;
 }) {
 	const rawUrl = banner.image_url?.trim() ?? "";
-	const fallbackUrl = rawUrl || TENANT_HERO_FALLBACK_IMAGE;
+	const fallbackUrl =
+		rawUrl && !isCloudinaryImageUrl(rawUrl) ? rawUrl : TENANT_HERO_FALLBACK_IMAGE;
 
 	return (
 		<div

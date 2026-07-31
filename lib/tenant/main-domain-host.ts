@@ -5,6 +5,12 @@ function getTenantBaseDomain(): string {
 		.toLowerCase();
 }
 
+/** Origen canónico del tenant en subdominio (p. ej. https://slug.godcode.me). */
+export function getTenantSubdomainOrigin(slug: string): string {
+	const base = getTenantBaseDomain().replace(/^www\./, "") || "godcode.me";
+	return `https://${slug}.${base}`;
+}
+
 export function isMainDomain(host: string): boolean {
 	const h = host.split(":")[0].toLowerCase();
 	// Desarrollo local: misma experiencia que godcode.me (landing en /).

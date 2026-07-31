@@ -3,6 +3,7 @@ import { revalidateTag } from "next/cache";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { mergePaymentJsonField } from "@/lib/payments/merge-payment-json-field";
 
 function defaultPaymentPolicy(method: string) {
   const normalized = method.toLowerCase();
@@ -85,10 +86,12 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "El nombre de la sucursal es requerido" }, { status: 400 });
   }
 
-  // Verify branch ownership and get current pause state
+  // Verify branch ownership and get current pause state + payment configs
   const { data: branch, error: fetchError } = await supabaseAdmin
     .from("branches")
-    .select("company_id, order_intake_paused")
+    .select(
+      "company_id, order_intake_paused, pago_movil, zelle, transferencia_bancaria, stripe, mercadopago, paypal",
+    )
     .eq("id", id)
     .maybeSingle();
 
@@ -133,12 +136,15 @@ export async function PUT(req: NextRequest) {
       origin_lat: origin_lat != null ? Number(origin_lat) : null,
       origin_lng: origin_lng != null ? Number(origin_lng) : null,
       payment_methods: Array.isArray(payment_methods) ? payment_methods : [],
-      pago_movil: pago_movil ? JSON.stringify(pago_movil) : null,
-      zelle: zelle ? JSON.stringify(zelle) : null,
-      transferencia_bancaria: transferencia_bancaria ? JSON.stringify(transferencia_bancaria) : null,
-      stripe: stripe ? JSON.stringify(stripe) : null,
-      mercadopago: mercadopago ? JSON.stringify(mercadopago) : null,
-      paypal: paypal ? JSON.stringify(paypal) : null,
+      pago_movil: mergePaymentJsonField(pago_movil, branch.pago_movil),
+      zelle: mergePaymentJsonField(zelle, branch.zelle),
+      transferencia_bancaria: mergePaymentJsonField(
+        transferencia_bancaria,
+        branch.transferencia_bancaria,
+      ),
+      stripe: mergePaymentJsonField(stripe, branch.stripe),
+      mercadopago: mergePaymentJsonField(mercadopago, branch.mercadopago),
+      paypal: mergePaymentJsonField(paypal, branch.paypal),
       order_intake_paused: parsedPaused,
       order_intake_pause_message: parsedPaused ? (order_intake_pause_message ? order_intake_pause_message.trim() : null) : null,
       ...(finalPausedAt !== undefined ? { order_intake_paused_at: finalPausedAt } : {}),

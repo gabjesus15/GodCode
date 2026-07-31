@@ -1,5 +1,7 @@
 import { CompanyGlobalForm } from "./company-global-form";
 import { CompanyHealth } from "./company-health";
+import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
+import { resolveStorefrontThemeAssets } from "@/lib/storage/storefront-branding";
 
 interface CompanyGlobalTabProps {
   company: {
@@ -14,6 +16,7 @@ interface CompanyGlobalTabProps {
     plan_id: string | null;
     subscription_status: string | null;
     subscription_ends_at?: string | null;
+    updated_at?: string | null;
     theme_config?: {
       primaryColor?: string;
       secondaryColor?: string;
@@ -28,7 +31,6 @@ interface CompanyGlobalTabProps {
       roleNavPermissions?: Record<string, string[]>;
     } | null;
   };
-  /** Vista previa de integración Uber (sin exponer secretos). */
   uberIntegration: {
     clientId: string;
     hasClientSecret: boolean;
@@ -66,6 +68,11 @@ export async function CompanyGlobalTab({
   plans,
   payments,
 }: CompanyGlobalTabProps) {
+  const resolvedAssets = await resolveStorefrontThemeAssets(
+    normalizeStoreThemeConfig(company.theme_config, company.name ?? ""),
+    company.id,
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <CompanyHealth companyId={company.id} />
@@ -74,6 +81,10 @@ export async function CompanyGlobalTab({
         businessInfo={businessInfo}
         plans={plans}
         payments={payments}
+        brandingPreviewUrls={{
+          logoUrl: resolvedAssets.logoUrl,
+          backgroundImageUrl: resolvedAssets.backgroundImageUrl,
+        }}
         uberIntegration={uberIntegration}
       />
     </div>

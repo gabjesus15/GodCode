@@ -5,7 +5,7 @@ import { Illustrated404 } from "@/components/brand/illustrated-404";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
 import { MenuClient } from "../../../components/tenant/menu/menu-client";
 import type { HeroBanner } from "../../../components/tenant/home/hero-carousel";
-import { isMainDomain } from "@/lib/tenant/main-domain-host";
+import { isMainDomain, getTenantSubdomainOrigin } from "@/lib/tenant/main-domain-host";
 import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedMenuStaticData, getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
 import { getCachedCompany } from "@/utils/tenant-cache";
@@ -56,6 +56,7 @@ export async function generateMetadata({
   const protocol = hdrs.get("x-forwarded-proto") ?? "https";
 
   const pathPrefix = isMainDomain(host) ? `/${resolvedParams.subdomain}` : "";
+  const onApexPathTenant = isMainDomain(host);
 	const company = await getCachedCompany(resolvedParams.subdomain);
 
   const rawThemeConfig = company?.theme_config;
@@ -79,7 +80,10 @@ export async function generateMetadata({
   const icon = `/tenant-favicon?tenant=${encodeURIComponent(resolvedParams.subdomain)}&v=${encodeURIComponent(String(iconVersionSeed))}`;
   const baseOrigin = `${protocol}://${host}`;
   const resolvedMetadataBase = new URL(baseOrigin);
-  const canonical = `${baseOrigin}${pathPrefix}/menu`;
+  const subdomainOrigin = getTenantSubdomainOrigin(resolvedParams.subdomain);
+  const canonical = onApexPathTenant
+    ? `${subdomainOrigin}/menu`
+    : `${baseOrigin}${pathPrefix}/menu`;
 
 	return {
     metadataBase: resolvedMetadataBase,
@@ -110,12 +114,17 @@ export async function generateMetadata({
 			statusBarStyle: "default",
 			title: displayName,
 		},
-    robots: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
+    robots: onApexPathTenant
+      ? {
+          index: false,
+          follow: true,
+        }
+      : {
+          index: true,
+          follow: true,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+        },
 	};
 }
 
@@ -363,7 +372,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
 
     const heroBanners = heroBannerRows
       .map((row) => {
-        const resolved = resolveMenuImageUrl(row.image_url) ?? row.image_url.trim();
+        const resolved = resolveMenuImageUrl(row.image_url);
         if (!resolved) return null;
         return { id: row.id, image_url: resolved };
       })

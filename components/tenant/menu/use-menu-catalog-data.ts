@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 
+import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
 import { FIRE_ICON, isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
 import type { CategoryListItem, MenuCategory, MenuProduct } from "./menu-types";
 
@@ -42,7 +43,12 @@ export function useMenuCatalogData(
 	const categoriesList = useMemo<CategoryListItem[]>(() => [
 		...(specialProducts.length > 0 ? [{ id: "special", name: "Solo por hoy", icon: FIRE_ICON }] : []),
 		...visibleCategories.map((cat) => {
-			const catFirstProduct = products.find((p) => p.category_id === cat.id && p.image_url);
+			const catFirstProduct = products.find(
+				(p) =>
+					p.category_id === cat.id &&
+					p.image_url &&
+					!isCloudinaryImageUrl(p.image_url),
+			);
 			return {
 				id: cat.id,
 				name: cat.name,

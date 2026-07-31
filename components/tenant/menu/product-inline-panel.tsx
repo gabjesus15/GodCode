@@ -6,6 +6,8 @@ import { Minus, Plus, X } from "lucide-react";
 
 import { useCartStore } from "../cart/cart-store";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
+import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
+import { PRODUCT_CARD_FALLBACK_IMAGE } from "./product-card-shared";
 import type { MenuProduct } from "./menu-types";
 
 export function ProductInlinePanel({
@@ -66,18 +68,20 @@ export function ProductInlinePanel({
 			</button>
 
 			<div className="product-inline-panel__inner">
-				{product.image_url && (
-					<div className="product-inline-panel__img-wrap">
-						<Image
-							src={product.image_url}
-							alt={product.name ?? "Producto"}
-							fill
-							className="product-inline-panel__img"
-							sizes="160px"
-							quality={75}
-						/>
-					</div>
-				)}
+				<div className="product-inline-panel__img-wrap">
+					<Image
+						src={
+							product.image_url && !isCloudinaryImageUrl(product.image_url)
+								? product.image_url
+								: PRODUCT_CARD_FALLBACK_IMAGE
+						}
+						alt={product.name ?? "Producto"}
+						fill
+						className="product-inline-panel__img"
+						sizes="160px"
+						quality={75}
+					/>
+				</div>
 
 				<div className="product-inline-panel__body">
 					<h3 className="product-inline-panel__name">{product.name}</h3>

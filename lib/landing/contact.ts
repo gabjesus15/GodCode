@@ -92,6 +92,16 @@ export function getLandingSocialLinksFromEnv(): LandingSocialLink[] {
 	return links;
 }
 
+/** URLs públicas de perfiles para Organization.sameAs (schema SEO). */
+export function getLandingOrganizationSameAs(): string[] {
+	const urls: string[] = [];
+	const instagramUrl = normalizeInstagramUrl(
+		process.env.NEXT_PUBLIC_LANDING_INSTAGRAM_URL?.trim() || LANDING_INSTAGRAM_URL_DEFAULT,
+	);
+	if (instagramUrl) urls.push(instagramUrl);
+	return urls;
+}
+
 export {
 	normalizeInstagramUrl,
 	normalizeWhatsAppUrl,

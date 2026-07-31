@@ -15,8 +15,8 @@ describe("sitemap.ts SEO rules", () => {
 		expect(source).not.toMatch(/`https:\/\/\$\{c\.public_slug\}\.godcode\.me`/);
 	});
 
-	it("includes llms.txt for main domain GEO", () => {
+	it("does not list llms.txt as an HTML sitemap URL", () => {
 		const source = readFileSync(join(process.cwd(), "app", "sitemap.ts"), "utf8");
-		expect(source).toContain("/llms.txt");
+		expect(source).not.toContain("/llms.txt");
 	});
 });

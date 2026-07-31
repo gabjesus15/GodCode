@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
+import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { Plus, ChevronDown, X } from "lucide-react";
 import { useCartStore } from "../cart/cart-store";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
@@ -148,6 +149,7 @@ const GlassCard = React.memo(function GlassCard({ product, logic, priority = fal
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           quality={75}
           priority={priority}
+          unoptimized={shouldUnoptimizeImageSrc(logic.imageSrc)}
           onLoad={() => logic.setImageLoaded(true)}
           onLoadingComplete={() => logic.setImageLoaded(true)}
           className="opacity-100 transition-opacity duration-500"

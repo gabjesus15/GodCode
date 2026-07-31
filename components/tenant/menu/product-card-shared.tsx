@@ -28,6 +28,7 @@ export interface ProductCardProduct {
 }
 
 import { TENANT_PRODUCT_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
+import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
 
 export const PRODUCT_CARD_FALLBACK_IMAGE = TENANT_PRODUCT_FALLBACK_IMAGE;
 
@@ -95,9 +96,13 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
     [],
   );
 
+  const resolvedProductImage =
+    product.image_url && !isCloudinaryImageUrl(product.image_url)
+      ? product.image_url
+      : null;
   const imageSrc = imageError
     ? PRODUCT_CARD_FALLBACK_IMAGE
-    : product.image_url || PRODUCT_CARD_FALLBACK_IMAGE;
+    : resolvedProductImage || PRODUCT_CARD_FALLBACK_IMAGE;
 
   const setImageLoaded = useCallback((_value: boolean | ((prev: boolean) => boolean) = true) => {
     // Callers always mark loaded=true; identity mismatch already means "not loaded".

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Store, ExternalLink } from "lucide-react";
 
+import { LANDING_BRAND_NAME } from "@/lib/landing/brand";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getCurrentLocale } from "../../../lib/i18n/server";
@@ -10,29 +11,37 @@ import { getTenantUrl } from "../../../utils/tenant-url";
 const COPY = {
 	es: {
 		directory: "Directorio",
-		title: "Negocios en la plataforma",
-		desc: "Estos negocios ya confían en nosotros para gestionar sus pedidos, menú y caja.",
+		title: `Negocios en ${LANDING_BRAND_NAME}`,
+		desc: "Restaurantes y locales que ya venden con menú digital, pedidos online y delivery en su propio dominio, sin comisiones por venta.",
+		seoBody:
+			`${LANDING_BRAND_NAME} es la plataforma para crear tu tienda online: menú digital, pedidos online sin comisiones, punto de venta e inventario. Estos negocios ya confían en nosotros para gestionar pedidos, menú y caja.`,
 		emptyTitle: "Aún no hay negocios publicados.",
 		emptySub: "Sé el primero en unirte.",
 		register: "Registrar mi negocio",
 		visit: "Visitar",
 		backRegister: "Volver al registro",
-		metaTitle: "Negocios en GodCode · Tiendas online creadas con la plataforma",
+		aboutLink: `Sobre ${LANDING_BRAND_NAME}`,
+		homeLink: "Ir al inicio",
+		metaTitle: `Negocios en ${LANDING_BRAND_NAME} | Menú digital y pedidos`,
 		metaDescription:
-			"Conoce los restaurantes y negocios que ya venden online con GodCode: menú digital, pedidos y delivery con dominio propio.",
+			`Conoce restaurantes que venden online con ${LANDING_BRAND_NAME}: menú digital, pedidos y delivery con dominio propio, sin comisiones.`,
 	},
 	en: {
 		directory: "Directory",
-		title: "Businesses on the platform",
-		desc: "These businesses already trust us to manage orders, menu and checkout.",
+		title: `Businesses on ${LANDING_BRAND_NAME}`,
+		desc: "Restaurants and shops already selling with a digital menu, online orders and delivery on their own domain — no commissions per sale.",
+		seoBody:
+			`${LANDING_BRAND_NAME} is the platform to build your online store: digital menu, commission-free online orders, POS and inventory. These businesses already trust us for orders, menu and checkout.`,
 		emptyTitle: "There are no published businesses yet.",
 		emptySub: "Be the first to join.",
 		register: "Register my business",
 		visit: "Visit",
 		backRegister: "Back to registration",
-		metaTitle: "Businesses on GodCode · Online stores built with the platform",
+		aboutLink: `About ${LANDING_BRAND_NAME}`,
+		homeLink: "Go to home",
+		metaTitle: `Businesses on ${LANDING_BRAND_NAME} | Digital menu & orders`,
 		metaDescription:
-			"Discover the restaurants and businesses already selling online with GodCode: digital menu, orders and delivery with your own domain.",
+			`Discover restaurants selling online with ${LANDING_BRAND_NAME}: digital menu, orders and delivery on your own domain, no commissions.`,
 	},
 } as const;
 
@@ -92,8 +101,17 @@ export async function generateMetadata(): Promise<Metadata> {
 			title: t.metaTitle,
 			description: t.metaDescription,
 			url: `${base}/onboarding/negocios`,
-			siteName: "GodCode",
+			siteName: LANDING_BRAND_NAME,
 			type: "website",
+			images: [
+				{
+					url: `${base}/api/system/og`,
+					width: 1200,
+					height: 630,
+					type: "image/png",
+					alt: t.metaTitle,
+				},
+			],
 		},
 		robots: {
 			index: true,
@@ -123,6 +141,16 @@ export default async function NegociosPage() {
 				</h1>
 				<p className="mx-auto mt-3 max-w-xl text-sm text-slate-500 sm:text-base">
 					{t.desc}
+				</p>
+				<p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-[15px]">
+					{t.seoBody}{" "}
+					<Link href="/sobre-godcode" className="font-medium text-indigo-600 hover:underline">
+						{t.aboutLink}
+					</Link>
+					{" · "}
+					<Link href="/" className="font-medium text-indigo-600 hover:underline">
+						{t.homeLink}
+					</Link>
 				</p>
 			</div>
 

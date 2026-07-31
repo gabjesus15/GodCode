@@ -7,6 +7,7 @@ import { buildPlanMarketingLinesI18nPayload, buildPlanNameI18nPayload } from "@/
 import { normalizeMarketingLines } from "@/lib/plans/plan-marketing-lines";
 import { adminUpdatePlanById } from "@/lib/plans/plans-db-query";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { asThemeConfigObject } from "@/lib/store-theme/merge-theme-config";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
 type PatchBody = {
@@ -22,13 +23,6 @@ type PatchBody = {
 	name_i18n?: unknown;
 	marketing_lines_i18n?: unknown;
 };
-
-function asThemeConfigObject(raw: unknown): Record<string, unknown> {
-	if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
-		return {};
-	}
-	return { ...(raw as Record<string, unknown>) };
-}
 
 async function syncPlanPanelAccessToCompanies(planId: string, planFeatures: unknown): Promise<{ synced: number }> {
 	const panelAccess = buildCompanyPanelAccessFromPlanFeatures(planFeatures);

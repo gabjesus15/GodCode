@@ -53,7 +53,7 @@ export default async function CompanyDetailPage({
       supabase
         .from("companies")
         .select(
-          "id,name,legal_rut,email,phone,address,public_slug,custom_domain,plan_id,subscription_status,subscription_ends_at,theme_config,country,currency,integration_settings"
+          "id,name,legal_rut,email,phone,address,public_slug,custom_domain,plan_id,subscription_status,subscription_ends_at,updated_at,theme_config,country,currency,integration_settings"
         )
         .eq("id", resolvedParams.id)
         .maybeSingle(),

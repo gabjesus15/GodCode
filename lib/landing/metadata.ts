@@ -2,18 +2,25 @@ import type { Metadata } from "next";
 
 import { LANDING_BRAND_NAME } from "./brand";
 
-const SHARE_TITLE = `${LANDING_BRAND_NAME} | Menú digital y POS para restaurantes`;
+const SHARE_TITLE = `${LANDING_BRAND_NAME} | Menú digital y POS sin comisiones`;
 const DESCRIPTION =
 	`${LANDING_BRAND_NAME} es la plataforma SaaS todo-en-uno para restaurantes: menú digital, pedidos online, punto de venta, delivery e inventario. Sin comisiones por venta.`;
 
 export function buildLandingMetadata(base: string): Metadata {
 	const canonical = `${base}/`;
+	const ogImage = {
+		url: `${base}/api/system/og`,
+		width: 1200,
+		height: 630,
+		type: "image/png",
+		alt: SHARE_TITLE,
+	};
 
 	return {
 		metadataBase: new URL(base),
 		applicationName: LANDING_BRAND_NAME,
 		title: {
-			absolute: `${SHARE_TITLE} · Sin comisiones`,
+			absolute: SHARE_TITLE,
 		},
 		description: DESCRIPTION,
 		keywords: [
@@ -46,20 +53,13 @@ export function buildLandingMetadata(base: string): Metadata {
 			siteName: LANDING_BRAND_NAME,
 			locale: "es_ES",
 			type: "website",
-			images: [
-				{
-					url: `${base}/api/system/og`,
-					width: 1200,
-					height: 630,
-					alt: SHARE_TITLE,
-				},
-			],
+			images: [ogImage],
 		},
 		twitter: {
 			card: "summary_large_image",
 			title: SHARE_TITLE,
 			description: DESCRIPTION,
-			images: [`${base}/api/system/og`],
+			images: [ogImage.url],
 		},
 		robots: {
 			index: true,

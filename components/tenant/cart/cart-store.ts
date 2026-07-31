@@ -14,6 +14,13 @@ import {
   resetCheckoutSessionToSummary,
   type CheckoutSessionState,
 } from "@/lib/tenant/mobile/checkout-session";
+import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
+
+function sanitizeCartImageUrl(value: string | null | undefined): string | null {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw || isCloudinaryImageUrl(raw)) return null;
+  return raw;
+}
 
 interface CartProduct {
   id: string;
@@ -191,7 +198,7 @@ export const useCartStore = create<CartState>()(
             id: product.id,
             name: product.name ?? null,
             description: product.description ?? null,
-            image_url: product.image_url ?? null,
+            image_url: sanitizeCartImageUrl(product.image_url),
             price: product.price ?? null,
             has_discount: product.has_discount ?? null,
             discount_price: product.discount_price ?? null,
@@ -323,11 +330,27 @@ export const useCartStore = create<CartState>()(
       name: "tenant_cart_storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        cart: state.cart,
+        cart: state.cart.map((item) => ({
+          ...item,
+          image_url: sanitizeCartImageUrl(item.image_url),
+        })),
         orderNote: state.orderNote,
         storedBranchId: state.storedBranchId,
         globalExtras: state.globalExtras,
       }),
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<CartState>;
+        return {
+          ...current,
+          ...p,
+          cart: Array.isArray(p.cart)
+            ? p.cart.map((item) => ({
+                ...item,
+                image_url: sanitizeCartImageUrl(item.image_url),
+              }))
+            : current.cart,
+        };
+      },
     },
   ),
 );

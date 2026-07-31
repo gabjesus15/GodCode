@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ArrowRight, ChartNoAxesCombined, ShieldCheck, Sparkles, Users } from "lucide-react";
 
 import { LandingLogo } from "@/components/ui/logo/landing-logo";
+import { LANDING_BRAND_ALTERNATE, LANDING_BRAND_NAME } from "@/lib/landing/brand";
 import { normalizeLocale } from "@/lib/i18n/config";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { getCurrentLocale } from "@/lib/i18n/server";
@@ -13,10 +14,10 @@ type AboutSearchParams = {
 
 const copy = {
   es: {
-    eyebrow: "Sobre GodCode",
+    eyebrow: `Sobre ${LANDING_BRAND_NAME}`,
     title: "Una plataforma pensada para vender online sin perder el control de tu negocio.",
     intro:
-      "GodCode simplifica lo que hoy suele estar fragmentado: menú digital, pedidos online, caja, inventario y delivery, todo en un solo lugar.",
+      `${LANDING_BRAND_NAME} simplifica lo que hoy suele estar fragmentado: menú digital, pedidos online, caja, inventario y delivery, todo en un solo lugar.`,
     primaryCta: "Crear mi tienda",
     secondaryCta: "Ver la home",
     facts: [
@@ -26,14 +27,14 @@ const copy = {
       { label: "En minutos", detail: "Sin necesidad de programar." },
     ],
       sectionOneEyebrow: "01 · Qué resuelve",
-    sectionOneTitle: "Vende por tu propia web, sin ceder margen.",
+    sectionOneTitle: "Menú digital y pedidos online, sin ceder margen.",
     sectionOneText:
-      "Restaurantes y negocios con sucursales pierden margen en cada pedido que pasa por un marketplace. GodCode les da su propia tienda, con su propio dominio y sin comisiones.",
+      `Restaurantes y negocios con sucursales pierden margen en cada pedido que pasa por un marketplace. ${LANDING_BRAND_NAME} les da su propia tienda con menú digital, pedidos online sin comisiones y punto de venta integrado.`,
     sectionOneFeatures: ["Menú digital con fotos", "Carrito y checkout propio", "Delivery y retiro en tienda", "Caja e inventario integrados"],
       sectionTwoEyebrow: "02 · Cómo trabajamos",
     sectionTwoTitle: "Menos pasos, más pedidos.",
     sectionTwoText:
-      "Priorizamos una experiencia simple para el negocio y clara para el cliente: menos pantallas, menos fricción y una ruta directa desde el menú hasta el pago.",
+      "Priorizamos una experiencia simple para el negocio y clara para el cliente: menos pantallas, menos fricción y una ruta directa desde el menú digital hasta el pago.",
     sectionTwoFeatures: ["Onboarding guiado en minutos", "Panel de control centralizado", "Notificaciones en tiempo real", "Soporte humano cuando lo necesitas"],
     pullQuote: "Cada pedido que llega por tu propia web es tuyo al 100%.",
       sectionThreeEyebrow: "03 · Por qué importa",
@@ -50,13 +51,13 @@ const copy = {
     ],
     closingEyebrow: "Empieza hoy",
     closingTitle: "Tu tienda online, en tu propio dominio.",
-    closingText: "Crea tu cuenta, configura tu menú y empieza a recibir pedidos. Sin comisiones, sin contratos.",
+    closingText: "Crea tu cuenta, configura tu menú digital y empieza a recibir pedidos online. Sin comisiones, sin contratos.",
   },
   en: {
-    eyebrow: "About GodCode",
+    eyebrow: `About ${LANDING_BRAND_NAME}`,
     title: "A platform designed to sell online without losing control of your business.",
     intro:
-      "GodCode simplifies what is usually fragmented: digital menu, online orders, POS, inventory and delivery, all in one place.",
+      `${LANDING_BRAND_NAME} simplifies what is usually fragmented: digital menu, online orders, POS, inventory and delivery, all in one place.`,
     primaryCta: "Create my store",
     secondaryCta: "View home",
     facts: [
@@ -66,14 +67,14 @@ const copy = {
       { label: "Ready in minutes", detail: "No coding required." },
     ],
     sectionOneEyebrow: "01 · What it solves",
-    sectionOneTitle: "Sell through your own website, without giving up margin.",
+    sectionOneTitle: "Digital menu and online orders, without giving up margin.",
     sectionOneText:
-      "Restaurants and multi-branch businesses lose margin on every order that goes through a marketplace. GodCode gives them their own store, their own domain and zero commissions.",
+      `Restaurants and multi-branch businesses lose margin on every order that goes through a marketplace. ${LANDING_BRAND_NAME} gives them their own store with a digital menu, commission-free online orders and integrated POS.`,
     sectionOneFeatures: ["Digital menu with photos", "Own cart and checkout", "Delivery and in-store pickup", "Integrated POS and inventory"],
     sectionTwoEyebrow: "02 · How we work",
     sectionTwoTitle: "Fewer steps, more orders.",
     sectionTwoText:
-      "We prioritize a simple experience for the business and a clear one for the customer: fewer screens, less friction and a direct path from the menu to payment.",
+      "We prioritize a simple experience for the business and a clear one for the customer: fewer screens, less friction and a direct path from the digital menu to payment.",
     sectionTwoFeatures: ["Guided onboarding in minutes", "Centralized control panel", "Real-time notifications", "Human support when you need it"],
     pullQuote: "Every order that arrives through your own website is 100% yours.",
     sectionThreeEyebrow: "03 · Why it matters",
@@ -90,7 +91,7 @@ const copy = {
     ],
     closingEyebrow: "Get started",
     closingTitle: "Your online store, on your own domain.",
-    closingText: "Create your account, configure your menu and start receiving orders. No commissions, no contracts.",
+    closingText: "Create your account, set up your digital menu and start receiving online orders. No commissions, no contracts.",
   },
 } as const;
 
@@ -114,10 +115,10 @@ export async function generateMetadata({
   const fallbackLocale = await getCurrentLocale();
   const locale = resolveAboutLocale(resolvedSearchParams?.hl, fallbackLocale);
   const isSpanish = locale === "es";
-  const title = isSpanish ? "Sobre GodCode" : "About GodCode";
+  const title = isSpanish ? `Sobre ${LANDING_BRAND_NAME}` : `About ${LANDING_BRAND_NAME}`;
   const description = isSpanish
-    ? "Página de marca de GodCode: una plataforma para menú digital, pedidos online, caja, inventario y delivery."
-    : "GodCode brand page: a platform for digital menus, online orders, POS, inventory and delivery.";
+    ? `Página de marca de ${LANDING_BRAND_NAME}: menú digital, pedidos online sin comisiones, punto de venta, inventario y delivery.`
+    : `${LANDING_BRAND_NAME} brand page: digital menus, commission-free online orders, POS, inventory and delivery.`;
   const canonical =
     locale === "es"
       ? `${base}/sobre-godcode`
@@ -138,8 +139,23 @@ export async function generateMetadata({
       title,
       description,
       url: canonical,
-      siteName: "GodCode",
+      siteName: LANDING_BRAND_NAME,
       type: "website",
+      images: [
+        {
+          url: `${base}/api/system/og`,
+          width: 1200,
+          height: 630,
+          type: "image/png",
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [`${base}/api/system/og`],
     },
     robots: {
       index: true,
@@ -161,14 +177,30 @@ export default async function SobreGodCodePage({
   const t = getLocaleCopy(locale);
   const base = getAppUrl();
   const ld = [
-    { "@context": "https://schema.org", "@type": "AboutPage", name: "Sobre GodCode", url: `${base}/sobre-godcode`, description: t.intro },
-    { "@context": "https://schema.org", "@type": "Organization", name: "GodCode", url: base },
+    {
+      "@context": "https://schema.org",
+      "@type": "AboutPage",
+      name: `Sobre ${LANDING_BRAND_NAME}`,
+      url: `${base}/sobre-godcode`,
+      description: t.intro,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: LANDING_BRAND_NAME,
+      alternateName: LANDING_BRAND_ALTERNATE,
+      url: base,
+      logo: {
+        "@type": "ImageObject",
+        url: `${base}/logo.png`,
+      },
+    },
   ];
 
   return (
     <main className="bg-white text-[#1d1d1f]">
       <script
-        id="godcode-about-jsonld"
+        id="gcode-about-jsonld"
         type="application/ld+json"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data JSON-LD must be inline for Googlebot
         dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
@@ -179,8 +211,8 @@ export default async function SobreGodCodePage({
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
           <a
             href="/"
-            aria-label="Ir al inicio de GodCode"
-            title="Ir al inicio de GodCode"
+            aria-label={`Ir al inicio de ${LANDING_BRAND_NAME}`}
+            title={`Ir al inicio de ${LANDING_BRAND_NAME}`}
             className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
             <LandingLogo className="gap-1" />

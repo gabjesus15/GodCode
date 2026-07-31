@@ -135,7 +135,11 @@ export async function buildOrderItemsFromBranch(
 			has_discount: false,
 			discount_price: null,
 			description: line.description,
-			extras_total: line.extras_total,
+			// Recalculate from extras lines — never trust client extras_total alone.
+			extras_total: line.extras.reduce(
+				(sum, extra) => sum + Math.max(0, extra.price) * Math.max(1, extra.qty),
+				0,
+			),
 			extras: line.extras,
 		});
 	}

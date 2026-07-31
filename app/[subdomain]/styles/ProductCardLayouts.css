@@ -124,13 +124,15 @@
 .detailed-badge-hot,
 .horizontal-badge.layout-badge-hot,
 .rappi-badge.layout-badge-hot {
-  background: var(--tenant-primary, #ef4444);
+  background: color-mix(in srgb, var(--tenant-primary, #ef4444) 40%, #111 60%);
+  color: #fff;
 }
 .layout-badge-special,
 .detailed-badge-hot.layout-badge-special,
 .horizontal-badge.layout-badge-special,
 .rappi-badge.layout-badge-special {
-  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  background: linear-gradient(135deg, #d97706 0%, #c2410c 100%);
+  color: #fff;
 }
 
 /* --- Price blocks --- */

@@ -581,6 +581,14 @@ export const ordersService = {
       });
       if (!patchRes.ok) {
         const j = (await patchRes.json().catch(() => ({}))) as { error?: string; message?: string };
+        // Compensate orphan order created by RPC before delivery/tax patch failed.
+        await supabase
+          .from("orders")
+          .update({
+            status: "cancelled",
+            note: `[AUTO-CANCEL] Fallo post-creacion: ${j.error || j.message || "patch"}`,
+          })
+          .eq("id", orderId);
         const msg = j.error === "ORDER_INTAKE_PAUSED"
           ? (j.message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.")
           : (j.error || "No se pudo registrar los datos de facturación del pedido.");

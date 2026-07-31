@@ -2,6 +2,7 @@ import type { PublicPlanForLanding } from "@/lib/plans/public-plans";
 import { resolveRegionalPlanPrice } from "@/lib/plans/plan-regional-pricing";
 
 import { LANDING_BRAND_ALTERNATE, LANDING_BRAND_NAME, LANDING_SUPPORT_EMAIL } from "./brand";
+import { getLandingOrganizationSameAs } from "./contact";
 import type { LandingFaqItem } from "./faq";
 
 type BuildLandingJsonLdInput = {
@@ -31,12 +32,16 @@ function getLowestPlanOffer(
 export function buildLandingJsonLd({ base, faq, plans, country }: BuildLandingJsonLdInput) {
 	const offer = getLowestPlanOffer(plans, country);
 
+	const logoUrl = `${base}/logo.png`;
+	const sameAs = getLandingOrganizationSameAs();
+
 	const softwareApplication: Record<string, unknown> = {
 		"@context": "https://schema.org",
 		"@type": "SoftwareApplication",
 		name: LANDING_BRAND_NAME,
 		alternateName: LANDING_BRAND_ALTERNATE,
 		url: base,
+		image: logoUrl,
 		applicationCategory: "BusinessApplication",
 		operatingSystem: "Web",
 		description:
@@ -69,6 +74,11 @@ export function buildLandingJsonLd({ base, faq, plans, country }: BuildLandingJs
 			name: LANDING_BRAND_NAME,
 			alternateName: LANDING_BRAND_ALTERNATE,
 			url: base,
+			logo: {
+				"@type": "ImageObject",
+				url: logoUrl,
+			},
+			...(sameAs.length > 0 ? { sameAs } : {}),
 			contactPoint: {
 				"@type": "ContactPoint",
 				email: LANDING_SUPPORT_EMAIL,

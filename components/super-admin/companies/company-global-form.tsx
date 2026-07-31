@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { revalidateMenuCache } from "@/app/actions/revalidate";
 
 import { CompanySectionCard } from "./company-section-card";
 import { CompanyUserManagement } from "./company-user-management";
@@ -17,9 +16,8 @@ import { useAdminRole } from "@/components/super-admin/shell/admin-role-context"
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 import { logAdminAction } from "@/utils/audit";
 import { requireAdminRole, roleSets } from "@/utils/admin";
-import { getTenantBaseDomainStatic, normalizeBaseDomain } from "@/utils/tenant-url";
+import { getTenantBaseDomainStatic } from "@/utils/tenant-url";
 import { slugify } from "@/utils/slugify";
-import { uploadImage } from "@/lib/storage/upload-image-client";
 import { TENANT_ADMIN_TAB_OPTIONS } from "@/lib/super-admin/tenant-admin-tabs";
 import {
   buildCompanyPanelAccessFromPlanFeatures,
@@ -61,6 +59,7 @@ interface CompanyData {
   country?: string | null;
   currency?: string | null;
   subscription_ends_at?: string | null;
+  updated_at?: string | null;
   theme_config?: {
     primaryColor?: string;
     secondaryColor?: string;
@@ -102,6 +101,10 @@ interface CompanyGlobalFormProps {
   businessInfo: BusinessInfo | null;
   plans: PlanOption[];
   payments: PaymentHistory[];
+  brandingPreviewUrls?: {
+    logoUrl?: string;
+    backgroundImageUrl?: string;
+  };
   uberIntegration: {
     clientId: string;
     hasClientSecret: boolean;
@@ -114,6 +117,7 @@ export function CompanyGlobalForm({
   businessInfo,
   plans,
   payments,
+  brandingPreviewUrls,
   uberIntegration,
 }: CompanyGlobalFormProps) {
   const { readOnly } = useAdminRole();
@@ -130,6 +134,10 @@ export function CompanyGlobalForm({
   const [backgroundUploadError, setBackgroundUploadError] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
+  const [previewUrls, setPreviewUrls] = useState({
+    logoUrl: brandingPreviewUrls?.logoUrl ?? "",
+    backgroundImageUrl: brandingPreviewUrls?.backgroundImageUrl ?? "",
+  });
 
   const [companyForm, setCompanyForm] = useState({
     name: company.name ?? "",
@@ -225,6 +233,13 @@ export function CompanyGlobalForm({
     [selectedPlan?.features]
   );
 
+  useEffect(() => {
+    setPreviewUrls({
+      logoUrl: brandingPreviewUrls?.logoUrl ?? "",
+      backgroundImageUrl: brandingPreviewUrls?.backgroundImageUrl ?? "",
+    });
+  }, [brandingPreviewUrls?.logoUrl, brandingPreviewUrls?.backgroundImageUrl]);
+
   // Sincronizar businessForm si cambia la prop (refresh)
   useEffect(() => {
     setBusinessForm({
@@ -238,10 +253,65 @@ export function CompanyGlobalForm({
     });
   }, [businessInfo, company.country, company.currency]);
 
+  useEffect(() => {
+    setThemeForm({
+      displayName: company.theme_config?.displayName ?? "",
+      primaryColor: company.theme_config?.primaryColor ?? "#111827",
+      secondaryColor:
+        company.theme_config?.secondaryColor ?? company.theme_config?.primaryColor ?? "#111827",
+      priceColor: company.theme_config?.priceColor ?? "#ff4757",
+      discountColor: company.theme_config?.discountColor ?? "#25d366",
+      hoverColor: company.theme_config?.hoverColor ?? "#ff2e40",
+      backgroundColor: company.theme_config?.backgroundColor ?? "#0a0a0a",
+      backgroundImageUrl: company.theme_config?.backgroundImageUrl ?? "",
+      logoUrl: company.theme_config?.logoUrl ?? "",
+      panelAccess: normalizeCompanyPanelAccess(
+        company.theme_config?.panelAccess ?? company.theme_config?.roleNavPermissions,
+      ),
+    });
+    setCompanyForm({
+      name: company.name ?? "",
+      legal_rut: company.legal_rut ?? "",
+      email: company.email ?? "",
+      phone: company.phone ?? "",
+      address: company.address ?? "",
+      public_slug: company.public_slug ?? "",
+      custom_domain: company.custom_domain ?? "",
+      plan_id: company.plan_id ?? "",
+      subscription_status: company.subscription_status ?? "active",
+      country: company.country ?? "",
+      currency: company.currency ?? "",
+    });
+  }, [company]);
+
   const addDays = (date: Date, days: number) => {
     const next = new Date(date);
     next.setDate(next.getDate() + days);
     return next;
+  };
+
+  const uploadStorefrontAsset = async (
+    file: File,
+    field: "logoUrl" | "backgroundImageUrl",
+  ): Promise<{ path: string; signedUrl: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("field", field);
+    const response = await fetch(`/api/super-admin/companies/${company.id}`, {
+      method: "POST",
+      body: formData,
+    });
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      path?: string;
+      signedUrl?: string;
+    };
+    if (!response.ok) {
+      throw new Error(payload.error || "No se pudo subir la imagen.");
+    }
+    const path = String(payload.path ?? "").trim();
+    if (!path) throw new Error("El almacenamiento no devolvio el path.");
+    return { path, signedUrl: String(payload.signedUrl ?? "").trim() };
   };
 
   const handleBackgroundUpload = async (file: File | null) => {
@@ -249,8 +319,9 @@ export function CompanyGlobalForm({
     setBackgroundUploading(true);
     setBackgroundUploadError(null);
     try {
-      const url = await uploadImage(file, "tenant");
-      setThemeForm((prev) => ({ ...prev, backgroundImageUrl: url }));
+      const { path, signedUrl } = await uploadStorefrontAsset(file, "backgroundImageUrl");
+      setThemeForm((prev) => ({ ...prev, backgroundImageUrl: path }));
+      setPreviewUrls((prev) => ({ ...prev, backgroundImageUrl: signedUrl || path }));
     } catch (err) {
       setBackgroundUploadError(err instanceof Error ? err.message : "No se pudo subir la imagen.");
     } finally {
@@ -263,8 +334,9 @@ export function CompanyGlobalForm({
     setLogoUploading(true);
     setLogoUploadError(null);
     try {
-      const url = await uploadImage(file, "tenant");
-      setThemeForm((prev) => ({ ...prev, logoUrl: url }));
+      const { path, signedUrl } = await uploadStorefrontAsset(file, "logoUrl");
+      setThemeForm((prev) => ({ ...prev, logoUrl: path }));
+      setPreviewUrls((prev) => ({ ...prev, logoUrl: signedUrl || path }));
     } catch (err) {
       setLogoUploadError(err instanceof Error ? err.message : "No se pudo subir el logo.");
     } finally {
@@ -321,41 +393,34 @@ export function CompanyGlobalForm({
       const permission = await requireAdminRole(roleSets.billing);
       if (!permission.ok) throw new Error(permission.error);
 
-      const supabase = createSupabaseBrowserClient("super-admin");
-      const normalizedCustomDomain = normalizeBaseDomain(companyForm.custom_domain);
-      let nextSubscriptionEnds: string | null = company.subscription_ends_at ?? null;
-
-      const companyUpdate: Record<string, unknown> = {
-        name: companyForm.name.trim(),
-        legal_rut: companyForm.legal_rut.trim(),
-        email: companyForm.email.trim(),
-        phone: companyForm.phone.trim(),
-        address: companyForm.address.trim(),
-        public_slug: companyForm.public_slug.trim(),
-        custom_domain: normalizedCustomDomain || null,
-        plan_id: companyForm.plan_id || null,
-        subscription_status: companyForm.subscription_status,
-        country: companyForm.country || null,
-        currency: companyForm.currency || null,
-        updated_at: new Date().toISOString(),
-      };
-
-      if (isDevPlan) {
-        companyUpdate.subscription_ends_at = null;
-        nextSubscriptionEnds = null;
-      } else if (isBetaPlan && !currentEndsAt) {
-        const betaEnd = addDays(new Date(), 30).toISOString();
-        companyUpdate.subscription_ends_at = betaEnd;
-        nextSubscriptionEnds = betaEnd;
-      }
-
-      companyUpdate.custom_domain_expires_at = normalizedCustomDomain ? nextSubscriptionEnds : null;
-
-      const { error: companyError } = await supabase
-        .from("companies")
-        .update({
-          ...companyUpdate,
-          theme_config: {
+      const response = await fetch(`/api/super-admin/companies/${company.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          expectedUpdatedAt: company.updated_at ?? null,
+          company: {
+            name: companyForm.name.trim(),
+            legal_rut: companyForm.legal_rut.trim(),
+            email: companyForm.email.trim(),
+            phone: companyForm.phone.trim(),
+            address: companyForm.address.trim(),
+            public_slug: companyForm.public_slug.trim(),
+            custom_domain: companyForm.custom_domain.trim() || null,
+            plan_id: companyForm.plan_id || null,
+            subscription_status: companyForm.subscription_status,
+            country: companyForm.country || null,
+            currency: companyForm.currency || null,
+          },
+          businessInfo: {
+            name: businessForm.name?.trim() || null,
+            phone: businessForm.phone?.trim() || null,
+            address: businessForm.address?.trim() || null,
+            instagram: businessForm.instagram?.trim() || null,
+            schedule: businessForm.schedule?.trim() || null,
+            country: businessForm.country || null,
+            currency: businessForm.currency || null,
+          },
+          themePatch: {
             displayName: themeForm.displayName.trim() || null,
             primaryColor: themeForm.primaryColor,
             secondaryColor: themeForm.secondaryColor,
@@ -365,29 +430,17 @@ export function CompanyGlobalForm({
             logoUrl: themeForm.logoUrl,
             backgroundColor: themeForm.backgroundColor,
             backgroundImageUrl: themeForm.backgroundImageUrl.trim() || null,
-            panelAccess: panelAccessByPlan,
           },
-        })
-        .eq("id", company.id);
+        }),
+      });
 
-      if (companyError) throw companyError;
-
-      const { error: businessError } = await supabase.from("business_info").upsert(
-        {
-          company_id: company.id,
-          name: businessForm.name?.trim() || null,
-          phone: businessForm.phone?.trim() || null,
-          address: businessForm.address?.trim() || null,
-          instagram: businessForm.instagram?.trim() || null,
-          schedule: businessForm.schedule?.trim() || null,
-          country: businessForm.country || null,
-          currency: businessForm.currency || null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "company_id" }
-      );
-
-      if (businessError) throw businessError;
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        code?: string;
+      };
+      if (!response.ok) {
+        throw new Error(payload.error || "No se pudieron guardar los cambios.");
+      }
 
       await logAdminAction({
         action: "company.update",
@@ -397,10 +450,10 @@ export function CompanyGlobalForm({
         metadata: {
           plan_changed: initialPlanId !== companyForm.plan_id,
           status_changed: initialStatus !== companyForm.subscription_status,
+          via: "api",
         },
       });
 
-      await revalidateMenuCache(company.id);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudieron guardar los cambios.");
@@ -700,8 +753,8 @@ export function CompanyGlobalForm({
               primaryColor={themeForm.primaryColor}
               secondaryColor={themeForm.secondaryColor}
               backgroundColor={themeForm.backgroundColor}
-              backgroundImageUrl={themeForm.backgroundImageUrl}
-              logoUrl={themeForm.logoUrl}
+              backgroundImageUrl={previewUrls.backgroundImageUrl || themeForm.backgroundImageUrl}
+              logoUrl={previewUrls.logoUrl || themeForm.logoUrl}
               priceColor={themeForm.priceColor}
               discountColor={themeForm.discountColor}
               hoverColor={themeForm.hoverColor}

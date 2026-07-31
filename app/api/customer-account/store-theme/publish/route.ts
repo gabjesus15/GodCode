@@ -4,6 +4,7 @@ import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
+import { mergeThemeConfig, storeThemePatchFromRawDraft } from "@/lib/store-theme/merge-theme-config";
 
 export async function POST(req: NextRequest) {
   const ctx = await getCustomerAccountContext();
@@ -34,12 +35,17 @@ export async function POST(req: NextRequest) {
 
   const { data: companyRow } = await supabaseAdmin
     .from("companies")
-    .select("public_slug")
+    .select("public_slug,theme_config")
     .eq("id", ctx.companyId)
     .maybeSingle();
 
   const nowIso = new Date().toISOString();
-  const theme = normalizeStoreThemeConfig(draft.theme_config);
+  const storeTheme = normalizeStoreThemeConfig(draft.theme_config);
+  const storePatch = storeThemePatchFromRawDraft(
+    draft.theme_config,
+    storeTheme as unknown as Record<string, unknown>,
+  );
+  const theme = mergeThemeConfig(companyRow?.theme_config, storePatch);
 
   const { error: updateCompanyError } = await supabaseAdmin
     .from("companies")
@@ -57,7 +63,7 @@ export async function POST(req: NextRequest) {
     .from("company_theme_versions")
     .insert({
       company_id: ctx.companyId,
-      theme_config: theme,
+      theme_config: storeTheme,
       created_by_email: ctx.email,
     });
 

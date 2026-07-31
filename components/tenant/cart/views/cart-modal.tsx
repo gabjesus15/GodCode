@@ -638,22 +638,6 @@ export function CartModal({
       [cart, branchPriceRows]
     );
 
-    // Detectar productos eliminados al cambiar de sucursal
-    // const [removedProducts, setRemovedProducts] = useState<string[]>([]);
-    // useEffect(() => {
-    //   // Buscar en localStorage si hay productos eliminados
-    //   const storage = localStorage.getItem("tenant_cart_storage");
-    //   if (storage) {
-    //     try {
-    //       const parsed = JSON.parse(storage);
-    //       if (parsed.removedProducts && Array.isArray(parsed.removedProducts)) {
-    //         setRemovedProducts(parsed.removedProducts);
-    //         localStorage.removeItem("tenant_cart_storage_removed");
-    //       }
-    //     } catch {}
-    //   }
-    // }, [selectedBranch]);
-
   const [viewState, setViewState] = useState<CartModalViewState>({
     showPaymentInfo: false,
     showPaymentMethods: false,
@@ -664,6 +648,7 @@ export function CartModal({
     receiptUploadFailed: false,
     lastOrderSuccess: null,
   });
+  const orderSubmitLockRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -1368,7 +1353,6 @@ export function CartModal({
   );
 
   const handleSendOrder = handleSubmit(async (data) => {
-    // ...existing code...
     if (!canCheckout) {
       const msg = isOrderIntakePaused
         ? (selectedBranchForCheckout?.order_intake_pause_message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.")
@@ -1377,16 +1361,15 @@ export function CartModal({
           : businessInfo?.schedule
             ? `Nuestro horario es: ${businessInfo.schedule}`
             : t("errors.noOrdersNow");
-      // ...existing code...
       setViewState((v) => ({ ...v, isSaving: false, error: msg }));
       return;
     }
-    if (viewState.isSaving) {
-      // ...existing code...
+    if (orderSubmitLockRef.current || viewState.isSaving) {
       return;
     }
+    orderSubmitLockRef.current = true;
     if (!selectedBranch?.id) {
-      // ...existing code...
+      orderSubmitLockRef.current = false;
       setViewState((prev) => ({
         ...prev,
         error: t("errors.noBranchSelected"),
@@ -1394,6 +1377,7 @@ export function CartModal({
       return;
     }
     if (fulfillment === "delivery" && deliverySettings.enabled && !canProceedFulfillment) {
+      orderSubmitLockRef.current = false;
       setViewState((v) => ({
         ...v,
         isSaving: false,
@@ -1407,6 +1391,7 @@ export function CartModal({
       deliverySettings.enabled &&
       !isOrderPaymentAllowedForDelivery(paymentMethodKey, deliverySettings)
     ) {
+      orderSubmitLockRef.current = false;
       setViewState((v) => ({
         ...v,
         isSaving: false,
@@ -1694,6 +1679,8 @@ export function CartModal({
       const errorRecord = (error ?? {}) as Record<string, unknown>;
       const message = String(errorRecord.message || t("errors.processOrderTryAgain"));
       setViewState((v) => ({ ...v, isSaving: false, error: message }));
+    } finally {
+      orderSubmitLockRef.current = false;
     }
   });
 

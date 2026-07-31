@@ -11,7 +11,6 @@ import { logAdminAction } from "@/utils/audit";
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 import {
 	effectiveDeliveryPricingMode,
-	mergeDeliverySettingsJson,
 	normalizeDeliverySettings,
 } from "@/lib/delivery/delivery-settings";
 
@@ -327,7 +326,6 @@ function BranchView({ branch, onEdit }: { branch: Branch, onEdit: () => void }) 
 // Edit Component
 function BranchEditForm({ branch, onCancel }: { branch: Branch, onCancel: () => void }) {
     const router = useRouter();
-    const supabase = createSupabaseBrowserClient("super-admin");
 
     const [globalError, setGlobalError] = useState<string | null>(null);
     const [expandedDetails, setExpandedDetails] = useState<Set<string>>(new Set());
@@ -423,7 +421,7 @@ function BranchEditForm({ branch, onCancel }: { branch: Branch, onCancel: () => 
         } = data;
         const cleanForm = { ...restData };
 
-        const deliveryPatch: Record<string, unknown> = uberOn
+        const delivery_settings_patch = uberOn
             ? {
                   deliveryPricingStrategy: "external",
                   externalDeliveryProvider: "uber_direct",
@@ -440,18 +438,17 @@ function BranchEditForm({ branch, onCancel }: { branch: Branch, onCancel: () => 
                   showExternalDeliveryFeeAmount: true,
               };
 
-        const delivery_settings = mergeDeliverySettingsJson(
-            branch.delivery_settings,
-            deliveryPatch,
-        );
-
-        const { error: updateError } = await supabase
-            .from("branches")
-            .update({ ...cleanForm, delivery_settings })
-            .eq("id", branch.id);
-
-        if (updateError) {
-            setGlobalError(`Error actualizando: ${updateError.message}`);
+        const response = await fetch(`/api/super-admin/branches/${branch.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                ...cleanForm,
+                delivery_settings_patch,
+            }),
+        });
+        const payload = (await response.json().catch(() => ({}))) as { error?: string };
+        if (!response.ok) {
+            setGlobalError(`Error actualizando: ${payload.error || response.statusText}`);
         } else {
             await logAdminAction({ action: "update_branch", targetType: "branch", targetId: branch.id, companyId: branch.company_id, metadata: { details: `Branch ${branch.name} updated by ${auth.email}` } });
             onCancel();

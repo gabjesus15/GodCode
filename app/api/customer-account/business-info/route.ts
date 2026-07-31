@@ -51,43 +51,58 @@ export async function PUT(req: NextRequest) {
 
 	const { data: existing } = await supabaseAdmin
 		.from("business_info")
-		.select("phone,address,instagram,schedule")
+		.select("name,phone,address,instagram,schedule,country,currency")
 		.eq("company_id", ctx.companyId)
 		.maybeSingle();
 
-	const schedule = hasSchedule
-		? (typeof payload.schedule === "string" ? payload.schedule.trim() : "")
-		: (existing?.schedule ?? "");
-	const phone = hasPhone
-		? (typeof payload.phone === "string" ? payload.phone.trim() : "")
-		: (existing?.phone ?? "");
-	const address = hasAddress
-		? (typeof payload.address === "string" ? payload.address.trim() : "")
-		: (existing?.address ?? "");
-	const instagram = hasInstagram
-		? (typeof payload.instagram === "string" ? payload.instagram.trim() : "")
-		: (existing?.instagram ?? "");
+	const patch: Record<string, unknown> = {
+		company_id: ctx.companyId,
+		updated_at: new Date().toISOString(),
+	};
 
-	const { data: company } = await supabaseAdmin
-		.from("companies")
-		.select("name,country,currency")
-		.eq("id", ctx.companyId)
-		.maybeSingle();
+	if (hasSchedule) {
+		patch.schedule = typeof payload.schedule === "string" ? payload.schedule.trim() : "";
+	} else if (existing) {
+		patch.schedule = existing.schedule ?? "";
+	}
 
-	const { error } = await supabaseAdmin.from("business_info").upsert(
-		{
-			company_id: ctx.companyId,
-			name: company?.name?.trim() || null,
-			phone: phone || null,
-			address: address || null,
-			instagram: instagram || null,
-			schedule: schedule || null,
-			country: company?.country ?? null,
-			currency: company?.currency ?? null,
-			updated_at: new Date().toISOString(),
-		},
-		{ onConflict: "company_id" },
-	);
+	if (hasPhone) {
+		patch.phone = typeof payload.phone === "string" ? payload.phone.trim() : "";
+	} else if (existing) {
+		patch.phone = existing.phone ?? "";
+	}
+
+	if (hasAddress) {
+		patch.address = typeof payload.address === "string" ? payload.address.trim() : "";
+	} else if (existing) {
+		patch.address = existing.address ?? "";
+	}
+
+	if (hasInstagram) {
+		patch.instagram = typeof payload.instagram === "string" ? payload.instagram.trim() : "";
+	} else if (existing) {
+		patch.instagram = existing.instagram ?? "";
+	}
+
+	// Preserve business_info.name / country / currency unless absent (bootstrap).
+	patch.name = existing?.name ?? null;
+	patch.country = existing?.country ?? null;
+	patch.currency = existing?.currency ?? null;
+
+	if (!existing) {
+		const { data: company } = await supabaseAdmin
+			.from("companies")
+			.select("name,country,currency")
+			.eq("id", ctx.companyId)
+			.maybeSingle();
+		patch.name = company?.name?.trim() || null;
+		patch.country = company?.country ?? null;
+		patch.currency = company?.currency ?? null;
+	}
+
+	const { error } = await supabaseAdmin.from("business_info").upsert(patch, {
+		onConflict: "company_id",
+	});
 
 	if (error) {
 		return NextResponse.json({ error: error.message }, { status: 500 });

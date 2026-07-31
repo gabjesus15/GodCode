@@ -12,7 +12,7 @@ export function Statement() {
 	const staticAccent = LANDING_STATEMENT_TEXT.slice(LANDING_STATEMENT_ACCENT_START);
 
 	return (
-		<section className="v3-section-dark py-28 md:py-36">
+		<section className="v3-section-dark pt-28 pb-10 md:pt-36 md:pb-12">
 			<div className="v3-container flex flex-col items-center gap-20">
 				<StatementTypewriter className="max-w-4xl text-center text-2xl font-medium leading-snug text-[#f4f4f5] md:text-4xl lg:text-5xl" />
 

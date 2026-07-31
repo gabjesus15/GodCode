@@ -1,3 +1,5 @@
+import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
+
 function isHttpUrl(value: string): boolean {
 	try {
 		const url = new URL(value);
@@ -13,6 +15,9 @@ export function resolveMenuImageUrl(
 ): string | null {
 	const rawValue = value?.trim();
 	if (!rawValue) return null;
+
+	// Cloud deshabilitado: no servir URLs legacy; el UI usa fallback local.
+	if (isCloudinaryImageUrl(rawValue)) return null;
 
 	if (/^https?:\/\//i.test(rawValue)) {
 		if (!isHttpUrl(rawValue)) return null;

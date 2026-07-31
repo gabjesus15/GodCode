@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { headers } from "next/headers";
 
-import { isMainDomain } from "@/lib/tenant/main-domain-host";
+import { isMainDomain, getTenantSubdomainOrigin } from "@/lib/tenant/main-domain-host";
 import { buildTenantThemeCssString } from "@/lib/store-theme/apply-theme-css-vars";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
@@ -91,7 +91,9 @@ export async function generateMetadata({
 
   const baseOrigin = `${protocol}://${host}`;
   const metadataBase = new URL(baseOrigin);
-  const pathPrefix = isMainDomain(host) ? `/${resolvedParams.subdomain}` : "";
+  const onApexPathTenant = isMainDomain(host);
+  const pathPrefix = onApexPathTenant ? `/${resolvedParams.subdomain}` : "";
+  const subdomainOrigin = getTenantSubdomainOrigin(resolvedParams.subdomain);
 
   if (!company) {
     return { title: { absolute: "GodCode | Menú Digital" } };
@@ -123,7 +125,8 @@ export async function generateMetadata({
   const icon = `/tenant-favicon?tenant=${encodeURIComponent(resolvedParams.subdomain)}&v=${encodeURIComponent(versionSeed)}`;
   const description = `Pide online en ${name}. Consulta nuestro menu digital, precios y haz tu pedido por WhatsApp con delivery o retiro.`;
 
-  const canonical = `${baseOrigin}${pathPrefix}/`;
+  const canonical = onApexPathTenant ? `${subdomainOrigin}/` : `${baseOrigin}${pathPrefix}/`;
+  const ogUrl = canonical;
 
   return {
     metadataBase,
@@ -150,7 +153,7 @@ export async function generateMetadata({
       description: description,
       type: 'website',
       siteName: name,
-      url: `${metadataBase.origin}${pathPrefix}/`,
+      url: ogUrl,
       images: [
         {
           url: `${pathPrefix}/opengraph-image`,
@@ -165,12 +168,17 @@ export async function generateMetadata({
       title: name,
       description: description,
     },
-    robots: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
+    robots: onApexPathTenant
+      ? {
+          index: false,
+          follow: true,
+        }
+      : {
+          index: true,
+          follow: true,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+        },
   };
 }
 

@@ -8,6 +8,7 @@ import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 import { normalizeCountryCode } from "@/lib/geo/country-registry";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { checkRateLimit } from "@/lib/infra/rate-limiter";
+import { syncCompanyPanelAccessFromPlanId } from "@/lib/super-admin/sync-company-panel-access";
 
 type PlanRow = {
   id: string;
@@ -517,6 +518,8 @@ export async function POST(req: NextRequest) {
       })
       .eq("id", ctx.companyId);
 
+    await syncCompanyPanelAccessFromPlanId(ctx.companyId, preview.targetPlan.id);
+
     await supabaseAdmin.from("saas_tickets").insert({
       company_id: ctx.companyId,
       created_by_email: ctx.email,
@@ -582,6 +585,7 @@ export async function POST(req: NextRequest) {
         updated_at: nowIso,
       })
       .eq("id", ctx.companyId);
+    await syncCompanyPanelAccessFromPlanId(ctx.companyId, preview.targetPlan.id);
     await activateCompanySubscription({
       supabaseAdmin,
       companyId: ctx.companyId,

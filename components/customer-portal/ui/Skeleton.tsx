@@ -24,13 +24,3 @@ export function SkeletonStatCard() {
   );
 }
 
-/** Grupo de skeletons para simular una fila de tabla. */
-export function SkeletonTableRow() {
-  return (
-    <div className="flex items-center gap-4 border-b border-[#f5f5f7] py-3">
-      <Skeleton className="h-4 w-24" />
-      <Skeleton className="h-4 w-16" />
-      <Skeleton className="ml-auto h-6 w-16 rounded-full" />
-    </div>
-  );
-}

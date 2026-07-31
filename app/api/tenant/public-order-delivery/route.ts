@@ -269,17 +269,23 @@ export async function POST(req: NextRequest) {
 				} else {
 					const olat = Number(branch.origin_lat);
 					const olng = Number(branch.origin_lng);
-					let preciseKm =
-						Number.isFinite(deliveryKm) && deliveryKm >= 0 ? deliveryKm : 0;
 					if (
-						isValidLatLng(deliveryLat, deliveryLng) &&
-						isValidLatLng(olat, olng)
+						!isValidLatLng(deliveryLat, deliveryLng) ||
+						!isValidLatLng(olat, olng)
 					) {
-						preciseKm = haversineKm(
-							{ lat: olat, lng: olng },
-							{ lat: deliveryLat, lng: deliveryLng },
+						return jsonWithPublicCors(
+							req,
+							{
+								error:
+									"Se requieren coordenadas validas de origen y destino para calcular el envio.",
+							},
+							{ status: 400 },
 						);
 					}
+					const preciseKm = haversineKm(
+						{ lat: olat, lng: olng },
+						{ lat: deliveryLat, lng: deliveryLng },
+					);
 					if (
 						settings.maxDeliveryKm != null &&
 						preciseKm > settings.maxDeliveryKm + 1e-9
@@ -345,8 +351,10 @@ export async function POST(req: NextRequest) {
 		}
 
 		const expectedTotal = Math.round(Math.max(0, baseTotal.value));
+		// RPC stores total as items − coupon + fee (without excluded IVA). Compare against that contract.
+		const expectedRpcTotal = Math.round(Math.max(0, subAfterDiscount.add(devFee).value));
 		const orderTotal = Number(order.total) || 0;
-		if (Math.abs(orderTotal - expectedTotal) > TOTAL_EPS) {
+		if (Math.abs(orderTotal - expectedRpcTotal) > TOTAL_EPS) {
 			return jsonWithPublicCors(
 				req,
 				{ error: "Total del pedido no coincide con ítems + envío" },
@@ -381,14 +389,14 @@ export async function POST(req: NextRequest) {
 		const handoff =
 			isDeliveryType(orderTypeRaw) ? await pickHandoffCode() : null;
 
-		// taxTotal is already pre-calculated in block scope
-
 		const { error: upErr } = await supabaseAdmin
 			.from("orders")
 			.update({
 				delivery_fee: expectedFee,
 				delivery_address: deliveryAddress,
 				tax_total: taxTotal,
+				// Keep display total aligned when IVA is excluded from RPC total.
+				...(taxRatePercent > 0 && !taxIncluded ? { total: expectedTotal } : {}),
 				...(handoff ? { handoff_code: handoff } : {}),
 			})
 			.eq("id", orderId)

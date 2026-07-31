@@ -6,7 +6,8 @@ import Image from "next/image";
 import { CupSoda, Minus, Plus, Trash2 } from "lucide-react";
 
 import { type CartLineItem } from "../cart-modal-types";
-import { FALLBACK_IMAGE } from "../constants";
+import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
+import { TENANT_PRODUCT_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
 import { formatCartMoney } from "../utils/format-cart-money";
 import { isUpsellBeverageLineId } from "../cart-context";
 import { useCart } from "../use-cart";
@@ -38,10 +39,12 @@ export function CartItemRow({
   const hasNote = Boolean(item.line_note?.trim());
   const [noteOpen, setNoteOpen] = useState(false);
 
+  const rawImage =
+    typeof item.image_url === "string" ? item.image_url.trim() : "";
   const imageSrc =
-    typeof item.image_url === "string" && item.image_url.trim().length > 0
-      ? item.image_url.trim()
-      : FALLBACK_IMAGE;
+    rawImage.length > 0 && !isCloudinaryImageUrl(rawImage)
+      ? rawImage
+      : TENANT_PRODUCT_FALLBACK_IMAGE;
   const upsellBevOnly = isUpsellBeverageLineId(item.id);
   const extrasText = (item.selected_extras ?? []).map((ex) => `${ex.qty}x ${ex.name}`).join(", ");
   const beveragesText = upsellBevOnly
@@ -75,7 +78,7 @@ export function CartItemRow({
             quality={70}
             className="item-thumb"
             onError={(event) => {
-              event.currentTarget.src = FALLBACK_IMAGE;
+              event.currentTarget.src = TENANT_PRODUCT_FALLBACK_IMAGE;
             }}
           />
         )}

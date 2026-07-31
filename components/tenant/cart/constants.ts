@@ -4,11 +4,7 @@ import { Banknote, Building, CreditCard, DollarSign, Smartphone } from "lucide-r
 import {
 	ENHANCE_CATALOG_BEVERAGE_FALLBACK,
 	ENHANCE_CATALOG_EXTRA_FALLBACK,
-	TENANT_PRODUCT_FALLBACK_IMAGE,
 } from "@/lib/tenant/config/tenant-assets";
-
-/** @deprecated Usar TENANT_PRODUCT_FALLBACK_IMAGE */
-export const FALLBACK_IMAGE = TENANT_PRODUCT_FALLBACK_IMAGE;
 
 export { ENHANCE_CATALOG_BEVERAGE_FALLBACK, ENHANCE_CATALOG_EXTRA_FALLBACK };
 

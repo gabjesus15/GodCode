@@ -28,6 +28,9 @@
 Thumbs.db
 *.pem
 
+# scratch / local one-off dumps
+/_tmp/
+
 # debug & logs
 npm-debug.log*
 yarn-debug.log*

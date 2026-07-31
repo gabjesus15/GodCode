@@ -112,7 +112,7 @@ export function Hero({
 					</h1>
 
 					<p className="mt-3 max-w-sm text-base leading-relaxed text-[#a1a1aa] sm:mt-4 sm:max-w-md sm:text-lg lg:mt-5">
-						Menú, pedidos y caja en un solo lugar.{" "}
+						Menú digital, pedidos online y punto de venta en un solo lugar.{" "}
 						<span className="text-[#f4f4f5]">Sin comisiones por venta.</span>
 					</p>
 

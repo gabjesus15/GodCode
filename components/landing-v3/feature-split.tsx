@@ -14,31 +14,31 @@ const SWIPE_THRESHOLD_PX = 48;
 const slides = [
 	{
 		id: "pos",
-		chip: "POS",
-		accentWord: "Diseñado",
-		rest: "para el servicio rápido",
+		chip: "Punto de venta",
+		accentWord: "POS",
+		rest: "para restaurantes",
 		description:
-			"Un punto de venta pensado para la velocidad. Toma pedidos, divide cuentas, gestiona modificadores y envía comandas a cocina en segundos, sin salir de la vista de mesas.",
+			"Punto de venta pensado para servicio rápido: toma pedidos, divide cuentas, gestiona modificadores y envía comandas a cocina en segundos, sin salir de la vista de mesas.",
 		imageKey: "pos" as const,
 		aspectRatio: 1220 / 2587,
 	},
 	{
 		id: "menu",
 		chip: "Menú digital",
-		accentWord: "Menús",
-		rest: "que venden solos",
+		accentWord: "Menú digital",
+		rest: "que vende solo",
 		description:
-			"Menús digitales con fotos, variantes, combos y acceso por QR. Tus clientes navegan, piden y pagan desde su celular mientras tú te quedas con el margen.",
+			"Menú digital para restaurantes con fotos, variantes, combos y acceso por QR. Tus clientes navegan, piden y pagan desde el celular. Pedidos online sin comisiones por venta.",
 		imageKey: "menu" as const,
 		aspectRatio: 390 / 858,
 	},
 	{
 		id: "inventory",
-		chip: "Inventario",
-		accentWord: "Una",
-		rest: "plataforma, todos los canales",
+		chip: "Pedidos y caja",
+		accentWord: "Pedidos online",
+		rest: "y caja integrados",
 		description:
-			"Unifica pedidos en sala, delivery, pickup y WhatsApp en un solo dashboard. Inventario en tiempo real, reportes y gestión multi-tenant incluidos.",
+			"Unifica sala, delivery, pickup y WhatsApp en un solo dashboard. Inventario en tiempo real, reportes y gestión multi-sucursal sin intermediarios que se queden con tu margen.",
 		imageKey: "inventory" as const,
 		aspectRatio: 1220 / 2598,
 	},
@@ -207,7 +207,7 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 			ref={sectionRef}
 			tabIndex={-1}
 			onKeyDown={handleSectionKeyDown}
-			className="v3-section-dark py-28 md:py-36 outline-none"
+			className="v3-section-dark pt-10 pb-28 md:pt-12 md:pb-36 outline-none"
 			aria-roledescription="carrusel"
 			aria-label="Funciones de Gcode"
 		>
