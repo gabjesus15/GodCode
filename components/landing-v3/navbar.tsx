@@ -13,10 +13,19 @@ const navLinks = [
 	{ label: "FAQ", href: "#faq" },
 	{ label: "Sobre Gcode", href: "/sobre-godcode" },
 	{ label: "Contacto", href: "#contacto" },
-];
+] as const;
 
 /** Al superar este scroll la navbar pasa a modo sólido blanco. */
 const SCROLL_THRESHOLD = 32;
+
+function scrollToHash(href: string) {
+	const id = href.slice(1);
+	const el = document.getElementById(id);
+	if (!el) return false;
+	el.scrollIntoView({ behavior: "smooth", block: "start" });
+	window.history.pushState(null, "", href);
+	return true;
+}
 
 export function Navbar() {
 	const [open, setOpen] = useState(false);
@@ -40,6 +49,16 @@ export function Navbar() {
 	}, [open]);
 
 	const solid = scrolled;
+
+	const onHashClick = (
+		event: React.MouseEvent<HTMLAnchorElement>,
+		href: string,
+	) => {
+		if (!href.startsWith("#")) return;
+		event.preventDefault();
+		scrollToHash(href);
+		setOpen(false);
+	};
 
 	return (
 		<header
@@ -70,20 +89,36 @@ export function Navbar() {
 				</Link>
 
 				<div className="hidden items-center gap-10 md:flex">
-					{navLinks.map((link) => (
-						<Link
-							key={link.label}
-							href={link.href}
-							className={cn(
-								"text-sm font-medium tracking-wide transition-colors duration-500",
-								solid
-									? "text-[#52525b] hover:text-[#0d0d0d]"
-									: "text-[#a1a1aa] hover:text-[#f4f4f5]"
-							)}
-						>
-							{link.label}
-						</Link>
-					))}
+					{navLinks.map((link) =>
+						link.href.startsWith("#") ? (
+							<a
+								key={link.label}
+								href={link.href}
+								onClick={(event) => onHashClick(event, link.href)}
+								className={cn(
+									"text-sm font-medium tracking-wide transition-colors duration-500",
+									solid
+										? "text-[#52525b] hover:text-[#0d0d0d]"
+										: "text-[#a1a1aa] hover:text-[#f4f4f5]"
+								)}
+							>
+								{link.label}
+							</a>
+						) : (
+							<Link
+								key={link.label}
+								href={link.href}
+								className={cn(
+									"text-sm font-medium tracking-wide transition-colors duration-500",
+									solid
+										? "text-[#52525b] hover:text-[#0d0d0d]"
+										: "text-[#a1a1aa] hover:text-[#f4f4f5]"
+								)}
+							>
+								{link.label}
+							</Link>
+						),
+					)}
 				</div>
 
 				<div className="flex items-center gap-4">
@@ -129,21 +164,37 @@ export function Navbar() {
 					</button>
 				</div>
 				<div className="v3-container flex flex-col gap-8 pt-12">
-					{navLinks.map((link) => (
-						<Link
-							key={link.label}
-							href={link.href}
-							onClick={() => setOpen(false)}
-							className={cn(
-								"font-display text-5xl tracking-wide transition-colors duration-500",
-								solid
-									? "text-[#0d0d0d] hover:text-[#7c3aed]"
-									: "text-[#f4f4f5] hover:text-[#7c3aed]"
-							)}
-						>
-							{link.label}
-						</Link>
-					))}
+					{navLinks.map((link) =>
+						link.href.startsWith("#") ? (
+							<a
+								key={link.label}
+								href={link.href}
+								onClick={(event) => onHashClick(event, link.href)}
+								className={cn(
+									"font-display text-5xl tracking-wide transition-colors duration-500",
+									solid
+										? "text-[#0d0d0d] hover:text-[#7c3aed]"
+										: "text-[#f4f4f5] hover:text-[#7c3aed]"
+								)}
+							>
+								{link.label}
+							</a>
+						) : (
+							<Link
+								key={link.label}
+								href={link.href}
+								onClick={() => setOpen(false)}
+								className={cn(
+									"font-display text-5xl tracking-wide transition-colors duration-500",
+									solid
+										? "text-[#0d0d0d] hover:text-[#7c3aed]"
+										: "text-[#f4f4f5] hover:text-[#7c3aed]"
+								)}
+							>
+								{link.label}
+							</Link>
+						),
+					)}
 					<Link
 						href="/login"
 						onClick={() => setOpen(false)}

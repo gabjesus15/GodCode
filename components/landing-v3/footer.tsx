@@ -46,12 +46,21 @@ export function Footer({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 						<ul className="flex flex-col gap-3">
 							{footerLinks.map((link) => (
 								<li key={link.label}>
-									<Link
-										href={link.href}
-										className="text-lg font-medium text-[#0d0d0d] transition-colors hover:text-[#7c3aed]"
-									>
-										{link.label}
-									</Link>
+									{link.href.startsWith("#") ? (
+										<a
+											href={link.href}
+											className="text-lg font-medium text-[#0d0d0d] transition-colors hover:text-[#7c3aed]"
+										>
+											{link.label}
+										</a>
+									) : (
+										<Link
+											href={link.href}
+											className="text-lg font-medium text-[#0d0d0d] transition-colors hover:text-[#7c3aed]"
+										>
+											{link.label}
+										</Link>
+									)}
 								</li>
 							))}
 						</ul>

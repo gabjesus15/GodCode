@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { ArrowRight, ChartNoAxesCombined, ShieldCheck, Sparkles, Users } from "lucide-react";
 
-import { LandingLogo } from "@/components/ui/logo/landing-logo";
+import { AboutNavbar } from "@/components/landing-v3/about-navbar";
 import { LANDING_BRAND_ALTERNATE, LANDING_BRAND_NAME } from "@/lib/landing/brand";
 import { normalizeLocale } from "@/lib/i18n/config";
 import { getAppUrl } from "@/lib/tenant/app-url";
@@ -206,54 +207,38 @@ export default async function SobreGodCodePage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
       />
 
-      {/* ── HEADER ── */}
-      <header className="sticky top-0 z-20 border-b border-zinc-100 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-          <a
-            href="/"
-            aria-label={`Ir al inicio de ${LANDING_BRAND_NAME}`}
-            title={`Ir al inicio de ${LANDING_BRAND_NAME}`}
-            className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-          >
-            <LandingLogo className="gap-1" />
-          </a>
-          <a
-            href="/onboarding"
-            className="inline-flex items-center gap-1.5 rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 active:scale-[0.98]"
-          >
-            {t.primaryCta}
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-          </a>
-        </div>
-      </header>
+      <AboutNavbar
+        ctaLabel={t.primaryCta}
+        homeAriaLabel={`Ir al inicio de ${LANDING_BRAND_NAME}`}
+      />
 
-      {/* ── HERO ── */}
-      <section className="mx-auto max-w-5xl px-6 pb-20 pt-24 sm:pb-28 sm:pt-32 lg:pt-40">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-400">
-          {t.eyebrow}
-        </p>
-        <h1
-          className="mt-5 max-w-4xl text-[clamp(2.6rem,5.5vw,5.25rem)] font-semibold leading-[1.06] tracking-[-0.03em] text-[#1d1d1f]"
-        >
-          {t.title}
-        </h1>
-        <p className="mt-7 max-w-2xl text-xl leading-relaxed text-[#6e6e73]">
-          {t.intro}
-        </p>
-        <div className="mt-10 flex flex-wrap items-center gap-6">
-          <a
-            href="/onboarding"
-            className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-indigo-700 active:scale-[0.98]"
-          >
-            {t.primaryCta}
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </a>
-          <a
-            href="/"
-            className="text-sm font-medium text-[#6e6e73] underline decoration-zinc-300 underline-offset-4 transition hover:text-[#1d1d1f] hover:decoration-zinc-600"
-          >
-            {t.secondaryCta} →
-          </a>
+      {/* ── HERO (fondo oscuro para el mismo efecto de navbar que el landing) ── */}
+      <section className="bg-[#080808] px-6 pb-20 pt-32 sm:pb-28 sm:pt-36 lg:pb-32 lg:pt-40">
+        <div className="mx-auto max-w-5xl">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-[#a1a1aa]">
+            {t.eyebrow}
+          </p>
+          <h1 className="mt-5 max-w-4xl text-[clamp(2.6rem,5.5vw,5.25rem)] font-semibold leading-[1.06] tracking-[-0.03em] text-[#f4f4f5]">
+            {t.title}
+          </h1>
+          <p className="mt-7 max-w-2xl text-xl leading-relaxed text-[#a1a1aa]">
+            {t.intro}
+          </p>
+          <div className="mt-10 flex flex-wrap items-center gap-6">
+            <Link
+              href="/onboarding"
+              className="inline-flex items-center gap-2 rounded-full bg-[#7c3aed] px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-[#6d28d9] active:scale-[0.98]"
+            >
+              {t.primaryCta}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+            <Link
+              href="/"
+              className="text-sm font-medium text-[#a1a1aa] underline decoration-white/20 underline-offset-4 transition hover:text-[#f4f4f5] hover:decoration-white/50"
+            >
+              {t.secondaryCta} →
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -263,7 +248,7 @@ export default async function SobreGodCodePage({
           <dl className="grid divide-y divide-[#e5e5ea] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
             {t.facts.map((fact) => (
               <div key={fact.label} className="py-10 sm:px-8 sm:first:pl-0 sm:last:pr-0">
-                <dt className="border-t border-indigo-500 pt-4 text-lg font-semibold tracking-tight text-[#1d1d1f]">{fact.label}</dt>
+                <dt className="border-t border-[#7c3aed] pt-4 text-lg font-semibold tracking-tight text-[#1d1d1f]">{fact.label}</dt>
                 <dd className="mt-1.5 text-sm leading-relaxed text-[#6e6e73]">{fact.detail}</dd>
               </div>
             ))}

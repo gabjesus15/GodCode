@@ -10,7 +10,7 @@ import { LANDING_FAQ } from "@/lib/landing/faq";
 
 export function Faq() {
   return (
-    <section id="faq" className="v3-section-dark py-28 md:py-36">
+    <section id="faq" className="v3-section-dark scroll-mt-24 py-28 md:py-36">
       <div className="v3-container">
         <div className="mb-16 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
