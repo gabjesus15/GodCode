@@ -1,3 +1,5 @@
+"use server";
+
 import { revalidateTag } from "next/cache";
 
 import { createSupabaseServerClient } from "@/utils/supabase/server";

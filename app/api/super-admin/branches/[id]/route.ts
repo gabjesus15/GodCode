@@ -85,12 +85,12 @@ export async function PUT(
   if (Object.prototype.hasOwnProperty.call(body, "delivery_settings_patch")) {
     update.delivery_settings = mergeDeliverySettingsJson(
       existing.delivery_settings,
-      body.delivery_settings_patch,
+      (body.delivery_settings_patch ?? {}) as Partial<Record<string, unknown>>,
     );
   } else if (Object.prototype.hasOwnProperty.call(body, "delivery_settings")) {
     update.delivery_settings = mergeDeliverySettingsJson(
       existing.delivery_settings,
-      body.delivery_settings,
+      (body.delivery_settings ?? {}) as Partial<Record<string, unknown>>,
     );
   }
 
