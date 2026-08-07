@@ -6,7 +6,7 @@ declare global {
 }
 
 export function getGaMeasurementId(): string {
-	return process.env.NEXT_PUBLIC_GA_ID?.trim() || "G-RG8T86FJZE";
+	return process.env.NEXT_PUBLIC_GA_ID?.trim() || "G-ZLTXLHNVNE";
 }
 
 export function gtag(...args: unknown[]) {

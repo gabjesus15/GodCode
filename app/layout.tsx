@@ -18,7 +18,7 @@ import { getAppUrl } from "@/lib/tenant/app-url";
 
 import "./globals.css";
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID?.trim() || "G-RG8T86FJZE";
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID?.trim() || "G-ZLTXLHNVNE";
 const IS_VERCEL = Boolean(process.env.VERCEL || process.env.VERCEL_ENV);
 
 const geistSans = Geist({
