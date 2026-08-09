@@ -96,7 +96,7 @@ export function Hero({
 	const { amount, currency } = formatFromPrice(fromPrice);
 
 	return (
-		<section data-landing-hero className="relative flex h-[100dvh] flex-col overflow-hidden bg-[#080808] lg:h-auto lg:min-h-screen lg:pb-[52px]">
+		<section data-landing-hero className="relative flex h-[100svh] flex-col overflow-hidden bg-[#080808] lg:h-auto lg:min-h-screen lg:pb-[52px]">
 			<HeroBackground />
 
 			<div className="v3-container relative flex min-h-0 flex-1 flex-col justify-start gap-1.5 pt-24 pb-1.5 sm:gap-4 sm:pb-6 lg:min-h-screen lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-center lg:justify-center lg:gap-x-10 lg:gap-y-0 lg:pt-28 lg:pb-12 xl:gap-x-16">

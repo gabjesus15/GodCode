@@ -163,7 +163,7 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 								className="flex h-full shrink-0 items-end justify-center px-1"
 								style={{ width: `${100 / phones.length}%` }}
 							>
-								<div className="mx-auto aspect-[9/17.5] h-[min(100%,58dvh)] w-auto max-h-[480px] max-w-[min(270px,78vw)]">
+								<div className="mx-auto aspect-[9/17.5] h-[min(58svh,480px)] w-auto max-w-[min(270px,78vw)]">
 									<PhoneFrame
 										src={phone.src}
 										alt={phone.alt}
