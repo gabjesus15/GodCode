@@ -137,10 +137,10 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 
 	return (
 		<>
-			{/* Mobile: carrusel con swipe */}
-			<div className="relative flex h-full min-h-0 w-full max-w-[360px] flex-col items-center lg:hidden">
+			{/* Mobile: carrusel con swipe — tamaño por ancho fijo (no salta con la toolbar de iOS) */}
+			<div className="relative w-full max-w-[300px] sm:max-w-[320px] lg:hidden">
 				<div
-					className="min-h-0 w-full flex-1 touch-pan-y select-none overflow-hidden"
+					className="touch-pan-y select-none overflow-hidden"
 					onPointerDown={onPointerDown}
 					onPointerMove={onPointerMove}
 					onPointerUp={onPointerUp}
@@ -150,7 +150,7 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 					aria-label="Capturas de la app Gcode"
 				>
 					<div
-						className="flex h-full items-end"
+						className="flex"
 						style={{
 							width: `${phones.length * 100}%`,
 							transform: trackTransform,
@@ -160,10 +160,10 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 						{phones.map((phone) => (
 							<div
 								key={phone.src}
-								className="flex h-full shrink-0 items-end justify-center px-1"
+								className="flex shrink-0 justify-center px-1"
 								style={{ width: `${100 / phones.length}%` }}
 							>
-								<div className="mx-auto aspect-[9/17.5] h-[min(58svh,480px)] w-auto max-w-[min(270px,78vw)]">
+								<div className="aspect-[9/17.5] w-[200px] sm:w-[230px]">
 									<PhoneFrame
 										src={phone.src}
 										alt={phone.alt}
@@ -179,8 +179,8 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 					</div>
 				</div>
 
-				<div className="mt-1.5 flex shrink-0 flex-col items-center gap-1 sm:mt-3 sm:gap-2">
-					<p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[#4f5bff] sm:text-[11px]">
+				<div className="mt-4 flex flex-col items-center gap-2.5">
+					<p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#4f5bff]">
 						{phones[active].label}
 					</p>
 					<div className="flex items-center gap-2">
@@ -201,11 +201,12 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 							/>
 						))}
 					</div>
+					<p className="text-[10px] tracking-wide text-[#52525b]">Deslizá para cambiar</p>
 				</div>
 
 				<a
 					href="#funciones"
-					className="mt-1.5 flex shrink-0 flex-col items-center gap-0.5 text-[#71717a] transition-colors hover:text-[#a1a1aa] sm:mt-3"
+					className="mt-5 flex flex-col items-center gap-0.5 text-[#71717a] transition-colors hover:text-[#a1a1aa]"
 					aria-label="Ver más abajo"
 				>
 					<span className="text-[10px] font-semibold uppercase tracking-[0.2em]">

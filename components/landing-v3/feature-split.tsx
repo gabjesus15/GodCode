@@ -296,7 +296,7 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 										src={featureImages[item.imageKey].src}
 										alt={featureImages[item.imageKey].alt}
 										priority={i === 0}
-										imageFit="contain"
+										imageFit="cover"
 										showSystemChrome={false}
 										aspectRatio={item.aspectRatio}
 										className="max-w-[280px] lg:max-w-[320px] xl:max-w-[300px]"
