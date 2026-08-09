@@ -31,14 +31,14 @@ function contactLinkClassName(kind: LandingSocialLink["kind"]) {
 		"inline-flex items-center gap-3 text-lg font-medium transition-colors";
 	if (kind === "instagram") return `${base} text-[#0d0d0d] hover:text-[#c13584]`;
 	if (kind === "whatsapp") return `${base} text-[#0d0d0d] hover:text-[#25D366]`;
-	return `${base} text-[#0d0d0d] hover:text-[#7c3aed]`;
+	return `${base} text-[#0d0d0d] hover:text-[#4f5bff]`;
 }
 
 export function Footer({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 	const directSocialLinks = socialLinks.filter((link) => link.kind !== "email");
 
 	return (
-		<footer id="contacto" className="v3-section-beige pt-20 md:pt-28">
+		<footer id="contacto" className="v3-section-beige pt-16 md:pt-20">
 			<div className="v3-container">
 				<div className="grid grid-cols-1 gap-12 border-b border-[#0d0d0d]/10 pb-16 md:grid-cols-3">
 					<div>
@@ -49,14 +49,14 @@ export function Footer({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 									{link.href.startsWith("#") ? (
 										<a
 											href={link.href}
-											className="text-lg font-medium text-[#0d0d0d] transition-colors hover:text-[#7c3aed]"
+											className="text-lg font-medium text-[#0d0d0d] transition-colors hover:text-[#4f5bff]"
 										>
 											{link.label}
 										</a>
 									) : (
 										<Link
 											href={link.href}
-											className="text-lg font-medium text-[#0d0d0d] transition-colors hover:text-[#7c3aed]"
+											className="text-lg font-medium text-[#0d0d0d] transition-colors hover:text-[#4f5bff]"
 										>
 											{link.label}
 										</Link>
@@ -126,7 +126,7 @@ export function Footer({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 									target="_blank"
 									rel="noopener noreferrer"
 									aria-label={link.label}
-									className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#0d0d0d]/20 bg-white/50 text-[#0d0d0d] transition-colors hover:border-[#7c3aed] hover:bg-[#7c3aed] hover:text-white"
+									className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#0d0d0d]/20 bg-white/50 text-[#0d0d0d] transition-colors hover:border-[#4f5bff] hover:bg-[#4f5bff] hover:text-white"
 								>
 									<SocialIcon link={link} />
 								</a>

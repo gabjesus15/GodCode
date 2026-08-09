@@ -38,7 +38,7 @@ export function PhoneFrame({
 				className="pointer-events-none absolute -inset-10 -z-10 rounded-[3.5rem] opacity-55 blur-3xl"
 				style={{
 					background:
-						"radial-gradient(ellipse at center, rgba(124, 58, 237, 0.32) 0%, transparent 70%)",
+						"radial-gradient(ellipse at center, rgba(79, 91, 255, 0.32) 0%, transparent 70%)",
 				}}
 			/>
 
@@ -74,7 +74,7 @@ export function PhoneFrame({
 							className={cn(
 								imageFit === "contain"
 									? "object-contain object-center"
-									: "object-cover object-top",
+									: "scale-[1.02] object-cover object-top will-change-transform",
 							)}
 							sizes="(max-width: 768px) 80vw, 340px"
 							priority={priority}

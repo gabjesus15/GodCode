@@ -44,7 +44,7 @@ export function AboutNavbar({ ctaLabel, homeAriaLabel }: AboutNavbarProps) {
 					href="/"
 					aria-label={homeAriaLabel}
 					title={homeAriaLabel}
-					className="relative z-50 inline-flex items-center gap-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7c3aed]"
+					className="relative z-50 inline-flex items-center gap-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4f5bff]"
 				>
 					<Image
 						src="/gcode-logo.svg"
@@ -66,7 +66,7 @@ export function AboutNavbar({ ctaLabel, homeAriaLabel }: AboutNavbarProps) {
 
 				<Link
 					href="/onboarding"
-					className="inline-flex items-center gap-1.5 rounded-full bg-[#7c3aed] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#6d28d9]"
+					className="inline-flex items-center gap-1.5 rounded-full bg-[#4f5bff] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#3d47e6]"
 				>
 					{ctaLabel}
 					<ArrowRight className="h-3.5 w-3.5" aria-hidden />

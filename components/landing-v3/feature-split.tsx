@@ -207,7 +207,7 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 			ref={sectionRef}
 			tabIndex={-1}
 			onKeyDown={handleSectionKeyDown}
-			className="v3-section-dark pt-10 pb-28 md:pt-12 md:pb-36 outline-none"
+			className="v3-section-dark pt-8 pb-16 md:pt-10 md:pb-24 outline-none"
 			aria-roledescription="carrusel"
 			aria-label="Funciones de Gcode"
 		>
@@ -217,7 +217,7 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 				</p>
 
 				{/* Chips */}
-				<div className="mb-10 flex justify-center gap-2 overflow-x-auto pb-1 lg:mb-12 lg:justify-start">
+				<div className="mb-10 flex w-full gap-1.5 sm:justify-center sm:gap-2 lg:mb-12 lg:w-auto lg:justify-start">
 					{slides.map((item, i) => (
 						<button
 							key={item.id}
@@ -229,10 +229,10 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 								scheduleAutoplayResume();
 							}}
 							className={cn(
-								"shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+								"min-w-0 flex-1 rounded-full px-2 py-2 text-center text-[11px] font-medium leading-tight transition-colors sm:flex-none sm:px-4 sm:text-sm sm:leading-normal",
 								i === index
-									? "bg-[#7c3aed] text-white"
-									: "border border-[rgba(244,244,245,0.2)] text-[#a1a1aa] hover:border-[#7c3aed] hover:text-[#f4f4f5]",
+									? "bg-[#4f5bff] text-white"
+									: "border border-[rgba(244,244,245,0.2)] text-[#a1a1aa] hover:border-[#4f5bff] hover:text-[#f4f4f5]",
 							)}
 							aria-current={i === index ? "true" : undefined}
 						>
@@ -320,7 +320,7 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 					>
 						<div key={slide.id} className="v3-fade-up">
 							<h2 className="font-display text-[clamp(2.5rem,8vw,4.5rem)] leading-[0.95] tracking-wide text-[#f4f4f5] lg:text-6xl xl:text-7xl">
-								<span className="text-[#7c3aed]">{slide.accentWord}</span>
+								<span className="text-[#4f5bff]">{slide.accentWord}</span>
 								<br />
 								{slide.rest}
 							</h2>
@@ -339,7 +339,7 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 										aria-hidden
 									>
 										<div
-											className="h-full w-full origin-left bg-[#7c3aed] will-change-transform"
+											className="h-full w-full origin-left bg-[#4f5bff] will-change-transform"
 											style={{
 												transform: `scaleX(${barFillPercent(i, index, slideProgress, reducedMotion) / 100})`,
 											}}
@@ -358,7 +358,7 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 											focusSection();
 											scheduleAutoplayResume();
 										}}
-										className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(244,244,245,0.2)] text-[#f4f4f5] transition-colors hover:border-[#7c3aed] hover:text-[#7c3aed] sm:h-12 sm:w-12"
+										className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(244,244,245,0.2)] text-[#f4f4f5] transition-colors hover:border-[#4f5bff] hover:text-[#4f5bff] sm:h-12 sm:w-12"
 										aria-label="Función anterior"
 									>
 										<ChevronLeft className="h-5 w-5" />
@@ -371,7 +371,7 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 											focusSection();
 											scheduleAutoplayResume();
 										}}
-										className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(244,244,245,0.2)] text-[#f4f4f5] transition-colors hover:border-[#7c3aed] hover:text-[#7c3aed] sm:h-12 sm:w-12"
+										className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(244,244,245,0.2)] text-[#f4f4f5] transition-colors hover:border-[#4f5bff] hover:text-[#4f5bff] sm:h-12 sm:w-12"
 										aria-label="Siguiente función"
 									>
 										<ChevronRight className="h-5 w-5" />

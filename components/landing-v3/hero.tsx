@@ -31,7 +31,7 @@ function HeroBackground() {
 				className="absolute -right-[10%] top-[8%] h-[70vh] w-[65vw] max-w-[900px] rounded-full opacity-70 blur-[60px] md:blur-[100px]"
 				style={{
 					background:
-						"radial-gradient(ellipse at center, rgba(124, 58, 237, 0.45) 0%, rgba(88, 28, 135, 0.2) 45%, transparent 72%)",
+						"radial-gradient(ellipse at center, rgba(79, 91, 255, 0.45) 0%, rgba(61, 71, 230, 0.2) 45%, transparent 72%)",
 				}}
 			/>
 
@@ -39,7 +39,7 @@ function HeroBackground() {
 				className="absolute right-[5%] top-[35%] h-[40vh] w-[35vw] max-w-[480px] rounded-full opacity-50 blur-[50px] md:blur-[80px]"
 				style={{
 					background:
-						"radial-gradient(ellipse at center, rgba(168, 85, 247, 0.3) 0%, transparent 70%)",
+						"radial-gradient(ellipse at center, rgba(79, 91, 255, 0.3) 0%, transparent 70%)",
 				}}
 			/>
 
@@ -75,12 +75,12 @@ function HeroPriceTag({
 }) {
 	return (
 		<div className={className}>
-			<p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#71717a]">
+			<p className="mb-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] text-[#71717a] sm:mb-1 sm:text-[10px]">
 				{"// "}DESDE
 			</p>
-			<p className="font-display text-2xl leading-none text-white sm:text-[28px]">
+			<p className="font-display text-xl leading-none text-white sm:text-[28px]">
 				{amount}
-				<span className="ml-1 text-xs text-[#71717a] sm:text-[13px]">{currency}/MES</span>
+				<span className="ml-1 text-[11px] text-[#71717a] sm:text-[13px]">{currency}/MES</span>
 			</p>
 		</div>
 	);
@@ -96,40 +96,40 @@ export function Hero({
 	const { amount, currency } = formatFromPrice(fromPrice);
 
 	return (
-		<section data-landing-hero className="relative min-h-[100dvh] overflow-hidden bg-[#080808] lg:min-h-screen lg:pb-[52px]">
+		<section data-landing-hero className="relative flex h-[100dvh] flex-col overflow-hidden bg-[#080808] lg:h-auto lg:min-h-screen lg:pb-[52px]">
 			<HeroBackground />
 
-			<div className="v3-container relative flex min-h-[100dvh] flex-col justify-center gap-8 pt-24 pb-10 sm:gap-10 lg:min-h-screen lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-center lg:gap-x-10 lg:gap-y-0 lg:pt-28 lg:pb-12 xl:gap-x-16">
+			<div className="v3-container relative flex min-h-0 flex-1 flex-col justify-start gap-1.5 pt-24 pb-1.5 sm:gap-4 sm:pb-6 lg:min-h-screen lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-center lg:justify-center lg:gap-x-10 lg:gap-y-0 lg:pt-28 lg:pb-12 xl:gap-x-16">
 				{/* Copy */}
-				<div className="z-10 flex flex-col items-center text-center lg:items-start lg:text-left lg:py-6">
-					<p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-[#a855f7] sm:mb-4 lg:mb-5">
+				<div className="z-10 flex shrink-0 flex-col items-center text-center lg:items-start lg:text-left lg:py-6">
+					<p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4f5bff] sm:mb-4 sm:text-[11px] lg:mb-5">
 						{"// "}EL POS Y MENÚ DIGITAL
 					</p>
 
-					<h1 className="w-full font-display text-[clamp(4rem,18vw,7.5rem)] leading-[0.88] tracking-[-0.02em] text-white lg:text-[clamp(5.5rem,7.5vw,13.75rem)] lg:leading-[0.85]">
+					<h1 className="w-full font-display text-[clamp(2.85rem,12.5vw,7.5rem)] leading-[0.88] tracking-[-0.02em] text-white lg:text-[clamp(5.5rem,7.5vw,13.75rem)] lg:leading-[0.85]">
 						<span className="sr-only">Menú digital y POS para restaurantes — Gcode</span>
 						<span aria-hidden="true">GCODE</span>
 					</h1>
 
-					<p className="mt-3 max-w-sm text-base leading-relaxed text-[#a1a1aa] sm:mt-4 sm:max-w-md sm:text-lg lg:mt-5">
+					<p className="mt-1.5 max-w-[20rem] text-[13px] leading-snug text-[#a1a1aa] sm:mt-4 sm:max-w-md sm:text-base sm:leading-relaxed lg:mt-5 lg:text-lg">
 						Menú digital, pedidos online y punto de venta en un solo lugar.{" "}
 						<span className="text-[#f4f4f5]">Sin comisiones por venta.</span>
 					</p>
 
-					<p className="mt-2 max-w-sm text-sm leading-relaxed text-[#a855f7]/90 sm:max-w-md">
+					<p className="mt-1 max-w-sm text-[11px] leading-relaxed text-[#4f5bff]/90 sm:mt-2 sm:max-w-md sm:text-sm">
 						En tu primer pago: 2 meses al precio de 1.
 					</p>
 
-					<div className="mt-5 flex w-full max-w-sm flex-wrap items-center justify-center gap-2.5 sm:mt-6 sm:gap-3 lg:max-w-none lg:justify-start">
+					<div className="mt-2.5 flex w-full max-w-sm flex-wrap items-center justify-center gap-2 sm:mt-6 sm:gap-3 lg:max-w-none lg:justify-start">
 						<Link
 							href="/onboarding"
-							className="inline-flex min-w-[140px] justify-center rounded-md bg-[#a855f7] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#9333ea] sm:px-7"
+							className="inline-flex min-w-[120px] justify-center rounded-md bg-[#4f5bff] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#3d47e6] sm:min-w-[140px] sm:px-7 sm:py-3"
 						>
 							Empezar ahora
 						</Link>
 						<Link
 							href="#funciones"
-							className="inline-flex min-w-[140px] justify-center rounded-md border border-white/20 px-6 py-3 text-sm font-semibold text-white transition-colors hover:border-[#a855f7] hover:text-white sm:px-7"
+							className="inline-flex min-w-[120px] justify-center rounded-md border border-white/20 px-4 py-2 text-sm font-semibold text-white transition-colors hover:border-[#4f5bff] hover:text-white sm:min-w-[140px] sm:px-7 sm:py-3"
 						>
 							Ver funciones
 						</Link>
@@ -138,12 +138,12 @@ export function Hero({
 					<HeroPriceTag
 						amount={amount}
 						currency={currency}
-						className="mt-5 sm:mt-6 lg:mt-7"
+						className="mt-2 sm:mt-6 lg:mt-7"
 					/>
 				</div>
 
 				{/* Teléfonos */}
-				<div className="relative z-10 flex w-full items-center justify-center lg:py-4">
+				<div className="relative z-10 flex min-h-0 w-full flex-1 items-center justify-center lg:flex-none lg:py-4">
 					<HeroPhoneShowcase phones={heroPhones} />
 				</div>
 			</div>
@@ -154,7 +154,7 @@ export function Hero({
 					href="/onboarding"
 					className="group flex min-h-[52px] items-center justify-center transition-colors hover:bg-white/5"
 				>
-					<span className="font-display text-[13px] tracking-[0.2em] text-white transition-colors group-hover:text-[#a855f7]">
+					<span className="font-display text-[13px] tracking-[0.2em] text-white transition-colors group-hover:text-[#4f5bff]">
 						EMPEZAR AHORA — 2 MESES AL PRECIO DE 1
 					</span>
 				</Link>

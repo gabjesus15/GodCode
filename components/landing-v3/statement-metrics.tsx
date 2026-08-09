@@ -89,13 +89,13 @@ function MetricCard({
 	return (
 		<div className="flex flex-col gap-5 border-t border-[rgba(244,244,245,0.12)] pt-6">
 			<div className="flex items-baseline gap-2">
-				<span className="font-display text-5xl text-[#7c3aed] md:text-6xl">
+				<span className="font-display text-5xl text-[#4f5bff] md:text-6xl">
 					{formatLandingMetricValue(currentValue, metric)}
 				</span>
 				<span className="text-sm font-medium text-[#a1a1aa]">{metric.label}</span>
 			</div>
 			<div className="h-1.5 w-full overflow-hidden bg-[#1a1a1a]">
-				<div className="h-full bg-[#7c3aed]" style={{ width: `${barWidth}%` }} />
+				<div className="h-full bg-[#4f5bff]" style={{ width: `${barWidth}%` }} />
 			</div>
 		</div>
 	);

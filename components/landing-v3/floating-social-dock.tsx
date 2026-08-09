@@ -81,7 +81,7 @@ export function FloatingSocialDock({ links }: FloatingSocialDockProps) {
 				)}
 			>
 				<div
-					className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-[#7c3aed]/15 blur-2xl"
+					className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-[#4f5bff]/15 blur-2xl"
 					aria-hidden
 				/>
 				<div className="relative flex flex-col gap-1.5">

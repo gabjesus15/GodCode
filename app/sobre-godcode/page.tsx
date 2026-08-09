@@ -227,7 +227,7 @@ export default async function SobreGodCodePage({
           <div className="mt-10 flex flex-wrap items-center gap-6">
             <Link
               href="/onboarding"
-              className="inline-flex items-center gap-2 rounded-full bg-[#7c3aed] px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-[#6d28d9] active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-full bg-[#4f5bff] px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-[#3d47e6] active:scale-[0.98]"
             >
               {t.primaryCta}
               <ArrowRight className="h-4 w-4" aria-hidden />
@@ -248,7 +248,7 @@ export default async function SobreGodCodePage({
           <dl className="grid divide-y divide-[#e5e5ea] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
             {t.facts.map((fact) => (
               <div key={fact.label} className="py-10 sm:px-8 sm:first:pl-0 sm:last:pr-0">
-                <dt className="border-t border-[#7c3aed] pt-4 text-lg font-semibold tracking-tight text-[#1d1d1f]">{fact.label}</dt>
+                <dt className="border-t border-[#4f5bff] pt-4 text-lg font-semibold tracking-tight text-[#1d1d1f]">{fact.label}</dt>
                 <dd className="mt-1.5 text-sm leading-relaxed text-[#6e6e73]">{fact.detail}</dd>
               </div>
             ))}

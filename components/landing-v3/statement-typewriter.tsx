@@ -23,7 +23,7 @@ function renderStatementText(count: number) {
 	return (
 		<>
 			{plain}
-			{accent ? <span className="text-[#7c3aed]">{accent}</span> : null}
+			{accent ? <span className="text-[#4f5bff]">{accent}</span> : null}
 		</>
 	);
 }
@@ -31,7 +31,7 @@ function renderStatementText(count: number) {
 function TypewriterCursor() {
 	return (
 		<span
-			className="ml-0.5 inline-block w-[2px] motion-safe:animate-pulse bg-[#7c3aed] align-middle"
+			className="ml-0.5 inline-block w-[2px] motion-safe:animate-pulse bg-[#4f5bff] align-middle"
 			style={{ height: "0.85em" }}
 			aria-hidden
 		/>
@@ -100,7 +100,7 @@ export function StatementTypewriter({ className }: StatementTypewriterProps) {
 			{phase === "idle" ? (
 				<span aria-hidden className="invisible">
 					{staticPlain}
-					<span className="text-[#7c3aed]">{staticAccent}</span>
+					<span className="text-[#4f5bff]">{staticAccent}</span>
 				</span>
 			) : (
 				<span aria-live={phase === "typing" ? "polite" : undefined}>

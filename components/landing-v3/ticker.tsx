@@ -4,7 +4,7 @@ export function Ticker() {
   );
 
   return (
-    <section className="overflow-hidden bg-[#7c3aed] py-5">
+    <section className="overflow-hidden bg-[#4f5bff] py-5">
       <div className="ticker-track">
         {items.map((text, i) => (
           <span

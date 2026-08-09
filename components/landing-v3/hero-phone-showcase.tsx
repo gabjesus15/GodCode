@@ -138,9 +138,9 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 	return (
 		<>
 			{/* Mobile: carrusel con swipe */}
-			<div className="relative w-full max-w-[320px] sm:max-w-[340px] lg:hidden">
+			<div className="relative flex h-full min-h-0 w-full max-w-[360px] flex-col items-center lg:hidden">
 				<div
-					className="touch-pan-y select-none overflow-hidden"
+					className="min-h-0 w-full flex-1 touch-pan-y select-none overflow-hidden"
 					onPointerDown={onPointerDown}
 					onPointerMove={onPointerMove}
 					onPointerUp={onPointerUp}
@@ -150,7 +150,7 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 					aria-label="Capturas de la app Gcode"
 				>
 					<div
-						className="flex"
+						className="flex h-full items-end"
 						style={{
 							width: `${phones.length * 100}%`,
 							transform: trackTransform,
@@ -160,26 +160,27 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 						{phones.map((phone) => (
 							<div
 								key={phone.src}
-								className="flex shrink-0 justify-center px-1"
+								className="flex h-full shrink-0 items-end justify-center px-1"
 								style={{ width: `${100 / phones.length}%` }}
 							>
-								<div className="aspect-[9/17.5] w-[240px] max-w-[72vw] sm:w-[270px]">
-							<PhoneFrame
-								src={phone.src}
-								alt={phone.alt}
-								priority={phone.priority}
-								imageFit="contain"
-								showSystemChrome={false}
-								aspectRatio={HERO_SCREEN_ASPECT}
-							/>
+								<div className="mx-auto aspect-[9/17.5] h-[min(100%,58dvh)] w-auto max-h-[480px] max-w-[min(270px,78vw)]">
+									<PhoneFrame
+										src={phone.src}
+										alt={phone.alt}
+										priority={phone.priority}
+										imageFit="cover"
+										showSystemChrome={false}
+										aspectRatio={HERO_SCREEN_ASPECT}
+										className="max-w-none"
+									/>
 								</div>
 							</div>
 						))}
 					</div>
 				</div>
 
-				<div className="mt-4 flex flex-col items-center gap-2.5">
-					<p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#a855f7]">
+				<div className="mt-1.5 flex shrink-0 flex-col items-center gap-1 sm:mt-3 sm:gap-2">
+					<p className="text-[10px] font-medium uppercase tracking-[0.14em] text-[#4f5bff] sm:text-[11px]">
 						{phones[active].label}
 					</p>
 					<div className="flex items-center gap-2">
@@ -193,19 +194,18 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 									scheduleAutoplayResume();
 								}}
 								className={`h-1.5 rounded-full transition-all duration-300 ${
-									index === active ? "w-6 bg-[#a855f7]" : "w-1.5 bg-white/25"
+									index === active ? "w-6 bg-[#4f5bff]" : "w-1.5 bg-white/25"
 								}`}
 								aria-label={`Ver ${phone.label}`}
 								aria-current={index === active ? "true" : undefined}
 							/>
 						))}
 					</div>
-					<p className="text-[10px] tracking-wide text-[#52525b]">Deslizá para cambiar</p>
 				</div>
 
 				<a
 					href="#funciones"
-					className="mt-4 flex flex-col items-center gap-0.5 text-[#71717a] transition-colors hover:text-[#a1a1aa]"
+					className="mt-1.5 flex shrink-0 flex-col items-center gap-0.5 text-[#71717a] transition-colors hover:text-[#a1a1aa] sm:mt-3"
 					aria-label="Ver más abajo"
 				>
 					<span className="text-[10px] font-semibold uppercase tracking-[0.2em]">
@@ -228,7 +228,7 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 						src={phones[0].src}
 						alt={phones[0].alt}
 						className="opacity-90"
-						imageFit="contain"
+						imageFit="cover"
 						showSystemChrome={false}
 						aspectRatio={HERO_SCREEN_ASPECT}
 					/>
@@ -245,7 +245,7 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 						src={phones[1].src}
 						alt={phones[1].alt}
 						priority
-						imageFit="contain"
+						imageFit="cover"
 						showSystemChrome={false}
 						aspectRatio={HERO_SCREEN_ASPECT}
 					/>

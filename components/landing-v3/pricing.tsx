@@ -27,13 +27,13 @@ export function Pricing({ plans, country }: PricingProps) {
   const gridCols = "md:grid-cols-2 lg:grid-cols-3";
 
   return (
-    <section id="precios" className="v3-section-dark py-28 md:py-36">
+    <section id="precios" className="v3-section-dark py-16 md:py-24">
       <div className="v3-container">
         <div className="mb-16 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="v3-label mb-4">{"// "}PRECIOS</p>
             <h2 className="font-display text-5xl tracking-wide text-[#f4f4f5] md:text-6xl lg:text-7xl">
-              Planes <span className="text-[#7c3aed]">simples</span>
+              Planes <span className="text-[#4f5bff]">simples</span>
             </h2>
           </div>
           <p className="max-w-md text-lg text-[#a1a1aa]">
@@ -56,12 +56,12 @@ export function Pricing({ plans, country }: PricingProps) {
                   key={plan.id}
                   className={`relative flex flex-col rounded-2xl border p-6 transition-colors ${
                     isPopular
-                      ? "border-[#7c3aed] bg-[#141414]"
+                      ? "border-[#4f5bff] bg-[#141414]"
                       : "border-[rgba(244,244,245,0.12)] bg-[#141414] hover:border-[rgba(244,244,245,0.2)]"
                   }`}
                 >
                   {isPopular ? (
-                    <span className="absolute -top-3 left-6 rounded-full bg-[#7c3aed] px-3 py-1 text-xs font-semibold text-white">
+                    <span className="absolute -top-3 left-6 rounded-full bg-[#4f5bff] px-3 py-1 text-xs font-semibold text-white">
                       Popular
                     </span>
                   ) : null}
@@ -83,7 +83,7 @@ export function Pricing({ plans, country }: PricingProps) {
                         key={`${plan.id}-${fi}`}
                         className="flex items-start gap-3 text-sm text-[#a1a1aa]"
                       >
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#7c3aed]" />
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#4f5bff]" />
                         <span className="whitespace-pre-wrap">{feature}</span>
                       </li>
                     ))}
@@ -92,8 +92,8 @@ export function Pricing({ plans, country }: PricingProps) {
                     href="/onboarding"
                     className={`mt-auto inline-flex justify-center rounded-full px-6 py-3 text-sm font-semibold transition-colors ${
                       isPopular
-                        ? "bg-[#7c3aed] text-white hover:bg-[#6d28d9]"
-                        : "border border-[rgba(244,244,245,0.2)] text-[#f4f4f5] hover:border-[#7c3aed] hover:text-white"
+                        ? "bg-[#4f5bff] text-white hover:bg-[#3d47e6]"
+                        : "border border-[rgba(244,244,245,0.2)] text-[#f4f4f5] hover:border-[#4f5bff] hover:text-white"
                     }`}
                   >
                     Empezar
