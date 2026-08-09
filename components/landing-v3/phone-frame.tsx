@@ -13,6 +13,8 @@ type PhoneFrameProps = {
 	showSystemChrome?: boolean;
 	/** Proporción ancho/alto de la captura. Por defecto 9/19.5 (iPhone). */
 	aspectRatio?: number;
+	/** Grosor del marco interno. */
+	bezel?: "default" | "slim";
 };
 
 export function PhoneFrame({
@@ -24,7 +26,10 @@ export function PhoneFrame({
 	imageFit = "cover",
 	showSystemChrome = true,
 	aspectRatio = 9 / 19.5,
+	bezel = "default",
 }: PhoneFrameProps) {
+	const slim = bezel === "slim";
+
 	return (
 		<div className={cn("relative mx-auto w-full max-w-[280px]", className)}>
 			{/* Sombra en suelo */}
@@ -50,19 +55,28 @@ export function PhoneFrame({
 
 			{/* Chasis */}
 			<div
-				className="relative rounded-[2.85rem] p-[3.5px] shadow-[0_2px_1px_rgba(255,255,255,0.08)_inset,0_30px_70px_-15px_rgba(0,0,0,0.9),0_50px_100px_-25px_rgba(0,0,0,0.55)]"
+				className={cn(
+					"relative shadow-[0_2px_1px_rgba(255,255,255,0.08)_inset,0_30px_70px_-15px_rgba(0,0,0,0.9),0_50px_100px_-25px_rgba(0,0,0,0.55)]",
+					slim ? "rounded-[14%/7%] p-[0.9%]" : "rounded-[2.85rem] p-[3.5px]",
+				)}
 				style={{
 					background:
 						"linear-gradient(155deg, #6b6b73 0%, #3f3f46 8%, #18181b 35%, #27272a 52%, #09090b 72%, #3f3f46 88%, #52525b 100%)",
 				}}
 			>
 				{/* Banda antena superior */}
-				<div className="pointer-events-none absolute inset-x-[18%] top-[7px] z-30 h-[2px] rounded-full bg-gradient-to-r from-transparent via-white/[0.12] to-transparent" />
+				<div className="pointer-events-none absolute inset-x-[18%] top-[1.4%] z-30 h-[2px] rounded-full bg-gradient-to-r from-transparent via-white/[0.12] to-transparent" />
 
-				<div className="rounded-[2.65rem] bg-[#030303] p-[8px] ring-1 ring-white/[0.07]">
+				<div
+					className={cn(
+						"bg-[#030303] ring-1 ring-white/[0.07]",
+						slim ? "rounded-[13%/6.5%] p-[1.7%]" : "rounded-[2.65rem] p-[8px]",
+					)}
+				>
 					<div
 						className={cn(
-							"relative overflow-hidden rounded-[2.2rem] bg-black ring-1 ring-black/80",
+							"relative overflow-hidden bg-black ring-1 ring-black/80",
+							slim ? "rounded-[12%/6%]" : "rounded-[2.2rem]",
 							screenClassName,
 						)}
 						style={{ aspectRatio }}
@@ -82,7 +96,12 @@ export function PhoneFrame({
 
 						{/* Cristal */}
 						<div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-tr from-white/[0.09] via-transparent to-transparent" />
-						<div className="pointer-events-none absolute inset-0 z-20 rounded-[2.2rem] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]" />
+						<div
+							className={cn(
+								"pointer-events-none absolute inset-0 z-20 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]",
+								slim ? "rounded-[12%/6%]" : "rounded-[2.2rem]",
+							)}
+						/>
 						<div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-[18%] bg-gradient-to-l from-white/[0.03] to-transparent" />
 
 						{showSystemChrome ? (
@@ -95,7 +114,7 @@ export function PhoneFrame({
 				</div>
 
 				{/* Banda antena inferior */}
-				<div className="pointer-events-none absolute inset-x-[22%] bottom-[7px] z-30 h-[2px] rounded-full bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+				<div className="pointer-events-none absolute inset-x-[22%] bottom-[1.4%] z-30 h-[2px] rounded-full bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
 			</div>
 
 			{/* Brillo lateral */}

@@ -137,8 +137,8 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 
 	return (
 		<>
-			{/* Mobile: carrusel con swipe — tamaño por ancho fijo (no salta con la toolbar de iOS) */}
-			<div className="relative w-full max-w-[300px] sm:max-w-[320px] lg:hidden">
+			{/* Mobile: carrusel — llena el ancho del contenedor (tamaño estable, sin dvh) */}
+			<div className="relative mx-auto w-full max-w-[220px] overflow-hidden sm:max-w-[240px] lg:hidden">
 				<div
 					className="touch-pan-y select-none overflow-hidden"
 					onPointerDown={onPointerDown}
@@ -160,10 +160,10 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 						{phones.map((phone) => (
 							<div
 								key={phone.src}
-								className="flex shrink-0 justify-center px-1"
+								className="flex shrink-0 justify-center px-0.5"
 								style={{ width: `${100 / phones.length}%` }}
 							>
-								<div className="aspect-[9/17.5] w-[200px] sm:w-[230px]">
+								<div className="aspect-[9/17.5] w-full">
 									<PhoneFrame
 										src={phone.src}
 										alt={phone.alt}
@@ -172,6 +172,7 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 										showSystemChrome={false}
 										aspectRatio={HERO_SCREEN_ASPECT}
 										className="max-w-none"
+										bezel="slim"
 									/>
 								</div>
 							</div>
@@ -232,6 +233,7 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 						imageFit="cover"
 						showSystemChrome={false}
 						aspectRatio={HERO_SCREEN_ASPECT}
+						bezel="slim"
 					/>
 				</div>
 
@@ -249,6 +251,7 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 						imageFit="cover"
 						showSystemChrome={false}
 						aspectRatio={HERO_SCREEN_ASPECT}
+						bezel="slim"
 					/>
 				</div>
 			</div>
