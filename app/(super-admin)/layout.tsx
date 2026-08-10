@@ -14,8 +14,11 @@ import { QueryProvider } from "@/components/ui/query-provider";
 export const metadata: Metadata = {
 	manifest: "/saas-admin/manifest.webmanifest",
 	icons: {
-		icon: "/favicon.svg",
-		apple: "/favicon.svg",
+		icon: [
+			{ url: "/favicon.png", type: "image/png", sizes: "1024x1024" },
+			{ url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+		],
+		apple: "/apple-touch-icon.png",
 	},
 	appleWebApp: {
 		capable: true,

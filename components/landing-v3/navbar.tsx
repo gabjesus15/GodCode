@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
 import { cn } from "@/utils/cn";
+
+import { LandingBrandMark } from "./landing-brand-mark";
 
 const navLinks = [
 	{ label: "Funciones", href: "#funciones" },
@@ -85,22 +86,11 @@ export function Navbar() {
 				)}
 			>
 				<nav className="v3-container flex h-20 items-center justify-between">
-					<Link href="/" className="relative z-50 flex items-center gap-2">
-						<Image
-							src="/gcode-logo.svg"
-							alt="Gcode"
-							width={36}
-							height={36}
-							className="h-9 w-9 rounded-lg"
+					<Link href="/" className="relative z-50 flex items-center" aria-label="Gcode">
+						<LandingBrandMark
+							variant={solid ? "onLight" : "onDark"}
+							priority
 						/>
-						<span
-							className={cn(
-								"font-display text-2xl tracking-wide transition-colors duration-500",
-								solid ? "text-[#0d0d0d]" : "text-[#f4f4f5]",
-							)}
-						>
-							CODE
-						</span>
 					</Link>
 
 					<div className="hidden items-center gap-10 md:flex">

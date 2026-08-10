@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { cn } from "@/utils/cn";
+
+import { LandingBrandMark } from "./landing-brand-mark";
 
 /** Al superar este scroll la navbar pasa a modo sólido blanco. */
 const SCROLL_THRESHOLD = 32;
@@ -46,22 +47,10 @@ export function AboutNavbar({ ctaLabel, homeAriaLabel }: AboutNavbarProps) {
 					title={homeAriaLabel}
 					className="relative z-50 inline-flex items-center gap-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4f5bff]"
 				>
-					<Image
-						src="/gcode-logo.svg"
-						alt="Gcode"
-						width={36}
-						height={36}
-						className="h-9 w-9 rounded-lg"
+					<LandingBrandMark
+						variant={solid ? "onLight" : "onDark"}
+						priority
 					/>
-					<span
-						className={cn(
-							"text-2xl font-bold tracking-wide transition-colors duration-500",
-							solid ? "text-[#0d0d0d]" : "text-[#f4f4f5]",
-						)}
-						style={{ fontFamily: "var(--font-space-grotesk), sans-serif" }}
-					>
-						CODE
-					</span>
 				</Link>
 
 				<Link

@@ -8,7 +8,7 @@ import { Lock, Mail, ShieldCheck } from "lucide-react";
 
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import { WordmarkReveal } from "../../../components/ui/logo";
+import { LandingBrandMark } from "../../../components/landing-v3/landing-brand-mark";
 import { mapAuthClientError } from "../../../utils/auth-client-errors";
 import { createSupabaseBrowserClient } from "../../../utils/supabase/client";
 
@@ -171,12 +171,11 @@ function LoginPageContent() {
 			>
 				<div className="mb-8 flex flex-col items-center text-center">
 					<div className="mb-6">
-					<WordmarkReveal
-						ink="#18181b"
-						panelBg="#ffffff"
-						markClassName="h-14 w-14 shrink-0 sm:h-16 sm:w-16"
-						wordSize="clamp(42px, 7.5vw, 50px)"
-					/>
+						<LandingBrandMark
+							variant="onLight"
+							className="h-14 sm:h-16"
+							priority
+						/>
 					</div>
 				</div>
 

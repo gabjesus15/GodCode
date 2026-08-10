@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
 import type { LandingSocialLink } from "@/lib/landing/contact";
 
+import { LandingBrandMark } from "./landing-brand-mark";
 import {
 	LandingInstagramIcon,
 	LandingMailIcon,
@@ -105,13 +105,7 @@ export function Footer({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 
 				<div className="flex flex-col items-center gap-8 py-12 md:flex-row md:justify-between">
 					<div className="flex items-center gap-3">
-						<Image
-							src="/gcode-logo.svg"
-							alt="Gcode"
-							width={32}
-							height={32}
-							className="h-8 w-8 rounded-lg"
-						/>
+						<LandingBrandMark variant="onLight" className="h-8" />
 						<p className="text-sm text-[#71717a]">
 							© {new Date().getFullYear()} Gcode. Todos los derechos reservados.
 						</p>
