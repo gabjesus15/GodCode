@@ -14,6 +14,7 @@ import "./tenant-base.css";
 import { TenantShell } from "../../components/tenant/shell/tenant-shell";
 import { QueryProvider } from "@/components/ui/query-provider";
 import { resolveStorefrontThemeAssets } from "@/lib/storage/storefront-branding";
+import { buildTenantStorefrontDescription } from "@/lib/tenant/seo-metadata";
 
 export const revalidate = 60; // ISR: regenera cada 60 segundos → HTML pre-renderizado para Googlebot
 
@@ -123,7 +124,11 @@ export async function generateMetadata({
       : company.name?.trim()) || slugFallback || "GodCode";
   const versionSeed = tenantBrandingIconVersionSeed(company);
   const icon = `/tenant-favicon?tenant=${encodeURIComponent(resolvedParams.subdomain)}&v=${encodeURIComponent(versionSeed)}`;
-  const description = `Pide online en ${name}. Consulta nuestro menu digital, precios y haz tu pedido por WhatsApp con delivery o retiro.`;
+  const description = buildTenantStorefrontDescription({
+    displayName: name,
+    address: company.address,
+    country: company.country,
+  });
 
   const canonical = onApexPathTenant ? `${subdomainOrigin}/` : `${baseOrigin}${pathPrefix}/`;
   const ogUrl = canonical;
@@ -204,7 +209,11 @@ export default async function TenantLayout({
 
   const tenantThemeCss = buildTenantThemeCssString(theme);
 
-  const businessDescription = `Pide online en ${theme.displayName ?? company?.name ?? "GodCode"}. Consulta nuestro menu digital, precios y haz tu pedido por WhatsApp con delivery o retiro.`;
+  const businessDescription = buildTenantStorefrontDescription({
+    displayName: theme.displayName ?? company?.name ?? "GodCode",
+    address: company?.address,
+    country: company?.country,
+  });
 
   // Datos estructurados LocalBusiness/Restaurant (Mucho más potentes para SEO local)
   const businessJsonLd = {

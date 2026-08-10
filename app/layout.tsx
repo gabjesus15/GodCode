@@ -12,7 +12,8 @@ import { LIGHT_ONLY_THEME_SCRIPT } from "@/components/theme/saas-theme-scope";
 import { PageAnalyticsTracker } from "../components/analytics/page-analytics-tracker";
 import { getClientMessagesForPath } from "@/lib/i18n/client-messages";
 import { getCurrentLocale } from "@/lib/i18n/server";
-import { LANDING_BRAND_ALTERNATE, LANDING_BRAND_NAME } from "@/lib/landing/brand";
+import { LANDING_BRAND_NAME } from "@/lib/landing/brand";
+import { LANDING_DESCRIPTION, LANDING_SHARE_TITLE } from "@/lib/landing/metadata";
 import { getAppUrl } from "@/lib/tenant/app-url";
 // import Image from 'next/image'; // Eliminado porque no se usa
 
@@ -51,11 +52,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(getAppUrl()),
   title: {
-    default: `${LANDING_BRAND_NAME} | Menú digital y pedidos online para restaurantes`,
+    default: LANDING_SHARE_TITLE,
     template: `%s · ${LANDING_BRAND_NAME}`,
   },
-  description:
-    `${LANDING_BRAND_NAME} (${LANDING_BRAND_ALTERNATE}) ayuda a restaurantes y negocios con sucursales a vender online con menú digital, pedidos por WhatsApp, delivery, caja e inventario. Sin comisiones por venta y listo en minutos.`,
+  description: LANDING_DESCRIPTION,
   verification: {
     google:
       process.env.GOOGLE_SITE_VERIFICATION?.trim() ||

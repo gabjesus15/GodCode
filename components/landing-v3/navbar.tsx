@@ -13,6 +13,7 @@ const navLinks = [
 	{ label: "Precios", href: "#precios" },
 	{ label: "FAQ", href: "#faq" },
 	{ label: "Sobre Gcode", href: "/sobre-godcode" },
+	{ label: "Negocios", href: "/onboarding/negocios" },
 	{ label: "Contacto", href: "#contacto" },
 ] as const;
 
@@ -85,7 +86,7 @@ export function Navbar() {
 					open && "border-b border-white/[0.06] bg-[#080808]",
 				)}
 			>
-				<nav className="v3-container flex h-20 items-center justify-between">
+				<nav className="v3-container relative flex h-20 items-center justify-between">
 					<Link href="/" className="relative z-50 flex items-center" aria-label="Gcode">
 						<LandingBrandMark
 							variant={solid ? "onLight" : "onDark"}
@@ -93,40 +94,43 @@ export function Navbar() {
 						/>
 					</Link>
 
-					<div className="hidden items-center gap-10 md:flex">
-						{navLinks.map((link) =>
-							link.href.startsWith("#") ? (
-								<a
-									key={link.label}
-									href={link.href}
-									onClick={(event) => onHashClick(event, link.href)}
-									className={cn(
-										"text-sm font-medium tracking-wide transition-colors duration-500",
-										solid
-											? "text-[#52525b] hover:text-[#0d0d0d]"
-											: "text-[#a1a1aa] hover:text-[#f4f4f5]",
-									)}
-								>
-									{link.label}
-								</a>
-							) : (
-								<Link
-									key={link.label}
-									href={link.href}
-									className={cn(
-										"text-sm font-medium tracking-wide transition-colors duration-500",
-										solid
-											? "text-[#52525b] hover:text-[#0d0d0d]"
-											: "text-[#a1a1aa] hover:text-[#f4f4f5]",
-									)}
-								>
-									{link.label}
-								</Link>
-							),
-						)}
+					{/* Centrado al viewport (no al hueco entre logo y CTA). */}
+					<div className="pointer-events-none absolute inset-y-0 left-1/2 hidden -translate-x-1/2 items-center md:flex">
+						<div className="pointer-events-auto flex items-center gap-5 lg:gap-8 xl:gap-10">
+							{navLinks.map((link) =>
+								link.href.startsWith("#") ? (
+									<a
+										key={link.label}
+										href={link.href}
+										onClick={(event) => onHashClick(event, link.href)}
+										className={cn(
+											"whitespace-nowrap text-sm font-medium tracking-wide transition-colors duration-500",
+											solid
+												? "text-[#52525b] hover:text-[#0d0d0d]"
+												: "text-[#a1a1aa] hover:text-[#f4f4f5]",
+										)}
+									>
+										{link.label}
+									</a>
+								) : (
+									<Link
+										key={link.label}
+										href={link.href}
+										className={cn(
+											"whitespace-nowrap text-sm font-medium tracking-wide transition-colors duration-500",
+											solid
+												? "text-[#52525b] hover:text-[#0d0d0d]"
+												: "text-[#a1a1aa] hover:text-[#f4f4f5]",
+										)}
+									>
+										{link.label}
+									</Link>
+								),
+							)}
+						</div>
 					</div>
 
-					<div className="flex items-center gap-4">
+					<div className="relative z-50 flex items-center gap-4">
 						<Link
 							href="/login"
 							className="hidden rounded-full bg-[#4f5bff] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#3d47e6] md:inline-flex"

@@ -8,6 +8,7 @@ import { OrderIntakePausedBanner } from "./order-intake-paused-banner";
 import { MegaMenuFab, MegaMenuOverlay, SidebarCategoriesPanel } from "./menu-category-nav";
 import { MenuCatalog } from "./menu-catalog";
 import { MenuContactChannelSheet } from "./menu-contact-channel-sheet";
+import { PoweredByGcode } from "../branding/powered-by-gcode";
 import type { BranchInfo, BranchModalItem, CategoryListItem, MenuProduct } from "./menu-types";
 import type { BranchContactChannel } from "@/lib/tenant/menu/menu-helpers";
 import { branchHasContactChannel } from "@/lib/tenant/menu/menu-helpers";
@@ -79,6 +80,7 @@ export type MenuClientViewProps = {
 	catalogScrollRef: React.RefObject<MenuCatalogScrollController | null>;
 	observerBlockRef: React.RefObject<boolean>;
 	onActiveSectionChange: (sectionId: string) => void;
+	tenantSlug?: string | null;
 };
 
 export function MenuClientView(props: MenuClientViewProps) {
@@ -143,6 +145,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 		catalogScrollRef,
 		observerBlockRef,
 		onActiveSectionChange,
+		tenantSlug = null,
 	} = props;
 
 	const contactBranches = pendingContactChannel
@@ -163,6 +166,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 					categories={categoriesList}
 					activeCategory={activeCategory}
 					onCategoryClick={onCategoryClick}
+					tenantSlug={tenantSlug}
 				/>
 			)}
 
@@ -202,6 +206,9 @@ export function MenuClientView(props: MenuClientViewProps) {
 						observerBlockRef={observerBlockRef}
 						onActiveSectionChange={onActiveSectionChange}
 					/>
+					{!isEmbeddedPreview ? (
+						<PoweredByGcode tenantSlug={tenantSlug} surface="menu" />
+					) : null}
 				</main>
 
 				{mounted && typeof document !== "undefined" && document.getElementById("cart-portal-root")

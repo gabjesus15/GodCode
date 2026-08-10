@@ -7,8 +7,9 @@ import { Settings, QrCode } from "lucide-react";
 import Image from "next/image";
 
 import { LazyContactBranchModal } from "@/lib/tenant/lazy/tenant-dynamic";
-import { getAppUrl } from "@/lib/tenant/app-url";
+import { buildPoweredByHref } from "@/lib/tenant/powered-by";
 import { getTenantScopedPath } from "../utils/tenant-route";
+import { PoweredByGcode } from "../branding/powered-by-gcode";
 
 interface BranchInfo {
   id: string;
@@ -90,7 +91,7 @@ interface HomeClientProps {
 }
 
 export function HomeClient(props: HomeClientProps) {
-  const { name, logoUrl, schedule, branches } = props;
+  const { name, logoUrl, schedule, branches, publicSlug } = props;
     // Estado para detectar mobile
     const [showQR, setShowQR] = useState(true);
 
@@ -192,6 +193,7 @@ export function HomeClient(props: HomeClientProps) {
     onClick: () => void;
     primary?: boolean;
     ariaLabel?: string;
+    godcodeCta?: boolean;
   }> => {
     const list: Array<{
       label: string;
@@ -199,6 +201,7 @@ export function HomeClient(props: HomeClientProps) {
       onClick: () => void;
       primary?: boolean;
       ariaLabel?: string;
+      godcodeCta?: boolean;
     }> = [
       {
         label: "Ver Menú Digital",
@@ -234,8 +237,9 @@ export function HomeClient(props: HomeClientProps) {
     }
 
     list.push({
-      label: "REGISTRAR MI NEGOCIO",
-      ariaLabel: "Ir a Registrar mi negocio",
+      label: "Crea tu menú",
+      ariaLabel: "Crea tu menú digital con Gcode",
+      godcodeCta: true,
         icon: (
         <Image
           src="/favicon-32.png"
@@ -247,13 +251,12 @@ export function HomeClient(props: HomeClientProps) {
       ),
       onClick: () => {
         // La landing pública de marketing es `/` (landing v3). `/landing` es el panel super-admin y pide login.
-        const base = getAppUrl().replace(/\/$/, "");
-        window.location.assign(`${base}/`);
+        window.location.assign(buildPoweredByHref({ tenantSlug: publicSlug, surface: "home" }));
       },
     });
 
     return list;
-  }, [handleActionClick, router, menuPath, branches]);
+  }, [handleActionClick, router, menuPath, branches, publicSlug]);
 
   // Generador de iniciales robusto
   const initials = useMemo(() => {
@@ -331,7 +334,7 @@ export function HomeClient(props: HomeClientProps) {
                   key={btn.label}
                   onClick={btn.onClick}
                   className={`btn ${btn.primary ? "btn-primary" : "btn-secondary glass"} ${
-                    btn.label === "REGISTRAR MI NEGOCIO" ? "btn-godcode" : ""
+                    btn.godcodeCta ? "btn-godcode" : ""
                   }`}
                   aria-label={btn.ariaLabel ?? `Ir a ${btn.label}`}
                 >
@@ -340,6 +343,8 @@ export function HomeClient(props: HomeClientProps) {
                 </button>
               ))}
             </nav>
+
+            <PoweredByGcode tenantSlug={publicSlug} surface="home" />
           </div>
 
           {/* Talón de QR (Escritorio) */}

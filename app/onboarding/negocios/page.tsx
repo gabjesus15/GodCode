@@ -217,7 +217,19 @@ export default async function NegociosPage() {
 				</div>
 			)}
 
-			<div className="mt-10 text-center">
+			<div className="mt-10 flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-center sm:gap-5">
+				<Link href="/" className="text-sm font-medium text-indigo-600 hover:underline">
+					{t.homeLink}
+				</Link>
+				<span className="hidden text-slate-300 sm:inline" aria-hidden>
+					·
+				</span>
+				<Link href="/sobre-godcode" className="text-sm font-medium text-indigo-600 hover:underline">
+					{t.aboutLink}
+				</Link>
+				<span className="hidden text-slate-300 sm:inline" aria-hidden>
+					·
+				</span>
 				<Link href="/onboarding" className="text-sm font-medium text-slate-500 hover:text-slate-900">
 					← {t.backRegister}
 				</Link>

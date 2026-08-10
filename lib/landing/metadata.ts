@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 
 import { LANDING_BRAND_NAME } from "./brand";
 
-const SHARE_TITLE = `${LANDING_BRAND_NAME} | Menú digital y POS sin comisiones`;
-const DESCRIPTION =
-	`${LANDING_BRAND_NAME} es la plataforma SaaS todo-en-uno para restaurantes: menú digital, pedidos online, punto de venta, delivery e inventario. Sin comisiones por venta.`;
+/** Fuente única para title/description de marketing (home + fallback root). */
+export const LANDING_SHARE_TITLE = `${LANDING_BRAND_NAME} | Menú digital y POS sin comisiones`;
+export const LANDING_DESCRIPTION =
+	`${LANDING_BRAND_NAME} es la plataforma todo-en-uno para restaurantes: menú digital, pedidos online, punto de venta, delivery e inventario. Sin comisiones por venta.`;
 
 export function buildLandingMetadata(base: string): Metadata {
 	const canonical = `${base}/`;
@@ -13,19 +14,21 @@ export function buildLandingMetadata(base: string): Metadata {
 		width: 1200,
 		height: 630,
 		type: "image/png",
-		alt: SHARE_TITLE,
+		alt: LANDING_SHARE_TITLE,
 	};
 
 	return {
 		metadataBase: new URL(base),
 		applicationName: LANDING_BRAND_NAME,
 		title: {
-			absolute: SHARE_TITLE,
+			absolute: LANDING_SHARE_TITLE,
 		},
-		description: DESCRIPTION,
+		description: LANDING_DESCRIPTION,
 		keywords: [
 			"menú digital para restaurantes",
 			"pedidos online para restaurantes",
+			"POS para restaurantes",
+			"POS sin comisiones",
 			"delivery para restaurantes",
 			"menú digital",
 			"pedidos online",
@@ -36,7 +39,6 @@ export function buildLandingMetadata(base: string): Metadata {
 			"caja",
 			"sucursales",
 			"SaaS para restaurantes",
-			"plataforma ecommerce",
 			LANDING_BRAND_NAME,
 		],
 		alternates: {
@@ -47,8 +49,8 @@ export function buildLandingMetadata(base: string): Metadata {
 			},
 		},
 		openGraph: {
-			title: SHARE_TITLE,
-			description: DESCRIPTION,
+			title: LANDING_SHARE_TITLE,
+			description: LANDING_DESCRIPTION,
 			url: canonical,
 			siteName: LANDING_BRAND_NAME,
 			locale: "es_ES",
@@ -57,8 +59,8 @@ export function buildLandingMetadata(base: string): Metadata {
 		},
 		twitter: {
 			card: "summary_large_image",
-			title: SHARE_TITLE,
-			description: DESCRIPTION,
+			title: LANDING_SHARE_TITLE,
+			description: LANDING_DESCRIPTION,
 			images: [ogImage.url],
 		},
 		robots: {

@@ -15,8 +15,8 @@ const footerLinks = [
 	{ label: "Precios", href: "#precios" },
 	{ label: "FAQ", href: "#faq" },
 	{ label: "Sobre Gcode", href: "/sobre-godcode" },
-	{ label: "Crear tienda", href: "/onboarding" },
 	{ label: "Negocios", href: "/onboarding/negocios" },
+	{ label: "Crear tienda", href: "/onboarding" },
 	{ label: "Contacto", href: "#contacto" },
 ];
 

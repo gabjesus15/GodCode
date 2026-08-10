@@ -75,6 +75,7 @@ function MenuClientViewFromVm({
 				catalogScrollRef={vm.catalogScrollRef}
 				observerBlockRef={vm.observerBlockRef}
 				onActiveSectionChange={vm.handleScrollSpyCategoryChange}
+				tenantSlug={vm.tenantSlug}
 			/>
 		</>
 	);

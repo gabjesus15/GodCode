@@ -629,6 +629,7 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    flex: 1;
 }
 
 .sidebar-nav-item {
@@ -1061,4 +1062,68 @@ html, body {
 .page-wrapper.embedded-preview.preview-device-desktop {
     max-width: 100%;
 }
+
+/* —— Powered by Gcode (crédito de plataforma) —— */
+.powered-by-gcode {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--color-text-tertiary, var(--text-secondary, #999));
+    opacity: 0.72;
+    transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.powered-by-gcode:hover,
+.powered-by-gcode:focus-visible {
+    opacity: 1;
+    color: var(--accent-primary, #4f5bff);
+    outline: none;
+}
+
+.powered-by-gcode__label {
+    font-weight: 500;
+    letter-spacing: 0.12em;
+}
+
+.powered-by-gcode__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 700;
+}
+
+.powered-by-gcode__mark {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    opacity: 0.9;
+}
+
+.powered-by-gcode--menu {
+    display: flex;
+    width: 100%;
+    margin: 0.5rem 0 0;
+    padding: 1.75rem 0 calc(2.25rem + env(safe-area-inset-bottom));
+    border-top: 1px solid color-mix(in srgb, var(--color-text-tertiary, #999) 18%, transparent);
+}
+
+.powered-by-gcode--sidebar {
+    margin-top: auto;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    justify-content: flex-start;
+    width: 100%;
+}
+
+.powered-by-gcode--home {
+    margin: 1.25rem auto 0.25rem;
+    padding: 0.35rem 0.5rem;
+}
+
 

@@ -9,14 +9,14 @@ import type { LandingV3PhoneSlide } from "@/lib/landing/v3-config";
 const DEFAULT_PHONES: LandingV3PhoneSlide[] = [
 	{
 		src: "/oishi-sushi-bio.png",
-		alt: "Página de enlaces de Oishi Sushi",
-		label: "Página de enlaces",
+		alt: "Oishi Sushi en Gcode — página de enlaces y menú digital",
+		label: "Oishi Sushi",
 		priority: false,
 	},
 	{
 		src: "/la-parada-menu.png",
 		alt: "Menú digital de La Parada en Gcode",
-		label: "Menú digital",
+		label: "La Parada · Menú",
 		priority: true,
 	},
 ];

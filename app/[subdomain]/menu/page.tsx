@@ -17,6 +17,10 @@ import {
 	resolveOnlineOrderingEnabled,
 } from "@/lib/tenant/menu-settings";
 import { resolveSelectedMenuBranch } from "@/lib/tenant/menu/menu-helpers";
+import {
+	buildTenantMenuDescription,
+	buildTenantMenuTitle,
+} from "@/lib/tenant/seo-metadata";
 
 // ISR: re-generate at most every 60 s. Menu updates (product edits, theme publish)
 // are pushed instantly via revalidateTag(`menu:${companyId}`) from:
@@ -76,6 +80,12 @@ export async function generateMetadata({
     (typeof rawDisplayName === "string" && rawDisplayName.trim().length > 0
       ? rawDisplayName.trim()
       : company?.name?.trim()) || slugFallback || "Menú";
+  const menuTitle = buildTenantMenuTitle(displayName);
+  const menuDescription = buildTenantMenuDescription({
+    displayName,
+    address: company?.address,
+    country: company?.country,
+  });
   const iconVersionSeed = company ? tenantBrandingIconVersionSeed(company) : resolvedParams.subdomain;
   const icon = `/tenant-favicon?tenant=${encodeURIComponent(resolvedParams.subdomain)}&v=${encodeURIComponent(String(iconVersionSeed))}`;
   const baseOrigin = `${protocol}://${host}`;
@@ -87,8 +97,8 @@ export async function generateMetadata({
 
 	return {
     metadataBase: resolvedMetadataBase,
-    title: { absolute: displayName },
-		description: `Explora el menú de ${displayName}. Pide online y recibe en tu puerta.`,
+    title: { absolute: menuTitle },
+		description: menuDescription,
     alternates: {
       canonical,
     },
@@ -99,15 +109,15 @@ export async function generateMetadata({
       apple: icon,
     },
     openGraph: {
-      title: displayName,
-      description: `Explora el menú de ${displayName}. Pide online y recibe en tu puerta.`,
+      title: menuTitle,
+      description: menuDescription,
       url: canonical,
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: displayName,
-      description: `Explora el menú de ${displayName}. Pide online y recibe en tu puerta.`,
+      title: menuTitle,
+      description: menuDescription,
     },
 		appleWebApp: {
 			capable: true,

@@ -530,6 +530,49 @@
     0 4px 10px rgba(79, 70, 229, 0.15) !important;
 }
 
+/* Crédito discreto bajo la botonera (home link-in-bio) */
+.home-container .powered-by-gcode {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 1.1rem auto 0.35rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #94a3b8;
+  opacity: 0.85;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.home-container .powered-by-gcode:hover,
+.home-container .powered-by-gcode:focus-visible {
+  opacity: 1;
+  color: #4f46e5;
+  outline: none;
+}
+
+.home-container .powered-by-gcode__label {
+  font-weight: 500;
+  letter-spacing: 0.12em;
+}
+
+.home-container .powered-by-gcode__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+
+.home-container .powered-by-gcode__mark {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
 
 @media (max-width: 849px) {
   .home-nav-grid {

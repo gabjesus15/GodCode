@@ -135,6 +135,13 @@ export function Hero({
 						</Link>
 					</div>
 
+					<Link
+						href="/onboarding/negocios"
+						className="mt-4 text-sm text-[#71717a] transition-colors hover:text-[#4f5bff]"
+					>
+						Ver negocios que ya usan Gcode
+					</Link>
+
 					<HeroPriceTag
 						amount={amount}
 						currency={currency}

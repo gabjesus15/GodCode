@@ -7,6 +7,7 @@ import { ChevronDown, Compass, Grid, MapPin, X } from "lucide-react";
 import { isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { Navbar } from "../navbar/navbar";
+import { PoweredByGcode } from "../branding/powered-by-gcode";
 import type { BranchInfo, CategoryListItem } from "./menu-types";
 
 export const IconListCategories = memo(function IconListCategories({
@@ -54,6 +55,7 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 	categories,
 	activeCategory,
 	onCategoryClick,
+	tenantSlug = null,
 }: {
 	displayName: string;
 	logoUrl: string | null | undefined;
@@ -65,6 +67,7 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 	categories: CategoryListItem[];
 	activeCategory: string | null;
 	onCategoryClick: (id: string) => void;
+	tenantSlug?: string | null;
 }) {
 	return (
 		<aside className="sidebar-categories-panel">
@@ -119,6 +122,9 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 					</button>
 				))}
 			</nav>
+			{!isEmbeddedPreview ? (
+				<PoweredByGcode tenantSlug={tenantSlug} surface="sidebar" />
+			) : null}
 		</aside>
 	);
 });
