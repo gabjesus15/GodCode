@@ -18,7 +18,7 @@ export function BentoShowcaseMetric() {
 	const { metricEnd, metricSuffix, metricLabel } = LANDING_SHOWCASE_TENANT;
 	const nodeRef = useRef<HTMLDivElement>(null);
 	const playedRef = useRef(false);
-	const [value, setValue] = useState(metricEnd);
+	const [value, setValue] = useState<number>(metricEnd);
 	const [started, setStarted] = useState(false);
 
 	useEffect(() => {
