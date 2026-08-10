@@ -10,8 +10,6 @@ const MARK_CLASS = {
 
 interface SaasLogoProps {
 	size?: "sm" | "md" | "lg";
-	/** Conservado por compatibilidad; el mark ya no anima texto. */
-	animated?: boolean;
 }
 
 export function SaasLogo({ size = "md" }: SaasLogoProps) {

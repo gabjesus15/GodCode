@@ -238,7 +238,7 @@ export function HomeClient(props: HomeClientProps) {
       ariaLabel: "Ir a Registrar mi negocio",
         icon: (
         <Image
-          src="/logo.svg"
+          src="/favicon-32.png"
           alt="Gcode Logo"
           width={20}
           height={20}

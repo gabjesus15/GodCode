@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" fill="#4F5BFF"/>
-  <g transform="translate(512 512) scale(0.82) translate(-512 -512)" fill="none" stroke-linecap="round">
-    <path d="M 812.0 512.0 A 300 300 0 1 1 684.1 266.3" stroke="#F4F4F5" stroke-width="145"/>
-    <line x1="812" y1="512" x2="488" y2="512" stroke="#F4F4F5" stroke-width="145"/>
-    <line x1="170" y1="854" x2="854" y2="170" stroke="#4F5BFF" stroke-width="52"/>
-  </g>
-</svg>

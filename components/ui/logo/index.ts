@@ -1,2 +1,1 @@
-export { GcodeMark } from "./gcode-mark";
-export { WordmarkReveal } from "./wordmark-reveal";
+export { LandingLogo } from "./landing-logo";

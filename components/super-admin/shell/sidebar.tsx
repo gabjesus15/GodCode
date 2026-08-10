@@ -38,7 +38,7 @@ export function Sidebar() {
   return (
     <div className="flex h-full flex-col gap-6 md:gap-10">
       <div className="mb-2 mt-1 flex justify-center md:mb-4 md:mt-2">
-        <SaasLogo size="lg" animated />
+        <SaasLogo size="lg" />
       </div>
       <nav className="flex flex-col gap-1 sm:gap-2">
         {SUPER_ADMIN_NAV.map((item) => {
