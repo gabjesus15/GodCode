@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Shield, Mail, Clock } from "lucide-react";
+import { redirect } from "next/navigation";
 
 import { OnboardingStep1Form } from "@/components/onboarding/steps/OnboardingStep1Form";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
@@ -32,7 +33,17 @@ export async function generateMetadata(): Promise<Metadata> {
 	};
 }
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({
+	searchParams,
+}: {
+	searchParams?: Promise<{ hl?: string }>;
+}) {
+	const resolved = searchParams ? await searchParams : undefined;
+	// Onboarding no usa ?hl=; consolidar señales SEO en la URL limpia.
+	if (resolved?.hl) {
+		redirect("/onboarding");
+	}
+
 	const messages = await getCurrentMessages();
 	const t = messages.onboarding.start;
 

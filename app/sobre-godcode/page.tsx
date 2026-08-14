@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { ArrowRight, ChartNoAxesCombined, ShieldCheck, Sparkles, Users } from "lucide-react";
 
@@ -101,8 +102,21 @@ function getLocaleCopy(locale: string) {
 }
 
 function resolveAboutLocale(hlParam: string | undefined, fallbackLocale: string): "es" | "en" {
-  const normalized = hlParam ? normalizeLocale(hlParam) : normalizeLocale(fallbackLocale);
-  return normalized === "es" ? "es" : "en";
+  // Solo `en` explícito (o preferencia EN) sirve inglés. fr/pt/de/it → español (mercado principal).
+  if (hlParam) {
+    const fromHl = normalizeLocale(hlParam);
+    if (fromHl === "en") return "en";
+    return "es";
+  }
+  return normalizeLocale(fallbackLocale) === "en" ? "en" : "es";
+}
+
+/** Evita indexar ?hl=fr / ?hl=es / basura; solo admite ?hl=en o URL limpia. */
+function redirectInvalidAboutHl(hlParam: string | undefined) {
+  if (!hlParam?.trim()) return;
+  const normalized = normalizeLocale(hlParam);
+  if (normalized === "en") return;
+  redirect("/sobre-godcode");
 }
 
 export async function generateMetadata({
@@ -120,10 +134,11 @@ export async function generateMetadata({
   const description = isSpanish
     ? `Página de marca de ${LANDING_BRAND_NAME}: menú digital, pedidos online sin comisiones, punto de venta, inventario y delivery.`
     : `${LANDING_BRAND_NAME} brand page: digital menus, commission-free online orders, POS, inventory and delivery.`;
+  // Solo ?hl=en es variante válida; el resto canoniciza a ES limpio.
   const canonical =
-    locale === "es"
-      ? `${base}/sobre-godcode`
-      : `${base}/sobre-godcode?hl=${locale}`;
+    locale === "en" && normalizeLocale(resolvedSearchParams?.hl ?? "") === "en"
+      ? `${base}/sobre-godcode?hl=en`
+      : `${base}/sobre-godcode`;
   return {
     metadataBase: new URL(base),
     title,
@@ -173,6 +188,7 @@ export default async function SobreGodCodePage({
   searchParams?: Promise<AboutSearchParams>;
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  redirectInvalidAboutHl(resolvedSearchParams?.hl);
   const fallbackLocale = await getCurrentLocale();
   const locale = resolveAboutLocale(resolvedSearchParams?.hl, fallbackLocale);
   const t = getLocaleCopy(locale);

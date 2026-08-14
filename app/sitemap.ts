@@ -2,7 +2,8 @@ import type { MetadataRoute } from "next";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { createSupabasePublicServerClient } from "../utils/supabase/server";
 
-const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-06-15T00:00:00.000Z";
+/** Actualizar al desplegar cambios de marketing relevantes para incentivar recrawl. */
+const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-08-14T00:00:00.000Z";
 
 function getTenantBaseDomain(): string {
 	const fromEnv = process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN?.trim() ?? "";
@@ -32,15 +33,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	const base = getAppUrl();
 	const marketingLastModified = getMarketingLastModified();
 	const supabase = createSupabasePublicServerClient();
-
-	const localizedAboutUrls: MetadataRoute.Sitemap = [
-		{
-			url: `${base}/sobre-godcode?hl=en`,
-			lastModified: marketingLastModified,
-			changeFrequency: "monthly" as const,
-			priority: 0.7,
-		},
-	];
 
 	const { data: companies } = await supabase
 		.from("companies")
@@ -98,7 +90,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			changeFrequency: "weekly",
 			priority: 0.7,
 		},
-		...localizedAboutUrls,
 		...tenantUrls,
 	];
 }
