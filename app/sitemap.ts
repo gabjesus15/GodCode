@@ -5,15 +5,6 @@ import { createSupabasePublicServerClient } from "../utils/supabase/server";
 /** Actualizar al desplegar cambios de marketing relevantes para incentivar recrawl. */
 const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-08-14T00:00:00.000Z";
 
-function getTenantBaseDomain(): string {
-	const fromEnv = process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN?.trim() ?? "";
-	return fromEnv.replace(/^https?:\/\//i, "").replace(/\/$/, "").toLowerCase() || "godcode.me";
-}
-
-function getTenantOrigin(slug: string): string {
-	return `https://${slug}.${getTenantBaseDomain()}`;
-}
-
 function getMarketingLastModified(): Date {
 	const fromEnv = process.env.NEXT_PUBLIC_SITEMAP_LAST_MODIFIED?.trim();
 	if (fromEnv) {
@@ -47,17 +38,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 				!String(c.custom_domain ?? "").trim(),
 		)
 		.flatMap((c) => {
-			const origin = getTenantOrigin(c.public_slug);
+			// Tenants se sirven por path en el dominio principal (godcode.me/{slug});
+			// los subdominios *.godcode.me no existen en DNS y generaban URLs rotas.
 			const lastModified = getTenantLastModified(c.updated_at, marketingLastModified);
 			return [
 				{
-					url: `${origin}/`,
+					url: `${base}/${c.public_slug}`,
 					lastModified,
 					changeFrequency: "daily" as const,
 					priority: 0.9,
 				},
 				{
-					url: `${origin}/menu`,
+					url: `${base}/${c.public_slug}/menu`,
 					lastModified,
 					changeFrequency: "daily" as const,
 					priority: 0.8,

@@ -16,10 +16,11 @@ describe("sitemap.ts SEO rules", () => {
 		expect(source).toContain('DEFAULT_SITEMAP_LAST_MODIFIED = "2026-08-14T00:00:00.000Z"');
 	});
 
-	it("uses tenant base domain helper instead of hardcoded godcode.me", () => {
+	it("lists tenants with path-based URLs on the main domain (no subdomains)", () => {
 		const source = readFileSync(join(process.cwd(), "app", "sitemap.ts"), "utf8");
-		expect(source).toContain("getTenantBaseDomain");
-		expect(source).not.toMatch(/`https:\/\/\$\{c\.public_slug\}\.godcode\.me`/);
+		expect(source).toContain("`${base}/${c.public_slug}`");
+		expect(source).not.toContain("getTenantOrigin");
+		expect(source).not.toMatch(/`https:\/\/\$\{[^}]+\}\.\$\{/);
 	});
 
 	it("does not list llms.txt as an HTML sitemap URL", () => {

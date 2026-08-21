@@ -53,6 +53,7 @@ type CompanyPublic = {
 	id: string;
 	name: string;
 	slug: string;
+	customDomain: string | null;
 	logoUrl: string | null;
 };
 
@@ -64,7 +65,7 @@ async function fetchPublicCompanies(): Promise<CompanyPublic[]> {
 	try {
 		const { data, error } = await supabaseAdmin
 			.from("companies")
-			.select("id,name,public_slug,theme_config")
+			.select("id,name,public_slug,custom_domain,theme_config")
 			.in("subscription_status", ["active", "trial"])
 			.not("public_slug", "is", null)
 			.order("name");
@@ -89,6 +90,7 @@ async function fetchPublicCompanies(): Promise<CompanyPublic[]> {
 					id,
 					name: displayName || companyName || slugName || "Negocio",
 					slug,
+					customDomain: (row.custom_domain as string | null)?.trim() || null,
 					rawLogo: theme?.logoUrl ?? null,
 				};
 			})
@@ -192,7 +194,7 @@ export default async function NegociosPage() {
 					{companies.map((c) => (
 						<a
 							key={c.id}
-							href={getTenantUrl(c.slug)}
+							href={getTenantUrl(c.slug, c.customDomain)}
 							target="_blank"
 							rel="noopener noreferrer"
 							className="onboarding-card flex items-center gap-4 p-4 transition hover:border-indigo-200 hover:shadow-lg"

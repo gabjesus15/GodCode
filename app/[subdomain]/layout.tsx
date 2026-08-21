@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { headers } from "next/headers";
 
-import { isMainDomain, getTenantSubdomainOrigin } from "@/lib/tenant/main-domain-host";
+import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { buildTenantThemeCssString } from "@/lib/store-theme/apply-theme-css-vars";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
@@ -94,7 +94,6 @@ export async function generateMetadata({
   const metadataBase = new URL(baseOrigin);
   const onApexPathTenant = isMainDomain(host);
   const pathPrefix = onApexPathTenant ? `/${resolvedParams.subdomain}` : "";
-  const subdomainOrigin = getTenantSubdomainOrigin(resolvedParams.subdomain);
 
   if (!company) {
     return { title: { absolute: "GodCode | Menú Digital" } };
@@ -130,7 +129,14 @@ export async function generateMetadata({
     country: company.country,
   });
 
-  const canonical = onApexPathTenant ? `${subdomainOrigin}/` : `${baseOrigin}${pathPrefix}/`;
+  // Canonical propio de cada URL servida: los subdominios *.godcode.me no existen en DNS,
+  // los tenants se sirven por path (godcode.me/{slug}) y deben indexarse tal cual.
+  // Si el negocio tiene dominio personalizado, consolidar el SEO en ese dominio.
+  const customDomain =
+    typeof company.custom_domain === "string" ? company.custom_domain.trim() : "";
+  const canonical = customDomain
+    ? `https://${customDomain}/`
+    : `${baseOrigin}${pathPrefix}/`;
   const ogUrl = canonical;
 
   return {
@@ -173,17 +179,12 @@ export async function generateMetadata({
       title: name,
       description: description,
     },
-    robots: onApexPathTenant
-      ? {
-          index: false,
-          follow: true,
-        }
-      : {
-          index: true,
-          follow: true,
-          "max-image-preview": "large",
-          "max-snippet": -1,
-        },
+    robots: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   };
 }
 
@@ -216,12 +217,24 @@ export default async function TenantLayout({
   });
 
   // Datos estructurados LocalBusiness/Restaurant (Mucho más potentes para SEO local)
+  const businessName =
+    (typeof theme.displayName === "string" && theme.displayName.trim()) ||
+    company?.name?.trim() ||
+    "GodCode";
+  // Logo con URL estable: la signed URL de Storage expira en 12 h y Google no podría descargarlo.
+  const stableLogoUrl = company
+    ? `${protocol}://${host}/tenant-favicon?tenant=${encodeURIComponent(resolvedParams.subdomain)}&v=${encodeURIComponent(tenantBrandingIconVersionSeed(company))}&size=192`
+    : null;
+  // Con dominio personalizado, los datos estructurados apuntan a ese dominio (consolidación SEO).
+  const customDomain =
+    typeof company?.custom_domain === "string" ? company.custom_domain.trim() : "";
+  const businessUrl = customDomain ? `https://${customDomain}/` : baseUrl;
   const businessJsonLd = {
     "@context": "https://schema.org",
     "@type": "Restaurant",
-    "name": theme.displayName ?? company?.name,
-    "url": baseUrl,
-    "logo": theme.logoUrl,
+    "name": businessName,
+    "url": businessUrl,
+    ...(stableLogoUrl ? { "logo": stableLogoUrl } : {}),
     "image": `${baseUrl}/opengraph-image`,
     "description": businessDescription,
     "address": {
@@ -230,7 +243,7 @@ export default async function TenantLayout({
       "addressCountry": company?.country || "CL"
     },
     "servesCuisine": "International",
-    "hasMenu": `${baseUrl}/menu`,
+    "hasMenu": `${businessUrl}menu`,
     "acceptsReservations": "False",
     "priceRange": "$$"
   };
@@ -250,16 +263,16 @@ export default async function TenantLayout({
           {
             "@type": "ListItem",
             "position": 2,
-            "name": theme.displayName ?? company?.name ?? "Menú",
-            "item": baseUrl
+            "name": businessName,
+            "item": businessUrl
           }
         ]
       : [
           {
             "@type": "ListItem",
             "position": 1,
-            "name": theme.displayName ?? company?.name ?? "Menú",
-            "item": baseUrl
+            "name": businessName,
+            "item": businessUrl
           }
         ]
   };

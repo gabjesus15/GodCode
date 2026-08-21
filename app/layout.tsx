@@ -64,6 +64,8 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      // Google Search exige favicons múltiplo de 48px para mostrarlos en resultados.
+      { url: "/favicon-48.png", type: "image/png", sizes: "48x48" },
       { url: "/favicon.png", type: "image/png", sizes: "1024x1024" },
       { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
       { url: "/favicon-16.png", type: "image/png", sizes: "16x16" },
