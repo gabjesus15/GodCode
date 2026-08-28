@@ -20,7 +20,7 @@ const slides = [
 		description:
 			"Punto de venta pensado para servicio rápido: toma pedidos, divide cuentas, gestiona modificadores y envía comandas a cocina en segundos, sin salir de la vista de mesas.",
 		imageKey: "pos" as const,
-		aspectRatio: 1220 / 2587,
+		aspectRatio: 473 / 1024,
 	},
 	{
 		id: "menu",
@@ -30,7 +30,7 @@ const slides = [
 		description:
 			"Menú digital para restaurantes con fotos, variantes, combos y acceso por QR. Tus clientes navegan, piden y pagan desde el celular. Pedidos online sin comisiones por venta.",
 		imageKey: "menu" as const,
-		aspectRatio: 390 / 858,
+		aspectRatio: 473 / 1024,
 	},
 	{
 		id: "inventory",
@@ -40,7 +40,7 @@ const slides = [
 		description:
 			"Unifica sala, delivery, pickup y WhatsApp en un solo dashboard. Inventario en tiempo real, reportes y gestión multi-sucursal sin intermediarios que se queden con tu margen.",
 		imageKey: "inventory" as const,
-		aspectRatio: 1220 / 2598,
+		aspectRatio: 473 / 1024,
 	},
 ] as const;
 

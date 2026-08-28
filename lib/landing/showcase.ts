@@ -15,5 +15,5 @@ export const LANDING_SHOWCASE_TENANT = {
 } as const;
 
 export function getLandingShowcaseMenuUrl(): string {
-	return getTenantMenuUrl(LANDING_SHOWCASE_TENANT.slug) || `/${LANDING_SHOWCASE_TENANT.slug}/menu`;
+	return "https://oishisushi.shop";
 }

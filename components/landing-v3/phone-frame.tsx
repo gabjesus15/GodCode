@@ -85,10 +85,12 @@ export function PhoneFrame({
 							src={src}
 							alt={alt}
 							fill
+							unoptimized
+							quality={100}
 							className={cn(
 								imageFit === "contain"
 									? "object-contain object-center"
-									: "scale-[1.02] object-cover object-top will-change-transform",
+									: "object-cover object-top will-change-transform",
 							)}
 							sizes="(max-width: 768px) 80vw, 340px"
 							priority={priority}

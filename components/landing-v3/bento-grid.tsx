@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Layers, Smartphone, Zap, Quote } from "lucide-react";
 
@@ -57,7 +57,7 @@ export function BentoGrid({ bentoMenuMobile }: BentoGridProps) {
 							<span className="v3-label">{"// "}RATING</span>
 						</div>
 						<p className="relative mt-8 max-w-xl text-lg leading-relaxed text-[#f4f4f5]">
-							Los equipos que migran a Gcode reducen a la mitad los errores de
+							Los equipos que migran a Gcode Pos reducen a la mitad los errores de
 							pedido en el primer mes.
 						</p>
 					</div>
@@ -150,7 +150,7 @@ export function BentoGrid({ bentoMenuMobile }: BentoGridProps) {
 							<div>
 								<p className="v3-label mb-3">{"// "}NOSOTROS</p>
 								<p className="max-w-md text-2xl font-medium leading-snug text-[#f4f4f5]">
-									¿Querés ver cómo Gcode se adapta a tu negocio?
+									¿Quieres ver cómo Gcode Pos se adapta a tu negocio?
 								</p>
 							</div>
 							<Link

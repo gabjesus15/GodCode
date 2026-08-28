@@ -37,16 +37,16 @@ export function defaultLandingV3AssetsRows(): LandingMediaAssetRow[] {
 	return [
 		{
 			key: "v3.hero.phone.0",
-			src: "/oishi-sushi-bio.png",
-			alt: "Oishi Sushi en Gcode — página de enlaces y menú digital",
-			label: "Oishi Sushi",
+			src: "/rica-pizza-bio.png",
+			alt: "Rica Pizza en Gcode — página de enlaces y menú digital",
+			label: "Rica Pizza",
 			sub: null,
 			sort_order: 10,
 			is_active: true,
 		},
 		{
 			key: "v3.hero.phone.1",
-			src: "/la-parada-menu.png",
+			src: "/menu_digital_v1.png",
 			alt: "Menú digital de La Parada en Gcode",
 			label: "La Parada · Menú",
 			sub: null,
@@ -55,7 +55,7 @@ export function defaultLandingV3AssetsRows(): LandingMediaAssetRow[] {
 		},
 		{
 			key: "v3.feature.pos",
-			src: encodePublicPath("/imagenes para landing/caja_mobil.jpg"),
+			src: encodePublicPath("/imagenes para landing/caja_mobil_v3.png"),
 			alt: "Vista previa del POS de Gcode",
 			label: null,
 			sub: null,
@@ -64,7 +64,7 @@ export function defaultLandingV3AssetsRows(): LandingMediaAssetRow[] {
 		},
 		{
 			key: "v3.feature.menu",
-			src: "/la-parada-menu.png",
+			src: "/menu_digital_v1.png",
 			alt: "Menú digital de La Parada en Gcode",
 			label: null,
 			sub: null,
@@ -73,7 +73,7 @@ export function defaultLandingV3AssetsRows(): LandingMediaAssetRow[] {
 		},
 		{
 			key: "v3.feature.inventory",
-			src: encodePublicPath("/imagenes para landing/iventario_mobil.jpg"),
+			src: "/pedidos_caja_v2.png",
 			alt: "Gestión de inventario en Gcode",
 			label: null,
 			sub: null,
@@ -161,18 +161,18 @@ function buildConfigFromRows(rows: LandingMediaAssetRow[]): LandingV3Config {
 						})),
 		featureImages: {
 			pos: {
-				src: activeSrc(map, "v3.feature.pos", encodePublicPath("/imagenes para landing/caja_mobil.jpg")),
+				src: activeSrc(map, "v3.feature.pos", encodePublicPath("/imagenes para landing/caja_mobil_v3.png")),
 				alt: map.get("v3.feature.pos")?.alt || "Vista previa del POS de Gcode",
 			},
 			menu: {
-				src: activeSrc(map, "v3.feature.menu", "/la-parada-menu.png"),
+				src: activeSrc(map, "v3.feature.menu", "/menu_digital_v1.png"),
 				alt: map.get("v3.feature.menu")?.alt || "Menú digital de La Parada en Gcode",
 			},
 			inventory: {
 				src: activeSrc(
 					map,
 					"v3.feature.inventory",
-					encodePublicPath("/imagenes para landing/iventario_mobil.jpg"),
+					"/pedidos_caja_v2.png",
 				),
 				alt: map.get("v3.feature.inventory")?.alt || "Gestión de inventario en Gcode",
 			},

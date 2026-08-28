@@ -1,5 +1,5 @@
-export const LANDING_STATEMENT_TEXT =
-	"Gcode convierte cada pedido en una relación directa entre tu restaurante y tu cliente — sin intermediarios ni comisiones.";
+﻿export const LANDING_STATEMENT_TEXT =
+	"Gcode Pos convierte cada pedido en una relación directa entre tu restaurante y tu cliente — sin intermediarios ni comisiones.";
 
 export const LANDING_STATEMENT_ACCENT_START = LANDING_STATEMENT_TEXT.indexOf("sin intermediarios");
 
