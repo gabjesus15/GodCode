@@ -76,6 +76,100 @@
     }
   },
   "tenant": {
+    "account": {
+      "title": "Mon compte",
+      "back": "Retour au menu",
+      "tabs": {
+        "login": "Se connecter",
+        "register": "Créer un compte"
+      },
+      "login": {
+        "title": "Connectez-vous avec votre numéro de pièce d'identité",
+        "documentLabel": "Numéro de pièce d'identité",
+        "passwordLabel": "Mot de passe",
+        "submit": "Se connecter",
+        "submitting": "Connexion…",
+        "forgot": "Mot de passe oublié ?"
+      },
+      "register": {
+        "title": "Créez votre compte",
+        "intro": "Enregistrez vos informations pour commander plus vite la prochaine fois.",
+        "documentLabel": "Numéro de pièce d'identité",
+        "emailLabel": "E-mail",
+        "fullNameLabel": "Nom complet",
+        "phoneLabel": "Téléphone",
+        "passwordLabel": "Mot de passe",
+        "passwordHint": "8 caractères minimum.",
+        "branchLabel": "Établissement habituel",
+        "branchPlaceholder": "Choisissez un établissement",
+        "submit": "Créer un compte",
+        "submitting": "Création…"
+      },
+      "recover": {
+        "title": "Réinitialiser le mot de passe",
+        "description": "Saisissez votre numéro de pièce d'identité et nous enverrons un lien à l'e-mail de votre compte.",
+        "documentLabel": "Numéro de pièce d'identité",
+        "submit": "Envoyer le lien",
+        "submitting": "Envoi…",
+        "back": "Retour à la connexion",
+        "sentTitle": "Consultez votre e-mail",
+        "sentDescription": "S'il existe un compte avec ce numéro, nous avons envoyé un lien pour définir un nouveau mot de passe. Le lien expire dans une heure."
+      },
+      "linkSent": {
+        "title": "Consultez votre e-mail",
+        "description": "Vous avez déjà un compte avec cet e-mail. Nous avons envoyé un lien pour y rattacher cet établissement ; en l'ouvrant vous serez connecté.",
+        "note": "Votre mot de passe reste inchangé."
+      },
+      "dashboard": {
+        "greeting": "Bonjour, {name}",
+        "profileTitle": "Vos informations",
+        "documentLabel": "Pièce d'identité",
+        "emailLabel": "E-mail",
+        "phoneLabel": "Téléphone",
+        "fullNameLabel": "Nom",
+        "branchLabel": "Établissement habituel",
+        "branchNone": "Aucun établissement préféré",
+        "save": "Enregistrer",
+        "saving": "Enregistrement…",
+        "saved": "Informations mises à jour.",
+        "passwordTitle": "Mot de passe",
+        "currentPassword": "Mot de passe actuel",
+        "newPassword": "Nouveau mot de passe",
+        "changePassword": "Changer le mot de passe",
+        "changingPassword": "Modification…",
+        "passwordUpdated": "Mot de passe mis à jour.",
+        "passwordSharedNote": "Votre mot de passe est le même dans tous les établissements où vous avez un compte.",
+        "logout": "Se déconnecter",
+        "loggingOut": "Déconnexion…",
+        "ordersTitle": "Mes commandes",
+        "ordersSoon": "Votre historique de commandes apparaîtra bientôt ici.",
+        "addressesTitle": "Mes adresses",
+        "addressesSoon": "Vous pourrez bientôt enregistrer vos adresses de livraison."
+      },
+      "notices": {
+        "passwordChanged": "Mot de passe mis à jour. Reconnectez-vous avec le nouveau.",
+        "linked": "C'est fait, cet établissement est rattaché à votre compte.",
+        "reset": "Choisissez votre nouveau mot de passe."
+      },
+      "errors": {
+        "company_not_found": "Cet établissement n'est pas disponible.",
+        "invalid_document": "Ce numéro de pièce d'identité n'est pas valide.",
+        "blocked_document": "Ce numéro de pièce d'identité ne peut pas être utilisé.",
+        "invalid_branch": "L'établissement sélectionné n'est pas disponible.",
+        "document_taken": "Un compte avec ce numéro existe déjà pour cet établissement.",
+        "already_registered": "Vous avez déjà un compte ici. Connectez-vous avec votre numéro.",
+        "email_belongs_to_staff": "Cet e-mail appartient à un compte de l'équipe. Utilisez-en un autre.",
+        "email_unavailable": "Cet e-mail n'est pas disponible.",
+        "invalid_credentials": "Numéro de pièce d'identité ou mot de passe incorrect.",
+        "unauthorized": "Votre session a expiré. Reconnectez-vous.",
+        "link_invalid": "Ce lien n'est plus valide. Demandez-en un nouveau.",
+        "reset_required": "Votre mot de passe actuel est requis pour le modifier.",
+        "weak_password": "Le mot de passe doit comporter au moins 8 caractères.",
+        "validation_error": "Vérifiez les champs du formulaire.",
+        "network": "Connexion impossible. Vérifiez votre réseau et réessayez.",
+        "internal": "L'opération n'a pas pu aboutir. Réessayez."
+      }
+    },
     "cart": {
       "float": {
         "totalPrefix": "Total:",

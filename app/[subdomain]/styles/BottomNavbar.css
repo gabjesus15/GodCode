@@ -138,8 +138,33 @@
     max-width: none;
 }
 
+/* Cuatro ítems: la barra necesita algo más de ancho y botones más angostos. */
+.bottom-floating-navbar--count-4 {
+    max-width: 430px;
+    gap: 2px;
+    padding: 0 8px;
+}
+
+/* Doble clase: gana al `.bottom-floating-navbar .bottom-nav-item` que viene más abajo. */
+.bottom-floating-navbar.bottom-floating-navbar--count-4 .bottom-nav-item {
+    min-width: 60px;
+}
+
+.bottom-floating-navbar--count-4 .bottom-nav-label {
+    font-size: 0.66rem;
+    white-space: nowrap;
+}
+
 /* Adjust layout on tiny mobile screens */
 @media (max-width: 360px) {
+    .bottom-floating-navbar.bottom-floating-navbar--count-4 .bottom-nav-item {
+        min-width: 54px;
+    }
+
+    .bottom-floating-navbar--count-4 .bottom-nav-label {
+        font-size: 0.6rem;
+    }
+
     .bottom-floating-navbar {
         height: 72px;
         bottom: 16px;

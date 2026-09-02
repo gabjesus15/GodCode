@@ -1178,6 +1178,37 @@
 }
 .btn-close-cart:hover { background: rgba(255,68,68,0.2); color: #ff4444; border-color: rgba(255, 68, 68, 0.3); }
 
+.cart-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.btn-cart-account {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #f2f2f7;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-cart-account:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
 .cart-panel .text-accent { color: var(--accent-primary, #e63946); }
 .cart-panel .flex-center { display: flex; align-items: center; gap: 10px; }
 .cart-count-badge {
@@ -1220,6 +1251,19 @@
     .btn-close-cart {
         width: 36px;
         height: 36px;
+    }
+
+    /* En móvil el título ya ocupa el ancho: dejamos solo el icono de cuenta. */
+    .btn-cart-account {
+        height: 36px;
+        width: 36px;
+        padding: 0;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    .btn-cart-account span {
+        display: none;
     }
 }
 

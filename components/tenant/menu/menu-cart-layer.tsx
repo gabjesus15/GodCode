@@ -32,9 +32,11 @@ type MenuCartLayerProps = {
 	totalItems: number;
 	activeBottomTab: BottomNavTab;
 	showContactTab: boolean;
+	showAccountTab?: boolean;
 	onHome: () => void;
 	onCart: () => void;
 	onContact: () => void;
+	onAccount?: () => void;
 };
 
 export const MenuCartLayer = memo(function MenuCartLayer({
@@ -48,9 +50,11 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 	totalItems,
 	activeBottomTab,
 	showContactTab,
+	showAccountTab,
 	onHome,
 	onCart,
 	onContact,
+	onAccount,
 }: MenuCartLayerProps) {
 	const isCartOpen = useCartStore((state) => state.isCartOpen);
 	const mode = resolveMenuCartUiMode({
@@ -67,9 +71,11 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 			totalItems={totalItems}
 			onlineOrderingEnabled={onlineOrderingEnabled}
 			showContactTab={showContactTab}
+			showAccountTab={showAccountTab}
 			onHome={onHome}
 			onCart={onCart}
 			onContact={onContact}
+			onAccount={onAccount}
 		/>
 	) : null;
 

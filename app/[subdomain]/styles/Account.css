@@ -1,0 +1,388 @@
+/* =========================================
+   MI CUENTA (CLIENTE DEL MENÚ)
+   ========================================= */
+
+.account-page {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    color: #f2f2f7;
+}
+
+.account-page-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: calc(16px + env(safe-area-inset-top)) 18px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.account-back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: inherit;
+    transition: background 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.account-back-button:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.account-page-heading {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.account-page-title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.account-page-business {
+    font-size: 0.78rem;
+    color: #9a9aa2;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-page-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 24px 18px calc(32px + env(safe-area-inset-bottom));
+}
+
+/* Con dashboard el contenido crece: se ancla arriba en vez de centrarse. */
+.account-page-body:has(.account-dashboard) {
+    justify-content: flex-start;
+}
+
+.account-card {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    padding: 30px 24px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.account-card-glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--accent-primary, #e63946);
+}
+
+.account-card-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.account-card-text {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: #b9b9c0;
+}
+
+.account-card-action {
+    margin-top: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 46px;
+    padding: 0 26px;
+    border-radius: 999px;
+    background: var(--accent-primary, #e63946);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition: filter 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.account-card-action:hover {
+    filter: brightness(1.08);
+}
+
+/* =========================================
+   FORMULARIOS Y DASHBOARD
+   ========================================= */
+
+.account-card--form {
+    align-items: stretch;
+    text-align: left;
+    gap: 16px;
+}
+
+.account-card--form .account-card-glyph {
+    align-self: center;
+}
+
+.account-card--form .account-card-title,
+.account-card--soon .account-card-text {
+    text-align: left;
+}
+
+.account-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.account-tab {
+    flex: 1;
+    height: 38px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: #b9b9c0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.account-tab.is-active {
+    background: var(--accent-primary, #e63946);
+    color: #fff;
+}
+
+.account-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.account-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.account-field-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #c8c8cf;
+}
+
+.account-field-hint {
+    font-size: 0.72rem;
+    color: #8d8d95;
+}
+
+.account-input {
+    width: 100%;
+    height: 46px;
+    padding: 0 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #f2f2f7;
+    font-size: 0.92rem;
+    /* 16px reales en móvil evitan el zoom automático de iOS al enfocar. */
+    transition: border-color 0.18s ease, background 0.18s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.account-input:focus {
+    outline: none;
+    border-color: var(--accent-primary, #e63946);
+    background: rgba(255, 255, 255, 0.09);
+}
+
+select.account-input {
+    cursor: pointer;
+}
+
+.account-submit {
+    height: 48px;
+    border: none;
+    border-radius: 999px;
+    background: var(--accent-primary, #e63946);
+    color: #fff;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.18s ease, opacity 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.account-submit:hover:not(:disabled) {
+    filter: brightness(1.08);
+}
+
+.account-submit:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.account-link-button {
+    align-self: center;
+    background: none;
+    border: none;
+    color: #b9b9c0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 4px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.account-link-button:hover {
+    color: #f2f2f7;
+}
+
+.account-error,
+.account-success,
+.account-note,
+.account-notice {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.account-error {
+    color: #ff6b6b;
+}
+
+.account-success {
+    color: #4ade80;
+}
+
+.account-note {
+    color: #8d8d95;
+}
+
+.account-notice {
+    width: 100%;
+    max-width: 420px;
+    padding: 11px 14px;
+    border-radius: 12px;
+    background: rgba(74, 222, 128, 0.1);
+    border: 1px solid rgba(74, 222, 128, 0.24);
+    color: #86efac;
+}
+
+.account-dashboard {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.account-section-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.account-readonly {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.account-readonly > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+.account-readonly dt {
+    font-size: 0.78rem;
+    color: #8d8d95;
+}
+
+.account-readonly dd {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-card--soon {
+    gap: 8px;
+    opacity: 0.72;
+}
+
+.account-logout {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 46px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #f2f2f7;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.account-logout:hover:not(:disabled) {
+    background: rgba(255, 68, 68, 0.16);
+    border-color: rgba(255, 68, 68, 0.3);
+}
+
+.account-logout:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+@media (max-width: 480px) {
+    /* Cualquier fuente por debajo de 16px hace que iOS haga zoom al enfocar. */
+    .account-input {
+        font-size: 16px;
+    }
+}

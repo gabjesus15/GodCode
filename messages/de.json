@@ -76,6 +76,100 @@
     }
   },
   "tenant": {
+    "account": {
+      "title": "Mein Konto",
+      "back": "Zurück zur Speisekarte",
+      "tabs": {
+        "login": "Anmelden",
+        "register": "Konto erstellen"
+      },
+      "login": {
+        "title": "Mit Ausweisnummer anmelden",
+        "documentLabel": "Ausweisnummer",
+        "passwordLabel": "Passwort",
+        "submit": "Anmelden",
+        "submitting": "Anmeldung…",
+        "forgot": "Passwort vergessen?"
+      },
+      "register": {
+        "title": "Konto erstellen",
+        "intro": "Speichere deine Daten, um beim nächsten Mal schneller zu bestellen.",
+        "documentLabel": "Ausweisnummer",
+        "emailLabel": "E-Mail",
+        "fullNameLabel": "Vollständiger Name",
+        "phoneLabel": "Telefon",
+        "passwordLabel": "Passwort",
+        "passwordHint": "Mindestens 8 Zeichen.",
+        "branchLabel": "Übliche Filiale",
+        "branchPlaceholder": "Filiale wählen",
+        "submit": "Konto erstellen",
+        "submitting": "Wird erstellt…"
+      },
+      "recover": {
+        "title": "Passwort zurücksetzen",
+        "description": "Gib deine Ausweisnummer ein und wir senden einen Link an die E-Mail deines Kontos.",
+        "documentLabel": "Ausweisnummer",
+        "submit": "Link senden",
+        "submitting": "Wird gesendet…",
+        "back": "Zurück zur Anmeldung",
+        "sentTitle": "Prüfe deine E-Mails",
+        "sentDescription": "Falls es ein Konto mit dieser Nummer gibt, haben wir einen Link zum Festlegen eines neuen Passworts gesendet. Der Link läuft in einer Stunde ab."
+      },
+      "linkSent": {
+        "title": "Prüfe deine E-Mails",
+        "description": "Du hast bereits ein Konto mit dieser E-Mail. Wir haben einen Link gesendet, um dieses Geschäft damit zu verknüpfen; beim Öffnen wirst du angemeldet.",
+        "note": "Dein Passwort bleibt unverändert."
+      },
+      "dashboard": {
+        "greeting": "Hallo, {name}",
+        "profileTitle": "Deine Daten",
+        "documentLabel": "Ausweisnummer",
+        "emailLabel": "E-Mail",
+        "phoneLabel": "Telefon",
+        "fullNameLabel": "Name",
+        "branchLabel": "Übliche Filiale",
+        "branchNone": "Keine bevorzugte Filiale",
+        "save": "Änderungen speichern",
+        "saving": "Wird gespeichert…",
+        "saved": "Daten aktualisiert.",
+        "passwordTitle": "Passwort",
+        "currentPassword": "Aktuelles Passwort",
+        "newPassword": "Neues Passwort",
+        "changePassword": "Passwort ändern",
+        "changingPassword": "Wird geändert…",
+        "passwordUpdated": "Passwort aktualisiert.",
+        "passwordSharedNote": "Dein Passwort gilt für alle Geschäfte, in denen du ein Konto hast.",
+        "logout": "Abmelden",
+        "loggingOut": "Abmeldung…",
+        "ordersTitle": "Meine Bestellungen",
+        "ordersSoon": "Deine Bestellhistorie erscheint hier in Kürze.",
+        "addressesTitle": "Meine Adressen",
+        "addressesSoon": "Bald kannst du hier deine Lieferadressen speichern."
+      },
+      "notices": {
+        "passwordChanged": "Passwort aktualisiert. Melde dich mit dem neuen an.",
+        "linked": "Fertig, dieses Geschäft ist jetzt mit deinem Konto verknüpft.",
+        "reset": "Wähle dein neues Passwort."
+      },
+      "errors": {
+        "company_not_found": "Dieses Geschäft ist nicht verfügbar.",
+        "invalid_document": "Diese Ausweisnummer ist ungültig.",
+        "blocked_document": "Diese Ausweisnummer kann nicht verwendet werden.",
+        "invalid_branch": "Die gewählte Filiale ist nicht verfügbar.",
+        "document_taken": "Für dieses Geschäft gibt es bereits ein Konto mit dieser Nummer.",
+        "already_registered": "Du hast hier bereits ein Konto. Melde dich mit deiner Nummer an.",
+        "email_belongs_to_staff": "Diese E-Mail gehört zu einem Team-Konto. Bitte nutze eine andere.",
+        "email_unavailable": "Diese E-Mail ist nicht verfügbar.",
+        "invalid_credentials": "Ausweisnummer oder Passwort falsch.",
+        "unauthorized": "Deine Sitzung ist abgelaufen. Melde dich erneut an.",
+        "link_invalid": "Dieser Link ist nicht mehr gültig. Fordere einen neuen an.",
+        "reset_required": "Du brauchst dein aktuelles Passwort, um es zu ändern.",
+        "weak_password": "Das Passwort muss mindestens 8 Zeichen haben.",
+        "validation_error": "Bitte prüfe die Formularfelder.",
+        "network": "Verbindung fehlgeschlagen. Prüfe dein Netz und versuche es erneut.",
+        "internal": "Der Vorgang konnte nicht abgeschlossen werden. Versuche es erneut."
+      }
+    },
     "cart": {
       "float": {
         "totalPrefix": "Summe:",

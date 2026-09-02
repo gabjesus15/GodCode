@@ -55,7 +55,7 @@ export function useMenuClientController(props: MenuClientProps) {
 	const [detailsMode, setDetailsMode] = useState(initialProductDetailsMode);
 	const [previewDisplayName, setPreviewDisplayName] = useState<string | null>(null);
 	const [previewLogoUrl, setPreviewLogoUrl] = useState<string | null>(null);
-	const [activeBottomTab, setActiveBottomTab] = useState<"home" | "cart" | "contact">("home");
+	const [activeBottomTab, setActiveBottomTab] = useState<"home" | "cart" | "contact" | "account">("home");
 	const [isContactChannelSheetOpen, setIsContactChannelSheetOpen] = useState(false);
 	const [isContactBranchModalOpen, setIsContactBranchModalOpen] = useState(false);
 	const [pendingContactChannel, setPendingContactChannel] = useState<BranchContactChannel | null>(null);
@@ -89,6 +89,7 @@ export function useMenuClientController(props: MenuClientProps) {
 
 	const homePath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/"), [pathname]);
 	const menuPath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/menu"), [pathname]);
+	const accountPath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/mi-cuenta"), [pathname]);
 	const menuScopePath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/menu/"), [pathname]);
 	const menuServiceWorkerPath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/menu/sw.js"), [pathname]);
 
@@ -324,6 +325,12 @@ export function useMenuClientController(props: MenuClientProps) {
 		closeContactUi();
 	}, [closeContactUi, pendingContactChannel]);
 
+	const handleAccountClick = useCallback(() => {
+		if (isEmbeddedPreview || readEmbeddedPreviewFromLocation()) return;
+		setActiveBottomTab("account");
+		router.push(accountPath);
+	}, [accountPath, isEmbeddedPreview, router]);
+
 	const handleContactClick = useCallback(() => {
 		const step = resolveContactFlowStep(branches, selectedBranchId);
 		if (!step) return;
@@ -440,9 +447,11 @@ export function useMenuClientController(props: MenuClientProps) {
 			totalItems={totalItems}
 			activeBottomTab={activeBottomTab}
 			showContactTab={showContactTab}
+			showAccountTab={!isEmbeddedPreview}
 			onHome={scrollToHome}
 			onCart={handleCartToggle}
 			onContact={handleContactClick}
+			onAccount={handleAccountClick}
 		/>
 	);
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import type { SupabaseAuthScope } from "./utils/supabase/auth-scope";
+import { getAuthCookieName, type SupabaseAuthScope } from "./utils/supabase/auth-scope";
 import { getAppHostname, buildAppUrl } from "@/lib/tenant/app-url";
 import {
   normalizeHostForLookup,
@@ -147,7 +147,7 @@ async function applySessionRefresh(
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookieOptions: {
-      name: scope === "super-admin" ? "sb-super-admin-auth-token" : "sb-tenant-auth-token",
+      name: getAuthCookieName(scope),
     },
     cookies: {
       getAll() {
@@ -166,6 +166,18 @@ async function applySessionRefresh(
     // Red o Supabase no disponible (p. ej. CI con URL placeholder): no tumbar la petición.
   }
   return response;
+}
+
+/**
+ * En hosts de tenant conviven dos sesiones posibles: el panel del negocio y la
+ * cuenta del cliente final del menú. Hay que refrescar ambas, o el access token de
+ * la que no se refresque expira a la hora y desloguea aunque su refresh token siga
+ * siendo válido. Encadenar es seguro: cada scope usa su propia cookie, y cada
+ * llamada muta `request.cookies` y escribe en la misma `response`.
+ */
+async function applyTenantHostRefresh(request: NextRequest, response: NextResponse) {
+  await applySessionRefresh(request, response, "tenant");
+  return applySessionRefresh(request, response, "menu-client");
 }
 
 const resolveTenantSlugFromReferer = (refererHeader: string | null) => {
@@ -267,7 +279,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
       });
       return attachPublicDeliveryApiCors(
         req,
-        await applySessionRefresh(req, response, "tenant"),
+        await applyTenantHostRefresh(req, response),
       );
     }
 
@@ -302,7 +314,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
       });
       return attachPublicDeliveryApiCors(
         req,
-        await applySessionRefresh(req, response, "tenant"),
+        await applyTenantHostRefresh(req, response),
       );
     }
 
@@ -317,7 +329,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
       });
       return attachPublicDeliveryApiCors(
         req,
-        await applySessionRefresh(req, response, "tenant"),
+        await applyTenantHostRefresh(req, response),
       );
     }
 
@@ -330,7 +342,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
       });
       return attachPublicDeliveryApiCors(
         req,
-        await applySessionRefresh(req, response, "tenant"),
+        await applyTenantHostRefresh(req, response),
       );
     }
 
@@ -344,7 +356,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
     });
     return attachPublicDeliveryApiCors(
       req,
-      await applySessionRefresh(req, response, "tenant"),
+      await applyTenantHostRefresh(req, response),
     );
   }
 
@@ -365,6 +377,11 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
       headers: requestHeaders,
     },
   });
+  // En dominio principal el tenant llega por path (`/{slug}/mi-cuenta`), así que ahí
+  // también hay que refrescar la sesión del cliente final del menú.
+  if (resolvedTenantSlug) {
+    await applySessionRefresh(req, response, "menu-client");
+  }
   return attachPublicDeliveryApiCors(
     req,
     await applySessionRefresh(req, response, "super-admin"),

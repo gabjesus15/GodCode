@@ -76,6 +76,100 @@
     }
   },
   "tenant": {
+    "account": {
+      "title": "Minha conta",
+      "back": "Voltar ao cardápio",
+      "tabs": {
+        "login": "Entrar",
+        "register": "Criar conta"
+      },
+      "login": {
+        "title": "Entre com seu documento",
+        "documentLabel": "Número do documento",
+        "passwordLabel": "Senha",
+        "submit": "Entrar",
+        "submitting": "Entrando…",
+        "forgot": "Esqueceu a senha?"
+      },
+      "register": {
+        "title": "Crie sua conta",
+        "intro": "Salve seus dados para pedir mais rápido na próxima vez.",
+        "documentLabel": "Número do documento",
+        "emailLabel": "E-mail",
+        "fullNameLabel": "Nome completo",
+        "phoneLabel": "Telefone",
+        "passwordLabel": "Senha",
+        "passwordHint": "Mínimo de 8 caracteres.",
+        "branchLabel": "Unidade habitual",
+        "branchPlaceholder": "Escolha uma unidade",
+        "submit": "Criar conta",
+        "submitting": "Criando…"
+      },
+      "recover": {
+        "title": "Recuperar senha",
+        "description": "Informe seu documento e enviaremos um link para o e-mail da sua conta.",
+        "documentLabel": "Número do documento",
+        "submit": "Enviar link",
+        "submitting": "Enviando…",
+        "back": "Voltar a entrar",
+        "sentTitle": "Verifique seu e-mail",
+        "sentDescription": "Se houver uma conta com esse documento, enviamos um link para criar uma nova senha. O link expira em uma hora."
+      },
+      "linkSent": {
+        "title": "Verifique seu e-mail",
+        "description": "Você já tem uma conta com esse e-mail. Enviamos um link para vincular este negócio a ela; ao abrir o link você entra automaticamente.",
+        "note": "Sua senha continua sendo a mesma de antes."
+      },
+      "dashboard": {
+        "greeting": "Olá, {name}",
+        "profileTitle": "Seus dados",
+        "documentLabel": "Documento",
+        "emailLabel": "E-mail",
+        "phoneLabel": "Telefone",
+        "fullNameLabel": "Nome",
+        "branchLabel": "Unidade habitual",
+        "branchNone": "Sem unidade preferida",
+        "save": "Salvar alterações",
+        "saving": "Salvando…",
+        "saved": "Dados atualizados.",
+        "passwordTitle": "Senha",
+        "currentPassword": "Senha atual",
+        "newPassword": "Nova senha",
+        "changePassword": "Alterar senha",
+        "changingPassword": "Alterando…",
+        "passwordUpdated": "Senha atualizada.",
+        "passwordSharedNote": "Sua senha é a mesma em todos os negócios onde você tem conta.",
+        "logout": "Sair",
+        "loggingOut": "Saindo…",
+        "ordersTitle": "Meus pedidos",
+        "ordersSoon": "Em breve seu histórico de pedidos aparecerá aqui.",
+        "addressesTitle": "Meus endereços",
+        "addressesSoon": "Em breve você poderá salvar seus endereços de entrega."
+      },
+      "notices": {
+        "passwordChanged": "Senha atualizada. Entre novamente com a nova.",
+        "linked": "Pronto, vinculamos este negócio à sua conta.",
+        "reset": "Escolha sua nova senha."
+      },
+      "errors": {
+        "company_not_found": "Este negócio não está disponível.",
+        "invalid_document": "O número do documento não é válido.",
+        "blocked_document": "Esse número de documento não pode ser usado.",
+        "invalid_branch": "A unidade selecionada não está disponível.",
+        "document_taken": "Já existe uma conta com esse documento neste negócio.",
+        "already_registered": "Você já tem uma conta aqui. Entre com seu documento.",
+        "email_belongs_to_staff": "Esse e-mail pertence a uma conta da equipe. Use outro.",
+        "email_unavailable": "Esse e-mail não está disponível.",
+        "invalid_credentials": "Documento ou senha incorretos.",
+        "unauthorized": "Sua sessão expirou. Entre novamente.",
+        "link_invalid": "Este link não é mais válido. Peça um novo.",
+        "reset_required": "Você precisa da senha atual para alterá-la.",
+        "weak_password": "A senha deve ter pelo menos 8 caracteres.",
+        "validation_error": "Confira os dados do formulário.",
+        "network": "Não conseguimos conectar. Verifique sua conexão e tente novamente.",
+        "internal": "Não foi possível concluir a operação. Tente novamente."
+      }
+    },
     "cart": {
       "float": {
         "totalPrefix": "Total:",
