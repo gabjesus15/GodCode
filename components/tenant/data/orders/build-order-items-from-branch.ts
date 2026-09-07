@@ -127,13 +127,17 @@ export async function buildOrderItemsFromBranch(
 		const effectivePrice = hasDiscount ? discountPrice : basePrice;
 		if (!Number.isFinite(effectivePrice) || effectivePrice <= 0) continue;
 
+		// El RPC (`validate_and_normalize_order_items`) compara el `price` del cliente contra el
+		// precio BASE del catálogo (`product_prices.price`) y aplica el descuento por su cuenta.
+		// Si aplanáramos a `effectivePrice` con `has_discount:false`, un producto con descuento
+		// dispararía `invalid_item_price`. Enviamos base + flags reales para que calce.
 		normalizedItems.push({
 			id: productId,
 			name: String(productNames.get(productId) || "Producto"),
 			quantity: line.quantity,
-			price: effectivePrice,
-			has_discount: false,
-			discount_price: null,
+			price: basePrice,
+			has_discount: hasDiscount,
+			discount_price: hasDiscount ? discountPrice : null,
 			description: line.description,
 			// Recalculate from extras lines — never trust client extras_total alone.
 			extras_total: line.extras.reduce(

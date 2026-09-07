@@ -1508,6 +1508,10 @@ export function CartModal({
                 : {}),
               lat: deliveryLat,
               lng: deliveryLng,
+              // Fallback de km para el server cuando no hay lat/lng (checkout sin mapa):
+              // `resolve_delivery_fee_for_role_legacy_v1` prioriza haversine con lat/lng y,
+              // si no hay coords, lee este `delivery_km` para resolver la zona por radio.
+              ...(kmForOrder > 0 ? { delivery_km: kmForOrder } : {}),
               ...(deliveryNamedAreaId?.trim()
                 ? { named_area_id: deliveryNamedAreaId.trim() }
                 : {}),
