@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { mergeCustomLinesForRpc } from "@/lib/orders/merge-custom-lines-for-rpc";
 
 describe("mergeCustomLinesForRpc", () => {
-	it("folds custom lines into the first catalog line extras_total", () => {
+	it("appends custom lines as their own extra lines", () => {
 		const merged = mergeCustomLinesForRpc(
 			[
 				{
@@ -20,14 +20,18 @@ describe("mergeCustomLinesForRpc", () => {
 					name: "Papas",
 					quantity: 1,
 					price: 3000,
-					custom_item: true,
+					is_extra: true,
+					manual_order_source: "extras",
 				},
 			],
 		);
 
-		expect(merged).toHaveLength(1);
-		expect(merged[0]?.extras_total).toBe(3000);
-		expect(merged[0]?.extras).toHaveLength(1);
+		expect(merged).toHaveLength(2);
+		expect(merged[0]?.id).toBe("11111111-1111-4111-8111-111111111111");
+		expect(merged[0]?.extras_total).toBe(0);
+		expect(merged[1]?.id).toBe("menu-extra-003");
+		expect(merged[1]?.is_extra).toBe(true);
+		expect(merged[1]?.manual_order_source).toBe("extras");
 	});
 
 	it("throws when only custom lines are present", () => {

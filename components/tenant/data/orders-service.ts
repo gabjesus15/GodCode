@@ -10,7 +10,6 @@ import type { Json } from "../../../types/supabase-database";
 import {
 	buildOrderItemsFromBranch,
 	isCatalogOrderLine,
-	normalizeExtrasPayload,
 	type OrderCatalogLine,
 } from "./orders/build-order-items-from-branch";
 import { mergeCustomLinesForRpc } from "@/lib/orders/merge-custom-lines-for-rpc";
@@ -156,20 +155,38 @@ export const ordersService = {
       orderData.items
     );
 
-    const customItems = (orderData.items ?? [])
+    const customItems: OrderCatalogLine[] = (orderData.items ?? [])
       .filter((it) => it.custom_item === true)
-      .map((it, idx) => ({
-        id: String(it.id ?? `custom_${idx}`),
-        name: String(it.name ?? "Extra"),
-        quantity: Math.max(1, Number(it.quantity) || 1),
-        price: Math.max(0, Math.round(Number(it.price) || 0)),
-        has_discount: false,
-        discount_price: null,
-        description: it.description ?? null,
-        extras_total: 0,
-        extras: normalizeExtrasPayload(it.extras),
-        custom_item: true as const,
-      }));
+      .map((it, idx) => {
+        // Los extras globales y bebidas upsell llevan id sintético en el carrito
+        // (`global_extra_<n>_<id>`, `upsell_beverage_<id>`). El RPC los valida contra el catálogo
+        // JSON de la sucursal por su id CRUDO y exige marcarlos como extra (`is_extra` /
+        // `manual_order_source`) para no buscarlos como producto de catálogo por UUID.
+        const rawId = String(it.id ?? `custom_${idx}`);
+        let id = rawId;
+        let source: "extras" | "beverages" = "extras";
+        if (rawId.startsWith("upsell_beverage_")) {
+          id = rawId.slice("upsell_beverage_".length);
+          source = "beverages";
+        } else {
+          const m = rawId.match(/^global_extra_\d+_(.+)$/);
+          if (m) id = m[1];
+        }
+        return {
+          id,
+          name: String(it.name ?? "Extra"),
+          quantity: Math.max(1, Number(it.quantity) || 1),
+          // Precio exacto del catálogo (sin `Math.round`): el server exige |cliente − catálogo| ≤ 0.01.
+          price: Math.max(0, Math.round((Number(it.price) || 0) * 100) / 100),
+          has_discount: false,
+          discount_price: null,
+          description: it.description ?? null,
+          extras_total: 0,
+          extras: [],
+          is_extra: true,
+          manual_order_source: source,
+        };
+      });
 
     const requestedCatalogLines = (orderData.items ?? []).filter(isCatalogOrderLine);
     if (requestedCatalogLines.length > normalizedItems.length) {

@@ -12,6 +12,10 @@ export interface OrderCatalogLine {
 	extras_total?: number;
 	extras?: Array<{ id: string; name: string; price: number; qty: number }>;
 	custom_item?: boolean;
+	/** Marca la línea como extra/bebida (el RPC la valida contra el catálogo JSON, no por UUID). */
+	is_extra?: boolean;
+	/** Origen del extra para el RPC: `extras` (extra global) o `beverages` (bebida upsell). */
+	manual_order_source?: "extras" | "beverages";
 }
 
 interface ProductPriceRow {

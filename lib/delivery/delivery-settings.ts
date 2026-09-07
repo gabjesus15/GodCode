@@ -750,15 +750,27 @@ export function isOrderPaymentAllowedForDelivery(
 
 /** Suma ítems del pedido (precio efectivo × cantidad). */
 export function orderItemsSubtotalFromPayload(
-	items: Array<{ price?: unknown; quantity?: unknown; extras_total?: unknown }>,
+	items: Array<{
+		price?: unknown;
+		quantity?: unknown;
+		extras_total?: unknown;
+		has_discount?: unknown;
+		discount_price?: unknown;
+	}>,
 ): number {
 	if (!Array.isArray(items)) return 0;
 	let sum = 0;
 	for (const it of items) {
-		const p = Number(it.price) || 0;
+		// Usar el precio EFECTIVO (con descuento) igual que el RPC y `calculatedItemsTotal`.
+		// Los ítems guardados traen `price` = precio base + flags de descuento; si sumáramos el
+		// base, el subtotal quedaría por encima de `order.total` y el parche de delivery
+		// rechazaría el pedido ("Total del pedido no coincide con ítems + envío").
+		const base = Number(it.price) || 0;
+		const discount = Number(it.discount_price) || 0;
+		const unit = it.has_discount && discount > 0 ? discount : base;
 		const extras = Math.max(0, Number(it.extras_total) || 0);
 		const q = Math.max(1, Number(it.quantity) || 1);
-		sum += (p + extras) * q;
+		sum += (unit + extras) * q;
 	}
 	return Math.round(sum);
 }

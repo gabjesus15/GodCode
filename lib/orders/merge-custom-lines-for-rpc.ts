@@ -1,11 +1,12 @@
-import {
-	normalizeExtrasPayload,
-	type OrderCatalogLine,
-} from "@/components/tenant/data/orders/build-order-items-from-branch";
+import type { OrderCatalogLine } from "@/components/tenant/data/orders/build-order-items-from-branch";
 
 /**
- * El RPC `create_order_transaction` solo suma precios de productos de catálogo (UUID en sucursal).
- * Los extras globales / bebidas upsell van como `extras_total` en la primera línea de catálogo.
+ * Combina las líneas de catálogo con los extras globales / bebidas upsell.
+ *
+ * `validate_and_normalize_order_items` valida cada extra/bebida contra el catálogo JSON de la
+ * sucursal (por id crudo, marcado con `is_extra` / `manual_order_source`), así que van como
+ * LÍNEAS PROPIAS del pedido — no plegadas en el `extras_total` de la primera pizza. Así aparecen
+ * como su propio ítem con su precio en el POS y la cocina.
  */
 export function mergeCustomLinesForRpc(
 	catalogItems: OrderCatalogLine[],
@@ -18,26 +19,5 @@ export function mergeCustomLinesForRpc(
 		);
 	}
 
-	// Redondeo a 2 decimales (no a entero): en monedas con céntimos (USD/VES) un extra de
-	// $0.50 no debe cobrarse como $1. El server confía en `extras_total`, así que basta con
-	// mandar el valor exacto.
-	const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
-	const items = catalogItems.map((line, index) => (index === 0 ? { ...line } : { ...line }));
-	const host = items[0]!;
-	const customExtras = customItems.flatMap((line) => {
-		const qty = Math.max(1, Number(line.quantity) || 1);
-		const unit = Math.max(0, round2(Number(line.price) || 0));
-		return Array.from({ length: qty }, () => ({
-			id: String(line.id ?? "custom"),
-			name: String(line.name ?? "Extra"),
-			price: unit,
-			qty: 1,
-		}));
-	});
-
-	const extraTotal = customExtras.reduce((sum, ex) => sum + ex.price * ex.qty, 0);
-	host.extras_total = Math.max(0, round2((Number(host.extras_total) || 0) + extraTotal));
-	host.extras = [...normalizeExtrasPayload(host.extras), ...customExtras];
-
-	return items;
+	return [...catalogItems, ...customItems];
 }
