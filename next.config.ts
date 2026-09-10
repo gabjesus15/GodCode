@@ -37,7 +37,10 @@ const nextConfig: NextConfig = {
         removeConsole: true,
       }
     : undefined,
-  // Evita que Turbopack infiera `app/` como raíz y luego falle con "Next.js package not found".
+  // Turbopack en dev y build (default de Next 16). `root` evita que infiera `app/`
+  // como raíz y falle con "Next.js package not found".
+  // No hace falta ignorar `services/**`: es una app Next aparte que nada importa
+  // desde aquí, y el grafo de Turbopack solo compila lo que se importa.
   turbopack: {
     root: resolve(__dirname),
   },
@@ -62,23 +65,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },
       ...(supabaseStoragePattern ? [supabaseStoragePattern] : []),
     ],
-  },
-  webpack: (config, { dev }) => {
-    if (dev) {
-      const currentIgnored = config.watchOptions?.ignored;
-      const ignoredList = Array.isArray(currentIgnored)
-        ? currentIgnored
-        : currentIgnored
-          ? [currentIgnored]
-          : [];
-
-      config.watchOptions = {
-        ...config.watchOptions,
-        ignored: [...ignoredList, "**/services/**"],
-      };
-    }
-
-    return config;
   },
   async headers() {
     // Detectar si estamos en un dominio de preview de Vercel para añadir noindex.

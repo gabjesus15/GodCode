@@ -6,7 +6,7 @@
     "services/*"
   ],
   "scripts": {
-    "dev": "cross-env NEXT_DISABLE_TURBOPACK=1 next dev",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
     "lint": "eslint",
