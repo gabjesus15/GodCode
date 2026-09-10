@@ -95,8 +95,37 @@ export interface CartTotalsResult {
 }
 
 /**
+ * Importe monetario saneado: no finito o negativo cuenta como 0.
+ *
+ * `currency()` propaga NaN sin avisar, así que un subtotal corrupto salía como
+ * `total: NaN` hasta la interfaz. Y sin acotar a 0, un descuento negativo subía
+ * el total y una tarifa de envío negativa lo bajaba.
+ */
+function safeMoney(value: unknown): number {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/**
+ * Porcentaje de impuesto saneado, acotado a [0, 100].
+ *
+ * Equivale a `parseOptionalTaxRate` del Panel POS, que ya descartaba valores
+ * fuera de ese rango. Aquí no había cota superior: un `taxRate` de 1000
+ * multiplicaba el total por once.
+ */
+function safeTaxRate(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(100, n);
+}
+
+/**
  * Realiza los cálculos monetarios precisos del carrito usando currency.js.
  * Soporta IVA incluido/excluido y conversión dual de divisas.
+ *
+ * Todas las entradas se sanean primero: este cálculo alimenta lo que el cliente
+ * ve antes de confirmar, y un dato corrupto no debe convertirse en un total
+ * corrupto. La RPC `create_order_transaction` recalcula al crear el pedido.
  */
 export function calculateCartTotals(params: {
   subtotal: number;
@@ -106,12 +135,14 @@ export function calculateCartTotals(params: {
   taxIncluded?: boolean | null;
   exchangeRate?: number | null;
 }) {
-  const sub = currency(params.subtotal);
-  const disc = currency(params.discountAmount);
-  const devFee = currency(params.deliveryFee);
-  const taxRatePercent = params.taxRate ? params.taxRate : 0;
+  const sub = currency(safeMoney(params.subtotal));
+  // Un descuento mayor que el subtotal ya se acotaba al calcular el total, pero
+  // se devolvía sin acotar: la interfaz mostraba "-999" sobre un subtotal de 10.
+  const disc = currency(Math.min(safeMoney(params.discountAmount), sub.value));
+  const devFee = currency(safeMoney(params.deliveryFee));
+  const taxRatePercent = safeTaxRate(params.taxRate);
   const taxIncluded = params.taxIncluded ?? false;
-  const exchangeRate = params.exchangeRate ? params.exchangeRate : 0;
+  const exchangeRate = safeMoney(params.exchangeRate);
 
   // Subtotal neto después del descuento
   const subAfterDiscount = currency(Math.max(0, sub.subtract(disc).value));
