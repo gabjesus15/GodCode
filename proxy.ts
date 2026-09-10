@@ -196,7 +196,85 @@ function attachPublicDeliveryApiCors(req: NextRequest, res: NextResponse): NextR
   return res;
 }
 
+/**
+ * Rutas /api que un tercero llama legítimamente sin cabecera `Origin`:
+ * webhooks entrantes y cron. Todas autentican por firma o por secreto
+ * compartido, así que exigirles Origin las rompería sin aportar seguridad.
+ */
+const CSRF_EXEMPT_API_PATHS = new Set([
+  "/api/onboarding/stripe-webhook",       // firma de Stripe
+  "/api/revalidate-menu",                 // REVALIDATION_SECRET (webhook de Supabase)
+  "/api/system/cron/subscription-status", // CRON_SECRET
+  "/api/system/health",                   // HEALTH_CHECK_SECRET
+]);
+
+const CSRF_PROTECTED_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/**
+ * Verificacion CSRF explicita para las rutas /api.
+ *
+ * Next.js protege las Server Actions por su cuenta, pero las rutas API
+ * tradicionales no llevan nada: un formulario cross-origin puede dispararlas
+ * con las cookies de sesion del usuario. Esto replica el guard que el Panel POS
+ * aplica en `api/_lib/http.ts`: el `Origin` debe coincidir con el `Host`.
+ *
+ * Solo aplica a metodos que mutan. GET y HEAD quedan fuera: no cambian estado y
+ * los navegadores no siempre mandan Origin en ellos.
+ */
+function rejectCrossOriginApiRequest(req: NextRequest): NextResponse | null {
+  const { pathname } = req.nextUrl;
+  if (!CSRF_PROTECTED_METHODS.has(req.method)) return null;
+  if (CSRF_EXEMPT_API_PATHS.has(pathname)) return null;
+  // Las publicas de delivery son cross-origin por diseno y llevan su propio CORS.
+  if (PUBLIC_DELIVERY_API_PATHS.has(pathname)) return null;
+
+  const origin = req.headers.get("origin");
+  const host = req.headers.get("host");
+
+  // Sin Origin en una peticion mutante: o es un cliente que no es navegador, o
+  // es un form cross-site antiguo. Se rechaza, igual que hace el Panel POS.
+  if (!origin || !host) {
+    return NextResponse.json({ error: "Peticion no autorizada." }, { status: 403 });
+  }
+
+  try {
+    if (new URL(origin).host !== host) {
+      return NextResponse.json({ error: "Peticion no autorizada." }, { status: 403 });
+    }
+  } catch {
+    return NextResponse.json({ error: "Peticion no autorizada." }, { status: 403 });
+  }
+
+  return null;
+}
+
+/**
+ * Las rutas /api no necesitan resolucion de tenant ni refresco de sesion: se
+ * atienden con un camino corto que solo aplica CSRF, cabeceras de seguridad y
+ * `no-store`. Antes quedaban fuera del matcher por completo, asi que no recibian
+ * ni CSP ni Permissions-Policy, y el `no-store` de mas abajo era codigo muerto.
+ */
+function handleApiRequest(req: NextRequest): NextResponse {
+  if (PUBLIC_DELIVERY_API_PATHS.has(req.nextUrl.pathname) && req.method === "OPTIONS") {
+    const cors = publicApiCorsHeaders(req);
+    if ([...cors.keys()].length > 0) {
+      return applySecurityHeaders(new NextResponse(null, { status: 204, headers: cors }));
+    }
+  }
+
+  const rejected = rejectCrossOriginApiRequest(req);
+  const res = rejected ?? NextResponse.next();
+
+  applySecurityHeaders(res);
+  res.headers.set("Cache-Control", "no-store");
+  return attachPublicDeliveryApiCors(req, res);
+}
+
 export async function proxy(req: NextRequest) {
+  if (req.nextUrl.pathname.startsWith("/api/")) {
+    return handleApiRequest(req);
+  }
+
   const result = await _proxy(req);
   applySecurityHeaders(result);
   if (req.nextUrl.pathname.startsWith("/api/")) {
@@ -374,6 +452,6 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
 export const config = {
   matcher: [
     // Exclude asset-like paths and next internals; keep /favicon.ico in the middleware so tenants can serve their own icon.
-    "/((?!api/|_next/static|_next/image|tenant-favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|tenant-favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
