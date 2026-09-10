@@ -6,6 +6,8 @@ import { tenantTicketCreateSchema } from "@/lib/api/schemas/tenant/tickets";
 import { enforceScopedRateLimit } from "@/lib/infra/api-guard";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role tenant-session */
+
 type TicketStatus = "open" | "in_progress" | "waiting_customer" | "resolved" | "closed";
 type TicketPriority = "low" | "medium" | "high" | "critical";
 type TicketCategory = "general" | "billing" | "technical" | "product" | "account";

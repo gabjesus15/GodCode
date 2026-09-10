@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
+/** @service-role super-admin */
+
 type ExportType = "leads" | "contacts";
 
 function toCsv(rows: Record<string, unknown>[]): string {

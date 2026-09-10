@@ -4,6 +4,8 @@ import { AuditoriaClient } from "@/components/super-admin/dashboard/auditoria-cl
 import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
 import type { Json } from "@/types/supabase-database";
 
+/** @service-role layout-guard */
+
 export const dynamic = "force-dynamic";
 
 type Row = {

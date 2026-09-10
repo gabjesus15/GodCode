@@ -4,6 +4,11 @@ import { withApiHandler } from "@/lib/api/api-handler";
 import { TenantStaffService } from "@/lib/services/tenant-staff.service";
 import { ValidationError, NotFoundError, ForbiddenError } from "@/lib/api/errors";
 
+/** @service-role tenant-session
+ *
+ * getCeoSession fija el company_id y cada fila se verifica contra él.
+ */
+
 const TENANT_ALLOWED_ROLES = new Set(["ceo", "cashier"]);
 
 export const GET = withApiHandler(async (_req) => {

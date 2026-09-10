@@ -5,6 +5,8 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 import { createSupabaseServerClient } from "../../../../../utils/supabase/server";
 
+/** @service-role super-admin */
+
 type FactorLike = { id?: string; factor_type?: string; type?: string; status?: string };
 
 /** Obtiene el id del factor TOTP verificado del payload de `mfa.listFactors()`. */

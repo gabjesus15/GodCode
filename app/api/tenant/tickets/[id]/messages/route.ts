@@ -6,6 +6,11 @@ import { getTicketAuthContext } from "@/lib/api/ticket-auth";
 import { tenantTicketMessageBodySchema } from "@/lib/api/schemas/tenant/tickets";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role tenant-session
+ *
+ * La propiedad del ticket se comprueba contra el company_id de la sesión.
+ */
+
 type MessageRow = {
   id: string;
   ticket_id: string;

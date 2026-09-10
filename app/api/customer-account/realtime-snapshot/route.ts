@@ -4,6 +4,8 @@ import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role customer-account */
+
 type SnapshotScope = "company" | "payments" | "tickets" | "addons" | "entitlements" | "full";
 
 function parseScope(raw: string | null): SnapshotScope {

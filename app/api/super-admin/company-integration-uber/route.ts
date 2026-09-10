@@ -12,6 +12,8 @@ import {
 	validateAdminRolesOnServer,
 } from "../../../../utils/admin/server-auth";
 
+/** @service-role super-admin */
+
 interface Body {
 	companyId?: unknown;
 	clientId?: unknown;

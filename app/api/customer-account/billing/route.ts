@@ -11,6 +11,8 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { checkRateLimit } from "@/lib/infra/rate-limiter";
 import { logger } from "@/lib/infra/logger";
 
+/** @service-role customer-account */
+
 async function activateBranchExpansionEntitlement(params: {
   companyId: string;
   paymentId: string;

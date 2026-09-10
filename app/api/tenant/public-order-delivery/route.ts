@@ -20,6 +20,11 @@ import { resolveUberOAuthCredentials } from "@/lib/integrations/company-integrat
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { fetchUberDeliveryEstimate } from "@/lib/delivery/uber-direct";
 
+/** @service-role public
+ *
+ * Cierre del pedido público; el pedido se ata por client_request_id y edad máxima.
+ */
+
 const MAX_ORDER_AGE_MS = 10 * 60 * 1000;
 const TOTAL_EPS = 2;
 const FEE_EPS = 0.5;

@@ -13,6 +13,11 @@ import {
 import { assertJsonRateLimit, assertPublicScopedRateLimit } from "@/lib/infra/public-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role public
+ *
+ * Cotización de envío desde el carrito anónimo.
+ */
+
 const CACHE_TTL_MS = 15 * 60 * 1000;
 
 /**

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role capability-token */
+
 export async function POST(req: NextRequest) {
 	try {
 		const body = (await req.json().catch(() => ({}))) as {

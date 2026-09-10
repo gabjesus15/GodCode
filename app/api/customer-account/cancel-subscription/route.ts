@@ -6,6 +6,8 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { checkRateLimit } from "@/lib/infra/rate-limiter";
 import { sanitizeServerText } from "@/lib/infra/server-sanitize";
 
+/** @service-role customer-account */
+
 type CompanyRow = {
 	id: string;
 	name: string;

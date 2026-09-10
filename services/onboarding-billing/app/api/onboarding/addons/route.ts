@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role public-read
+ *
+ * Catálogo de addons activos que pinta el formulario de alta.
+ */
+
 export async function GET() {
 	const { data, error } = await supabaseAdmin
 		.from("addons")

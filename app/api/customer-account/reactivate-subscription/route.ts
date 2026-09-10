@@ -5,6 +5,8 @@ import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-ra
 import { sendOnboardingEmail } from "../../../../lib/onboarding/emails";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role customer-account */
+
 type CompanyRow = {
   id: string;
   name: string;

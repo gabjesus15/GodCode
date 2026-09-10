@@ -3,6 +3,8 @@ import { logAdminAudit } from "@/lib/super-admin/admin-audit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
+/** @service-role super-admin */
+
 type PatchBody = {
 	slug?: string;
 	name?: string;

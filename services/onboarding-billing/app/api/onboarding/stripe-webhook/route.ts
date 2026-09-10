@@ -5,6 +5,8 @@ import { getStripeClient } from "@/lib/onboarding/stripe";
 import { activateCompanyAddonsFromApplication, activateCompanySubscription } from "@/lib/onboarding/billing-activation";
 import { provisionCompanyFromApplication, recordPayment, type OnboardingApplication } from "@/lib/onboarding/checkout-service";
 
+/** @service-role webhook-signature */
+
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 
 export async function POST(req: NextRequest) {

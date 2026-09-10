@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role public-read
+ *
+ * Metodos de pago activos por pais para el formulario de alta.
+ */
+
 const STRIPE_SECRET = (process.env.STRIPE_SECRET_KEY ?? "").trim();
 
 const COUNTRY_NORMALIZE: Record<string, string> = {

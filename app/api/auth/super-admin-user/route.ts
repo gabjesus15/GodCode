@@ -3,6 +3,8 @@ import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/ser
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role super-admin */
+
 const TENANT_MANAGEABLE_ROLES = new Set(["admin", "ceo", "cashier"]);
 const RESERVED_NON_TENANT_ROLES = new Set(["super_admin", "owner"]);
 

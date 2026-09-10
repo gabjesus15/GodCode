@@ -20,6 +20,11 @@ import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 import { resolveFirstPaymentPromo } from "@/lib/onboarding/first-payment-promo";
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 
+/** @service-role capability-token, payment-provider-verified
+ *
+ * La referencia identifica; el cobro se confirma contra Stripe.
+ */
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";
 

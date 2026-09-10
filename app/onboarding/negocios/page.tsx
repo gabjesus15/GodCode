@@ -10,6 +10,11 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getCurrentLocale } from "../../../lib/i18n/server";
 import { getTenantUrl } from "../../../utils/tenant-url";
 
+/** @service-role public-read
+ *
+ * Directorio público de negocios activos.
+ */
+
 const COPY = {
 	es: {
 		directory: "Directorio",

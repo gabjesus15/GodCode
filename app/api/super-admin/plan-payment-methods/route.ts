@@ -6,6 +6,8 @@ import { SAAS_MUTATE_ROLES } from "../../../../utils/admin/server-auth";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { logAdminAudit } from "@/lib/super-admin/admin-audit";
 
+/** @service-role super-admin */
+
 export async function GET() {
 	const permission = await validateAdminRolesOnServer([...SAAS_READ_ROLES]);
 	if (!permission.ok) {

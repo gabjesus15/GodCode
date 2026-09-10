@@ -10,6 +10,8 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { asThemeConfigObject } from "@/lib/store-theme/merge-theme-config";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
+/** @service-role super-admin */
+
 type PatchBody = {
 	name?: string;
 	price?: number;

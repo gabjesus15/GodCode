@@ -4,6 +4,11 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { logger, createRequestContext } from "@/lib/infra/logger";
 import { validateApiKey } from "../../../../../lib/api-key-auth";
 
+/** @service-role internal-api-key
+ *
+ * El rol super_admin ya lo valido el Portal antes de reenviar.
+ */
+
 export async function POST(req: NextRequest) {
 	const ctx = createRequestContext("/api/super-admin/payments/reject", "POST");
 

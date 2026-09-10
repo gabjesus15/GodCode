@@ -7,6 +7,8 @@ import { normalizeCountryCode } from "@/lib/geo/country-registry";
 import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role customer-account */
+
 type CompanyRow = {
   id: string;
   name: string;

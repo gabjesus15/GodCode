@@ -17,6 +17,8 @@ import { isSameStoreTheme, normalizeStoreThemeConfig } from "@/lib/store-theme/t
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 
+/** @service-role customer-account */
+
 const ALLOWED_IMAGE_TYPES = new Map([
   ["image/jpeg", "jpg"],
   ["image/png", "png"],

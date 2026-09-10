@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role capability-token */
+
 const VALID_STATUSES = new Set(["email_verified", "form_completed", "payment_pending", "paid", "approved"]);
 
 type AddonChoice = { addon_id: string; quantity?: number; price_snapshot?: number };

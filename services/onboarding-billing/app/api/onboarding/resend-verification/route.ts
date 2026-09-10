@@ -6,6 +6,11 @@ import { isRateLimited } from "@/lib/onboarding/rate-limit";
 import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role public
+ *
+ * Rate limit por IP y correo; no revela si la cuenta existe.
+ */
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";
 

@@ -5,6 +5,11 @@ import { computeCouponDiscountAmount } from "@/lib/discount/compute-coupon-disco
 import { assertJsonRateLimit } from "@/lib/infra/public-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role public
+ *
+ * Previsualiza el cupón sin revelar la fila: solo devuelve el importe.
+ */
+
 const bodySchema = z.object({
   branchId: z.string().uuid(),
   code: z.string().min(1).max(80),

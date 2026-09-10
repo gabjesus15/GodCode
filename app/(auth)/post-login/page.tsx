@@ -5,6 +5,11 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { resolveTenantPanelLoginUrl } from "@/lib/tenant/panel-url";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
 
+/** @service-role tenant-session
+ *
+ * Solo lee el slug de la empresa a la que ya pertenece la sesión validada.
+ */
+
 export const dynamic = "force-dynamic";
 
 export default async function PostLoginPage() {

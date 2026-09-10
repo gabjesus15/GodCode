@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { assertPublicRateLimit } from "@/lib/infra/public-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role public
+ *
+ * Política de cobro que el carrito anónimo necesita para pintar el paso de pago.
+ */
+
 const FALLBACK_RECEIPT_METHODS = new Set([
   "transferencia_bancaria",
   "pago_movil",

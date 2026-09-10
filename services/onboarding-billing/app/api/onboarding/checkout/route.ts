@@ -19,6 +19,8 @@ import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 import { resolveFirstPaymentPromo } from "@/lib/onboarding/first-payment-promo";
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 
+/** @service-role capability-token */
+
 const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY ?? "";
 const PAYPAL_CLIENT_ID = (process.env.PAYPAL_CLIENT_ID ?? "").trim();
 const PAYPAL_CLIENT_SECRET = (process.env.PAYPAL_CLIENT_SECRET ?? "").trim();

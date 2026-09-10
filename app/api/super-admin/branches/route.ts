@@ -6,6 +6,8 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
 import { slugify } from "@/utils/slugify";
 
+/** @service-role super-admin */
+
 export async function POST(req: NextRequest) {
 	const permission = await validateAdminRolesOnServer([...SAAS_MUTATE_ROLES]);
 	if (!permission.ok) {

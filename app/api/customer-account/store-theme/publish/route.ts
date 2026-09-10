@@ -6,6 +6,8 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { mergeThemeConfig, storeThemePatchFromRawDraft } from "@/lib/store-theme/merge-theme-config";
 
+/** @service-role customer-account */
+
 export async function POST(req: NextRequest) {
   const ctx = await getCustomerAccountContext();
   if (!ctx) {

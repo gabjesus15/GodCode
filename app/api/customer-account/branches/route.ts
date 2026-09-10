@@ -5,6 +5,8 @@ import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-ra
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { mergePaymentJsonField } from "@/lib/payments/merge-payment-json-field";
 
+/** @service-role customer-account */
+
 function defaultPaymentPolicy(method: string) {
   const normalized = method.toLowerCase();
   const rail = ["efectivo", "cash", "tienda", "cash_usd", "cash_ves"].includes(normalized)

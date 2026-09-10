@@ -7,6 +7,8 @@ import { isSameStoreTheme, normalizeStoreThemeConfig } from "@/lib/store-theme/t
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
 import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 
+/** @service-role customer-account */
+
 function toThemeConfig(input: unknown): StoreThemeConfig {
   return normalizeStoreThemeConfig(input);
 }

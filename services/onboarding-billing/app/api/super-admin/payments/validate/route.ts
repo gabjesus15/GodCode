@@ -22,6 +22,11 @@ import { provisionOnboardingWelcome } from "@/lib/onboarding/welcome-provisionin
 import { resolveFirstPaymentPromo } from "@/lib/onboarding/first-payment-promo";
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 
+/** @service-role internal-api-key
+ *
+ * El rol super_admin ya lo valido el Portal antes de reenviar.
+ */
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";
 

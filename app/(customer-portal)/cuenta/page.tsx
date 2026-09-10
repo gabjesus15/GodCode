@@ -14,6 +14,11 @@ import { createSupabaseServerClient } from "../../../utils/supabase/server";
 import { getCountryConfig } from "@/lib/geo/country-registry";
 import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
 
+/** @service-role tenant-session
+ *
+ * getCustomerMembership fija el company_id; los catálogos cacheados son públicos.
+ */
+
 const getCachedActivePlans = unstable_cache(
   async () => {
     const { data } = await supabaseAdmin

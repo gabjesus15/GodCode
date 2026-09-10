@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
 import { sanitizeServerText } from "@/lib/infra/server-sanitize";
 
+/** @service-role super-admin */
+
 type TicketStatus = "open" | "in_progress" | "waiting_customer" | "resolved" | "closed";
 type TicketPriority = "low" | "medium" | "high" | "critical";
 type TicketCategory = "general" | "billing" | "technical" | "product" | "account";

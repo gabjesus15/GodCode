@@ -9,6 +9,8 @@ import {
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
+/** @service-role super-admin */
+
 function normalizeRow(input: Partial<LandingMediaAssetRow>): LandingMediaAssetRow | null {
   const key = String(input.key ?? "").trim();
   const src = String(input.src ?? "").trim();

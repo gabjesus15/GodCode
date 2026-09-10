@@ -8,6 +8,11 @@ import { resolvePlanName } from "@/lib/plans/plan-i18n";
 import { OnboardingStep2Form } from "@/components/onboarding/steps/OnboardingStep2Form";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
 
+/** @service-role capability-token
+ *
+ * El verification_token del correo es la credencial.
+ */
+
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {

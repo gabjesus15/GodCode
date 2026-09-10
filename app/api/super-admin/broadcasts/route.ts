@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
 
+/** @service-role super-admin */
+
 type BroadcastRow = {
   id: string;
   title: string;

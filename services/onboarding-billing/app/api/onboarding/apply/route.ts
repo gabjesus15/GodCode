@@ -8,6 +8,11 @@ import { verifyRecaptcha } from "@/lib/onboarding/recaptcha";
 import { isRateLimited } from "@/lib/onboarding/rate-limit";
 import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 
+/** @service-role public
+ *
+ * Formulario de alta: reCAPTCHA y rate limit por IP y correo.
+ */
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY ?? "";

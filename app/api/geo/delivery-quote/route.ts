@@ -14,6 +14,11 @@ import { resolveUberOAuthCredentials } from "@/lib/integrations/company-integrat
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { fetchUberDeliveryEstimate } from "@/lib/delivery/uber-direct";
 
+/** @service-role public
+ *
+ * Cotización de envío desde el carrito anónimo.
+ */
+
 function roundMoney(n: number): number {
 	return Math.round(Number(n) || 0);
 }

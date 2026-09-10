@@ -7,6 +7,8 @@ import { mergePaymentJsonField } from "@/lib/payments/merge-payment-json-field";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
 
+/** @service-role super-admin */
+
 const PAYMENT_JSON_FIELDS = [
   "pago_movil",
   "zelle",

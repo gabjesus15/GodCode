@@ -12,6 +12,8 @@ import {
 	type CompanyMenuSettings,
 } from "@/lib/tenant/menu-settings";
 
+/** @service-role customer-account */
+
 export async function GET() {
 	const ctx = await getCustomerAccountContext();
 	if (!ctx) {

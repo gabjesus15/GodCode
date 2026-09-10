@@ -6,6 +6,11 @@ import { logger, createRequestContext } from "@/lib/infra/logger";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
 import { proxyToOnboardingBilling } from "@/lib/onboarding/service-proxy";
 
+/** @service-role super-admin
+ *
+ * El rol se valida antes de reenviar al microservicio.
+ */
+
 export async function POST(req: NextRequest) {
 	const permission = await validateAdminRolesOnServer([...SAAS_MUTATE_ROLES]);
 	if (!permission.ok) {

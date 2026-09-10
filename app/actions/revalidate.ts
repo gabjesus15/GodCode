@@ -6,6 +6,11 @@ import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getSuperAdminRoleByEmail, getCustomerMembership } from "@/lib/super-admin/account-access";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role tenant-session
+ *
+ * Server action: comprueba que la membresía coincide con el companyId pedido.
+ */
+
 /**
  * Revalidates the public menu + company slug caches for a given company.
  */

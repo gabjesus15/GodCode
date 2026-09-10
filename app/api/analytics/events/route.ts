@@ -7,6 +7,11 @@ import { enforceRateLimit } from "@/lib/infra/api-guard";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 
+/** @service-role public
+ *
+ * Telemetría anónima del storefront.
+ */
+
 type EventBody = {
   event?: string;
   path?: string;

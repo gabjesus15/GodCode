@@ -10,6 +10,8 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { checkRateLimit } from "@/lib/infra/rate-limiter";
 import { syncCompanyPanelAccessFromPlanId } from "@/lib/super-admin/sync-company-panel-access";
 
+/** @service-role customer-account */
+
 type PlanRow = {
   id: string;
   name: string;

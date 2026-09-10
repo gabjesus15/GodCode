@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role public-read
+ *
+ * Dice si un correo ya solicito ese plan. El proxy del Portal lo acota.
+ */
+
 export async function GET(req: NextRequest) {
 	const email = req.nextUrl.searchParams.get("email")?.toLowerCase();
 	const plan_id = req.nextUrl.searchParams.get("plan_id");

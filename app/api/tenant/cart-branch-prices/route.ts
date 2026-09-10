@@ -6,6 +6,11 @@ import { assertPublicRateLimit } from "@/lib/infra/public-rate-limit";
 import { fetchCartBranchPrices } from "@/lib/orders/fetch-cart-branch-prices";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role public
+ *
+ * Precios del menú público: mismo criterio que el checkout anónimo.
+ */
+
 const bodySchema = z.object({
 	branchId: z.string().uuid(),
 	productIds: z.array(z.string().min(1).max(64)).min(1).max(80),

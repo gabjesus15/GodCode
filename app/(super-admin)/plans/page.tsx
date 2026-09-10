@@ -3,6 +3,8 @@ import { PlansAdminClientLazy } from "./plans-admin-client-lazy";
 import { queryAdminPlansList } from "@/lib/plans/plans-db-query";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role layout-guard */
+
 const getUsdToClp = async () => {
 	try {
 		const res = await fetch("https://open.er-api.com/v6/latest/USD", {

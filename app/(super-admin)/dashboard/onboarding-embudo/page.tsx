@@ -10,6 +10,8 @@ import {
 } from "@/lib/super-admin/super-admin-metrics";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role layout-guard */
+
 export const dynamic = "force-dynamic";
 
 function parsePeriod(raw: string | undefined): DashboardPeriod {

@@ -9,6 +9,11 @@ import { jsonWithPublicCors, publicApiCorsHeaders } from "@/lib/infra/api-cors";
 import { assertPublicRateLimit } from "@/lib/infra/public-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role public
+ *
+ * Valida los ítems del carrito anónimo contra el catálogo de la sucursal.
+ */
+
 const orderCatalogLineSchema = z.object({
 	id: z.string().min(1),
 	name: z.string().optional(),

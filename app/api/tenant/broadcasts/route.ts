@@ -6,6 +6,8 @@ import { tenantBroadcastAckSchema } from "@/lib/api/schemas/tenant/broadcasts";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 
+/** @service-role tenant-session */
+
 type MessageError = { message: string } | null;
 
 type TenantUserRow = {

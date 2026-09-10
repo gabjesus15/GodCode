@@ -27,6 +27,26 @@ env:
   CI: true
 
 jobs:
+  service-role:
+    name: Service Role (contrato de autorizacion)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # No necesita dependencias: el auditor solo lee ficheros con la API de Node.
+      # Cada punto de entrada que importe supabaseAdmin debe declarar como
+      # autoriza, y el guard declarado tiene que aparecer en cada metodo HTTP.
+      - name: Auditar el uso de la Service Role Key
+        run: npm run security:service-role
+
   dependency-review:
     name: Dependency Review
     if: github.event_name == 'pull_request'

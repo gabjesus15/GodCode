@@ -7,6 +7,11 @@ import { normalizeDeliverySettings } from "@/lib/delivery/delivery-settings";
 import { assertJsonRateLimit, assertPublicScopedRateLimit } from "@/lib/infra/public-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role public
+ *
+ * Autocompletado del carrito anónimo.
+ */
+
 /**
  * Si el local no define tope de km, igual acotamos sugerencias para no listar coincidencias muy lejanas.
  */

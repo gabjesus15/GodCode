@@ -4,6 +4,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { assertPublicRateLimit } from "@/lib/infra/public-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role capability-token, public
+ *
+ * El client_request_id del pedido es la credencial; además hay rate limit.
+ */
+
 const RECEIPTS_BUCKET = "receipts";
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Map([

@@ -18,6 +18,7 @@
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install --with-deps chromium",
     "analyze": "cross-env ANALYZE=true next build",
+    "security:service-role": "node scripts/security/audit-service-role.mjs",
     "i18n:validate": "node scripts/i18n/validate-locales.mjs",
     "i18n:fill-missing": "node scripts/i18n/fill-missing.mjs"
   },

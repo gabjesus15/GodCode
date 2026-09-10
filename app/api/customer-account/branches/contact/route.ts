@@ -5,6 +5,11 @@ import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role customer-account
+ *
+ * La sucursal se verifica contra ctx.companyId antes de actualizarla.
+ */
+
 export async function PATCH(req: NextRequest) {
 	const ctx = await getCustomerAccountContext();
 	if (!ctx) {

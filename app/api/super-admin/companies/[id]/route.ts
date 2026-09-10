@@ -16,6 +16,8 @@ import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { normalizeBaseDomain } from "@/utils/tenant-url";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
 
+/** @service-role super-admin */
+
 type ThemePatchBody = {
   displayName?: string | null;
   primaryColor?: string;

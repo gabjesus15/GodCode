@@ -5,6 +5,8 @@ import { fetchAnalyticsEventsPaged } from "@/lib/analytics/fetch-analytics-event
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
+/** @service-role super-admin */
+
 type Status = "new" | "contacted" | "closed";
 
 async function countRows(table: "landing_leads" | "landing_contacts", status?: Status): Promise<number> {

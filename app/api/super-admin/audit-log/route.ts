@@ -3,6 +3,8 @@ import { SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../utils/a
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role super-admin */
+
 function csvEscape(value: unknown): string {
 	if (value == null) return '""';
 	const s = typeof value === "string" ? value : JSON.stringify(value);

@@ -3,6 +3,8 @@ import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role super-admin */
+
 type RoleRow = {
 	id: string;
 	name: string;

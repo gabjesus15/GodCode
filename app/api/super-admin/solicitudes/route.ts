@@ -3,6 +3,8 @@ import { SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../utils/a
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role super-admin */
+
 function getDeletePolicy(input: {
 	status: string | null;
 	companyId: string | null;

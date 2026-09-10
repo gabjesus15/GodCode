@@ -17,6 +17,11 @@ import {
 } from "@/lib/onboarding/checkout-service";
 import { hashPaymentIdentity, normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 
+/** @service-role payment-provider-verified
+ *
+ * La captura se confirma contra PayPal, no contra el cuerpo de la peticion.
+ */
+
 const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID ?? "";
 const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET ?? "";
 

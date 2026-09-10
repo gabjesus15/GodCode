@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 
+/** @service-role capability-token */
+
 export async function GET(req: NextRequest) {
 	const token = req.nextUrl.searchParams.get("token");
 	if (!token) {

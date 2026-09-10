@@ -14,6 +14,8 @@ import {
 import { fetchAnalyticsEventsPaged } from "@/lib/analytics/fetch-analytics-events";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+/** @service-role layout-guard */
+
 export const dynamic = "force-dynamic";
 
 type EventRow = {

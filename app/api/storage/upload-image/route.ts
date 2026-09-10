@@ -9,6 +9,11 @@ import { STOREFRONT_BRANDING_BUCKET } from "@/lib/storage/storefront-branding";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
 
+/** @service-role super-admin, customer-account, public
+ *
+ * Una postura por carpeta destino: tenant/landing exige super_admin, payment-reference exige CEO, onboarding/receipts es pública con rate limit.
+ */
+
 export const runtime = "nodejs";
 
 const EXT_BY_TYPE = new Map([
