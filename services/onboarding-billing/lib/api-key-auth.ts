@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { secretsMatch } from "@/lib/infra/secret-compare";
+
 const SERVICE_API_KEY = process.env.SERVICE_API_KEY ?? "";
 
 export type ApiKeyResult =
@@ -17,8 +19,9 @@ export function validateApiKey(req: NextRequest): ApiKeyResult {
 		};
 	}
 
-	const header = req.headers.get("x-internal-api-key") ?? "";
-	if (header !== SERVICE_API_KEY) {
+	// Comparación en tiempo constante: `!==` filtraba por temporización cuántos
+	// bytes de la clave interna acertaba quien llamara al microservicio directo.
+	if (!secretsMatch(req.headers.get("x-internal-api-key"), SERVICE_API_KEY)) {
 		return {
 			ok: false,
 			response: NextResponse.json(

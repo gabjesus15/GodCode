@@ -1,11 +1,29 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { startTimer } from "@/lib/infra/logger";
+import { validateApiKey } from "../../../lib/api-key-auth";
 
 const startedAt = new Date().toISOString();
 
-export async function GET() {
+/**
+ * @service-role internal-api-key
+ *
+ * El detalle (latencia de Postgres, qué variables de entorno faltan) solo se
+ * entrega a quien presente la clave interna: es un mapa de la infraestructura.
+ * Sin clave se responde vivo, que es lo único que necesita un balanceador, y no
+ * se toca la base de datos.
+ */
+export async function GET(req: NextRequest) {
+	const auth = validateApiKey(req);
+
+	if (!auth.ok) {
+		return NextResponse.json(
+			{ service: "onboarding-billing", status: "alive", timestamp: new Date().toISOString() },
+			{ status: 200 },
+		);
+	}
+
 	const checks: Record<string, string> = {};
 	let healthy = true;
 

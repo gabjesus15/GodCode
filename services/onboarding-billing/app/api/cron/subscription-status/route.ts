@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { readBearerSecret, secretsMatch } from "@/lib/infra/secret-compare";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { applyScheduledPlanChangesDue, suspendExpiredSubscriptions } from "@/lib/onboarding/billing-activation";
 import { processDueBookingReminders } from "@/lib/onboarding/booking-notifications";
 
+/** @service-role cron-secret */
+
 export async function GET(req: NextRequest) {
-	const secret = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-	if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
+	// Fail-closed y en tiempo constante: antes, sin CRON_SECRET en el entorno la
+	// condicion se saltaba entera y el endpoint quedaba abierto.
+	const expectedSecret = process.env.CRON_SECRET?.trim();
+	if (!expectedSecret) {
+		return NextResponse.json(
+			{ error: "CRON_SECRET es obligatorio para este endpoint" },
+			{ status: 503 },
+		);
+	}
+
+	if (!secretsMatch(readBearerSecret(req.headers.get("authorization")), expectedSecret)) {
 		return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 	}
 

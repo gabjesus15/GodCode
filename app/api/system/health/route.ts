@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { enforceRateLimit } from "@/lib/infra/api-guard";
 import { flags, getOnboardingBillingBaseUrl } from "@/lib/infra/feature-flags";
+import { readBearerSecret, secretsMatch } from "@/lib/infra/secret-compare";
 import { startTimer } from "@/lib/infra/logger";
+
+/** @service-role capability-token, public
+ *
+ * HEALTH_CHECK_SECRET destapa el detalle; sin él solo vivo/degradado, con rate limit.
+ */
 
 const startedAt = new Date().toISOString();
 
@@ -12,13 +19,24 @@ function isLoopbackHostname(hostname: string): boolean {
 }
 
 function isAuthorized(req: NextRequest): boolean {
-  const secret = process.env.HEALTH_CHECK_SECRET;
-  if (!secret) return false;
-  const auth = req.headers.get("authorization") || "";
-  return auth === `Bearer ${secret}`;
+  return secretsMatch(
+    readBearerSecret(req.headers.get("authorization")),
+    process.env.HEALTH_CHECK_SECRET?.trim(),
+  );
 }
 
 export async function GET(req: NextRequest) {
+	const authorized = isAuthorized(req);
+
+	// Sin secreto, cada llamada dispara una consulta a Postgres y —con el proxy
+	// externo activo— un fetch de hasta 5 s al microservicio. Eso convierte un
+	// endpoint público en amplificador, así que el tráfico anónimo se acota.
+	// El sondeo del balanceador cabe de sobra en 30 por minuto e IP.
+	if (!authorized) {
+		const limited = await enforceRateLimit(req, "system_health", 30, 60_000);
+		if (limited) return limited;
+	}
+
 	const checks: Record<string, string> = {};
 	let healthy = true;
 
@@ -95,7 +113,7 @@ export async function GET(req: NextRequest) {
 		timestamp: new Date().toISOString(),
 	};
 
-	if (!isAuthorized(req)) {
+	if (!authorized) {
 		return NextResponse.json(publicBody, { status: statusCode });
 	}
 

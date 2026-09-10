@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { readBearerSecret, secretsMatch } from "@/lib/infra/secret-compare";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { applyScheduledPlanChangesDue, suspendExpiredSubscriptions } from "@/lib/onboarding/billing-activation";
 import { processDueBookingReminders } from "@/lib/onboarding/booking-notifications";
 import { proxyToOnboardingBilling } from "@/lib/onboarding/service-proxy";
+
+/** @service-role cron-secret */
 
 export async function GET(req: NextRequest) {
 	const proxied = await proxyToOnboardingBilling(req, "/api/cron/subscription-status");
@@ -19,8 +22,8 @@ export async function GET(req: NextRequest) {
 		);
 	}
 
-	const secret = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-	if (expectedSecret && secret !== expectedSecret) {
+	// Comparación en tiempo constante para no filtrar el secreto por temporización.
+	if (expectedSecret && !secretsMatch(readBearerSecret(req.headers.get("authorization")), expectedSecret)) {
 		return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 	}
 
