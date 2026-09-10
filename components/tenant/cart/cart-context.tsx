@@ -136,6 +136,12 @@ interface CartContextType {
   appliedCouponDiscount: number;
   setAppliedCoupon: (code: string, discountAmount: number) => void;
   clearAppliedCoupon: () => void;
+  /**
+   * Moneda en la que están realmente los importes del carrito. En Venezuela es
+   * siempre "USD", aunque `branches.currency` diga "VES": los precios del
+   * catálogo están en dólares y los bolívares solo aparecen como conversión.
+   * El proveedor ya resuelve esa excepción, así que formatea siempre con esto.
+   */
   currency: string;
   country: string;
   exchangeRate?: number | null;

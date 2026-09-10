@@ -7,9 +7,16 @@ import { useCart } from "./use-cart";
 import { formatCartMoney } from "./utils/format-cart-money";
 import "../../../app/[subdomain]/styles/CartFloat.css";
 
+/**
+ * `currency` queda solo como respaldo para cuando el botón se monta fuera del
+ * proveedor. La moneda buena es `cartCurrency` del contexto: quien llama pasa
+ * `selectedBranch.currency`, que en Venezuela vale "VES" aunque los precios
+ * estén en dólares, y el proveedor ya aplica esa excepción.
+ */
 export function CartFloat({ currency = "CLP" }: { currency?: string }) {
   const t = useTranslations("tenant.cart.float");
-  const { totalItems, grandTotal, isCartOpen, openCart, closeCart } = useCart();
+  const { totalItems, grandTotal, isCartOpen, openCart, closeCart, currency: cartCurrency } = useCart();
+  const displayCurrency = cartCurrency || currency;
   const hasItems = totalItems > 0;
   const [isIdle, setIsIdle] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -92,7 +99,7 @@ export function CartFloat({ currency = "CLP" }: { currency?: string }) {
         <span className="cart-label-text">
           {mounted && hasItems ? (
             <>
-              <span className="cart-total-prefix">{t("totalPrefix")}</span> {formatCartMoney(grandTotal, currency)}
+              <span className="cart-total-prefix">{t("totalPrefix")}</span> {formatCartMoney(grandTotal, displayCurrency)}
             </>
           ) : (
             t("emptyLabel")
