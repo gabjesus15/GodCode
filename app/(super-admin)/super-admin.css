@@ -69,7 +69,7 @@ html.dark .super-admin .sa-badge--neutral {
 .super-admin {
   min-height: 100vh;
   color: var(--sa-text);
-  font-family: var(--font-geist-sans, "Outfit", sans-serif);
+  font-family: var(--font-geist-sans, system-ui, sans-serif);
 }
 
 .super-admin .sa-shell {

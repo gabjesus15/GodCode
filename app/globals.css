@@ -68,7 +68,9 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Outfit', var(--font-geist-sans), sans-serif;
+  /* Outfit iba delante pero sus ficheros estaban vacios: nunca resolvio y el
+     texto ya caia en Geist. Se retira el nombre muerto, sin cambio visual. */
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
 .dark .bg-white {
