@@ -8,6 +8,7 @@ import { getTenantScopedPath, getTenantPrefixFromPathname } from "../utils/tenan
 import { normalizeDeliverySettings } from "@/lib/delivery/delivery-settings";
 import { mergeMenuPathQuery } from "@/utils/tenant-url";
 import { readEmbeddedPreviewFromLocation } from "@/lib/store-theme/preview-theme-messaging";
+import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
 import { FIRE_ICON, getAvailableContactChannels, getBranchesWithContactChannel, openBranchContactUrl, resolveContactFlowStep, resolveMenuCartUiMode, shouldShowBottomNav, shouldShowContactTab, type BranchContactChannel } from "@/lib/tenant/menu/menu-helpers";
 import { buildModalBranchItems } from "./menu-branch-items";
 import { MenuCartLayer } from "./menu-cart-layer";
@@ -447,7 +448,7 @@ export function useMenuClientController(props: MenuClientProps) {
 			totalItems={totalItems}
 			activeBottomTab={activeBottomTab}
 			showContactTab={showContactTab}
-			showAccountTab={!isEmbeddedPreview}
+			showAccountTab={MENU_ACCOUNT_ENABLED && !isEmbeddedPreview}
 			onHome={scrollToHome}
 			onCart={handleCartToggle}
 			onContact={handleContactClick}

@@ -8,6 +8,7 @@ import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 import { usePathname, useRouter } from "next/navigation";
 import { X, MapPin, AlertCircle, Plus, Check, CupSoda, Sparkles, Store, Truck, ArrowLeft, Ticket, UserRound } from "lucide-react";
 import { getTenantScopedPath } from "../../utils/tenant-route";
+import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
 import { formatCartMoney } from "../utils/format-cart-money";
 import { type CartFulfillment, isUpsellBeverageLineId } from "../cart-context";
 import {
@@ -1773,15 +1774,17 @@ export function CartModal({
             ) : null}
           </div>
           <div className="cart-header-actions">
-            <button
-              type="button"
-              onClick={handleOpenAccount}
-              className="btn-cart-account"
-              aria-label="Mi cuenta"
-            >
-              <UserRound size={17} aria-hidden />
-              <span>Mi cuenta</span>
-            </button>
+            {MENU_ACCOUNT_ENABLED ? (
+              <button
+                type="button"
+                onClick={handleOpenAccount}
+                className="btn-cart-account"
+                aria-label="Mi cuenta"
+              >
+                <UserRound size={17} aria-hidden />
+                <span>Mi cuenta</span>
+              </button>
+            ) : null}
             <button onClick={handleCloseCart} className="btn-close-cart" aria-label={t("actions.close")}><X size={20} /></button>
           </div>
         </header>

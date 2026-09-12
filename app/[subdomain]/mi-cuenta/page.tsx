@@ -4,6 +4,7 @@ import { getCachedCompany } from "../../../utils/tenant-cache";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 import { resolveCheckoutCountryCode } from "@/lib/geo/country-forms";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
+import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
 import { getMenuAccountSession, toMenuAccountDto } from "@/lib/menu-account/session";
 import { AccountPageClient } from "../../../components/tenant/account/account-page-client";
 
@@ -31,6 +32,13 @@ export default async function TenantAccountPage({
   params,
   searchParams,
 }: TenantAccountPageProps) {
+  // La cuenta de cliente del menú aún no está terminada: mientras el flag esté
+  // apagado la ruta no existe. Ocultar sólo los botones dejaría el registro
+  // alcanzable escribiendo la URL a mano.
+  if (!MENU_ACCOUNT_ENABLED) {
+    notFound();
+  }
+
   const [resolvedParams, resolvedSearch] = await Promise.all([params, searchParams]);
   const company = await getCachedCompany(resolvedParams.subdomain);
 
