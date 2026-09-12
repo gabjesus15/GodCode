@@ -167,22 +167,39 @@
     animation: singlePulse 2s infinite;
 }
 
-.animate-bounce-in {
-    animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+/**
+ * Badge de cantidad al agregar al carrito.
+ *
+ * Traia easeOutBack (0.175, 0.885, 0.32, 1.275) con rebase a scale(1.1): el
+ * unico rebote elastico del menu, contra la curva expo que usa todo lo demas.
+ * El rebote se reserva para gestos que traen inercia propia — un lanzamiento,
+ * un arrastre — y esto es la confirmacion de un toque, sin inercia que
+ * devolver. Se queda el "pop" de confirmacion, ahora amortiguado y con la
+ * curva de la casa.
+ *
+ * Renombrada desde `animate-bounce-in`: el nombre describia un rebote que ya no
+ * existe. Consumidor unico en este repo y ningun uso en el repo del Panel.
+ */
+.animate-pop-in {
+    animation: popIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes bounceIn {
+@keyframes popIn {
     0% {
-        transform: scale(0);
+        transform: scale(0.6);
         opacity: 0;
-    }
-
-    60% {
-        transform: scale(1.1);
-        opacity: 1;
     }
 
     100% {
         transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-pop-in {
+        animation: none;
+        opacity: 1;
+        transform: none;
     }
 }

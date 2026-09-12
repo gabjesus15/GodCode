@@ -128,31 +128,66 @@ export type ResolvedThemeColors = {
 	cardBorder: string;
 };
 
-/** Modo patrón sobre color sólido (comportamiento histórico). */
-const BG_BRIGHTNESS_TINTED_DEFAULT = 0.46;
-const BG_BRIGHTNESS_NATURAL_DEFAULT = 1;
+/**
+ * Rampa del tinte del fondo.
+ *
+ * El alfa del color de fondo decide cuanto se mezcla la imagen con el color
+ * solido. Antes ese control era un escalon, no una rampa: por debajo de 0.08 la
+ * capa de imagen iba al 100% sin oscurecer, y a partir de 0.09 saltaba de golpe
+ * al 38% con brillo 0.46, desenfoque y contraste. Mover el deslizador del 8% al
+ * 9% cambiaba tres cosas a la vez, y del 9% al 100% ya no cambiaba ninguna: todo
+ * el recorrido restante del control no hacia nada.
+ *
+ * Ahora cada extremo se conserva —alfa 0 se comporta igual que antes, alfa 1
+ * tambien— y lo de en medio interpola. Los dos valores extremos son justo donde
+ * estan los tenants conocidos, asi que el cambio solo alcanza a quien tenga
+ * valores intermedios, que es precisamente la franja que hoy se comporta de
+ * forma discontinua.
+ */
+const BG_TINT_RAMP = {
+	/** Opacidad de la capa de imagen: sin tinte se ve entera, con tinte pleno cede al color. */
+	layerOpacity: { sinTinte: 1, tintePleno: 0.38 },
+	/** Brillo por defecto cuando el tenant no lo fija a mano. */
+	brightness: { sinTinte: 1, tintePleno: 0.46 },
+	/** Tratamiento de la capa: sin tinte la imagen va limpia; con tinte se integra. */
+	blurPx: { sinTinte: 0, tintePleno: 0.875 },
+	contrast: { sinTinte: 1, tintePleno: 1.05 },
+	saturate: { sinTinte: 1, tintePleno: 0.97 },
+} as const;
+
+/** Interpola entre el extremo sin tinte y el de tinte pleno. */
+function rampa(tramo: { sinTinte: number; tintePleno: number }, tinte: number): number {
+	return tramo.sinTinte + tinte * (tramo.tintePleno - tramo.sinTinte);
+}
+
+const redondea = (value: number, decimales = 2): number => {
+	const factor = 10 ** decimales;
+	return Math.round(value * factor) / factor;
+};
 
 function resolveOptimizedBackgroundImageUrl(rawBackgroundImageUrl: string): string {
 	return rawBackgroundImageUrl;
 }
 
-function resolveBackgroundBrightness(
-	theme: Partial<StoreThemeConfig>,
-	naturalBackground: boolean,
-): number {
+function resolveBackgroundBrightness(theme: Partial<StoreThemeConfig>, tinte: number): number {
 	const raw = theme.backgroundBrightness;
 	if (typeof raw === "number" && Number.isFinite(raw)) {
 		return Math.min(1.8, Math.max(0.2, raw));
 	}
-	return naturalBackground ? BG_BRIGHTNESS_NATURAL_DEFAULT : BG_BRIGHTNESS_TINTED_DEFAULT;
+	return rampa(BG_TINT_RAMP.brightness, tinte);
 }
 
-function buildBackgroundLayerFilter(brightness: number, naturalBackground: boolean): string {
-	const b = Math.round(brightness * 100) / 100;
-	if (naturalBackground) {
+function buildBackgroundLayerFilter(brightness: number, tinte: number): string {
+	const b = redondea(brightness);
+	const blur = redondea(rampa(BG_TINT_RAMP.blurPx, tinte), 3);
+	const contrast = redondea(rampa(BG_TINT_RAMP.contrast, tinte), 3);
+	const saturate = redondea(rampa(BG_TINT_RAMP.saturate, tinte), 3);
+
+	// Sin tinte no hay nada que integrar: la imagen va limpia, como antes.
+	if (blur === 0 && contrast === 1 && saturate === 1) {
 		return `brightness(${b})`;
 	}
-	return `blur(0.875px) brightness(${b}) contrast(1.05) saturate(0.97)`;
+	return `blur(${blur}px) brightness(${b}) contrast(${contrast}) saturate(${saturate})`;
 }
 
 export function resolveThemeColors(theme: Partial<StoreThemeConfig>): ResolvedThemeColors {
@@ -169,17 +204,32 @@ export function resolveThemeColors(theme: Partial<StoreThemeConfig>): ResolvedTh
 		: "";
 	const backgroundImage = optimizedBackground ? `url(${optimizedBackground})` : "none";
 
-	// Sin tint de color: imagen a pleno; se mantiene el mismo tamaño/tile del patrón.
-	const naturalBackground = Boolean(optimizedBackground) && backgroundParsed.alpha <= 0.08;
-	const brightness = resolveBackgroundBrightness(theme, naturalBackground);
+	/** Posicion en la rampa del tinte: 0 = imagen limpia, 1 = tinte pleno. */
+	const tinte = Math.min(1, Math.max(0, backgroundParsed.alpha));
+	const brightness = resolveBackgroundBrightness(theme, tinte);
 	const backgroundLayerOpacity = !optimizedBackground
 		? "0"
-		: naturalBackground
-			? "1"
-			: "0.38";
-	const backgroundSize = optimizedBackground ? "1200px" : "auto";
-	const backgroundRepeat = "repeat";
-	const backgroundLayerFilter = buildBackgroundLayerFilter(brightness, naturalBackground);
+		: String(redondea(rampa(BG_TINT_RAMP.layerOpacity, tinte)));
+	/**
+	 * El fondo se mostraba teselado a 1200px con `repeat`, que solo funciona si la
+	 * imagen subida es una textura sin costuras. Medido sobre un fondo real: la
+	 * diferencia entre el borde izquierdo y el derecho era 59, y entre dos columnas
+	 * interiores al azar 53 — los bordes casaban peor que dos trozos no
+	 * relacionados. El resultado eran lineas verticales visibles con el dibujo
+	 * cortado a media seta cada vez que el patron se repetia.
+	 *
+	 * La capa que lo pinta es `position: fixed` y del tamano del viewport (ver
+	 * `.tenant-shell-bg-layer`), asi que nunca necesita repetirse: con `cover` una
+	 * sola copia la llena entera y no hay ninguna union que pueda verse. La
+	 * sensacion de fondo infinito venia de que la capa es fija, no de que la
+	 * imagen se repitiera.
+	 *
+	 * Medido en movil sobre el mismo fondo, `cover` aplica 0.92x del tamano
+	 * original: practicamente la misma escala de dibujo que antes, sin costuras.
+	 */
+	const backgroundSize = optimizedBackground ? "cover" : "auto";
+	const backgroundRepeat = optimizedBackground ? "no-repeat" : "repeat";
+	const backgroundLayerFilter = buildBackgroundLayerFilter(brightness, tinte);
 
 	return {
 		primaryColor,
@@ -277,6 +327,23 @@ export function applyThemeCssVarsToRoot(theme: Partial<StoreThemeConfig>, root?:
 
 const EMBEDDED_PREVIEW_STYLE_ID = "godcode-embedded-preview-theme";
 
+/**
+ * Sube la especificidad del bloque de preview de `.tenant-theme-vars` (0,1,0) a
+ * `:root .tenant-theme-vars` (0,2,0).
+ *
+ * El `<style>` del tema publicado lo renderiza el SSR dentro de `<body>`, o sea
+ * *después* de este, que vive en `<head>`. Con la misma especificidad ganaba el
+ * ultimo en orden de documento: el publicado. El resultado es que el borrador
+ * nunca teñia la vista previa embebida y el dueño movia un selector de color
+ * sin ver ningun cambio. Los cambios de layout si se veian porque viajan por
+ * estado de React, no por CSS, lo que hacia el fallo aun mas confuso.
+ *
+ * Con mayor especificidad el borrador gana esté donde esté el bloque publicado.
+ */
+export function scopePreviewThemeCss(css: string): string {
+	return css.replace(/\.tenant-theme-vars\s*\{/g, ":root .tenant-theme-vars{");
+}
+
 /** Sobrescribe el `<style>` SSR del tenant en preview embebido (no revierte al tema publicado). */
 export function applyEmbeddedPreviewThemeStyles(theme: Partial<StoreThemeConfig>): () => void {
 	if (typeof document === "undefined") return () => {};
@@ -289,7 +356,7 @@ export function applyEmbeddedPreviewThemeStyles(theme: Partial<StoreThemeConfig>
 	}
 
 	const previous = el.textContent;
-	el.textContent = buildTenantThemeCssString(theme);
+	el.textContent = scopePreviewThemeCss(buildTenantThemeCssString(theme));
 
 	const colors = resolveThemeColors(theme);
 	document.documentElement.style.setProperty("background-color", colors.backgroundColor, "important");

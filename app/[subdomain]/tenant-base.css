@@ -13,9 +13,17 @@
 	margin-left: 16px;
 }
 
+/*
+ * La familia sale de `next/font`, que la autoaloja y ajusta las metricas del
+ * respaldo para que no salte el layout mientras carga.
+ *
+ * Sin `!important`: esta hoja se importa despues de `index.css`, asi que el
+ * orden ya decide. El `!important` estaba tapando un conflicto que no existe y
+ * dejaba la familia imposible de ajustar desde ninguna otra regla.
+ */
 html,
 body {
-	font-family: "Outfit", sans-serif !important;
+	font-family: var(--font-montserrat), "Montserrat", system-ui, sans-serif;
 	background-color: transparent !important;
 	color: var(--text-primary) !important;
 }

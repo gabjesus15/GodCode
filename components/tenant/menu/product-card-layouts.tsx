@@ -48,7 +48,7 @@ function layoutCardInteractionProps(onClick?: () => void) {
 }
 
 /** Zapatillas — pestaña vertical + imagen cover */
-export const CleanCard = React.memo(function CleanCard({ product, logic, currency, priority, onClick, detailsMode, exchangeRate }: LayoutCardProps) {
+export const CleanCard = React.memo(function CleanCard({ product, logic, currency, priority, onClick, exchangeRate }: LayoutCardProps) {
   const pricing = useProductPricing(product, currency, logic, exchangeRate);
 
   return (
@@ -68,16 +68,16 @@ export const CleanCard = React.memo(function CleanCard({ product, logic, currenc
           onError={() => onImageError(logic)}
         />
       </div>
+      {/*
+        La franja lateral mide 40px de ancho por unos 190px de recorrido. Ahi no
+        caben el nombre y la etiqueta "Ver producto": la etiqueta se llevaba la
+        mitad del espacio y dejaba el nombre cortado en los doce productos. El
+        nombre es el contenido y se queda con la franja entera; que la tarjeta se
+        pueda abrir ya lo dicen el precio y el boton de carrito de la barra
+        inferior, ambos siempre visibles.
+      */}
       <div className="card__name">
         <p>{truncateText(product.name, 32)}</p>
-        {onClick ? (
-          <ProductDetailsAffordance
-            detailsMode={detailsMode}
-            hasDescription={Boolean(product.description?.trim())}
-            className="clean-details-affordance"
-            subtle
-          />
-        ) : null}
       </div>
       <div className="card__precis">
         <ProductPriceBlock
@@ -190,6 +190,7 @@ export const SidebarCard = React.memo(function SidebarCard({ product, logic, cur
   return (
     <article className="product-layout-sidebar group tenant-ui-card" {...layoutCardInteractionProps(onClick)}>
       <div className="sidebar-image-container">
+        <ProductOfferBadges product={product} />
         <ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="sidebar-qty-badge" />
         <ProductCardImage
           src={logic.imageSrc}
@@ -291,6 +292,7 @@ export const SneakerCard = React.memo(function SneakerCard({ product, logic, cur
           {monogram}
         </span>
         <div className="sneaker-img-wrapper">
+          <ProductOfferBadges product={product} />
           <ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="sneaker-qty-badge" />
           <ProductCardImage
             src={logic.imageSrc}
@@ -343,6 +345,7 @@ export const SkewCard = React.memo(function SkewCard({ product, logic, currency,
         {backgroundText}
       </div>
       <div className="imgBox">
+        <ProductOfferBadges product={product} />
         <ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="skew-qty-badge" />
         <ProductCardImage
           src={logic.imageSrc}
@@ -429,6 +432,7 @@ export const FoodCard = React.memo(function FoodCard({ product, logic, currency,
       <div className="food-card-bg" ref={bgRef} />
 
       <div className="food-image-wrapper">
+        <ProductOfferBadges product={product} />
         <ProductCardImage
           src={logic.imageSrc}
           alt={product.name ?? "Producto"}
@@ -445,7 +449,7 @@ export const FoodCard = React.memo(function FoodCard({ product, logic, currency,
 
       <div className="food-info">
         <h3 className="food-title" title={product.name || undefined}>
-          {product.name ? product.name.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : ''}
+          {product.name ?? ""}
         </h3>
         
         <div className="food-price-section">

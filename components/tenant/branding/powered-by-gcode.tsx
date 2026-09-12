@@ -33,7 +33,11 @@ export function PoweredByGcode({
 			href={href}
 			className={`powered-by-gcode powered-by-gcode--${surface}`}
 			rel="noopener noreferrer"
-			aria-label={`${LANDING_BRAND_NAME}: menú digital y pedidos online`}
+			/* WCAG 2.5.3 (etiqueta en el nombre): el nombre accesible debe contener el
+			   texto visible. Decia solo "Gcode: menú digital…" mientras en pantalla
+			   pone "Hecho con Gcode", asi que quien navega por voz no podia activarlo
+			   leyendo lo que veia. */
+			aria-label={`Hecho con ${LANDING_BRAND_NAME}: menú digital y pedidos online`}
 		>
 			<span className="powered-by-gcode__label">Hecho con</span>
 			<span className="powered-by-gcode__brand">

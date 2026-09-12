@@ -56,9 +56,27 @@
   overflow-x: hidden;
 }
 
+/**
+ * Fondo "infinito" del menu.
+ *
+ * La capa es `position: fixed`: no acompaña al scroll, asi que nunca muestra
+ * mas que el viewport. Llevaba `inset: -200% -50%`, que en un 1440x900 la
+ * convierte en 3053x4770 — 14,6 MP, 11,2 veces lo que se ve — y con
+ * `will-change: transform` quedaba promocionada a capa de composicion propia:
+ * unos 56 MB de memoria de GPU para pintar 1,3 MP. El `filter` de brillo se
+ * aplicaba ademas sobre los 14,6 MP enteros.
+ *
+ * El sobredimensionado tenia sentido con una capa que hiciera scroll; con
+ * `fixed` es peso muerto, y nadie la mueve: no hay parallax ni handler de
+ * scroll, solo el toggle de `is-hidden`. El `scale(1.06)` ya aporta el margen
+ * que evita bordes al filtrar.
+ *
+ * `will-change` sobra por el mismo motivo: la capa no anima transform — solo
+ * hace `transition: opacity` — y forzaba la promocion de forma permanente.
+ */
 .tenant-shell-bg-layer {
   position: fixed;
-  inset: -200% -50%;
+  inset: 0;
   z-index: 0;
   background-image: var(--tenant-bg-image, none);
   background-repeat: var(--tenant-bg-repeat, repeat);
@@ -72,20 +90,19 @@
   transform: scale(1.06);
   transition: opacity 0.2s ease-out;
   pointer-events: none;
-  will-change: transform;
 }
 
 /* Móvil / sin GPU: el filter en capa fija cuesta mucho en Android Chrome. */
 @media (max-width: 768px) {
   .tenant-shell-bg-layer {
-    /* Si el tema pide colores naturales (filter: none), no forzar brightness oscuro. */
+    /* Sin `blur` en el filtro por defecto: es la parte cara, y sin desenfoque
+       tampoco hace falta el margen del `scale`.
+       Si el tema pide colores naturales (filter: none), no forzar brightness oscuro. */
     filter: var(
       --tenant-bg-layer-filter,
       brightness(0.46) contrast(1.05) saturate(0.97)
     );
-    will-change: auto;
     transform: none;
-    inset: 0;
   }
 }
 

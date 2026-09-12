@@ -138,7 +138,19 @@ export async function validateStoreThemeAssetFile(
       const ratio = width / height;
       if (ratio < 0.7 || ratio > 1.4) return { ok: true, hint: "Recomendacion: usa un logo casi cuadrado para mejor encuadre en navbar." };
     } else {
-      if (width / height < 1.5) return { ok: true, hint: "Recomendacion: usa imagen panoramica (16:9 aprox) para mejor resultado." };
+      /**
+       * El fondo del menu no es un banner ni un mosaico: se escala con `cover`
+       * sobre una capa fija del tamano del viewport (ver `.tenant-shell-bg-layer`
+       * en App.css). Una sola copia llena la pantalla, sin repetirse, asi que lo
+       * que importa es que tenga resolucion suficiente y que el motivo aguante el
+       * recorte — no que sea panoramica ni que sea teselable.
+       */
+      if (width < 900) {
+        return {
+          ok: true,
+          hint: "El fondo se escala para llenar la pantalla completa. Con menos de 900 px de ancho puede verse borroso en pantallas grandes.",
+        };
+      }
     }
     return { ok: true };
   } catch {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import type { StoreThemeConfig } from "../shared/customer-account-types";
 import { encodePreviewThemeParam } from "@/lib/store-theme/preview-theme-codec";
@@ -8,6 +8,14 @@ import { postPreviewThemeToIframe } from "@/lib/store-theme/preview-theme-messag
 import { mergeMenuPathQuery, getTenantMenuPreviewUrl } from "@/utils/tenant-url";
 
 export { encodePreviewThemeParam };
+
+/**
+ * Los controles comparten un solo estilo: el anillo de foco visible faltaba en
+ * todos ellos y el estado presionado no existía, así que el panel se navegaba a
+ * ciegas con teclado y no acusaba recibo del clic.
+ */
+const CONTROL_CLASS =
+  "rounded-lg border border-zinc-300 px-2.5 py-1 text-xs font-semibold text-zinc-700 transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:focus-visible:ring-offset-zinc-900";
 
 export function StoreThemePreviewPanel({
   theme,
@@ -30,6 +38,7 @@ export function StoreThemePreviewPanel({
   );
   const draftIframeRef = useRef<HTMLIFrameElement | null>(null);
   const productionIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const tokensPanelId = useId();
   const displayName = theme.displayName.trim() || companyName;
   const tokenRows = [
     ["Primario", theme.primaryColor],
@@ -94,7 +103,7 @@ export function StoreThemePreviewPanel({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <p className="text-xs uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">Vista 1:1 del menú</p>
-              <h4 className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100">{displayName}</h4>
+              <h4 className="mt-1 text-lg font-semibold tracking-[-0.01em] text-zinc-900 dark:text-zinc-100">{displayName}</h4>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                 Render del menú real del tenant tal como lo ve el cliente final.
               </p>
@@ -115,7 +124,11 @@ export function StoreThemePreviewPanel({
                   Menú embebido. Puedes comparar producción vs borrador y cambiar dispositivo.
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <div className="inline-flex rounded-lg border border-zinc-300 p-1 dark:border-zinc-700">
+                  <div
+                    role="group"
+                    aria-label="Dispositivo de la vista previa"
+                    className="inline-flex rounded-lg border border-zinc-300 p-1 dark:border-zinc-700"
+                  >
                     {(
                       [
                         ["mobile", "Móvil"],
@@ -126,8 +139,9 @@ export function StoreThemePreviewPanel({
                       <button
                         key={id}
                         type="button"
+                        aria-pressed={previewDevice === id}
                         onClick={() => setPreviewDevice(id)}
-                        className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+                        className={`rounded-md px-2.5 py-1 text-xs font-semibold transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100 dark:focus-visible:ring-offset-zinc-900 ${
                           previewDevice === id
                             ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                             : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -140,27 +154,36 @@ export function StoreThemePreviewPanel({
 
                   <button
                     type="button"
+                    aria-pressed={compareMode}
                     onClick={() => setCompareMode((prev) => !prev)}
-                    className="rounded-lg border border-zinc-300 px-2.5 py-1 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    className={CONTROL_CLASS}
                   >
                     {compareMode ? "Ver solo borrador" : "Comparar con producción"}
                   </button>
 
-                  <a
-                    href={draftExternalUrl ?? "#"}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-lg border border-zinc-300 px-2.5 py-1 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                  >
-                    Abrir borrador
-                  </a>
+                  {/* Sin tema codificado no hay borrador que abrir: el enlace
+                      apuntaba a "#" y parecía disponible. */}
+                  {draftExternalUrl ? (
+                    <a href={draftExternalUrl} target="_blank" rel="noreferrer" className={CONTROL_CLASS}>
+                      Abrir borrador
+                    </a>
+                  ) : (
+                    <span
+                      className="cursor-not-allowed rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-semibold text-zinc-400 dark:border-zinc-800 dark:text-zinc-600"
+                      title="Guarda un cambio para abrir el borrador en una pestaña"
+                    >
+                      Abrir borrador
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div className={`grid gap-4 ${shouldSplitFrames ? "xl:grid-cols-2" : "grid-cols-1"}`}>
                 {compareMode ? (
                   <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
-                    <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">Producción</p>
+                    <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
+                      Producción
+                    </p>
                     <div
                       className={`mx-auto overflow-hidden rounded-2xl border border-zinc-300 bg-zinc-900 shadow-inner dark:border-zinc-700 ${frameWidthClass}`}
                     >
@@ -176,7 +199,9 @@ export function StoreThemePreviewPanel({
                 ) : null}
 
                 <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
-                  <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">Borrador</p>
+                  <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
+                    Borrador
+                  </p>
                   <div
                     className={`mx-auto overflow-hidden rounded-2xl border border-zinc-300 bg-zinc-900 shadow-inner dark:border-zinc-700 ${frameWidthClass}`}
                   >
@@ -205,18 +230,22 @@ export function StoreThemePreviewPanel({
 
           <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3 dark:border-zinc-700 dark:bg-zinc-800/40">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">Tokens del tema</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
+                Tokens del tema
+              </p>
               <button
                 type="button"
+                aria-expanded={showTokens}
+                aria-controls={tokensPanelId}
                 onClick={() => setShowTokens((prev) => !prev)}
-                className="rounded-lg border border-zinc-300 px-2.5 py-1 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                className={CONTROL_CLASS}
               >
                 {showTokens ? "Ocultar" : "Mostrar"}
               </button>
             </div>
 
             {showTokens ? (
-              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <div id={tokensPanelId} className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {tokenRows.map(([label, value]) => (
                   <div
                     key={label}
@@ -234,8 +263,10 @@ export function StoreThemePreviewPanel({
                         <rect x="0" y="0" width="28" height="28" rx="6" fill={value} />
                       </svg>
                       <div className="min-w-0">
-                        <p className="text-[11px] uppercase tracking-[0.12em] text-zinc-500">{label}</p>
-                        <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">{value}</p>
+                        <p className="text-[11px] uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">{label}</p>
+                        <p className="truncate font-mono text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+                          {value}
+                        </p>
                       </div>
                     </div>
                   </div>

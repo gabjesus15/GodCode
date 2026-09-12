@@ -32,6 +32,9 @@ type MenuCartLayerProps = {
 	totalItems: number;
 	activeBottomTab: BottomNavTab;
 	showContactTab: boolean;
+	showBranchSelector: boolean;
+	isEmbeddedPreview: boolean;
+	onOpenBranchModal: () => void;
 	onHome: () => void;
 	onCart: () => void;
 	onContact: () => void;
@@ -48,6 +51,9 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 	totalItems,
 	activeBottomTab,
 	showContactTab,
+	showBranchSelector,
+	isEmbeddedPreview,
+	onOpenBranchModal,
 	onHome,
 	onCart,
 	onContact,
@@ -67,6 +73,10 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 			totalItems={totalItems}
 			onlineOrderingEnabled={onlineOrderingEnabled}
 			showContactTab={showContactTab}
+			showBranchSelector={showBranchSelector}
+			selectedBranch={selectedBranch}
+			isEmbeddedPreview={isEmbeddedPreview}
+			onOpenBranchModal={onOpenBranchModal}
 			onHome={onHome}
 			onCart={onCart}
 			onContact={onContact}

@@ -2,6 +2,43 @@
    6. PRODUCTOS (DISEÃ‘O MEJORADO & LIMPIO)
    ========================================= */
 
+/*
+ * ESCALA DE ELEVACION DE LAS TARJETAS
+ *
+ * Cada estilo traia su propia sombra, y seis de los nueve la definian sin
+ * `spread` negativo. Una sombra `0 8px 32px 0` se extiende 16px hacia CADA
+ * lado (blur/2), pero la calle del grid mas estrecha mide 12px: las dos
+ * tarjetas vecinas metian 16px cada una en un hueco de 12, se solapaban y
+ * seguian 4px por DEBAJO de la tarjeta de al lado. El resultado no era una
+ * sombra por tarjeta sino una mancha continua bajo toda la parrilla, que es
+ * justo lo contrario de lo que una sombra tiene que hacer: separar la tarjeta
+ * de lo que hay detras.
+ *
+ * Ademas, sin desplazamiento suficiente la sombra tambien asomaba por ARRIBA
+ * (32/2 - 8 = 8px de halo). Una sombra que rodea el objeto por los cuatro
+ * lados se lee como resplandor, no como elevacion.
+ *
+ * La escala de aqui abajo se calcula al reves: se fija primero cuanto puede
+ * salirse de lado (blur/2 + spread) y se elige el spread para que quepa en
+ * media calle de la parrilla mas apretada, con la sombra desplazada lo justo
+ * para que no quede nada por encima del borde superior.
+ *
+ *   reposo  lateral 4px   arriba 0   abajo 14px
+ *   hover   lateral 5px   arriba 0   abajo 23px
+ *
+ * Dos capas en cada nivel: una de contacto, corta y definida, que dibuja el
+ * canto; y una ambiental, ancha y difusa, que da la altura. Una sola capa o
+ * recorta el canto o difumina de mas.
+ */
+:root {
+  --card-elev-rest:
+    0 1px 2px rgba(0, 0, 0, 0.28),
+    0 10px 24px -8px rgba(0, 0, 0, 0.45);
+  --card-elev-hover:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 18px 38px -14px rgba(0, 0, 0, 0.55);
+}
+
 /* --- GRID DINÁMICO & ADAPTATIVO (FLUIDO) --- */
 .product-grid-container {
 	width: 100%;
@@ -244,21 +281,27 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, rgba(30, 30, 30, 0.65) 0%, rgba(15, 15, 15, 0.8) 100%);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  background: linear-gradient(135deg, rgba(30, 30, 30, 0.78) 0%, rgba(15, 15, 15, 0.88) 100%);
+  /* `saturate` es lo que separa un material de un velo gris: revive el color
+     del fondo que atraviesa el desenfoque en vez de apagarlo. */
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   overflow: hidden;
   position: relative;
-  /* TransiciÃ³n suave para todos los estados */
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+  /* Era `all`, que en hover animaba tambien background y backdrop-filter: las
+     dos propiedades mas caras de la tarjeta, en las doce a la vez. Solo se
+     mueven las que realmente cambian. */
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+              box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+              border-color 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: var(--card-elev-rest), inset 0 1px 1px rgba(255, 255, 255, 0.08);
 }
 
 .product-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--card-elev-hover), inset 0 1px 1px rgba(255, 255, 255, 0.12);
   /* Borde sutil con color de marca al hover */
   border-color: var(--accent-shadow, rgba(255, 71, 87, 0.3));
 }
@@ -288,7 +331,7 @@
   position: absolute;
   top: 12px;
   left: 12px;
-  background: rgba(20, 20, 20, 0.85);
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   color: white;
@@ -297,7 +340,28 @@
   font-size: 0.75rem;
   font-weight: 800;
   z-index: 10;
-  border: 1px solid rgba(255, 165, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 2px 10px rgba(180, 83, 9, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-promo {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: linear-gradient(135deg, #e11d48 0%, #ea580c 50%, #d97706 100%);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  box-shadow: 0 2px 10px rgba(234, 88, 12, 0.45);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -370,7 +434,7 @@
 
 .product-desc-clamped {
   font-size: 0.9rem;
-  color: #b0b0b0; /* Gris mÃ¡s claro para mejor lectura */
+  color: #c2c2c2; /* Gris mÃ¡s claro para mejor lectura */
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -521,7 +585,11 @@
 
 .product-price.original {
   font-size: 0.9rem;
-  color: #64748b;
+  /* Era #64748b (slate-500): 4.16:1 sobre el fondo oscuro del menu, por debajo
+     del 4.5:1 que pide texto normal. Sigue siendo claramente secundario frente
+     al precio vigente — lo tachado y el peso ya lo jerarquizan — pero ahora se
+     lee. */
+  color: #94a3b8;
   text-decoration: line-through;
   font-weight: 500;
   position: absolute;
@@ -807,9 +875,22 @@
     margin-top: auto !important;
   }
 
+  /**
+   * Jerarquia de la tarjeta.
+   *
+   * El nombre caia a 0.9rem y la descripcion a 0.8rem: 1.6px de diferencia,
+   * mientras la descripcion se llevaba tres lineas frente a las dos del nombre
+   * — 58px contra 18px, mas del triple de espacio. En una carta el plato se
+   * elige por la foto, el nombre y el precio; la descripcion acompaña, y la
+   * completa esta a un toque en el detalle.
+   *
+   * El nombre sube a 1.02rem con tracking mas cerrado, y la descripcion baja a
+   * dos lineas. La tarjeta encoge, asi que entran mas productos por pantalla.
+   */
   .product-name {
-    font-size: 0.9rem; /* Un poco mÃ¡s compacto */
-    line-height: 1.25;
+    font-size: 1.02rem;
+    line-height: 1.22;
+    letter-spacing: -0.015em;
     margin-bottom: 4px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -819,10 +900,10 @@
   }
 
   .product-desc-clamped {
-    -webkit-line-clamp: 3 !important; /* MÃ XIMO 3 LÃ NEAS */
-    line-clamp: 3 !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
     font-size: 0.8rem;
-    color: #b0b0b0;
+    color: #c2c2c2;
     margin-bottom: 0px !important; /* Sin margen inferior */
   }
 
@@ -1243,6 +1324,8 @@
 
 /* Móvil: apagar glass. El selector anterior usaba `.glass-card` pero el DOM usa `.glass`. */
 @media (max-width: 768px) {
+  /* La superficie opaca que acompaña a este apagado vive en
+     TenantUiPrimitives.css, que es donde gana la especificidad del fondo. */
   .product-card.glass,
   .product-card.glass-card,
   .product-inline-panel,

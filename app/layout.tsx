@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import Script from "next/script";
-import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
+import { Geist, Geist_Mono, Montserrat, Space_Grotesk } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -41,12 +41,42 @@ const spaceGrotesk = Space_Grotesk({
   weight: ["500", "700"],
 });
 
+/**
+ * Tipografia del menu publico del tenant.
+ *
+ * Sin `weight`: Montserrat es variable en Google Fonts, asi que un solo fichero
+ * cubre de 100 a 900. Importa aqui porque el CSS del tenant pide siete pesos
+ * distintos (400, 450, 500, 600, 700, 800 y 900) y con caras estaticas el
+ * navegador tendria que fabricar por software los 34 usos de 800 y 900 —
+ * precios y titulos de categoria — engordando los trazos del 700.
+ *
+ * Va por `next/font` y no autoalojada a mano como la anterior: se sirve desde
+ * el propio dominio, sin peticion a Google, y con las metricas del respaldo
+ * ajustadas para que no salte el layout mientras carga.
+ */
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  display: "swap",
+});
 
+
+/**
+ * Sin `maximumScale` ni `userScalable`: bloquear el pellizco es un fallo de
+ * WCAG 1.4.4 (AA), y es el viewport de este layout raiz el que acaba sirviendo
+ * el menu publico del tenant.
+ *
+ * En una carta duele especialmente: el zoom es el gesto con el que alguien con
+ * vista cansada lee la descripcion de un plato o mira bien la foto. El motivo
+ * habitual para bloquearlo — el zoom accidental al tocar dos veces — ya lo
+ * cubren los `touch-action: manipulation` de los controles.
+ *
+ * Los layouts de auth, super-admin y onboarding declaran el suyo y siguen
+ * bloqueandolo; son superficies de panel y se dejan como estaban.
+ */
 export const viewport: Viewport = {
 	width: "device-width",
 	initialScale: 1,
-	maximumScale: 1,
-	userScalable: false,
 };
 
 export const metadata: Metadata = {
@@ -96,9 +126,9 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://saas-godcode-admin.vercel.app" crossOrigin="anonymous" />
         {!isTenantRoute ? (
           <>
-            <link rel="preload" href="/fonts/outfit.css" as="style" />
-            <link rel="preload" href="/fonts/Outfit-Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-            <link rel="preload" href="/fonts/Outfit-Bold.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+            {/* Los preload de Outfit apuntaban a cuatro ficheros de 0 bytes: la
+                fuente nunca llego a cargar en ninguna superficie. Se retiran con
+                ellos. `custom-fonts.css` se queda: declara Nevis y Aleo. */}
             <link rel="stylesheet" href="/fonts/custom-fonts.css" />
           </>
         ) : null}
@@ -121,7 +151,7 @@ export default async function RootLayout({
         suppressHydrationWarning
         className={
           isTenantRoute
-            ? "bg-background text-foreground antialiased transition-colors duration-200"
+            ? `${montserrat.variable} bg-background text-foreground antialiased transition-colors duration-200`
             : `${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} bg-background text-foreground antialiased transition-colors duration-200`
         }
       >

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	formatMenuDescription,
+	formatMenuTitle,
 	getAvailableContactChannels,
+	isPromocionesCategoryName,
 	resolveContactFlowStep,
 	resolveMenuCartUiMode,
 	resolveSelectedMenuBranch,
@@ -88,5 +91,49 @@ describe("menu-helpers", () => {
 	it("resolveContactFlowStep asks for channel when multiple exist", () => {
 		const branches = [{ id: "a", whatsapp_url: "https://wa.me/1", instagram_url: "https://instagram.com/x" }];
 		expect(resolveContactFlowStep(branches, "a")).toEqual({ type: "pick-channel" });
+	});
+
+	it("formatMenuTitle normalizes ALL CAPS and all-lower to clean title case", () => {
+		expect(formatMenuTitle("HOT ROLLS ESPECIALES OISHI")).toBe("Hot Rolls Especiales Oishi");
+		expect(formatMenuTitle("ROLLS DE LA CASA OISHI")).toBe("Rolls de la Casa Oishi");
+		expect(formatMenuTitle("ROLLS SIN ARROZ")).toBe("Rolls sin Arroz");
+		expect(formatMenuTitle("ENTRADAS CALIENTES")).toBe("Entradas Calientes");
+		expect(formatMenuTitle("AL HORNO CON PAPAS")).toBe("Al Horno con Papas");
+		expect(formatMenuTitle("DEL CHEF")).toBe("Del Chef");
+		expect(formatMenuTitle("PIZZA BBQ XL")).toBe("Pizza BBQ XL");
+		expect(formatMenuTitle("PROMO 2X1")).toBe("Promo 2X1");
+		expect(formatMenuTitle("COCA-COLA ZERO 350ML")).toBe("Coca-Cola Zero 350ml");
+		expect(formatMenuTitle("gohan mixto")).toBe("Gohan Mixto");
+	});
+
+	it("formatMenuTitle preserves intentionally mixed casing", () => {
+		expect(formatMenuTitle("Rolls de Salmón")).toBe("Rolls de Salmón");
+		expect(formatMenuTitle("Coca-Cola Zero")).toBe("Coca-Cola Zero");
+		expect(formatMenuTitle("McFlurry con Oreo")).toBe("McFlurry con Oreo");
+	});
+
+	it("formatMenuDescription normalizes ALL CAPS descriptions to sentence case", () => {
+		expect(
+			formatMenuDescription(
+				"DELICIOSO ROLL RELLENO DE SALMON Y PALTA, CUBIERTO EN SESAMO TOSTADO. INCLUYE SOYA Y BBQ.",
+			),
+		).toBe("Delicioso roll relleno de salmon y palta, cubierto en sesamo tostado. Incluye soya y BBQ.");
+		expect(formatMenuDescription("Ya en minúsculas y Mayúsculas.")).toBe("Ya en minúsculas y Mayúsculas.");
+	});
+
+	it("isPromocionesCategoryName recognizes promo variations and rejects others", () => {
+		expect(isPromocionesCategoryName("Promociones")).toBe(true);
+		expect(isPromocionesCategoryName("promociones")).toBe(true);
+		expect(isPromocionesCategoryName("PROMOCIONES")).toBe(true);
+		expect(isPromocionesCategoryName("Promoción")).toBe(true);
+		expect(isPromocionesCategoryName("promocion")).toBe(true);
+		expect(isPromocionesCategoryName("Promos")).toBe(true);
+		expect(isPromocionesCategoryName("promo")).toBe(true);
+		expect(isPromocionesCategoryName("  Promociones  ")).toBe(true);
+
+		expect(isPromocionesCategoryName("Pizzas")).toBe(false);
+		expect(isPromocionesCategoryName("Bebidas")).toBe(false);
+		expect(isPromocionesCategoryName(null)).toBe(false);
+		expect(isPromocionesCategoryName(undefined)).toBe(false);
 	});
 });

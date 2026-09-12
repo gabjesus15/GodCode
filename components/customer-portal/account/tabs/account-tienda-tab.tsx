@@ -307,6 +307,7 @@ export function AccountTiendaTab({
                       <p className="mb-2 text-xs font-medium text-[#6e6e73]">Tipo de barra de navegación</p>
                       <StoreThemeNavbarPicker
                         value={storeThemeDraft?.navbarType}
+                        theme={storeThemeDraft}
                         onChange={setNavbarType}
                         disabled={busy}
                       />
@@ -341,6 +342,7 @@ export function AccountTiendaTab({
                   <div className="px-5 pb-5">
                     <StoreThemeProductCardPicker
                       value={storeThemeDraft?.productCardStyle}
+                      theme={storeThemeDraft}
                       onChange={setProductCardStyle}
                       disabled={busy}
                     />
@@ -362,6 +364,7 @@ export function AccountTiendaTab({
                   <div className="px-5 pb-5">
                     <StoreThemeProductDetailsPicker
                       value={storeThemeDraft?.productDetailsMode}
+                      theme={storeThemeDraft}
                       onChange={setProductDetailsMode}
                       disabled={busy}
                     />

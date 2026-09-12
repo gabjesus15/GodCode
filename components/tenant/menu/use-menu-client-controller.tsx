@@ -8,7 +8,20 @@ import { getTenantScopedPath, getTenantPrefixFromPathname } from "../utils/tenan
 import { normalizeDeliverySettings } from "@/lib/delivery/delivery-settings";
 import { mergeMenuPathQuery } from "@/utils/tenant-url";
 import { readEmbeddedPreviewFromLocation } from "@/lib/store-theme/preview-theme-messaging";
-import { FIRE_ICON, getAvailableContactChannels, getBranchesWithContactChannel, openBranchContactUrl, resolveContactFlowStep, resolveMenuCartUiMode, shouldShowBottomNav, shouldShowContactTab, type BranchContactChannel } from "@/lib/tenant/menu/menu-helpers";
+import {
+	FIRE_ICON,
+	formatMenuDescription,
+	formatMenuTitle,
+	getAvailableContactChannels,
+	getBranchesWithContactChannel,
+	openBranchContactUrl,
+	resolveBranchSelectorPlacement,
+	resolveContactFlowStep,
+	resolveMenuCartUiMode,
+	shouldShowBottomNav,
+	shouldShowContactTab,
+	type BranchContactChannel,
+} from "@/lib/tenant/menu/menu-helpers";
 import { buildModalBranchItems } from "./menu-branch-items";
 import { MenuCartLayer } from "./menu-cart-layer";
 import { MenuNavbar } from "./menu-navbar";
@@ -33,8 +46,8 @@ export function useMenuClientController(props: MenuClientProps) {
 		businessInfo,
 		branches,
 		openBranchIds,
-		categories,
-		products,
+		categories: rawCategories,
+		products: rawProducts,
 		selectedBranchId,
 		country = "CL",
 		currency = "CLP",
@@ -46,6 +59,21 @@ export function useMenuClientController(props: MenuClientProps) {
 		orderChannel = "both",
 		tenantSlug: tenantSlugProp = null,
 	} = props;
+
+	const categories = useMemo(() => {
+		return (rawCategories ?? []).map((cat) => ({
+			...cat,
+			name: formatMenuTitle(cat.name),
+		}));
+	}, [rawCategories]);
+
+	const products = useMemo(() => {
+		return (rawProducts ?? []).map((prod) => ({
+			...prod,
+			name: formatMenuTitle(prod.name),
+			description: formatMenuDescription(prod.description),
+		}));
+	}, [rawProducts]);
 
 	const mounted = useTenantMounted();
 	const isLowEnd = useLowEndDevice();
@@ -325,6 +353,11 @@ export function useMenuClientController(props: MenuClientProps) {
 	}, [closeContactUi, pendingContactChannel]);
 
 	const handleContactClick = useCallback(() => {
+		if (isContactChannelSheetOpen || isContactBranchModalOpen) {
+			closeContactUi();
+			return;
+		}
+
 		const step = resolveContactFlowStep(branches, selectedBranchId);
 		if (!step) return;
 
@@ -342,7 +375,7 @@ export function useMenuClientController(props: MenuClientProps) {
 
 		setPendingContactChannel(step.channel);
 		setIsContactBranchModalOpen(true);
-	}, [branches, selectedBranchId]);
+	}, [branches, closeContactUi, isContactBranchModalOpen, isContactChannelSheetOpen, selectedBranchId]);
 
 	const handleContactChannelSelect = useCallback((channel: BranchContactChannel) => {
 		setIsContactChannelSheetOpen(false);
@@ -395,6 +428,14 @@ export function useMenuClientController(props: MenuClientProps) {
 
 	const pageClassName = `page-wrapper navbar-type-${navbarType} nav-mode-${effectiveNavigationMode} card-style-${cardStyle} cart-ui-${cartUiMode}${onlineOrderingEnabled === false ? " online-ordering-disabled" : ""}${isLowEnd ? " low-end-device" : ""}${previewDeviceClass ? ` ${previewDeviceClass}` : ""}${isEmbeddedPreview ? " embedded-preview" : ""}`;
 
+	/**
+	 * Es seguro bajar el selector: sin sucursal elegida `resolveMenuCartUiMode`
+	 * devuelve "none" y la barra no se monta, pero en ese estado el modal de
+	 * sucursales se abre bloqueado (`allowClose` es falso), asi que el selector
+	 * nunca es la unica via para elegir — solo para cambiar.
+	 */
+	const branchSelectorInBottomNav = resolveBranchSelectorPlacement(showBottomNav) === "bottom-nav";
+
 	const navbar = (
 		<MenuNavbar
 			navbarType={navbarType}
@@ -405,6 +446,7 @@ export function useMenuClientController(props: MenuClientProps) {
 			selectedBranch={selectedBranch}
 			isEmbeddedPreview={isEmbeddedPreview}
 			onOpenBranchModal={() => setIsLocationModalOpen(true)}
+			showBranchSelector={!branchSelectorInBottomNav}
 			onBackHome={() => {
 				if (isEmbeddedPreview || readEmbeddedPreviewFromLocation()) return;
 				router.replace(homePath);
@@ -440,8 +482,26 @@ export function useMenuClientController(props: MenuClientProps) {
 			totalItems={totalItems}
 			activeBottomTab={activeBottomTab}
 			showContactTab={showContactTab}
-			onHome={scrollToHome}
-			onCart={handleCartToggle}
+			showBranchSelector={branchSelectorInBottomNav}
+			isEmbeddedPreview={isEmbeddedPreview}
+			onOpenBranchModal={() => {
+				if (isContactChannelSheetOpen || isContactBranchModalOpen) {
+					closeContactUi();
+				}
+				setIsLocationModalOpen(true);
+			}}
+			onHome={() => {
+				if (isContactChannelSheetOpen || isContactBranchModalOpen) {
+					closeContactUi();
+				}
+				scrollToHome();
+			}}
+			onCart={() => {
+				if (isContactChannelSheetOpen || isContactBranchModalOpen) {
+					closeContactUi();
+				}
+				handleCartToggle();
+			}}
 			onContact={handleContactClick}
 		/>
 	);

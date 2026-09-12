@@ -36,12 +36,14 @@ export function Navbar({ categories, activeCategory, onCategoryClick }: NavbarPr
       <div className="navbar-main-row">
         <div className="navbar-tabs-area">
           <div className="nav-fade-left" />
-          <nav className="navbar-container" ref={scrollRef as React.RefObject<HTMLDivElement>}>
+          <nav aria-label="Categorías" className="navbar-container" ref={scrollRef as React.RefObject<HTMLDivElement>}>
             {categories.map((cat) => (
               <button
                 key={cat.id}
                 data-id={cat.id}
+                type="button"
                 onClick={() => handleClick(cat.id)}
+                aria-current={activeCategory === cat.id ? "true" : undefined}
                 className={`tab-item ${activeCategory === cat.id ? "active" : ""}`}
               >
                 {cat.name}

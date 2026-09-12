@@ -236,7 +236,7 @@
   overflow: hidden;
   background: #0f0f12;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--card-elev-rest);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
   cursor: default;
 }
@@ -255,7 +255,7 @@
 .product-layout-clean.card:hover {
   transform: translateY(-4px);
   border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--card-elev-hover);
 }
 .product-layout-clean .card__img {
   position: absolute;
@@ -285,16 +285,60 @@
 .product-layout-clean.card:hover .card__name {
   transform: translateX(2px);
 }
+
+/**
+ * La franja lateral escribe en vertical, pero solo el <p> del nombre lo hacia:
+ * la etiqueta "Ver producto" seguia en horizontal dentro de una columna de
+ * 38px, se desbordaba por ambos lados y empujaba el nombre fuera de la tarjeta.
+ * El cliente veia "r producto" recortado sobre la foto y ningun nombre.
+ *
+ * La franja pasa a ser la que impone el flujo vertical; el nombre se queda con
+ * el espacio disponible y la etiqueta ocupa una cola fija al final.
+ */
+.product-layout-clean .card__name {
+  writing-mode: vertical-rl;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  overflow: hidden;
+}
+.product-layout-clean .card__name > p {
+  margin: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.product-layout-clean .clean-details-affordance {
+  flex: 0 0 auto;
+  /* La franja es clara: el color base de la etiqueta (blanco al 55%) seria
+     invisible aqui. */
+  color: rgba(24, 24, 27, 0.5);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 .product-layout-clean .card__name p {
   margin: 0;
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   text-align: center;
   writing-mode: vertical-rl;
-  text-orientation: upright;
+  /**
+   * Era `upright`: cada letra latina de pie, apilada una por linea. A ~10px por
+   * glifo, un nombre de 28 caracteres pedia unos 280px en una franja de 200px,
+   * asi que se cortaba a media palabra en 6 de cada 12 productos.
+   *
+   * `mixed` — el valor por defecto — gira el texto latino 90 grados y lo hace
+   * leer a lo largo de la franja, como el lomo de un libro: entra unas tres
+   * veces mas nombre en el mismo recorrido y se lee de un vistazo. Es ademas
+   * como ya se comportaba la etiqueta "Ver producto" justo debajo.
+   */
+  text-orientation: mixed;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -317,7 +361,7 @@
 .product-layout-clean .card__preci--now {
   font-size: 1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--price-color, #fff);
   letter-spacing: -0.02em;
 }
 .product-layout-clean .card__icon {
@@ -390,7 +434,7 @@
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--card-elev-rest);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
 }
 /* colored accent bar top */
@@ -404,7 +448,7 @@
 .product-layout-detailed:hover {
   transform: translateY(-4px);
   border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--card-elev-hover);
 }
 .product-layout-detailed .detailed-image-container {
   position: relative;
@@ -454,11 +498,11 @@
 .product-layout-detailed .detailed-new-price {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--price-color, #fff);
   letter-spacing: -0.01em;
 }
 .product-layout-detailed .detailed-new-price.layout-price--sale {
-  color: #10b981;
+  color: var(--discount-color, #25d366);
 }
 .product-layout-detailed .detailed-add-btn {
   display: inline-flex;
@@ -520,7 +564,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--card-elev-rest);
   transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
 }
 /* accent stripe */
@@ -533,7 +577,7 @@
 .product-layout-horizontal:hover {
   transform: translateY(-3px);
   border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.38);
+  box-shadow: var(--card-elev-hover);
 }
 .product-layout-horizontal .horizontal-image-container {
   position: relative;
@@ -566,7 +610,7 @@
 .product-layout-horizontal .horizontal-price {
   font-size: 1rem;
   font-weight: 800;
-  color: var(--tenant-primary, #fbbf24);
+  color: var(--price-color, #fff);
 }
 .product-layout-horizontal .horizontal-desc {
   margin: 0;
@@ -652,13 +696,13 @@
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--card-elev-rest);
   transition: box-shadow 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
 }
 .product-layout-sidebar:hover {
   transform: translateY(-4px);
   border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--card-elev-hover);
 }
 .product-layout-sidebar .sidebar-image-container {
   position: relative;
@@ -750,7 +794,7 @@
 .product-layout-sidebar .sidebar-price {
   font-size: 1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--price-color, #fff);
   margin-top: auto;
   padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -793,16 +837,20 @@
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  /* Conserva el reflejo interior, que es lo que le da el canto de cristal;
+     la elevacion la pone la escala compartida. */
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.05) inset,
-    0 6px 20px rgba(0, 0, 0, 0.1);
+    var(--card-elev-rest);
   transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 .product-layout-rappi:hover {
   transform: translateY(-3px);
+  /* La sombra de hover era mas clara que la de reposo (0.14 frente a 0.28):
+     al pasar por encima la tarjeta se hundia en lugar de levantarse. */
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 1) inset,
-    0 12px 30px rgba(0, 0, 0, 0.14);
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    var(--card-elev-hover);
 }
 .product-layout-rappi .rappi-image-container {
   position: relative;
@@ -852,7 +900,7 @@
 .product-layout-rappi .rappi-price {
   font-size: 0.95rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--price-color, #fff);
   margin-top: 2px;
 }
 .product-layout-rappi .rappi-actions {
@@ -909,13 +957,13 @@
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--card-elev-rest);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
 }
 .product-layout-sneaker:hover {
   transform: translateY(-4px);
   border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--card-elev-hover);
 }
 .product-layout-sneaker .sneaker-head {
   position: relative;
@@ -1001,7 +1049,7 @@
 .product-layout-sneaker .sneaker-price-label {
   font-size: 1.05rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--price-color, #fff);
   letter-spacing: -0.02em;
 }
 .product-layout-sneaker .sneaker-price-old {
@@ -1066,13 +1114,13 @@
   overflow: hidden;
   background: #09090b;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--card-elev-rest);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
 }
 .product-layout-skew.card:hover {
   transform: translateY(-4px);
   border-color: var(--tenant-primary, rgba(255, 255, 255, 0.15));
-  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--card-elev-hover);
 }
 .product-layout-skew .skew-bg-text {
   position: absolute;
@@ -1136,7 +1184,7 @@
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--tenant-primary, #a855f7);
+  color: var(--price-color, #fff);
   letter-spacing: -0.02em;
 }
 .product-layout-skew .buy.skew-btn {
@@ -1309,13 +1357,34 @@
   }
 }
 
+/**
+ * Acuse de pulsado, comun a los nueve estilos.
+ *
+ * Cada layout traia :hover pero ninguno :active. En un menu que se usa sobre
+ * todo con el dedo no existe el hover: al tocar un producto no pasaba nada
+ * hasta que abria el modal o el panel. El gesto necesita respuesta en el
+ * pointer-down, no en el release.
+ *
+ * Es deliberadamente sutil y corto para que no compita con el transform de
+ * :hover de cada layout ni retrase la apertura del detalle.
+ */
+[class*="product-layout-"]:active,
+.product-card:active {
+  /* Conserva el translateZ(0) que promociona la tarjeta a capa propia: pisarlo
+     justo durante el gesto es lo que produce el tiron al pulsar. */
+  transform: translateZ(0) scale(0.985);
+  transition-duration: 0.1s;
+}
+
 /* Respect reduced-motion preference */
 @media (prefers-reduced-motion: reduce) {
   [class*="product-layout-"] {
     transition: none !important;
     will-change: auto;
   }
-  [class*="product-layout-"]:hover {
+  [class*="product-layout-"]:hover,
+  [class*="product-layout-"]:active,
+  .product-card:active {
     transform: none !important;
   }
   .product-card-media__img {
@@ -1338,7 +1407,10 @@
   border-radius: 36px;
   /* Removed overflow: hidden so it NEVER clips the absolute button! */
   border: none;
-  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.35));
+  /* `drop-shadow` no admite spread, asi que el alcance lateral se acota
+     bajando el blur y se dirige hacia abajo subiendo el desplazamiento.
+     Queda en 5px de lado y 13 abajo: la misma silueta que --card-elev-rest. */
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.45));
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
   cursor: default;
   background: transparent;
@@ -1348,7 +1420,7 @@
 }
 .product-layout-food:hover {
   transform: translateY(-4px);
-  filter: drop-shadow(0 20px 20px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 16px 12px rgba(0, 0, 0, 0.5));
 }
 
 .product-layout-food .food-card-bg {
@@ -1492,17 +1564,36 @@
   white-space: nowrap;
 }
 
+/**
+ * Los otros ocho estilos apilan precio tachado y precio vigente en columna
+ * (`.layout-price-block`). Food los ponia en fila: con los 56px reservados para
+ * el boton, dos precios no caben en los ~60px restantes y el vigente colapsaba a
+ * 3px de ancho — el producto rebajado se quedaba literalmente sin precio.
+ */
 .product-layout-food .food-price-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
 }
 
 .product-layout-food .food-price {
-  font-size: 24px;
+  /**
+   * Era `24px` fijo. La tarjeta reserva 56px a la derecha para el boton absoluto,
+   * asi que en movil a dos columnas al precio le quedaban 60px y "$10.00" pedia
+   * 68: se truncaba a "$1…" en 4 de cada 6 productos, y en uno quedaban 3px.
+   * Un precio ilegible es lo peor que puede pasar en una carta.
+   *
+   * Ya existia un `clamp` responsive mas arriba, pero esta regla base va
+   * despues en el archivo y lo pisaba siempre: era codigo muerto. El tamano
+   * fluido vive ahora aqui, donde nada lo sobreescribe.
+   */
+  font-size: clamp(1rem, 5vw, 1.5rem);
   font-weight: 600;
-  color: white;
-  letter-spacing: -0.04em;
+  color: var(--price-color, #fff);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1606,4 +1697,29 @@
   font-size: 1.1rem;
   width: 24px;
   text-align: center;
+}
+
+/* =========================================
+   COMPENSACION DEL TRAZO EN EL TEXTO PEQUENO
+   =========================================
+
+   El menu venia pintandose en Arial —los ficheros de la fuente declarada
+   estaban a 0 bytes— y Montserrat tiene el asta bastante mas fina: medido a
+   200px, 14px frente a los 17px de Arial, un 18% menos.
+
+   En titulares y precios eso es justo lo que se buscaba. En la descripcion del
+   plato no: son 11-14px de gris sobre tarjeta oscura, y ahi un 18% menos de
+   trazo es la diferencia entre leerla y adivinarla — el mismo problema de
+   legibilidad que arrastraba el resto del menu.
+
+   450 no es un numero redondeado a ojo: es el peso al que el asta de Montserrat
+   vuelve a medir exactamente 17px, el grosor que el texto tenia antes. Ni mas,
+   para no engordar lo que ya se leia bien. Es un peso real, no sintetico,
+   porque la fuente es variable. */
+.product-desc-clamped,
+.product-layout-detailed .detailed-desc,
+.product-layout-horizontal .horizontal-desc,
+.product-layout-rappi .rappi-desc,
+.product-layout-sidebar .sidebar-desc {
+  font-weight: 450;
 }

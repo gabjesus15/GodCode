@@ -117,8 +117,11 @@
     justify-content: center;
     width: 36px;
     height: 36px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Mismo motivo que el circulo de categorias: al 6% saltaba 9 niveles sobre un
+       fondo claro y la pastilla de busqueda no llegaba a verse. Al 12% se lee
+       sobre cualquier fondo que configure el tenant. */
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50px;
     cursor: pointer;
     overflow: hidden;
@@ -245,16 +248,21 @@
         flex-shrink: 0;
     }
 
+    /* Encogia a 32x32 justo en movil, que es donde se usa con el dedo: el objetivo
+       se hacia mas pequeño precisamente al pasar a tactil, y es la unica via para
+       buscar en la carta. Sube a 40, que sigue cabiendo en la fila del header —la
+       pastilla de sucursal de al lado ya mide 44 de alto— y deja de ser un blanco
+       incomodo. */
     .search-pill-wrapper {
-        width: 32px;
-        height: 32px;
+        width: 40px;
+        height: 40px;
     }
 
     .search-pill-wrapper.expanded {
         position: relative;
         right: auto;
         width: min(58vw, 190px);
-        height: 34px;
+        height: 40px;
         padding-left: 8px;
         z-index: auto;
     }
