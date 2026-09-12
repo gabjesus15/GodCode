@@ -1289,22 +1289,45 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 60px 20px;
+    gap: 10px;
+    padding: 40px 24px;
     text-align: center;
     flex: 1;
 }
 
-.cart-panel .empty-state .empty-emoji {
-    font-size: 3.5rem;
-    line-height: 1;
+/* Mismo circulo que el resto del cromo del menu: 12% de blanco con borde al
+   20%. Al 4-8% no se despegaba del fondo (por debajo del umbral de percepcion)
+   y el icono quedaba flotando sin caja. */
+.cart-panel .empty-state__icon {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 4px;
 }
 
 .cart-panel .empty-state h3 {
     color: white;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     font-weight: 700;
+    letter-spacing: -0.01em;
     margin: 0;
+}
+
+/* La pista va al 70% y no mas bajo: es texto de 0.9rem sobre un panel casi
+   negro, y por debajo de ese nivel deja de cumplir el 4.5:1. */
+.cart-panel .empty-state__hint {
+    margin: 0;
+    max-width: 30ch;
+    font-size: 0.9rem;
+    font-weight: 450;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .cart-panel .empty-state .btn {

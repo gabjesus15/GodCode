@@ -160,7 +160,7 @@
           "yourOrder": "Seu pedido", "copyOrderNumber": "Copiar numero do pedido", "deliveryCode": "Codigo de entrega", "copyDeliveryCode": "Copiar codigo de entrega",
           "pickupAt": "Retirada em", "addressUnavailable": "Endereco indisponivel", "storeNameFallback": "Nome da loja", "orderNumber": "Pedido #"
         },
-        "empty": { "title": "Carrinho vazio" },
+        "empty": { "title": "Carrinho vazio", "subtitle": "Adicione pratos do cardápio e eles aparecerão aqui." },
         "item": { "productFallback": "Produto", "removeProduct": "Remover produto", "decreaseQuantity": "Diminuir quantidade", "increaseQuantity": "Aumentar quantidade" },
         "ws": { "titlePrefix": "NOVO PEDIDO WEB", "businessFallback": "RESTAURANTE", "customer": "Cliente", "rut": "Documento", "phone": "Telefone", "typeLabel": "Tipo", "typeDelivery": "ENTREGA", "typePickup": "RETIRADA NO LOCAL", "shipping": "Entrega", "subtotalProducts": "Subtotal dos produtos", "couponLabel": "Cupom", "orderNumber": "Pedido #", "orderId": "ID do pedido", "handoffCode": "Codigo de entrega", "detail": "DETALHE", "doLabel": "Fazer", "total": "TOTAL", "payment": "Pagamento", "bankTransferTitle": "Transferencia bancaria", "bank": "Banco", "accountType": "Tipo", "account": "Conta", "holder": "Titular", "bankTransferHint": "Quando concluir a transferencia, anexe o comprovante ao seu pedido.", "note": "Observacao" }
       }
