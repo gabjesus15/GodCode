@@ -52,7 +52,7 @@ export const TenantCardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttri
 	},
 );
 
-export type TenantBadgeVariant = "default" | "secondary" | "destructive" | "outline" | "success";
+export type TenantBadgeVariant = "default" | "secondary" | "destructive" | "outline" | "success" | "special" | "promo";
 
 export type TenantBadgeProps = React.HTMLAttributes<HTMLSpanElement> & {
 	variant?: TenantBadgeVariant;

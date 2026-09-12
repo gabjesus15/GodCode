@@ -9,7 +9,6 @@ import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils
 import { getCachedCompany } from "../../utils/tenant-cache";
 import "./styles/TenantUiPrimitives.css";
 import "./styles/index.css";
-import "./tenant-outfit.css";
 import "./tenant-base.css";
 import { TenantShell } from "../../components/tenant/shell/tenant-shell";
 import { QueryProvider } from "@/components/ui/query-provider";
@@ -43,8 +42,15 @@ export async function generateViewport({
   return {
     width: "device-width",
     initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
+    /**
+     * Sin `maximumScale: 1` ni `userScalable: false`.
+     *
+     * Bloqueaban el zoom con pellizco, que es un fallo de WCAG 1.4.4 (AA) y en
+     * una carta duele especialmente: es el gesto con el que alguien con vista
+     * cansada lee la descripcion de un plato o mira bien la foto. El motivo
+     * habitual para bloquearlo — evitar el zoom accidental al tocar dos veces —
+     * ya lo cubren los `touch-action: manipulation` de los controles.
+     */
     themeColor: backgroundColor,
   };
 }

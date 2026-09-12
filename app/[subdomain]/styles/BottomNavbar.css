@@ -1,97 +1,194 @@
 /* =========================================
-   BOTTOM FLOATING NAVBAR (GLASSMORPHISM)
+   BOTTOM FLOATING NAVBAR (SLIDING PILL DOCK)
    ========================================= */
 
 .bottom-floating-navbar {
     position: fixed;
-    bottom: 24px;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%);
-    width: calc(100% - 32px);
-    max-width: 400px;
-    height: 76px;
-    background: rgba(30, 30, 33, 0.76);
+    width: auto;
+    max-width: calc(100% - 24px);
+    height: 58px;
+    background: rgba(30, 30, 34, 0.92);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     backdrop-filter: blur(24px) saturate(180%);
-    border-radius: 40px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-    z-index: 1000;
-    display: flex;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: calc(var(--z-modal, 5000) + 20);
+    display: inline-flex;
     align-items: center;
-    justify-content: space-around;
-    padding: 0 12px;
+    justify-content: center;
+    padding: 6px;
     box-sizing: border-box;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     gap: 6px;
 }
 
-/* Nav Item Base */
+/* Nav Item Base (icon-only button by default) */
 .bottom-nav-item {
-    display: flex;
-    flex-direction: column;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    height: 46px;
+    min-width: 46px;
+    padding: 0 12px;
+    border-radius: 999px;
     cursor: pointer;
     background: transparent;
     border: none;
-    color: #c8c8cc;
-    transition: color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    min-width: 64px;
-    padding: 0;
-    position: relative;
+    color: rgba(255, 255, 255, 0.65);
     outline: none;
     -webkit-tap-highlight-color: transparent;
+    transition: background 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                padding 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.15s ease;
+    position: relative;
+    user-select: none;
+    flex-shrink: 0;
 }
 
+/* Hover fallback on desktop */
+@media (hover: hover) {
+    .bottom-nav-item:not(.active-pill):not(.active-nav-circle):hover {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.08);
+    }
+}
+
+.bottom-nav-item:not(.active-pill):not(.active-nav-circle):active {
+    transform: scale(0.92);
+}
+
+/* Active Item (Expanded Pill with theme accent) */
+.bottom-nav-item.active-pill,
+.bottom-nav-item.active-nav-circle {
+    background: var(--accent-primary, #2563eb);
+    color: #ffffff;
+    padding: 0 20px 0 16px;
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--accent-primary, #2563eb) 45%, transparent);
+}
+
+.bottom-nav-item.active-pill:active,
+.bottom-nav-item.active-nav-circle:active {
+    transform: scale(0.97);
+}
+
+/* Icon Container */
 .bottom-nav-icon-wrap {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
+    width: 24px;
+    height: 24px;
     color: inherit;
     flex-shrink: 0;
-    transition: background 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-        color 0.2s ease,
-        box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.bottom-nav-icon-wrap svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 2;
+    transition: stroke-width 0.2s ease;
+}
+
+.bottom-nav-item.active-pill .bottom-nav-icon-wrap svg,
+.bottom-nav-item.active-nav-circle .bottom-nav-icon-wrap svg {
+    stroke-width: 2.3;
+}
+
+/* Label: Collapsed for inactive items, smoothly expands for active pill */
 .bottom-nav-label {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: inherit;
-    transition: color 0.2s;
-    line-height: 1.1;
-}
-
-/* Active: mismo tamaño de círculo, label siempre visible */
-.bottom-nav-item.active-nav-circle {
-    color: #f2f2f7;
-}
-
-.bottom-nav-item.active-nav-circle .bottom-nav-icon-wrap {
-    background: #ffffff;
-    color: #000000;
-    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.28);
-}
-
-.bottom-nav-item.active-nav-circle .bottom-nav-label {
+    font-size: 0.88rem;
     font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+    white-space: nowrap;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    margin-left: 0;
+    pointer-events: none;
+    transition: max-width 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.22s ease,
+                margin-left 0.25s ease;
 }
 
-/* Cart badge — anclado al icono, no al botón ancho */
+.bottom-nav-item.active-pill .bottom-nav-label,
+.bottom-nav-item.active-nav-circle .bottom-nav-label {
+    max-width: 140px;
+    opacity: 1;
+    margin-left: 8px;
+}
+
+/* Floating Tooltip on Hover for Inactive Tabs */
+.bottom-nav-tooltip {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    opacity: 0;
+    pointer-events: none;
+    background: rgba(18, 18, 22, 0.95);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+    z-index: 100;
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
+}
+
+.bottom-nav-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px 5px 0 5px;
+    border-style: solid;
+    border-color: rgba(18, 18, 22, 0.95) transparent transparent transparent;
+}
+
+@media (hover: hover) {
+    .bottom-nav-item:not(.active-pill):not(.active-nav-circle):hover .bottom-nav-tooltip {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.bottom-nav-item.active-pill .bottom-nav-tooltip,
+.bottom-nav-item.active-nav-circle .bottom-nav-tooltip {
+    display: none;
+}
+
+@media (hover: none) {
+    .bottom-nav-tooltip {
+        display: none !important;
+    }
+}
+
+/* Cart badge — anclado al icono */
 .bottom-nav-cart-badge {
     position: absolute;
-    top: -5px;
+    top: -6px;
     right: -8px;
-    background: #ff4757;
-    color: #fff;
-    font-size: 0.58rem;
+    background: #ff3b30;
+    color: #ffffff;
+    font-size: 0.6rem;
     font-weight: 800;
     line-height: 1;
     min-width: 17px;
@@ -101,61 +198,17 @@
     align-items: center;
     justify-content: center;
     padding: 0 4px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-    border: 2px solid rgba(30, 30, 33, 0.95);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(30, 30, 34, 0.95);
     pointer-events: none;
+    z-index: 2;
 }
 
+.bottom-nav-item.active-pill .bottom-nav-cart-badge,
 .bottom-nav-item.active-nav-circle .bottom-nav-cart-badge {
-    border-color: #fff;
-    top: -4px;
-    right: -6px;
+    border-color: var(--accent-primary, #2563eb);
 }
 
-/* Hover fallback on desktop */
-@media (hover: hover) {
-    .bottom-nav-item:not(.active-nav-circle):hover {
-        color: #ffffff;
-    }
-}
-
-/* Active circle positioning details */
-.bottom-nav-item.active-nav-circle svg {
-    stroke-width: 2.2;
-}
-
-/* Pocos ítems: barra más compacta, sin estirar botones */
-.bottom-floating-navbar--count-2 {
-    max-width: 280px;
-    justify-content: center;
-    gap: 36px;
-    padding: 0 20px;
-}
-
-.bottom-floating-navbar--count-2 .bottom-nav-item {
-    flex: 0 0 auto;
-    min-width: 64px;
-    max-width: none;
-}
-
-/* Adjust layout on tiny mobile screens */
-@media (max-width: 360px) {
-    .bottom-floating-navbar {
-        height: 72px;
-        bottom: 16px;
-        padding: 0 12px;
-    }
-
-    .bottom-floating-navbar--count-2 {
-        gap: 28px;
-        max-width: 260px;
-    }
-
-    .bottom-nav-icon-wrap {
-        width: 44px;
-        height: 44px;
-    }
-}
 
 /* Page wrapper extra padding when floating bar is present */
 .page-wrapper.navbar-type-floating-bottom,
@@ -183,12 +236,6 @@
     padding-bottom: calc(var(--menu-bottom-chrome-h) + env(safe-area-inset-bottom, 0px)) !important;
 }
 
-.bottom-floating-navbar .bottom-nav-item {
-    flex: 1;
-    min-width: 68px;
-    max-width: 110px;
-}
-
 /* Contact channel sheet */
 @keyframes menu-contact-overlay-in {
     from {
@@ -203,12 +250,12 @@
 @keyframes menu-contact-sheet-in {
     from {
         opacity: 0;
-        transform: translateY(100%);
+        transform: translateY(28px) scale(0.97);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
@@ -237,12 +284,12 @@
 @keyframes menu-contact-sheet-out {
     from {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 
     to {
         opacity: 0;
-        transform: translateY(100%);
+        transform: translateY(20px) scale(0.97);
     }
 }
 
@@ -269,7 +316,7 @@
     align-items: flex-end;
     justify-content: center;
     padding: 16px;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(94px + env(safe-area-inset-bottom, 0px));
     animation: menu-contact-overlay-in 0.28s ease-out both;
 }
 
@@ -289,15 +336,15 @@
 .menu-contact-sheet {
     width: 100%;
     max-width: 420px;
-    max-height: min(72dvh, calc(100dvh - 48px - env(safe-area-inset-bottom, 0px)));
+    max-height: min(65dvh, calc(100dvh - 124px - env(safe-area-inset-bottom, 0px)));
     overflow-y: auto;
     background: rgba(28, 28, 32, 0.96);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px 24px 20px 20px;
+    border-radius: 24px;
     padding: 20px;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     transform: translateY(0);
-    animation: menu-contact-sheet-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: menu-contact-sheet-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
     will-change: transform, opacity;
 }
 
@@ -394,10 +441,94 @@
     }
 }
 
-@media (max-width: 768px) {
+@supports not (backdrop-filter: blur(1px)) {
     .bottom-floating-navbar {
-        -webkit-backdrop-filter: none;
-        backdrop-filter: none;
-        background: rgba(30, 30, 33, 0.94);
+        background: rgb(26, 26, 30);
     }
 }
+
+/* Branch selector button specifics */
+.bottom-nav-item--branch:disabled {
+    opacity: 0.45;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Mobile & compact responsive tuning */
+@media (max-width: 600px) {
+    .bottom-floating-navbar {
+        height: 52px;
+        bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+        padding: 4px;
+        gap: 4px;
+    }
+
+    .menu-contact-sheet-overlay {
+        padding: 14px;
+        padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .bottom-nav-item {
+        height: 44px;
+        min-width: 44px;
+        padding: 0 10px;
+    }
+
+    .bottom-nav-item.active-pill,
+    .bottom-nav-item.active-nav-circle {
+        padding: 0 16px 0 12px;
+    }
+
+    .bottom-nav-icon-wrap {
+        width: 22px;
+        height: 22px;
+    }
+
+    .bottom-nav-icon-wrap svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .bottom-nav-label {
+        font-size: 0.82rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .bottom-floating-navbar {
+        height: 48px;
+        bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        padding: 3px;
+        gap: 2px;
+    }
+
+    .menu-contact-sheet-overlay {
+        padding: 10px;
+        padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .bottom-nav-item {
+        height: 40px;
+        min-width: 40px;
+        padding: 0 8px;
+    }
+
+    .bottom-nav-item.active-pill,
+    .bottom-nav-item.active-nav-circle {
+        padding: 0 12px 0 10px;
+    }
+
+    .bottom-nav-label {
+        font-size: 0.76rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bottom-floating-navbar,
+    .bottom-nav-item,
+    .bottom-nav-label,
+    .bottom-nav-tooltip {
+        transition: none !important;
+    }
+}
+

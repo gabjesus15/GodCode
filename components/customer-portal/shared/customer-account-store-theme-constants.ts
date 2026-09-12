@@ -52,7 +52,7 @@ export const STORE_THEME_COLOR_HELPERS: Record<
   priceColor: "Color del precio destacado en cards de producto.",
   discountColor: "Color de badges de descuento y ahorro.",
   hoverColor: "Color al pasar mouse sobre CTA y acciones.",
-  backgroundColor: "Fondo base del menú. A 0% se quita el tint; el patrón mantiene su formato. Ajustá el brillo aparte.",
+  backgroundColor: "Fondo base del menú. La imagen de fondo se escala para llenar la pantalla, sin repetirse: se recorta según la forma del dispositivo. A 0% se quita el tint. Ajustá el brillo aparte.",
 };
 
 export const STORE_THEME_TEMPLATES: Array<{

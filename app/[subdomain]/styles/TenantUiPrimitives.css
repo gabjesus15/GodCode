@@ -1,3 +1,17 @@
+/*
+ * Color del distintivo de oferta. Fijo y no configurable por el tenant: va
+ * encima de la foto del plato y tiene que leerse igual en todos los menus.
+ * Blanco sobre este rojo da 4.99:1.
+ */
+:root {
+	--badge-offer-bg: #d92037;
+	--badge-offer-fg: #ffffff;
+	--badge-special-bg: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+	--badge-special-fg: #ffffff;
+	--badge-promo-bg: linear-gradient(135deg, #e11d48 0%, #ea580c 50%, #d97706 100%);
+	--badge-promo-fg: #ffffff;
+}
+
 /* =========================================================================
  * Tenant UI — primitivos inspirados en shadcn/ui
  * Usa variables del tema del comercio (--tenant-primary, --card-border, etc.)
@@ -90,16 +104,22 @@
 	color: #fff;
 }
 
-.tenant-ui-badge--secondary {
-	background: rgba(15, 15, 15, 0.82);
-	color: #fff;
-	border-color: rgba(255, 255, 255, 0.18);
+.tenant-ui-badge--secondary,
+.tenant-ui-badge--special {
+	background: var(--badge-special-bg);
+	color: var(--badge-special-fg);
+	border-color: rgba(255, 255, 255, 0.25);
+}
+
+.tenant-ui-badge--promo {
+	background: var(--badge-promo-bg);
+	color: var(--badge-promo-fg);
+	border-color: rgba(255, 255, 255, 0.25);
 }
 
 .tenant-ui-badge--destructive {
-	/* Mezcla fuerte con negro: si --price-color es claro, el texto blanco sigue legible. */
-	background: color-mix(in srgb, var(--price-color, #ff4757) 42%, #111 58%);
-	color: #fff;
+	background: var(--badge-offer-bg);
+	color: var(--badge-offer-fg);
 }
 
 .tenant-ui-badge--success {
@@ -124,29 +144,102 @@
 	max-width: calc(100% - 20px);
 }
 
+/*
+ * LOS DOS DISTINTIVOS SOBRE LA FOTO
+ *
+ * "Oferta" se tenia de `--price-color`, el color que el tenant elige para los
+ * PRECIOS. Un negocio real lo tiene en blanco, asi que el distintivo de rebaja
+ * resolvia a `color-mix(blanco 38%, negro 62%)`: un gris #616161. El mismo
+ * negocio tiene un rojo de marca (#c11801) y un ambar de rebaja (#ffbc01), y el
+ * distintivo no usaba ninguno de los dos. Pasaba el contraste con holgura
+ * —6.19:1— y aun asi estaba mal: el problema no era la legibilidad, era que el
+ * color no significaba nada.
+ *
+ * Ahora no depende del tenant a proposito. Va sobre la foto del plato, que
+ * puede ser de cualquier color, y tiene que decir "rebajado" igual en todos los
+ * menus: un rojo fijo y saturado lo hace, un tono de marca se confunde con el
+ * resto del diseno. Blanco sobre #d92037 da 4.99:1, por encima del 4.5:1 que
+ * pide el texto normal.
+ *
+ * "Especial" se queda sin color a proposito. Son dos avisos de peso distinto y
+ * antes competian: un gris y un negro, los dos en mayusculas diminutas. Uno
+ * grita y el otro acompana.
+ */
 .tenant-ui-offer-badges .tenant-ui-badge {
 	text-transform: uppercase;
-	letter-spacing: 0.05em;
-	font-size: 0.62rem;
-	padding: 4px 9px;
-	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
-	text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+	/* El texto sube de 0.62rem (9.9px) a 0.7rem: en mayusculas y espaciado, a
+	   9.9px las letras se empastan. Con el fondo solido la sombra del texto ya
+	   no hace falta y solo ensuciaba los trazos finos. */
+	font-size: 0.7rem;
+	letter-spacing: 0.04em;
+	font-weight: 700;
+	padding: 4px 10px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+	text-shadow: none;
 }
 
 .tenant-ui-offer-badges .tenant-ui-badge--destructive {
-	background: color-mix(in srgb, var(--price-color, #e53935) 38%, #000 62%);
-	color: #fff;
+	background: var(--badge-offer-bg);
+	color: var(--badge-offer-fg);
+	border-color: rgba(0, 0, 0, 0.2);
 }
 
+.tenant-ui-offer-badges .tenant-ui-badge--special,
 .tenant-ui-offer-badges .tenant-ui-badge--secondary {
-	background: rgba(0, 0, 0, 0.78);
-	color: #fff;
-	border-color: rgba(255, 255, 255, 0.22);
+	background: var(--badge-special-bg);
+	color: var(--badge-special-fg);
+	border-color: rgba(255, 255, 255, 0.28);
+	box-shadow: 0 2px 10px rgba(180, 83, 9, 0.45);
+	font-weight: 700;
+}
+
+.tenant-ui-offer-badges .tenant-ui-badge--promo {
+	background: var(--badge-promo-bg);
+	color: var(--badge-promo-fg);
+	border-color: rgba(255, 255, 255, 0.32);
+	box-shadow: 0 2px 10px rgba(234, 88, 12, 0.45);
+	font-weight: 700;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 9px 3px 6px;
+}
+
+.tenant-ui-offer-badges .badge-flame-img {
+	width: 14px;
+	height: 14px;
+	object-fit: contain;
+	display: inline-block;
+	flex-shrink: 0;
+	filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
 }
 
 .product-card.glass.tenant-ui-card {
 	border-color: rgba(255, 255, 255, 0.1);
-	background: linear-gradient(135deg, rgba(30, 30, 30, 0.65) 0%, rgba(15, 15, 15, 0.8) 100%);
+	background: linear-gradient(135deg, rgba(30, 30, 30, 0.78) 0%, rgba(15, 15, 15, 0.88) 100%);
+}
+
+/**
+ * Movil: superficie opaca.
+ *
+ * `ProductCard.css` apaga el `backdrop-filter` de Cristal por debajo de 768px —
+ * correcto, doce tarjetas desenfocando sobre un fondo con imagen hunden a un
+ * Android medio — pero dejaba la translucidez puesta. Sin desenfoque no aporta
+ * material, solo deja pasar el fondo del tenant en crudo, y el contraste del
+ * texto cambia segun el trozo de patron que caiga detras de cada tarjeta.
+ *
+ * Medido sobre un fondo crema: la superficie compone a rgb(104,102,98) arriba y
+ * rgb(60,59,57) abajo, asi que la descripcion iba de 2.64:1 — por debajo del
+ * 4.5:1 — a 5.16:1 dentro de la misma tarjeta, y cambiaba con cada tenant.
+ * Opaca da 8.3:1 estable y una capa compuesta menos en scroll.
+ *
+ * Vive aqui y no junto al `backdrop-filter: none` porque esta es la regla que
+ * gana el fondo: la de `ProductCard.css` tiene menos especificidad.
+ */
+@media (max-width: 768px) {
+	.product-card.glass.tenant-ui-card {
+		background: linear-gradient(135deg, #1e1e1e 0%, #0f0f0f 100%);
+	}
 }
 
 .product-card.glass .btn-add.tenant-ui-btn {

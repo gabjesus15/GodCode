@@ -158,7 +158,7 @@ const GlassCard = React.memo(function GlassCard({ product, logic, priority = fal
 
         <ProductOfferBadges product={product} />
 
-        <ProductQtyBadge quantity={quantity} hydrated={mounted} className="qty-badge-overlay animate-bounce-in" />
+        <ProductQtyBadge quantity={quantity} hydrated={mounted} className="qty-badge-overlay animate-pop-in" />
       </div>
 
       <div className="product-info">

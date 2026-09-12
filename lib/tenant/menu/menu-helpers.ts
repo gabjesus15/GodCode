@@ -1,7 +1,17 @@
 export const FIRE_ICON = "https://fonts.gstatic.com/s/e/notoemoji/latest/1f525/512.gif";
 
 export function isPromocionesCategoryName(name: string | null | undefined): boolean {
-	return String(name || "").trim().toLowerCase() === "promociones";
+	const normalized = String(name || "")
+		.trim()
+		.toLowerCase()
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "");
+	return (
+		normalized === "promociones" ||
+		normalized === "promocion" ||
+		normalized === "promos" ||
+		normalized === "promo"
+	);
 }
 
 export function resolveHomeCategoryId(
@@ -14,6 +24,22 @@ export function resolveHomeCategoryId(
 
 export function shouldShowBottomNav(cardStyle: string, navbarType: string): boolean {
 	return cardStyle === "layout-food" || navbarType === "floating-bottom";
+}
+
+export type BranchSelectorPlacement = "navbar" | "bottom-nav";
+
+/**
+ * Donde vive el selector de sucursal.
+ *
+ * Ocupaba una linea fija bajo el nombre del local en el header. Con la barra
+ * inferior a la vista baja alli, y el nombre se queda con la linea entera.
+ *
+ * La regla es excluyente a proposito: sale en un sitio o en el otro, nunca en
+ * los dos ni en ninguno. Dos selectores para el mismo estado es un fallo de
+ * interfaz; cero deja al cliente sin poder cambiar de local.
+ */
+export function resolveBranchSelectorPlacement(showBottomNav: boolean): BranchSelectorPlacement {
+	return showBottomNav ? "bottom-nav" : "navbar";
 }
 
 export type MenuCartUiMode = "none" | "bottom-nav" | "float-with-modal" | "bottom-nav-only";
@@ -161,4 +187,110 @@ export function resolveContactFlowStep(
 		return { type: "direct", channel, branch: eligible[0] };
 	}
 	return { type: "pick-branch", channel };
+}
+
+// Palabras que deben ir en minúscula en títulos en español (salvo si son la primera palabra)
+const SPANISH_LOWER_WORDS = new Set([
+	"de", "del", "la", "las", "el", "los", "en", "con", "sin", "y", "e", "o", "u", "a", "al", "por", "para",
+]);
+
+// Acrónimos comunes, medidas y números romanos que deben mantenerse en mayúsculas
+const UPPER_ACRONYMS = new Set([
+	"BBQ", "IPA", "DOP", "DOC", "BLT", "KCAL", "VIP", "USA", "USD", "CLP", "UF",
+	"XL", "XXL", "XXXL", "XS",
+	"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+]);
+
+function isAllUpperLetters(str: string): boolean {
+	const lettersOnly = str.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/g, "");
+	if (!lettersOnly) return false;
+	return lettersOnly === lettersOnly.toUpperCase();
+}
+
+function isAllLowerLetters(str: string): boolean {
+	const lettersOnly = str.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/g, "");
+	if (!lettersOnly) return false;
+	return lettersOnly === lettersOnly.toLowerCase();
+}
+
+function formatWord(word: string, index: number, totalWords: number): string {
+	if (!word) return "";
+
+	if (word.includes("-")) {
+		return word
+			.split("-")
+			.map((part, i) => formatWord(part, index === 0 && i === 0 ? 0 : 1, totalWords))
+			.join("-");
+	}
+	if (word.includes("/")) {
+		return word
+			.split("/")
+			.map((part, i) => formatWord(part, index === 0 && i === 0 ? 0 : 1, totalWords))
+			.join("/");
+	}
+
+	const match = word.match(/^([^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ]*)(.*?)([^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ]*)$/);
+	if (match) {
+		const [, prefix, core, suffix] = match;
+		if (!core) return word;
+
+		const coreUpper = core.toUpperCase();
+		const coreLower = core.toLowerCase();
+
+		if (UPPER_ACRONYMS.has(coreUpper)) {
+			return prefix + coreUpper + suffix;
+		}
+
+		if (/^\d+[xX]\d+$/.test(core)) {
+			return prefix + coreUpper + suffix;
+		}
+
+		if (/^\d+(ml|cc|gr|kg|g|l|oz|pcs|pz|cm)$/i.test(core)) {
+			return prefix + coreLower + suffix;
+		}
+
+		if (index > 0 && index < totalWords - 1 && SPANISH_LOWER_WORDS.has(coreLower)) {
+			return prefix + coreLower + suffix;
+		}
+
+		const capitalized = core.charAt(0).toUpperCase() + core.slice(1).toLowerCase();
+		return prefix + capitalized + suffix;
+	}
+
+	return word;
+}
+
+/**
+ * Normaliza nombres de categorías y productos que fueron ingresados en MAYÚSCULAS sostenidas
+ * o minúsculas a un formato Capitalizado elegante y legible, preservando casos mixtos ya formateados.
+ */
+export function formatMenuTitle(title: string | null | undefined): string {
+	if (!title || typeof title !== "string") return title || "";
+	const trimmed = title.trim();
+	if (!trimmed) return "";
+
+	if (!isAllUpperLetters(trimmed) && !isAllLowerLetters(trimmed)) {
+		return trimmed;
+	}
+
+	const words = trimmed.split(/\s+/);
+	return words.map((word, idx) => formatWord(word, idx, words.length)).join(" ");
+}
+
+/**
+ * Normaliza descripciones de productos escritas en MAYÚSCULAS sostenidas a tipo oración (Sentence case).
+ */
+export function formatMenuDescription(desc: string | null | undefined): string {
+	if (!desc || typeof desc !== "string") return desc || "";
+	const trimmed = desc.trim();
+	if (!trimmed) return "";
+
+	if (!isAllUpperLetters(trimmed)) {
+		return trimmed;
+	}
+
+	return trimmed
+		.toLowerCase()
+		.replace(/(^\s*|[.!?]\s+)([a-záéíóúñü])/g, (m, p1, p2) => p1 + p2.toUpperCase())
+		.replace(/\b(bbq|ipa|xl|xxl|2x1|3x2)\b/gi, (m) => m.toUpperCase());
 }

@@ -36,16 +36,26 @@ function HeroSlide({
 			className={`hero-slide hero-slide--image-only${isActive ? " hero-slide--active" : ""}`}
 		>
 			<div className="hero-slide-media">
+				{/*
+				  Llevaba `unoptimized` para no recomprimir el arte subido. La intencion era
+				  buena — un banner promocional lleva texto y los artefactos se notan — pero
+				  el precio era servir el original en crudo: 1,8 MB de PNG, sin `srcset`, en
+				  la primera pantalla del menu. En un movil con DPR 2 la ranura pide 708 px y
+				  se descargaban 1920: 2,7 veces mas de lo necesario, y encima es el elemento
+				  LCP.
+				  `quality: 95` mantiene el texto nitido y deja que Next redimensione y sirva
+				  AVIF/WebP. El host de Storage ya esta en `remotePatterns` — las fotos de
+				  producto pasan por el optimizador desde el mismo sitio.
+				*/}
 				{shouldRenderImage ? (
 					<Image
 						src={fallbackUrl}
 						alt="Promoción"
 						fill
-						sizes="100vw"
+						sizes="(min-width: 1024px) min(1220px, 100vw), 100vw"
 						priority={isFirst}
 						loading={isFirst ? "eager" : "lazy"}
-						// Carrusel: servir el archivo subido tal cual (sin recomprimir con next/image).
-						unoptimized
+						quality={95}
 						className="hero-slide-image"
 						style={{ objectFit: "cover" }}
 					/>

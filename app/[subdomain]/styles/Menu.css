@@ -31,7 +31,7 @@
     left: 0;
     right: 0;
     width: 100%;
-    z-index: 10000;
+    z-index: var(--z-sticky-header, 100);
     padding: calc(8px + env(safe-area-inset-top)) 0 8px;
     pointer-events: auto;
     border-bottom: none;
@@ -81,12 +81,22 @@
     border-radius: 6px;
 }
 
+/*
+ * Es el <h1> de la pagina —el nombre del negocio— y estaba a 1rem: exactamente
+ * el tamano por defecto del navegador para un parrafo. Al lado de un logo de
+ * 52px quedaba 3.25 veces mas pequeno que el, asi que se leia como un pie de
+ * foto del logo en vez de como el titulo del sitio.
+ *
+ * Escala con el ancho hasta 1.35rem. A 1111px sale 21px, que deja el logo 2.4
+ * veces mas alto: la proporcion habitual de un logotipo con su nombre al lado.
+ */
 .nav-brand-title {
-    font-size: 1rem;
+    font-size: clamp(1.05rem, 0.85rem + 0.7vw, 1.35rem);
     margin: 0;
     font-weight: 700;
     color: white;
     line-height: 1.2;
+    letter-spacing: -0.01em;
 }
 
 .nav-location-button {
@@ -141,8 +151,16 @@
     min-width: 0;
 }
 
+/*
+ * El header es fijo, asi que este bloque es lo unico que separa el contenido de
+ * debajo de la barra. Su altura la publica `useMenuHeaderHeight` midiendo el
+ * header real: `--menu-header-height` se queda solo como respaldo para el primer
+ * pintado, porque la altura depende de los datos del tenant (la tira de
+ * categorias crece con lo largos que sean los nombres) y ningun valor escrito a
+ * mano puede acertar para todos.
+ */
 .menu-spacer {
-    height: calc(var(--menu-header-height) + env(safe-area-inset-top));
+    height: calc(var(--menu-header-measured, var(--menu-header-height)) + env(safe-area-inset-top));
     width: 100%;
 }
 
@@ -162,7 +180,7 @@
     padding-bottom: 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     position: relative;
-    scroll-margin-top: calc(180px + env(safe-area-inset-top));
+    scroll-margin-top: calc(var(--menu-header-measured, var(--menu-header-height)) + 12px + env(safe-area-inset-top));
     content-visibility: auto;
     contain-intrinsic-size: auto 520px;
     /* Asegura que el título no quede tapado por el header */
@@ -174,8 +192,7 @@
     gap: 12px;
     font-size: 1.5rem;
     font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: -0.01em;
     color: var(--text-primary);
     line-height: 1.15;
 }
@@ -267,7 +284,10 @@
     .navbar-sticky {
         -webkit-backdrop-filter: none !important;
         backdrop-filter: none !important;
-        background: rgba(12, 12, 14, 0.94) !important;
+        /* Opaco, no 0.94: sin desenfoque ese 6% no aporta material, solo deja
+           pasar el contenido que scrollea por debajo. Se veia el precio de una
+           tarjeta fantasmeando dentro del header en cuanto se bajaba un poco. */
+        background: rgb(12, 12, 14) !important;
     }
 
     .fire-icon {
@@ -321,7 +341,7 @@ section {
     }
 
     .nav-brand-title {
-        font-size: 0.84rem;
+        font-size: 0.95rem;
         line-height: 1.1;
         max-width: 116px;
         overflow: hidden;
@@ -342,34 +362,8 @@ section {
         font-size: 0.64rem;
     }
 
-    .category-section {
-        scroll-margin-top: calc(116px + env(safe-area-inset-top));
-    }
-
-    .icon-list-categories {
-        scroll-padding-inline: 8px;
-    }
-
-    .icon-list-container {
-        gap: 14px;
-        padding-inline: 8px;
-    }
-
-    .icon-list-card {
-        min-width: 62px;
-        max-width: 76px;
-    }
-
-    .icon-list-card-image-wrapper {
-        width: 50px;
-        height: 50px;
-    }
-
-    .icon-list-card-name {
-        font-size: 0.66rem;
-        max-width: 76px;
-    }
 }
+
 
 /* =========================================
    ANIMACIÓN NAV BRAND (MOBILE SEARCH)
@@ -390,7 +384,9 @@ section {
     /* Transición suave para ocultar/mostrar */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 1;
-    max-width: 200px; /* Ancho suficiente para el contenido */
+    /* Sube con el titulo: a 1.35rem un nombre de dos palabras pedia mas de los
+       200px de antes y se cortaba con puntos suspensivos. */
+    max-width: 320px;
     overflow: hidden;
     white-space: nowrap;
 }
@@ -407,13 +403,6 @@ section {
         max-width: 1240px;
     }
 
-    .menu-spacer {
-        height: calc(var(--menu-header-height) + env(safe-area-inset-top) + 4px);
-    }
-
-    .category-section {
-        scroll-margin-top: calc(156px + env(safe-area-inset-top));
-    }
 }
 
 @media (max-width: 600px) {
@@ -506,7 +495,7 @@ html, body {
         backdrop-filter: blur(20px);
         border-right: 1px solid rgba(255, 255, 255, 0.08);
         padding: 24px 20px;
-        z-index: 10100;
+        z-index: calc(var(--z-sticky-header, 100) + 10);
         overflow-y: auto;
     }
 
@@ -526,8 +515,8 @@ html, body {
         display: none !important;
     }
 
-    .page-wrapper.navbar-type-sidebar-categories .menu-spacer {
-        height: calc(76px + env(safe-area-inset-top));
+    .page-wrapper.navbar-type-sidebar-categories {
+        --menu-header-height: 76px;
     }
 }
 
@@ -675,17 +664,14 @@ html, body {
     display: none !important;
 }
 
-.page-wrapper.navbar-type-mega-menu .menu-spacer {
-    height: calc(76px + env(safe-area-inset-top));
+.page-wrapper.navbar-type-mega-menu {
+    --menu-header-height: 76px;
 }
 
 /* Layout: Icon List (Rappi Style) */
-.page-wrapper.navbar-type-icon-list .menu-spacer {
-    height: calc(168px + env(safe-area-inset-top));
-}
-
-.page-wrapper.navbar-type-floating-bottom .menu-spacer {
-    height: calc(168px + env(safe-area-inset-top));
+.page-wrapper.navbar-type-icon-list,
+.page-wrapper.navbar-type-floating-bottom {
+    --menu-header-height: 168px;
 }
 
 .icon-list-categories-shell {
@@ -707,7 +693,27 @@ html, body {
     scroll-behavior: smooth;
     scroll-snap-type: x proximity;
     scroll-padding-inline: 12px;
-    text-align: center;
+}
+
+/* Máscaras de degradé dinámicas para indicar scroll y suavizar los bordes */
+.icon-list-categories.fade-right {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 54px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 54px), transparent 100%);
+}
+
+.icon-list-categories.fade-both {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 48px, black calc(100% - 54px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 48px, black calc(100% - 54px), transparent 100%);
+}
+
+.icon-list-categories.fade-left {
+    -webkit-mask-image: linear-gradient(to left, black calc(100% - 48px), transparent 100%);
+    mask-image: linear-gradient(to left, black calc(100% - 48px), transparent 100%);
+}
+
+.icon-list-categories.no-fade {
+    -webkit-mask-image: none;
+    mask-image: none;
 }
 
 .icon-list-categories::-webkit-scrollbar {
@@ -717,7 +723,11 @@ html, body {
 .icon-list-container {
     display: inline-flex;
     align-items: flex-start;
-    justify-content: center;
+    justify-content: flex-start;
+    justify-content: safe center;
+    min-width: 100%;
+    width: max-content;
+    box-sizing: border-box;
     gap: 18px;
     padding: 8px 12px 6px;
     text-align: left;
@@ -754,12 +764,25 @@ html, body {
     transform: scale(0.95);
 }
 
+/**
+ * El circulo que enmarca cada categoria iba a blanco 4% con borde al 8%. Es el
+ * lenguaje de "chip de cristal", pero aqui no hay desenfoque en movil y el fondo
+ * lo pone el tenant, asi que el resultado dependia de que hubiera detras.
+ *
+ * Medido: sobre el fondo crema oscurecido de un tenant real el chip saltaba solo
+ * 6 niveles de gris respecto a su fondo — por debajo del umbral de percepcion
+ * (~12). El circulo no se veia y los iconos quedaban flotando sin caja, que es
+ * justo la sensacion de cromo "sin armar".
+ *
+ * Al 12% salta 18 niveles sobre un fondo claro y 29 sobre uno oscuro: se lee en
+ * los dos extremos que un tenant puede configurar, sin convertirse en una losa.
+ */
 .icon-list-card-image-wrapper {
     width: 54px;
     height: 54px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -778,6 +801,7 @@ html, body {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    image-rendering: -webkit-optimize-contrast;
 }
 
 .icon-list-card-placeholder,
@@ -793,16 +817,26 @@ html, body {
     color: white;
 }
 
+/**
+ * Los nombres de categoria iban a una sola linea con `nowrap` y 84px de ancho:
+ * de cuatro categorias reales, tres salian cortadas a media palabra
+ * ("Especialidades Gourmet", "Carnivoras & Ahumadas", "Vegetarianas & Frescas").
+ * Con dos lineas entran enteras, que es ademas el patron habitual para etiquetas
+ * bajo iconos circulares.
+ *
+ * El color iba al 62% de blanco: sobre el fondo claro de un tenant son 3.3:1 a
+ * 11px, por debajo del 4.5:1 que pide el texto normal. Al 88% pasa.
+ */
 .icon-list-card-name {
     font-size: 0.7rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.62);
+    color: rgba(255, 255, 255, 0.88);
     transition: color 0.2s ease;
     width: 100%;
-    max-width: 84px;
+    max-width: 86px;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
     text-align: center;
     line-height: 1.2;
 }
@@ -970,6 +1004,7 @@ html, body {
 .mega-menu-item-icon {
     width: 100%;
     height: 100%;
+    image-rendering: -webkit-optimize-contrast;
 }
 
 .mega-menu-item-icon.icon-cover {
@@ -1021,8 +1056,21 @@ html, body {
     }
 }
 
+/**
+ * Con tarjetas Food Deluxe el FAB de categorias se oculta y este disparador del
+ * header queda como unica via para abrir el menu de categorias. Heredaba el
+ * tamano del icono (20x20), por debajo del minimo de 24x24 de WCAG 2.5.8 y muy
+ * por debajo de un objetivo tactil comodo, asi que aqui se le da area propia.
+ */
 .mega-menu-header-trigger {
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .mega-menu-header-trigger:hover {
@@ -1035,14 +1083,6 @@ html, body {
     transform: scale(0.94);
 }
 
-.page-wrapper.navbar-type-icon-list .category-section,
-.page-wrapper.navbar-type-floating-bottom .category-section {
-    scroll-margin-top: calc(200px + env(safe-area-inset-top));
-}
-
-.page-wrapper.navbar-type-mega-menu .category-section {
-    scroll-margin-top: calc(120px + env(safe-area-inset-top));
-}
 
 /* Embedded theme editor preview */
 .page-wrapper.embedded-preview {
@@ -1126,4 +1166,95 @@ html, body {
     padding: 0.35rem 0.5rem;
 }
 
+/* =========================================
+   CROMO SUPERIOR COMPACTO EN MOVIL
+   =========================================
 
+   Va al final del archivo a proposito. Las reglas base de la tira de
+   categorias se declaran mas abajo que el bloque movil que ya habia, y una
+   media query no suma especificidad: la base posterior ganaba y los ajustes
+   de movil —circulo de 50px, nombre a 0.66rem, gap de 14px— llevaban tiempo
+   sin aplicarse. Aqui, por detras de todo, si mandan.
+
+   Medido en un tenant real a 375x812, el header ocupaba 203px: el 25% de la
+   pantalla antes de ver un solo producto. De esos, 132px eran la tira de
+   categorias, y de la tira 40px eran el nombre a tres lineas.
+
+   El clamp de tres lineas se puso porque un tenant con nombres muy largos
+   ("HOT ROLLS ESPECIALES OISHI") se cortaba a dos. Pero el clamp no fuerza
+   altura: la fila mide lo que la tarjeta mas alta, asi que basta UNA categoria
+   de nombre largo para que la tira crezca 13px en todos los tenants.
+
+   En movil la tercera linea cuesta mas de lo que aporta —el nombre completo
+   sigue estando en el titulo de la seccion al llegar a ella— asi que se queda
+   en dos. En escritorio, donde el espacio no aprieta, se mantienen las tres. */
+@media (max-width: 600px) {
+    .icon-list-categories {
+        padding: 4px 0 6px;
+    }
+
+    .icon-list-categories.fade-right {
+        -webkit-mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%);
+        mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%);
+    }
+
+    .icon-list-categories.fade-both {
+        -webkit-mask-image: linear-gradient(to right, transparent 0%, black 32px, black calc(100% - 36px), transparent 100%);
+        mask-image: linear-gradient(to right, transparent 0%, black 32px, black calc(100% - 36px), transparent 100%);
+    }
+
+    .icon-list-categories.fade-left {
+        -webkit-mask-image: linear-gradient(to left, black calc(100% - 32px), transparent 100%);
+        mask-image: linear-gradient(to left, black calc(100% - 32px), transparent 100%);
+    }
+
+    .icon-list-container {
+        gap: 12px;
+        padding: 6px 8px 4px;
+    }
+
+    .icon-list-card {
+        gap: 6px;
+    }
+
+    .icon-list-card-image-wrapper {
+        width: 44px;
+        height: 44px;
+    }
+
+    .icon-list-card-name {
+        max-width: 78px;
+        white-space: nowrap;
+        line-height: 1.15;
+    }
+
+    /* Sin el selector de sucursal debajo, el nombre del local se queda con toda
+       la linea: pasa de 116px recortados a dos lineas de ancho completo. */
+    .nav-brand-info--solo-titulo {
+        max-width: min(190px, 52vw);
+        white-space: normal;
+    }
+
+    .nav-brand-info--solo-titulo .nav-brand-title {
+        font-size: 1.1rem;
+        line-height: 1.15;
+        max-width: 100%;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: clip;
+        white-space: normal;
+        text-align: center;
+    }
+}
+
+/* La primera seccion del catalogo no arrastra el ritmo entre secciones.
+   `margin-top: 40px` separa una categoria de la anterior, pero arriba del todo
+   no hay ninguna anterior: se suma al header y, en un negocio SIN banner, deja
+   40px de vacio entre la barra y el primer titulo. Con banner tampoco aporta,
+   porque el propio banner ya hace de separacion. */
+main.container > .category-section:first-child {
+    margin-top: 16px;
+}

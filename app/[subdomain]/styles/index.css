@@ -32,6 +32,9 @@ select:focus {
   --shadow-glow: 0 0 20px rgba(230, 57, 70, 0.25);
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  /* Relleno al pie del catalogo para que la barra flotante no tape la ultima
+     tarjeta. Tiene que seguir a la barra: en movil ocupa 78px (64 de alto mas
+     14 de separacion), en escritorio 100px (76 mas 24). */
   --menu-bottom-chrome-h: 130px;
   --menu-cart-float-h: 120px;
   --z-card-badge: 10;
@@ -50,7 +53,7 @@ select:focus {
 }
 
 body {
-  font-family: "Outfit", sans-serif;
+  font-family: var(--font-montserrat), "Montserrat", system-ui, sans-serif;
   background-color: transparent !important;
   color: var(--text-primary);
   line-height: 1.5;
@@ -73,6 +76,17 @@ html, body, #root {
   padding: 0 20px;
   min-width: 0;
   overflow-x: clip;
+}
+
+/*
+ * En el menu el relleno superior lo pone `.menu-spacer`, que mide exactamente
+ * el header fijo. Estos 20px se sumaban por encima y separaban el contenido del
+ * header sin motivo — se notaba sobre todo en los negocios sin banner, donde no
+ * hay nada que llene ese hueco. Se mantienen en las paginas que no llevan
+ * spacer (la home del tenant), donde si hacen falta.
+ */
+.page-wrapper:has(.menu-spacer) {
+  padding-top: 0;
 }
 
 .page-wrapper {
@@ -169,4 +183,11 @@ html, body, #root {
 section {
   scroll-behavior: smooth;
   overflow-anchor: none;
+}
+
+@media (max-width: 600px) {
+  :root {
+    --menu-bottom-chrome-h: 104px;
+    --menu-cart-float-h: 100px;
+  }
 }

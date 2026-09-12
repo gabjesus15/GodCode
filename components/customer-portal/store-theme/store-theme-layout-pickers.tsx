@@ -1,9 +1,9 @@
 "use client";
 
-import { memo, useCallback } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { memo, useCallback, useMemo } from "react";
+import { Check } from "lucide-react";
 
-import type { Dispatch, SetStateAction } from "react";
+import type { CSSProperties, Dispatch, ReactNode, SetStateAction } from "react";
 import {
   type NavbarType,
   type NavigationMode,
@@ -14,6 +14,9 @@ import {
   normalizeProductCardStyle,
   normalizeProductDetailsMode,
 } from "@/lib/store-theme/theme-config";
+import { parseThemeColor, themeColorsToCssVarEntries } from "@/lib/store-theme/apply-theme-css-vars";
+import { contrastRatio } from "@/lib/store-theme/store-theme-utils";
+import { DEFAULT_STORE_THEME } from "../shared/customer-account-store-theme-constants";
 import type { StoreThemeConfig } from "../shared/customer-account-types";
 
 const PRODUCT_DETAILS_OPTIONS: Array<{ value: ProductDetailsMode; label: string; description: string }> = [
@@ -29,430 +32,501 @@ const NAVBAR_OPTIONS: Array<{ value: NavbarType; label: string; description: str
   { value: "floating-bottom", label: "Barra flotante inferior", description: "Categorías arriba + barra de app abajo (Inicio, Favoritos, Carrito, Perfil)" },
 ];
 
-const PRODUCT_CARD_OPTIONS: Array<{ value: ProductCardStyle; label: string }> = [
-  { value: "glass", label: "Cristal" },
-  { value: "layout-clean", label: "Zapatillas" },
-  { value: "layout-detailed", label: "Tecnología" },
-  { value: "layout-horizontal", label: "Horizontal" },
-  { value: "layout-sidebar", label: "Barra lateral" },
-  { value: "layout-rappi", label: "Rappi" },
-  { value: "layout-sneaker", label: "Sneaker" },
-  { value: "layout-skew", label: "Gaming" },
-  { value: "layout-food", label: "Food Deluxe" },
+const PRODUCT_CARD_OPTIONS: Array<{ value: ProductCardStyle; label: string; description: string }> = [
+  { value: "glass", label: "Cristal", description: "Tarjeta translúcida sobre el fondo" },
+  { value: "layout-clean", label: "Zapatillas", description: "Imagen a sangre con panel lateral" },
+  { value: "layout-detailed", label: "Tecnología", description: "Imagen cuadrada y ficha con descripción" },
+  { value: "layout-horizontal", label: "Horizontal", description: "Fila compacta, más productos por pantalla" },
+  { value: "layout-sidebar", label: "Barra lateral", description: "Acciones apiladas al borde de la imagen" },
+  { value: "layout-rappi", label: "Rappi", description: "Imagen enmarcada y botón de acción redondo" },
+  { value: "layout-sneaker", label: "Sneaker", description: "Producto centrado sobre pedestal oscuro" },
+  { value: "layout-skew", label: "Gaming", description: "Bloque inclinado y marca de agua" },
+  { value: "layout-food", label: "Food Deluxe", description: "Sin marco, el plato flota sobre el fondo" },
 ];
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Tokens vivos en las miniaturas
+ *
+ * Las miniaturas se dibujaban con grises y `indigo-500` fijos, así que elegías
+ * un layout sin ver tu paleta — y dos de ellas mentían: "Tecnología" y "Rappi"
+ * se pintaban blancas cuando las tarjetas reales son `#0d0d0f` y
+ * `rgba(8,8,8,.65)`. Aquí el mismo `themeColorsToCssVarEntries` que emite el
+ * storefront alimenta las miniaturas, así que lo que ves sale del contrato de
+ * tokens real, no de una interpretación paralela.
+ *
+ * `--pick-*` son locales de este componente, no del contrato compartido: son la
+ * tinta de los placeholders, derivada del fondo del borrador para que las
+ * miniaturas sigan legibles con paletas claras y oscuras.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+type PickerStyle = CSSProperties & Record<string, string>;
+
+function usePickerThemeStyle(theme: StoreThemeConfig | null | undefined): PickerStyle {
+  return useMemo(() => {
+    const resolved = theme ?? DEFAULT_STORE_THEME;
+    const style = {} as PickerStyle;
+    for (const [name, value] of themeColorsToCssVarEntries(resolved)) {
+      style[name] = value;
+    }
+
+    /**
+     * Con tint al 0% el menú enseña la imagen de fondo a pleno y `--bg-primary`
+     * queda en `rgba(...,0)`. Pintar la miniatura con ese valor la dejaba
+     * transparente sobre la tarjeta blanca del panel, con la tinta clara encima:
+     * invisible. El lienzo usa entonces el color sólido elegido como sustrato, y
+     * la imagen del tenant se superpone con sus propios tokens de capa.
+     */
+    const parsedBg = parseThemeColor(resolved.backgroundColor, "#0a0a0a");
+    style["--pick-stage"] = parsedBg.alpha >= 0.05 ? resolved.backgroundColor : parsedBg.hex;
+
+    // El contraste se mide contra el sustrato opaco, no contra el color con alfa.
+    const whiteOnStage = contrastRatio("#ffffff", parsedBg.hex) ?? 21;
+    const inkIsLight = whiteOnStage >= 3;
+
+    style["--pick-ink"] = inkIsLight ? "rgba(255,255,255,0.92)" : "rgba(17,17,19,0.92)";
+    style["--pick-ink-dim"] = inkIsLight ? "rgba(255,255,255,0.45)" : "rgba(17,17,19,0.40)";
+    style["--pick-surface"] = inkIsLight ? "rgba(255,255,255,0.09)" : "rgba(17,17,19,0.07)";
+    style["--pick-surface-strong"] = inkIsLight ? "rgba(255,255,255,0.16)" : "rgba(17,17,19,0.13)";
+    style["--pick-hairline"] = inkIsLight ? "rgba(255,255,255,0.12)" : "rgba(17,17,19,0.10)";
+
+    // El menú escala el fondo con `cover` sobre una capa del tamaño del viewport;
+    // la miniatura hace lo mismo a su escala, así que enseña el mismo encuadre.
+    style["--pick-bg-size"] = style["--tenant-bg-size"] === "auto" ? "auto" : "cover";
+    return style;
+  }, [theme]);
+}
+
+/** Lienzo de miniatura: el fondo del tenant, no un gris de sistema. */
+function PreviewStage({ className = "", children }: { className?: string; children: ReactNode }) {
+  return (
+    <div
+      className={`relative overflow-hidden rounded-lg bg-[var(--pick-stage)] ring-1 ring-inset ring-[var(--pick-hairline)] ${className}`}
+    >
+      {/* Capa de imagen del tenant. Sin imagen, `--tenant-bg-layer-opacity` es 0
+          y la capa se apaga sola. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: "var(--tenant-bg-image)",
+          backgroundSize: "var(--pick-bg-size)",
+          backgroundRepeat: "var(--tenant-bg-repeat)",
+          opacity: "var(--tenant-bg-layer-opacity)",
+          filter: "var(--tenant-bg-layer-filter)",
+        }}
+      />
+      {children}
+    </div>
+  );
+}
 
 function NavbarPreview({ type }: { type: NavbarType }) {
   if (type === "sidebar-categories") {
     return (
-      <div className="flex h-14 gap-1 rounded-lg bg-[#f5f5f7] p-1.5">
-        <div className="w-1/4 rounded bg-gray-300" />
+      <PreviewStage className="flex h-14 gap-1 p-1.5">
+        <div className="w-1/4 rounded bg-[var(--pick-surface-strong)]" />
         <div className="flex flex-1 flex-col gap-1">
-          <div className="h-2 w-2/3 rounded-full bg-gray-300" />
+          <div className="h-2 w-2/3 rounded-full bg-[var(--accent-primary)]" />
           <div className="grid flex-1 grid-cols-2 gap-1">
-            <div className="rounded bg-gray-200" />
-            <div className="rounded bg-gray-200" />
+            <div className="rounded bg-[var(--pick-surface)]" />
+            <div className="rounded bg-[var(--pick-surface)]" />
           </div>
         </div>
-      </div>
+      </PreviewStage>
     );
   }
   if (type === "mega-menu") {
     return (
-      <div className="flex h-14 flex-col justify-end gap-1 rounded-lg bg-[#f5f5f7] p-1.5">
+      <PreviewStage className="flex h-14 flex-col justify-end gap-1 p-1.5">
         <div className="flex gap-1">
-          <div className="h-2 flex-1 rounded-full bg-indigo-400" />
-          <div className="h-2 flex-1 rounded-full bg-gray-300" />
-          <div className="h-2 flex-1 rounded-full bg-gray-300" />
+          <div className="h-2 flex-1 rounded-full bg-[var(--accent-primary)]" />
+          <div className="h-2 flex-1 rounded-full bg-[var(--pick-surface-strong)]" />
+          <div className="h-2 flex-1 rounded-full bg-[var(--pick-surface-strong)]" />
         </div>
-        <div className="h-6 rounded-md border border-dashed border-indigo-300 bg-indigo-50" />
-      </div>
+        <div className="h-6 rounded-md border border-[var(--card-border)] bg-[var(--pick-surface)]" />
+      </PreviewStage>
     );
   }
   if (type === "icon-list") {
     return (
-      <div className="flex h-14 items-center justify-center gap-2 rounded-lg bg-[#f5f5f7] px-2">
+      <PreviewStage className="flex h-14 items-center justify-center gap-2 px-2">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className={`h-7 w-7 rounded-full ${i === 1 ? "bg-indigo-400 ring-2 ring-indigo-200" : "bg-gray-300"}`} />
+          <div
+            key={i}
+            className={
+              i === 1
+                ? "h-7 w-7 rounded-full bg-[var(--accent-primary)] shadow-[0_2px_8px_var(--accent-shadow)]"
+                : "h-7 w-7 rounded-full bg-[var(--pick-surface-strong)]"
+            }
+          />
         ))}
-      </div>
+      </PreviewStage>
     );
   }
   if (type === "floating-bottom") {
     return (
-      <div className="flex h-14 flex-col justify-end rounded-lg bg-[#f5f5f7] p-1.5">
-        <div className="flex h-7 w-5/6 mx-auto items-center justify-around rounded-full bg-gray-900 px-2 py-0.5 shadow-sm">
-          <div className="h-5 w-5 rounded-full bg-white shrink-0" />
-          <div className="h-1.5 w-2.5 rounded bg-gray-500" />
-          <div className="h-1.5 w-2.5 rounded bg-gray-500" />
-          <div className="h-1.5 w-2.5 rounded bg-gray-500" />
+      <PreviewStage className="flex h-14 flex-col justify-end p-1.5">
+        <div className="mx-auto flex h-7 w-5/6 items-center justify-around rounded-full bg-[var(--pick-surface-strong)] px-2 py-0.5 shadow-[0_2px_10px_rgba(0,0,0,0.28)] backdrop-blur-sm">
+          <div className="h-5 w-5 shrink-0 rounded-full bg-[var(--accent-primary)]" />
+          <div className="h-1.5 w-2.5 rounded bg-[var(--pick-ink-dim)]" />
+          <div className="h-1.5 w-2.5 rounded bg-[var(--pick-ink-dim)]" />
+          <div className="h-1.5 w-2.5 rounded bg-[var(--pick-ink-dim)]" />
         </div>
-      </div>
+      </PreviewStage>
     );
   }
   return (
-    <div className="flex h-14 items-center gap-1.5 overflow-hidden rounded-lg bg-[#f5f5f7] px-2">
-      <div className="h-6 shrink-0 rounded-full bg-indigo-500 px-3" />
-      <div className="h-6 shrink-0 rounded-full bg-gray-300 px-3" />
-      <div className="h-6 shrink-0 rounded-full bg-gray-300 px-3" />
-      <div className="ml-auto h-6 w-6 shrink-0 rounded-full bg-gray-300" />
-    </div>
+    <PreviewStage className="flex h-14 items-center gap-1.5 px-2">
+      <div className="h-6 w-12 shrink-0 rounded-full bg-[var(--accent-primary)] shadow-[0_2px_8px_var(--accent-shadow)]" />
+      <div className="h-6 w-12 shrink-0 rounded-full bg-[var(--pick-surface-strong)]" />
+      <div className="h-6 w-12 shrink-0 rounded-full bg-[var(--pick-surface-strong)]" />
+      <div className="ml-auto h-6 w-6 shrink-0 rounded-full bg-[var(--pick-surface-strong)]" />
+    </PreviewStage>
   );
 }
 
 function ProductCardPreview({ style }: { style: ProductCardStyle }) {
   if (style === "layout-clean") {
     return (
-      <div className="relative h-[92px] overflow-hidden rounded-xl bg-[#0f0f12] shadow-md">
-        <div className="absolute inset-0 bg-white/10" />
-        <div className="absolute bottom-0 left-0 top-8 w-7 bg-white shadow-sm" />
+      <PreviewStage className="h-[92px]">
+        <div className="absolute inset-0 bg-[var(--pick-surface)]" />
+        <div className="absolute bottom-0 left-0 top-8 w-7 bg-[var(--pick-surface-strong)]" />
         <div className="absolute bottom-2 left-9 right-2 flex items-center justify-between">
-          <div className="h-2 w-10 rounded-full bg-white/90" />
-          <div className="h-6 w-6 rounded-full bg-white" />
+          <div className="h-2 w-10 rounded-full bg-[var(--price-color)]" />
+          <div className="h-6 w-6 rounded-full bg-[var(--accent-primary)]" />
         </div>
-      </div>
+      </PreviewStage>
     );
   }
   if (style === "layout-detailed") {
     return (
-      <div className="flex h-[92px] flex-col overflow-hidden rounded-xl border border-white/20 bg-white shadow-md">
-        <div className="h-0.5 bg-indigo-500" />
-        <div className="relative h-[50%] bg-gradient-to-b from-gray-100 to-gray-200">
-          <div className="absolute left-1.5 top-1.5 h-2 w-6 rounded-full bg-red-500" />
+      <PreviewStage className="flex h-[92px] flex-col">
+        {/* Barra de acento superior: `.product-layout-detailed::before` */}
+        <div className="h-[3px] shrink-0 bg-[var(--accent-primary)]" />
+        <div className="relative h-[46%] bg-[var(--pick-surface)]">
+          <div className="absolute left-1.5 top-1.5 h-2 w-6 rounded-full bg-[var(--discount-color)]" />
         </div>
-        <div className="flex flex-1 flex-col justify-center gap-1 px-2">
-          <div className="h-2 w-4/5 rounded-full bg-gray-800" />
-          <div className="flex justify-between">
-            <div className="h-2 w-8 rounded-full bg-gray-600" />
-            <div className="h-4 w-12 rounded-full bg-indigo-600" />
+        <div className="flex flex-1 flex-col justify-center gap-1 border-t border-[var(--pick-hairline)] px-2">
+          <div className="h-2 w-4/5 rounded-full bg-[var(--pick-ink)]" />
+          <div className="flex items-center justify-between gap-1">
+            <div className="h-2 w-8 rounded-full bg-[var(--price-color)]" />
+            <div className="h-4 w-12 rounded-md bg-[var(--pick-surface-strong)]" />
           </div>
         </div>
-      </div>
+      </PreviewStage>
     );
   }
   if (style === "layout-horizontal") {
     return (
-      <div className="flex h-[72px] overflow-hidden rounded-xl bg-[#141418] shadow-md">
-        <div className="w-1 shrink-0 bg-indigo-500" />
-        <div className="w-[36%] shrink-0 border-r border-white/10 bg-[#232328]" />
+      <PreviewStage className="flex h-[72px]">
+        <div className="w-1 shrink-0 bg-[var(--accent-primary)]" />
+        <div className="w-[36%] shrink-0 border-r border-[var(--pick-hairline)] bg-[var(--pick-surface-strong)]" />
         <div className="flex flex-1 flex-col justify-center gap-1 p-2">
-          <div className="h-2 w-4/5 rounded-full bg-white/85" />
-          <div className="h-3 w-14 rounded-full bg-indigo-500" />
+          <div className="h-2 w-4/5 rounded-full bg-[var(--pick-ink)]" />
+          <div className="h-3 w-14 rounded-full bg-[var(--price-color)]" />
         </div>
-      </div>
+      </PreviewStage>
     );
   }
   if (style === "layout-sidebar") {
     return (
-      <div className="flex h-[92px] flex-col overflow-hidden rounded-xl bg-[#101014] shadow-md">
-        <div className="relative h-[62%] bg-[#1c1c20]">
-          <div className="absolute right-0 top-0 flex h-full w-6 flex-col items-center justify-center gap-1 bg-black/50">
-            <div className="h-4 w-4 rounded-full border border-white/30" />
-            <div className="h-4 w-4 rounded-full border border-white/30" />
+      <PreviewStage className="flex h-[92px] flex-col">
+        <div className="relative h-[62%] bg-[var(--pick-surface)]">
+          <div className="absolute right-0 top-0 flex h-full w-6 flex-col items-center justify-center gap-1 bg-[var(--pick-surface-strong)]">
+            <div className="h-4 w-4 rounded-full border border-[var(--card-border)]" />
+            <div className="h-4 w-4 rounded-full bg-[var(--accent-primary)]" />
           </div>
         </div>
-        <div className="flex flex-1 items-center px-2">
-          <div className="h-2 w-3/4 rounded-full bg-white/80" />
+        <div className="flex flex-1 items-center justify-between px-2">
+          <div className="h-2 w-1/2 rounded-full bg-[var(--pick-ink)]" />
+          <div className="h-2 w-8 rounded-full bg-[var(--price-color)]" />
         </div>
-      </div>
+      </PreviewStage>
     );
   }
   if (style === "layout-rappi") {
     return (
-      <div className="flex h-[92px] flex-col overflow-hidden rounded-xl bg-white shadow-md">
-        <div className="mx-2 mt-2 h-[48%] rounded-lg bg-gray-100" />
+      <PreviewStage className="flex h-[92px] flex-col">
+        <div className="mx-2 mt-2 h-[48%] rounded-lg bg-[var(--pick-surface)]" />
         <div className="flex flex-1 items-center justify-between px-2 pb-2">
           <div className="space-y-1">
-            <div className="h-2 w-16 rounded-full bg-gray-800" />
-            <div className="h-2 w-8 rounded-full bg-gray-500" />
+            <div className="h-2 w-16 rounded-full bg-[var(--pick-ink)]" />
+            <div className="h-2 w-8 rounded-full bg-[var(--price-color)]" />
           </div>
-          <div className="h-7 w-7 rounded-full bg-green-500" />
+          <div className="h-7 w-7 rounded-full bg-[var(--accent-primary)] shadow-[0_2px_8px_var(--accent-shadow)]" />
         </div>
-      </div>
+      </PreviewStage>
     );
   }
   if (style === "layout-sneaker") {
     return (
-      <div className="flex h-[92px] flex-col overflow-hidden rounded-xl bg-gradient-to-b from-[#1c1c22] to-[#0a0a0c] shadow-md">
+      <PreviewStage className="flex h-[92px] flex-col">
         <div className="flex flex-1 items-end justify-center pb-1">
-          <div className="h-10 w-16 rounded-lg bg-white/15" />
+          <div className="h-10 w-16 rounded-lg bg-[var(--pick-surface-strong)]" />
         </div>
-        <div className="flex items-center justify-between border-t border-white/10 bg-black/30 px-2 py-1.5">
-          <div className="h-2.5 w-10 rounded-full bg-white/90" />
-          <div className="h-6 w-6 rounded-lg bg-white" />
+        <div className="flex items-center justify-between border-t border-[var(--pick-hairline)] bg-[var(--pick-surface)] px-2 py-1.5">
+          <div className="h-2.5 w-10 rounded-full bg-[var(--price-color)]" />
+          <div className="h-6 w-6 rounded-lg bg-[var(--accent-primary)]" />
         </div>
-      </div>
+      </PreviewStage>
     );
   }
   if (style === "layout-skew") {
     return (
-      <div className="relative flex h-[92px] flex-col overflow-hidden rounded-xl bg-gradient-to-br from-purple-950 to-[#0c0c10] p-2 shadow-md">
-        <div className="absolute right-1 top-1 text-[10px] font-black text-white/10">GM</div>
-        <div className="my-1 flex-1 skew-y-[-3deg] rounded-lg bg-purple-500/30" />
-        <div className="h-2 w-2/3 rounded-full bg-white/80" />
-      </div>
+      <PreviewStage className="flex h-[92px] flex-col p-2">
+        <div className="absolute right-1 top-1 text-[10px] font-black text-[var(--pick-surface-strong)]">GM</div>
+        <div className="my-1 flex-1 skew-y-[-3deg] rounded-lg bg-[var(--accent-secondary)] opacity-40" />
+        <div className="flex items-center justify-between gap-1">
+          <div className="h-2 w-1/2 rounded-full bg-[var(--pick-ink)]" />
+          <div className="h-2 w-8 rounded-full bg-[var(--price-color)]" />
+        </div>
+      </PreviewStage>
     );
   }
   if (style === "layout-food") {
+    /* Food Deluxe no tiene marco: el plato flota sobre el fondo del menú. */
     return (
-      <div className="relative flex h-[92px] flex-col overflow-hidden rounded-xl bg-gradient-to-br from-emerald-950 to-[#121214] p-2 shadow-md border border-white/5">
-        <div className="absolute right-1.5 top-1.5 h-4 w-4 rounded-full bg-white/15 flex items-center justify-center">
-          <div className="h-1.5 w-1.5 rounded-full bg-white" />
+      <PreviewStage className="flex h-[92px] flex-col p-2">
+        <div className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--pick-surface-strong)]">
+          <div className="h-1.5 w-1.5 rounded-full bg-[var(--discount-color)]" />
         </div>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="h-9 w-14 rounded-lg bg-white/10" />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="h-9 w-14 rounded-full bg-[var(--pick-surface-strong)] shadow-[0_6px_14px_rgba(0,0,0,0.35)]" />
         </div>
-        <div className="flex justify-between items-center mt-1">
-          <div className="h-2.5 w-10 rounded bg-white/85" />
-          <div className="h-4.5 w-4.5 rounded bg-white flex items-center justify-center" />
+        <div className="mt-1 flex items-center justify-between">
+          <div className="h-2.5 w-10 rounded bg-[var(--price-color)]" />
+          <div className="h-4 w-4 rounded bg-[var(--accent-primary)]" />
         </div>
-      </div>
+      </PreviewStage>
     );
   }
   return (
-    <div className="flex h-[92px] flex-col overflow-hidden rounded-xl border border-white/10 bg-[#18181b]">
-      <div className="h-[55%] bg-white/10" />
+    <PreviewStage className="flex h-[92px] flex-col border border-[var(--card-border)]">
+      <div className="h-[55%] bg-[var(--pick-surface)] backdrop-blur-sm" />
       <div className="flex flex-1 items-center justify-between p-2">
-        <div className="h-2 w-12 rounded-full bg-white/70" />
-        <div className="h-5 w-5 rounded-full bg-indigo-500" />
+        <div className="h-2 w-12 rounded-full bg-[var(--price-color)]" />
+        <div className="h-5 w-5 rounded-full bg-[var(--accent-primary)]" />
       </div>
-    </div>
+    </PreviewStage>
   );
 }
 
-type NavbarPickerProps = {
+function ProductDetailsPreview({ mode }: { mode: ProductDetailsMode }) {
+  if (mode === "modal-premium") {
+    return (
+      <PreviewStage className="flex h-[92px] w-full flex-col justify-end p-2">
+        {/* Catálogo detrás del modal */}
+        <div className="pointer-events-none absolute inset-0 grid select-none grid-cols-3 gap-1.5 p-2 opacity-40">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-10 rounded bg-[var(--pick-surface-strong)]" />
+          ))}
+        </div>
+
+        {/* Scrim: el modal atenúa el catálogo para proteger el foco */}
+        <div className="absolute inset-0 bg-black/30 transition-[background-color] duration-300 group-hover:bg-black/45 motion-reduce:transition-none" />
+
+        <div className="relative flex h-[70%] w-full translate-y-2.5 flex-col gap-1.5 rounded-t-lg border-x border-t border-[var(--card-border)] bg-[var(--bg-primary)] p-2 shadow-[0_-6px_18px_rgba(0,0,0,0.35)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 motion-reduce:translate-y-0 motion-reduce:transition-none">
+          <div className="mx-auto h-1 w-6 rounded-full bg-[var(--pick-surface-strong)]" />
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-5 shrink-0 rounded bg-[var(--pick-surface-strong)]" />
+            <div className="flex-1 space-y-1">
+              <div className="h-2 w-4/5 rounded bg-[var(--pick-ink)]" />
+              <div className="h-1.5 w-1/2 rounded bg-[var(--price-color)]" />
+            </div>
+          </div>
+          <div className="mt-auto h-3 w-full rounded bg-[var(--accent-primary)]" />
+        </div>
+      </PreviewStage>
+    );
+  }
+
+  return (
+    <PreviewStage className="flex h-[92px] w-full flex-col justify-start p-2">
+      <div className="flex w-full flex-col overflow-hidden rounded-md border border-[var(--card-border)] bg-[var(--pick-surface)]">
+        <div className="flex items-center justify-between border-b border-[var(--pick-hairline)] p-2">
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-5 shrink-0 rounded bg-[var(--pick-surface-strong)]" />
+            <div className="space-y-1">
+              <div className="h-2 w-16 rounded bg-[var(--pick-ink)]" />
+              <div className="h-1.5 w-8 rounded bg-[var(--price-color)]" />
+            </div>
+          </div>
+          <div className="flex h-3.5 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent-primary)]">
+            <span className="select-none text-[8px] font-bold text-white">Ver</span>
+          </div>
+        </div>
+
+        {/* La tarjeta crece en su sitio; el catálogo alrededor no se atenúa */}
+        <div className="flex h-0 flex-col justify-between space-y-1 overflow-hidden px-2 py-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:h-8 group-hover:py-1.5 motion-reduce:h-8 motion-reduce:py-1.5 motion-reduce:transition-none">
+          <div className="h-1.5 w-11/12 rounded bg-[var(--pick-ink-dim)]" />
+          <div className="h-1 w-2/3 rounded bg-[var(--pick-ink-dim)]" />
+        </div>
+      </div>
+    </PreviewStage>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Celda de opción
+ *
+ * El radio real es `sr-only`, así que el foco de teclado no se veía en ninguno
+ * de los tres pickers: se navegaba a ciegas. `peer-focus-visible` lo devuelve.
+ * La marca de selección baja a la fila del rótulo para no taparle la esquina a
+ * la miniatura que estás evaluando.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+function OptionTile({
+  name,
+  value,
+  label,
+  description,
+  isActive,
+  onSelect,
+  children,
+}: {
+  name: string;
+  value: string;
+  label: string;
+  description?: string;
+  isActive: boolean;
+  onSelect: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <label className="group relative block cursor-pointer">
+      <input
+        type="radio"
+        name={name}
+        value={value}
+        checked={isActive}
+        onChange={onSelect}
+        className="peer sr-only"
+      />
+      <div
+        className={`flex h-full flex-col overflow-hidden rounded-xl border bg-white transition duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-500 peer-focus-visible:ring-offset-2 group-active:scale-[0.985] motion-reduce:transition-none motion-reduce:group-active:scale-100 ${
+          isActive
+            ? "border-indigo-500 shadow-[0_2px_10px_rgba(79,70,229,0.16)] ring-1 ring-indigo-500"
+            : "border-[#e5e5ea] hover:border-[#c7c7cc] hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
+        }`}
+      >
+        <div className="p-2.5">{children}</div>
+        <div className="flex items-start gap-1.5 border-t border-[#f0f0f5] px-2.5 py-2">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold leading-tight text-[#1d1d1f]">{label}</p>
+            {description ? (
+              <p className="mt-0.5 text-[11px] leading-snug text-[#6e6e73]">{description}</p>
+            ) : null}
+          </div>
+          <span
+            className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full transition-colors duration-200 motion-reduce:transition-none ${
+              isActive ? "bg-indigo-500 text-white" : "bg-[#f0f0f5] text-transparent"
+            }`}
+            aria-hidden
+          >
+            <Check size={11} strokeWidth={3} />
+          </span>
+        </div>
+      </div>
+    </label>
+  );
+}
+
+type PickerProps<T> = {
   value: string | undefined;
-  onChange: (navbarType: NavbarType) => void;
+  onChange: (next: T) => void;
   disabled?: boolean;
+  /** Borrador actual: alimenta los tokens vivos de las miniaturas. */
+  theme?: StoreThemeConfig | null;
 };
 
 export const StoreThemeNavbarPicker = memo(function StoreThemeNavbarPicker({
   value,
   onChange,
   disabled,
-}: NavbarPickerProps) {
+  theme,
+}: PickerProps<NavbarType>) {
   const selected = normalizeNavbarType(value);
+  const themeStyle = usePickerThemeStyle(theme);
 
   return (
     <fieldset className="space-y-2" disabled={disabled}>
       <legend className="sr-only">Tipo de barra de navegación</legend>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {NAVBAR_OPTIONS.map((option) => {
-          const isActive = selected === option.value;
-          return (
-            <label
-              key={option.value}
-              className={`relative rounded-xl border-2 p-3 text-left transition-colors cursor-pointer block ${
-                isActive
-                  ? "border-indigo-500 bg-indigo-50/40 ring-2 ring-indigo-500/20"
-                  : "border-[#e5e5ea] bg-white hover:border-[#d2d2d7]"
-              }`}
-            >
-              <input
-                type="radio"
-                name="navbarType"
-                value={option.value}
-                checked={isActive}
-                onChange={() => onChange(option.value)}
-                className="sr-only"
-              />
-              <NavbarPreview type={option.value} />
-              <p className="mt-2 text-xs font-semibold text-[#1d1d1f]">{option.label}</p>
-              <p className="text-[10px] text-[#6e6e73]">{option.description}</p>
-              {isActive && (
-                <CheckCircle2
-                  size={16}
-                  className="absolute right-2 top-2 text-indigo-500"
-                  aria-hidden
-                />
-              )}
-            </label>
-          );
-        })}
+      <div style={themeStyle} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {NAVBAR_OPTIONS.map((option) => (
+          <OptionTile
+            key={option.value}
+            name="navbarType"
+            value={option.value}
+            label={option.label}
+            description={option.description}
+            isActive={selected === option.value}
+            onSelect={() => onChange(option.value)}
+          >
+            <NavbarPreview type={option.value} />
+          </OptionTile>
+        ))}
       </div>
     </fieldset>
   );
 });
-
-type ProductCardPickerProps = {
-  value: string | undefined;
-  onChange: (style: ProductCardStyle) => void;
-  disabled?: boolean;
-};
 
 export const StoreThemeProductCardPicker = memo(function StoreThemeProductCardPicker({
   value,
   onChange,
   disabled,
-}: ProductCardPickerProps) {
+  theme,
+}: PickerProps<ProductCardStyle>) {
   const selected = normalizeProductCardStyle(value);
+  const themeStyle = usePickerThemeStyle(theme);
 
   return (
     <fieldset className="space-y-2" disabled={disabled}>
       <legend className="sr-only">Estilo de tarjeta de producto</legend>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {PRODUCT_CARD_OPTIONS.map((option) => {
-          const isActive = selected === option.value;
-          return (
-            <label
-              key={option.value}
-              className={`relative flex flex-col overflow-hidden rounded-xl border-2 bg-white transition-colors cursor-pointer ${
-                isActive
-                  ? "border-indigo-500 ring-2 ring-indigo-500/20"
-                  : "border-[#e5e5ea] hover:border-[#d2d2d7]"
-              }`}
-            >
-              <input
-                type="radio"
-                name="productCardStyle"
-                value={option.value}
-                checked={isActive}
-                onChange={() => onChange(option.value)}
-                className="sr-only"
-              />
-              <div className="p-2">
-                <ProductCardPreview style={option.value} />
-              </div>
-              <p className="border-t border-[#f0f0f5] px-2 py-1.5 text-center text-[10px] font-semibold uppercase tracking-wide text-[#6e6e73]">
-                {option.label}
-              </p>
-              {isActive && (
-                <CheckCircle2
-                  size={14}
-                  className="absolute right-1.5 top-1.5 text-indigo-500"
-                  aria-hidden
-                />
-              )}
-            </label>
-          );
-        })}
+      <div style={themeStyle} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {PRODUCT_CARD_OPTIONS.map((option) => (
+          <OptionTile
+            key={option.value}
+            name="productCardStyle"
+            value={option.value}
+            label={option.label}
+            description={option.description}
+            isActive={selected === option.value}
+            onSelect={() => onChange(option.value)}
+          >
+            <ProductCardPreview style={option.value} />
+          </OptionTile>
+        ))}
       </div>
     </fieldset>
   );
 });
 
-function ProductDetailsPreview({ mode }: { mode: ProductDetailsMode }) {
-  if (mode === "modal-premium") {
-    return (
-      <div className="relative h-[92px] w-full overflow-hidden rounded-lg bg-slate-100 border border-slate-200/60 p-2 flex flex-col justify-end">
-        {/* Wireframe background representing product grid behind modal */}
-        <div className="absolute inset-0 p-2 grid grid-cols-3 gap-1.5 opacity-30 select-none pointer-events-none">
-          <div className="rounded bg-slate-400 h-10" />
-          <div className="rounded bg-slate-400 h-10" />
-          <div className="rounded bg-slate-400 h-10" />
-          <div className="rounded bg-slate-400 h-10" />
-          <div className="rounded bg-slate-400 h-10" />
-          <div className="rounded bg-slate-400 h-10" />
-        </div>
-
-        {/* Dim overlay representing backdrop */}
-        <div className="absolute inset-0 bg-slate-900/10 transition-opacity duration-300 group-hover:bg-slate-900/20" />
-
-        {/* Bottom sheet popup */}
-        <div
-          className="relative h-[70%] w-full rounded-t-lg bg-white p-2 border-t border-x border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] flex flex-col gap-1.5 transform translate-y-2.5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0"
-        >
-          {/* Top handle bar */}
-          <div className="w-6 h-1 rounded-full bg-slate-200 mx-auto" />
-          
-          <div className="flex gap-2 items-center">
-            {/* Thumbnail representation */}
-            <div className="h-5 w-5 rounded bg-indigo-50 shrink-0 border border-indigo-100 flex items-center justify-center">
-              <div className="h-2 w-2 rounded-full bg-indigo-500" />
-            </div>
-            <div className="flex-1 space-y-1">
-              <div className="h-2 w-4/5 rounded bg-slate-700" />
-              <div className="h-1.5 w-1/2 rounded bg-slate-300" />
-            </div>
-          </div>
-          <div className="mt-auto h-3 w-full rounded bg-indigo-600/90" />
-        </div>
-      </div>
-    );
-  }
-
-  // Inline expansion classical
-  return (
-    <div className="relative h-[92px] w-full overflow-hidden rounded-lg bg-slate-50 border border-slate-200/60 p-2 flex flex-col justify-start">
-      {/* Container simulating the list item */}
-      <div className="w-full rounded-md border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:shadow-md">
-        {/* Main card row representation */}
-        <div className="p-2 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
-          <div className="flex gap-2 items-center">
-            <div className="h-5 w-5 rounded bg-slate-200 shrink-0" />
-            <div className="space-y-1">
-              <div className="h-2 w-16 rounded bg-slate-700" />
-              <div className="h-1.5 w-8 rounded bg-slate-300" />
-            </div>
-          </div>
-          {/* Action indicator */}
-          <div className="h-3.5 w-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-            <span className="text-[8px] font-bold text-indigo-600 select-none">Ver</span>
-          </div>
-        </div>
-
-        {/* Dynamic expansion block */}
-        <div className="h-0 group-hover:h-8 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden bg-white px-2 py-0 group-hover:py-1.5 space-y-1 flex flex-col justify-between">
-          <div className="h-1.5 w-11/12 rounded bg-slate-400" />
-          <div className="h-1 w-2/3 rounded bg-slate-300" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-type ProductDetailsPickerProps = {
-  value: string | undefined;
-  onChange: (mode: ProductDetailsMode) => void;
-  disabled?: boolean;
-};
-
 export const StoreThemeProductDetailsPicker = memo(function StoreThemeProductDetailsPicker({
   value,
   onChange,
   disabled,
-}: ProductDetailsPickerProps) {
+  theme,
+}: PickerProps<ProductDetailsMode>) {
   const selected = normalizeProductDetailsMode(value);
+  const themeStyle = usePickerThemeStyle(theme);
 
   return (
     <fieldset className="space-y-2" disabled={disabled}>
       <legend className="sr-only">Modo de Detalles del Producto</legend>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {PRODUCT_DETAILS_OPTIONS.map((option) => {
-          const isActive = selected === option.value;
-          return (
-            <label
-              key={option.value}
-              className={`group relative flex flex-col overflow-hidden rounded-xl border-2 bg-white transition-colors cursor-pointer ${
-                isActive
-                  ? "border-indigo-500 ring-2 ring-indigo-500/20"
-                  : "border-[#e5e5ea] hover:border-[#d2d2d7]"
-              }`}
-            >
-              <input
-                type="radio"
-                name="productDetailsMode"
-                value={option.value}
-                checked={isActive}
-                onChange={() => onChange(option.value)}
-                className="sr-only"
-              />
-              <div className="p-3 w-full">
-                <ProductDetailsPreview mode={option.value} />
-              </div>
-              <div className="w-full border-t border-[#f0f0f5] p-3 text-left">
-                <p className="text-xs font-semibold text-[#1d1d1f]">{option.label}</p>
-                <p className="mt-1 text-[10px] text-[#6e6e73] leading-relaxed">{option.description}</p>
-              </div>
-              {isActive && (
-                <CheckCircle2
-                  size={16}
-                  className="absolute right-2 top-2 text-indigo-500"
-                  aria-hidden
-                />
-              )}
-            </label>
-          );
-        })}
+      <div style={themeStyle} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {PRODUCT_DETAILS_OPTIONS.map((option) => (
+          <OptionTile
+            key={option.value}
+            name="productDetailsMode"
+            value={option.value}
+            label={option.label}
+            description={option.description}
+            isActive={selected === option.value}
+            onSelect={() => onChange(option.value)}
+          >
+            <ProductDetailsPreview mode={option.value} />
+          </OptionTile>
+        ))}
       </div>
     </fieldset>
   );

@@ -287,20 +287,37 @@ export function ProductOfferBadges({
 	hotClassName?: string;
 	specialClassName?: string;
 }) {
-	if (!product.has_discount && !product.is_special) return null;
+	const hasDiscount = Boolean(product.has_discount);
+	const isSpecial = Boolean(product.is_special);
+
+	if (!hasDiscount && !isSpecial) return null;
 
 	return (
 		<TenantOfferBadgeStack>
-			{product.has_discount ? <TenantBadge variant="destructive">Oferta</TenantBadge> : null}
-			{product.is_special ? <TenantBadge variant="secondary">Especial</TenantBadge> : null}
+			{hasDiscount ? <TenantBadge variant="destructive">Oferta</TenantBadge> : null}
+			{isSpecial ? <TenantBadge variant="special">Especial</TenantBadge> : null}
 		</TenantOfferBadgeStack>
 	);
 }
 
+/**
+ * `className` era un reemplazo, no un anadido: al pasar `clean-details-affordance`
+ * el elemento perdia `product-details-affordance`, que es quien aporta tamano,
+ * peso y color. Cuatro de los cinco modificadores por layout no tienen ninguna
+ * regla propia, asi que la etiqueta salia sin estilar — 16px por defecto — y
+ * `.is-subtle` tampoco enganchaba, porque su regla es
+ * `.product-details-affordance.is-subtle`.
+ *
+ * En Zapatillas eso era visible: "Ver producto" a 16px horizontales dentro de la
+ * franja vertical de 38px se desbordaba por ambos lados y desplazaba el nombre
+ * del producto fuera de la tarjeta. Que `.product-layout-food .food-details-affordance`
+ * solo declare `margin-top` y `color` confirma que la intencion siempre fue
+ * base + modificador.
+ */
 export const ProductDetailsAffordance = React.memo(function ProductDetailsAffordance({
   detailsMode,
   hasDescription,
-  className = "product-details-affordance",
+  className,
   subtle = false,
 }: {
   detailsMode?: string;
@@ -311,9 +328,12 @@ export const ProductDetailsAffordance = React.memo(function ProductDetailsAfford
   const isModal = detailsMode !== "inline";
   if (!isModal && !hasDescription) return null;
   const label = isModal ? "Ver producto" : "Ver más";
+  const classes = ["product-details-affordance", className, subtle ? "is-subtle" : null]
+    .filter((value): value is string => Boolean(value) && value !== "product-details-affordance")
+    .join(" ");
 
   return (
-    <span className={`${className}${subtle ? " is-subtle" : ""}`} aria-hidden>
+    <span className={`product-details-affordance${classes ? ` ${classes}` : ""}`} aria-hidden>
       {label}
     </span>
   );
