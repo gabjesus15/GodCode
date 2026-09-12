@@ -134,7 +134,7 @@ export type PreviewThemePayload = {
 	productDetailsMode?: string;
 };
 
-export type BottomNavTab = "home" | "cart" | "contact";
+export type BottomNavTab = "home" | "cart" | "contact" | "account";
 
 export type CategoryListItem = {
 	id: string;

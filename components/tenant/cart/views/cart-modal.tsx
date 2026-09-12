@@ -5,7 +5,10 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
-import { X, MapPin, AlertCircle, Plus, Check, CupSoda, Sparkles, Store, Truck, ArrowLeft, Ticket } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { X, MapPin, AlertCircle, Plus, Check, CupSoda, Sparkles, Store, Truck, ArrowLeft, Ticket, UserRound } from "lucide-react";
+import { getTenantScopedPath } from "../../utils/tenant-route";
+import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
 import { formatCartMoney } from "../utils/format-cart-money";
 import { type CartFulfillment, isUpsellBeverageLineId } from "../cart-context";
 import {
@@ -76,6 +79,8 @@ export function CartModal({
   const submitOrderMutation = useSubmitOrder();
 
   const t = useTranslations("tenant.cart.modal");
+    const router = useRouter();
+    const pathname = usePathname();
     const supabase = useMemo(() => createSupabaseBrowserClient("tenant"), []);
 
     const mounted = useTenantMounted();
@@ -1289,6 +1294,12 @@ export function CartModal({
     dismissCart();
   }, [dismissCart]);
 
+  // "Mi cuenta" sale del carrito: cerramos el modal antes de navegar para no dejar overlay abierto.
+  const handleOpenAccount = useCallback(() => {
+    dismissCart();
+    router.push(getTenantScopedPath(pathname ?? "/", "/mi-cuenta"));
+  }, [dismissCart, pathname, router]);
+
   const triggerHaptic = useCallback((duration = 8) => {
     if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
       navigator.vibrate(duration);
@@ -1766,7 +1777,20 @@ export function CartModal({
               </div>
             ) : null}
           </div>
-          <button onClick={handleCloseCart} className="btn-close-cart" aria-label={t("actions.close")}><X size={20} /></button>
+          <div className="cart-header-actions">
+            {MENU_ACCOUNT_ENABLED ? (
+              <button
+                type="button"
+                onClick={handleOpenAccount}
+                className="btn-cart-account"
+                aria-label="Mi cuenta"
+              >
+                <UserRound size={17} aria-hidden />
+                <span>Mi cuenta</span>
+              </button>
+            ) : null}
+            <button onClick={handleCloseCart} className="btn-close-cart" aria-label={t("actions.close")}><X size={20} /></button>
+          </div>
         </header>
 
         {isOrderIntakePaused && (

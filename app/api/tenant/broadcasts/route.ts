@@ -61,7 +61,7 @@ async function getTenantContext(admin: SupabaseClient) {
   const { data: rows, error: userRowError } = await admin
     .from("users")
     .select("id,company_id,role")
-    .ilike("email", email) as { data: TenantUserRow[] | null; error: MessageError };
+    .eq("email", email) as { data: TenantUserRow[] | null; error: MessageError };
 
   if (userRowError) return { error: userRowError.message };
 

@@ -35,9 +35,11 @@ type MenuCartLayerProps = {
 	showBranchSelector: boolean;
 	isEmbeddedPreview: boolean;
 	onOpenBranchModal: () => void;
+	showAccountTab?: boolean;
 	onHome: () => void;
 	onCart: () => void;
 	onContact: () => void;
+	onAccount?: () => void;
 };
 
 export const MenuCartLayer = memo(function MenuCartLayer({
@@ -54,9 +56,11 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 	showBranchSelector,
 	isEmbeddedPreview,
 	onOpenBranchModal,
+	showAccountTab,
 	onHome,
 	onCart,
 	onContact,
+	onAccount,
 }: MenuCartLayerProps) {
 	const isCartOpen = useCartStore((state) => state.isCartOpen);
 	const mode = resolveMenuCartUiMode({
@@ -77,9 +81,11 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 			selectedBranch={selectedBranch}
 			isEmbeddedPreview={isEmbeddedPreview}
 			onOpenBranchModal={onOpenBranchModal}
+			showAccountTab={showAccountTab}
 			onHome={onHome}
 			onCart={onCart}
 			onContact={onContact}
+			onAccount={onAccount}
 		/>
 	) : null;
 

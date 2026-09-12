@@ -1,20 +1,24 @@
 import { createServerClient } from "@supabase/ssr";
 import type { NextRequest, NextResponse } from "next/server";
 
-import type { SupabaseAuthScope } from "@/utils/supabase/auth-scope";
+import {
+	getAuthCookieName,
+	PANEL_AUTH_SCOPES,
+	type SupabaseAuthScope,
+} from "@/utils/supabase/auth-scope";
 
 const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
-function getCookieName(scope: SupabaseAuthScope): string {
-	return scope === "super-admin" ? "sb-super-admin-auth-token" : "sb-tenant-auth-token";
-}
+const getCookieName = getAuthCookieName;
 
 /** Invalida sesiones Supabase y escribe las cookies limpias en la respuesta HTTP. */
 export async function signOutScopesOnResponse(
 	request: NextRequest,
 	response: NextResponse,
-	scopes: SupabaseAuthScope[] = ["super-admin", "tenant"],
+	// Solo los paneles: la sesión del cliente final del menú se cierra por su propia
+	// ruta (`/api/menu-account/logout`) para no arrastrarla en el logout del panel.
+	scopes: SupabaseAuthScope[] = PANEL_AUTH_SCOPES,
 ): Promise<void> {
 	if (!supabaseUrl || !supabaseAnonKey) return;
 

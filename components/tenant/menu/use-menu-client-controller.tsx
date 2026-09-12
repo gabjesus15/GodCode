@@ -8,6 +8,7 @@ import { getTenantScopedPath, getTenantPrefixFromPathname } from "../utils/tenan
 import { normalizeDeliverySettings } from "@/lib/delivery/delivery-settings";
 import { mergeMenuPathQuery } from "@/utils/tenant-url";
 import { readEmbeddedPreviewFromLocation } from "@/lib/store-theme/preview-theme-messaging";
+import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
 import {
 	FIRE_ICON,
 	formatMenuDescription,
@@ -83,7 +84,7 @@ export function useMenuClientController(props: MenuClientProps) {
 	const [detailsMode, setDetailsMode] = useState(initialProductDetailsMode);
 	const [previewDisplayName, setPreviewDisplayName] = useState<string | null>(null);
 	const [previewLogoUrl, setPreviewLogoUrl] = useState<string | null>(null);
-	const [activeBottomTab, setActiveBottomTab] = useState<"home" | "cart" | "contact">("home");
+	const [activeBottomTab, setActiveBottomTab] = useState<"home" | "cart" | "contact" | "account">("home");
 	const [isContactChannelSheetOpen, setIsContactChannelSheetOpen] = useState(false);
 	const [isContactBranchModalOpen, setIsContactBranchModalOpen] = useState(false);
 	const [pendingContactChannel, setPendingContactChannel] = useState<BranchContactChannel | null>(null);
@@ -117,6 +118,7 @@ export function useMenuClientController(props: MenuClientProps) {
 
 	const homePath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/"), [pathname]);
 	const menuPath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/menu"), [pathname]);
+	const accountPath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/mi-cuenta"), [pathname]);
 	const menuScopePath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/menu/"), [pathname]);
 	const menuServiceWorkerPath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/menu/sw.js"), [pathname]);
 
@@ -352,6 +354,12 @@ export function useMenuClientController(props: MenuClientProps) {
 		closeContactUi();
 	}, [closeContactUi, pendingContactChannel]);
 
+	const handleAccountClick = useCallback(() => {
+		if (isEmbeddedPreview || readEmbeddedPreviewFromLocation()) return;
+		setActiveBottomTab("account");
+		router.push(accountPath);
+	}, [accountPath, isEmbeddedPreview, router]);
+
 	const handleContactClick = useCallback(() => {
 		if (isContactChannelSheetOpen || isContactBranchModalOpen) {
 			closeContactUi();
@@ -484,6 +492,7 @@ export function useMenuClientController(props: MenuClientProps) {
 			showContactTab={showContactTab}
 			showBranchSelector={branchSelectorInBottomNav}
 			isEmbeddedPreview={isEmbeddedPreview}
+			showAccountTab={MENU_ACCOUNT_ENABLED && !isEmbeddedPreview}
 			onOpenBranchModal={() => {
 				if (isContactChannelSheetOpen || isContactBranchModalOpen) {
 					closeContactUi();
@@ -503,6 +512,7 @@ export function useMenuClientController(props: MenuClientProps) {
 				handleCartToggle();
 			}}
 			onContact={handleContactClick}
+			onAccount={handleAccountClick}
 		/>
 	);
 

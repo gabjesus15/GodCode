@@ -76,6 +76,100 @@
     }
   },
   "tenant": {
+    "account": {
+      "title": "Il mio account",
+      "back": "Torna al menu",
+      "tabs": {
+        "login": "Accedi",
+        "register": "Crea account"
+      },
+      "login": {
+        "title": "Accedi con il tuo documento",
+        "documentLabel": "Numero del documento",
+        "passwordLabel": "Password",
+        "submit": "Accedi",
+        "submitting": "Accesso…",
+        "forgot": "Password dimenticata?"
+      },
+      "register": {
+        "title": "Crea il tuo account",
+        "intro": "Salva i tuoi dati per ordinare più in fretta la prossima volta.",
+        "documentLabel": "Numero del documento",
+        "emailLabel": "E-mail",
+        "fullNameLabel": "Nome e cognome",
+        "phoneLabel": "Telefono",
+        "passwordLabel": "Password",
+        "passwordHint": "Almeno 8 caratteri.",
+        "branchLabel": "Sede abituale",
+        "branchPlaceholder": "Scegli una sede",
+        "submit": "Crea account",
+        "submitting": "Creazione…"
+      },
+      "recover": {
+        "title": "Recupera password",
+        "description": "Inserisci il numero del documento e invieremo un link all'e-mail del tuo account.",
+        "documentLabel": "Numero del documento",
+        "submit": "Invia link",
+        "submitting": "Invio…",
+        "back": "Torna ad accedere",
+        "sentTitle": "Controlla la tua e-mail",
+        "sentDescription": "Se esiste un account con quel documento, abbiamo inviato un link per impostare una nuova password. Il link scade tra un'ora."
+      },
+      "linkSent": {
+        "title": "Controlla la tua e-mail",
+        "description": "Hai già un account con quell'e-mail. Ti abbiamo inviato un link per collegare questa attività al tuo account; aprendolo accederai automaticamente.",
+        "note": "La tua password resta quella di prima."
+      },
+      "dashboard": {
+        "greeting": "Ciao, {name}",
+        "profileTitle": "I tuoi dati",
+        "documentLabel": "Documento",
+        "emailLabel": "E-mail",
+        "phoneLabel": "Telefono",
+        "fullNameLabel": "Nome",
+        "branchLabel": "Sede abituale",
+        "branchNone": "Nessuna sede preferita",
+        "save": "Salva modifiche",
+        "saving": "Salvataggio…",
+        "saved": "Dati aggiornati.",
+        "passwordTitle": "Password",
+        "currentPassword": "Password attuale",
+        "newPassword": "Nuova password",
+        "changePassword": "Cambia password",
+        "changingPassword": "Modifica…",
+        "passwordUpdated": "Password aggiornata.",
+        "passwordSharedNote": "La tua password è la stessa in tutte le attività dove hai un account.",
+        "logout": "Esci",
+        "loggingOut": "Uscita…",
+        "ordersTitle": "I miei ordini",
+        "ordersSoon": "Presto qui vedrai lo storico dei tuoi ordini.",
+        "addressesTitle": "I miei indirizzi",
+        "addressesSoon": "Presto potrai salvare qui i tuoi indirizzi di consegna."
+      },
+      "notices": {
+        "passwordChanged": "Password aggiornata. Accedi di nuovo con quella nuova.",
+        "linked": "Fatto, questa attività è collegata al tuo account.",
+        "reset": "Scegli la tua nuova password."
+      },
+      "errors": {
+        "company_not_found": "Questa attività non è disponibile.",
+        "invalid_document": "Il numero del documento non è valido.",
+        "blocked_document": "Questo numero di documento non può essere usato.",
+        "invalid_branch": "La sede selezionata non è disponibile.",
+        "document_taken": "Esiste già un account con quel documento per questa attività.",
+        "already_registered": "Hai già un account qui. Accedi con il tuo documento.",
+        "email_belongs_to_staff": "Quell'e-mail appartiene a un account del team. Usane un'altra.",
+        "email_unavailable": "Quell'e-mail non è disponibile.",
+        "invalid_credentials": "Documento o password errati.",
+        "unauthorized": "La tua sessione è scaduta. Accedi di nuovo.",
+        "link_invalid": "Questo link non è più valido. Richiedine uno nuovo.",
+        "reset_required": "Ti serve la password attuale per cambiarla.",
+        "weak_password": "La password deve avere almeno 8 caratteri.",
+        "validation_error": "Controlla i campi del modulo.",
+        "network": "Impossibile connettersi. Controlla la connessione e riprova.",
+        "internal": "Impossibile completare l'operazione. Riprova."
+      }
+    },
     "cart": {
       "float": {
         "totalPrefix": "Totale:",

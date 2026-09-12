@@ -1,5 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
-import type { SupabaseAuthScope } from "./auth-scope";
+import { getAuthCookieName, getAuthStorageKey, type SupabaseAuthScope } from "./auth-scope";
 
 /** Misma normalización que `utils/supabase/server.ts` para evitar URLs mal formadas en Auth (p. ej. doble `/`). */
 const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim().replace(/\/$/, "");
@@ -27,6 +27,15 @@ function isLikelyTenantHost(): boolean {
   return false;
 }
 
+/**
+ * Heurística por path/host para los dos scopes de panel.
+ *
+ * NUNCA debe devolver `"menu-client"`: en dominio principal la ruta de cuenta es
+ * `/{slug}/mi-cuenta` y no se puede distinguir de una ruta de tenant, así que sería
+ * un falso sentido de seguridad. La sesión del cliente final se maneja entera en el
+ * servidor (`/api/menu-account/*`), que escribe la cookie en la respuesta; el
+ * navegador no instancia ningún cliente Supabase con ese scope.
+ */
 const resolveScope = (scope?: SupabaseAuthScope): SupabaseAuthScope => {
   if (scope) return scope;
 
@@ -47,11 +56,8 @@ const resolveScope = (scope?: SupabaseAuthScope): SupabaseAuthScope => {
   return isSuperAdminPath ? "super-admin" : "tenant";
 };
 
-const getCookieName = (scope: SupabaseAuthScope) =>
-  scope === "super-admin" ? "sb-super-admin-auth-token" : "sb-tenant-auth-token";
-
-const getStorageKey = (scope: SupabaseAuthScope) =>
-  scope === "super-admin" ? "sb-super-admin-auth-storage" : "sb-tenant-auth-storage";
+const getCookieName = getAuthCookieName;
+const getStorageKey = getAuthStorageKey;
 
 type SupabaseBrowserClient = ReturnType<typeof createBrowserClient>;
 type ScopedClientStore = Partial<Record<SupabaseAuthScope, SupabaseBrowserClient>>;

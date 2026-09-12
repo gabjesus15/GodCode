@@ -1,4 +1,4 @@
-const TENANT_BASE_ROUTES = new Set(["menu", "login", "admin"]);
+const TENANT_BASE_ROUTES = new Set(["menu", "login", "admin", "mi-cuenta"]);
 
 const splitPathAndSuffix = (value: string) => {
   const match = value.match(/^([^?#]*)(.*)$/);

@@ -76,6 +76,100 @@
     }
   },
   "tenant": {
+    "account": {
+      "title": "Mi cuenta",
+      "back": "Volver al menú",
+      "tabs": {
+        "login": "Entrar",
+        "register": "Crear cuenta"
+      },
+      "login": {
+        "title": "Entra con tu documento",
+        "documentLabel": "Número de documento",
+        "passwordLabel": "Contraseña",
+        "submit": "Entrar",
+        "submitting": "Entrando…",
+        "forgot": "¿Olvidaste tu contraseña?"
+      },
+      "register": {
+        "title": "Crea tu cuenta",
+        "intro": "Guarda tus datos para pedir más rápido la próxima vez.",
+        "documentLabel": "Número de documento",
+        "emailLabel": "Correo",
+        "fullNameLabel": "Nombre y apellido",
+        "phoneLabel": "Teléfono",
+        "passwordLabel": "Contraseña",
+        "passwordHint": "Mínimo 8 caracteres.",
+        "branchLabel": "Sucursal habitual",
+        "branchPlaceholder": "Elige una sucursal",
+        "submit": "Crear cuenta",
+        "submitting": "Creando…"
+      },
+      "recover": {
+        "title": "Recuperar contraseña",
+        "description": "Escribe tu documento y te enviamos un enlace al correo de tu cuenta.",
+        "documentLabel": "Número de documento",
+        "submit": "Enviar enlace",
+        "submitting": "Enviando…",
+        "back": "Volver a entrar",
+        "sentTitle": "Revisa tu correo",
+        "sentDescription": "Si hay una cuenta con ese documento, le enviamos un enlace para crear una contraseña nueva. El enlace vence en una hora."
+      },
+      "linkSent": {
+        "title": "Revisa tu correo",
+        "description": "Ya tienes una cuenta con ese correo. Te enviamos un enlace para vincular este negocio a tu cuenta; al abrirlo entrarás automáticamente.",
+        "note": "Tu contraseña seguirá siendo la que ya usabas."
+      },
+      "dashboard": {
+        "greeting": "Hola, {name}",
+        "profileTitle": "Tus datos",
+        "documentLabel": "Documento",
+        "emailLabel": "Correo",
+        "phoneLabel": "Teléfono",
+        "fullNameLabel": "Nombre",
+        "branchLabel": "Sucursal habitual",
+        "branchNone": "Sin sucursal preferida",
+        "save": "Guardar cambios",
+        "saving": "Guardando…",
+        "saved": "Datos actualizados.",
+        "passwordTitle": "Contraseña",
+        "currentPassword": "Contraseña actual",
+        "newPassword": "Contraseña nueva",
+        "changePassword": "Cambiar contraseña",
+        "changingPassword": "Cambiando…",
+        "passwordUpdated": "Contraseña actualizada.",
+        "passwordSharedNote": "Tu contraseña es la misma en todos los negocios donde tengas cuenta.",
+        "logout": "Cerrar sesión",
+        "loggingOut": "Cerrando…",
+        "ordersTitle": "Mis pedidos",
+        "ordersSoon": "Muy pronto vas a ver aquí tu historial de pedidos.",
+        "addressesTitle": "Mis direcciones",
+        "addressesSoon": "Muy pronto vas a poder guardar tus direcciones de entrega."
+      },
+      "notices": {
+        "passwordChanged": "Contraseña actualizada. Entra de nuevo con la nueva.",
+        "linked": "Listo, vinculamos este negocio a tu cuenta.",
+        "reset": "Elige tu contraseña nueva."
+      },
+      "errors": {
+        "company_not_found": "Este negocio no está disponible.",
+        "invalid_document": "El número de documento no es válido.",
+        "blocked_document": "Ese número de documento no se puede usar.",
+        "invalid_branch": "La sucursal seleccionada no está disponible.",
+        "document_taken": "Ya existe una cuenta con ese documento en este negocio.",
+        "already_registered": "Ya tienes una cuenta en este negocio. Entra con tu documento.",
+        "email_belongs_to_staff": "Ese correo pertenece a una cuenta del equipo. Usa otro.",
+        "email_unavailable": "Ese correo no está disponible.",
+        "invalid_credentials": "Documento o contraseña incorrectos.",
+        "unauthorized": "Tu sesión expiró. Vuelve a entrar.",
+        "link_invalid": "Este enlace ya no es válido. Pide uno nuevo.",
+        "reset_required": "Necesitas tu contraseña actual para cambiarla.",
+        "weak_password": "La contraseña debe tener al menos 8 caracteres.",
+        "validation_error": "Revisa los datos del formulario.",
+        "network": "No pudimos conectar. Revisa tu conexión e intenta de nuevo.",
+        "internal": "No se pudo completar la operación. Intenta de nuevo."
+      }
+    },
     "cart": {
       "float": {
         "totalPrefix": "Total:",

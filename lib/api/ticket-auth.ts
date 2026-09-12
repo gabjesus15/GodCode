@@ -47,7 +47,7 @@ async function resolveTenantSession(
 	const { data: rows, error } = (await client
 		.from("users")
 		.select("company_id,role")
-		.ilike("email", email)) as { data: TenantUserRow[] | null; error: MessageError };
+		.eq("email", email)) as { data: TenantUserRow[] | null; error: MessageError };
 
 	if (error) return { error: error.message };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { Home, MapPin, MessageCircle, ShoppingBag } from "lucide-react";
+import { Home, MapPin, MessageCircle, ShoppingBag, UserRound } from "lucide-react";
 
 import type { BottomNavTab, BranchInfo } from "./menu-types";
 
@@ -19,9 +19,11 @@ type MenuBottomNavProps = {
 	selectedBranch: BranchInfo | null;
 	isEmbeddedPreview: boolean;
 	onOpenBranchModal: () => void;
+	showAccountTab?: boolean;
 	onHome: () => void;
 	onCart: () => void;
 	onContact: () => void;
+	onAccount?: () => void;
 };
 
 export const MenuBottomNav = memo(function MenuBottomNav({
@@ -33,15 +35,18 @@ export const MenuBottomNav = memo(function MenuBottomNav({
 	selectedBranch,
 	isEmbeddedPreview,
 	onOpenBranchModal,
+	showAccountTab = false,
 	onHome,
 	onCart,
 	onContact,
+	onAccount,
 }: MenuBottomNavProps) {
 	const itemCount =
 		1 +
 		(onlineOrderingEnabled !== false ? 1 : 0) +
 		(showContactTab ? 1 : 0) +
-		(showBranchSelector ? 1 : 0);
+		(showBranchSelector ? 1 : 0) +
+		(showAccountTab ? 1 : 0);
 	const nombreSucursal = selectedBranch?.name || "Seleccionar Local";
 	/*
 	 * En una columna de 81px cabian trece caracteres, y una sucursal real se
@@ -119,6 +124,20 @@ export const MenuBottomNav = memo(function MenuBottomNav({
 					{/* El `aria-label` de arriba lleva el nombre entero, asi que el lector
 					    de pantalla no pierde nada aunque la etiqueta visible se acorte. */}
 					<span className="bottom-nav-label">{etiquetaSucursal}</span>
+				</button>
+			)}
+
+			{showAccountTab && (
+				<button
+					type="button"
+					className={`bottom-nav-item ${activeTab === "account" ? "active-nav-circle" : ""}`}
+					onClick={onAccount}
+					aria-label="Mi cuenta"
+				>
+					<span className="bottom-nav-icon-wrap" aria-hidden>
+						<UserRound size={24} strokeWidth={2} />
+					</span>
+					<span className="bottom-nav-label">Mi cuenta</span>
 				</button>
 			)}
 		</nav>

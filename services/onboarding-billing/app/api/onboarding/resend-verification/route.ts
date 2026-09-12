@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     const { data: app, error } = await supabaseAdmin
       .from("onboarding_applications")
       .select("id,business_name,responsible_name,email,verification_token,status")
-      .ilike("email", email)
+      .eq("email", email)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();

@@ -14,7 +14,7 @@ export class TenantStaffService {
       throw new ForbiddenError("No autenticado");
     }
 
-    const email = user.email.trim();
+    const email = user.email.trim().toLowerCase();
     
     // 1. Intentar leer usando el cliente scoped (con RLS de usuario)
     let rows: Array<{ id: string; company_id: string | null; role: string | null }> | null = null;
@@ -23,7 +23,7 @@ export class TenantStaffService {
       const scopedRes = await supabase
         .from("users")
         .select("id,company_id,role")
-        .ilike("email", email);
+        .eq("email", email);
       rows = scopedRes.data as Array<{ id: string; company_id: string | null; role: string | null }> | null;
       error = scopedRes.error;
     } catch (err) {
@@ -37,7 +37,7 @@ export class TenantStaffService {
       const adminRes = await supabaseAdmin
         .from("users")
         .select("id,company_id,role")
-        .ilike("email", email);
+        .eq("email", email);
         
       if (adminRes.error) throw new Error(adminRes.error.message);
       rows = adminRes.data;

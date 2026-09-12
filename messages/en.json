@@ -76,6 +76,100 @@
     }
   },
   "tenant": {
+    "account": {
+      "title": "My account",
+      "back": "Back to menu",
+      "tabs": {
+        "login": "Sign in",
+        "register": "Create account"
+      },
+      "login": {
+        "title": "Sign in with your ID number",
+        "documentLabel": "ID number",
+        "passwordLabel": "Password",
+        "submit": "Sign in",
+        "submitting": "Signing in…",
+        "forgot": "Forgot your password?"
+      },
+      "register": {
+        "title": "Create your account",
+        "intro": "Save your details to order faster next time.",
+        "documentLabel": "ID number",
+        "emailLabel": "Email",
+        "fullNameLabel": "Full name",
+        "phoneLabel": "Phone",
+        "passwordLabel": "Password",
+        "passwordHint": "At least 8 characters.",
+        "branchLabel": "Usual location",
+        "branchPlaceholder": "Choose a location",
+        "submit": "Create account",
+        "submitting": "Creating…"
+      },
+      "recover": {
+        "title": "Reset password",
+        "description": "Enter your ID number and we'll email your account a reset link.",
+        "documentLabel": "ID number",
+        "submit": "Send link",
+        "submitting": "Sending…",
+        "back": "Back to sign in",
+        "sentTitle": "Check your email",
+        "sentDescription": "If an account exists for that ID number, we sent a link to set a new password. The link expires in one hour."
+      },
+      "linkSent": {
+        "title": "Check your email",
+        "description": "You already have an account with that email. We sent a link to connect this business to it; opening the link signs you in.",
+        "note": "Your password stays the same as before."
+      },
+      "dashboard": {
+        "greeting": "Hi, {name}",
+        "profileTitle": "Your details",
+        "documentLabel": "ID number",
+        "emailLabel": "Email",
+        "phoneLabel": "Phone",
+        "fullNameLabel": "Name",
+        "branchLabel": "Usual location",
+        "branchNone": "No preferred location",
+        "save": "Save changes",
+        "saving": "Saving…",
+        "saved": "Details updated.",
+        "passwordTitle": "Password",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "changePassword": "Change password",
+        "changingPassword": "Changing…",
+        "passwordUpdated": "Password updated.",
+        "passwordSharedNote": "Your password is the same across every business where you have an account.",
+        "logout": "Sign out",
+        "loggingOut": "Signing out…",
+        "ordersTitle": "My orders",
+        "ordersSoon": "Your order history will show up here soon.",
+        "addressesTitle": "My addresses",
+        "addressesSoon": "You'll be able to save delivery addresses here soon."
+      },
+      "notices": {
+        "passwordChanged": "Password updated. Please sign in again with the new one.",
+        "linked": "Done, this business is now connected to your account.",
+        "reset": "Choose your new password."
+      },
+      "errors": {
+        "company_not_found": "This business is not available.",
+        "invalid_document": "That ID number is not valid.",
+        "blocked_document": "That ID number cannot be used.",
+        "invalid_branch": "The selected location is not available.",
+        "document_taken": "An account with that ID number already exists for this business.",
+        "already_registered": "You already have an account here. Sign in with your ID number.",
+        "email_belongs_to_staff": "That email belongs to a team account. Please use another one.",
+        "email_unavailable": "That email is not available.",
+        "invalid_credentials": "Incorrect ID number or password.",
+        "unauthorized": "Your session expired. Please sign in again.",
+        "link_invalid": "This link is no longer valid. Request a new one.",
+        "reset_required": "You need your current password to change it.",
+        "weak_password": "The password must be at least 8 characters.",
+        "validation_error": "Please check the form fields.",
+        "network": "We couldn't connect. Check your connection and try again.",
+        "internal": "We couldn't complete the operation. Please try again."
+      }
+    },
     "cart": {
       "float": {
         "totalPrefix": "Total:",

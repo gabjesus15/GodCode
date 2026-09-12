@@ -25,7 +25,7 @@ export async function isFirstPaymentPromoEligible(
 	const { data: companyWithPromo } = await supabaseAdmin
 		.from("companies")
 		.select("id")
-		.ilike("email", normalized)
+		.eq("email", normalized)
 		.not("first_payment_promo_used_at", "is", null)
 		.maybeSingle();
 
