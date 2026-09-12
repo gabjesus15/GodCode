@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { Settings, QrCode } from "lucide-react";
 import Image from "next/image";
@@ -19,39 +20,38 @@ interface BranchInfo {
   map_url?: string | null;
 }
 
-const MenuBookIcon = () => (
+const RestaurantMenuIcon = () => (
   <svg
-    width="20"
-    height="20"
+    width="24"
+    height="24"
     viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
   >
-    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-    <path d="M8 6h7M8 10h7M8 14h5" />
+    {/* Cloche knob */}
+    <circle cx="12" cy="4" r="1.8" />
+    {/* Cloche dome */}
+    <path d="M12 6.5C7.2 6.5 3.3 10.3 3 15h18c-.3-4.7-4.2-8.5-9-8.5Z" />
+    {/* Serving tray platter */}
+    <rect x="2" y="16.5" width="20" height="2.5" rx="1.25" />
   </svg>
 );
 
 const WhatsAppIcon = () => (
   <svg
-    width="20"
-    height="20"
+    width="22"
+    height="22"
     viewBox="0 0 24 24"
     fill="currentColor"
   >
-    <path d="M8.88595 7.16985C9.06891 7.17475 9.27175 7.18465 9.46474 7.61303C9.59271 7.89821 9.80829 8.42321 9.9839 8.85087C10.1206 9.18366 10.233 9.45751 10.2611 9.51356C10.3254 9.64156 10.365 9.78926 10.2809 9.96156C10.271 9.98188 10.2617 10.0013 10.2526 10.02C10.1852 10.16 10.1372 10.2597 10.0237 10.3899C9.97709 10.4435 9.9285 10.5022 9.88008 10.5607C9.79494 10.6636 9.71035 10.7658 9.63785 10.838C9.50924 10.9659 9.37563 11.1039 9.52402 11.3599C9.6725 11.6159 10.1919 12.4579 10.9587 13.1373C11.783 13.8712 12.4998 14.1805 12.8622 14.3368C12.9325 14.3672 12.9895 14.3918 13.0313 14.4126C13.2886 14.5406 13.4419 14.5209 13.5903 14.3486C13.7388 14.1762 14.2334 13.6001 14.4066 13.3441C14.5748 13.0881 14.7479 13.1275 14.9854 13.2161C15.2228 13.3047 16.4892 13.9251 16.7464 14.0531C16.7972 14.0784 16.8448 14.1012 16.8889 14.1224C17.0678 14.2082 17.1895 14.2665 17.2411 14.3535C17.3054 14.4618 17.3054 14.9739 17.0927 15.5746C16.8751 16.1752 15.8263 16.7513 15.3514 16.7956C15.3064 16.7999 15.2617 16.8053 15.2156 16.8108C14.7804 16.8635 14.228 16.9303 12.2596 16.1555C9.83424 15.2018 8.23322 12.8354 7.90953 12.357C7.88398 12.3192 7.86638 12.2932 7.85698 12.2806L7.8515 12.2733C7.70423 12.0762 6.80328 10.8707 6.80328 9.62685C6.80328 8.43682 7.38951 7.81726 7.65689 7.53467C7.67384 7.51676 7.6895 7.50021 7.70366 7.48494C7.94107 7.22895 8.21814 7.16495 8.39125 7.16495C8.56445 7.16495 8.73756 7.16495 8.88595 7.16985Z" />
-    <path fillRule="evenodd" clipRule="evenodd" d="M2.18418 21.3314C2.10236 21.6284 2.37285 21.9025 2.6709 21.8247L7.27824 20.6213C8.7326 21.409 10.37 21.8275 12.0371 21.8275H12.0421C17.5281 21.8275 22 17.3815 22 11.9163C22 9.26735 20.966 6.77594 19.0863 4.90491C17.2065 3.03397 14.7084 2 12.042 2C6.55607 2 2.08411 6.44605 2.08411 11.9114C2.08348 13.65 2.5424 15.3582 3.41479 16.8645L2.18418 21.3314ZM4.86092 17.2629C4.96774 16.8752 4.91437 16.4608 4.71281 16.1127C3.97266 14.8348 3.58358 13.3855 3.58411 11.9114C3.58411 7.28158 7.37738 3.5 12.042 3.5C14.3119 3.5 16.5053 4.38287 18.0619 5.93952C19.6186 7.49618 20.5015 9.68953 20.5015 11.9614C20.5015 16.5912 16.7082 20.3727 12.0784 20.3727C10.597 20.3727 9.14175 19.988 7.87635 19.2621L7.75373 19.1915L3.92317 20.187L4.86092 17.2629Z" />
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.888 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.938 3.658 1.434 5.71 1.435h.005c6.554 0 11.89-5.335 11.893-11.893a11.82 11.82 0 00-3.48-8.413z" />
   </svg>
 );
 
 const InstagramIcon = () => (
   <svg
-    width="20"
-    height="20"
+    width="22"
+    height="22"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -67,8 +67,8 @@ const InstagramIcon = () => (
 
 const MapPinIcon = () => (
   <svg
-    width="20"
-    height="20"
+    width="22"
+    height="22"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -76,11 +76,58 @@ const MapPinIcon = () => (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
     <circle cx="12" cy="10" r="3" />
   </svg>
 );
 
+const StorefrontIcon = () => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {/* Storefront structure */}
+    <rect x="4" y="10.5" width="16" height="10" rx="1.5" fill="#38bdf8" />
+    <rect x="13" y="13.5" width="5.5" height="4.5" rx="0.75" fill="#ffffff" />
+    <path d="M13 15.75H18.5M15.75 13.5V18" stroke="#38bdf8" strokeWidth="0.75" strokeLinecap="round" />
+    <rect x="5.5" y="13.5" width="5" height="7" rx="0.75" fill="#ffffff" />
+    <circle cx="9.5" cy="17" r="0.65" fill="#0284c7" />
+    {/* Striped awning */}
+    <path d="M3 10.5L5 4H19L21 10.5H3Z" fill="#f43f5e" />
+    <path d="M7 4L6 10.5H10.2L10.5 4H7Z" fill="#ffffff" />
+    <path d="M13.5 4L13.8 10.5H18L17 4H13.5Z" fill="#ffffff" />
+    {/* Scalloped edge */}
+    <circle cx="4.5" cy="10.5" r="1.5" fill="#f43f5e" />
+    <circle cx="7.5" cy="10.5" r="1.5" fill="#ffffff" />
+    <circle cx="10.5" cy="10.5" r="1.5" fill="#f43f5e" />
+    <circle cx="13.5" cy="10.5" r="1.5" fill="#ffffff" />
+    <circle cx="16.5" cy="10.5" r="1.5" fill="#f43f5e" />
+    <circle cx="19.5" cy="10.5" r="1.5" fill="#ffffff" />
+  </svg>
+);
+
+
+type ActionType = "whatsapp" | "instagram" | "location";
+
+type ActionVariant = ActionType | "menu" | "godcode";
+
+interface HomeAction {
+  label: string;
+  icon: ReactNode;
+  variant: ActionVariant;
+  /** Solo cuando el nombre accesible debe decir más que la etiqueta visible. */
+  ariaLabel?: string;
+  primary?: boolean;
+  godcodeCta?: boolean;
+  /** Navegación: se renderiza como enlace real (Cmd+click, click central, SEO). */
+  href?: string;
+  external?: boolean;
+  /** Acción: abre el selector de sucursal. */
+  onClick?: () => void;
+}
 
 interface HomeClientProps {
   publicSlug: string;
@@ -92,18 +139,6 @@ interface HomeClientProps {
 
 export function HomeClient(props: HomeClientProps) {
   const { name, logoUrl, schedule, branches, publicSlug } = props;
-    // Estado para detectar mobile
-    const [showQR, setShowQR] = useState(true);
-
-    useEffect(() => {
-      const handleResize = () => {
-        setShowQR(window.innerWidth >= 850);
-      };
-      handleResize(); // Inicial
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }, []);
-  const router = useRouter();
   const pathname = usePathname();
   
   const menuPath = useMemo(
@@ -122,9 +157,6 @@ export function HomeClient(props: HomeClientProps) {
   // Estados de UI
   const [showModal, setShowModal] = useState(false);
   const [logoError, setLogoError] = useState(false);
-  
-  // Tipado estricto: Eliminamos "menu" porque esa acción ya no abre este modal
-  type ActionType = "whatsapp" | "instagram" | "location";
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null);
 
   // Generación de URL segura para el QR
@@ -187,29 +219,15 @@ export function HomeClient(props: HomeClientProps) {
   };
 
   // Configuración de botones dinámica
-  const buttons = useMemo((): Array<{
-    label: string;
-    icon: ReactNode;
-    onClick: () => void;
-    primary?: boolean;
-    ariaLabel?: string;
-    godcodeCta?: boolean;
-  }> => {
-    const list: Array<{
-      label: string;
-      icon: ReactNode;
-      onClick: () => void;
-      primary?: boolean;
-      ariaLabel?: string;
-      godcodeCta?: boolean;
-    }> = [
+  const buttons = useMemo((): HomeAction[] => {
+    const list: HomeAction[] = [
       {
         label: "Ver Menú Digital",
-        icon: <MenuBookIcon />,
-        // AL HACER CLIC, VA DIRECTO AL MENÚ SIN ABRIR MODAL AQUÍ
-        onClick: () => router.push(menuPath),
+        icon: <RestaurantMenuIcon />,
+        href: menuPath,
         primary: true,
-      }
+        variant: "menu",
+      },
     ];
 
     if (branches.some(b => b.whatsapp_url)) {
@@ -217,6 +235,9 @@ export function HomeClient(props: HomeClientProps) {
         label: "WhatsApp",
         icon: <WhatsAppIcon />,
         onClick: () => handleActionClick("whatsapp"),
+        // El botón no va a WhatsApp: abre el selector de sucursal.
+        ariaLabel: "Contactar por WhatsApp",
+        variant: "whatsapp",
       });
     }
 
@@ -225,6 +246,8 @@ export function HomeClient(props: HomeClientProps) {
         label: "Instagram",
         icon: <InstagramIcon />,
         onClick: () => handleActionClick("instagram"),
+        ariaLabel: "Ver nuestro Instagram",
+        variant: "instagram",
       });
     }
 
@@ -233,6 +256,8 @@ export function HomeClient(props: HomeClientProps) {
         label: "Ubicación",
         icon: <MapPinIcon />,
         onClick: () => handleActionClick("location"),
+        ariaLabel: "Ver ubicaciones",
+        variant: "location",
       });
     }
 
@@ -240,23 +265,15 @@ export function HomeClient(props: HomeClientProps) {
       label: "Crea tu menú",
       ariaLabel: "Crea tu menú digital con Gcode",
       godcodeCta: true,
-        icon: (
-        <Image
-          src="/favicon-32.png"
-          alt="Gcode Logo"
-          width={20}
-          height={20}
-          className="h-5 w-5 object-contain"
-        />
-      ),
-      onClick: () => {
-        // La landing pública de marketing es `/` (landing v3). `/landing` es el panel super-admin y pide login.
-        window.location.assign(buildPoweredByHref({ tenantSlug: publicSlug, surface: "home" }));
-      },
+      variant: "godcode",
+      icon: <StorefrontIcon />,
+      // La landing pública de marketing es `/` (landing v3). `/landing` es el panel super-admin y pide login.
+      href: buildPoweredByHref({ tenantSlug: publicSlug, surface: "home" }),
+      external: true,
     });
 
     return list;
-  }, [handleActionClick, router, menuPath, branches, publicSlug]);
+  }, [handleActionClick, menuPath, branches, publicSlug]);
 
   // Generador de iniciales robusto
   const initials = useMemo(() => {
@@ -270,15 +287,14 @@ export function HomeClient(props: HomeClientProps) {
   return (
     <div className="home-container animate-fade">
       {panelBase ? (
-        <button
-          type="button"
-          onClick={() => router.push(loginPath)}
+        <Link
+          href={loginPath}
           className="settings-btn"
           title="Acceso Administrativo"
           aria-label="Acceso Administrativo"
         >
-          <Settings size={20} />
-        </button>
+          <Settings size={20} aria-hidden="true" />
+        </Link>
       ) : null}
 
       <div className="home-background-glass" aria-hidden="true" />
@@ -313,6 +329,7 @@ export function HomeClient(props: HomeClientProps) {
                 ) : (
                   <div
                     className="home-logo-centered logo-initials"
+                    role="img"
                     aria-label={`Iniciales de ${name}`}
                   >
                     {initials}
@@ -322,64 +339,105 @@ export function HomeClient(props: HomeClientProps) {
               
               <div className="home-profile-info">
                 <h1 className="text-gradient">{name}</h1>
-                <p className="home-tagline">
-                  {schedule ? schedule.split("\n")[0] : "Sabor auténtico en cada pieza"}
-                </p>
+                {schedule?.split("\n")[0]?.trim() ? (
+                  <p className="home-tagline">{schedule.split("\n")[0].trim()}</p>
+                ) : null}
               </div>
             </header>
 
             <nav className="home-nav-grid" aria-label="Menú principal de opciones">
-              {buttons.map((btn) => (
-                <button
-                  key={btn.label}
-                  onClick={btn.onClick}
-                  className={`btn ${btn.primary ? "btn-primary" : "btn-secondary glass"} ${
-                    btn.godcodeCta ? "btn-godcode" : ""
-                  }`}
-                  aria-label={btn.ariaLabel ?? `Ir a ${btn.label}`}
-                >
-                  <span className="btn-icon" aria-hidden="true">{btn.icon}</span>
-                  <span className="btn-label">{btn.label}</span>
-                </button>
-              ))}
+              {buttons.map((btn) => {
+                const className = `btn btn-linkbio btn-item--${btn.variant} ${
+                  btn.primary ? "btn-primary" : "btn-secondary"
+                } ${btn.godcodeCta ? "btn-godcode" : ""}`;
+                const inner = (
+                  <>
+                    <span className="btn-icon-bubble" aria-hidden="true">
+                      {btn.icon}
+                    </span>
+                    <span className="btn-label">{btn.label}</span>
+                  </>
+                );
+
+                if (btn.href && btn.external) {
+                  return (
+                    <a
+                      key={btn.label}
+                      href={btn.href}
+                      className={className}
+                      rel="noopener noreferrer"
+                      aria-label={btn.ariaLabel}
+                    >
+                      {inner}
+                    </a>
+                  );
+                }
+
+                if (btn.href) {
+                  return (
+                    <Link
+                      key={btn.label}
+                      href={btn.href}
+                      className={className}
+                      aria-label={btn.ariaLabel}
+                    >
+                      {inner}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <button
+                    key={btn.label}
+                    type="button"
+                    onClick={btn.onClick}
+                    className={className}
+                    aria-label={btn.ariaLabel}
+                  >
+                    {inner}
+                  </button>
+                );
+              })}
             </nav>
 
             <PoweredByGcode tenantSlug={publicSlug} surface="home" />
           </div>
 
-          {/* Talón de QR (Escritorio) */}
-          {showQR && (
-            <aside className="ticket-stub">
-              <div className="veggie-bg" aria-hidden="true">
-                <span className="veggie veggie-1" />
-                <span className="veggie veggie-2" />
-                <span className="veggie veggie-3" />
-                <span className="veggie veggie-4" />
-                <span className="veggie veggie-5" />
+          {/* Talón de QR (visible en escritorio; el CSS lo oculta en móvil) */}
+          <aside className="ticket-stub">
+            <div className="veggie-bg" aria-hidden="true">
+              <span className="veggie veggie-1" />
+              <span className="veggie veggie-2" />
+              <span className="veggie veggie-3" />
+              <span className="veggie veggie-4" />
+              <span className="veggie veggie-5" />
+            </div>
+            <div className="stub-content">
+              <div className="stub-badge">Acceso digital</div>
+              <div
+                className="qr-box"
+                role="img"
+                aria-label="Código QR del Menú Digital"
+              >
+                {menuUrl ? (
+                  <QRCodeSVG 
+                    value={menuUrl} 
+                    level="H" 
+                    includeMargin={false} 
+                    className="qr-code"
+                  />
+                ) : (
+                  <div className="qr-placeholder">
+                    <QrCode size={40} />
+                  </div>
+                )}
               </div>
-              <div className="stub-content">
-                <div className="stub-badge">ACCESO DIGITAL</div>
-                <div className="qr-box" aria-label="Código QR del Menú Digital">
-                  {menuUrl ? (
-                    <QRCodeSVG 
-                      value={menuUrl} 
-                      level="H" 
-                      includeMargin={false} 
-                      className="qr-code"
-                    />
-                  ) : (
-                    <div className="qr-placeholder">
-                      <QrCode size={40} />
-                    </div>
-                  )}
-                </div>
-                <div className="stub-footer">
-                  <p className="stub-scan-text">ESCANÉAME</p>
-                  <span className="stub-info">PASAPORTE AL SABOR</span>
-                </div>
+              <div className="stub-footer">
+                <p className="stub-scan-text">Escanéame</p>
+                <span className="stub-info">Pasaporte al sabor</span>
               </div>
-            </aside>
-          )}
+            </div>
+          </aside>
 
         </div>
       </main>

@@ -1,7 +1,7 @@
 /* ==========================================================================
    CONFIGURACIÓN & VARIABLES (TEMA OISHI PREMIUM V2 - SOFT OFF-WHITE)
    ========================================================================== */
-:root {
+.home-container {
   /* --- Dimensiones --- */
   --ticket-radius: 28px;
   --stub-width: 310px; /* Ancho optimizado para la sección QR */
@@ -40,9 +40,6 @@
   --shadow-inset: inset 0 0 40px rgba(255,255,255,0.5); /* Profundidad interna clara */
 }
 
-/* Reset */
-* { box-sizing: border-box; }
-
 /* ==========================================================================
    LAYOUT PRINCIPAL
    ========================================================================== */
@@ -71,15 +68,7 @@
   overflow: hidden; /* Clips the floating blobs */
 }
 
-/* Efecto de Vidrio Esmerilado Texturizado (Noise Overlay) */
-.home-overlay::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0.022; /* Textura táctil muy sutil de cristal esmerilado */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  pointer-events: none;
-}
+
 
 /* Esferas de Luz Dinámicas Estilo Apple (Mesh Gradient Acelerado por GPU - Más Vibrantes) */
 .home-glow {
@@ -97,7 +86,6 @@
   background: var(--accent-primary, #e53935);
   top: -10%;
   left: -10%;
-  animation: float-glow-1 14s ease-in-out infinite alternate;
 }
 
 .home-glow-2 {
@@ -106,54 +94,18 @@
   background: #4f46e5; /* indigo */
   bottom: -15%;
   right: -10%;
-  animation: float-glow-2 16s ease-in-out infinite alternate;
 }
 
 .home-glow-3 {
   width: clamp(300px, 35vw, 450px);
   height: clamp(300px, 35vw, 450px);
-  background: #d946ef; /* fuchsia neón vibrante */
+  background: #d946ef; /* fuchsia neón */
   top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
-  animation: float-glow-3 12s ease-in-out infinite alternate;
 }
 
-@keyframes float-glow-1 {
-  0% {
-    transform: translate(0, 0) scale(1) rotate(0deg);
-  }
-  50% {
-    transform: translate(120px, 90px) scale(1.2) rotate(120deg);
-  }
-  100% {
-    transform: translate(-60px, 160px) scale(0.9) rotate(360deg);
-  }
-}
 
-@keyframes float-glow-2 {
-  0% {
-    transform: translate(0, 0) scale(1) rotate(0deg);
-  }
-  50% {
-    transform: translate(-140px, -90px) scale(0.8) rotate(-180deg);
-  }
-  100% {
-    transform: translate(90px, -150px) scale(1.15) rotate(-360deg);
-  }
-}
-
-@keyframes float-glow-3 {
-  0% {
-    transform: translate(-50%, -50%) scale(1) rotate(0deg);
-  }
-  50% {
-    transform: translate(-25%, -30%) scale(1.25) rotate(90deg);
-  }
-  100% {
-    transform: translate(-70%, -70%) scale(0.75) rotate(180deg);
-  }
-}
 
 /* Fondo de Cristal Esmerilado Profundo (Acuarela Claro) */
 .home-background-glass {
@@ -200,16 +152,26 @@
   
   color: var(--accent-primary, #e63946);
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  touch-action: manipulation;
+  transition: background-color 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              color 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              border-color 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   box-shadow: 0 5px 15px rgba(0,0,0,0.03), 0 0 0 1px rgba(255,255,255,0.5) inset;
+}
+
+.settings-btn:focus-visible {
+  outline: 3px solid var(--accent-primary, #e63946);
+  outline-offset: 3px;
 }
 
 .settings-btn:hover {
   background: var(--accent-primary, #e63946);
   color: white;
-  transform: scale(1.1) rotate(90deg);
+  transform: scale(1.05);
   border-color: var(--accent-hover, #c62828);
-  box-shadow: 0 8px 24px var(--accent-shadow, rgba(255, 71, 87, 0.3));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
 }
 
 /* ==========================================================================
@@ -222,9 +184,9 @@
   width: 100%;
   max-width: 860px; /* Tamaño compacto premium */
   
+  /* Sin backdrop-filter: el fondo de la tarjeta es opaco, así que solo costaba
+     una capa de composición extra (y en móvil ocupa la pantalla entera). */
   background: var(--card-bg);
-  -webkit-backdrop-filter: var(--blur-val);
-  backdrop-filter: var(--blur-val);
   border: 1px solid var(--glass-border);
   border-top: 1px solid var(--glass-highlight);
   
@@ -232,7 +194,7 @@
   box-shadow: var(--shadow-float);
   
   position: relative;
-  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: box-shadow 0.3s ease;
   overflow: hidden;
 }
 
@@ -241,12 +203,9 @@
     flex-direction: row;
   }
   .ticket-wrapper:hover {
-    transform: translateY(-8px);
     box-shadow: 
-      0 60px 100px -20px rgba(15, 23, 42, 0.22),
-      0 30px 60px -15px rgba(15, 23, 42, 0.14),
-      0 10px 20px -10px rgba(15, 23, 42, 0.10),
-      0 0 0 1px rgba(0, 0, 0, 0.03);
+      0 45px 90px -15px rgba(15, 23, 42, 0.16),
+      0 20px 40px -10px rgba(15, 23, 42, 0.10);
   }
 }
 
@@ -285,12 +244,6 @@
   border-radius: var(--ticket-radius) 0 0 0;
 }
 
-@media (max-width: 849px) {
-  .home-banner {
-    border-radius: var(--ticket-radius) var(--ticket-radius) 0 0 !important;
-  }
-}
-
 .home-banner::after {
   content: "";
   position: absolute;
@@ -323,7 +276,9 @@
   align-items: center;
   justify-content: center;
   z-index: 5;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-color 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden; /* Clips logo image to a perfect circle */
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
@@ -335,7 +290,7 @@
   object-fit: cover; /* Cover container space completely */
 }
 
-.home-logo-wrap.logo-initials {
+.home-logo-centered.logo-initials {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -343,14 +298,16 @@
   color: #0f172a;
   font-size: 2.2rem;
   font-weight: 700;
+  line-height: 1;
   border-radius: 50%;
   letter-spacing: 1px;
+  user-select: none;
 }
 
 .home-logo-wrap:hover {
-  transform: scale(1.08) rotate(-2deg);
-  border-color: rgba(0, 0, 0, 0.12);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  transform: scale(1.03);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
 }
 
 .home-profile-info {
@@ -364,6 +321,7 @@
   line-height: 1.2;
   margin: 0;
   letter-spacing: -0.02em;
+  text-wrap: balance;
   
   background: var(--title-silver-gradient);
   -webkit-background-clip: text;
@@ -383,151 +341,170 @@
   font-size: 0.76rem;
 }
 
-/* --- Rejilla de Botones (Nav Grid) --- */
+/* --- Rejilla / Lista Vertical de Botones (Estilo Bio.link / Linktree) --- */
 .home-nav-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   width: 100%;
-  max-width: 480px;
-  padding: 2rem 2rem 0 2rem;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 0 1.5rem;
 }
 
 .home-container .btn {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0 24px;
-  height: 54px;
-  border-radius: 50px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  height: 60px;
+  padding: 0;
+  border-radius: 9999px;
+  background: #ffffff;
   border: none;
-  text-transform: uppercase;
-  overflow: hidden;
+  cursor: pointer;
+  text-decoration: none;
+  text-transform: none;
+  touch-action: manipulation;
+  /* Sombras limpias, suaves y realistas idénticas a Bio.link */
+  box-shadow: 
+    0 8px 24px -2px rgba(15, 23, 42, 0.08),
+    0 3px 6px -1px rgba(15, 23, 42, 0.04);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow;
 }
 
-.home-container .btn .btn-icon {
+.home-container .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 14px 28px -2px rgba(15, 23, 42, 0.12),
+    0 6px 12px -1px rgba(15, 23, 42, 0.05);
+}
+
+.home-container .btn:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 4px 10px -1px rgba(15, 23, 42, 0.08),
+    0 2px 4px -1px rgba(15, 23, 42, 0.04);
+}
+
+/* Anillo de foco para teclado. Antes la botonera entera llevaba `outline: none`
+   sin reemplazo: quien navega con Tab no veía dónde estaba. */
+.home-container .btn:focus-visible {
+  outline: 3px solid #0f172a;
+  outline-offset: 3px;
+}
+
+.home-container .btn-primary:focus-visible {
+  outline-color: #0f172a;
+  outline-offset: 4px;
+}
+
+/* Burbuja circular concéntrica con su propia sombra proyectada sobre la píldora blanca */
+.home-container .btn .btn-icon-bubble {
   position: absolute;
-  left: 24px;
+  left: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
   pointer-events: none;
-  transition: transform 0.3s ease;
 }
 
+/* Etiqueta de texto perfectamente centrada en la píldora */
 .home-container .btn .btn-label {
   display: block;
   width: 100%;
   text-align: center;
-  padding: 0 15px 0 25px; /* Deja espacio para el icono absoluto a la izquierda */
-  font-size: 0.76rem;
-  letter-spacing: 1.2px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.01em;
   line-height: 1.2;
-  white-space: normal; /* Permite envolver en desktop si el botón es estrecho */
-  word-break: keep-all; /* Evita romper palabras */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 54px; /* Simétrico: 54px izquierda y derecha garantizan centrado exacto y no colisionar con la burbuja */
+  box-sizing: border-box;
 }
 
-@media (min-width: 850px) {
-  .home-container .btn-secondary .btn-label {
-    font-size: 0.7rem !important; /* Más pequeño para que quepa en la cuadrícula de 2 columnas */
-    letter-spacing: 0.8px !important;
-    padding: 0 10px 0 20px !important;
-  }
-}
+/* ==========================================================================
+   IDENTIDAD POR BOTÓN (Burbujas Circulares con Color de Marca)
+   ========================================================================== */
 
-/* Efecto Brillo (Shine) al pasar el mouse */
-.home-container .btn::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
-  transition: 0.6s;
-}
-.home-container .btn:hover::after {
-  left: 100%;
-}
-
-/* Primario */
+/* 1. Ver Menú Digital (CTA principal).
+   Misma altura y misma gramática de sombra que el resto de la lista: lo que lo
+   destaca es el color de marca, no una base 3D negra de otro lenguaje visual.
+   La sombra usa los tokens del tema, así que se tiñe con el color del tenant
+   igual que el carrito flotante del menú. */
 .home-container .btn-primary {
-  grid-column: 1 / -1;
-  height: 60px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--accent-primary, #e53935) 0%, var(--accent-hover, #d32f2f) 100%);
-  color: white;
-  box-shadow: 
-    0 10px 24px -4px var(--accent-shadow-strong, rgba(229, 57, 53, 0.4)),
-    0 4px 12px var(--accent-shadow, rgba(229, 57, 53, 0.2)),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 50px;
+  background: var(--accent-primary, #e53935);
+  color: #ffffff;
+  border: none;
+  box-shadow:
+    0 10px 24px -4px var(--accent-shadow, rgba(229, 57, 53, 0.38)),
+    0 3px 8px -2px rgba(15, 23, 42, 0.16);
 }
+
 .home-container .btn-primary:hover {
-  transform: translateY(-3px) scale(1.01);
-  box-shadow: 
-    0 16px 32px -4px var(--accent-shadow-strong, rgba(229, 57, 53, 0.55)),
-    0 12px 24px -4px var(--accent-shadow-strong, rgba(229, 57, 53, 0.4)),
-    0 6px 20px var(--accent-shadow, rgba(229, 57, 53, 0.3));
+  transform: translateY(-2px);
+  box-shadow:
+    0 16px 32px -4px var(--accent-shadow-strong, rgba(229, 57, 53, 0.45)),
+    0 6px 12px -2px rgba(15, 23, 42, 0.18);
+}
+
+.home-container .btn-primary:active {
+  transform: translateY(0);
+  box-shadow:
+    0 5px 12px -2px var(--accent-shadow, rgba(229, 57, 53, 0.38)),
+    0 2px 4px -1px rgba(15, 23, 42, 0.14);
 }
 
 .home-container .btn-primary .btn-label {
-  font-size: 0.85rem !important; /* El botón principal destaca más */
-  letter-spacing: 2px !important;
+  color: #ffffff;
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
-/* Secundarios Claras */
-.home-container .btn-secondary {
-  background: rgba(255, 255, 255, 0.72); /* Cristal translúcido claro */
-  border: 1px solid rgba(0, 0, 0, 0.06); /* Borde sutil oscuro */
-  color: rgba(15, 23, 42, 0.85); /* Texto carbón legible */
-  font-size: 0.8rem;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 50px;
-  box-shadow: 
-    0 4px 12px rgba(15, 23, 42, 0.05),
-    0 1px 3px rgba(15, 23, 42, 0.02);
-}
- 
-.home-container .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(0, 0, 0, 0.12);
-  color: #000;
-  transform: translateY(-2px);
-  box-shadow: 
-    0 8px 20px rgba(15, 23, 42, 0.08),
-    0 2px 6px rgba(15, 23, 42, 0.04);
+.home-container .btn-item--menu .btn-icon-bubble {
+  background: #ffffff;
+  color: var(--accent-primary, #e53935);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
-/* Botón especial GodCode */
-.home-container .btn-godcode {
-  background: rgba(99, 102, 241, 0.06) !important; /* Fondo muy claro de índigo */
-  border: 1px solid rgba(99, 102, 241, 0.25) !important; /* Borde índigo suave */
-  color: #4f46e5 !important; /* Texto índigo oscuro/medio */
-  font-weight: 700 !important;
-  box-shadow: 
-    0 4px 12px rgba(99, 102, 241, 0.05),
-    0 1px 3px rgba(99, 102, 241, 0.02) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+/* 2. WhatsApp */
+.home-container .btn-item--whatsapp .btn-icon-bubble {
+  background: #25D366;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
 }
 
-.home-container .btn-godcode:hover {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important; /* Gradiente índigo GodCode */
-  border-color: #4f46e5 !important;
-  color: #ffffff !important; /* Texto blanco en hover */
-  transform: translateY(-2px) !important;
-  box-shadow: 
-    0 10px 24px rgba(79, 70, 229, 0.25),
-    0 4px 10px rgba(79, 70, 229, 0.15) !important;
+/* 3. Instagram */
+.home-container .btn-item--instagram .btn-icon-bubble {
+  background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
+}
+
+/* 4. Ubicación */
+.home-container .btn-item--location .btn-icon-bubble {
+  background: #0ea5e9;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
+}
+
+/* 5. Crea tu menú (GodCode / Tienda) */
+.home-container .btn-item--godcode .btn-icon-bubble {
+  background: #fef08a;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
 }
 
 /* Crédito discreto bajo la botonera (home link-in-bio) */
@@ -552,7 +529,12 @@
 .home-container .powered-by-gcode:focus-visible {
   opacity: 1;
   color: #4f46e5;
-  outline: none;
+}
+
+.home-container .powered-by-gcode:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 .home-container .powered-by-gcode__label {
@@ -573,17 +555,6 @@
   object-fit: contain;
 }
 
-
-@media (max-width: 849px) {
-  .home-nav-grid {
-    grid-template-columns: 1fr !important; /* Stacked vertical stack on mobile */
-    gap: 12px;
-    padding: 1.5rem 1rem 0 1rem;
-  }
-  .home-container .btn-primary {
-    grid-column: auto !important;
-  }
-}
 
 /* ==========================================================================
    SECCIÓN DERECHA (TICKET STUB - EL TALÓN CLARO)
@@ -627,6 +598,7 @@
 }
 
 .stub-badge {
+  text-transform: uppercase;
   background: rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(0, 0, 0, 0.08);
   color: rgba(15, 23, 42, 0.7);
@@ -647,7 +619,8 @@
     0 24px 48px -8px rgba(15, 23, 42, 0.12),
     0 8px 16px -8px rgba(15, 23, 42, 0.06),
     0 0 0 1px rgba(0, 0, 0, 0.02);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   margin-bottom: 1.8rem;
   width: clamp(130px, 42vw, 160px);
   height: clamp(130px, 42vw, 160px);
@@ -655,7 +628,12 @@
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(0, 0, 0, 0.04);
-  animation: qr-float 6s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .qr-box {
+    animation: qr-float 6s ease-in-out infinite alternate;
+  }
 }
 
 @keyframes qr-float {
@@ -688,6 +666,7 @@
 }
 
 .stub-scan-text {
+  text-transform: uppercase;
   font-weight: 900;
   font-size: 1.1rem;
   letter-spacing: 2px;
@@ -788,6 +767,21 @@
     transform: translate3d(var(--x-end), var(--y-end), 0);
     opacity: 0.18;
   }
+
+  /* La entrada de la página y los hover que desplazan tampoco deben moverse. */
+  .home-container.animate-fade {
+    animation: none;
+  }
+
+  .home-container .btn:hover,
+  .home-container .btn-primary:hover,
+  .home-container .btn:active,
+  .home-container .btn-primary:active,
+  .home-logo-wrap:hover,
+  .settings-btn:hover,
+  .qr-box:hover {
+    transform: none;
+  }
 }
 
 /* ==========================================================================
@@ -795,49 +789,54 @@
    ========================================================================== */
 @media (max-width: 849px) {
   .home-container {
-    padding: 0 !important;
+    padding: 0;
     align-items: flex-start; /* Permite scroll natural desde la parte superior */
   }
   .home-content.container {
-    padding: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
   }
   .ticket-wrapper {
-    width: 100% !important;
-    max-width: 100% !important;
+    width: 100%;
+    max-width: 100%;
     min-height: 100dvh;
-    border-radius: 0 !important;
-    border: none !important;
-    box-shadow: none !important; /* En pantalla completa móvil no se requiere la sombra flotante exterior */
+    border-radius: 0;
+    border: none;
+    box-shadow: none; /* En pantalla completa móvil no se requiere la sombra flotante exterior */
   }
   .home-banner {
-    height: 250px !important; /* Aumentado de 180px a 250px para empujar todo hacia abajo */
-    border-radius: 0 !important;
-    clip-path: ellipse(120% 70% at 50% 20%) !important; /* Curva adaptada al nuevo alto */
+    height: 250px; /* Aumentado de 180px a 250px para empujar todo hacia abajo */
+    border-radius: 0;
+    clip-path: ellipse(120% 70% at 50% 20%); /* Curva adaptada al nuevo alto */
   }
   .home-profile-info {
-    margin-top: 1.5rem !important; /* Más separación entre logo y título */
+    margin-top: 1.5rem; /* Más separación entre logo y título */
   }
   .home-tagline {
-    margin-top: 0.8rem !important;
-    margin-bottom: 0.5rem !important;
+    margin-top: 0.8rem;
+    margin-bottom: 0.5rem;
   }
   .ticket-main {
-    padding: 0 0 4.5rem 0; /* Espacio extra al final para evitar recortes con la navegación del sistema */
+    /* Espacio extra al final para no quedar bajo la barra de gestos del sistema. */
+    padding: 0 0 calc(3rem + env(safe-area-inset-bottom, 1.5rem)) 0;
   }
   
   .home-nav-grid { 
-    grid-template-columns: 1fr; 
-    gap: 16px !important; /* Más separación entre botones para ocupar mejor el espacio */
-    padding: 2.5rem 1.5rem 0 1.5rem !important; /* Aumentado padding superior para bajar la botonera */
+    gap: 14px;
+    padding: 2.2rem 1.25rem 0 1.25rem;
   }
   .settings-btn { width: 42px; height: 42px; top: 15px; right: 15px; }
   
-  /* En móvil el troquelado es horizontal */
-  .ticket-stub { 
-    border-top: 1px solid rgba(0, 0, 0, 0.06); 
-    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4);
-    border-left: none;
+  /* El QR solo sirve para escanear desde otra pantalla: en móvil sobra. */
+  .ticket-stub {
+    display: none;
+  }
+
+  /* La tarjeta ocupa toda la pantalla, así que ninguna de estas capas
+     decorativas llega a verse: no vale la pena pintarlas ni desenfocarlas. */
+  .home-background-glass,
+  .home-overlay {
+    display: none;
   }
 }
