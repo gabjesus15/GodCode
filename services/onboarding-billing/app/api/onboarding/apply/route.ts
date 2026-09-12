@@ -13,6 +13,15 @@ const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY ?? "";
 const TEAM_EMAIL = process.env.ONBOARDING_TEAM_EMAIL ?? process.env.RESEND_FROM ?? "";
 
+/**
+ * Atajo de desarrollo: da el correo por verificado y no envia ningun email.
+ * Apagado salvo que la variable valga 1/true/on. Debe quedar apagado en produccion:
+ * con esto cualquiera puede seguir el alta con un correo que no le pertenece.
+ */
+const SKIP_EMAIL_VERIFICATION = /^(1|true|on)$/i.test(
+	(process.env.ONBOARDING_SKIP_EMAIL_VERIFICATION ?? "").trim()
+);
+
 type ApplyBody = {
 	business_name: string;
 	responsible_name: string;
@@ -88,7 +97,8 @@ export async function POST(req: NextRequest) {
 				terms_accepted: true,
 				privacy_accepted: true,
 				verification_token: verificationToken,
-				status: "pending_verification",
+				status: SKIP_EMAIL_VERIFICATION ? "email_verified" : "pending_verification",
+				email_verified_at: SKIP_EMAIL_VERIFICATION ? new Date().toISOString() : null,
 				ip_address: ipToStore,
 				user_agent: userAgent,
 			})
@@ -104,6 +114,18 @@ export async function POST(req: NextRequest) {
 			}
 			console.error("onboarding apply insert:", insertError);
 			return NextResponse.json({ error: "Error al registrar la solicitud" }, { status: 500 });
+		}
+
+		if (SKIP_EMAIL_VERIFICATION) {
+			console.warn(
+				"onboarding apply: ONBOARDING_SKIP_EMAIL_VERIFICATION activo, se omite el correo de verificacion"
+			);
+			return NextResponse.json({
+				ok: true,
+				skippedVerification: true,
+				token: verificationToken,
+				message: "Verificacion de correo desactivada. Continua con el formulario.",
+			});
 		}
 
 		const baseUrl = getAppUrl();

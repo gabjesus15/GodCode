@@ -4,6 +4,7 @@ import currency from "currency.js";
 import { jsonWithPublicCors, publicApiCorsHeaders } from "@/lib/infra/api-cors";
 import { assertPublicRateLimit } from "@/lib/infra/public-rate-limit";
 import { resolveNamedAreaFromAddress } from "@/lib/delivery/delivery-area-resolve";
+import { pickClientAddressFields } from "@/lib/delivery/client-address-fields";
 import { UBER_NEEDS_COORDINATES_CODE } from "@/lib/delivery/delivery-quote-contract";
 import {
 	computeDeliveryFee,
@@ -364,7 +365,7 @@ export async function POST(req: NextRequest) {
 
 		const deliveryAddress: Record<string, unknown> | null =
 			isDeliveryType(orderTypeRaw) && draftAddr
-				? { ...draftAddr }
+				? pickClientAddressFields(draftAddr)
 				: null;
 
 		if (

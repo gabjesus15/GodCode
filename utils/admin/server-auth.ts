@@ -40,7 +40,7 @@ export async function validateAdminRolesOnServer(
 		const { data: adminUser, error: adminError } = await supabaseAdmin
 			.from("admin_users")
 			.select("role")
-			.ilike("email", email)
+			.eq("email", email)
 			.maybeSingle();
 
 		if (adminError) {

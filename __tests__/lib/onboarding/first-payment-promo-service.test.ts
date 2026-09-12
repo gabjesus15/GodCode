@@ -6,7 +6,7 @@ function mockSupabase(companyWithPromo: { id: string } | null) {
 	return {
 		from: () => ({
 			select: () => ({
-				ilike: () => ({
+				eq: () => ({
 					not: () => ({
 						maybeSingle: async () => ({ data: companyWithPromo }),
 					}),

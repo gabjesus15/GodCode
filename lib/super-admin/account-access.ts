@@ -22,7 +22,7 @@ export async function getSuperAdminRoleByEmail(email: string): Promise<string | 
   const { data, error } = await supabaseAdmin
     .from("admin_users")
     .select("role")
-    .ilike("email", normalized)
+    .eq("email", normalized)
     .maybeSingle();
 
   if (error) return null;
@@ -71,7 +71,7 @@ export async function getCustomerMembership(params: {
     const { data, error } = await supabaseAdmin
       .from("users")
       .select("id,company_id,role,is_active")
-      .ilike("email", email)
+      .eq("email", email)
       .limit(5);
 
     if (!error) {

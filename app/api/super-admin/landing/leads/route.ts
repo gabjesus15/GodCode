@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { escapeLikePattern } from "@/lib/db/like-pattern";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
     .limit(limit);
 
   if (STATUS_VALUES.has(status)) query = query.eq("status", status);
-  if (q) query = query.ilike("email", `%${q}%`);
+  if (q) query = query.ilike("email", `%${escapeLikePattern(q)}%`);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

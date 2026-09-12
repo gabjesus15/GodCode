@@ -112,6 +112,14 @@ export function OnboardingStep1Form() {
 			if (!res.ok) {
 				throw new Error(data.error ?? t.errorSubmit);
 			}
+			// El servicio dio el correo por verificado (ONBOARDING_SKIP_EMAIL_VERIFICATION):
+			// no hay enlace que esperar, se salta directo al paso 2.
+			if (data.skippedVerification && data.token) {
+				window.location.assign(
+					`/onboarding/complete?token=${encodeURIComponent(String(data.token))}`
+				);
+				return;
+			}
 			setSuccess(true);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : t.errorUnexpected);

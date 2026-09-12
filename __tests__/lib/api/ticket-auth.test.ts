@@ -41,7 +41,7 @@ describe("getTicketAuthContext", () => {
 				if (table === "users") {
 					return {
 						select: () => ({
-							ilike: async () => ({
+							eq: async () => ({
 								data: [
 									{ company_id: "company-a", role: "admin" },
 									{ company_id: "company-b", role: "admin" },
