@@ -1,18 +1,19 @@
 import { z } from "zod";
 
-import { sanitizeServerText } from "@/lib/infra/server-sanitize";
+import { cleanPlainText } from "@/lib/infra/server-sanitize";
+import { COMPANY_SLUG_PATTERN } from "@/lib/menu-account/slug";
 
 /**
- * `sanitizeServerText` escapa entidades HTML, así que solo se aplica a los campos
- * de texto libre que después se pintan (nombre). El correo, el documento y la
- * contraseña se dejan crudos: escaparlos los corrompería.
+ * Los textos libres (nombre, dirección, referencia) pasan por `cleanPlainText`: se
+ * guardan como texto plano, sin entidades HTML, porque React ya escapa al pintar.
+ * El correo, el documento y la contraseña se validan pero no se tocan.
  */
-const companySlug = z.string().trim().min(1).max(80);
+const companySlug = z.string().trim().toLowerCase().regex(COMPANY_SLUG_PATTERN);
 const documentField = z.string().trim().min(3).max(32);
 const emailField = z.string().trim().toLowerCase().email().max(160);
 /** 72 bytes es el tope de bcrypt: más allá, Supabase trunca en silencio. */
 const passwordField = z.string().min(8).max(72);
-const fullNameField = z.string().trim().min(2).max(80).transform(sanitizeServerText);
+const fullNameField = z.string().trim().min(2).max(80).transform(cleanPlainText);
 const phoneField = z.string().trim().min(6).max(32);
 
 export const menuAccountRegisterSchema = z.object({
@@ -40,17 +41,36 @@ export const menuAccountProfileSchema = z.object({
 
 export const menuAccountPasswordSchema = z.object({
 	companySlug,
-	currentPassword: z.string().min(1).max(72).optional(),
+	currentPassword: z.string().min(1).max(72),
 	newPassword: passwordField,
 });
 
-export const menuAccountRecoverSchema = z.object({
+/** Query de las rutas GET, que solo necesitan identificar el negocio. */
+export const menuAccountCompanyQuerySchema = z.object({ companySlug });
+
+/** El carrito identifica el negocio por `company_id` de la sucursal, no por slug. */
+export const menuAccountCheckoutProfileQuerySchema = z.object({ companyId: z.string().uuid() });
+
+/** Mismo criterio que el perfil de checkout: el carrito solo conoce el `company_id`. */
+export const menuAccountLastOrderQuerySchema = menuAccountCheckoutProfileQuerySchema;
+
+/**
+ * Cuál de los dos campos es obligatorio depende del negocio (zona o dirección), y eso
+ * lo decide el servidor con la configuración de delivery, no el schema.
+ */
+export const menuAccountAddressCreateSchema = z.object({
 	companySlug,
-	document: documentField,
+	addressLine: z.string().trim().max(160).default("").transform(cleanPlainText),
+	namedAreaId: z.string().trim().min(1).max(64).nullable().optional(),
+	reference: z.string().trim().max(160).default("").transform(cleanPlainText),
+});
+
+export const menuAccountAddressDeleteSchema = z.object({
+	companySlug,
+	id: z.string().uuid(),
 });
 
 export type MenuAccountRegisterInput = z.infer<typeof menuAccountRegisterSchema>;
 export type MenuAccountLoginInput = z.infer<typeof menuAccountLoginSchema>;
 export type MenuAccountProfileInput = z.infer<typeof menuAccountProfileSchema>;
 export type MenuAccountPasswordInput = z.infer<typeof menuAccountPasswordSchema>;
-export type MenuAccountRecoverInput = z.infer<typeof menuAccountRecoverSchema>;

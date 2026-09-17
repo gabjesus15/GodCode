@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { maskDocument } from "@/lib/geo/document-normalize";
 
+import { isLegacyAccountRow, openAccountRow, upgradeLegacyAccountRow } from "./account-records";
 import { menuAccountErrors } from "./errors";
 import type { MenuAccountDto, MenuAccountSession, MenuClientAccountRow } from "./types";
 
@@ -38,7 +39,12 @@ export async function getMenuAccountSession(
 
 	if (!account || account.is_active === false) return null;
 
-	return { account: account as MenuClientAccountRow, authUserId };
+	const row = account as MenuClientAccountRow;
+	if (isLegacyAccountRow(row)) await upgradeLegacyAccountRow(row);
+
+	// La fila guarda los datos cifrados; el resto del servidor trabaja con la versión en
+	// claro. El correo sale de la sesión de auth: en la tabla solo está su huella.
+	return { account: openAccountRow(row, data.user.email ?? ""), authUserId };
 }
 
 /** Igual que `getMenuAccountSession`, pero lanza 401 en vez de devolver `null`. */

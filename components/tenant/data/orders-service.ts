@@ -52,6 +52,11 @@ interface CreateOrderPayload {
    */
   order_origin?: "web" | null;
   client_request_id?: string;
+  /**
+   * Ficha de `clients` de la persona logueada en el menú (`/api/menu-account/checkout-profile`).
+   * Con ella el RPC no busca el cliente por teléfono, que en `clients` está lleno de duplicados.
+   */
+  client_id?: string | null;
   currency?: string | null;
   requires_receipt?: boolean;
 }
@@ -529,6 +534,7 @@ export const ordersService = {
       p_delivery_address: deliveryMode ? (orderData.delivery_address as Json) : null,
       ...(couponPayload ? { p_coupon_code: couponPayload } : {}),
       p_order_origin: orderData.order_origin ?? WEB_MENU_ORDER_ORIGIN,
+      ...(orderData.client_id ? { p_client_id: orderData.client_id } : {}),
     };
 
     const { data: newOrder, error: orderError } = await supabase.rpc(

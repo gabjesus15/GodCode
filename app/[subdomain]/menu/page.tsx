@@ -256,7 +256,10 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
   }
 
     const openBranchIds = (openShifts ?? [])
-      .map((shift) => String(shift.branch_id))
+      // `String(null)` devuelve "null" y ese texto pasa el `filter(Boolean)`: una
+      // caja abierta sin sucursal (dato heredado) entraba como id valido, hacia
+      // creer que habia dos locales abiertos y anulaba la auto-seleccion.
+      .map((shift) => (shift.branch_id == null ? "" : String(shift.branch_id)))
       .filter(Boolean);
     const openBranchIdSet = new Set(openBranchIds);
 

@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import type { NextRequest } from "next/server";
 
 import { jsonOk, parseJsonBody } from "@/lib/api/response";
@@ -8,6 +7,8 @@ import { loginMenuAccount } from "@/lib/menu-account/account-service";
 import { resolveCompanyForMenuAccount } from "@/lib/menu-account/company-resolve";
 import {
 	createCookieCarrier,
+	documentRateKey,
+	menuAccountDisabledResponse,
 	toMenuAccountErrorResponse,
 	withCarriedCookies,
 } from "@/lib/menu-account/route-helpers";
@@ -16,6 +17,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+	const disabled = menuAccountDisabledResponse();
+	if (disabled) return disabled;
+
 	const limited = await enforceRateLimit(req, "menu_account_login", 10, 60_000);
 	if (limited) return limited;
 
@@ -26,13 +30,9 @@ export async function POST(req: NextRequest) {
 		const company = await resolveCompanyForMenuAccount(parsed.data.companySlug);
 
 		// Segundo límite por cuenta: sin él, rotar IPs permitiría fuerza bruta contra
-		// un documento concreto. Se hashea para no dejar el documento en el store.
-		const documentKey = createHash("sha256")
-			.update(`${company.id}:${parsed.data.document.trim().toUpperCase()}`)
-			.digest("hex")
-			.slice(0, 16);
+		// un documento concreto.
 		const accountLimited = await enforceScopedRateLimit(
-			`menu_account_login_doc:${documentKey}`,
+			`menu_account_login_doc:${documentRateKey(company, parsed.data.document)}`,
 			5,
 			15 * 60_000,
 		);

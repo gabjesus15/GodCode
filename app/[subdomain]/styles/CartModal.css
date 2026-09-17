@@ -1381,6 +1381,13 @@
     font-size: 0.9rem;
 }
 
+/* Atajo de repetir el ultimo pedido: mismo ancho que "Volver al menu" para que
+   los dos lean como una sola columna de salidas, no como dos botones sueltos. */
+.cart-panel .empty-state__repeat {
+    margin-top: 4px;
+    min-width: 200px;
+}
+
 /* --- 8. UTILIDADES DEL CARRITO --- */
 .cart-panel .text-center { text-align: center; }
 .cart-panel .text-white { color: white; }
@@ -2017,4 +2024,47 @@
     .total-row {
         font-size: 0.96rem;
     }
+}
+/* Direcciones guardadas de la cuenta de cliente ("Mi cuenta") */
+.cart-saved-addresses {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.cart-saved-addresses-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.cart-saved-address-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    min-height: 36px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.cart-saved-address-chip span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cart-saved-address-chip:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+.btn-cart-account span {
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

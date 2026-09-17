@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { MailCheck, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 
 import { getFormStrategy } from "@/lib/geo/country-forms";
 
@@ -13,24 +13,20 @@ type MenuAccountAuthPanelProps = {
 	companySlug: string;
 	countryCode: string;
 	branches: MenuAccountBranchOption[];
-	initialView: MenuAccountView;
-	initialErrorCode: string | null;
-	onAuthenticated: (account: MenuAccountPublic) => void;
+	/** `linked`: el correo ya tenía cuenta en otro negocio y se vinculó con su contraseña. */
+	onAuthenticated: (account: MenuAccountPublic, how: "login" | "created" | "linked") => void;
 };
 
 export function MenuAccountAuthPanel({
 	companySlug,
 	countryCode,
 	branches,
-	initialView,
-	initialErrorCode,
 	onAuthenticated,
 }: MenuAccountAuthPanelProps) {
 	const t = useTranslations("tenant.account");
 	const strategy = useMemo(() => getFormStrategy(countryCode), [countryCode]);
 
-	const { view, setView, pending, errorCode, setErrorCode, run } = useMenuAccount(initialView);
-	const [initialError, setInitialError] = useState<string | null>(initialErrorCode);
+	const { view, setView, pending, errorCode, setErrorCode, run } = useMenuAccount("login");
 
 	const [document, setDocument] = useState("");
 	const [password, setPassword] = useState("");
@@ -39,7 +35,7 @@ export function MenuAccountAuthPanel({
 	const [phone, setPhone] = useState(strategy.phonePrefix);
 	const [branchId, setBranchId] = useState("");
 
-	const shownError = errorCode ?? initialError;
+	const shownError = errorCode;
 
 	/** El formato del documento es por país: RUT, Cédula/RIF o Cédula. */
 	const handleDocumentChange = (value: string) => {
@@ -48,23 +44,20 @@ export function MenuAccountAuthPanel({
 
 	const switchView = (next: MenuAccountView) => {
 		setErrorCode(null);
-		setInitialError(null);
 		setView(next);
 	};
 
 	const handleLogin = async (event: React.FormEvent) => {
 		event.preventDefault();
-		setInitialError(null);
 		const result = await run<{ account: MenuAccountPublic }>("login", {
 			body: { companySlug, document, password },
 		});
-		if (result.ok) onAuthenticated(result.data.account);
+		if (result.ok) onAuthenticated(result.data.account, "login");
 	};
 
 	const handleRegister = async (event: React.FormEvent) => {
 		event.preventDefault();
-		setInitialError(null);
-		const result = await run<{ status: string; account?: MenuAccountPublic }>("register", {
+		const result = await run<{ status: "created" | "linked"; account: MenuAccountPublic }>("register", {
 			body: {
 				companySlug,
 				document,
@@ -75,72 +68,8 @@ export function MenuAccountAuthPanel({
 				preferredBranchId: branchId || null,
 			},
 		});
-		if (!result.ok) return;
-		// El correo ya tenía cuenta: se vincula por correo, no aquí.
-		if (result.data.status === "link_email_sent") {
-			setView("link-sent");
-			return;
-		}
-		if (result.data.account) onAuthenticated(result.data.account);
+		if (result.ok) onAuthenticated(result.data.account, result.data.status);
 	};
-
-	const handleRecover = async (event: React.FormEvent) => {
-		event.preventDefault();
-		setInitialError(null);
-		const result = await run("recover", { body: { companySlug, document } });
-		// Respuesta siempre igual, exista o no la cuenta.
-		if (result.ok) setView("recover-sent");
-	};
-
-	if (view === "link-sent" || view === "recover-sent") {
-		const isLink = view === "link-sent";
-		return (
-			<div className="account-card">
-				<span className="account-card-glyph" aria-hidden>
-					<MailCheck size={30} strokeWidth={1.8} />
-				</span>
-				<h2 className="account-card-title">
-					{isLink ? t("linkSent.title") : t("recover.sentTitle")}
-				</h2>
-				<p className="account-card-text">
-					{isLink ? t("linkSent.description") : t("recover.sentDescription")}
-				</p>
-				{isLink ? <p className="account-note">{t("linkSent.note")}</p> : null}
-				<button type="button" className="account-link-button" onClick={() => switchView("login")}>
-					{t("recover.back")}
-				</button>
-			</div>
-		);
-	}
-
-	if (view === "recover") {
-		return (
-			<div className="account-card">
-				<h2 className="account-card-title">{t("recover.title")}</h2>
-				<p className="account-card-text">{t("recover.description")}</p>
-				<form className="account-form" onSubmit={handleRecover}>
-					<label className="account-field">
-						<span className="account-field-label">{t("recover.documentLabel")}</span>
-						<input
-							className="account-input"
-							value={document}
-							onChange={(event) => handleDocumentChange(event.target.value)}
-							placeholder={strategy.idPlaceholder}
-							autoComplete="off"
-							required
-						/>
-					</label>
-					{shownError ? <p className="account-error">{errorMessage(t, shownError)}</p> : null}
-					<button type="submit" className="account-submit" disabled={pending}>
-						{pending ? t("recover.submitting") : t("recover.submit")}
-					</button>
-				</form>
-				<button type="button" className="account-link-button" onClick={() => switchView("login")}>
-					{t("recover.back")}
-				</button>
-			</div>
-		);
-	}
 
 	return (
 		<div className="account-card account-card--form">
@@ -197,13 +126,8 @@ export function MenuAccountAuthPanel({
 					<button type="submit" className="account-submit" disabled={pending}>
 						{pending ? t("login.submitting") : t("login.submit")}
 					</button>
-					<button
-						type="button"
-						className="account-link-button"
-						onClick={() => switchView("recover")}
-					>
-						{t("login.forgot")}
-					</button>
+					{/* Sin correo no hay recuperación autoservicio: la resetea el negocio. */}
+					<p className="account-note">{t("login.forgotHint")}</p>
 				</form>
 			) : (
 				<form className="account-form" onSubmit={handleRegister}>
@@ -263,6 +187,7 @@ export function MenuAccountAuthPanel({
 							required
 						/>
 						<span className="account-field-hint">{t("register.passwordHint")}</span>
+						<span className="account-field-hint">{t("register.existingEmailHint")}</span>
 					</label>
 					{branches.length > 0 ? (
 						<label className="account-field">
@@ -304,11 +229,15 @@ export function errorMessage(t: ReturnType<typeof useTranslations>, code: string
 		"email_unavailable",
 		"invalid_credentials",
 		"unauthorized",
-		"link_invalid",
-		"reset_required",
+		"link_password_mismatch",
+		"address_limit",
+		"invalid_zone",
+		"invalid_address",
+		"delivery_unavailable",
 		"weak_password",
 		"validation_error",
 		"network",
+		"rate_limited",
 	];
 	return known.includes(code) ? t(`errors.${code}`) : t("errors.internal");
 }

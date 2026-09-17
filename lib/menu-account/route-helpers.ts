@@ -1,11 +1,41 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { jsonError } from "@/lib/api/response";
+import { normalizeDocument } from "@/lib/geo/document-normalize";
 import { logger } from "@/lib/infra/logger";
 
+import type { MenuAccountCompany } from "./company-resolve";
 import { MenuAccountError } from "./errors";
+import { MENU_ACCOUNT_ENABLED } from "./feature";
+
+/**
+ * 404 mientras la cuenta de cliente esté apagada. Ocultar la página no basta: sin
+ * esto, cualquiera podría registrar cuentas llamando a la API directamente.
+ */
+export function menuAccountDisabledResponse(): NextResponse | null {
+	if (MENU_ACCOUNT_ENABLED) return null;
+	return jsonError(404, "No encontrado.", { code: "not_found" });
+}
+
+/**
+ * Clave de rate limit por documento, calculada sobre el documento normalizado. Con el
+ * texto tal cual, `12.345.678-5`, `12345678-5` y `123456785` contarían como tres
+ * claves distintas y el límite se esquivaría cambiando el formato. Se hashea para no
+ * dejar el documento en el store.
+ */
+export function documentRateKey(
+	company: Pick<MenuAccountCompany, "id" | "countryCode">,
+	document: string,
+): string {
+	const result = normalizeDocument(document, company.countryCode);
+	const canonical = result.ok
+		? result.normalized
+		: document.replace(/[^0-9a-zA-Z]/g, "").toUpperCase();
+	return createHash("sha256").update(`${company.id}:${canonical}`).digest("hex").slice(0, 16);
+}
 
 /**
  * Respuesta "portadora": el cliente Supabase escribe aquí las cookies de sesión

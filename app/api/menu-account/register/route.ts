@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { NextRequest } from "next/server";
 
 import { jsonOk, parseJsonBody } from "@/lib/api/response";
@@ -7,6 +8,7 @@ import { registerMenuAccount } from "@/lib/menu-account/account-service";
 import { resolveCompanyForMenuAccount } from "@/lib/menu-account/company-resolve";
 import {
 	createCookieCarrier,
+	menuAccountDisabledResponse,
 	toMenuAccountErrorResponse,
 	withCarriedCookies,
 } from "@/lib/menu-account/route-helpers";
@@ -15,6 +17,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+	const disabled = menuAccountDisabledResponse();
+	if (disabled) return disabled;
+
 	// Escritura de identidad: más restrictivo que las rutas públicas de lectura.
 	const limited = await enforceRateLimit(req, "menu_account_register", 5, 60_000);
 	if (limited) return limited;
@@ -32,6 +37,16 @@ export async function POST(req: NextRequest) {
 		);
 		if (companyLimited) return companyLimited;
 
+		// Si el correo ya es de un cliente, el registro verifica su contraseña: sin un
+		// límite por correo, rotar IPs permitiría adivinarla por aquí.
+		const emailKey = createHash("sha256").update(parsed.data.email).digest("hex").slice(0, 16);
+		const emailLimited = await enforceScopedRateLimit(
+			`menu_account_register_email:${emailKey}`,
+			5,
+			15 * 60_000,
+		);
+		if (emailLimited) return emailLimited;
+
 		const carrier = createCookieCarrier();
 		const result = await registerMenuAccount(
 			{
@@ -42,19 +57,17 @@ export async function POST(req: NextRequest) {
 				fullName: parsed.data.fullName,
 				phone: parsed.data.phone,
 				preferredBranchId: parsed.data.preferredBranchId ?? null,
-				origin: req.nextUrl.origin,
 			},
 			req,
 			carrier,
 		);
 
-		if (result.status === "link_email_sent") {
-			return jsonOk({ status: "link_email_sent" });
-		}
-
 		return withCarriedCookies(
 			carrier,
-			jsonOk({ status: "created", account: result.account }, { status: 201 }),
+			jsonOk(
+				{ status: result.status, account: result.account },
+				{ status: result.status === "created" ? 201 : 200 },
+			),
 		);
 	} catch (error) {
 		return toMenuAccountErrorResponse(error, "menu_account_register");

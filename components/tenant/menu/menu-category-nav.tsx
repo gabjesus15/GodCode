@@ -108,6 +108,7 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 	selectedBranch,
 	isEmbeddedPreview,
 	onOpenBranchModal,
+	showBranchSelector,
 	categories,
 	activeCategory,
 	onCategoryClick,
@@ -120,6 +121,7 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 	selectedBranch: BranchInfo | null;
 	isEmbeddedPreview: boolean;
 	onOpenBranchModal: () => void;
+	showBranchSelector: boolean;
 	categories: CategoryListItem[];
 	activeCategory: string | null;
 	onCategoryClick: (id: string) => void;
@@ -144,22 +146,24 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 						<p className="sidebar-brand-subtitle">Menú Digital</p>
 					</div>
 				</div>
-				<div className="sidebar-location-selector">
-					<button
-						type="button"
-						onClick={onOpenBranchModal}
-						disabled={isEmbeddedPreview}
-						aria-disabled={isEmbeddedPreview}
-						className="sidebar-location-button"
-					>
-						<MapPin size={16} className="sidebar-location-icon" color="var(--accent-primary)" />
-						<div className="sidebar-location-content">
-							<p className="sidebar-location-label">Sucursal</p>
-							<p className="sidebar-location-value">{selectedBranch ? selectedBranch.name : "Seleccionar Local"}</p>
-						</div>
-						<ChevronDown size={14} className="sidebar-location-chevron" />
-					</button>
-				</div>
+				{showBranchSelector ? (
+					<div className="sidebar-location-selector">
+						<button
+							type="button"
+							onClick={onOpenBranchModal}
+							disabled={isEmbeddedPreview}
+							aria-disabled={isEmbeddedPreview}
+							className="sidebar-location-button"
+						>
+							<MapPin size={16} className="sidebar-location-icon" color="var(--accent-primary)" />
+							<div className="sidebar-location-content">
+								<p className="sidebar-location-label">Sucursal</p>
+								<p className="sidebar-location-value">{selectedBranch ? selectedBranch.name : "Seleccionar Local"}</p>
+							</div>
+							<ChevronDown size={14} className="sidebar-location-chevron" />
+						</button>
+					</div>
+				) : null}
 			</div>
 			<nav className="sidebar-nav" aria-label="Categorías">
 				{categories.map((cat) => (

@@ -15,9 +15,12 @@ export type MenuAccountErrorCode =
 	| "email_belongs_to_staff"
 	| "email_unavailable"
 	| "invalid_credentials"
+	| "link_password_mismatch"
+	| "address_limit"
+	| "invalid_zone"
+	| "invalid_address"
+	| "delivery_unavailable"
 	| "unauthorized"
-	| "link_invalid"
-	| "reset_required"
 	| "weak_password"
 	| "internal";
 
@@ -53,12 +56,27 @@ export const menuAccountErrors = {
 	/** Mensaje deliberadamente idéntico exista o no la cuenta, para no filtrar documentos. */
 	invalidCredentials: () =>
 		new MenuAccountError(401, "invalid_credentials", "Documento o contraseña incorrectos."),
+	/**
+	 * El correo ya es de un cliente de otro negocio y la contraseña no es la de esa
+	 * cuenta. Revela que el correo tiene cuenta, pero es inevitable: el registro tiene
+	 * que decirle a la persona por qué no puede usar ese correo.
+	 */
+	linkPasswordMismatch: () =>
+		new MenuAccountError(
+			401,
+			"link_password_mismatch",
+			"Ese correo ya tiene una cuenta. Escribe la misma contraseña que usas en ella.",
+		),
+	addressLimit: () =>
+		new MenuAccountError(409, "address_limit", "Llegaste al máximo de direcciones. Borra una para agregar otra."),
+	invalidAddress: () =>
+		new MenuAccountError(400, "invalid_address", "Escribe la dirección con calle y número."),
+	invalidZone: () =>
+		new MenuAccountError(400, "invalid_zone", "Elige una zona de entrega de la lista."),
+	deliveryUnavailable: () =>
+		new MenuAccountError(409, "delivery_unavailable", "Este negocio no hace delivery."),
 	unauthorized: () =>
 		new MenuAccountError(401, "unauthorized", "Tu sesión expiró. Vuelve a entrar."),
-	linkInvalid: () =>
-		new MenuAccountError(400, "link_invalid", "Este enlace ya no es válido. Pide uno nuevo."),
-	resetRequired: () =>
-		new MenuAccountError(400, "reset_required", "Necesitas tu contraseña actual para cambiarla."),
 	internal: (message = "No se pudo completar la operación. Intenta de nuevo.") =>
 		new MenuAccountError(500, "internal", message),
 } as const;

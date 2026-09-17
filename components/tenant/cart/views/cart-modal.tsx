@@ -8,7 +8,10 @@ import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 import { usePathname, useRouter } from "next/navigation";
 import { X, MapPin, AlertCircle, Plus, Check, CupSoda, Sparkles, Store, Truck, ArrowLeft, Ticket, UserRound } from "lucide-react";
 import { getTenantScopedPath } from "../../utils/tenant-route";
+import { shortZoneName } from "@/lib/menu-account/delivery-options";
 import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
+import { useCheckoutProfile } from "../../account/use-checkout-profile";
+import type { MenuAccountAddress } from "../../account/menu-account-types";
 import { formatCartMoney } from "../utils/format-cart-money";
 import { type CartFulfillment, isUpsellBeverageLineId } from "../cart-context";
 import {
@@ -135,6 +138,9 @@ export function CartModal({
       currency = propCurrency,
       country: cartCountry = "CL",
     } = useCart();
+
+    // Persona logueada en "Mi cuenta": rellena el checkout y vincula el pedido a su ficha.
+    const checkoutProfile = useCheckoutProfile(selectedBranch?.company_id, isCartOpen);
 
 
 
@@ -823,6 +829,18 @@ export function CartModal({
     }
   }, [checkoutSession.clientDraft, isCartOpen, setValue]);
 
+  // Datos de la cuenta: solo completan campos vacíos, nunca pisan lo que la persona
+  // ya escribió en este checkout o dejó en el borrador.
+  useEffect(() => {
+    if (!checkoutProfile) return;
+    if (!getValues("name")?.trim()) setValue("name", checkoutProfile.fullName);
+    if (!getValues("rut")?.trim()) setValue("rut", checkoutProfile.document);
+    const phone = getValues("phone")?.trim() ?? "";
+    const phoneIsDefault =
+      !phone || phone === strategy.phonePrefix.trim() || phone === "+56 9" || phone === "+58";
+    if (phoneIsDefault && checkoutProfile.phone) setValue("phone", checkoutProfile.phone);
+  }, [checkoutProfile, getValues, setValue, strategy.phonePrefix]);
+
   const formValues = useWatch({ control });
 
   // Sincronizar fulfillment y datos de delivery al form de react-hook-form
@@ -1306,6 +1324,43 @@ export function CartModal({
     }
   }, []);
 
+  /**
+   * Aplica una dirección guardada con el mismo camino que si la persona la tecleara,
+   * para que la cotización de envío se recalcule con el flujo normal.
+   */
+  const applySavedAddress = useCallback(
+    (address: MenuAccountAddress) => {
+      const area = address.namedAreaId
+        ? deliverySettings.namedAreas.find((a) => a.id === address.namedAreaId)
+        : undefined;
+      if (area) {
+        setDeliveryNamedAreaId(area.id);
+        if (area.name) setDeliveryCommune(area.name);
+      }
+      const line = cleanSavedAddressLine(address.addressLine);
+      // Una dirección guardada solo con zona trae el nombre de la zona como línea; no es calle.
+      const isZoneOnly = Boolean(area && line && area.name.startsWith(line));
+      if (line && !isZoneOnly) {
+        if (mapAddressMode) {
+          setUnifiedAddressSearch(line);
+        } else {
+          const parsed = parseUnifiedAddressSearch(line);
+          setDeliveryLine1(parsed.line1);
+          if (!area) setDeliveryCommune(parsed.commune);
+        }
+      }
+      if (address.reference) setDeliveryReference(address.reference);
+    },
+    [
+      deliverySettings.namedAreas,
+      mapAddressMode,
+      setDeliveryCommune,
+      setDeliveryLine1,
+      setDeliveryNamedAreaId,
+      setDeliveryReference,
+    ],
+  );
+
   const handleFulfillmentChange = useCallback(
     (next: CartFulfillment) => {
       if (fulfillment === next) return;
@@ -1540,6 +1595,7 @@ export function CartModal({
         client_name: sanitizeUserText(data.name),
         client_phone: String(data.phone ?? "").trim(),
         client_rut: String(data.rut ?? "").trim(),
+        client_id: checkoutProfile?.clientId ?? null,
         payment_method_specific: paymentMethodKey,
         total: Number(snapGrand) || 0,
         items: mergedItemsForOrder,
@@ -1786,7 +1842,7 @@ export function CartModal({
                 aria-label="Mi cuenta"
               >
                 <UserRound size={17} aria-hidden />
-                <span>Mi cuenta</span>
+                <span>{checkoutProfile?.fullName.split(" ")[0] || "Mi cuenta"}</span>
               </button>
             ) : null}
             <button onClick={handleCloseCart} className="btn-close-cart" aria-label={t("actions.close")}><X size={20} /></button>
@@ -1814,7 +1870,11 @@ export function CartModal({
           }`}
         >
           {filteredCart.length === 0 ? (
-            <CartEmptyState onMenu={handleCloseCart} />
+            <CartEmptyState
+              onMenu={handleCloseCart}
+              /* Solo con sesión: `checkoutProfile` es la señal de que hay cuenta. */
+              companyId={checkoutProfile ? selectedBranch?.company_id ?? null : null}
+            />
           ) : (
             <>
               {!isDeliveryFulfillmentFocus ? (
@@ -2209,6 +2269,25 @@ export function CartModal({
                             </p>
                           ) : null}
 
+                          {checkoutProfile && checkoutProfile.addresses.length > 0 ? (
+                            <div className="cart-saved-addresses">
+                              <span className="cart-field-label">{t("delivery.savedAddresses")}</span>
+                              <div className="cart-saved-addresses-list">
+                                {checkoutProfile.addresses.map((address) => (
+                                  <button
+                                    key={address.id}
+                                    type="button"
+                                    className="cart-saved-address-chip"
+                                    onClick={() => applySavedAddress(address)}
+                                  >
+                                    <MapPin size={13} aria-hidden />
+                                    <span>{savedAddressLabel(address, deliverySettings.namedAreas)}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+
                           {mapAddressMode ? (
                             <>
                               <button
@@ -2562,4 +2641,26 @@ export function CartModal({
       </div>
     </div>
   );
+}
+
+/** El RPC guarda `address` tal como llegó, a veces con la calle vacía (", Comuna"). */
+function cleanSavedAddressLine(line: string): string {
+  return line.replace(/^[\s,]+/, "").trim();
+}
+
+/** En negocios por zona la etiqueta es la zona (sin la región), más la calle si la hay. */
+function savedAddressLabel(
+  address: MenuAccountAddress,
+  namedAreas: ReadonlyArray<{ id: string; name: string }>,
+): string {
+  const line = cleanSavedAddressLine(address.addressLine);
+  const area = address.namedAreaId
+    ? namedAreas.find((item) => item.id === address.namedAreaId)
+    : undefined;
+  if (area) {
+    const zone = shortZoneName(area.name);
+    const street = line && !area.name.startsWith(line) ? line : "";
+    return street ? `${zone} · ${street}` : zone;
+  }
+  return line || address.reference || "—";
 }
