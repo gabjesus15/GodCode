@@ -604,14 +604,9 @@ export const ordersService = {
       });
       if (!patchRes.ok) {
         const j = (await patchRes.json().catch(() => ({}))) as { error?: string; message?: string };
-        // Compensate orphan order created by RPC before delivery/tax patch failed.
-        await supabase
-          .from("orders")
-          .update({
-            status: "cancelled",
-            note: `[AUTO-CANCEL] Fallo post-creacion: ${j.error || j.message || "patch"}`,
-          })
-          .eq("id", orderId);
+        // El pedido huérfano lo cancela la propia ruta, que sí tiene permiso: desde
+        // aquí la clave anónima no puede escribir en `orders` y el intento siempre
+        // moria en un 42501 silencioso, dejando el pedido vivo en el panel.
         const msg = j.error === "ORDER_INTAKE_PAUSED"
           ? (j.message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.")
           : (j.error || "No se pudo registrar los datos de facturación del pedido.");

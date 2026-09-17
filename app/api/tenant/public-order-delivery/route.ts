@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import currency from "currency.js";
 
 import { jsonWithPublicCors, publicApiCorsHeaders } from "@/lib/infra/api-cors";
-import { assertPublicRateLimit } from "@/lib/infra/public-rate-limit";
+import { assertPublicRateLimit, assertPublicScopedRateLimit } from "@/lib/infra/public-rate-limit";
 import { resolveNamedAreaFromAddress } from "@/lib/delivery/delivery-area-resolve";
 import { pickClientAddressFields } from "@/lib/delivery/client-address-fields";
 import { UBER_NEEDS_COORDINATES_CODE } from "@/lib/delivery/delivery-quote-contract";
@@ -18,6 +18,11 @@ import {
 	isValidLatLng,
 } from "@/lib/geo/geo";
 import { resolveUberOAuthCredentials } from "@/lib/integrations/company-integration-settings";
+import {
+	canAutoCancelOrphanOrder,
+	orderPatchEligibility,
+	orphanCancelNote,
+} from "@/lib/orders/orphan-cancel";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { fetchUberDeliveryEstimate } from "@/lib/delivery/uber-direct";
 
@@ -26,9 +31,40 @@ import { fetchUberDeliveryEstimate } from "@/lib/delivery/uber-direct";
  * Cierre del pedido público; el pedido se ata por client_request_id y edad máxima.
  */
 
-const MAX_ORDER_AGE_MS = 10 * 60 * 1000;
 const TOTAL_EPS = 2;
 const FEE_EPS = 0.5;
+
+/**
+ * Cancela el pedido que quedó a medias cuando este cierre no puede completarse.
+ *
+ * Vive aquí y no en el navegador porque la clave anónima no tiene UPDATE sobre
+ * `orders`: el intento del cliente siempre murió en un 42501 que nadie miraba, y
+ * el pedido se quedaba vivo en el panel mientras la persona veía un error.
+ */
+async function cancelOrphanOrder(
+	order: { id: unknown; note?: unknown; status?: unknown; created_at?: unknown },
+	reason: string,
+): Promise<void> {
+	if (!canAutoCancelOrphanOrder({ status: String(order.status ?? ""), createdAt: String(order.created_at ?? "") }, Date.now())) {
+		return;
+	}
+	const { error } = await supabaseAdmin
+		.from("orders")
+		.update({
+			status: "cancelled",
+			note: orphanCancelNote(typeof order.note === "string" ? order.note : null, reason),
+		})
+		.eq("id", order.id)
+		// Carrera con caja: si el pedido ya se movió, esta cancelación no le toca.
+		.eq("status", "pending");
+	if (error) {
+		console.error("[public-order-delivery] pedido huérfano sin cancelar", {
+			orderId: order.id,
+			reason,
+			error: error.message,
+		});
+	}
+}
 
 function parseItems(raw: unknown): Array<{ price?: unknown; quantity?: unknown }> {
 	if (!raw) return [];
@@ -100,7 +136,7 @@ export async function POST(req: NextRequest) {
 
 		const { data: order, error: orderErr } = await supabaseAdmin
 			.from("orders")
-			.select("id, branch_id, total, items, created_at, status, discount_total")
+			.select("id, branch_id, total, items, created_at, status, discount_total, note")
 			.eq("id", orderId)
 			.maybeSingle();
 
@@ -108,22 +144,46 @@ export async function POST(req: NextRequest) {
 			return jsonWithPublicCors(req, { error: "Pedido no encontrado" }, { status: 404 });
 		}
 
-		const created = order.created_at ? new Date(String(order.created_at)) : null;
-		if (
-			!created ||
-			!Number.isFinite(created.getTime()) ||
-			Date.now() - created.getTime() > MAX_ORDER_AGE_MS
-		) {
+		const elegibilidad = orderPatchEligibility(
+			{ status: String(order.status ?? ""), createdAt: String(order.created_at ?? "") },
+			Date.now(),
+		);
+		// Ni el pedido viejo ni el que ya avanzó se cancelan: son justo los ajenos que
+		// alguien podría intentar tumbar adivinando un id correlativo.
+		if (elegibilidad === "expired") {
 			return jsonWithPublicCors(
 				req,
 				{ error: "Pedido no elegible para actualización de envío" },
 				{ status: 400 },
 			);
 		}
-
-		if (String(order.status) !== "pending") {
+		if (elegibilidad === "not_pending") {
 			return jsonWithPublicCors(req, { error: "Solo pedidos pendientes" }, { status: 400 });
 		}
+
+		/**
+		 * De aquí en adelante el pedido ya existe y es cancelable: cada rechazo lo
+		 * cancela antes de responder. El límite por IP acota el daño si alguien usa
+		 * esta vía para tumbar pedidos: una compra normal cancela como mucho uno.
+		 */
+		const rechazarYCancelar = async (payload: Record<string, unknown>, status: number) => {
+			const motivo = String(payload.error ?? payload.message ?? "patch");
+			const cancelLimitado = await assertPublicScopedRateLimit(
+				req,
+				"tenant_public_order_cancel",
+				5,
+				10 * 60_000,
+			);
+			if (cancelLimitado) {
+				console.warn("[public-order-delivery] cancelación omitida por límite", {
+					orderId: order.id,
+					reason: motivo,
+				});
+			} else {
+				await cancelOrphanOrder(order, motivo);
+			}
+			return jsonWithPublicCors(req, payload, { status });
+		};
 
 		const { data: branch, error: brErr } = await supabaseAdmin
 			.from("branches")
@@ -132,17 +192,16 @@ export async function POST(req: NextRequest) {
 			.maybeSingle();
 
 		if (brErr || !branch) {
-			return jsonWithPublicCors(req, { error: "Sucursal no encontrada" }, { status: 400 });
+			return await rechazarYCancelar({ error: "Sucursal no encontrada" }, 400);
 		}
 
 		if (branch.order_intake_paused) {
-			return jsonWithPublicCors(
-				req,
+			return await rechazarYCancelar(
 				{
 					error: "ORDER_INTAKE_PAUSED",
 					message: branch.order_intake_pause_message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos."
 				},
-				{ status: 423 }
+				423,
 			);
 		}
 
@@ -176,10 +235,9 @@ export async function POST(req: NextRequest) {
 
 		if (isDeliveryType(orderTypeRaw)) {
 			if (!settings.enabled) {
-				return jsonWithPublicCors(
-					req,
+				return await rechazarYCancelar(
 					{ error: "Delivery no habilitado en esta sucursal" },
-					{ status: 400 },
+					400,
 				);
 			}
 			const pricingMode = effectiveDeliveryPricingMode(settings);
@@ -187,13 +245,12 @@ export async function POST(req: NextRequest) {
 			if (pricingMode === "external") {
 				const storeId = settings.uberDirectStoreId?.trim() ?? "";
 				if (!storeId) {
-					return jsonWithPublicCors(
-						req,
+					return await rechazarYCancelar(
 						{
 							error:
 								"Esta sucursal no tiene configurado el local de Uber Direct (store id).",
 						},
-						{ status: 400 },
+						400,
 					);
 				}
 				const addrLine = String(
@@ -205,21 +262,20 @@ export async function POST(req: NextRequest) {
 					uberQuoteIdResolved = uberQuoteIdClient || null;
 				} else {
 					if (!isValidLatLng(deliveryLat, deliveryLng)) {
-						return jsonWithPublicCors(
-							req,
+						return await rechazarYCancelar(
 							{
 								error:
 									"Faltan coordenadas de entrega válidas para validar el envío con Uber.",
 								code: UBER_NEEDS_COORDINATES_CODE,
 							},
-							{ status: 400 },
+							400,
 						);
 					}
 					const oauth = resolveUberOAuthCredentials({
 						integrationSettings: companyIntegration,
 					});
 					if (!oauth.ok) {
-						return jsonWithPublicCors(req, { error: oauth.message }, { status: 400 });
+						return await rechazarYCancelar({ error: oauth.message }, 400);
 					}
 					const uber = await fetchUberDeliveryEstimate({
 						storeId,
@@ -231,7 +287,7 @@ export async function POST(req: NextRequest) {
 						oauth: { clientId: oauth.clientId, clientSecret: oauth.clientSecret },
 					});
 					if (!uber.ok) {
-						return jsonWithPublicCors(req, { error: uber.message }, { status: 502 });
+						return await rechazarYCancelar({ error: uber.message }, 502);
 					}
 					expectedFee = Math.round(uber.feeMajor);
 					uberQuoteIdResolved = uber.estimateId;
@@ -251,17 +307,9 @@ export async function POST(req: NextRequest) {
 							subtotal,
 						);
 						if (!resolved.ok) {
-							return jsonWithPublicCors(
-								req,
+							return await rechazarYCancelar(
 								{ error: resolved.message },
-								{
-									status:
-										resolved.code === "ambiguous"
-											? 409
-											: resolved.code === "short_address"
-												? 400
-												: 400,
-								},
+								resolved.code === "ambiguous" ? 409 : 400,
 							);
 						}
 						r = computeDeliveryFee(settings, 0, subtotal, {
@@ -279,13 +327,12 @@ export async function POST(req: NextRequest) {
 						!isValidLatLng(deliveryLat, deliveryLng) ||
 						!isValidLatLng(olat, olng)
 					) {
-						return jsonWithPublicCors(
-							req,
+						return await rechazarYCancelar(
 							{
 								error:
 									"Se requieren coordenadas validas de origen y destino para calcular el envio.",
 							},
-							{ status: 400 },
+							400,
 						);
 					}
 					const preciseKm = haversineKm(
@@ -313,7 +360,7 @@ export async function POST(req: NextRequest) {
 								: fee === -3
 									? "Debes elegir una zona de entrega"
 									: "Zona de entrega no válida";
-					return jsonWithPublicCors(req, { error: msg }, { status: 400 });
+					return await rechazarYCancelar({ error: msg }, 400);
 				}
 				expectedFee = Math.round(r.fee);
 			}
@@ -325,7 +372,7 @@ export async function POST(req: NextRequest) {
 			!Number.isFinite(deliveryFeeClient) ||
 			Math.abs(deliveryFeeClient - expectedFee) > FEE_EPS
 		) {
-			return jsonWithPublicCors(req, { error: "Tarifa de envío no válida" }, { status: 400 });
+			return await rechazarYCancelar({ error: "Tarifa de envío no válida" }, 400);
 		}
 
 		const discount = Number(order.discount_total) || 0;
@@ -361,10 +408,9 @@ export async function POST(req: NextRequest) {
 		const expectedRpcTotal = Math.round(Math.max(0, subAfterDiscount.add(devFee).value));
 		const orderTotal = Number(order.total) || 0;
 		if (Math.abs(orderTotal - expectedRpcTotal) > TOTAL_EPS) {
-			return jsonWithPublicCors(
-				req,
+			return await rechazarYCancelar(
 				{ error: "Total del pedido no coincide con ítems + envío" },
-				{ status: 400 },
+				400,
 			);
 		}
 
@@ -409,7 +455,7 @@ export async function POST(req: NextRequest) {
 			.eq("branch_id", order.branch_id);
 
 		if (upErr) {
-			return jsonWithPublicCors(req, { error: upErr.message }, { status: 400 });
+			return await rechazarYCancelar({ error: upErr.message }, 400);
 		}
 
 		return jsonWithPublicCors(req, {
