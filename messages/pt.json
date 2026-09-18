@@ -79,6 +79,19 @@
     "account": {
       "title": "Minha conta",
       "back": "Voltar ao cardápio",
+      "nav": {
+        "account": "Minha conta",
+        "orders": "Meus pedidos",
+        "addresses": "Meus endereços",
+        "settings": "Configurações",
+        "menu": "Ver cardápio"
+      },
+      "sectionDescriptions": {
+        "account": "Seus dados de contato para agilizar seus pedidos.",
+        "orders": "O histórico dos seus pedidos neste negócio.",
+        "addresses": "Os endereços que você usou para entrega.",
+        "settings": "Senha e sessão da sua conta."
+      },
       "tabs": {
         "login": "Entrar",
         "register": "Criar conta"
@@ -89,7 +102,7 @@
         "passwordLabel": "Senha",
         "submit": "Entrar",
         "submitting": "Entrando…",
-        "forgot": "Esqueceu a senha?"
+        "forgotHint": "Esqueceu sua senha? Peça ao negócio para ajudar a recuperá-la."
       },
       "register": {
         "title": "Crie sua conta",
@@ -103,22 +116,8 @@
         "branchLabel": "Unidade habitual",
         "branchPlaceholder": "Escolha uma unidade",
         "submit": "Criar conta",
-        "submitting": "Criando…"
-      },
-      "recover": {
-        "title": "Recuperar senha",
-        "description": "Informe seu documento e enviaremos um link para o e-mail da sua conta.",
-        "documentLabel": "Número do documento",
-        "submit": "Enviar link",
-        "submitting": "Enviando…",
-        "back": "Voltar a entrar",
-        "sentTitle": "Verifique seu e-mail",
-        "sentDescription": "Se houver uma conta com esse documento, enviamos um link para criar uma nova senha. O link expira em uma hora."
-      },
-      "linkSent": {
-        "title": "Verifique seu e-mail",
-        "description": "Você já tem uma conta com esse e-mail. Enviamos um link para vincular este negócio a ela; ao abrir o link você entra automaticamente.",
-        "note": "Sua senha continua sendo a mesma de antes."
+        "submitting": "Criando…",
+        "existingEmailHint": "Se você já tem conta em outro local com este e-mail, use a mesma senha."
       },
       "dashboard": {
         "greeting": "Olá, {name}",
@@ -141,15 +140,13 @@
         "passwordSharedNote": "Sua senha é a mesma em todos os negócios onde você tem conta.",
         "logout": "Sair",
         "loggingOut": "Saindo…",
-        "ordersTitle": "Meus pedidos",
-        "ordersSoon": "Em breve seu histórico de pedidos aparecerá aqui.",
-        "addressesTitle": "Meus endereços",
-        "addressesSoon": "Em breve você poderá salvar seus endereços de entrega."
+        "sessionTitle": "Sessão",
+        "preferencesTitle": "Preferências",
+        "logoutLabel": "Sair neste dispositivo"
       },
       "notices": {
         "passwordChanged": "Senha atualizada. Entre novamente com a nova.",
-        "linked": "Pronto, vinculamos este negócio à sua conta.",
-        "reset": "Escolha sua nova senha."
+        "linked": "Pronto, vinculamos este negócio à sua conta."
       },
       "errors": {
         "company_not_found": "Este negócio não está disponível.",
@@ -162,12 +159,92 @@
         "email_unavailable": "Esse e-mail não está disponível.",
         "invalid_credentials": "Documento ou senha incorretos.",
         "unauthorized": "Sua sessão expirou. Entre novamente.",
-        "link_invalid": "Este link não é mais válido. Peça um novo.",
-        "reset_required": "Você precisa da senha atual para alterá-la.",
         "weak_password": "A senha deve ter pelo menos 8 caracteres.",
         "validation_error": "Confira os dados do formulário.",
         "network": "Não conseguimos conectar. Verifique sua conexão e tente novamente.",
-        "internal": "Não foi possível concluir a operação. Tente novamente."
+        "internal": "Não foi possível concluir a operação. Tente novamente.",
+        "rate_limited": "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+        "link_password_mismatch": "Esse e-mail já tem uma conta. Digite a mesma senha que você usa nela.",
+        "address_limit": "Você atingiu o máximo de endereços. Exclua um para adicionar outro.",
+        "invalid_zone": "Escolha uma zona de entrega da lista.",
+        "invalid_address": "Informe o endereço com rua e número.",
+        "delivery_unavailable": "Este negócio não faz entregas."
+      },
+      "orders": {
+        "loading": "Carregando pedidos…",
+        "empty": "Você ainda não tem pedidos neste negócio. Os pedidos feitos com a sessão iniciada aparecerão aqui.",
+        "number": "Pedido #{number}",
+        "moreItems": "e mais {count}",
+        "fulfillment": {
+          "delivery": "Entrega",
+          "pickup": "Retirada"
+        },
+        "status": {
+          "pending": "Recebido",
+          "in_progress": "Em preparo",
+          "ready": "Pronto",
+          "picked_up": "Entregue",
+          "delivered": "Entregue",
+          "completed": "Concluído",
+          "cancelled": "Cancelado",
+          "rejected": "Recusado",
+          "other": "Em andamento"
+        },
+        "detail": {
+          "open": "Ver detalhes do pedido #{number}",
+          "back": "Voltar aos meus pedidos",
+          "payment": "Pagamento",
+          "paymentMethod": "Forma de pagamento",
+          "paymentStatus": "Status do pagamento",
+          "fulfillment": "Entrega",
+          "type": "Tipo",
+          "address": "Endereço",
+          "reference": "Referência",
+          "handoffCode": "Código de entrega",
+          "branch": "Filial",
+          "products": "Produtos ({count})",
+          "itemNote": "Obs.: {note}",
+          "note": "Observação do pedido",
+          "summary": "Resumo",
+          "subtotal": "Subtotal",
+          "discount": "Desconto",
+          "deliveryFee": "Entrega",
+          "free": "Grátis",
+          "total": "Total",
+          "notAvailable": "Sem dados"
+        },
+        "paymentStatus": {
+          "paid": "Pago",
+          "pending": "Pendente",
+          "partial": "Pago parcialmente",
+          "other": "Em análise"
+        },
+        "repeat": "Repetir pedido",
+        "goToMenu": "Ir ao cardápio",
+        "orderNow": "Fazer meu primeiro pedido",
+        "repeatHint": "Ao repetir, os produtos vão para o carrinho com os preços de hoje. Você pode alterá-los antes de confirmar.",
+        "repeatUnavailable": "Este pedido não tem produtos que possam ser repetidos."
+      },
+      "addresses": {
+        "loading": "Carregando endereços…",
+        "empty": "Você ainda não tem endereços salvos.",
+        "hint": "Também são salvos automaticamente quando você pede com entrega.",
+        "delete": "Excluir endereço",
+        "noStreet": "Endereço sem rua",
+        "add": "Adicionar endereço",
+        "newTitle": "Novo endereço",
+        "addressLabel": "Endereço",
+        "addressPlaceholder": "Rua, número e bairro",
+        "referenceLabel": "Referência",
+        "referencePlaceholder": "Apto, casa, cor do portão…",
+        "save": "Salvar endereço",
+        "saving": "Salvando…",
+        "cancel": "Cancelar",
+        "zoneLabel": "Zona de entrega",
+        "zonePlaceholder": "Escolha sua zona",
+        "zoneHint": "Este negócio entrega por zonas: escolha a sua e informe seu endereço.",
+        "noDelivery": "Este negócio não faz entregas, então não é preciso salvar endereços.",
+        "zoneAddressPlaceholder": "Rua, número, apto ou casa"
       }
     },
     "cart": {
@@ -190,7 +267,8 @@
           "continueToPaymentMethods": "Continuar para metodos de pagamento", "backToSummary": "Voltar ao resumo",
           "sending": "Enviando...", "confirmOrder": "Confirmar Pedido", "back": "Voltar",
           "alreadyPaid": "Ja paguei", "continue": "Continuar", "chooseAnotherMethod": "Escolher outro metodo",
-          "cancel": "Cancelar", "newOrder": "Novo Pedido", "backToMenu": "Voltar ao Menu"
+          "cancel": "Cancelar", "newOrder": "Novo Pedido", "backToMenu": "Voltar ao Menu",
+          "repeatLastOrder": "Repetir último pedido"
         },
         "delivery": {
           "pickNamedArea": "Escolha uma area", "selectAreaAria": "Selecionar area de entrega",
@@ -207,7 +285,7 @@
           "cannotReadLocation": "Nao foi possivel ler sua localizacao.",
           "addressFoundReview": "Endereco encontrado. Revise rua, bairro e custo de entrega.",
           "addressLabel": "Endereco", "howReceiveOrder": "Como deseja receber seu pedido",
-          "fulfillmentSubtitle": "Escolha uma opcao para continuar.", "pickup": "Retirada", "delivery": "Entrega", "zoneLabel": "Zona de entrega", "writeStreetNumberCommune": "Digite rua, numero e bairro/cidade; calculamos a tarifa com base nas zonas da loja.", "useCurrentLocation": "Usar localizacao atual", "preciseShippingHint": "Calculamos o frete com mais precisao.", "fullAddressHint": "Digite seu endereco completo (rua e numero e, se possivel, bairro/cidade). Assim cotamos o frete e coordenamos o pedido no WhatsApp.", "approxHintPrefix": "Esta sugestao e apenas por zona/cidade: o ponto no mapa pode ficar longe da sua porta. Prefira uma opcao com endereco mais especifico, ajuste rua ou bairro/cidade, ou use", "useMyLocationStrong": "Usar minha localizacao", "communeOrCity": "Bairro ou cidade", "communePlaceholder": "Ex: Centro", "street": "Rua", "streetPlaceholder": "Ex: Avenida Paulista", "number": "Numero", "numberPlaceholder": "Ex: 1432", "searchingAddresses": "Buscando enderecos...", "addressSuggestionsAria": "Sugestoes de endereco", "updatingLocationFromStreet": "Atualizando localizacao com rua e numero (recalculando frete)...", "driverInstructionsRequired": "Instrucoes para o entregador (obrigatorio)", "driverInstructionsPlaceholder": "Apto, interfone, cor do portao, referencias...", "driverInstructionsMin": "Minimo de {min} caracteres para o entregador encontrar voce.", "calculatingShipping": "Calculando frete...", "detectedZone": "Zona detectada: {zone}", "approxDistance": "Distancia aprox. (linha reta)", "shippingCost": "Custo de entrega", "outOfZone": "Fora da zona", "minOrderForDelivery": "O minimo para entrega e ${amount}.", "locationExceedsMaxKm": "Sua localizacao excede a distancia maxima desta loja.", "pickupOnlyBranch": "Esta filial aceita apenas retirada no local.", "needLocationForUber": "Para cotar a entrega (Uber), marque o ponto no mapa ou toque em Usar localizacao atual.", "needLocationStreetOrKm": "Informe sua localizacao no mapa, digite rua e numero com bairro/cidade, ou informe os km manualmente para continuar.", "addDriverInstructionsMin": "Adicione instrucoes para o entregador (minimo de {min} caracteres).", "locationOutsideArea": "Sua localizacao esta fora da area de entrega desta loja.", "minAmountForDelivery": "Valor minimo para entrega: ${amount}.", "calculatingWithLocation": "Calculando frete com sua localizacao...", "completeDataToContinue": "Complete os dados de entrega para continuar."
+          "fulfillmentSubtitle": "Escolha uma opcao para continuar.", "pickup": "Retirada", "delivery": "Entrega", "zoneLabel": "Zona de entrega", "writeStreetNumberCommune": "Digite rua, numero e bairro/cidade; calculamos a tarifa com base nas zonas da loja.", "useCurrentLocation": "Usar localizacao atual", "preciseShippingHint": "Calculamos o frete com mais precisao.", "fullAddressHint": "Digite seu endereco completo (rua e numero e, se possivel, bairro/cidade). Assim cotamos o frete e coordenamos o pedido no WhatsApp.", "approxHintPrefix": "Esta sugestao e apenas por zona/cidade: o ponto no mapa pode ficar longe da sua porta. Prefira uma opcao com endereco mais especifico, ajuste rua ou bairro/cidade, ou use", "useMyLocationStrong": "Usar minha localizacao", "communeOrCity": "Bairro ou cidade", "communePlaceholder": "Ex: Centro", "street": "Rua", "streetPlaceholder": "Ex: Avenida Paulista", "number": "Numero", "numberPlaceholder": "Ex: 1432", "searchingAddresses": "Buscando enderecos...", "addressSuggestionsAria": "Sugestoes de endereco", "updatingLocationFromStreet": "Atualizando localizacao com rua e numero (recalculando frete)...", "driverInstructionsRequired": "Instrucoes para o entregador (obrigatorio)", "driverInstructionsPlaceholder": "Apto, interfone, cor do portao, referencias...", "driverInstructionsMin": "Minimo de {min} caracteres para o entregador encontrar voce.", "calculatingShipping": "Calculando frete...", "detectedZone": "Zona detectada: {zone}", "approxDistance": "Distancia aprox. (linha reta)", "shippingCost": "Custo de entrega", "outOfZone": "Fora da zona", "minOrderForDelivery": "O minimo para entrega e ${amount}.", "locationExceedsMaxKm": "Sua localizacao excede a distancia maxima desta loja.", "pickupOnlyBranch": "Esta filial aceita apenas retirada no local.", "needLocationForUber": "Para cotar a entrega (Uber), marque o ponto no mapa ou toque em Usar localizacao atual.", "needLocationStreetOrKm": "Informe sua localizacao no mapa, digite rua e numero com bairro/cidade, ou informe os km manualmente para continuar.", "addDriverInstructionsMin": "Adicione instrucoes para o entregador (minimo de {min} caracteres).", "locationOutsideArea": "Sua localizacao esta fora da area de entrega desta loja.", "minAmountForDelivery": "Valor minimo para entrega: ${amount}.", "calculatingWithLocation": "Calculando frete com sua localizacao...", "completeDataToContinue": "Complete os dados de entrega para continuar.", "savedAddresses": "Seus endereços salvos"
         },
         "errors": {
           "noOrdersNow": "Nao estamos recebendo pedidos neste momento.",
