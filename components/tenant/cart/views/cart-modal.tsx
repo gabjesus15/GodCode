@@ -1595,7 +1595,8 @@ export function CartModal({
         client_name: sanitizeUserText(data.name),
         client_phone: String(data.phone ?? "").trim(),
         client_rut: String(data.rut ?? "").trim(),
-        client_id: checkoutProfile?.clientId ?? null,
+        // Con sesión el servidor crea el pedido con la cuenta de la sesión.
+        account_order: Boolean(checkoutProfile),
         payment_method_specific: paymentMethodKey,
         total: Number(snapGrand) || 0,
         items: mergedItemsForOrder,

@@ -24,6 +24,7 @@ import {
 	orphanCancelNote,
 } from "@/lib/orders/orphan-cancel";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { isMenuAccountClient, sealOrderDeliveryAddress } from "@/lib/menu-account/order-address";
 import { fetchUberDeliveryEstimate } from "@/lib/delivery/uber-direct";
 
 /** @service-role public
@@ -136,7 +137,7 @@ export async function POST(req: NextRequest) {
 
 		const { data: order, error: orderErr } = await supabaseAdmin
 			.from("orders")
-			.select("id, branch_id, total, items, created_at, status, discount_total, note")
+			.select("id, branch_id, client_id, total, items, created_at, status, discount_total, note")
 			.eq("id", orderId)
 			.maybeSingle();
 
@@ -438,6 +439,13 @@ export async function POST(req: NextRequest) {
 			}
 		}
 
+		// Pedido de un cliente con cuenta: la dirección se guarda cifrada, con la zona y
+		// el proveedor en claro (ver lib/menu-account/order-address.ts).
+		const storedAddress =
+			deliveryAddress && (await isMenuAccountClient(order.client_id, branch.company_id))
+				? sealOrderDeliveryAddress(deliveryAddress)
+				: deliveryAddress;
+
 		const handoff =
 			isDeliveryType(orderTypeRaw) ? await pickHandoffCode() : null;
 
@@ -445,7 +453,7 @@ export async function POST(req: NextRequest) {
 			.from("orders")
 			.update({
 				delivery_fee: expectedFee,
-				delivery_address: deliveryAddress,
+				delivery_address: storedAddress,
 				tax_total: taxTotal,
 				// Keep display total aligned when IVA is excluded from RPC total.
 				...(taxRatePercent > 0 && !taxIncluded ? { total: expectedTotal } : {}),

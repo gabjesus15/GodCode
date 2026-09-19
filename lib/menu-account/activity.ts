@@ -9,6 +9,7 @@ import type {
 } from "@/components/tenant/account/menu-account-types";
 
 import { menuAccountErrors } from "./errors";
+import { openOrderDeliveryAddress } from "./order-address";
 import { isSealedPii, openPii, sealPii } from "./pii";
 import type { MenuClientAccountRow } from "./types";
 
@@ -139,7 +140,8 @@ export async function listMenuAccountOrders(
 	}
 
 	return rows.map((row) => {
-		const delivery = mapDelivery(row.delivery_address);
+		// La dirección de los pedidos de una cuenta está cifrada; a su dueña se le muestra entera.
+		const delivery = mapDelivery(openOrderDeliveryAddress(row.delivery_address) ?? row.delivery_address);
 		return {
 			id: String(row.id),
 			number: row.shift_sequence != null ? String(row.shift_sequence) : String(row.id),

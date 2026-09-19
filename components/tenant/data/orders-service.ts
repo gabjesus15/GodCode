@@ -53,10 +53,11 @@ interface CreateOrderPayload {
   order_origin?: "web" | null;
   client_request_id?: string;
   /**
-   * Ficha de `clients` de la persona logueada en el menú (`/api/menu-account/checkout-profile`).
-   * Con ella el RPC no busca el cliente por teléfono, que en `clients` está lleno de duplicados.
+   * La persona tiene sesión en el menú: el pedido lo crea el servidor
+   * (`POST /api/menu-account/order`) con la cuenta de la sesión. El navegador no
+   * conoce ni manda el id de su ficha.
    */
-  client_id?: string | null;
+  account_order?: boolean;
   currency?: string | null;
   requires_receipt?: boolean;
 }
@@ -98,6 +99,48 @@ async function resolveCouponDiscountForOrder(
 	if (!res.ok || !json.ok) return 0;
 
 	return Math.max(0, Number(json.discountAmount) || 0);
+}
+
+/**
+ * Pedido de una persona con sesión: lo crea el servidor, que toma la cuenta de la
+ * sesión y el contacto de su ficha. Devuelve la misma forma que `supabase.rpc` para
+ * que el resto del flujo (errores del RPC, cierre de envío) no cambie.
+ */
+async function createAccountOrder(args: {
+  p_items: unknown;
+  p_total: number;
+  p_payment_type: string;
+  p_payment_ref: string | null;
+  p_note: string;
+  p_branch_id: string;
+  p_payment_method_specific: string;
+  p_order_type: string;
+  p_delivery_fee: number;
+  p_delivery_address: unknown;
+  p_coupon_code?: string;
+  p_order_origin: string;
+}): Promise<{ data: unknown; error: { message: string } | null }> {
+  const res = await fetch(`${window.location.origin}/api/menu-account/order`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      branchId: args.p_branch_id,
+      items: args.p_items,
+      total: args.p_total,
+      paymentType: args.p_payment_type,
+      paymentRef: args.p_payment_ref,
+      paymentMethodSpecific: args.p_payment_method_specific,
+      note: args.p_note,
+      orderType: args.p_order_type === "delivery" ? "delivery" : "pickup",
+      deliveryFee: args.p_delivery_fee,
+      deliveryAddress: args.p_delivery_address ?? null,
+      couponCode: args.p_coupon_code ?? null,
+      orderOrigin: args.p_order_origin,
+    }),
+  });
+  const json = (await res.json().catch(() => ({}))) as { order?: unknown; error?: string };
+  if (!res.ok) return { data: null, error: { message: json.error || "No se pudo crear el pedido." } };
+  return { data: json.order ?? null, error: null };
 }
 
 async function resolveNormalizedCatalogItems(
@@ -534,13 +577,11 @@ export const ordersService = {
       p_delivery_address: deliveryMode ? (orderData.delivery_address as Json) : null,
       ...(couponPayload ? { p_coupon_code: couponPayload } : {}),
       p_order_origin: orderData.order_origin ?? WEB_MENU_ORDER_ORIGIN,
-      ...(orderData.client_id ? { p_client_id: orderData.client_id } : {}),
     };
 
-    const { data: newOrder, error: orderError } = await supabase.rpc(
-      "create_order_transaction",
-      rpcArgs
-    );
+    const { data: newOrder, error: orderError } = orderData.account_order
+      ? await createAccountOrder(rpcArgs)
+      : await supabase.rpc("create_order_transaction", rpcArgs);
 
     if (orderError) {
       const rpcMessage = String(orderError.message || "").toLowerCase();

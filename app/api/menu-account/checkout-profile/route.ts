@@ -19,8 +19,8 @@ export const dynamic = "force-dynamic";
 /**
  * Datos con los que el carrito rellena el checkout de una persona logueada.
  *
- * Garantiza la ficha en `clients` antes de devolverla: el carrito pasa ese id como
- * `p_client_id` y el RPC deja de adivinar el cliente por teléfono.
+ * Garantiza la ficha en `clients` para leer sus direcciones guardadas. El id de la
+ * ficha no se devuelve: el pedido con sesión lo crea el servidor.
  *
  * Sin sesión responde 200 con `profile: null`, no 401: comprar sin cuenta es el caso
  * normal del menú y no debe dejar errores en la consola de cada visitante.
@@ -46,8 +46,9 @@ export async function GET(req: NextRequest) {
 		const clientId = await ensureMenuAccountClient(account);
 		const addresses = await listMenuAccountAddresses({ ...account, client_id: clientId });
 
+		// El id de la ficha no sale al navegador: el pedido lo crea el servidor con la
+		// cuenta de la sesión (POST /api/menu-account/order).
 		const profile: MenuAccountCheckoutProfile = {
-			clientId,
 			fullName: account.full_name,
 			phone: account.phone,
 			document: account.document_raw ?? account.document_normalized,

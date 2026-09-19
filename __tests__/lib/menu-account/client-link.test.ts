@@ -13,6 +13,7 @@ vi.mock("@/lib/infra/supabase-admin", () => ({
 }));
 
 import { ensureMenuAccountClient } from "@/lib/menu-account/client-link";
+import { isSealedPii, openPii, sealPii } from "@/lib/menu-account/pii";
 import type { MenuClientAccountRow } from "@/lib/menu-account/types";
 
 function account(overrides: Partial<MenuClientAccountRow> = {}): MenuClientAccountRow {
@@ -59,7 +60,7 @@ describe("ensureMenuAccountClient", () => {
 		expect(adminHolder.current.fromCalls).not.toContain("menu_client_accounts");
 	});
 
-	it("crea una ficha nueva con los datos de la cuenta, sin buscar fichas históricas", async () => {
+	it("crea una ficha nueva con nombre corto y contacto cifrado, sin buscar fichas históricas", async () => {
 		adminHolder.current = makeAdminMock({
 			tables: {
 				clients: [{ data: { id: "client-new" }, error: null }],
@@ -70,17 +71,66 @@ describe("ensureMenuAccountClient", () => {
 		await expect(ensureMenuAccountClient(account())).resolves.toBe("client-new");
 
 		const [insert] = chainsFor("clients");
-		expect(insert.insert).toHaveBeenCalledWith(
-			expect.objectContaining({
-				company_id: "company-a",
-				name: "Ana Cliente",
-				rut: "12.345.678-5",
-				phone_normalized: "56912345678",
-			}),
-		);
+		const row = (insert.insert as ReturnType<typeof vi.fn>).mock.calls[0][0] as Record<string, unknown>;
+		expect(row).toMatchObject({ company_id: "company-a", name: "Ana C.", phone_normalized: null });
+		expect(openPii(String(row.phone))).toBe("+56 9 1234 5678");
+		expect(openPii(String(row.rut))).toBe("12.345.678-5");
+		// Nada legible de la cuenta queda en la ficha salvo el nombre corto.
+		expect(JSON.stringify(row)).not.toMatch(/Cliente|1234 5678|12\.345/);
 		// El reclamo es condicional: solo gana si la cuenta seguía sin ficha.
 		const [claim] = chainsFor("menu_client_accounts");
 		expect(claim.is).toHaveBeenCalledWith("client_id", null);
+	});
+
+	it("cifra al usarla una ficha de antes del cifrado", async () => {
+		adminHolder.current = makeAdminMock({
+			tables: {
+				clients: [
+					{
+						data: {
+							id: "client-1",
+							name: "Ana Cliente",
+							phone: "+56 9 1234 5678",
+							phone_normalized: "56912345678",
+							rut: "12.345.678-5",
+						},
+						error: null,
+					},
+					emptyResult,
+				],
+			},
+		});
+
+		await expect(ensureMenuAccountClient(account({ client_id: "client-1" }))).resolves.toBe("client-1");
+
+		const [, update] = chainsFor("clients");
+		const patch = (update.update as ReturnType<typeof vi.fn>).mock.calls[0][0] as Record<string, unknown>;
+		expect(patch).toMatchObject({ name: "Ana C.", phone_normalized: null });
+		expect(isSealedPii(String(patch.phone))).toBe(true);
+		expect(isSealedPii(String(patch.rut))).toBe(true);
+		expect(update.eq).toHaveBeenCalledWith("company_id", "company-a");
+	});
+
+	it("no reescribe una ficha que ya está cifrada y al día", async () => {
+		adminHolder.current = makeAdminMock({
+			tables: {
+				clients: [
+					{
+						data: {
+							id: "client-1",
+							name: "Ana C.",
+							phone: sealPii("+56 9 1234 5678"),
+							phone_normalized: null,
+							rut: sealPii("12.345.678-5"),
+						},
+						error: null,
+					},
+				],
+			},
+		});
+
+		await ensureMenuAccountClient(account({ client_id: "client-1" }));
+		expect(chainsFor("clients")).toHaveLength(1);
 	});
 
 	it("si otra petición ganó la carrera, borra su ficha y adopta la ganadora", async () => {

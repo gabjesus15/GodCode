@@ -16,6 +16,7 @@ import {
 	upgradeLegacyAccountRow,
 } from "./account-records";
 import { createMenuClientResponseClient } from "./cookies";
+import { syncMenuAccountClient } from "./client-link";
 import { assertBranchBelongsToCompany, type MenuAccountCompany } from "./company-resolve";
 import { menuAccountErrors, MenuAccountError } from "./errors";
 import { classifyEmail, normalizeEmail } from "./identity-guard";
@@ -364,7 +365,10 @@ export async function updateMenuAccountProfile(
 		.single();
 
 	if (error || !data) throw menuAccountErrors.internal();
-	return toMenuAccountDto(openAccountRow(data as MenuClientAccountRow, input.email));
+	const updated = openAccountRow(data as MenuClientAccountRow, input.email);
+	// La ficha y los próximos pedidos toman el nombre corto y el teléfono nuevos.
+	if (input.fullName !== undefined || input.phone !== undefined) await syncMenuAccountClient(updated);
+	return toMenuAccountDto(updated);
 }
 
 export type ChangePasswordInput = {

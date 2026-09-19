@@ -68,7 +68,6 @@ export type MenuAccountAddress = {
 
 /** Datos para rellenar el checkout (`GET /api/menu-account/checkout-profile`). */
 export type MenuAccountCheckoutProfile = {
-	clientId: string;
 	fullName: string;
 	phone: string;
 	document: string;
