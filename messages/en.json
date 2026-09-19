@@ -316,6 +316,7 @@
             "coupon_min_subtotal": "Your subtotal must be at least {amount} to use this coupon.",
             "coupon_phone_required": "Enter your phone to use this coupon.",
             "coupon_wrong_client": "This coupon does not apply to your details.",
+            "coupon_login_required": "Sign in to your account to use this coupon.",
             "coupon_usage_exhausted": "This coupon has no uses left.",
             "coupon_usage_exhausted_client": "You have already used this coupon the maximum times allowed.",
             "branch_not_found": "Branch not found.",

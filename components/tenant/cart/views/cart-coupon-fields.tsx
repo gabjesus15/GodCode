@@ -90,6 +90,7 @@ export function CartCouponFields({
     if (key === "coupon_expired") return t("coupon.errors.coupon_expired");
     if (key === "coupon_phone_required") return t("coupon.errors.coupon_phone_required");
     if (key === "coupon_wrong_client") return t("coupon.errors.coupon_wrong_client");
+    if (key === "coupon_login_required") return t("coupon.errors.coupon_login_required");
     if (key === "coupon_usage_exhausted") return t("coupon.errors.coupon_usage_exhausted");
     if (key === "coupon_usage_exhausted_client") return t("coupon.errors.coupon_usage_exhausted_client");
     if (key === "branch_not_found") return t("coupon.errors.branch_not_found");

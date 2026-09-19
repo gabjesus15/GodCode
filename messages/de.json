@@ -276,6 +276,7 @@
             "coupon_min_subtotal": "Der Zwischenbetrag muss mindestens {amount} betragen, um diesen Gutschein zu nutzen.",
             "coupon_phone_required": "Bitte ergaenze deine Telefonnummer, um diesen Gutschein zu nutzen.",
             "coupon_wrong_client": "Dieser Gutschein gilt nicht fuer deine Daten.",
+            "coupon_login_required": "Melde dich in deinem Konto an, um diesen Gutschein zu nutzen.",
             "coupon_usage_exhausted": "Fuer diesen Gutschein sind keine Nutzungen mehr verfuegbar.",
             "coupon_usage_exhausted_client": "Du hast diesen Gutschein bereits so oft genutzt wie erlaubt.",
             "branch_not_found": "Wir haben die Filiale nicht gefunden.",

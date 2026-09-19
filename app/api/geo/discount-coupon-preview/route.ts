@@ -4,6 +4,8 @@ import { z } from "zod";
 import { computeCouponDiscountAmount } from "@/lib/discount/compute-coupon-discount";
 import { assertJsonRateLimit } from "@/lib/infra/public-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { ensureMenuAccountClient } from "@/lib/menu-account/client-link";
+import { getMenuAccountSession } from "@/lib/menu-account/session";
 
 /** @service-role public
  *
@@ -78,8 +80,27 @@ export async function POST(req: NextRequest) {
     }
 
     const trimmedPhone = (clientPhone ?? "").trim();
+    const restrictedAccount =
+      coupon.scope === "client_only" && coupon.restricted_account_id != null
+        ? String(coupon.restricted_account_id)
+        : null;
 
-    if (coupon.scope === "client_only") {
+    /**
+     * Cupón de una cuenta: el dueño se prueba con la sesión del menú, no con el
+     * teléfono del carrito, que cualquiera puede escribir. El límite por cliente
+     * cuenta los pedidos de la ficha de esa cuenta, igual que la base al crear.
+     */
+    let accountClientId: string | null = null;
+    if (restrictedAccount) {
+      const session = await getMenuAccountSession(companyId);
+      if (!session) {
+        return NextResponse.json({ ok: false as const, error: "coupon_login_required" });
+      }
+      if (session.account.id !== restrictedAccount) {
+        return NextResponse.json({ ok: false as const, error: "coupon_wrong_client" });
+      }
+      accountClientId = await ensureMenuAccountClient(session.account);
+    } else if (coupon.scope === "client_only") {
       if (!trimmedPhone) {
         return NextResponse.json({ ok: false as const, error: "coupon_phone_required" });
       }
@@ -103,7 +124,17 @@ export async function POST(req: NextRequest) {
     }
 
     const maxPerClient = Number(coupon.max_redemptions_per_client ?? 0);
-    if (Number.isFinite(maxPerClient) && maxPerClient > 0) {
+    if (accountClientId && Number.isFinite(maxPerClient) && maxPerClient > 0) {
+      const { count } = await supabaseAdmin
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("discount_coupon_id", coupon.id)
+        .eq("client_id", accountClientId)
+        .neq("status", "cancelled");
+      if ((count ?? 0) >= maxPerClient) {
+        return NextResponse.json({ ok: false as const, error: "coupon_usage_exhausted_client" });
+      }
+    } else if (Number.isFinite(maxPerClient) && maxPerClient > 0) {
       const { data: reds } = await supabaseAdmin
         .from("discount_coupon_redemptions")
         .select("client_phone")

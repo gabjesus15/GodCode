@@ -316,6 +316,7 @@
             "coupon_min_subtotal": "El subtotal debe ser al menos {amount} para usar este cupón.",
             "coupon_phone_required": "Completá tu teléfono para usar este cupón.",
             "coupon_wrong_client": "Este cupón no aplica con tus datos.",
+            "coupon_login_required": "Inicia sesión en tu cuenta para usar este cupón.",
             "coupon_usage_exhausted": "Este cupón ya no tiene usos disponibles.",
             "coupon_usage_exhausted_client": "Ya usaste este cupón el máximo de veces permitidas.",
             "branch_not_found": "No encontramos la sucursal.",

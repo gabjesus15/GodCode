@@ -16,6 +16,17 @@
       "port": 3000
     },
     {
+      "name": "panel",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../GodCode-Panel",
+        "run",
+        "dev"
+      ],
+      "port": 5173
+    },
+    {
       "name": "onboarding-billing",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
