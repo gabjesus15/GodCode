@@ -60,3 +60,4 @@ next-env.d.ts
 # editor / IDE (optional: remove if you want to commit shared settings)
 .cursor/
 .turbo
+.mcp.json
