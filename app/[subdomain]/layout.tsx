@@ -102,12 +102,12 @@ export async function generateMetadata({
   const pathPrefix = onApexPathTenant ? `/${resolvedParams.subdomain}` : "";
 
   if (!company) {
-    return { title: { absolute: "GodCode | Menú Digital" } };
+    return { title: { absolute: "Gcode POS | Menú Digital" } };
   }
 
   const status = company.subscription_status?.toLowerCase();
   if (status === "suspended" || status === "cancelled") {
-    return { title: { absolute: "GodCode" } };
+    return { title: { absolute: "Gcode POS" } };
   }
 
   const rawThemeConfig = company.theme_config;
@@ -263,7 +263,7 @@ export default async function TenantLayout({
           {
             "@type": "ListItem",
             "position": 1,
-            "name": "GodCode",
+            "name": "Gcode Labs",
             "item": "https://www.godcode.me"
           },
           {

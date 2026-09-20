@@ -3,14 +3,18 @@ import Link from "next/link";
 
 import { getAppUrl } from "@/lib/tenant/app-url";
 
-const COMPANY_NAME = "GodCode";
-import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
+import {
+	LANDING_COMPANY_NAME,
+	LANDING_PRODUCT_NAME,
+	LANDING_SUPPORT_EMAIL,
+} from "@/lib/landing/brand";
 
+const COMPANY_NAME = LANDING_COMPANY_NAME;
 const SUPPORT_EMAIL = LANDING_SUPPORT_EMAIL;
 
 export const metadata: Metadata = {
-	title: "Términos de servicio · GodCode",
-	description: "Términos de servicio de la plataforma GodCode.",
+	title: "Términos de servicio",
+	description: `Términos de servicio de ${LANDING_PRODUCT_NAME}, la plataforma de ${LANDING_COMPANY_NAME}.`,
 	alternates: {
 		canonical: `${getAppUrl()}/onboarding/terminos`,
 	},

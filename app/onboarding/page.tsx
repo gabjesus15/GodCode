@@ -5,23 +5,25 @@ import { redirect } from "next/navigation";
 import { OnboardingStep1Form } from "@/components/onboarding/steps/OnboardingStep1Form";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
 import { getCurrentMessages } from "@/lib/i18n/server";
+import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
 import { getAppUrl } from "@/lib/tenant/app-url";
 
 export async function generateMetadata(): Promise<Metadata> {
 	const base = getAppUrl();
+	// La plantilla del layout raíz añade "· Gcode Labs" al final.
+	const title = `Crea tu tienda online en minutos con ${LANDING_PRODUCT_NAME}`;
+	const description = `Registra tu negocio en ${LANDING_PRODUCT_NAME}, de ${LANDING_COMPANY_NAME}, y crea tu menú digital, pedidos online, caja, inventario y delivery. Sin comisiones por venta y listo en minutos.`;
 	return {
-		title: "Crea tu tienda online en minutos · GodCode",
-		description:
-			"Registra tu negocio en GodCode y crea tu menú digital, pedidos online, caja, inventario y delivery. Sin comisiones por venta y listo en minutos.",
+		title,
+		description,
 		alternates: {
 			canonical: `${base}/onboarding`,
 		},
 		openGraph: {
-			title: "Crea tu tienda online en minutos · GodCode",
-			description:
-				"Registra tu negocio en GodCode y empieza a vender online con menú digital, pedidos y delivery.",
+			title: `${title} · ${LANDING_COMPANY_NAME}`,
+			description,
 			url: `${base}/onboarding`,
-			siteName: "GodCode",
+			siteName: LANDING_COMPANY_NAME,
 			type: "website",
 		},
 		robots: {

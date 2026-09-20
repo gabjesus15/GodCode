@@ -12,7 +12,7 @@ import { LIGHT_ONLY_THEME_SCRIPT } from "@/components/theme/saas-theme-scope";
 import { PageAnalyticsTracker } from "../components/analytics/page-analytics-tracker";
 import { getClientMessagesForPath } from "@/lib/i18n/client-messages";
 import { getCurrentLocale } from "@/lib/i18n/server";
-import { LANDING_BRAND_NAME } from "@/lib/landing/brand";
+import { LANDING_COMPANY_NAME } from "@/lib/landing/brand";
 import { LANDING_DESCRIPTION, LANDING_SHARE_TITLE } from "@/lib/landing/metadata";
 import { getAppUrl } from "@/lib/tenant/app-url";
 // import Image from 'next/image'; // Eliminado porque no se usa
@@ -83,7 +83,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(getAppUrl()),
   title: {
     default: LANDING_SHARE_TITLE,
-    template: `%s · ${LANDING_BRAND_NAME}`,
+    // Nombre de la empresa al final: es lo que Google usa como "nombre del sitio".
+    template: `%s · ${LANDING_COMPANY_NAME}`,
   },
   description: LANDING_DESCRIPTION,
   verification: {

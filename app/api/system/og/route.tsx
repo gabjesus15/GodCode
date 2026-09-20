@@ -37,7 +37,7 @@ export async function GET(req: Request) {
 							letterSpacing: "-0.02em",
 						}}
 					>
-						Gcode
+						Gcode POS
 					</div>
 				</div>
 				<div
@@ -58,7 +58,7 @@ export async function GET(req: Request) {
 						textAlign: "center",
 					}}
 				>
-					Menú digital · Carrito · Delivery · Caja · Inventario
+					Menú digital · Carrito · Delivery · Caja · Inventario · por Gcode Labs
 				</div>
 			</div>
 		),

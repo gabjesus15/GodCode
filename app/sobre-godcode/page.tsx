@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import { ArrowRight, ChartNoAxesCombined, ShieldCheck, Sparkles, Users } from "lucide-react";
 
 import { AboutNavbar } from "@/components/landing-v3/about-navbar";
-import { LANDING_BRAND_ALTERNATE, LANDING_BRAND_NAME } from "@/lib/landing/brand";
+import {
+  LANDING_BRAND_ALTERNATE,
+  LANDING_COMPANY_NAME,
+  LANDING_PRODUCT_NAME,
+} from "@/lib/landing/brand";
+import { buildOrganizationJsonLd, getOrganizationId } from "@/lib/landing/json-ld";
 import { normalizeLocale } from "@/lib/i18n/config";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { getCurrentLocale } from "@/lib/i18n/server";
@@ -16,10 +21,10 @@ type AboutSearchParams = {
 
 const copy = {
   es: {
-    eyebrow: `Sobre ${LANDING_BRAND_NAME}`,
-    title: "Una plataforma pensada para vender online sin perder el control de tu negocio.",
+    eyebrow: `Sobre ${LANDING_COMPANY_NAME} · antes ${LANDING_BRAND_ALTERNATE}`,
+    title: `Un estudio de desarrollo web que construye sistemas a medida y productos propios como ${LANDING_PRODUCT_NAME}.`,
     intro:
-      `${LANDING_BRAND_NAME} simplifica lo que hoy suele estar fragmentado: menú digital, pedidos online, caja, inventario y delivery, todo en un solo lugar.`,
+      `${LANDING_COMPANY_NAME} crea páginas web y sistemas a medida para negocios, y desarrolla ${LANDING_PRODUCT_NAME}: la plataforma que simplifica lo que hoy suele estar fragmentado: menú digital, pedidos online, caja, inventario y delivery, todo en un solo lugar.`,
     primaryCta: "Crear mi tienda",
     secondaryCta: "Ver la home",
     facts: [
@@ -31,12 +36,12 @@ const copy = {
       sectionOneEyebrow: "01 · Qué resuelve",
     sectionOneTitle: "Menú digital y pedidos online, sin ceder margen.",
     sectionOneText:
-      `Restaurantes y negocios con sucursales pierden margen en cada pedido que pasa por un marketplace. ${LANDING_BRAND_NAME} les da su propia tienda con menú digital, pedidos online sin comisiones y punto de venta integrado.`,
+      `Restaurantes y negocios con sucursales pierden margen en cada pedido que pasa por un marketplace. ${LANDING_PRODUCT_NAME} les da su propia tienda con menú digital, pedidos online sin comisiones y punto de venta integrado.`,
     sectionOneFeatures: ["Menú digital con fotos", "Carrito y checkout propio", "Delivery y retiro en tienda", "Caja e inventario integrados"],
       sectionTwoEyebrow: "02 · Cómo trabajamos",
     sectionTwoTitle: "Menos pasos, más pedidos.",
     sectionTwoText:
-      "Priorizamos una experiencia simple para el negocio y clara para el cliente: menos pantallas, menos fricción y una ruta directa desde el menú digital hasta el pago.",
+      `Priorizamos una experiencia simple para el negocio y clara para el cliente: menos pantallas, menos fricción y una ruta directa desde el menú digital hasta el pago. Como estudio, ${LANDING_COMPANY_NAME} también desarrolla páginas web y sistemas a medida cuando un negocio necesita algo que un producto estándar no cubre.`,
     sectionTwoFeatures: ["Onboarding guiado en minutos", "Panel de control centralizado", "Notificaciones en tiempo real", "Soporte humano cuando lo necesitas"],
     pullQuote: "Cada pedido que llega por tu propia web es tuyo al 100%.",
       sectionThreeEyebrow: "03 · Por qué importa",
@@ -56,10 +61,10 @@ const copy = {
     closingText: "Crea tu cuenta, configura tu menú digital y empieza a recibir pedidos online. Sin comisiones, sin contratos.",
   },
   en: {
-    eyebrow: `About ${LANDING_BRAND_NAME}`,
-    title: "A platform designed to sell online without losing control of your business.",
+    eyebrow: `About ${LANDING_COMPANY_NAME} · formerly ${LANDING_BRAND_ALTERNATE}`,
+    title: `A web development studio building custom systems and its own products, like ${LANDING_PRODUCT_NAME}.`,
     intro:
-      `${LANDING_BRAND_NAME} simplifies what is usually fragmented: digital menu, online orders, POS, inventory and delivery, all in one place.`,
+      `${LANDING_COMPANY_NAME} builds websites and custom systems for businesses, and develops ${LANDING_PRODUCT_NAME}: the platform that simplifies what is usually fragmented: digital menu, online orders, POS, inventory and delivery, all in one place.`,
     primaryCta: "Create my store",
     secondaryCta: "View home",
     facts: [
@@ -71,12 +76,12 @@ const copy = {
     sectionOneEyebrow: "01 · What it solves",
     sectionOneTitle: "Digital menu and online orders, without giving up margin.",
     sectionOneText:
-      `Restaurants and multi-branch businesses lose margin on every order that goes through a marketplace. ${LANDING_BRAND_NAME} gives them their own store with a digital menu, commission-free online orders and integrated POS.`,
+      `Restaurants and multi-branch businesses lose margin on every order that goes through a marketplace. ${LANDING_PRODUCT_NAME} gives them their own store with a digital menu, commission-free online orders and integrated POS.`,
     sectionOneFeatures: ["Digital menu with photos", "Own cart and checkout", "Delivery and in-store pickup", "Integrated POS and inventory"],
     sectionTwoEyebrow: "02 · How we work",
     sectionTwoTitle: "Fewer steps, more orders.",
     sectionTwoText:
-      "We prioritize a simple experience for the business and a clear one for the customer: fewer screens, less friction and a direct path from the digital menu to payment.",
+      `We prioritize a simple experience for the business and a clear one for the customer: fewer screens, less friction and a direct path from the digital menu to payment. As a studio, ${LANDING_COMPANY_NAME} also builds websites and custom systems when a business needs something an off-the-shelf product does not cover.`,
     sectionTwoFeatures: ["Guided onboarding in minutes", "Centralized control panel", "Real-time notifications", "Human support when you need it"],
     pullQuote: "Every order that arrives through your own website is 100% yours.",
     sectionThreeEyebrow: "03 · Why it matters",
@@ -130,10 +135,13 @@ export async function generateMetadata({
   const fallbackLocale = await getCurrentLocale();
   const locale = resolveAboutLocale(resolvedSearchParams?.hl, fallbackLocale);
   const isSpanish = locale === "es";
-  const title = isSpanish ? `Sobre ${LANDING_BRAND_NAME}` : `About ${LANDING_BRAND_NAME}`;
+  // Título absoluto: la plantilla raíz añadiría "· Gcode Labs" y quedaría duplicado.
+  const title = isSpanish
+    ? `Sobre ${LANDING_COMPANY_NAME}: estudio web y creadores de ${LANDING_PRODUCT_NAME}`
+    : `About ${LANDING_COMPANY_NAME}: web studio and makers of ${LANDING_PRODUCT_NAME}`;
   const description = isSpanish
-    ? `Página de marca de ${LANDING_BRAND_NAME}: menú digital, pedidos online sin comisiones, punto de venta, inventario y delivery.`
-    : `${LANDING_BRAND_NAME} brand page: digital menus, commission-free online orders, POS, inventory and delivery.`;
+    ? `${LANDING_COMPANY_NAME} (antes ${LANDING_BRAND_ALTERNATE}) es un estudio de desarrollo web en Santiago, Chile: páginas y sistemas a medida, y ${LANDING_PRODUCT_NAME}, su menú digital y punto de venta sin comisiones.`
+    : `${LANDING_COMPANY_NAME} (formerly ${LANDING_BRAND_ALTERNATE}) is a web development studio in Santiago, Chile: websites and custom systems, plus ${LANDING_PRODUCT_NAME}, its commission-free digital menu and POS.`;
   // Solo ?hl=en es variante válida; el resto canoniciza a ES limpio.
   const canonical =
     locale === "en" && normalizeLocale(resolvedSearchParams?.hl ?? "") === "en"
@@ -141,7 +149,7 @@ export async function generateMetadata({
       : `${base}/sobre-godcode`;
   return {
     metadataBase: new URL(base),
-    title,
+    title: { absolute: title },
     description,
     alternates: {
       canonical,
@@ -155,7 +163,7 @@ export async function generateMetadata({
       title,
       description,
       url: canonical,
-      siteName: LANDING_BRAND_NAME,
+      siteName: LANDING_COMPANY_NAME,
       type: "website",
       images: [
         {
@@ -193,25 +201,17 @@ export default async function SobreGodCodePage({
   const locale = resolveAboutLocale(resolvedSearchParams?.hl, fallbackLocale);
   const t = getLocaleCopy(locale);
   const base = getAppUrl();
+  // Mismo nodo Organization (mismo @id) que la home: señales consistentes de marca.
   const ld = [
     {
       "@context": "https://schema.org",
       "@type": "AboutPage",
-      name: `Sobre ${LANDING_BRAND_NAME}`,
+      name: `Sobre ${LANDING_COMPANY_NAME}`,
       url: `${base}/sobre-godcode`,
       description: t.intro,
+      about: { "@id": getOrganizationId(base) },
     },
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      name: LANDING_BRAND_NAME,
-      alternateName: LANDING_BRAND_ALTERNATE,
-      url: base,
-      logo: {
-        "@type": "ImageObject",
-        url: `${base}/logo.png`,
-      },
-    },
+    buildOrganizationJsonLd(base),
   ];
 
   return (
@@ -225,7 +225,7 @@ export default async function SobreGodCodePage({
 
       <AboutNavbar
         ctaLabel={t.primaryCta}
-        homeAriaLabel={`Ir al inicio de ${LANDING_BRAND_NAME}`}
+        homeAriaLabel={`Ir al inicio de ${LANDING_COMPANY_NAME}`}
       />
 
       {/* ── HERO (fondo oscuro para el mismo efecto de navbar que el landing) ── */}

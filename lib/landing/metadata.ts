@@ -1,11 +1,21 @@
 import type { Metadata } from "next";
 
-import { LANDING_BRAND_NAME } from "./brand";
+import {
+	LANDING_BRAND_ALTERNATE,
+	LANDING_BRAND_NAME,
+	LANDING_COMPANY_NAME,
+	LANDING_PRODUCT_NAME,
+} from "./brand";
 
-/** Fuente única para title/description de marketing (home + fallback root). */
-export const LANDING_SHARE_TITLE = `${LANDING_BRAND_NAME} | Menú digital y POS sin comisiones`;
+/**
+ * Fuente única para title/description de marketing (home + fallback root).
+ *
+ * El título termina en el nombre de la empresa a propósito: Google toma el
+ * texto tras el último separador como candidato a "nombre del sitio".
+ */
+export const LANDING_SHARE_TITLE = `${LANDING_PRODUCT_NAME}: menú digital y pedidos online | ${LANDING_COMPANY_NAME}`;
 export const LANDING_DESCRIPTION =
-	`${LANDING_BRAND_NAME} es la plataforma todo-en-uno para restaurantes: menú digital, pedidos online, punto de venta, delivery e inventario. Sin comisiones por venta.`;
+	`${LANDING_PRODUCT_NAME}, de ${LANDING_COMPANY_NAME}, es la plataforma todo-en-uno para restaurantes: menú digital, pedidos online, punto de venta, delivery e inventario. Sin comisiones por venta.`;
 
 export function buildLandingMetadata(base: string): Metadata {
 	const canonical = `${base}/`;
@@ -19,7 +29,7 @@ export function buildLandingMetadata(base: string): Metadata {
 
 	return {
 		metadataBase: new URL(base),
-		applicationName: LANDING_BRAND_NAME,
+		applicationName: LANDING_PRODUCT_NAME,
 		title: {
 			absolute: LANDING_SHARE_TITLE,
 		},
@@ -39,7 +49,10 @@ export function buildLandingMetadata(base: string): Metadata {
 			"caja",
 			"sucursales",
 			"SaaS para restaurantes",
+			LANDING_COMPANY_NAME,
+			LANDING_PRODUCT_NAME,
 			LANDING_BRAND_NAME,
+			LANDING_BRAND_ALTERNATE,
 		],
 		alternates: {
 			canonical,
@@ -52,7 +65,7 @@ export function buildLandingMetadata(base: string): Metadata {
 			title: LANDING_SHARE_TITLE,
 			description: LANDING_DESCRIPTION,
 			url: canonical,
-			siteName: LANDING_BRAND_NAME,
+			siteName: LANDING_COMPANY_NAME,
 			locale: "es_ES",
 			type: "website",
 			images: [ogImage],

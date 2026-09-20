@@ -12,7 +12,7 @@ const navLinks = [
 	{ label: "Funciones", href: "#funciones" },
 	{ label: "Precios", href: "#precios" },
 	{ label: "FAQ", href: "#faq" },
-	{ label: "Sobre Gcode", href: "/sobre-godcode" },
+	{ label: "Sobre Gcode Labs", href: "/sobre-godcode" },
 	{ label: "Negocios", href: "/onboarding/negocios" },
 	{ label: "Contacto", href: "#contacto" },
 ] as const;
