@@ -515,7 +515,8 @@
         "onlyToday": "Nur heute",
         "resultsFor": "Ergebnisse für „{query}“",
         "noResults": "Kein Gericht mit diesem Namen.",
-        "emptyCategory": "Keine Produkte in dieser Kategorie."
+        "emptyCategory": "Keine Produkte in dieser Kategorie.",
+        "productCount": "{count, plural, one {# Gericht} other {# Gerichte}}"
       },
       "card": {
         "add": "Hinzufügen",

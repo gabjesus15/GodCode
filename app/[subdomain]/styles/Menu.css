@@ -241,17 +241,56 @@
     contain-intrinsic-size: auto 520px;
 }
 
+/* Cabecera de sección: título con una marca en el color del local a la
+   izquierda y, a la derecha, cuántos productos hay. La marca es lo único de
+   color: el título sigue en tinta para que no compita con las tarjetas. */
+.category-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
 .category-title {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
     margin: 0;
-    font-size: 1.375rem;
-    font-weight: 600;
-    letter-spacing: -0.015em;
+    padding-left: 14px;
+    font-size: clamp(1.3rem, 1.15rem + 0.5vw, 1.55rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
     color: var(--menu-fg);
-    line-height: 1.2;
+    line-height: 1.15;
     text-wrap: balance;
+}
+
+.category-title::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.15em;
+    bottom: 0.15em;
+    width: 4px;
+    border-radius: 999px;
+    background: var(--menu-accent);
+}
+
+.category-count {
+    flex: none;
+    padding: 5px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--menu-line);
+    background: var(--menu-surface);
+    color: var(--menu-fg-2);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 
 .category-title .category-icon {
@@ -340,8 +379,18 @@ section {
 
 @media (max-width: 600px) {
     .category-title {
-        font-size: 1.125rem;
+        font-size: 1.2rem;
         gap: 8px;
+        padding-left: 12px;
+    }
+
+    .category-title::before {
+        width: 3px;
+    }
+
+    .category-count {
+        padding: 4px 9px;
+        font-size: 0.6875rem;
     }
 
     .category-icon {

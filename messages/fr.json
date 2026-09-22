@@ -515,7 +515,8 @@
         "onlyToday": "Aujourd’hui seulement",
         "resultsFor": "Résultats pour « {query} »",
         "noResults": "Aucun plat ne porte ce nom.",
-        "emptyCategory": "Aucun produit dans cette catégorie."
+        "emptyCategory": "Aucun produit dans cette catégorie.",
+        "productCount": "{count, plural, one {# plat} other {# plats}}"
       },
       "card": {
         "add": "Ajouter",

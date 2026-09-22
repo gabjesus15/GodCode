@@ -194,7 +194,12 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 							transform: `translateY(${virtualRow.start}px)`,
 						}}
 					>
-						<h2 className="category-title">{section.title}</h2>
+						<div className="category-head">
+							<h2 className="category-title">{section.title}</h2>
+							{section.products.length > 0 ? (
+								<span className="category-count">{t("catalog.productCount", { count: section.products.length })}</span>
+							) : null}
+						</div>
 						{section.products.length > 0 ? (
 							<ProductGrid products={section.products} {...gridProps} />
 						) : (

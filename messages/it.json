@@ -515,7 +515,8 @@
         "onlyToday": "Solo per oggi",
         "resultsFor": "Risultati per “{query}”",
         "noResults": "Nessun piatto con questo nome.",
-        "emptyCategory": "Nessun prodotto in questa categoria."
+        "emptyCategory": "Nessun prodotto in questa categoria.",
+        "productCount": "{count, plural, one {# piatto} other {# piatti}}"
       },
       "card": {
         "add": "Aggiungi",

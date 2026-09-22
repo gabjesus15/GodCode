@@ -164,10 +164,13 @@ export const MenuCatalog = memo(function MenuCatalog({
 		<>
 			{(navigationMode === "pagination" ? activeCategory === "special" : true) && specialProducts.length > 0 ? (
 				<section id="section-special" className="category-section">
-					<h2 className="category-title">
-						<Image src={FIRE_ICON} className="category-icon" alt="" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
-						{t("catalog.onlyToday")}
-					</h2>
+					<div className="category-head">
+						<h2 className="category-title">
+							<Image src={FIRE_ICON} className="category-icon" alt="" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
+							{t("catalog.onlyToday")}
+						</h2>
+						<span className="category-count">{t("catalog.productCount", { count: specialProducts.length })}</span>
+					</div>
 					<ProductGrid products={specialProducts} {...gridProps} />
 				</section>
 			) : null}
@@ -178,16 +181,21 @@ export const MenuCatalog = memo(function MenuCatalog({
 					const categoryProducts = productsByCategory.get(category.id) ?? [];
 					return (
 						<section key={category.id} id={`section-${category.id}`} className="category-section">
-							<h2 className="category-title">
-								{isPromocionesCategoryName(category.name) ? (
-									<>
-										{category.name}
-										<Image src={FIRE_ICON} className="category-icon" alt="🔥" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
-									</>
-								) : (
-									category.name
-								)}
-							</h2>
+							<div className="category-head">
+								<h2 className="category-title">
+									{isPromocionesCategoryName(category.name) ? (
+										<>
+											{category.name}
+											<Image src={FIRE_ICON} className="category-icon" alt="🔥" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
+										</>
+									) : (
+										category.name
+									)}
+								</h2>
+								{categoryProducts.length > 0 ? (
+									<span className="category-count">{t("catalog.productCount", { count: categoryProducts.length })}</span>
+								) : null}
+							</div>
 							{categoryProducts.length > 0 ? (
 								<ProductGrid products={categoryProducts} {...gridProps} />
 							) : (
