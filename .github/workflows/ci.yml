@@ -180,8 +180,9 @@ jobs:
           node-version: 20
           cache: npm
 
+      # NODE_ENV=production (del job) haría que npm ci omita devDependencies y next build no arranque.
       - name: Install dependencies
-        run: npm ci --no-audit --no-fund
+        run: npm ci --no-audit --no-fund --include=dev
 
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
