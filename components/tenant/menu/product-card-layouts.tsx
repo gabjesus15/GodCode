@@ -58,7 +58,7 @@ export const CleanCard = React.memo(function CleanCard({ product, logic, currenc
         <ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="clean-qty-badge" />
         <ProductCardImage
           src={logic.imageSrc}
-          alt={product.name ?? "Producto"}
+          alt={product.name ?? ""}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.tall}
           imageClassName="clean-img"
@@ -109,7 +109,7 @@ export const DetailedCard = React.memo(function DetailedCard({ product, logic, c
         <ProductOfferBadges product={product} />
         <ProductCardImage
           src={logic.imageSrc}
-          alt={product.name ?? "Producto"}
+          alt={product.name ?? ""}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.grid}
           imageClassName="detailed-img"
@@ -133,7 +133,7 @@ export const DetailedCard = React.memo(function DetailedCard({ product, logic, c
             logic={logic}
             addClassName="detailed-add-btn"
             stepperClassName="detailed-stepper"
-            addLabel="Agregar"
+           
             addVariant="outline"
           />
         </div>
@@ -154,7 +154,7 @@ export const HorizontalCard = React.memo(function HorizontalCard({ product, logi
         <ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="horizontal-qty-badge" />
         <ProductCardImage
           src={logic.imageSrc}
-          alt={product.name ?? "Producto"}
+          alt={product.name ?? ""}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.horizontal}
           imageClassName="horizontal-img"
@@ -173,7 +173,7 @@ export const HorizontalCard = React.memo(function HorizontalCard({ product, logi
             logic={logic}
             addClassName="horizontal-add-btn"
             stepperClassName="horizontal-stepper"
-            addLabel="Agregar"
+           
             addVariant="outline"
           />
         </div>
@@ -194,7 +194,7 @@ export const SidebarCard = React.memo(function SidebarCard({ product, logic, cur
         <ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="sidebar-qty-badge" />
         <ProductCardImage
           src={logic.imageSrc}
-          alt={product.name ?? "Producto"}
+          alt={product.name ?? ""}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.tall}
           imageClassName="sidebar-img"
@@ -247,7 +247,7 @@ export const RappiCard = React.memo(function RappiCard({ product, logic, currenc
         <ProductOfferBadges product={product} />
         <ProductCardImage
           src={logic.imageSrc}
-          alt={product.name ?? "Producto"}
+          alt={product.name ?? ""}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.grid}
           imageClassName="rappi-img"
@@ -296,7 +296,7 @@ export const SneakerCard = React.memo(function SneakerCard({ product, logic, cur
           <ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="sneaker-qty-badge" />
           <ProductCardImage
             src={logic.imageSrc}
-            alt={product.name ?? "Producto"}
+            alt={product.name ?? ""}
             priority={priority}
             sizes={PRODUCT_IMAGE_SIZES.tall}
             imageClassName="sneaker-img"
@@ -349,7 +349,7 @@ export const SkewCard = React.memo(function SkewCard({ product, logic, currency,
         <ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="skew-qty-badge" />
         <ProductCardImage
           src={logic.imageSrc}
-          alt={product.name ?? "Producto"}
+          alt={product.name ?? ""}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.tall}
           imageClassName="skew-img"
@@ -360,7 +360,7 @@ export const SkewCard = React.memo(function SkewCard({ product, logic, currency,
         />
       </div>
       <div className="contentBox">
-        <h3 className="skew-title">{product.name ?? "Producto"}</h3>
+        <h3 className="skew-title">{product.name ?? ""}</h3>
         <ProductPriceBlock
           pricing={pricing}
           blockClassName="skew-price-block"
@@ -374,7 +374,7 @@ export const SkewCard = React.memo(function SkewCard({ product, logic, currency,
             className="skew-details-affordance"
           />
         ) : null}
-        <CardCartActions logic={logic} addClassName="buy skew-btn" stepperClassName="skew-stepper" addLabel="Agregar" />
+        <CardCartActions logic={logic} addClassName="buy skew-btn" stepperClassName="skew-stepper" />
       </div>
     </article>
   );
@@ -435,7 +435,7 @@ export const FoodCard = React.memo(function FoodCard({ product, logic, currency,
         <ProductOfferBadges product={product} />
         <ProductCardImage
           src={logic.imageSrc}
-          alt={product.name ?? "Producto"}
+          alt={product.name ?? ""}
           priority={priority}
           sizes={PRODUCT_IMAGE_SIZES.grid}
           imageClassName="food-img"

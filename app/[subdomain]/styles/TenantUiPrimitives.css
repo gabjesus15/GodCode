@@ -214,56 +214,6 @@
 	filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
 }
 
-.product-card.glass.tenant-ui-card {
-	border-color: rgba(255, 255, 255, 0.1);
-	background: linear-gradient(135deg, rgba(30, 30, 30, 0.78) 0%, rgba(15, 15, 15, 0.88) 100%);
-}
-
-/**
- * Movil: superficie opaca.
- *
- * `ProductCard.css` apaga el `backdrop-filter` de Cristal por debajo de 768px —
- * correcto, doce tarjetas desenfocando sobre un fondo con imagen hunden a un
- * Android medio — pero dejaba la translucidez puesta. Sin desenfoque no aporta
- * material, solo deja pasar el fondo del tenant en crudo, y el contraste del
- * texto cambia segun el trozo de patron que caiga detras de cada tarjeta.
- *
- * Medido sobre un fondo crema: la superficie compone a rgb(104,102,98) arriba y
- * rgb(60,59,57) abajo, asi que la descripcion iba de 2.64:1 — por debajo del
- * 4.5:1 — a 5.16:1 dentro de la misma tarjeta, y cambiaba con cada tenant.
- * Opaca da 8.3:1 estable y una capa compuesta menos en scroll.
- *
- * Vive aqui y no junto al `backdrop-filter: none` porque esta es la regla que
- * gana el fondo: la de `ProductCard.css` tiene menos especificidad.
- */
-@media (max-width: 768px) {
-	.product-card.glass.tenant-ui-card {
-		background: linear-gradient(135deg, #1e1e1e 0%, #0f0f0f 100%);
-	}
-}
-
-.product-card.glass .btn-add.tenant-ui-btn {
-	border-radius: 50px;
-	width: 102px;
-	height: 40px;
-	min-height: 40px;
-	padding: 0;
-	background: var(--accent-primary, #ff4757);
-	box-shadow: 0 4px 15px var(--accent-shadow, rgba(255, 71, 87, 0.3));
-}
-
-.product-card.glass .btn-add.tenant-ui-btn:hover {
-	background: var(--accent-hover, #ff2e40);
-	filter: none;
-	transform: translateY(-2px);
-}
-
-.product-card.glass .stepper-control.tenant-ui-stepper {
-	border-radius: 50px;
-	height: 40px;
-	background: rgba(255, 255, 255, 0.08);
-}
-
 .product-card-qty-badge.tenant-ui-badge,
 .clean-qty-badge.tenant-ui-badge,
 .horizontal-qty-badge.tenant-ui-badge,

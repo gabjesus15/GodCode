@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import { Minus, Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { useCartStore } from "../cart/cart-store";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
@@ -27,6 +28,7 @@ export function ProductInlinePanel({
 	onClose: () => void;
 	panelRef?: React.RefObject<HTMLDivElement | null>;
 }) {
+	const t = useTranslations("tenant.menu");
 	const addToCart = useCartStore((state) => state.addToCart);
 	const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
 	const cart = useCartStore((state) => state.cart);
@@ -62,7 +64,7 @@ export function ProductInlinePanel({
 				type="button"
 				className="product-inline-panel__close"
 				onClick={onClose}
-				aria-label="Cerrar detalle"
+				aria-label={t("card.closeDetails")}
 			>
 				<X size={18} />
 			</button>
@@ -75,7 +77,7 @@ export function ProductInlinePanel({
 								? product.image_url
 								: PRODUCT_CARD_FALLBACK_IMAGE
 						}
-						alt={product.name ?? "Producto"}
+						alt={product.name ?? t("card.productFallback")}
 						fill
 						className="product-inline-panel__img"
 						sizes="160px"
@@ -108,17 +110,17 @@ export function ProductInlinePanel({
 									type="button"
 									className="product-inline-panel__add-btn"
 									onClick={() => addToCart?.(product)}
-									aria-label={`Agregar ${product.name} al carrito`}
+									aria-label={t("card.addAria", { name: product.name ?? t("card.productFallback") })}
 								>
 									<Plus size={16} />
-									Agregar
+									{t("card.add")}
 								</button>
 							) : (
 								<div className="product-inline-panel__stepper">
 									<button
 										type="button"
 										onClick={() => decreaseQuantity?.(product.id)}
-										aria-label="Disminuir cantidad"
+										aria-label={t("card.removeOne")}
 									>
 										<Minus size={14} />
 									</button>
@@ -126,7 +128,7 @@ export function ProductInlinePanel({
 									<button
 										type="button"
 										onClick={() => addToCart?.(product)}
-										aria-label="Aumentar cantidad"
+										aria-label={t("card.addOne")}
 									>
 										<Plus size={14} />
 									</button>

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import { LANDING_BRAND_NAME } from "@/lib/landing/brand";
 import {
@@ -24,6 +25,7 @@ export function PoweredByGcode({
 	surface = "menu",
 	showMark,
 }: PoweredByGcodeProps) {
+	const t = useTranslations("tenant.menu");
 	const href = buildPoweredByHref({ tenantSlug, surface });
 	// En home ya está el logo en "REGISTRAR MI NEGOCIO".
 	const withMark = showMark ?? surface !== "home";
@@ -37,9 +39,9 @@ export function PoweredByGcode({
 			   texto visible. Decia solo "Gcode: menú digital…" mientras en pantalla
 			   pone "Hecho con Gcode", asi que quien navega por voz no podia activarlo
 			   leyendo lo que veia. */
-			aria-label={`Hecho con ${LANDING_BRAND_NAME}: menú digital y pedidos online`}
+			aria-label={t("poweredBy.aria", { brand: LANDING_BRAND_NAME })}
 		>
-			<span className="powered-by-gcode__label">Hecho con</span>
+			<span className="powered-by-gcode__label">{t("poweredBy.madeWith")}</span>
 			<span className="powered-by-gcode__brand">
 				{withMark ? (
 					<Image

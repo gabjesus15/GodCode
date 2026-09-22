@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Minus, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 type TenantUiClassProps = {
 	className?: string;
 	children?: React.ReactNode;
@@ -111,6 +112,7 @@ export const TenantStepper = React.memo(function TenantStepper({
 	className,
 	compact = false,
 }: TenantStepperProps) {
+	const t = useTranslations("tenant.menu");
 	const iconSize = compact ? 14 : 16;
 	const isGlass = className?.includes("stepper-control");
 
@@ -118,14 +120,14 @@ export const TenantStepper = React.memo(function TenantStepper({
 		<div
 			className={className}
 			role="group"
-			aria-label="Cantidad en carrito"
+			aria-label={t("card.quantityAria")}
 			onClick={(e) => e.stopPropagation()}
 		>
 			<button
 				type="button"
 				className={isGlass ? "step-btn minus" : undefined}
 				onClick={onDecrease}
-				aria-label="Quitar uno"
+				aria-label={t("card.removeOne")}
 			>
 				<Minus size={iconSize} strokeWidth={2.5} />
 			</button>
@@ -136,7 +138,7 @@ export const TenantStepper = React.memo(function TenantStepper({
 				type="button"
 				className={isGlass ? "step-btn plus" : undefined}
 				onClick={onIncrease}
-				aria-label="Agregar uno"
+				aria-label={t("card.addOne")}
 			>
 				<Plus size={iconSize} strokeWidth={2.5} />
 			</button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 
 interface CategoryItem {
   id: string;
@@ -14,6 +15,7 @@ interface NavbarProps {
 }
 
 export function Navbar({ categories, activeCategory, onCategoryClick }: NavbarProps) {
+  const t = useTranslations("tenant.menu");
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -36,7 +38,7 @@ export function Navbar({ categories, activeCategory, onCategoryClick }: NavbarPr
       <div className="navbar-main-row">
         <div className="navbar-tabs-area">
           <div className="nav-fade-left" />
-          <nav aria-label="Categorías" className="navbar-container" ref={scrollRef as React.RefObject<HTMLDivElement>}>
+          <nav aria-label={t("nav.categories")} className="navbar-container" ref={scrollRef as React.RefObject<HTMLDivElement>}>
             {categories.map((cat) => (
               <button
                 key={cat.id}

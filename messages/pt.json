@@ -487,6 +487,94 @@
           "recapAria": "Resumo do seu pedido"
         }
       }
+    },
+    "menu": {
+      "nav": {
+        "backHome": "Voltar ao início",
+        "logoAlt": "Logo do estabelecimento",
+        "search": "Buscar prato",
+        "searchPlaceholder": "Buscar prato…",
+        "closeSearch": "Fechar busca",
+        "categories": "Categorias",
+        "viewCategories": "Ver categorias",
+        "selectBranch": "Escolher unidade",
+        "branchLabel": "Unidade",
+        "changeBranch": "Unidade: {name}. Trocar de unidade",
+        "digitalMenu": "Cardápio digital",
+        "close": "Fechar",
+        "navAria": "Navegação do cardápio"
+      },
+      "tabs": {
+        "home": "Início",
+        "cart": "Carrinho",
+        "cartWithCount": "Carrinho, {count, plural, =1 {1 produto} other {# produtos}}",
+        "contact": "Contato",
+        "account": "Minha conta"
+      },
+      "catalog": {
+        "onlyToday": "Só por hoje",
+        "resultsFor": "Resultados para “{query}”",
+        "noResults": "Nenhum prato com esse nome.",
+        "emptyCategory": "Nenhum produto nesta categoria."
+      },
+      "card": {
+        "add": "Adicionar",
+        "addAria": "Adicionar {name} ao carrinho",
+        "addToCart": "Adicionar ao carrinho",
+        "inCart": "{count, plural, =1 {1 no carrinho} other {# no carrinho}}",
+        "details": "Detalhes",
+        "viewProduct": "Ver produto",
+        "viewDetails": "Ver detalhes",
+        "viewMore": "Ver mais",
+        "closeDetails": "Fechar detalhes",
+        "detailsAria": "Ver detalhes de {name}",
+        "offer": "Oferta",
+        "special": "Especial",
+        "from": "A partir de",
+        "info": "Info",
+        "moreInfo": "Mais informações",
+        "quantityAria": "Quantidade no carrinho",
+        "removeOne": "Tirar um",
+        "addOne": "Adicionar um",
+        "productFallback": "Produto"
+      },
+      "details": {
+        "back": "Voltar",
+        "close": "Fechar",
+        "quantity": "Quantidade",
+        "increase": "Aumentar",
+        "decrease": "Diminuir",
+        "add": "Adicionar",
+        "addWithPrice": "Adicionar · {price}",
+        "inCart": "No seu pedido",
+        "done": "Pronto"
+      },
+      "contact": {
+        "title": "Contato",
+        "subtitle": "Como você quer falar com a gente?",
+        "pickChannel": "Escolher canal de contato",
+        "whatsapp": "WhatsApp",
+        "whatsappHint": "Escrever no WhatsApp",
+        "instagram": "Instagram",
+        "instagramHint": "Ver perfil no Instagram",
+        "location": "Localização",
+        "locationHint": "Abrir no mapa"
+      },
+      "paused": {
+        "title": "Pedidos pausados.",
+        "fallback": "Estamos com muita demanda agora. Tente de novo em alguns minutos."
+      },
+      "hero": {
+        "aria": "Promoções",
+        "slideAlt": "Promoção",
+        "prev": "Promoção anterior",
+        "next": "Próxima promoção",
+        "goTo": "Ir para a promoção {index}"
+      },
+      "poweredBy": {
+        "madeWith": "Feito com",
+        "aria": "Feito com {brand}: cardápio digital e pedidos online"
+      }
     }
   }
 }

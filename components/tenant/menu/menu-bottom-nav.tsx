@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import { Home, MapPin, MessageCircle, ShoppingBag, UserRound } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { BottomNavTab, BranchInfo } from "./menu-types";
 
@@ -41,13 +42,14 @@ export const MenuBottomNav = memo(function MenuBottomNav({
 	onContact,
 	onAccount,
 }: MenuBottomNavProps) {
+	const t = useTranslations("tenant.menu");
 	const itemCount =
 		1 +
 		(onlineOrderingEnabled !== false ? 1 : 0) +
 		(showContactTab ? 1 : 0) +
 		(showBranchSelector ? 1 : 0) +
 		(showAccountTab ? 1 : 0);
-	const nombreSucursal = selectedBranch?.name || "Seleccionar Local";
+	const nombreSucursal = selectedBranch?.name || t("nav.selectBranch");
 	/*
 	 * En una columna de 81px cabian trece caracteres, y una sucursal real se
 	 * llama "Pudahuel, Ciudad de los Valles": el recorte por ancho dejaba
@@ -58,19 +60,19 @@ export const MenuBottomNav = memo(function MenuBottomNav({
 	const etiquetaSucursal = nombreSucursal.split(",")[0].trim() || nombreSucursal;
 
 	return (
-		<nav aria-label="Navegación del menú" className={`bottom-floating-navbar bottom-floating-navbar--count-${itemCount}`}>
+		<nav aria-label={t("nav.navAria")} className={`bottom-floating-navbar bottom-floating-navbar--count-${itemCount}`}>
 			<button
 				type="button"
 				className={`bottom-nav-item ${activeTab === "home" ? "active-pill active-nav-circle" : ""}`}
 				aria-current={activeTab === "home" ? "page" : undefined}
 				onClick={onHome}
-				aria-label="Inicio"
+				aria-label={t("tabs.home")}
 			>
-				<span className="bottom-nav-tooltip" aria-hidden="true">Inicio</span>
+				<span className="bottom-nav-tooltip" aria-hidden="true">{t("tabs.home")}</span>
 				<span className="bottom-nav-icon-wrap" aria-hidden>
 					<Home size={22} strokeWidth={2} />
 				</span>
-				<span className="bottom-nav-label">Inicio</span>
+				<span className="bottom-nav-label">{t("tabs.home")}</span>
 			</button>
 
 			{onlineOrderingEnabled !== false && (
@@ -79,16 +81,16 @@ export const MenuBottomNav = memo(function MenuBottomNav({
 					className={`bottom-nav-item ${activeTab === "cart" ? "active-pill active-nav-circle" : ""}`}
 					aria-current={activeTab === "cart" ? "page" : undefined}
 					onClick={onCart}
-					aria-label={totalItems > 0 ? `Carrito, ${totalItems} productos` : "Carrito"}
+					aria-label={totalItems > 0 ? t("tabs.cartWithCount", { count: totalItems }) : t("tabs.cart")}
 				>
-					<span className="bottom-nav-tooltip" aria-hidden="true">Carrito</span>
+					<span className="bottom-nav-tooltip" aria-hidden="true">{t("tabs.cart")}</span>
 					<span className="bottom-nav-icon-wrap" aria-hidden>
 						<ShoppingBag size={22} strokeWidth={2} />
 						{totalItems > 0 && (
 							<span className="bottom-nav-cart-badge">{totalItems > 99 ? "99+" : totalItems}</span>
 						)}
 					</span>
-					<span className="bottom-nav-label">Carrito</span>
+					<span className="bottom-nav-label">{t("tabs.cart")}</span>
 				</button>
 			)}
 
@@ -98,13 +100,13 @@ export const MenuBottomNav = memo(function MenuBottomNav({
 					className={`bottom-nav-item ${activeTab === "contact" ? "active-pill active-nav-circle" : ""}`}
 					aria-current={activeTab === "contact" ? "page" : undefined}
 					onClick={onContact}
-					aria-label="Contacto"
+					aria-label={t("tabs.contact")}
 				>
-					<span className="bottom-nav-tooltip" aria-hidden="true">Contacto</span>
+					<span className="bottom-nav-tooltip" aria-hidden="true">{t("tabs.contact")}</span>
 					<span className="bottom-nav-icon-wrap" aria-hidden>
 						<MessageCircle size={22} strokeWidth={2} />
 					</span>
-					<span className="bottom-nav-label">Contacto</span>
+					<span className="bottom-nav-label">{t("tabs.contact")}</span>
 				</button>
 			)}
 			{showBranchSelector && (
@@ -115,7 +117,7 @@ export const MenuBottomNav = memo(function MenuBottomNav({
 					disabled={isEmbeddedPreview}
 					aria-disabled={isEmbeddedPreview}
 					aria-haspopup="dialog"
-					aria-label={`Sucursal: ${nombreSucursal}. Cambiar de sucursal`}
+					aria-label={t("nav.changeBranch", { name: nombreSucursal })}
 				>
 					<span className="bottom-nav-tooltip" aria-hidden="true">{etiquetaSucursal}</span>
 					<span className="bottom-nav-icon-wrap" aria-hidden>
@@ -132,12 +134,12 @@ export const MenuBottomNav = memo(function MenuBottomNav({
 					type="button"
 					className={`bottom-nav-item ${activeTab === "account" ? "active-nav-circle" : ""}`}
 					onClick={onAccount}
-					aria-label="Mi cuenta"
+					aria-label={t("tabs.account")}
 				>
 					<span className="bottom-nav-icon-wrap" aria-hidden>
 						<UserRound size={24} strokeWidth={2} />
 					</span>
-					<span className="bottom-nav-label">Mi cuenta</span>
+					<span className="bottom-nav-label">{t("tabs.account")}</span>
 				</button>
 			)}
 		</nav>

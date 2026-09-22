@@ -3,6 +3,7 @@
 import { memo } from "react";
 import Image from "next/image";
 import { ChevronDown, ChevronLeft, Compass, MapPin, Search, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { CategoryTabsNav, IconListCategories } from "./menu-category-nav";
 import { useMenuHeaderHeight } from "./use-menu-header-height";
@@ -60,18 +61,19 @@ export const MenuNavbar = memo(function MenuNavbar({
 	activeCategory,
 	onCategoryClick,
 }: MenuNavbarProps) {
+	const t = useTranslations("tenant.menu");
 	const headerRef = useMenuHeaderHeight<HTMLElement>();
 
 	return (
 		<header ref={headerRef} className={`navbar-sticky navbar-type-${navbarType}`}>
 			<div className="container nav-container-top">
-				<button type="button" onClick={onBackHome} className="nav-back-button" aria-label="Volver al inicio">
+				<button type="button" onClick={onBackHome} className="nav-back-button" aria-label={t("nav.backHome")}>
 					<ChevronLeft size={28} />
 				</button>
 				<div className={`nav-brand-wrapper ${searchExpanded ? "mobile-search-active" : ""} ${navbarType === "sidebar-categories" ? "nav-brand-sidebar-hidden" : ""}`}>
 					<Image
 						src={logoError ? "/tenant/logo-placeholder.svg" : logoUrl || "/tenant/logo-placeholder.svg"}
-						alt="Logo del local"
+						alt={t("nav.logoAlt")}
 						className="nav-logo"
 						width={52}
 						height={52}
@@ -93,9 +95,9 @@ export const MenuNavbar = memo(function MenuNavbar({
 								disabled={isEmbeddedPreview}
 								aria-disabled={isEmbeddedPreview}
 							>
-								<MapPin size={12} className="text-[var(--accent-primary)]" />
+								<MapPin size={12} className="nav-location-icon" aria-hidden />
 								<span className="nav-location-text nav-location-text--truncate">
-									{selectedBranch ? selectedBranch.name : "Seleccionar Local"}
+									{selectedBranch ? selectedBranch.name : t("nav.selectBranch")}
 								</span>
 								<ChevronDown size={12} className="opacity-60" />
 							</button>
@@ -105,7 +107,7 @@ export const MenuNavbar = memo(function MenuNavbar({
 				<div className="nav-search-section">
 					<div className="nav-actions-wrapper">
 						{navbarType === "mega-menu" && (
-							<button type="button" onClick={onOpenMegaMenu} className="mega-menu-header-trigger" aria-label="Ver Categorías">
+							<button type="button" onClick={onOpenMegaMenu} className="mega-menu-header-trigger" aria-label={t("nav.viewCategories")}>
 								<Compass size={20} />
 							</button>
 						)}
@@ -124,8 +126,8 @@ export const MenuNavbar = memo(function MenuNavbar({
 							/* El placeholder era el unico nombre del campo (WCAG 3.3.2): al
 							   escribir desaparece, y un lector de pantalla no tiene que
 							   anunciarlo como etiqueta. */
-							aria-label="Buscar plato"
-							placeholder="Buscar plato..."
+							aria-label={t("nav.search")}
+							placeholder={t("nav.searchPlaceholder")}
 							value={searchQuery}
 							onChange={(event) => onSearchChange(event.target.value)}
 							onBlur={() => {
@@ -142,7 +144,7 @@ export const MenuNavbar = memo(function MenuNavbar({
 									onSearchCollapse();
 									onSearchChange("");
 								}}
-								aria-label="Cerrar búsqueda"
+								aria-label={t("nav.closeSearch")}
 							>
 								<X size={14} />
 							</button>

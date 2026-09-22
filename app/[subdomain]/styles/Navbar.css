@@ -34,7 +34,7 @@
     align-items: center;
     gap: 8px;
     padding: 8px 6px;
-    background: transparent !important;
+    background: transparent;
     overflow-x: auto;
     scroll-behavior: smooth;
     white-space: nowrap;
@@ -51,41 +51,35 @@
 .tab-item {
     flex-shrink: 0;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 6px;
     line-height: 1.2;
-    padding: 8px 18px;
+    min-height: 36px;
+    padding: 6px 16px;
     border-radius: 99px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(255, 255, 255, 0.03);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-    color: #a1a1a6;
-    font-weight: 600;
+    border: 1px solid var(--menu-line);
+    background: var(--menu-surface-2);
+    color: var(--menu-fg-2);
+    font-weight: 500;
     font-size: 0.84rem;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
     -webkit-user-select: none;
     user-select: none;
-    transform: translateZ(0);
-    will-change: transform;
 }
 
 /* Hover */
 .tab-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.12);
+    color: var(--menu-fg);
+    border-color: var(--menu-line-strong);
 }
 
 /* Estado Activo */
 .tab-item.active {
-    background: var(--accent-primary) !important;
-    color: #ffffff !important;
-    border-color: var(--accent-primary) !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px var(--accent-shadow, rgba(255, 255, 255, 0.15));
-    font-weight: 700;
+    background: var(--menu-fg);
+    color: var(--menu-surface);
+    border-color: var(--menu-fg);
+    font-weight: 600;
 }
 
 .tab-item:active {
@@ -117,35 +111,26 @@
     justify-content: center;
     width: 36px;
     height: 36px;
-    /* Mismo motivo que el circulo de categorias: al 6% saltaba 9 niveles sobre un
-       fondo claro y la pastilla de busqueda no llegaba a verse. Al 12% se lee
-       sobre cualquier fondo que configure el tenant. */
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--menu-surface-2);
+    border: 1px solid var(--menu-line);
     border-radius: 50px;
     cursor: pointer;
     overflow: hidden;
-    transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
 }
 
 .search-pill-wrapper.expanded {
     width: 160px;
-    background: rgba(20, 20, 20, 0.88);
-    border-color: var(--accent-primary, #ff4e50);
+    border-color: var(--menu-line-strong);
     justify-content: flex-start;
     padding-left: 10px;
-    box-shadow: 0 4px 12px var(--accent-shadow, rgba(0, 0, 0, 0.4));
 }
 
 .search-icon-pill {
-    color: white;
+    color: var(--menu-fg);
     flex-shrink: 0;
-    transition: color 0.3s;
 }
 
-.search-pill-wrapper.expanded .search-icon-pill {
-    color: var(--accent-primary, #ff4e50);
-}
 
 .search-input-pill {
     width: 0;
@@ -154,7 +139,7 @@
     padding: 0;
     background: transparent;
     border: none;
-    color: white;
+    color: var(--menu-fg);
     font-size: 0.9rem;
     outline: none;
     opacity: 0;
@@ -171,13 +156,13 @@
 }
 
 .search-input-pill::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--menu-fg-3);
 }
 
 .btn-close-pill {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--menu-surface);
     border: none;
-    color: white;
+    color: var(--menu-fg);
     border-radius: 50%;
     width: 24px;
     height: 24px;
@@ -190,7 +175,7 @@
 }
 
 .btn-close-pill:hover {
-    background: rgba(255, 255, 255, 0.14);
+    background: var(--menu-surface-2);
 }
 
 /* Máscaras de desvanecimiento (dentro de navbar-tabs-area) */
@@ -206,12 +191,12 @@
 
 .nav-fade-left {
     left: 0;
-    background: linear-gradient(to right, rgba(8, 8, 8, 0.08), transparent);
+    background: linear-gradient(to right, var(--menu-chrome), transparent);
 }
 
 .nav-fade-right {
     right: 0;
-    background: linear-gradient(to left, rgba(8, 8, 8, 0.08), transparent);
+    background: linear-gradient(to left, var(--menu-chrome), transparent);
 }
 
 @media (max-width: 380px) {
@@ -237,10 +222,6 @@
         font-size: 0.74rem;
         min-height: 32px;
         scroll-snap-align: start;
-    }
-
-    .tab-item.active {
-        box-shadow: 0 3px 10px var(--accent-shadow, rgba(255, 78, 80, 0.38));
     }
 
     .nav-search-section {
@@ -282,6 +263,6 @@
     .search-pill-wrapper,
     .search-input-pill,
     .navbar-wrapper {
-        transition: none !important;
+        transition: none;
     }
 }

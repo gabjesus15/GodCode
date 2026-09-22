@@ -1,0 +1,305 @@
+/* =============================================================================
+   Detalle de producto: hoja desde abajo en teléfono, tarjeta centrada en
+   escritorio. Lee los tokens --menu-* de Menu.css (vive dentro de
+   .tenant-theme-vars por el portal #modal-root).
+   ============================================================================= */
+
+.pds-overlay {
+	position: fixed;
+	inset: 0;
+	/* Por encima de la barra flotante (z-modal + 20): el detalle es una tarea con foco. */
+	z-index: calc(var(--z-modal, 5000) + 30);
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	background: rgba(8, 8, 10, 0.55);
+	-webkit-backdrop-filter: blur(6px);
+	backdrop-filter: blur(6px);
+	animation: pds-fade 220ms ease-out both;
+}
+
+.pds-overlay[data-closing] {
+	animation: pds-fade-out 200ms ease-in both;
+	pointer-events: none;
+}
+
+.pds {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	max-height: 92dvh;
+	background: var(--menu-surface);
+	color: var(--menu-fg);
+	border-radius: 22px 22px 0 0;
+	box-shadow: var(--menu-shadow-chrome);
+	outline: none;
+	overflow: hidden;
+	animation: pds-rise 360ms var(--menu-ease) both;
+	touch-action: pan-y;
+}
+
+.pds-overlay[data-closing] .pds {
+	animation: pds-sink 200ms ease-in both;
+}
+
+@media (min-width: 768px) {
+	.pds-overlay {
+		align-items: center;
+		padding: 24px;
+	}
+
+	.pds {
+		width: min(100%, 460px);
+		max-height: min(88vh, 860px);
+		border-radius: 24px;
+		animation-name: pds-pop;
+	}
+
+	.pds-overlay[data-closing] .pds {
+		animation-name: pds-fade-out;
+	}
+}
+
+/* --- Cabecera: asa y cerrar ---------------------------------------------------- */
+
+.pds__head {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 3;
+	height: 52px;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding-top: 8px;
+	touch-action: none;
+}
+
+.pds__handle {
+	width: 36px;
+	height: 4px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.7);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+@media (min-width: 768px) {
+	.pds__handle {
+		display: none;
+	}
+}
+
+.pds__close {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	width: 40px;
+	height: 40px;
+	display: grid;
+	place-items: center;
+	border: 0;
+	border-radius: 999px;
+	background: var(--menu-surface);
+	color: var(--menu-fg);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	cursor: pointer;
+}
+
+/* --- Cuerpo con scroll ------------------------------------------------------- */
+
+.pds__body {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	scrollbar-width: thin;
+}
+
+.pds__media {
+	position: relative;
+	aspect-ratio: 4 / 3;
+	background: var(--menu-surface-2);
+}
+
+.pds__img {
+	object-fit: cover;
+}
+
+.pds__content {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 16px 20px 20px;
+}
+
+.pds__title {
+	margin: 0;
+	font-size: 1.25rem;
+	font-weight: 600;
+	line-height: 1.25;
+	letter-spacing: -0.015em;
+	text-wrap: balance;
+}
+
+.pds__price {
+	margin: 0;
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	font-variant-numeric: tabular-nums;
+}
+
+.pds__price-main {
+	font-size: 1.125rem;
+	font-weight: 600;
+	color: var(--price-color, var(--menu-fg));
+}
+
+.pds__price-main--sale {
+	color: var(--discount-color, var(--menu-ok));
+}
+
+.tenant-theme-vars[data-scheme="light"] .pds__price-main,
+.tenant-theme-vars[data-scheme="light"] .pds__price-main--sale {
+	color: var(--menu-fg);
+}
+
+.pds__price-was {
+	font-size: 0.875rem;
+	color: var(--menu-fg-3);
+	text-decoration: line-through;
+}
+
+.pds__desc {
+	margin: 4px 0 0;
+	font-size: 0.9375rem;
+	line-height: 1.55;
+	color: var(--menu-fg-2);
+	text-wrap: pretty;
+}
+
+/* --- Pie: cantidad y acción ---------------------------------------------------- */
+
+.pds__foot {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 20px calc(16px + env(safe-area-inset-bottom));
+	border-top: 1px solid var(--menu-line);
+	background: var(--menu-surface);
+}
+
+.pds__cta {
+	flex: 1;
+	min-height: 50px;
+	padding: 0 16px;
+	border: 0;
+	border-radius: 14px;
+	background: var(--menu-accent);
+	color: var(--menu-on-accent);
+	font: inherit;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: transform 120ms ease, filter 150ms ease;
+}
+
+.pds__cta:active {
+	transform: scale(0.98);
+}
+
+@media (hover: hover) {
+	.pds__cta:hover {
+		filter: brightness(1.06);
+	}
+}
+
+.pds__stepper {
+	display: inline-flex;
+	align-items: center;
+	height: 50px;
+	padding: 4px;
+	border-radius: 14px;
+	border: 1px solid var(--menu-line-strong);
+	background: var(--menu-surface-2);
+}
+
+.pds__step {
+	width: 42px;
+	height: 42px;
+	display: grid;
+	place-items: center;
+	border: 0;
+	border-radius: 11px;
+	background: none;
+	color: var(--menu-fg);
+	cursor: pointer;
+	transition: transform 120ms ease;
+}
+
+.pds__step:active {
+	transform: scale(0.9);
+}
+
+.pds__step--plus {
+	background: var(--menu-add-bg);
+	color: var(--menu-add-fg);
+}
+
+.pds__count {
+	min-width: 32px;
+	text-align: center;
+	font-size: 1.0625rem;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+/* --- Movimiento --------------------------------------------------------------- */
+
+@keyframes pds-fade {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes pds-fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes pds-rise {
+	from {
+		transform: translateY(100%);
+	}
+}
+
+@keyframes pds-sink {
+	to {
+		transform: translateY(100%);
+	}
+}
+
+@keyframes pds-pop {
+	from {
+		opacity: 0;
+		transform: translateY(12px) scale(0.98);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.pds-overlay,
+	.pds,
+	.pds-overlay[data-closing],
+	.pds-overlay[data-closing] .pds {
+		animation: pds-fade 120ms ease-out both;
+	}
+
+	.pds-overlay[data-closing],
+	.pds-overlay[data-closing] .pds {
+		animation-name: pds-fade-out;
+	}
+}

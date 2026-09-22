@@ -12,8 +12,8 @@ export const LazyCartFloat = createClientDynamic(
 
 export const LazyProductDetailsModal = createClientDynamic(
 	() =>
-		import("@/components/tenant/menu/product-details-modal").then((mod) => ({
-			default: mod.ProductDetailsModal,
+		import("@/components/tenant/menu/product-details-sheet").then((mod) => ({
+			default: mod.ProductDetailsSheet,
 		})),
 );
 

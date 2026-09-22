@@ -2,6 +2,7 @@
 
 import { memo, useEffect, useMemo } from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import { FIRE_ICON, isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
@@ -62,6 +63,7 @@ export const MenuCatalog = memo(function MenuCatalog({
 	observerBlockRef,
 	onActiveSectionChange,
 }: MenuCatalogProps) {
+	const t = useTranslations("tenant.menu");
 	const { priorityImageMax } = useMenuPerfProfile();
 
 	const priorityProductIds = useMemo(() => {
@@ -134,11 +136,11 @@ export const MenuCatalog = memo(function MenuCatalog({
 	if (query) {
 		return (
 			<section id="section-search" className="category-section">
-				<h2 className="category-title">Resultados para &quot;{searchQuery.trim()}&quot;</h2>
+				<h2 className="category-title">{t("catalog.resultsFor", { query: searchQuery.trim() })}</h2>
 				{filteredBySearch.length > 0 ? (
 					<ProductGrid products={filteredBySearch} {...gridProps} />
 				) : (
-					<p className="no-results-text">No hay platos con ese nombre.</p>
+					<p className="no-results-text">{t("catalog.noResults")}</p>
 				)}
 			</section>
 		);
@@ -163,8 +165,8 @@ export const MenuCatalog = memo(function MenuCatalog({
 			{(navigationMode === "pagination" ? activeCategory === "special" : true) && specialProducts.length > 0 ? (
 				<section id="section-special" className="category-section">
 					<h2 className="category-title">
-						<Image src={FIRE_ICON} className="category-icon" alt="🔥" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
-						Solo por hoy
+						<Image src={FIRE_ICON} className="category-icon" alt="" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
+						{t("catalog.onlyToday")}
 					</h2>
 					<ProductGrid products={specialProducts} {...gridProps} />
 				</section>
@@ -189,7 +191,7 @@ export const MenuCatalog = memo(function MenuCatalog({
 							{categoryProducts.length > 0 ? (
 								<ProductGrid products={categoryProducts} {...gridProps} />
 							) : (
-								<p className="no-results-text">No hay productos en esta categoría.</p>
+								<p className="no-results-text">{t("catalog.emptyCategory")}</p>
 							)}
 						</section>
 					);

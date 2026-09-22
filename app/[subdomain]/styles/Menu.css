@@ -1,6 +1,71 @@
 /* =========================================
    MENU PAGE STYLES
    ========================================= */
+
+/* -----------------------------------------------------------------------------
+   Tokens de superficie del menú público.
+
+   Mismo contrato que el carrito (Cart.css): neutros propios del menú, oscuros
+   por defecto porque el sitio nace sobre #0a0a0a, y un esquema claro que se
+   activa con `data-scheme="light"` en `.tenant-theme-vars` cuando el fondo que
+   configuró el local es claro (ver use-tenant-surface-scheme). Del tenant solo
+   entra el acento; el color de precio del menú no se usa en tarjetas nuevas.
+   ----------------------------------------------------------------------------- */
+.tenant-theme-vars {
+    --menu-chrome: #0c0c0e;
+    --menu-chrome-glass: rgba(12, 12, 14, 0.82);
+    --menu-surface: #161518;
+    --menu-surface-2: #201f23;
+    --menu-surface-glass: rgba(22, 21, 24, 0.72);
+    --menu-line: rgba(255, 255, 255, 0.09);
+    --menu-line-strong: rgba(255, 255, 255, 0.2);
+    --menu-fg: #f5f4f2;
+    --menu-fg-2: rgba(245, 244, 242, 0.76);
+    --menu-fg-3: rgba(245, 244, 242, 0.6);
+    --menu-ok: #5fd38d;
+    --menu-accent: var(--accent-primary, #e63946);
+    --menu-accent-ink: color-mix(in srgb, var(--menu-accent) 70%, var(--menu-fg));
+    --menu-accent-soft: color-mix(in srgb, var(--menu-accent) 14%, transparent);
+    --menu-on-accent: #fff;
+    /* El "+" de cada tarjeta lleva el color del local (decisión del cliente). */
+    --menu-add-bg: var(--menu-accent);
+    --menu-add-fg: var(--menu-on-accent);
+    --menu-shadow-card:
+        0 1px 2px rgba(0, 0, 0, 0.28),
+        0 10px 24px -8px rgba(0, 0, 0, 0.45);
+    --menu-shadow-chrome: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --menu-r-sm: 10px;
+    --menu-r-md: 14px;
+    --menu-r-lg: 20px;
+    --menu-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Los tokens viven en `.tenant-theme-vars` y no en `.page-wrapper` porque el
+   header y la barra inferior se montan por portal fuera del page-wrapper. */
+.page-wrapper {
+    color: var(--menu-fg);
+}
+
+.tenant-theme-vars[data-scheme="light"] {
+    color-scheme: light;
+    --menu-chrome: #fffdfa;
+    --menu-chrome-glass: rgba(255, 253, 250, 0.86);
+    --menu-surface: #ffffff;
+    --menu-surface-2: #f5f2ec;
+    --menu-surface-glass: rgba(255, 255, 255, 0.78);
+    --menu-line: rgba(31, 27, 22, 0.1);
+    --menu-line-strong: rgba(31, 27, 22, 0.2);
+    --menu-fg: #1f1b16;
+    --menu-fg-2: rgba(31, 27, 22, 0.68);
+    --menu-fg-3: rgba(31, 27, 22, 0.56);
+    --menu-ok: #1e7f47;
+    --menu-accent-ink: color-mix(in srgb, var(--menu-accent) 82%, var(--menu-fg));
+    --menu-accent-soft: color-mix(in srgb, var(--menu-accent) 10%, transparent);
+    --menu-shadow-card:
+        0 1px 2px rgba(31, 27, 22, 0.08),
+        0 10px 24px -10px rgba(31, 27, 22, 0.18);
+    --menu-shadow-chrome: 0 10px 28px rgba(31, 27, 22, 0.14);
+}
 :root {
     --menu-header-height: 130px;
 }
@@ -34,18 +99,10 @@
     z-index: var(--z-sticky-header, 100);
     padding: calc(8px + env(safe-area-inset-top)) 0 8px;
     pointer-events: auto;
-    border-bottom: none;
-
-    /* Fondo oscuro premium y uniforme */
-    background: rgba(8, 8, 8, 0.65);
-
-    /* Desenfoque fuerte estilo iOS */
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    backdrop-filter: blur(24px) saturate(180%);
-
-    /* Transición suave para cualquier cambio de estado */
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
+    background: var(--menu-chrome);
+    color: var(--menu-fg);
+    border-bottom: 1px solid var(--menu-line);
+    transition: background-color 0.3s ease;
 }
 
 .nav-container-top {
@@ -58,7 +115,7 @@
 .nav-back-button {
     background: none;
     border: none;
-    color: white;
+    color: var(--menu-fg);
     cursor: pointer;
     padding: 0;
     display: flex;
@@ -94,14 +151,16 @@
     font-size: clamp(1.05rem, 0.85rem + 0.7vw, 1.35rem);
     margin: 0;
     font-weight: 700;
-    color: white;
+    /* El nombre del local en su color de marca; `-ink` lo corrige lo justo para
+       que lea sobre el cromo (un rojo saturado sobre negro no llega a 3:1). */
+    color: var(--menu-accent-ink);
     line-height: 1.2;
     letter-spacing: -0.01em;
 }
 
 .nav-location-button {
-    background: rgba(255, 255, 255, 0.09);
-    border: 1px solid rgba(255, 255, 255, 0.13);
+    background: var(--menu-surface-2);
+    border: 1px solid var(--menu-line);
     border-radius: 20px;
     padding: 6px 10px;
     display: flex;
@@ -111,9 +170,7 @@
     cursor: pointer;
     min-height: 44px;
     margin-top: 1px;
-    transition: all 0.2s ease;
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
@@ -124,17 +181,16 @@
 }
 
 .nav-location-button:hover {
-    background: rgba(255, 255, 255, 0.13);
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: var(--menu-line-strong);
 }
 
 .nav-location-icon {
-    filter: drop-shadow(0 0 2px rgba(255, 71, 87, 0.5));
+    color: var(--menu-accent-ink);
 }
 
 .nav-location-text {
     font-size: 0.72rem;
-    color: white;
+    color: var(--menu-fg);
     font-weight: 600;
     letter-spacing: 0.3px;
     max-width: 120px;
@@ -170,50 +226,38 @@
 }
 
 .no-results-text {
-    color: var(--text-secondary);
+    color: var(--menu-fg-2);
     margin-top: 12px;
 }
 
 .category-section {
-    margin-top: 40px;
-    margin-bottom: 25px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 32px;
+    margin-bottom: 8px;
     position: relative;
     scroll-margin-top: calc(var(--menu-header-measured, var(--menu-header-height)) + 12px + env(safe-area-inset-top));
     content-visibility: auto;
     contain-intrinsic-size: auto 520px;
-    /* Asegura que el título no quede tapado por el header */
 }
 
 .category-title {
     display: flex;
-    align-items: flex-end;
-    gap: 12px;
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: -0.01em;
-    color: var(--text-primary);
-    line-height: 1.15;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--menu-fg);
+    line-height: 1.2;
+    text-wrap: balance;
 }
 
 .category-title .category-icon {
-    flex-shrink: 0;
-    display: block;
-    align-self: flex-end;
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
 }
 
-.category-title::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 60px;
-    height: 3px;
-    background: var(--accent-secondary);
-    border-radius: 2px;
-    box-shadow: 0 0 10px rgba(244, 162, 97, 0.4);
-}
 
 .category-icon {
     width: 32px;
@@ -279,17 +323,7 @@
     transform: none !important;
 }
 
-/* Móvil: navbar fijo sin blur (mismo patrón que bottom nav). iOS/PC desktop siguen con glass. */
 @media (max-width: 768px) {
-    .navbar-sticky {
-        -webkit-backdrop-filter: none !important;
-        backdrop-filter: none !important;
-        /* Opaco, no 0.94: sin desenfoque ese 6% no aporta material, solo deja
-           pasar el contenido que scrollea por debajo. Se veia el precio de una
-           tarjeta fantasmeando dentro del header en cuanto se bajaba un poco. */
-        background: rgb(12, 12, 14) !important;
-    }
-
     .fire-icon {
         animation: none;
         will-change: auto;
@@ -304,13 +338,13 @@ section {
 
 @media (max-width: 600px) {
     .category-title {
-        font-size: 1.1rem;
+        font-size: 1.125rem;
         gap: 8px;
     }
 
     .category-icon {
-        width: 24px;
-        height: 24px;
+        width: 22px;
+        height: 22px;
     }
 
     .navbar-sticky {
@@ -402,7 +436,14 @@ section {
     .navbar-sticky .container {
         max-width: 1240px;
     }
+}
 
+@media (min-width: 769px) {
+    .navbar-sticky {
+        background: var(--menu-chrome-glass);
+        -webkit-backdrop-filter: blur(20px) saturate(160%);
+        backdrop-filter: blur(20px) saturate(160%);
+    }
 }
 
 @media (max-width: 600px) {
@@ -538,16 +579,17 @@ html, body {
 }
 
 .sidebar-brand-title {
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 700;
-    color: white;
+    color: var(--menu-fg);
     margin: 0;
+    line-height: 1.2;
 }
 
 .sidebar-brand-subtitle {
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.4);
-    margin: 0;
+    color: var(--menu-fg-3);
+    margin: 2px 0 0;
 }
 
 /* Sidebar Branch Selector styles */
@@ -781,8 +823,8 @@ html, body {
     width: 54px;
     height: 54px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--menu-surface-2);
+    border: 1px solid var(--menu-line);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -792,8 +834,8 @@ html, body {
 }
 
 .icon-list-card.active .icon-list-card-image-wrapper {
-    border-color: var(--accent-primary, #ff4e50);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary, #ff4e50) 35%, transparent);
+    border-color: var(--menu-accent);
+    box-shadow: 0 0 0 2px var(--menu-accent);
     transform: scale(1.04);
 }
 
@@ -804,17 +846,15 @@ html, body {
     image-rendering: -webkit-optimize-contrast;
 }
 
-.icon-list-card-placeholder,
 .icon-list-card-initial {
     font-size: 1.1rem;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--menu-fg-3);
     line-height: 1;
 }
 
-.icon-list-card.active .icon-list-card-placeholder,
 .icon-list-card.active .icon-list-card-initial {
-    color: white;
+    color: var(--menu-fg);
 }
 
 /**
@@ -829,21 +869,24 @@ html, body {
  */
 .icon-list-card-name {
     font-size: 0.7rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.88);
+    font-weight: 500;
+    color: var(--menu-fg-2);
     transition: color 0.2s ease;
     width: 100%;
     max-width: 86px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     text-align: center;
     line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-wrap: balance;
 }
 
 .icon-list-card.active .icon-list-card-name {
-    color: white;
-    font-weight: 700;
+    color: var(--menu-fg);
+    font-weight: 600;
 }
 
 .mega-menu-fab {
@@ -856,13 +899,13 @@ html, body {
     gap: 8px;
     padding: 14px 20px;
     border-radius: 30px;
-    background: var(--accent-primary);
+    background: var(--menu-fg);
     border: none;
-    color: white;
-    font-weight: 700;
+    color: var(--menu-surface);
+    font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
-    box-shadow: 0 8px 24px var(--accent-shadow, rgba(255, 78, 80, 0.4));
+    box-shadow: var(--menu-shadow-chrome);
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
 }
 
@@ -890,8 +933,9 @@ html, body {
 }
 
 .mega-menu-content {
-    background: rgba(20, 20, 20, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--menu-surface);
+    color: var(--menu-fg);
+    border: 1px solid var(--menu-line);
     border-radius: 24px;
     width: 100%;
     max-width: 580px;
@@ -908,23 +952,22 @@ html, body {
     align-items: center;
     justify-content: space-between;
     padding-bottom: 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--menu-line);
     margin-bottom: 20px;
 }
 
 .mega-menu-header h3 {
     margin: 0;
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: white;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--menu-fg);
+    letter-spacing: -0.01em;
 }
 
 .mega-menu-close {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--menu-surface-2);
     border: none;
-    color: white;
+    color: var(--menu-fg);
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -932,7 +975,7 @@ html, body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease;
 }
 
 .mega-menu-close:hover {
@@ -957,48 +1000,46 @@ html, body {
     gap: 12px;
     padding: 14px 16px;
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    color: white;
+    background: var(--menu-surface-2);
+    border: 1px solid var(--menu-line);
+    color: var(--menu-fg);
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: border-color 0.2s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     text-align: left;
 }
 
 .mega-menu-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.18);
+    border-color: var(--menu-line-strong);
     transform: scale(1.02);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .mega-menu-item.active {
-    background: rgba(255, 78, 80, 0.12); /* Translucent accent */
-    border-color: var(--accent-primary, #ff4e50);
-    box-shadow: 0 0 16px var(--accent-shadow, rgba(255, 78, 80, 0.2));
-    font-weight: 700;
+    background: var(--menu-accent-soft);
+    border-color: var(--menu-accent);
+    font-weight: 600;
 }
 
 .mega-menu-item.active .mega-menu-item-name {
-    color: var(--accent-primary, #ff4e50);
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--menu-fg);
 }
 
 .mega-menu-item-icon-wrapper {
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--menu-surface);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--menu-line);
 }
 
 .mega-menu-item.active .mega-menu-item-icon-wrapper {
-    background: rgba(255, 78, 80, 0.15);
-    border-color: rgba(255, 78, 80, 0.3);
+    border-color: var(--menu-accent);
 }
 
 .mega-menu-item-icon {
@@ -1019,7 +1060,7 @@ html, body {
 .mega-menu-item-initial {
     font-size: 1.1rem;
     font-weight: 700;
-    color: white;
+    color: var(--menu-fg);
 }
 
 .mega-menu-item-name {
@@ -1068,14 +1109,17 @@ html, body {
     justify-content: center;
     min-width: 44px;
     min-height: 44px;
+    border-radius: 999px;
+    border: 1px solid var(--menu-line);
+    background: var(--menu-surface-2);
+    color: var(--menu-fg);
+    cursor: pointer;
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-                background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-                border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                border-color 0.25s ease;
 }
 
 .mega-menu-header-trigger:hover {
-    background: rgba(255, 255, 255, 0.14) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
+    border-color: var(--menu-line-strong);
     transform: scale(1.06);
 }
 
@@ -1224,7 +1268,7 @@ html, body {
 
     .icon-list-card-name {
         max-width: 78px;
-        white-space: nowrap;
+        font-size: 0.6875rem;
         line-height: 1.15;
     }
 

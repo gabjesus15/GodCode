@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import "../styles/App.css";
 import "../styles/Menu.css";
 import "../styles/ProductCard.css";
+import "../styles/GlassCard.css";
 import "../styles/Navbar.css";
 import "../styles/HeroCarousel.css";
 import "../styles/ProductCardLayouts.css";

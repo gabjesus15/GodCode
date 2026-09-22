@@ -19,6 +19,7 @@ import {
 } from "@/lib/tenant/lazy/tenant-dynamic";
 import type { MenuCatalogScrollController } from "@/lib/tenant/menu/menu-catalog-scroll-controller";
 import { useMenuPerfProfile } from "@/lib/tenant/menu/menu-perf-context";
+import { useApplyTenantSurfaceScheme } from "@/lib/tenant/hooks/use-tenant-surface-scheme";
 
 export type MenuClientViewProps = {
 	mounted: boolean;
@@ -85,6 +86,9 @@ export type MenuClientViewProps = {
 
 export function MenuClientView(props: MenuClientViewProps) {
 	const { heroAutoplay } = useMenuPerfProfile();
+	// Claro u oscuro según el fondo del local: se publica en el nodo del tema para
+	// que header y barra inferior (portales) lean los mismos tokens de Menu.css.
+	const scheme = useApplyTenantSurfaceScheme();
 	const {
 		mounted,
 		pageClassName,
@@ -153,7 +157,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 		: allBranches;
 
 	return (
-		<div className={pageClassName}>
+		<div className={pageClassName} data-scheme={scheme}>
 			{navbarType === "sidebar-categories" && (
 				<SidebarCategoriesPanel
 					displayName={displayName}

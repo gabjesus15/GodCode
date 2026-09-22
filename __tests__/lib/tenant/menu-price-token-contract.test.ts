@@ -46,7 +46,7 @@ function colorRuleBody(css: string, selector: string): string | null {
 
 /** Selector que pinta el precio vigente en cada estilo de tarjeta. */
 const PRICE_SELECTOR_BY_STYLE: Record<string, { file: string; selector: string }> = {
-	glass: { file: "ProductCard.css", selector: ".product-price" },
+	glass: { file: "GlassCard.css", selector: ".gcard__price-main" },
 	"layout-clean": { file: "ProductCardLayouts.css", selector: ".product-layout-clean .card__preci--now" },
 	"layout-detailed": { file: "ProductCardLayouts.css", selector: ".product-layout-detailed .detailed-new-price" },
 	"layout-horizontal": { file: "ProductCardLayouts.css", selector: ".product-layout-horizontal .horizontal-price" },

@@ -3,6 +3,7 @@
 import { memo, useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronDown, Compass, Grid, MapPin, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
@@ -28,6 +29,7 @@ export const IconListCategories = memo(function IconListCategories({
 	activeCategory: string | null;
 	onCategoryClick: (id: string) => void;
 }) {
+	const t = useTranslations("tenant.menu");
 	const navRef = useRef<HTMLElement | null>(null);
 	const [canScrollLeft, setCanScrollLeft] = useState(false);
 	const [canScrollRight, setCanScrollRight] = useState(categories.length > 4);
@@ -66,7 +68,7 @@ export const IconListCategories = memo(function IconListCategories({
 		: "fade-right";
 
 	return (
-		<nav ref={navRef} className={`icon-list-categories ${fadeClass}`} aria-label="Categorías">
+		<nav ref={navRef} className={`icon-list-categories ${fadeClass}`} aria-label={t("nav.categories")}>
 			<div className="icon-list-container">
 				{categories.map((cat) => (
 					<button
@@ -125,13 +127,14 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 	onCategoryClick: (id: string) => void;
 	tenantSlug?: string | null;
 }) {
+	const t = useTranslations("tenant.menu");
 	return (
 		<aside className="sidebar-categories-panel">
 			<div className="sidebar-header">
 				<div className="sidebar-header-row">
 					<Image
 						src={logoError ? "/tenant/logo-placeholder.svg" : logoUrl || "/tenant/logo-placeholder.svg"}
-						alt="Logo"
+						alt={t("nav.logoAlt")}
 						className="sidebar-logo"
 						width={44}
 						height={44}
@@ -141,7 +144,7 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 					/>
 					<div className="sidebar-brand-info">
 						<h3 className="sidebar-brand-title">{displayName}</h3>
-						<p className="sidebar-brand-subtitle">Menú Digital</p>
+						<p className="sidebar-brand-subtitle">{t("nav.digitalMenu")}</p>
 					</div>
 				</div>
 				<div className="sidebar-location-selector">
@@ -154,14 +157,14 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 					>
 						<MapPin size={16} className="sidebar-location-icon" color="var(--accent-primary)" />
 						<div className="sidebar-location-content">
-							<p className="sidebar-location-label">Sucursal</p>
-							<p className="sidebar-location-value">{selectedBranch ? selectedBranch.name : "Seleccionar Local"}</p>
+							<p className="sidebar-location-label">{t("nav.branchLabel")}</p>
+							<p className="sidebar-location-value">{selectedBranch ? selectedBranch.name : t("nav.selectBranch")}</p>
 						</div>
 						<ChevronDown size={14} className="sidebar-location-chevron" />
 					</button>
 				</div>
 			</div>
-			<nav className="sidebar-nav" aria-label="Categorías">
+			<nav className="sidebar-nav" aria-label={t("nav.categories")}>
 				{categories.map((cat) => (
 					<button
 						key={cat.id}
@@ -207,6 +210,7 @@ export const MegaMenuOverlay = memo(function MegaMenuOverlay({
 	onClose: () => void;
 	onCategoryClick: (id: string) => void;
 }) {
+	const t = useTranslations("tenant.menu");
 	const contentRef = useRef<HTMLDivElement | null>(null);
 	const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 	const titleId = useId();
@@ -274,13 +278,13 @@ export const MegaMenuOverlay = memo(function MegaMenuOverlay({
 				aria-labelledby={titleId}
 			>
 				<div className="mega-menu-header">
-					<h3 id={titleId}>Categorías</h3>
+					<h3 id={titleId}>{t("nav.categories")}</h3>
 					<button
 						ref={closeButtonRef}
 						type="button"
 						className="mega-menu-close"
 						onClick={onClose}
-						aria-label="Cerrar"
+						aria-label={t("nav.close")}
 					>
 						<X size={20} />
 					</button>
@@ -323,15 +327,16 @@ export const MegaMenuOverlay = memo(function MegaMenuOverlay({
 });
 
 export const MegaMenuFab = memo(function MegaMenuFab({ onOpen }: { onOpen: () => void }) {
+	const t = useTranslations("tenant.menu");
 	return (
 		<button
 			type="button"
 			onClick={onOpen}
 			className="mega-menu-fab shadow-lg transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-105 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100"
-			aria-label="Ver Categorías"
+			aria-label={t("nav.viewCategories")}
 		>
 			<Compass size={20} />
-			<span>Categorías</span>
+			<span>{t("nav.categories")}</span>
 		</button>
 	);
 });
@@ -349,6 +354,7 @@ export const CategoryTabsNav = memo(function CategoryTabsNav({
 	activeCategory: string | null;
 	onCategoryClick: (id: string) => void;
 }) {
+	const t = useTranslations("tenant.menu");
 	return (
 		<Navbar
 			categories={[
@@ -365,7 +371,7 @@ export const CategoryTabsNav = memo(function CategoryTabsNav({
 									height={16}
 									unoptimized={shouldUnoptimizeImageSrc(fireIcon)}
 								/>
-								<span>Solo por hoy</span>
+								<span>{t("catalog.onlyToday")}</span>
 							</span>
 						),
 					}]

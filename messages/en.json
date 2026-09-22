@@ -487,6 +487,94 @@
           "recapAria": "Your order summary"
         }
       }
+    },
+    "menu": {
+      "nav": {
+        "backHome": "Back to home",
+        "logoAlt": "Store logo",
+        "search": "Search dishes",
+        "searchPlaceholder": "Search dishes…",
+        "closeSearch": "Close search",
+        "categories": "Categories",
+        "viewCategories": "View categories",
+        "selectBranch": "Choose a location",
+        "branchLabel": "Location",
+        "changeBranch": "Location: {name}. Change location",
+        "digitalMenu": "Digital menu",
+        "close": "Close",
+        "navAria": "Menu navigation"
+      },
+      "tabs": {
+        "home": "Home",
+        "cart": "Cart",
+        "cartWithCount": "Cart, {count, plural, =1 {1 item} other {# items}}",
+        "contact": "Contact",
+        "account": "My account"
+      },
+      "catalog": {
+        "onlyToday": "Today only",
+        "resultsFor": "Results for “{query}”",
+        "noResults": "No dishes match that name.",
+        "emptyCategory": "No products in this category."
+      },
+      "card": {
+        "add": "Add",
+        "addAria": "Add {name} to cart",
+        "addToCart": "Add to cart",
+        "inCart": "{count, plural, =1 {1 in cart} other {# in cart}}",
+        "details": "Details",
+        "viewProduct": "View product",
+        "viewDetails": "View details",
+        "viewMore": "See more",
+        "closeDetails": "Close details",
+        "detailsAria": "View details for {name}",
+        "offer": "Offer",
+        "special": "Special",
+        "from": "From",
+        "info": "Info",
+        "moreInfo": "More info",
+        "quantityAria": "Quantity in cart",
+        "removeOne": "Remove one",
+        "addOne": "Add one",
+        "productFallback": "Product"
+      },
+      "details": {
+        "back": "Back",
+        "close": "Close",
+        "quantity": "Quantity",
+        "increase": "Increase",
+        "decrease": "Decrease",
+        "add": "Add",
+        "addWithPrice": "Add · {price}",
+        "inCart": "In your order",
+        "done": "Done"
+      },
+      "contact": {
+        "title": "Contact",
+        "subtitle": "How would you like to reach us?",
+        "pickChannel": "Choose a contact channel",
+        "whatsapp": "WhatsApp",
+        "whatsappHint": "Message on WhatsApp",
+        "instagram": "Instagram",
+        "instagramHint": "View Instagram profile",
+        "location": "Location",
+        "locationHint": "Open in maps"
+      },
+      "paused": {
+        "title": "Orders paused.",
+        "fallback": "We are very busy right now. Please try again in a few minutes."
+      },
+      "hero": {
+        "aria": "Promotions",
+        "slideAlt": "Promotion",
+        "prev": "Previous promotion",
+        "next": "Next promotion",
+        "goTo": "Go to promotion {index}"
+      },
+      "poweredBy": {
+        "madeWith": "Made with",
+        "aria": "Made with {brand}: digital menu and online ordering"
+      }
     }
   }
 }

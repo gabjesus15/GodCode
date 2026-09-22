@@ -33,3 +33,21 @@ export function useTenantSurfaceScheme(): SurfaceScheme {
 
 	return scheme;
 }
+
+/**
+ * Publica el esquema como `data-scheme` en el nodo del tema, que envuelve
+ * también los portales (header, barra inferior, modales): así el CSS de
+ * superficie del menú lo ve desde cualquier sitio, no solo bajo `.page-wrapper`.
+ */
+export function useApplyTenantSurfaceScheme(): SurfaceScheme {
+	const scheme = useTenantSurfaceScheme();
+	useEffect(() => {
+		const root = document.querySelector<HTMLElement>(THEME_ROOT_SELECTOR);
+		if (!root) return;
+		root.dataset.scheme = scheme;
+		return () => {
+			delete root.dataset.scheme;
+		};
+	}, [scheme]);
+	return scheme;
+}

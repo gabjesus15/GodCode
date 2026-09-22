@@ -3,6 +3,7 @@
 import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import { FIRE_ICON, isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
@@ -52,6 +53,7 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 	observerBlockRef,
 	onActiveSectionChange,
 }: VirtualizedMenuCatalogProps) {
+	const t = useTranslations("tenant.menu");
 	const [scrollAnchor, setScrollAnchor] = useState(() => getMenuScrollAnchorPx());
 	const activeSectionRef = useRef<string | null>(null);
 	const onActiveSectionChangeRef = useRef(onActiveSectionChange);
@@ -68,8 +70,8 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 				id: "special",
 				title: (
 					<>
-						<Image src={FIRE_ICON} className="category-icon" alt="🔥" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
-						Solo por hoy
+						<Image src={FIRE_ICON} className="category-icon" alt="" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
+						{t("catalog.onlyToday")}
 					</>
 				),
 				products: specialProducts,
@@ -89,12 +91,12 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 					category.name
 				),
 				products: categoryProducts,
-				emptyText: "No hay productos en esta categoría.",
+				emptyText: t("catalog.emptyCategory"),
 			});
 		}
 
 		return items;
-	}, [productsByCategory, specialProducts, visibleCategories]);
+	}, [productsByCategory, specialProducts, t, visibleCategories]);
 
 	const sectionIndexById = useMemo(() => {
 		const map = new Map<string, number>();
@@ -196,7 +198,7 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 						{section.products.length > 0 ? (
 							<ProductGrid products={section.products} {...gridProps} />
 						) : (
-							<p className="no-results-text">{section.emptyText ?? "No hay productos en esta categoría."}</p>
+							<p className="no-results-text">{section.emptyText ?? t("catalog.emptyCategory")}</p>
 						)}
 					</section>
 				);

@@ -423,7 +423,8 @@ export function useMenuClientController(props: MenuClientProps) {
 		if (isEmbeddedPreview || selectedBranchId) return;
 		const enabled = modalBranches.filter((branch) => !branch.disabled);
 		if (enabled.length !== 1) return;
-		handleBranchSelect(enabled[0]);
+		// Fuera del cuerpo del efecto: navega y cierra el modal en el siguiente tick.
+		queueMicrotask(() => handleBranchSelect(enabled[0]));
 	}, [handleBranchSelect, isEmbeddedPreview, modalBranches, selectedBranchId]);
 
 	const previewDeviceClass = isEmbeddedPreview

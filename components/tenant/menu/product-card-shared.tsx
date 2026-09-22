@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { useCartStore } from "../cart/cart-store";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
@@ -45,13 +46,11 @@ export function truncateText(text: string | null | undefined, maxLength: number)
   return `${value.slice(0, maxLength).trimEnd()}…`;
 }
 
+const subscribeNoop = () => () => {};
+
+/** false en el servidor y en la hidratación; true en cuanto React toma el DOM. */
 function useHydrated() {
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setHydrated(true), 0);
-    return () => clearTimeout(t);
-  }, []);
-  return hydrated;
+  return useSyncExternalStore(subscribeNoop, () => true, () => false);
 }
 
 /** Cantidad en carrito por producto — solo re-renderiza si cambia esta línea */
@@ -220,14 +219,11 @@ export const ProductCardImage = React.memo(function ProductCardImage({
   objectFit = "cover",
   objectPosition = "center",
 }: ProductCardImageProps) {
-  const onLoadedRef = React.useRef(onLoaded);
-  const onErrorRef = React.useRef(onError);
-  onLoadedRef.current = onLoaded;
-  onErrorRef.current = onError;
-
+  // `onLoaded`/`onError` ya vienen memoizados por identidad de imagen desde
+  // useProductCardLogic: no hace falta esconderlos en refs.
   const markLoaded = useCallback(() => {
-    onLoadedRef.current();
-  }, []);
+    onLoaded();
+  }, [onLoaded]);
 
   // Timeout de seguridad: si el evento no llega (Safari + lazy), quitar skeleton.
   useEffect(() => {
@@ -252,10 +248,7 @@ export const ProductCardImage = React.memo(function ProductCardImage({
         loading={priority ? "eager" : "lazy"}
         unoptimized={shouldUnoptimizeImageSrc(src)}
         onLoad={markLoaded}
-        onLoadingComplete={(img) => {
-          if (img.naturalWidth > 0) markLoaded();
-        }}
-        onError={() => onErrorRef.current()}
+        onError={onError}
         className={`product-card-media__img product-card-media__img--fill ${imageClassName} ${loaded ? "is-loaded" : "is-loading"}`.trim()}
         style={{ objectFit, objectPosition }}
       />
@@ -272,9 +265,10 @@ export const ProductQtyBadge = React.memo(function ProductQtyBadge({
 	hydrated: boolean;
 	className?: string;
 }) {
+	const t = useTranslations("tenant.menu");
 	if (!hydrated || quantity <= 0) return null;
 	return (
-		<TenantBadge variant="default" className={className} aria-label={`${quantity} en el carrito`}>
+		<TenantBadge variant="default" className={className} aria-label={t("card.inCart", { count: quantity })}>
 			{quantity}
 		</TenantBadge>
 	);
@@ -287,6 +281,7 @@ export function ProductOfferBadges({
 	hotClassName?: string;
 	specialClassName?: string;
 }) {
+	const t = useTranslations("tenant.menu");
 	const hasDiscount = Boolean(product.has_discount);
 	const isSpecial = Boolean(product.is_special);
 
@@ -294,8 +289,8 @@ export function ProductOfferBadges({
 
 	return (
 		<TenantOfferBadgeStack>
-			{hasDiscount ? <TenantBadge variant="destructive">Oferta</TenantBadge> : null}
-			{isSpecial ? <TenantBadge variant="special">Especial</TenantBadge> : null}
+			{hasDiscount ? <TenantBadge variant="destructive">{t("card.offer")}</TenantBadge> : null}
+			{isSpecial ? <TenantBadge variant="special">{t("card.special")}</TenantBadge> : null}
 		</TenantOfferBadgeStack>
 	);
 }
@@ -325,9 +320,10 @@ export const ProductDetailsAffordance = React.memo(function ProductDetailsAfford
   className?: string;
   subtle?: boolean;
 }) {
+  const t = useTranslations("tenant.menu");
   const isModal = detailsMode !== "inline";
   if (!isModal && !hasDescription) return null;
-  const label = isModal ? "Ver producto" : "Ver más";
+  const label = isModal ? t("card.viewProduct") : t("card.viewMore");
   const classes = ["product-details-affordance", className, subtle ? "is-subtle" : null]
     .filter((value): value is string => Boolean(value) && value !== "product-details-affordance")
     .join(" ");
@@ -353,11 +349,12 @@ export const CardCartActions = React.memo(function CardCartActions({
 	logic,
 	addClassName = "layout-add-btn",
 	stepperClassName = "layout-stepper",
-	addLabel = "Agregar",
+	addLabel,
 	compact = false,
 	icon = "plus",
 	addVariant,
 }: CardCartActionsProps) {
+	const t = useTranslations("tenant.menu");
 	const { quantity, hydrated, handleAdd, handleDecrease } = logic;
 	const showStepper = hydrated && quantity > 0;
 	const resolvedVariant = addVariant ?? (compact ? "outline" : "default");
@@ -380,12 +377,12 @@ export const CardCartActions = React.memo(function CardCartActions({
 			size={compact ? "icon" : "default"}
 			className={addClassName}
 			onClick={handleAdd}
-			aria-label="Agregar al carrito"
+			aria-label={t("card.addToCart")}
 		>
 			{compact ? (
 				icon === "bag" ? <ShoppingBag size={18} aria-hidden /> : <PlusGlyph size={18} />
 			) : (
-				addLabel
+				addLabel ?? t("card.add")
 			)}
 		</TenantButton>
 	);

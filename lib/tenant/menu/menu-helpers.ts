@@ -1,4 +1,5 @@
-export const FIRE_ICON = "https://fonts.gstatic.com/s/e/notoemoji/latest/1f525/512.gif";
+/** Llama estática servida desde el propio sitio: antes era un GIF animado de fonts.gstatic. */
+export const FIRE_ICON = "/tenant/flame.svg";
 
 export function isPromocionesCategoryName(name: string | null | undefined): boolean {
 	const normalized = String(name || "")

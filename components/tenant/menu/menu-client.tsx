@@ -6,13 +6,7 @@ import { MenuClientView } from "./menu-client-view";
 import type { MenuClientProps } from "./menu-types";
 import { useMenuClientController } from "./use-menu-client-controller";
 
-function MenuClientViewFromVm({
-	vm,
-	props,
-}: {
-	vm: ReturnType<typeof useMenuClientController>;
-	props: MenuClientProps;
-}) {
+function MenuClientViewFromVm({ vm }: { vm: ReturnType<typeof useMenuClientController> }) {
 	return (
 		<>
 			<MenuClientView
@@ -85,7 +79,7 @@ export function MenuClient(props: MenuClientProps) {
 	const vm = useMenuClientController(props);
 	const cartEnabled = vm.onlineOrderingEnabled !== false;
 
-	const content = <MenuClientViewFromVm vm={vm} props={props} />;
+	const content = <MenuClientViewFromVm vm={vm} />;
 
 	if (!cartEnabled) {
 		return <MenuPerfProvider isLowEnd={vm.isLowEnd}>{content}</MenuPerfProvider>;

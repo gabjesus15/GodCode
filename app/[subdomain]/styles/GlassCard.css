@@ -1,0 +1,371 @@
+/* =============================================================================
+   Tarjeta "Cristal" (product-card glass): foto primero, recibo debajo.
+
+   Lee los tokens de superficie de Menu.css (`--menu-*`), así que sigue al
+   fondo del local: clara sobre menús claros, oscura sobre oscuros. El
+   desenfoque que le da nombre solo existe en escritorio; en móvil doce
+   tarjetas desenfocando sobre una imagen hunden a un Android medio.
+   ============================================================================= */
+
+.gcard {
+	container-type: inline-size;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-width: 0;
+	border-radius: var(--menu-r-lg);
+	border: 1px solid var(--menu-line);
+	background: var(--menu-surface);
+	color: var(--menu-fg);
+	overflow: hidden;
+	box-shadow: var(--menu-shadow-card);
+	transition:
+		transform 300ms var(--menu-ease),
+		box-shadow 300ms var(--menu-ease),
+		border-color 300ms var(--menu-ease);
+}
+
+@media (min-width: 769px) {
+	.gcard {
+		background: var(--menu-surface-glass);
+		-webkit-backdrop-filter: blur(14px) saturate(140%);
+		backdrop-filter: blur(14px) saturate(140%);
+	}
+
+	.page-wrapper.low-end-device .gcard {
+		background: var(--menu-surface);
+		-webkit-backdrop-filter: none;
+		backdrop-filter: none;
+	}
+}
+
+@media (hover: hover) {
+	.gcard:hover {
+		transform: translateY(-3px);
+		border-color: var(--menu-line-strong);
+	}
+
+	.gcard:hover .gcard__media img {
+		transform: scale(1.04);
+	}
+}
+
+/* --- Zona tocable: foto + texto abren el detalle; el pie queda fuera ---------- */
+
+.gcard__hit {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+	outline: none;
+}
+
+.gcard__hit--static {
+	cursor: default;
+}
+
+.gcard__hit:focus-visible {
+	box-shadow: inset 0 0 0 2px var(--menu-accent-ink);
+}
+
+.gcard__media {
+	position: relative;
+	aspect-ratio: 4 / 3;
+	overflow: hidden;
+	background: var(--menu-surface-2);
+}
+
+.gcard__media .product-card-media {
+	position: absolute;
+	inset: 0;
+}
+
+.gcard__media img {
+	object-fit: cover;
+	transition: transform 500ms var(--menu-ease);
+}
+
+.gcard__body {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 12px 14px 0;
+}
+
+.gcard__name {
+	margin: 0;
+	font-size: 0.95rem;
+	font-weight: 600;
+	line-height: 1.25;
+	letter-spacing: -0.01em;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-wrap: pretty;
+}
+
+.gcard__desc {
+	margin: 0;
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	color: var(--menu-fg-2);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+/* Detalle inline: la descripción se despliega dentro de la tarjeta. */
+.gcard.is-expanded .gcard__desc {
+	display: block;
+	-webkit-line-clamp: unset;
+	line-clamp: unset;
+	overflow: visible;
+	animation: gcard-reveal 220ms var(--menu-ease) both;
+}
+
+.gcard__close {
+	position: absolute;
+	top: 8px;
+	left: 8px;
+	z-index: 3;
+	width: 32px;
+	height: 32px;
+	display: grid;
+	place-items: center;
+	border: 0;
+	border-radius: 999px;
+	background: var(--menu-fg);
+	color: var(--menu-surface);
+	cursor: pointer;
+}
+
+/* --- Pie: precio en tinta, un solo control ------------------------------------ */
+
+/* Pie: precio a la izquierda, "+" o cantidad a la derecha. Si no caben en una
+   línea (tarjeta estrecha con precio largo), el control baja a la línea
+   siguiente pegado a la derecha en vez de recortar el precio. */
+.gcard__foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: auto;
+	padding: 10px 14px 12px;
+}
+
+.gcard__stepper,
+.gcard__add {
+	margin-left: auto;
+}
+
+.gcard__price {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	line-height: 1.15;
+	font-variant-numeric: tabular-nums;
+}
+
+/* El precio no se recorta: con sitio de sobra el control queda a su lado, sin
+   sitio se va a la línea de abajo. */
+.gcard__price-main {
+	overflow: visible;
+	text-overflow: clip;
+}
+
+/* El panel deja elegir "Color precio" y "Color descuento": se respetan en el
+   esquema oscuro (donde el local los eligió) y ceden a la tinta en el claro,
+   donde un precio blanco desaparecería. */
+.gcard__price-main {
+	font-size: 1rem;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	color: var(--price-color, var(--menu-fg));
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.gcard__price-main--sale {
+	color: var(--discount-color, var(--menu-ok));
+}
+
+.tenant-theme-vars[data-scheme="light"] .gcard__price-main,
+.tenant-theme-vars[data-scheme="light"] .gcard__price-main--sale {
+	color: var(--menu-fg);
+}
+
+.gcard__price--was {
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: var(--menu-fg-3);
+	text-decoration: line-through;
+}
+
+.gcard__add,
+.gcard__step {
+	font: inherit;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.gcard__add {
+	width: 40px;
+	height: 40px;
+	display: grid;
+	place-items: center;
+	border: 0;
+	border-radius: 999px;
+	background: var(--menu-add-bg);
+	color: var(--menu-add-fg);
+	box-shadow: 0 4px 12px var(--accent-shadow, rgba(0, 0, 0, 0.3));
+	transition: transform 150ms ease, filter 150ms ease;
+}
+
+@media (hover: hover) {
+	.gcard__add:hover {
+		filter: brightness(0.92);
+	}
+}
+
+.gcard__add:active {
+	transform: scale(0.94);
+	transition-duration: 80ms;
+}
+
+.gcard__add.is-pop {
+	animation: gcard-pop 280ms var(--menu-ease);
+}
+
+.gcard__stepper {
+	display: inline-flex;
+	align-items: center;
+	height: 40px;
+	padding: 2px;
+	border-radius: 999px;
+	border: 1px solid var(--menu-line-strong);
+	background: var(--menu-surface-2);
+}
+
+/* Tarjeta estrecha (dos columnas en teléfono): el mismo control, más compacto. */
+@container (max-width: 240px) {
+	.gcard__stepper {
+		height: 34px;
+	}
+
+	.gcard__step {
+		width: 28px;
+		height: 28px;
+	}
+
+	.gcard__count {
+		min-width: 16px;
+		font-size: 0.875rem;
+	}
+}
+
+.gcard__step {
+	width: 34px;
+	height: 34px;
+	display: grid;
+	place-items: center;
+	border: 0;
+	border-radius: 999px;
+	background: none;
+	color: var(--menu-fg);
+	transition: transform 120ms ease;
+}
+
+.gcard__step:active {
+	transform: scale(0.88);
+}
+
+.gcard__step--plus {
+	background: var(--menu-add-bg);
+	color: var(--menu-add-fg);
+}
+
+.gcard__count {
+	min-width: 22px;
+	text-align: center;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	color: var(--menu-fg);
+}
+
+/* --- Móvil: más compacta, misma jerarquía ----------------------------------- */
+
+@media (max-width: 640px) {
+	.gcard {
+		border-radius: 16px;
+	}
+
+	.gcard__body {
+		gap: 3px;
+		padding: 10px 12px 0;
+	}
+
+	.gcard__name {
+		font-size: 0.875rem;
+	}
+
+	.gcard__desc {
+		font-size: 0.75rem;
+	}
+
+	.gcard__foot {
+		padding: 6px 12px 10px;
+	}
+
+	.gcard__price-main {
+		font-size: 0.9375rem;
+	}
+}
+
+/* --- Menú sin pedidos online: solo carta ------------------------------------- */
+
+.online-ordering-disabled .gcard__add,
+.online-ordering-disabled .gcard__stepper {
+	display: none;
+}
+
+/* --- Movimiento --------------------------------------------------------------- */
+
+@keyframes gcard-pop {
+	40% {
+		transform: scale(0.88);
+	}
+}
+
+@keyframes gcard-reveal {
+	from {
+		opacity: 0.4;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.gcard,
+	.gcard__media img,
+	.gcard__add,
+	.gcard__step {
+		transition: none;
+	}
+
+	.gcard:hover {
+		transform: none;
+	}
+
+	.gcard__add.is-pop,
+	.gcard.is-expanded .gcard__desc {
+		animation: none;
+	}
+}

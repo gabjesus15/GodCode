@@ -5,6 +5,7 @@ import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { TENANT_HERO_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
 import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
 
@@ -27,6 +28,7 @@ function HeroSlide({
 	isFirst: boolean;
 	shouldRenderImage: boolean;
 }) {
+	const t = useTranslations("tenant.menu");
 	const rawUrl = banner.image_url?.trim() ?? "";
 	const fallbackUrl =
 		rawUrl && !isCloudinaryImageUrl(rawUrl) ? rawUrl : TENANT_HERO_FALLBACK_IMAGE;
@@ -50,7 +52,7 @@ function HeroSlide({
 				{shouldRenderImage ? (
 					<Image
 						src={fallbackUrl}
-						alt="Promoción"
+						alt={t("hero.slideAlt")}
 						fill
 						sizes="(min-width: 1024px) min(1220px, 100vw), 100vw"
 						priority={isFirst}
@@ -72,6 +74,7 @@ export function HeroCarousel({
 	banners: HeroBanner[];
 	autoplayEnabled?: boolean;
 }) {
+	const t = useTranslations("tenant.menu");
 	const safeBanners = banners?.length ? banners : [];
 	const multi = safeBanners.length > 1;
 
@@ -118,7 +121,7 @@ export function HeroCarousel({
 	if (safeBanners.length === 0) return null;
 
 	return (
-		<section className="hero-carousel" aria-label="Promociones">
+		<section className="hero-carousel" aria-label={t("hero.aria")}>
 			<div className="hero-carousel-frame">
 				<div className="hero-carousel-shell">
 					{multi && (
@@ -127,7 +130,7 @@ export function HeroCarousel({
 								type="button"
 								className="hero-carousel-arrow hero-carousel-arrow--prev"
 								onClick={scrollPrev}
-								aria-label="Anterior promoción"
+								aria-label={t("hero.prev")}
 							>
 								<ChevronLeft size={22} strokeWidth={2.25} aria-hidden />
 							</button>
@@ -135,7 +138,7 @@ export function HeroCarousel({
 								type="button"
 								className="hero-carousel-arrow hero-carousel-arrow--next"
 								onClick={scrollNext}
-								aria-label="Siguiente promoción"
+								aria-label={t("hero.next")}
 							>
 								<ChevronRight size={22} strokeWidth={2.25} aria-hidden />
 							</button>
@@ -186,7 +189,7 @@ export function HeroCarousel({
 										type="button"
 										className={`hero-dot ${i === selectedIndex ? "hero-dot--active" : ""}`}
 										onClick={() => scrollTo(i)}
-										aria-label={`Ir a promoción ${i + 1}`}
+										aria-label={t("hero.goTo", { index: i + 1 })}
 										aria-current={i === selectedIndex ? "true" : undefined}
 									>
 										<span className="hero-dot-pill" />

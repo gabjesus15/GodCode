@@ -487,6 +487,94 @@
           "recapAria": "Zusammenfassung deiner Bestellung"
         }
       }
+    },
+    "menu": {
+      "nav": {
+        "backHome": "Zur Startseite",
+        "logoAlt": "Logo des Lokals",
+        "search": "Gericht suchen",
+        "searchPlaceholder": "Gericht suchen…",
+        "closeSearch": "Suche schließen",
+        "categories": "Kategorien",
+        "viewCategories": "Kategorien ansehen",
+        "selectBranch": "Filiale wählen",
+        "branchLabel": "Filiale",
+        "changeBranch": "Filiale: {name}. Filiale wechseln",
+        "digitalMenu": "Digitale Speisekarte",
+        "close": "Schließen",
+        "navAria": "Menünavigation"
+      },
+      "tabs": {
+        "home": "Start",
+        "cart": "Warenkorb",
+        "cartWithCount": "Warenkorb, {count, plural, =1 {1 Artikel} other {# Artikel}}",
+        "contact": "Kontakt",
+        "account": "Mein Konto"
+      },
+      "catalog": {
+        "onlyToday": "Nur heute",
+        "resultsFor": "Ergebnisse für „{query}“",
+        "noResults": "Kein Gericht mit diesem Namen.",
+        "emptyCategory": "Keine Produkte in dieser Kategorie."
+      },
+      "card": {
+        "add": "Hinzufügen",
+        "addAria": "{name} in den Warenkorb legen",
+        "addToCart": "In den Warenkorb",
+        "inCart": "{count, plural, =1 {1 im Warenkorb} other {# im Warenkorb}}",
+        "details": "Details",
+        "viewProduct": "Produkt ansehen",
+        "viewDetails": "Details ansehen",
+        "viewMore": "Mehr",
+        "closeDetails": "Details schließen",
+        "detailsAria": "Details zu {name} ansehen",
+        "offer": "Angebot",
+        "special": "Spezial",
+        "from": "Ab",
+        "info": "Info",
+        "moreInfo": "Mehr Infos",
+        "quantityAria": "Menge im Warenkorb",
+        "removeOne": "Eins entfernen",
+        "addOne": "Eins hinzufügen",
+        "productFallback": "Produkt"
+      },
+      "details": {
+        "back": "Zurück",
+        "close": "Schließen",
+        "quantity": "Menge",
+        "increase": "Mehr",
+        "decrease": "Weniger",
+        "add": "Hinzufügen",
+        "addWithPrice": "Hinzufügen · {price}",
+        "inCart": "In deiner Bestellung",
+        "done": "Fertig"
+      },
+      "contact": {
+        "title": "Kontakt",
+        "subtitle": "Wie möchtest du uns erreichen?",
+        "pickChannel": "Kontaktkanal wählen",
+        "whatsapp": "WhatsApp",
+        "whatsappHint": "Über WhatsApp schreiben",
+        "instagram": "Instagram",
+        "instagramHint": "Instagram-Profil ansehen",
+        "location": "Standort",
+        "locationHint": "In Karten öffnen"
+      },
+      "paused": {
+        "title": "Bestellungen pausiert.",
+        "fallback": "Wir haben gerade sehr viel zu tun. Versuch es in ein paar Minuten noch einmal."
+      },
+      "hero": {
+        "aria": "Aktionen",
+        "slideAlt": "Aktion",
+        "prev": "Vorherige Aktion",
+        "next": "Nächste Aktion",
+        "goTo": "Zur Aktion {index}"
+      },
+      "poweredBy": {
+        "madeWith": "Erstellt mit",
+        "aria": "Erstellt mit {brand}: digitale Speisekarte und Online-Bestellungen"
+      }
     }
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 
 import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
 import { FIRE_ICON, isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
@@ -13,6 +14,7 @@ export function useMenuCatalogData(
 	visibleCategories: MenuCategory[],
 	setActiveCategory: (id: string | null) => void,
 ) {
+	const t = useTranslations("tenant.menu");
 	const { specialProducts, filteredBySearch, query } = useMemo(() => {
 		const q = searchQuery.trim().toLowerCase();
 		const promoIds = categories.filter((cat) => isPromocionesCategoryName(cat.name)).map((cat) => cat.id);
@@ -41,7 +43,7 @@ export function useMenuCatalogData(
 	}, [products]);
 
 	const categoriesList = useMemo<CategoryListItem[]>(() => [
-		...(specialProducts.length > 0 ? [{ id: "special", name: "Solo por hoy", icon: FIRE_ICON }] : []),
+		...(specialProducts.length > 0 ? [{ id: "special", name: t("catalog.onlyToday"), icon: FIRE_ICON }] : []),
 		...visibleCategories.map((cat) => {
 			const catFirstProduct = products.find(
 				(p) =>
@@ -55,7 +57,7 @@ export function useMenuCatalogData(
 				icon: isPromocionesCategoryName(cat.name) ? FIRE_ICON : catFirstProduct?.image_url ?? null,
 			};
 		}),
-	], [specialProducts.length, visibleCategories, products]);
+	], [specialProducts.length, visibleCategories, products, t]);
 
 	return {
 		specialProducts,
