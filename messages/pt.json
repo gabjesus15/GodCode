@@ -515,8 +515,7 @@
         "onlyToday": "Só por hoje",
         "resultsFor": "Resultados para “{query}”",
         "noResults": "Nenhum prato com esse nome.",
-        "emptyCategory": "Nenhum produto nesta categoria.",
-        "productCount": "{count, plural, one {# item} other {# itens}}"
+        "emptyCategory": "Nenhum produto nesta categoria."
       },
       "card": {
         "add": "Adicionar",

@@ -241,16 +241,9 @@
     contain-intrinsic-size: auto 520px;
 }
 
-/* Cabecera de sección: título con una marca en el color del local a la
-   izquierda y, a la derecha, cuántos productos hay. La marca es lo único de
-   color: el título sigue en tinta para que no compita con las tarjetas. */
-.category-head {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-}
-
+/* Título de sección con una marca vertical en el color del local. La marca
+   es lo único de color: el título sigue en tinta para que no compita con las
+   tarjetas. */
 .category-title {
     position: relative;
     display: flex;
@@ -276,21 +269,6 @@
     width: 4px;
     border-radius: 999px;
     background: var(--menu-accent);
-}
-
-.category-count {
-    flex: none;
-    padding: 5px 11px;
-    border-radius: 999px;
-    border: 1px solid var(--menu-line);
-    background: var(--menu-surface);
-    color: var(--menu-fg-2);
-    font-size: 0.75rem;
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
 }
 
 .category-title .category-icon {
@@ -386,11 +364,6 @@ section {
 
     .category-title::before {
         width: 3px;
-    }
-
-    .category-count {
-        padding: 4px 9px;
-        font-size: 0.6875rem;
     }
 
     .category-icon {

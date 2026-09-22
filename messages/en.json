@@ -515,8 +515,7 @@
         "onlyToday": "Today only",
         "resultsFor": "Results for “{query}”",
         "noResults": "No dishes match that name.",
-        "emptyCategory": "No products in this category.",
-        "productCount": "{count, plural, one {# item} other {# items}}"
+        "emptyCategory": "No products in this category."
       },
       "card": {
         "add": "Add",
