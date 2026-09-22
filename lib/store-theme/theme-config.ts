@@ -22,16 +22,26 @@ export const SURFACE_SCHEMES = ["auto", "light", "dark"] as const;
 export type SurfaceSchemeSetting = (typeof SURFACE_SCHEMES)[number];
 
 /**
- * Tipografías del menú público. Cada una se autoaloja con `next/font` en
- * app/layout.tsx y expone su variable; el menú solo cambia `--tenant-font`.
+ * Tipografías del nombre del local. Cada una se autoaloja con `next/font` en
+ * app/layout.tsx y expone su variable; el menú solo cambia `--tenant-font` y
+ * `--tenant-font-weight`.
+ *
+ * `weight` es el peso con el que se pinta el nombre. Las de texto llevan la
+ * negrita de siempre; las de cartel (Anton, Bebas Neue, Luckiest Guy, Lilita
+ * One) solo existen en un peso y con 700 el navegador les inventaría una
+ * negrita falsa que las deforma.
  */
 export const STORE_THEME_FONTS = [
-  { id: "montserrat", label: "Montserrat", cssVar: "--font-montserrat", generic: "sans-serif", description: "Geométrica y moderna. La de siempre." },
-  { id: "inter", label: "Inter", cssVar: "--font-inter", generic: "sans-serif", description: "Neutra y muy legible en pantalla." },
-  { id: "poppins", label: "Poppins", cssVar: "--font-poppins", generic: "sans-serif", description: "Redonda y amable, con carácter." },
-  { id: "nunito", label: "Nunito", cssVar: "--font-nunito", generic: "sans-serif", description: "Suave y cercana, ideal para cafeterías." },
-  { id: "playfair", label: "Playfair Display", cssVar: "--font-playfair", generic: "serif", description: "Elegante, para restaurantes de mantel." },
-  { id: "lora", label: "Lora", cssVar: "--font-lora", generic: "serif", description: "Serif cálida y fácil de leer." },
+  { id: "montserrat", label: "Montserrat", cssVar: "--font-montserrat", generic: "sans-serif", weight: "700", description: "Geométrica y moderna. La de siempre." },
+  { id: "inter", label: "Inter", cssVar: "--font-inter", generic: "sans-serif", weight: "700", description: "Neutra y muy legible en pantalla." },
+  { id: "poppins", label: "Poppins", cssVar: "--font-poppins", generic: "sans-serif", weight: "700", description: "Redonda y amable, con carácter." },
+  { id: "nunito", label: "Nunito", cssVar: "--font-nunito", generic: "sans-serif", weight: "700", description: "Suave y cercana, ideal para cafeterías." },
+  { id: "playfair", label: "Playfair Display", cssVar: "--font-playfair", generic: "serif", weight: "700", description: "Elegante, para restaurantes de mantel." },
+  { id: "lora", label: "Lora", cssVar: "--font-lora", generic: "serif", weight: "700", description: "Serif cálida y fácil de leer." },
+  { id: "anton", label: "Anton", cssVar: "--font-anton", generic: "sans-serif", weight: "400", description: "Condensada y contundente, de cartel de pizzería." },
+  { id: "bebas", label: "Bebas Neue", cssVar: "--font-bebas", generic: "sans-serif", weight: "400", description: "Mayúsculas altas y estrechas, muy de rótulo." },
+  { id: "luckiest", label: "Luckiest Guy", cssVar: "--font-luckiest", generic: "cursive", weight: "400", description: "Rotulada y divertida, como pintada a mano." },
+  { id: "lilita", label: "Lilita One", cssVar: "--font-lilita", generic: "sans-serif", weight: "400", description: "Redonda y gordita, alegre sin gritar." },
 ] as const;
 export type StoreThemeFontId = (typeof STORE_THEME_FONTS)[number]["id"];
 

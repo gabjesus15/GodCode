@@ -33,6 +33,7 @@ body {
 .tenant-theme-vars .nav-brand-title,
 .tenant-theme-vars .sidebar-brand-title {
 	font-family: var(--tenant-font, inherit);
+	font-weight: var(--tenant-font-weight, inherit);
 }
 
 :root {

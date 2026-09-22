@@ -34,9 +34,15 @@ describe("ajustes de superficie del menú", () => {
 
 	it("emite su propio bloque CSS sin tocar el contrato compartido", () => {
 		const css = buildTenantSurfaceCssString({ surfaceScheme: "light", fontFamily: "lora", brandNameColor: "#112233" });
-		expect(extractCssVarNames(css)).toEqual(["--tenant-surface-scheme", "--tenant-font", "--menu-brand-color"]);
+		expect(extractCssVarNames(css)).toEqual(["--tenant-surface-scheme", "--tenant-font", "--tenant-font-weight", "--menu-brand-color"]);
 		expect(css).toContain("--tenant-font:var(--font-lora), \"Lora\", serif;");
+		expect(css).toContain("--tenant-font-weight:700;");
 		expect(css).toContain("--menu-brand-color:#112233;");
+	});
+
+	it("las de cartel se pintan en su único peso, sin negrita falsa", () => {
+		expect(normalizeFontFamily("anton")).toBe("anton");
+		expect(buildTenantSurfaceCssString({ fontFamily: "luckiest" })).toContain("--tenant-font-weight:400;");
 	});
 
 	it("con \"hover\" el nombre apunta a la variable del color hover", () => {

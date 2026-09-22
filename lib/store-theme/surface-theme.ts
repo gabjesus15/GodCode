@@ -17,12 +17,19 @@ import {
  * sigue funcionando si faltan.
  */
 
-export const TENANT_SURFACE_CSS_VARS = ["--tenant-surface-scheme", "--tenant-font", "--menu-brand-color"] as const;
+export const TENANT_SURFACE_CSS_VARS = [
+	"--tenant-surface-scheme",
+	"--tenant-font",
+	"--tenant-font-weight",
+	"--menu-brand-color",
+] as const;
 
 export type TenantSurfaceVars = {
 	surfaceScheme: "auto" | "light" | "dark";
 	/** `var(--font-x), "Nombre", generic` listo para font-family. */
 	fontStack: string;
+	/** Peso con el que se pinta el nombre: 700 en las de texto, 400 en las de cartel. */
+	fontWeight: string;
 	/** Hex o cadena vacía (= automático: el color de marca). */
 	brandNameColor: string;
 };
@@ -33,6 +40,7 @@ export function resolveTenantSurfaceVars(theme: Partial<StoreThemeConfig>): Tena
 	return {
 		surfaceScheme: normalizeSurfaceScheme(theme.surfaceScheme),
 		fontStack: `var(${font.cssVar}), "${font.label}", ${font.generic}`,
+		fontWeight: font.weight,
 		brandNameColor: normalizeBrandNameColor(theme.brandNameColor),
 	};
 }
@@ -43,6 +51,7 @@ export function tenantSurfaceCssVarEntries(theme: Partial<StoreThemeConfig>): Ar
 	const entries: Array<[string, string]> = [
 		["--tenant-surface-scheme", vars.surfaceScheme],
 		["--tenant-font", vars.fontStack],
+		["--tenant-font-weight", vars.fontWeight],
 	];
 	if (vars.brandNameColor === "hover") {
 		entries.push(["--menu-brand-color", "var(--accent-hover, var(--accent-primary))"]);

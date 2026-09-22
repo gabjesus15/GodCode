@@ -1,7 +1,21 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import Script from "next/script";
-import { Geist, Geist_Mono, Inter, Lora, Montserrat, Nunito, Playfair_Display, Poppins, Space_Grotesk } from "next/font/google";
+import {
+  Anton,
+  Bebas_Neue,
+  Geist,
+  Geist_Mono,
+  Inter,
+  Lilita_One,
+  Lora,
+  Luckiest_Guy,
+  Montserrat,
+  Nunito,
+  Playfair_Display,
+  Poppins,
+  Space_Grotesk,
+} from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -70,7 +84,14 @@ const poppins = Poppins({ variable: "--font-poppins", subsets: ["latin"], displa
 const nunito = Nunito({ variable: "--font-nunito", subsets: ["latin"], display: "swap" });
 const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"], display: "swap" });
 const lora = Lora({ variable: "--font-lora", subsets: ["latin"], display: "swap" });
-const tenantFontVariables = [montserrat, inter, poppins, nunito, playfair, lora].map((font) => font.variable).join(" ");
+/* De cartel: un solo peso cada una (ver STORE_THEME_FONTS). */
+const anton = Anton({ variable: "--font-anton", subsets: ["latin"], display: "swap", weight: "400" });
+const bebas = Bebas_Neue({ variable: "--font-bebas", subsets: ["latin"], display: "swap", weight: "400" });
+const luckiest = Luckiest_Guy({ variable: "--font-luckiest", subsets: ["latin"], display: "swap", weight: "400" });
+const lilita = Lilita_One({ variable: "--font-lilita", subsets: ["latin"], display: "swap", weight: "400" });
+const tenantFontVariables = [montserrat, inter, poppins, nunito, playfair, lora, anton, bebas, luckiest, lilita]
+  .map((font) => font.variable)
+  .join(" ");
 
 
 /**
