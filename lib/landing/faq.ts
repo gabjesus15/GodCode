@@ -1,9 +1,22 @@
+import {
+	LANDING_BRAND_ALTERNATE,
+	LANDING_COMPANY_NAME,
+	LANDING_PRODUCT_NAME,
+} from "./brand";
+
 export type LandingFaqItem = {
 	question: string;
 	answer: string;
 };
 
 export const LANDING_FAQ: LandingFaqItem[] = [
+	{
+		// Primera a propósito: es la consulta informacional ("qué es gcode / godcode")
+		// que hoy genera clics y ninguna página respondía.
+		question: `¿Qué es ${LANDING_PRODUCT_NAME} y quién está detrás?`,
+		answer:
+			`${LANDING_PRODUCT_NAME} es el menú digital, sistema de pedidos online y punto de venta para restaurantes creado por ${LANDING_COMPANY_NAME}, un estudio de desarrollo web con base en Santiago de Chile que también hace páginas y sistemas a medida. Antes se conocía como ${LANDING_BRAND_ALTERNATE}.`,
+	},
 	{
 		question: "¿No sé nada de tecnología, puedo usarlo?",
 		answer:

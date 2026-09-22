@@ -3,13 +3,17 @@ import Link from "next/link";
 
 import { getAppUrl } from "@/lib/tenant/app-url";
 
-import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
+import {
+	LANDING_COMPANY_NAME,
+	LANDING_PRODUCT_NAME,
+	LANDING_SUPPORT_EMAIL,
+} from "@/lib/landing/brand";
 
 const SUPPORT_EMAIL = LANDING_SUPPORT_EMAIL;
 
 export const metadata: Metadata = {
-	title: "Política de privacidad · GodCode",
-	description: "Política de privacidad de la plataforma GodCode.",
+	title: "Política de privacidad",
+	description: `Política de privacidad de ${LANDING_PRODUCT_NAME}, la plataforma de ${LANDING_COMPANY_NAME}.`,
 	alternates: {
 		canonical: `${getAppUrl()}/onboarding/privacidad`,
 	},
@@ -101,14 +105,14 @@ export default function PrivacidadPage() {
 								país aproximado, origen del tráfico).
 							</li>
 							<li>
-								<strong>Analítica interna de GodCode</strong>, almacenada en nuestros sistemas para
+								<strong>Analítica interna de {LANDING_COMPANY_NAME}</strong>, almacenada en nuestros sistemas para
 								medir el rendimiento de la landing, los menús digitales de cada negocio y el panel
 								super administrador (visitas, rutas, país aproximado, identificadores de sesión
 								seudonimizados).
 							</li>
 						</ul>
 						<p className="mt-2">
-							Estas mediciones aplican tanto a quienes visitan la web pública de GodCode como a los
+							Estas mediciones aplican tanto a quienes visitan la web pública de {LANDING_COMPANY_NAME} como a los
 							clientes finales que navegan el home y el menú digital de los negocios alojados en la
 							plataforma. No usamos cookies de publicidad comportamental propias.
 						</p>

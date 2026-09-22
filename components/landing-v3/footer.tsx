@@ -1,6 +1,11 @@
 import Link from "next/link";
 
-import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
+import {
+	LANDING_BRAND_ALTERNATE,
+	LANDING_COMPANY_NAME,
+	LANDING_PRODUCT_NAME,
+	LANDING_SUPPORT_EMAIL,
+} from "@/lib/landing/brand";
 import type { LandingSocialLink } from "@/lib/landing/contact";
 
 import { LandingBrandMark } from "./landing-brand-mark";
@@ -14,7 +19,7 @@ const footerLinks = [
 	{ label: "Funciones", href: "#funciones" },
 	{ label: "Precios", href: "#precios" },
 	{ label: "FAQ", href: "#faq" },
-	{ label: "Sobre Gcode", href: "/sobre-godcode" },
+	{ label: `Sobre ${LANDING_COMPANY_NAME}`, href: "/sobre-godcode" },
 	{ label: "Negocios", href: "/onboarding/negocios" },
 	{ label: "Crear tienda", href: "/onboarding" },
 	{ label: "Contacto", href: "#contacto" },
@@ -93,8 +98,11 @@ export function Footer({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 							Abiertos a integraciones con hardware POS, pasarelas de pago y flotas de
 							delivery.
 						</p>
+						<p className="mt-4 text-base leading-relaxed text-[#71717a]">
+							{LANDING_COMPANY_NAME} también desarrolla páginas web y sistemas a medida.
+						</p>
 						<address className="mt-6 not-italic text-base leading-relaxed text-[#71717a]">
-							Gcode HQ
+							{LANDING_COMPANY_NAME}
 							<br />
 							Santiago, Chile
 							<br />
@@ -106,9 +114,16 @@ export function Footer({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 				<div className="flex flex-col items-center gap-8 py-12 md:flex-row md:justify-between">
 					<div className="flex items-center gap-3">
 						<LandingBrandMark variant="onLight" className="h-8" />
-						<p className="text-sm text-[#71717a]">
-							© {new Date().getFullYear()} Gcode. Todos los derechos reservados.
-						</p>
+						<div className="text-sm text-[#71717a]">
+							<p>
+								© {new Date().getFullYear()} {LANDING_COMPANY_NAME}. Todos los derechos reservados.
+							</p>
+							{/* Mención visible del nombre anterior: mantiene la home en las búsquedas por "godcode". */}
+							<p className="mt-1">
+								{LANDING_PRODUCT_NAME} es un producto de {LANDING_COMPANY_NAME}, antes{" "}
+								{LANDING_BRAND_ALTERNATE}.
+							</p>
+						</div>
 					</div>
 
 					{directSocialLinks.length > 0 ? (

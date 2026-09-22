@@ -5,7 +5,13 @@ import { getPublicPlansForLanding } from "@/lib/plans/public-plans";
 import { resolveRegionalPlanPrice } from "@/lib/plans/plan-regional-pricing";
 import { getAppUrl } from "@/lib/tenant/app-url";
 
-import { LANDING_BRAND_ALTERNATE, LANDING_BRAND_NAME, LANDING_SUPPORT_EMAIL } from "./brand";
+import {
+	LANDING_BRAND_ALTERNATE,
+	LANDING_COMPANY_DESCRIPTION,
+	LANDING_COMPANY_NAME,
+	LANDING_PRODUCT_NAME,
+	LANDING_SUPPORT_EMAIL,
+} from "./brand";
 import { LANDING_FAQ } from "./faq";
 import { formatLlmsTxtLink } from "@/lib/seo/llms-txt-format";
 
@@ -30,19 +36,22 @@ export async function getMainDomainLlmsTxt(isFullVersion = false): Promise<strin
 	let markdown = "";
 
 	if (isFullVersion) {
-		markdown += `# ${LANDING_BRAND_NAME} (${LANDING_BRAND_ALTERNATE}) - Plataforma SaaS para restaurantes\n\n`;
-		markdown += `> ${LANDING_BRAND_NAME} es la plataforma todo-en-uno para restaurantes y negocios con sucursales: menú digital, pedidos online, punto de venta (POS), delivery e inventario. Sin comisiones por venta.\n\n`;
+		markdown += `# ${LANDING_PRODUCT_NAME} por ${LANDING_COMPANY_NAME} (antes ${LANDING_BRAND_ALTERNATE}) - Plataforma SaaS para restaurantes\n\n`;
+		markdown += `> ${LANDING_PRODUCT_NAME} es la plataforma todo-en-uno de ${LANDING_COMPANY_NAME} para restaurantes y negocios con sucursales: menú digital, pedidos online, punto de venta (POS), delivery e inventario. Sin comisiones por venta.\n\n`;
 		markdown += `Archivo detallado para modelos de lenguaje (LLMs) y motores de búsqueda generativos (GEO).\n\n`;
 	} else {
-		markdown += `# ${LANDING_BRAND_NAME}\n\n`;
-		markdown += `> Menú digital, pedidos online y caja para restaurantes. Sin comisiones por venta. También conocido como ${LANDING_BRAND_ALTERNATE}.\n\n`;
-		markdown += `Resumen optimizado para LLMs y GEO sobre el producto ${LANDING_BRAND_NAME}.\n\n`;
+		markdown += `# ${LANDING_PRODUCT_NAME} por ${LANDING_COMPANY_NAME}\n\n`;
+		markdown += `> Menú digital, pedidos online y caja para restaurantes. Sin comisiones por venta. También conocido como Gcode o ${LANDING_BRAND_ALTERNATE}.\n\n`;
+		markdown += `Resumen optimizado para LLMs y GEO sobre ${LANDING_COMPANY_NAME} y su producto ${LANDING_PRODUCT_NAME}.\n\n`;
 	}
+
+	markdown += `## Quién está detrás\n`;
+	markdown += `${LANDING_COMPANY_DESCRIPTION}\n\n`;
 
 	markdown += `## Enlaces principales\n`;
 	markdown += `${formatLlmsTxtLink("Sitio principal", `${base}/`, "Página de inicio")}\n`;
 	markdown += `${formatLlmsTxtLink("Registro y onboarding", `${base}/onboarding`, "Crear cuenta nueva")}\n`;
-	markdown += `${formatLlmsTxtLink("Sobre la marca", `${base}/sobre-godcode`, "Información institucional")}\n`;
+	markdown += `${formatLlmsTxtLink(`Sobre ${LANDING_COMPANY_NAME}`, `${base}/sobre-godcode`, "Información institucional: estudio web y creadores de Gcode POS")}\n`;
 	if (isFullVersion) {
 		markdown += `${formatLlmsTxtLink("Resumen IA (llms.txt)", `${base}/llms.txt`, "Versión resumida para LLMs")}\n`;
 	} else {
@@ -50,8 +59,8 @@ export async function getMainDomainLlmsTxt(isFullVersion = false): Promise<strin
 	}
 	markdown += `\n`;
 
-	markdown += `## Qué es ${LANDING_BRAND_NAME}\n`;
-	markdown += `${LANDING_BRAND_NAME} ayuda a restaurantes y negocios con sucursales a vender online con:\n`;
+	markdown += `## Qué es ${LANDING_PRODUCT_NAME}\n`;
+	markdown += `${LANDING_PRODUCT_NAME} ayuda a restaurantes y negocios con sucursales a vender online con:\n`;
 	markdown += `- Menú digital con fotos, categorías y precios\n`;
 	markdown += `- Pedidos online y carrito\n`;
 	markdown += `- Punto de venta (caja) y comandas\n`;

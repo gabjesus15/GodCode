@@ -60,7 +60,7 @@ const defaultSlides: LandingSlide[] = [
 export const defaultLandingMediaBundle: LandingMediaBundle = {
   hero: {
     laptopSrc: publicFile("menu_carrusel_mobil.png"),
-    laptopAlt: "Menú con carrusel de productos en GodCode",
+    laptopAlt: "Menú con carrusel de productos en Gcode POS",
     phoneSrc: publicFile("home_menu_mobil.jpg"),
     phoneAlt: "Menú digital en el celular del cliente",
   },

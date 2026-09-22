@@ -103,11 +103,11 @@ export function Hero({
 				{/* Copy */}
 				<div className="z-10 flex flex-col items-center text-center lg:items-start lg:text-left lg:py-6">
 					<p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-[#4f5bff] sm:mb-4 lg:mb-5">
-						{"// "}EL POS Y MENÚ DIGITAL
+						{"// "}GCODE LABS · EL POS Y MENÚ DIGITAL
 					</p>
 
 					<h1 className="w-full font-display text-[clamp(3.5rem,16vw,7.5rem)] leading-[0.88] tracking-[-0.02em] text-white lg:text-[clamp(5.5rem,7.5vw,13.75rem)] lg:leading-[0.85]">
-						<span className="sr-only">Menú digital y POS para restaurantes — Gcode</span>
+						<span className="sr-only">Gcode POS: menú digital y punto de venta para restaurantes, por Gcode Labs</span>
 						<span aria-hidden="true">GCODE</span>
 					</h1>
 
