@@ -20,7 +20,9 @@
        cromo < tarjeta < superficie interior. El cromo sube de #0c0c0e a
        #151518 para no leerse como una franja negra pegada al menú. */
     --menu-chrome: #151518;
-    --menu-chrome-glass: rgba(21, 21, 24, 0.84);
+    /* Cristal al 76%: deja pasar, difuminados, los colores de lo que hay
+       debajo (banner, fotos), que es lo que le gustó al cliente. */
+    --menu-chrome-glass: rgba(21, 21, 24, 0.76);
     --menu-surface: #1b1b1e;
     --menu-surface-2: #27272b;
     /* Escenario de la foto de producto: solo se ve con imágenes sin fondo
@@ -78,7 +80,7 @@
        página gris claro < cromo casi blanco < tarjeta blanco puro. */
     --menu-canvas: #f0f0f0;
     --menu-chrome: #fafafa;
-    --menu-chrome-glass: rgba(250, 250, 250, 0.9);
+    --menu-chrome-glass: rgba(250, 250, 250, 0.76);
     --menu-surface: #ffffff;
     --menu-surface-2: #f0f0f0;
     /* Gris muy suave, no blanco: un producto claro sobre blanco puro
@@ -145,7 +147,11 @@
     z-index: var(--z-sticky-header, 100);
     padding: calc(8px + env(safe-area-inset-top)) 0 8px;
     pointer-events: auto;
-    background: var(--menu-chrome);
+    /* Cristal en todos los tamaños: un solo elemento fijo, así que el
+       desenfoque es asumible también en móvil (menor radio que en escritorio). */
+    background: var(--menu-chrome-glass);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(14px) saturate(160%);
     color: var(--menu-fg);
     border-bottom: 1px solid var(--menu-line);
     box-shadow: var(--menu-shadow-header);
@@ -518,9 +524,14 @@ section {
 
 @media (min-width: 769px) {
     .navbar-sticky {
-        background: var(--menu-chrome-glass);
         -webkit-backdrop-filter: blur(20px) saturate(160%);
         backdrop-filter: blur(20px) saturate(160%);
+    }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+    .navbar-sticky {
+        background: var(--menu-chrome);
     }
 }
 
