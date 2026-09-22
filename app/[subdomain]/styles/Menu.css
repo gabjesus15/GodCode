@@ -868,6 +868,8 @@ html, body {
  * El color iba al 62% de blanco: sobre el fondo claro de un tenant son 3.3:1 a
  * 11px, por debajo del 4.5:1 que pide el texto normal. Al 88% pasa.
  */
+/* Una sola línea con puntos suspensivos: el nombre entero está en el título de
+   la sección al llegar a ella, y la tira se mantiene baja. */
 .icon-list-card-name {
     font-size: 0.7rem;
     font-weight: 500;
@@ -877,12 +879,9 @@ html, body {
     max-width: 86px;
     text-align: center;
     line-height: 1.2;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
+    white-space: nowrap;
     overflow: hidden;
-    text-wrap: balance;
+    text-overflow: ellipsis;
 }
 
 .icon-list-card.active .icon-list-card-name {
