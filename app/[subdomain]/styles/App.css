@@ -127,7 +127,7 @@
 .tenant-theme-vars[data-scheme="light"][data-scheme-mode="manual"] .tenant-shell-root {
   background:
     linear-gradient(var(--bg-primary, transparent), var(--bg-primary, transparent)),
-    var(--menu-chrome, #fffdfa);
+    var(--menu-canvas, #fffdfa);
 }
 
 /* Espejo del oscuro: allí la imagen se hunde hacia el negro (brillo 0.46) y
@@ -142,7 +142,7 @@
 .tenant-theme-vars[data-scheme="dark"][data-scheme-mode="manual"] .tenant-shell-root {
   background:
     linear-gradient(var(--bg-primary, transparent), var(--bg-primary, transparent)),
-    var(--menu-chrome, #0c0c0e);
+    var(--menu-canvas, #0c0c0e);
 }
 
 .tenant-content-layer {

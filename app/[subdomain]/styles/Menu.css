@@ -12,8 +12,14 @@
    entra el acento; el color de precio del menú no se usa en tarjetas nuevas.
    ----------------------------------------------------------------------------- */
 .tenant-theme-vars {
-    --menu-chrome: #0c0c0e;
-    --menu-chrome-glass: rgba(12, 12, 14, 0.82);
+    /* Lienzo de página en modo manual (App.css): neutro, sin tinte. */
+    --menu-canvas: #0c0c0e;
+    /* Cromo (cabecera y barra inferior): gris oscuro con un 9% del color del
+       local. A #0c0c0e casi negro la cabecera se leía como una franja ajena
+       pegada encima del menú; así es un poco más clara y "es del negocio":
+       cálida con un rojo, fría con un azul, verdosa con un verde. */
+    --menu-chrome: color-mix(in srgb, var(--menu-accent) 9%, #18181c);
+    --menu-chrome-glass: color-mix(in srgb, var(--menu-chrome) 84%, transparent);
     --menu-surface: #161518;
     --menu-surface-2: #201f23;
     --menu-surface-glass: rgba(22, 21, 24, 0.72);
@@ -48,8 +54,9 @@
 
 .tenant-theme-vars[data-scheme="light"] {
     color-scheme: light;
-    --menu-chrome: #fffdfa;
-    --menu-chrome-glass: rgba(255, 253, 250, 0.86);
+    --menu-canvas: #fffdfa;
+    --menu-chrome: color-mix(in srgb, var(--menu-accent) 4%, #fffdfa);
+    --menu-chrome-glass: color-mix(in srgb, var(--menu-chrome) 86%, transparent);
     --menu-surface: #ffffff;
     --menu-surface-2: #f5f2ec;
     --menu-surface-glass: rgba(255, 255, 255, 0.78);
