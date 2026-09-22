@@ -14,6 +14,9 @@ type PoweredByGcodeProps = {
 	surface?: PoweredBySurface;
 	/** Si false, solo texto (útil cuando la misma vista ya muestra el logo). */
 	showMark?: boolean;
+	/** Con logo del local, el pie del menú pasa a ser el sello "local | Gcode". */
+	logoUrl?: string | null;
+	brandName?: string;
 };
 
 /**
@@ -24,11 +27,33 @@ export function PoweredByGcode({
 	tenantSlug = null,
 	surface = "menu",
 	showMark,
+	logoUrl = null,
+	brandName = "",
 }: PoweredByGcodeProps) {
 	const t = useTranslations("tenant.menu");
 	const href = buildPoweredByHref({ tenantSlug, surface });
 	// En home ya está el logo en "REGISTRAR MI NEGOCIO".
 	const withMark = showMark ?? surface !== "home";
+	const ariaLabel = t("poweredBy.aria", { brand: LANDING_BRAND_NAME });
+
+	/* Sello de las dos marcas: logo del local | marca Gcode. Sustituye al texto
+	   "Hecho con" en el pie del menú (decisión del cliente); el nombre accesible
+	   lo conserva. La marca Gcode es la "G" del favicon, que funciona igual en
+	   claro y en oscuro. */
+	if (surface === "menu" && logoUrl) {
+		return (
+			<a href={href} className="powered-by-gcode powered-by-gcode--menu powered-by-lockup" rel="noopener noreferrer" aria-label={ariaLabel}>
+				<span className="powered-by-lockup__tenant">
+					<Image src={logoUrl} alt={brandName} width={36} height={36} className="powered-by-lockup__tenant-logo" unoptimized />
+				</span>
+				<span className="powered-by-lockup__divider" aria-hidden />
+				<span className="powered-by-lockup__gcode" aria-hidden>
+					<Image src="/favicon.png" alt="" width={22} height={22} className="powered-by-lockup__gmark" />
+					<span className="powered-by-lockup__wordmark">{LANDING_BRAND_NAME.toUpperCase()}</span>
+				</span>
+			</a>
+		);
+	}
 
 	return (
 		<a
@@ -39,7 +64,7 @@ export function PoweredByGcode({
 			   texto visible. Decia solo "Gcode: menú digital…" mientras en pantalla
 			   pone "Hecho con Gcode", asi que quien navega por voz no podia activarlo
 			   leyendo lo que veia. */
-			aria-label={t("poweredBy.aria", { brand: LANDING_BRAND_NAME })}
+			aria-label={ariaLabel}
 		>
 			<span className="powered-by-gcode__label">{t("poweredBy.madeWith")}</span>
 			<span className="powered-by-gcode__brand">

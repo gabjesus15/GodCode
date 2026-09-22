@@ -211,7 +211,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 						onActiveSectionChange={onActiveSectionChange}
 					/>
 					{!isEmbeddedPreview ? (
-						<PoweredByGcode tenantSlug={tenantSlug} surface="menu" />
+						<PoweredByGcode tenantSlug={tenantSlug} surface="menu" logoUrl={effectiveLogoUrl} brandName={displayName} />
 					) : null}
 				</main>
 
