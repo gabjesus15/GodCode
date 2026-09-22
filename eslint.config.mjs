@@ -36,6 +36,14 @@ const eslintConfig = defineConfig([
       "@next/next/no-html-link-for-pages": "off",
     },
   },
+  // Imágenes generadas con ImageResponse (Satori): solo aceptan <img> plano. La regla ya las
+  // salta en Linux, pero en Windows su chequeo de ruta falla; así el resultado es igual en ambos.
+  {
+    files: ["app/**/opengraph-image.tsx", "app/**/twitter-image.tsx", "app/**/icon.tsx"],
+    rules: {
+      "@next/next/no-img-element": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;
