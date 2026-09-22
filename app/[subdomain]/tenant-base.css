@@ -28,6 +28,12 @@ body {
 	color: var(--text-primary) !important;
 }
 
+/* La tipografía que eligió el local en el panel (ver surface-theme.ts). Todas
+   las caras se autoalojan en app/layout.tsx; aquí solo se elige cuál manda. */
+.tenant-theme-vars {
+	font-family: var(--tenant-font, var(--font-montserrat), "Montserrat"), system-ui, sans-serif;
+}
+
 :root {
 	--color-text-primary: var(--tenant-primary, #fff);
 	--color-text-secondary: var(--accent-secondary, #d4d4d8);

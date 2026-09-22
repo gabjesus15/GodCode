@@ -9,8 +9,11 @@ const THEME_ROOT_SELECTOR = ".tenant-theme-vars";
 function readScheme(): SurfaceScheme {
 	if (typeof document === "undefined") return "dark";
 	const root = document.querySelector<HTMLElement>(THEME_ROOT_SELECTOR) ?? document.documentElement;
-	const background = getComputedStyle(root).getPropertyValue("--bg-primary");
-	return resolveSurfaceScheme(background);
+	const styles = getComputedStyle(root);
+	return resolveSurfaceScheme(
+		styles.getPropertyValue("--bg-primary"),
+		styles.getPropertyValue("--tenant-surface-scheme"),
+	);
 }
 
 /**

@@ -13,6 +13,7 @@ import {
 	readPreviewThemeParamFromLocation,
 } from "@/lib/store-theme/preview-theme-messaging";
 import { decodePreviewThemeParam } from "@/lib/store-theme/preview-theme-codec";
+import { applyTenantSurfaceCssVars } from "@/lib/store-theme/surface-theme";
 import {
 	normalizeNavbarType,
 	normalizeNavigationMode,
@@ -68,6 +69,7 @@ export function useMenuPreviewTheme({
 
 	const embeddedLivePreviewRef = useRef(false);
 	const revertCssRef = useRef<(() => void) | null>(null);
+	const revertSurfaceRef = useRef<(() => void) | null>(null);
 
 	const isReallyEmbedded =
 		isEmbeddedPreview
@@ -94,6 +96,8 @@ export function useMenuPreviewTheme({
 		revertCssRef.current = isReallyEmbeddedRef.current
 			? applyEmbeddedPreviewThemeStyles(previewTheme)
 			: applyThemeCssVarsToRoot(previewTheme);
+		revertSurfaceRef.current?.();
+		revertSurfaceRef.current = applyTenantSurfaceCssVars(previewTheme);
 	}, [
 		setNavbarType,
 		setNavigationMode,
@@ -117,6 +121,8 @@ export function useMenuPreviewTheme({
 		setPreviewLogoUrl(null);
 		revertCssRef.current?.();
 		revertCssRef.current = null;
+		revertSurfaceRef.current?.();
+		revertSurfaceRef.current = null;
 	}, [
 		setNavbarType,
 		setNavigationMode,
@@ -173,5 +179,6 @@ export function useMenuPreviewTheme({
 
 	useEffect(() => () => {
 		revertCssRef.current?.();
+		revertSurfaceRef.current?.();
 	}, []);
 }

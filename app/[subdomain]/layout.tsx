@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { buildTenantThemeCssString } from "@/lib/store-theme/apply-theme-css-vars";
+import { buildTenantSurfaceCssString, resolveTenantSurfaceSchemeAttr } from "@/lib/store-theme/surface-theme";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedCompany } from "../../utils/tenant-cache";
@@ -215,6 +216,9 @@ export default async function TenantLayout({
   const baseUrl = `${protocol}://${host}${pathPrefix}`;
 
   const tenantThemeCss = buildTenantThemeCssString(theme);
+  // Modo, tipografía y color del nombre: bloque aparte, fuera del contrato compartido.
+  const tenantSurfaceCss = buildTenantSurfaceCssString(theme);
+  const tenantSurfaceScheme = resolveTenantSurfaceSchemeAttr(theme);
 
   const businessDescription = buildTenantStorefrontDescription({
     displayName: theme.displayName ?? company?.name ?? "GodCode",
@@ -290,7 +294,8 @@ export default async function TenantLayout({
       {/* BreadcrumbList para rich results */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <style>{tenantThemeCss}</style>
-      <div className="tenant-theme-vars">
+      <style>{tenantSurfaceCss}</style>
+      <div className="tenant-theme-vars" data-scheme={tenantSurfaceScheme}>
         <TenantShell>{children}</TenantShell>
       </div>
     </QueryProvider>

@@ -8,6 +8,14 @@ import Image from "next/image";
 import { STORE_THEME_COLOR_FIELDS, STORE_THEME_COLOR_HELPERS, STORE_THEME_TEMPLATES } from "../../shared/customer-account-store-theme-constants";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { formatThemeColor, parseThemeColor } from "@/lib/store-theme/apply-theme-css-vars";
+import {
+  STORE_THEME_FONTS,
+  normalizeBrandNameColor,
+  normalizeFontFamily,
+  normalizeSurfaceScheme,
+  type StoreThemeFontId,
+  type SurfaceSchemeSetting,
+} from "@/lib/store-theme/theme-config";
 import { StoreThemePreviewPanel } from "../../store-theme/store-theme-preview-panel";
 import {
   StoreThemeNavbarPicker,
@@ -372,6 +380,116 @@ export function AccountTiendaTab({
                 )}
               </Card>
             </div>
+
+            {/* Apariencia: modo, tipografía y color del nombre */}
+            {storeThemeDraft ? (
+              <Card compact>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Apariencia</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="text-xs font-medium text-[#6e6e73]">
+                    Modo claro u oscuro
+                    <div className="mt-1.5 grid grid-cols-3 gap-1 rounded-xl border border-[#d2d2d7] bg-white p-1" role="radiogroup" aria-label="Modo claro u oscuro">
+                      {(
+                        [
+                          ["auto", "Automático"],
+                          ["light", "Claro"],
+                          ["dark", "Oscuro"],
+                        ] as Array<[SurfaceSchemeSetting, string]>
+                      ).map(([value, label]) => {
+                        const active = normalizeSurfaceScheme(storeThemeDraft.surfaceScheme) === value;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            role="radio"
+                            aria-checked={active}
+                            disabled={busy}
+                            onClick={() => setStoreThemeDraft((prev) => (prev ? { ...prev, surfaceScheme: value } : prev))}
+                            className={`h-9 rounded-lg text-xs font-semibold transition-colors ${
+                              active ? "bg-[#1d1d1f] text-white" : "text-[#6e6e73] hover:bg-[#f0f0f5]"
+                            } disabled:opacity-60`}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-1 text-[10px] text-[#a1a1a6]">
+                      Tarjetas, cabecera y barra del menú. En automático se decide por el color de fondo.
+                    </p>
+                  </div>
+
+                  <label className="block text-xs font-medium text-[#6e6e73]">
+                    Tipografía
+                    <select
+                      value={normalizeFontFamily(storeThemeDraft.fontFamily)}
+                      onChange={(e) =>
+                        setStoreThemeDraft((prev) => (prev ? { ...prev, fontFamily: e.target.value as StoreThemeFontId } : prev))
+                      }
+                      disabled={busy}
+                      className="mt-1.5 h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm text-[#1d1d1f] focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60"
+                    >
+                      {STORE_THEME_FONTS.map((font) => (
+                        <option key={font.id} value={font.id}>
+                          {font.label}
+                        </option>
+                      ))}
+                    </select>
+                    {(() => {
+                      const font = STORE_THEME_FONTS.find((entry) => entry.id === normalizeFontFamily(storeThemeDraft.fontFamily)) ?? STORE_THEME_FONTS[0];
+                      return (
+                        <>
+                          <p
+                            className="mt-2 truncate rounded-xl border border-[#e5e5ea] bg-[#fbfbfd] px-3 py-2 text-base text-[#1d1d1f]"
+                            style={{ fontFamily: `var(${font.cssVar}), "${font.label}", ${font.generic}` }}
+                            aria-hidden
+                          >
+                            {storeThemeDraft.displayName.trim() || "Tu local"} · Pizza Margarita $9.90
+                          </p>
+                          <p className="mt-1 text-[10px] text-[#a1a1a6]">{font.description}</p>
+                        </>
+                      );
+                    })()}
+                  </label>
+
+                  <div className="text-xs font-medium text-[#6e6e73] sm:col-span-2">
+                    Color del nombre del local
+                    <div className="mt-1.5 flex flex-wrap items-center gap-3 rounded-xl border border-[#d2d2d7] bg-white px-3 py-2">
+                      <label className="flex items-center gap-2 text-xs text-[#1d1d1f]">
+                        <input
+                          type="checkbox"
+                          checked={!storeThemeDraft.brandNameColor}
+                          disabled={busy}
+                          onChange={(e) =>
+                            setStoreThemeDraft((prev) =>
+                              prev ? { ...prev, brandNameColor: e.target.checked ? "" : prev.primaryColor } : prev,
+                            )
+                          }
+                          className="h-4 w-4 accent-indigo-500"
+                        />
+                        Usar el color primario
+                      </label>
+                      {storeThemeDraft.brandNameColor ? (
+                        <>
+                          <input
+                            type="color"
+                            value={normalizeBrandNameColor(storeThemeDraft.brandNameColor) || "#ffffff"}
+                            disabled={busy}
+                            onChange={(e) => setStoreThemeDraft((prev) => (prev ? { ...prev, brandNameColor: e.target.value } : prev))}
+                            className="h-8 w-10 cursor-pointer rounded-md border border-[#d2d2d7] bg-transparent"
+                            aria-label="Color del nombre del local"
+                          />
+                          <span className="font-mono text-xs text-[#6e6e73]">{storeThemeDraft.brandNameColor}</span>
+                        </>
+                      ) : null}
+                    </div>
+                    <p className="mt-1 text-[10px] text-[#a1a1a6]">
+                      El nombre va en la cabecera del menú. Con el color primario se ajusta solo para que se lea sobre el fondo.
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            ) : null}
 
             {/* Colores */}
             <Card compact>

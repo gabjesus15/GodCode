@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import Script from "next/script";
-import { Geist, Geist_Mono, Montserrat, Space_Grotesk } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Lora, Montserrat, Nunito, Playfair_Display, Poppins, Space_Grotesk } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -59,6 +59,18 @@ const montserrat = Montserrat({
   subsets: ["latin"],
   display: "swap",
 });
+
+/**
+ * Tipografías que el local puede elegir en el panel (STORE_THEME_FONTS). Solo
+ * se declaran: el navegador descarga únicamente la que `--tenant-font` usa.
+ * Poppins no es variable, así que lleva los pesos que pide el menú.
+ */
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
+const poppins = Poppins({ variable: "--font-poppins", subsets: ["latin"], display: "swap", weight: ["400", "500", "600", "700", "800"] });
+const nunito = Nunito({ variable: "--font-nunito", subsets: ["latin"], display: "swap" });
+const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"], display: "swap" });
+const lora = Lora({ variable: "--font-lora", subsets: ["latin"], display: "swap" });
+const tenantFontVariables = [montserrat, inter, poppins, nunito, playfair, lora].map((font) => font.variable).join(" ");
 
 
 /**
@@ -152,7 +164,7 @@ export default async function RootLayout({
         suppressHydrationWarning
         className={
           isTenantRoute
-            ? `${montserrat.variable} bg-background text-foreground antialiased transition-colors duration-200`
+            ? `${tenantFontVariables} bg-background text-foreground antialiased transition-colors duration-200`
             : `${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} bg-background text-foreground antialiased transition-colors duration-200`
         }
       >

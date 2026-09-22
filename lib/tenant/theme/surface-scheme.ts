@@ -26,7 +26,13 @@ const LIGHT_THRESHOLD = 0.4;
  * `transparent`; un fondo casi transparente deja ver el `#0a0a0a` del sitio,
  * así que cuenta como oscuro.
  */
-export function resolveSurfaceScheme(backgroundColor: string | null | undefined): SurfaceScheme {
+export function resolveSurfaceScheme(
+	backgroundColor: string | null | undefined,
+	/** Lo que eligió el local en el panel: "light"/"dark" mandan, "auto" (o nada) decide por el fondo. */
+	override?: string | null,
+): SurfaceScheme {
+	const chosen = String(override ?? "").trim().toLowerCase();
+	if (chosen === "light" || chosen === "dark") return chosen;
 	const parsed = parseThemeColor(String(backgroundColor ?? "").trim(), "#0a0a0a");
 	if (parsed.alpha < 0.05) return "dark";
 	return luminance(parsed.hex) >= LIGHT_THRESHOLD ? "light" : "dark";

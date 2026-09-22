@@ -17,6 +17,44 @@ export type NavigationMode = (typeof NAVIGATION_MODES)[number];
 export const PRODUCT_DETAILS_MODES = ["modal-premium", "inline"] as const;
 export type ProductDetailsMode = (typeof PRODUCT_DETAILS_MODES)[number];
 
+/** "auto" decide por la luminancia del color de fondo (ver lib/tenant/theme/surface-scheme). */
+export const SURFACE_SCHEMES = ["auto", "light", "dark"] as const;
+export type SurfaceSchemeSetting = (typeof SURFACE_SCHEMES)[number];
+
+/**
+ * Tipografías del menú público. Cada una se autoaloja con `next/font` en
+ * app/layout.tsx y expone su variable; el menú solo cambia `--tenant-font`.
+ */
+export const STORE_THEME_FONTS = [
+  { id: "montserrat", label: "Montserrat", cssVar: "--font-montserrat", generic: "sans-serif", description: "Geométrica y moderna. La de siempre." },
+  { id: "inter", label: "Inter", cssVar: "--font-inter", generic: "sans-serif", description: "Neutra y muy legible en pantalla." },
+  { id: "poppins", label: "Poppins", cssVar: "--font-poppins", generic: "sans-serif", description: "Redonda y amable, con carácter." },
+  { id: "nunito", label: "Nunito", cssVar: "--font-nunito", generic: "sans-serif", description: "Suave y cercana, ideal para cafeterías." },
+  { id: "playfair", label: "Playfair Display", cssVar: "--font-playfair", generic: "serif", description: "Elegante, para restaurantes de mantel." },
+  { id: "lora", label: "Lora", cssVar: "--font-lora", generic: "serif", description: "Serif cálida y fácil de leer." },
+] as const;
+export type StoreThemeFontId = (typeof STORE_THEME_FONTS)[number]["id"];
+
+export function normalizeSurfaceScheme(value: unknown): SurfaceSchemeSetting {
+  const raw = String(value ?? "").trim().toLowerCase();
+  return (SURFACE_SCHEMES as readonly string[]).includes(raw) ? (raw as SurfaceSchemeSetting) : "auto";
+}
+
+export function normalizeFontFamily(value: unknown): StoreThemeFontId {
+  const raw = String(value ?? "").trim().toLowerCase();
+  return STORE_THEME_FONTS.some((font) => font.id === raw) ? (raw as StoreThemeFontId) : "montserrat";
+}
+
+/** Hex de 6 dígitos o vacío (= automático). Cualquier otra cosa se descarta. */
+export function normalizeBrandNameColor(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (/^#[a-fA-F0-9]{6}$/.test(raw)) return raw.toLowerCase();
+  if (/^#[a-fA-F0-9]{3}$/.test(raw)) {
+    return `#${raw.slice(1).split("").map((c) => c + c).join("")}`.toLowerCase();
+  }
+  return "";
+}
+
 export const PRODUCT_CARD_STYLES = [
   "glass",
   "layout-clean",
@@ -114,6 +152,9 @@ export function normalizeStoreThemeConfig(
     navigationMode: normalizeNavigationMode(value.navigationMode ?? defaults.navigationMode),
     productCardStyle: normalizeProductCardStyle(value.productCardStyle ?? defaults.productCardStyle),
     productDetailsMode: normalizeProductDetailsMode(value.productDetailsMode ?? defaults.productDetailsMode),
+    surfaceScheme: normalizeSurfaceScheme(value.surfaceScheme ?? defaults.surfaceScheme),
+    brandNameColor: normalizeBrandNameColor(value.brandNameColor ?? defaults.brandNameColor),
+    fontFamily: normalizeFontFamily(value.fontFamily ?? defaults.fontFamily),
   };
 }
 

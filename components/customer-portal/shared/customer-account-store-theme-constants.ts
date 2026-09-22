@@ -24,6 +24,9 @@ export const STORE_THEME_FIELD_LABELS: Record<keyof StoreThemeConfig, string> = 
   navigationMode: "Modo de Navegación",
   productCardStyle: "Estilo de Tarjeta",
   productDetailsMode: "Modo de Detalles del Producto",
+  surfaceScheme: "Modo claro u oscuro",
+  brandNameColor: "Color del nombre",
+  fontFamily: "Tipografía",
 };
 
 export const DEFAULT_STORE_THEME: StoreThemeConfig = {
@@ -41,6 +44,9 @@ export const DEFAULT_STORE_THEME: StoreThemeConfig = {
   navigationMode: "scroll",
   productCardStyle: "glass",
   productDetailsMode: "modal-premium",
+  surfaceScheme: "auto",
+  brandNameColor: "",
+  fontFamily: "montserrat",
 };
 
 export const STORE_THEME_COLOR_HELPERS: Record<

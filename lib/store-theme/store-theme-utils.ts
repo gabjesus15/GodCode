@@ -167,6 +167,10 @@ export function buildStoreThemeChecklist(draft: StoreThemeConfig | null): ThemeC
   const ctaContrast      = contrastRatio(draft.primaryColor, "#ffffff");
   const priceContrast    = contrastRatio(draft.priceColor,   draft.backgroundColor);
   const discountContrast = contrastRatio(draft.discountColor, draft.backgroundColor);
+  // El nombre va sobre el cromo del header, que sigue al modo elegido (o al fondo).
+  const chromeBg =
+    draft.surfaceScheme === "light" ? "#fffdfa" : draft.surfaceScheme === "dark" ? "#0c0c0e" : draft.backgroundColor;
+  const brandNameContrast = draft.brandNameColor ? contrastRatio(draft.brandNameColor, chromeBg) : null;
   return [
     {
       id:     "cta-contrast",
@@ -186,6 +190,14 @@ export function buildStoreThemeChecklist(draft: StoreThemeConfig | null): ThemeC
       ok:     (discountContrast ?? 0) >= 3,
       detail: discountContrast == null ? "No se pudo calcular" : `Ratio ${discountContrast.toFixed(2)} (objetivo >= 3.0)`,
     },
+    ...(draft.brandNameColor
+      ? [{
+          id:     "brand-name-contrast",
+          title:  "Contraste del color del nombre",
+          ok:     (brandNameContrast ?? 0) >= 3,
+          detail: brandNameContrast == null ? "No se pudo calcular" : `Ratio ${brandNameContrast.toFixed(2)} (objetivo >= 3.0)`,
+        }]
+      : []),
     {
       id:     "display-name",
       title:  "Nombre visible definido",

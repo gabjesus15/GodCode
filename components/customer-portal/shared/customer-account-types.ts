@@ -353,6 +353,12 @@ export type StoreThemeConfig = {
   navigationMode?: string;
   productCardStyle?: string;
   productDetailsMode?: string;
+  /** Claro u oscuro para tarjetas y cromo del menú; "auto" sigue al color de fondo. */
+  surfaceScheme?: string;
+  /** Color del nombre del local en el header; vacío = color primario. */
+  brandNameColor?: string;
+  /** Tipografía del menú público (id de STORE_THEME_FONTS). */
+  fontFamily?: string;
 };
 
 export type StoreThemeResponse = {

@@ -132,6 +132,9 @@ export type PreviewThemePayload = {
 	navigationMode?: string;
 	productCardStyle?: string;
 	productDetailsMode?: string;
+	surfaceScheme?: string;
+	brandNameColor?: string;
+	fontFamily?: string;
 };
 
 export type BottomNavTab = "home" | "cart" | "contact" | "account";
