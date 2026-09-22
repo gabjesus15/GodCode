@@ -88,18 +88,35 @@
 	transition: transform 500ms var(--menu-ease);
 }
 
+/* Medidas que siguen al ancho de la tarjeta (cqi = 1% de su ancho). La tarjeta
+   mide entre ~160 y ~235px según la columna; con estas rampas la tipografía,
+   el aire y las líneas reservadas crecen con ella y la proporción alto/ancho
+   se queda estable (~1.6) en vez de "engordar" en las columnas anchas. */
+.gcard {
+	--gcard-pad-x: clamp(12px, 2px + 6cqi, 16px);
+	--gcard-pad-top: clamp(10px, 4px + 4cqi, 14px);
+	--gcard-name-size: clamp(0.875rem, 0.55rem + 3.3cqi, 1.05rem);
+	--gcard-desc-size: clamp(0.75rem, 0.58rem + 1.7cqi, 0.8125rem);
+	--gcard-price-size: clamp(0.9375rem, 0.77rem + 1.7cqi, 1.0625rem);
+	--gcard-desc-lines: 2;
+}
+
 .gcard__body {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
-	padding: 12px 14px 0;
+	gap: clamp(3px, 1cqi + 1px, 6px);
+	padding: var(--gcard-pad-top) var(--gcard-pad-x) 0;
 }
 
+/* El nombre reserva siempre dos líneas y la descripción las suyas: así todas
+   las tarjetas de una fila miden lo mismo tenga el texto una línea o cinco, y
+   el pie no baila de una a otra. */
 .gcard__name {
 	margin: 0;
-	font-size: 0.95rem;
+	font-size: var(--gcard-name-size);
 	font-weight: 600;
 	line-height: 1.25;
+	min-height: 2.5em;
 	letter-spacing: -0.01em;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
@@ -111,14 +128,24 @@
 
 .gcard__desc {
 	margin: 0;
-	font-size: 0.8125rem;
+	font-size: var(--gcard-desc-size);
 	line-height: 1.4;
+	min-height: calc(var(--gcard-desc-lines) * 1.4em);
 	color: var(--menu-fg-2);
 	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	line-clamp: 2;
+	-webkit-line-clamp: var(--gcard-desc-lines);
+	line-clamp: var(--gcard-desc-lines);
 	-webkit-box-orient: vertical;
 	overflow: hidden;
+}
+
+/* Con tarjeta ancha (4-5 columnas de escritorio, 2 en tableta) la descripción
+   va a tres líneas: es lo que mantiene la tarjeta alargada cuando la foto 4:3
+   ya es alta de por sí. Se decide por el ancho de la tarjeta, no de la pantalla. */
+@container (min-width: 200px) {
+	.gcard__desc {
+		--gcard-desc-lines: 3;
+	}
 }
 
 /* Detalle inline: la descripción se despliega dentro de la tarjeta. */
@@ -126,6 +153,7 @@
 	display: block;
 	-webkit-line-clamp: unset;
 	line-clamp: unset;
+	min-height: 0;
 	overflow: visible;
 	animation: gcard-reveal 220ms var(--menu-ease) both;
 }
@@ -156,20 +184,26 @@
 	align-items: center;
 	justify-content: space-between;
 	flex-wrap: wrap;
-	gap: 8px;
+	gap: 6px;
 	margin-top: auto;
-	padding: 10px 14px 12px;
+	padding: clamp(6px, 2px + 3cqi, 12px) var(--gcard-pad-x) clamp(10px, 4px + 4cqi, 14px);
 }
 
 .gcard__stepper,
 .gcard__add {
+	flex: 0 0 auto;
 	margin-left: auto;
 }
 
+/* El bloque del precio reserva siempre dos líneas (tachado + precio): así el
+   pie mide lo mismo en una tarjeta con oferta que en una sin ella y las filas
+   no se desnivelan. */
 .gcard__price {
 	display: flex;
 	flex-direction: column;
+	justify-content: flex-end;
 	min-width: 0;
+	min-height: calc(0.75rem * 1.15 + var(--gcard-price-size) * 1.15);
 	line-height: 1.15;
 	font-variant-numeric: tabular-nums;
 }
@@ -185,7 +219,7 @@
    esquema oscuro (donde el local los eligió) y ceden a la tinta en el claro,
    donde un precio blanco desaparecería. */
 .gcard__price-main {
-	font-size: 1rem;
+	font-size: var(--gcard-price-size);
 	font-weight: 600;
 	letter-spacing: -0.01em;
 	color: var(--price-color, var(--menu-fg));
@@ -335,54 +369,36 @@
 	color: var(--menu-fg);
 }
 
-/* Escritorio: la foto se queda en 4:3 (cuadrada se comía la tarjeta); la
-   altura extra la ponen la descripción a tres líneas y algo más de aire. */
-@media (min-width: 769px) {
-	.gcard__body {
-		gap: 6px;
-		padding: 14px 16px 0;
-	}
-
-	.gcard__name {
-		font-size: 1rem;
-	}
-
-	.gcard__desc {
-		-webkit-line-clamp: 3;
-		line-clamp: 3;
-	}
-
+/* Tarjeta estrecha en pantalla ancha (4-5 columnas a partir de ~165px): el
+   stepper completo "− 1 +" se encoge para caber junto al precio en la misma
+   línea en vez de bajar a otra y cambiar el alto del pie. Va antes del bloque
+   móvil para que ahí el "+" siga midiendo 40px. */
+@container (max-width: 199px) {
 	.gcard__foot {
-		padding: 12px 16px 14px;
+		padding-inline: 10px;
+	}
+
+	.gcard__stepper {
+		height: 40px;
+		padding: 0 2px;
+	}
+
+	.gcard__step {
+		width: 28px;
+		height: 28px;
+	}
+
+	.gcard__count {
+		min-width: 16px;
+		font-size: 0.8125rem;
 	}
 }
 
-/* --- Móvil: más compacta, misma jerarquía ----------------------------------- */
+/* --- Móvil: esquinas algo más cerradas, misma jerarquía --------------------- */
 
 @media (max-width: 640px) {
 	.gcard {
 		border-radius: 16px;
-	}
-
-	.gcard__body {
-		gap: 3px;
-		padding: 10px 12px 0;
-	}
-
-	.gcard__name {
-		font-size: 0.875rem;
-	}
-
-	.gcard__desc {
-		font-size: 0.75rem;
-	}
-
-	.gcard__foot {
-		padding: 6px 12px 10px;
-	}
-
-	.gcard__price-main {
-		font-size: 0.9375rem;
 	}
 }
 

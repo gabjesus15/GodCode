@@ -118,16 +118,23 @@
   }
 }
 
-/* Cristal y sidebar. La Cristal entra en columnas de ~190-230px: a 3 columnas
-   en escritorio salía una tarjeta de 330px, más ancha que alta, y la foto
-   dominaba tanto que la parrilla parecía de banners. */
+/* Cristal y sidebar. Los cortes están calculados para que la tarjeta mida
+   siempre entre ~160 y ~235px: cada columna nueva entra justo cuando cabe a
+   160px, y la anterior se retira antes de pasar de ~235. Así la tarjeta se
+   mantiene alargada en cualquier pantalla en vez de engordar hasta 330px
+   justo antes de un corte, que es lo que pasaba con cortes "redondos".
+
+     2 col  hasta 491   → 154–240px (la banda alta solo en tabletas pequeñas)
+     3 col  492 – 707   → 155–226px
+     4 col  708 – 913   → 165–216px
+     5 col  914 – 1160  → 170–219px (tope del catálogo) */
 .product-grid.grid-glass,
 .product-grid.grid-layout-sidebar {
   --grid-gap: 12px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-@container product-catalog (min-width: 560px) {
+@container product-catalog (min-width: 492px) {
   .product-grid.grid-glass,
   .product-grid.grid-layout-sidebar {
     --grid-gap: 14px;
@@ -135,7 +142,7 @@
   }
 }
 
-@container product-catalog (min-width: 760px) {
+@container product-catalog (min-width: 708px) {
   .product-grid.grid-glass,
   .product-grid.grid-layout-sidebar {
     --grid-gap: 16px;
@@ -143,9 +150,7 @@
   }
 }
 
-/* El catálogo tope mide 1160px (contenedor de 1200 menos relleno): con 5
-   columnas la tarjeta queda en ~219px, más alta que ancha, con la foto 4:3. */
-@container product-catalog (min-width: 980px) {
+@container product-catalog (min-width: 914px) {
   .product-grid.grid-glass,
   .product-grid.grid-layout-sidebar {
     grid-template-columns: repeat(5, minmax(0, 1fr));
