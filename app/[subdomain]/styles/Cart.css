@@ -326,8 +326,8 @@
 	height: 22px;
 	padding: 0 7px;
 	border-radius: 999px;
-	background: var(--cart-fg);
-	color: var(--cart-bg);
+	background: var(--cart-accent);
+	color: var(--cart-on-accent);
 	font-size: 0.75rem;
 	font-weight: 700;
 	line-height: 1;
@@ -374,7 +374,7 @@
 
 .cart-icon-btn:hover {
 	background: var(--cart-raised-2);
-	border-color: var(--cart-line-strong);
+	border-color: var(--cart-accent);
 }
 
 /* --- Avisos ------------------------------------------------------------------ */
@@ -713,6 +713,11 @@
 	transition: color 150ms ease;
 }
 
+.cart-stepper__btn:last-child {
+	background: var(--cart-accent);
+	color: var(--cart-on-accent);
+}
+
 .cart-stepper__btn--remove {
 	color: var(--cart-fg-2);
 }
@@ -968,7 +973,7 @@
 }
 
 .cart-totals__row--discount {
-	color: var(--cart-ok);
+	color: var(--discount-color, var(--cart-ok));
 }
 
 .cart-totals__row--grand {
@@ -984,7 +989,16 @@
 	font-size: 1.375rem;
 	font-weight: 700;
 	letter-spacing: -0.02em;
+	color: var(--price-color, var(--cart-fg));
+}
+
+/* Sobre papel claro un precio blanco desaparecería: ahí mandan la tinta y el verde propio. */
+.cart-overlay[data-scheme="light"] .cart-totals__row--grand .cart-money__main {
 	color: var(--cart-fg);
+}
+
+.cart-overlay[data-scheme="light"] .cart-totals__row--discount {
+	color: var(--cart-ok);
 }
 
 .cart-totals__row--grand .cart-money__local {
@@ -1127,9 +1141,9 @@ button.cart-recap__row {
 }
 
 .cart-segmented__opt.is-active {
-	background: var(--cart-seg-active);
-	color: var(--cart-fg);
-	box-shadow: var(--cart-seg-shadow);
+	background: var(--cart-accent);
+	color: var(--cart-on-accent);
+	box-shadow: 0 4px 12px var(--accent-shadow, rgba(0, 0, 0, 0.25));
 }
 
 /* --- Campos ------------------------------------------------------------------ */
@@ -1741,6 +1755,11 @@ textarea.cart-field {
 	color: var(--cart-fg-2);
 }
 
+.cart-method:hover .cart-method__chevron,
+.cart-recap__row:hover .cart-recap__chevron {
+	color: var(--cart-accent-ink);
+}
+
 .cart-method__chevron {
 	flex-shrink: 0;
 	color: var(--cart-fg-3);
@@ -1759,8 +1778,8 @@ textarea.cart-field {
 	place-items: center;
 	border-radius: 999px;
 	border: 1px solid var(--cart-line);
-	background: var(--cart-raised);
-	color: var(--cart-fg-2);
+	background: var(--cart-accent-soft);
+	color: var(--cart-accent-ink);
 }
 
 .cart-store-pay__total {
