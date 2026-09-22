@@ -76,9 +76,8 @@
 	aspect-ratio: 4 / 3;
 	overflow: hidden;
 	background:
-		radial-gradient(ellipse 70% 60% at 50% 42%, var(--menu-media-glow, transparent), transparent 100%),
-		var(--menu-media, var(--menu-surface-2));
-	border-bottom: 1px solid var(--menu-line);
+		radial-gradient(ellipse 65% 55% at 50% 45%, var(--menu-media-glow, transparent), transparent 100%),
+		linear-gradient(180deg, var(--menu-media-top, var(--menu-surface-2)), var(--menu-media-bottom, var(--menu-surface)));
 }
 
 .gcard__media .product-card-media {
