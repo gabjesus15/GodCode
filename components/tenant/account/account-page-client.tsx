@@ -2,12 +2,14 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
 
 import type { MenuAccountDeliveryOptions } from "@/lib/menu-account/delivery-options";
+import { useApplyTenantSurfaceScheme } from "@/lib/tenant/hooks/use-tenant-surface-scheme";
 
+import { useCartStore } from "../cart/cart-store";
 import { getTenantScopedPath } from "../utils/tenant-route";
 
 import { MenuAccountAuthPanel } from "./menu-account-auth-panel";
@@ -33,7 +35,15 @@ export function AccountPageClient({
 }: AccountPageClientProps) {
 	const t = useTranslations("tenant.account");
 	const pathname = usePathname();
+	const router = useRouter();
+	const searchParams = useSearchParams();
 	const menuPath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/menu"), [pathname]);
+	/* Claro u oscuro como en el menú: el SSR ya fija el modo manual; en
+	   automático lo decide el color de fondo y hay que resolverlo aquí también. */
+	useApplyTenantSurfaceScheme();
+	/* `?next=cart`: quien vino desde el carrito (botón de cuenta o cupón que pide
+	   sesión) vuelve al menú con el carrito abierto en cuanto entra. */
+	const returnToCart = searchParams.get("next") === "cart";
 
 	const [account, setAccount] = useState<MenuAccountPublic | null>(initialAccount);
 	const [notice, setNotice] = useState<"passwordChanged" | "linked" | null>(null);
@@ -78,6 +88,10 @@ export function AccountPageClient({
 						onAuthenticated={(nextAccount, how) => {
 							setNotice(how === "linked" ? "linked" : null);
 							setAccount(nextAccount);
+							if (returnToCart) {
+								useCartStore.getState().openCart();
+								router.push(menuPath);
+							}
 						}}
 						onPasswordReset={() => setNotice("passwordChanged")}
 					/>

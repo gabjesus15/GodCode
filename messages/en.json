@@ -353,7 +353,8 @@
             "branch_not_found": "Branch not found.",
             "bad_request": "Invalid data.",
             "server": "We could not validate the coupon. Try again."
-          }
+          },
+          "loginCta": "Sign in"
         },
         "actions": {
           "close": "Close",

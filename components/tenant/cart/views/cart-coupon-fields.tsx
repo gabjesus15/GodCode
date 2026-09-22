@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+
+import { getTenantScopedPath } from "../../utils/tenant-route";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -48,6 +51,11 @@ export function CartCouponFields({
 	const [draft, setDraft] = useState("");
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	/* Con "coupon_login_required" el error trae salida: entrar a la cuenta y
+	   volver al carrito. Sin eso el cliente se queda con un mensaje sin camino. */
+	const [needsLogin, setNeedsLogin] = useState(false);
+	const router = useRouter();
+	const pathname = usePathname();
 	const phone = clientPhone?.trim() || undefined;
 
 	// El descuento depende del subtotal: se revalida en silencio cuando el carrito cambia.
@@ -108,6 +116,7 @@ export function CartCouponFields({
 		}
 		setBusy(true);
 		setError(null);
+		setNeedsLogin(false);
 		try {
 			const { ok, payload } = await previewCoupon({
 				branchId,
@@ -117,6 +126,7 @@ export function CartCouponFields({
 			});
 			if (!ok) {
 				setError(errorMessage(payload.error, payload.minSubtotal));
+				setNeedsLogin(payload.error === "coupon_login_required");
 				return;
 			}
 			setAppliedCoupon(
@@ -178,6 +188,18 @@ export function CartCouponFields({
 			{error ? (
 				<p className="cart-hint cart-hint--error" role="alert">
 					{error}
+					{needsLogin ? (
+						<>
+							{" "}
+							<button
+								type="button"
+								className="cart-link-btn"
+								onClick={() => router.push(getTenantScopedPath(pathname ?? "/", "/mi-cuenta?next=cart"))}
+							>
+								{t("coupon.loginCta")}
+							</button>
+						</>
+					) : null}
 				</p>
 			) : null}
 		</div>

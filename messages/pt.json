@@ -353,7 +353,8 @@
             "branch_not_found": "Filial nao encontrada.",
             "bad_request": "Dados invalidos.",
             "server": "Nao foi possivel validar o cupom."
-          }
+          },
+          "loginCta": "Entrar"
         },
         "actions": {
           "close": "Fechar",

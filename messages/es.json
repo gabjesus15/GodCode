@@ -353,7 +353,8 @@
             "bad_request": "Datos inválidos.",
             "server": "No pudimos validar el cupón. Inténtalo de nuevo.",
             "coupon_login_required": "Inicia sesión en tu cuenta para usar este cupón."
-          }
+          },
+          "loginCta": "Iniciar sesión"
         },
         "actions": {
           "close": "Cerrar",

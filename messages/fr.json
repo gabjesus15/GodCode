@@ -353,7 +353,8 @@
             "branch_not_found": "Succursale introuvable.",
             "bad_request": "Données invalides.",
             "server": "Impossible de valider le coupon."
-          }
+          },
+          "loginCta": "Se connecter"
         },
         "actions": {
           "close": "Fermer",

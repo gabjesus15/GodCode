@@ -353,7 +353,8 @@
             "branch_not_found": "Wir haben die Filiale nicht gefunden.",
             "bad_request": "Ungueltige Daten.",
             "server": "Wir konnten den Gutschein nicht pruefen. Bitte versuche es erneut."
-          }
+          },
+          "loginCta": "Anmelden"
         },
         "actions": {
           "close": "Schliessen",

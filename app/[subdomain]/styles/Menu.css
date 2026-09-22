@@ -2,71 +2,8 @@
    MENU PAGE STYLES
    ========================================= */
 
-/* -----------------------------------------------------------------------------
-   Tokens de superficie del menú público.
-
-   Mismo contrato que el carrito (Cart.css): neutros propios del menú, oscuros
-   por defecto porque el sitio nace sobre #0a0a0a, y un esquema claro que se
-   activa con `data-scheme="light"` en `.tenant-theme-vars` cuando el fondo que
-   configuró el local es claro (ver use-tenant-surface-scheme). Del tenant solo
-   entra el acento; el color de precio del menú no se usa en tarjetas nuevas.
-   ----------------------------------------------------------------------------- */
-.tenant-theme-vars {
-    /* Lienzo de página en modo manual (App.css): neutro, sin tinte. */
-    --menu-canvas: #0c0c0e;
-    /* Cromo (cabecera y barra inferior) y superficies (tarjetas, hojas,
-       chips): grises neutros, sin tinte del local (decisión del cliente: o
-       negro o blanco). Tres escalones bien separados: fondo de página <
-       cromo < tarjeta < superficie interior. El cromo sube de #0c0c0e a
-       #151518 para no leerse como una franja negra pegada al menú. */
-    --menu-chrome: #151518;
-    /* Cristal al 76%: deja pasar, difuminados, los colores de lo que hay
-       debajo (banner, fotos), que es lo que le gustó al cliente. */
-    --menu-chrome-glass: rgba(21, 21, 24, 0.76);
-    --menu-surface: #1b1b1e;
-    --menu-surface-2: #27272b;
-    /* Escenario de la foto de producto: solo se ve con imágenes sin fondo
-       (PNG recortados) y mientras carga. No es un gris plano (se leía como un
-       cuadro de relleno) sino un degradado del mismo tono de la tarjeta, algo
-       más claro arriba y fundido con ella abajo, con una luz suave en el
-       centro que apoya el producto. */
-    --menu-media-top: #2a2a2f;
-    --menu-media-bottom: #1f1f23;
-    --menu-media-glow: rgba(255, 255, 255, 0.06);
-    --menu-surface-glass: rgba(27, 27, 30, 0.76);
-    --menu-line: rgba(255, 255, 255, 0.1);
-    --menu-line-strong: rgba(255, 255, 255, 0.22);
-    --menu-fg: #f7f6f4;
-    --menu-fg-2: rgba(245, 244, 242, 0.76);
-    --menu-fg-3: rgba(245, 244, 242, 0.6);
-    --menu-ok: #5fd38d;
-    --menu-accent: var(--accent-primary, #e63946);
-    --menu-accent-ink: color-mix(in srgb, var(--menu-accent) 70%, var(--menu-fg));
-    --menu-accent-soft: color-mix(in srgb, var(--menu-accent) 14%, transparent);
-    --menu-on-accent: #fff;
-    /* El "+" de cada tarjeta lleva el color del local (decisión del cliente). */
-    --menu-add-bg: var(--menu-accent);
-    --menu-add-fg: var(--menu-on-accent);
-    /* Escala de elevación (una sola familia para todo el menú). Cada nivel
-       lleva dos capas: contacto corta (dibuja el canto) y ambiente difusa con
-       spread negativo (da altura sin invadir la calle de la parrilla).
-         chip    < tarjeta < tarjeta en hover < cabecera < barra flotante */
-    --menu-shadow-chip: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --menu-shadow-card:
-        0 1px 2px rgba(0, 0, 0, 0.3),
-        0 8px 20px -10px rgba(0, 0, 0, 0.5);
-    --menu-shadow-card-hover:
-        0 2px 4px rgba(0, 0, 0, 0.3),
-        0 18px 36px -14px rgba(0, 0, 0, 0.6);
-    --menu-shadow-header: 0 10px 24px -14px rgba(0, 0, 0, 0.7);
-    --menu-shadow-chrome:
-        0 1px 2px rgba(0, 0, 0, 0.35),
-        0 12px 28px -8px rgba(0, 0, 0, 0.55);
-    --menu-r-sm: 10px;
-    --menu-r-md: 14px;
-    --menu-r-lg: 20px;
-    --menu-ease: cubic-bezier(0.16, 1, 0.3, 1);
-}
+/* Los tokens --menu-* (oscuro y claro) viven en tenant-base.css: los usan el
+   menú, el carrito y "Mi cuenta", y esa hoja la carga el layout del local. */
 
 /* Los tokens viven en `.tenant-theme-vars` y no en `.page-wrapper` porque el
    header y la barra inferior se montan por portal fuera del page-wrapper. */
@@ -74,48 +11,6 @@
     color: var(--menu-fg);
 }
 
-.tenant-theme-vars[data-scheme="light"] {
-    color-scheme: light;
-    /* Paleta clara neutra (el cliente eligió el gris #f0f0f0 de página):
-       página gris claro < cromo casi blanco < tarjeta blanco puro. */
-    --menu-canvas: #f0f0f0;
-    --menu-chrome: #fafafa;
-    --menu-chrome-glass: rgba(250, 250, 250, 0.76);
-    --menu-surface: #ffffff;
-    --menu-surface-2: #f0f0f0;
-    /* Gris muy suave, no blanco: un producto claro sobre blanco puro
-       desaparece; abajo se funde con la tarjeta. */
-    --menu-media-top: #ececec;
-    --menu-media-bottom: #f8f8f8;
-    --menu-media-glow: rgba(255, 255, 255, 0.85);
-    --menu-surface-glass: rgba(255, 255, 255, 0.9);
-    /* Bordes opacos y nítidos: sobre gris liso, la tarjeta blanca se define
-       por el borde y la sombra solo aporta profundidad, no contorno. */
-    --menu-line: #d9d9d9;
-    --menu-line-strong: #bdbdbd;
-    --menu-fg: #1b1b1b;
-    /* Texto secundario más firme que en oscuro: sobre blanco, un 68% de tinta
-       se quedaba en gris pálido (descripciones, categorías inactivas). */
-    --menu-fg-2: rgba(27, 27, 27, 0.8);
-    --menu-fg-3: rgba(27, 27, 27, 0.64);
-    --menu-ok: #1e7f47;
-    --menu-accent-ink: color-mix(in srgb, var(--menu-accent) 82%, var(--menu-fg));
-    --menu-accent-soft: color-mix(in srgb, var(--menu-accent) 10%, transparent);
-    /* En claro la sombra es negro muy diluido: define el canto sin ensuciar. */
-    --menu-shadow-chip:
-        0 1px 2px rgba(0, 0, 0, 0.07),
-        0 4px 10px -4px rgba(0, 0, 0, 0.18);
-    --menu-shadow-card:
-        0 1px 2px rgba(0, 0, 0, 0.04),
-        0 8px 20px -10px rgba(0, 0, 0, 0.12);
-    --menu-shadow-card-hover:
-        0 2px 4px rgba(0, 0, 0, 0.05),
-        0 18px 36px -14px rgba(0, 0, 0, 0.2);
-    --menu-shadow-header: 0 10px 24px -16px rgba(0, 0, 0, 0.22);
-    --menu-shadow-chrome:
-        0 1px 2px rgba(0, 0, 0, 0.06),
-        0 12px 28px -8px rgba(0, 0, 0, 0.2);
-}
 :root {
     --menu-header-height: 130px;
 }

@@ -353,7 +353,8 @@
             "branch_not_found": "Filiale non trovata.",
             "bad_request": "Dati non validi.",
             "server": "Impossibile validare il coupon."
-          }
+          },
+          "loginCta": "Accedi"
         },
         "actions": {
           "close": "Chiudi",

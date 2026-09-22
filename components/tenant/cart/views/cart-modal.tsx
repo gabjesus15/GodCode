@@ -317,7 +317,8 @@ export function CartModal({
 
 	const openAccount = () => {
 		flow.dismissCart();
-		router.push(getTenantScopedPath(pathname ?? "/", "/mi-cuenta"));
+		// `next=cart`: al entrar o registrarse vuelve aquí con el carrito abierto.
+		router.push(getTenantScopedPath(pathname ?? "/", "/mi-cuenta?next=cart"));
 	};
 
 	const resetFlow = () => {
