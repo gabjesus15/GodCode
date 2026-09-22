@@ -181,6 +181,10 @@ export function AccountTiendaTab({
   const [navbarOpen, setNavbarOpen] = useState(false);
   const [productCardOpen, setProductCardOpen] = useState(false);
   const [productDetailsOpen, setProductDetailsOpen] = useState(false);
+  /* Lo que el usuario va tecleando en el hex del color del nombre. Va aparte
+     del borrador porque "#ff" a medio escribir no es un color válido y, si se
+     guardara tal cual, el selector saltaría a "Primario" con cada tecla. */
+  const [brandHexDraft, setBrandHexDraft] = useState("");
 
   const comboWarnings = getStoreThemeComboWarnings(storeThemeDraft);
 
@@ -441,7 +445,7 @@ export function AccountTiendaTab({
                         <>
                           <p
                             className="mt-2 truncate rounded-xl border border-[#e5e5ea] bg-[#fbfbfd] px-3 py-2 text-base text-[#1d1d1f]"
-                            style={{ fontFamily: `var(${font.cssVar}), "${font.label}", ${font.generic}` }}
+                            style={{ fontFamily: `var(${font.cssVar}), "${font.label}", ${font.generic}`, fontWeight: font.weight }}
                             aria-hidden
                           >
                             {storeThemeDraft.displayName.trim() || "Tu local"} · Pizza Margarita $9.90
@@ -472,17 +476,17 @@ export function AccountTiendaTab({
                             role="radio"
                             aria-checked={mode === value}
                             disabled={busy}
-                            onClick={() =>
-                              setStoreThemeDraft((prev) =>
-                                prev
-                                  ? {
-                                      ...prev,
-                                      brandNameColor:
-                                        value === "primary" ? "" : value === "hover" ? "hover" : normalizeBrandNameColor(prev.brandNameColor) || prev.primaryColor,
-                                    }
-                                  : prev,
-                              )
-                            }
+                            onClick={() => {
+                              setBrandHexDraft("");
+                              setStoreThemeDraft((prev) => {
+                                if (!prev) return prev;
+                                const kept = normalizeBrandNameColor(prev.brandNameColor);
+                                /* "Personalizado" arranca con el hex que ya hubiera; viniendo de
+                                   "Hover" no hay ninguno, así que parte del primario. */
+                                const custom = kept.startsWith("#") ? kept : prev.primaryColor;
+                                return { ...prev, brandNameColor: value === "primary" ? "" : value === "hover" ? "hover" : custom };
+                              });
+                            }}
                             className={`flex h-8 items-center justify-center gap-1.5 rounded-md px-2 text-xs font-semibold transition-colors ${
                               mode === value ? "bg-white text-[#1d1d1f] shadow-sm" : "text-[#6e6e73] hover:text-[#1d1d1f]"
                             } disabled:opacity-60`}
@@ -496,13 +500,35 @@ export function AccountTiendaTab({
                         <>
                           <input
                             type="color"
-                            value={normalizeBrandNameColor(storeThemeDraft.brandNameColor) || "#ffffff"}
+                            value={current}
                             disabled={busy}
-                            onChange={(e) => setStoreThemeDraft((prev) => (prev ? { ...prev, brandNameColor: e.target.value } : prev))}
+                            onChange={(e) => {
+                              setBrandHexDraft(e.target.value);
+                              setStoreThemeDraft((prev) => (prev ? { ...prev, brandNameColor: e.target.value } : prev));
+                            }}
                             className="h-8 w-10 cursor-pointer rounded-md border border-[#d2d2d7] bg-transparent"
-                            aria-label="Color del nombre del local"
+                            aria-label="Elegir color del nombre del local"
                           />
-                          <span className="font-mono text-xs text-[#6e6e73]">{storeThemeDraft.brandNameColor}</span>
+                          <input
+                            type="text"
+                            inputMode="text"
+                            spellCheck={false}
+                            maxLength={7}
+                            placeholder="#ff4757"
+                            value={brandHexDraft || current}
+                            disabled={busy}
+                            onChange={(e) => {
+                              const raw = e.target.value.trim();
+                              setBrandHexDraft(raw);
+                              const hex = normalizeBrandNameColor(raw);
+                              if (hex.startsWith("#")) {
+                                setStoreThemeDraft((prev) => (prev ? { ...prev, brandNameColor: hex } : prev));
+                              }
+                            }}
+                            onBlur={() => setBrandHexDraft("")}
+                            className="h-8 w-24 rounded-md border border-[#d2d2d7] bg-white px-2 font-mono text-xs text-[#1d1d1f] focus:border-indigo-500 focus:outline-none"
+                            aria-label="Código hexadecimal del color del nombre"
+                          />
                         </>
                       ) : null}
                     </div>
