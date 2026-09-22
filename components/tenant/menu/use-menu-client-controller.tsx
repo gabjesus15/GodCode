@@ -158,9 +158,24 @@ export function useMenuClientController(props: MenuClientProps) {
 		return () => { document.body.style.overflow = ""; };
 	}, [isEmbeddedPreview, isLocationModalOpen]);
 
+	/**
+	 * La reapertura de abajo corre en un microtask, o sea DESPUÉS de todos los
+	 * efectos del commit, incluida la auto-selección de sucursal única, que
+	 * cierra el modal. Sin esta bandera el microtask lo volvía a abrir encima y
+	 * el cliente se quedaba mirando un selector con una sola opción.
+	 */
+	const autoSelectingBranchRef = useRef(false);
+
 	useEffect(() => {
 		if (isEmbeddedPreview) return;
-		if (!selectedBranchId) queueMicrotask(() => setIsLocationModalOpen(true));
+		if (selectedBranchId) {
+			autoSelectingBranchRef.current = false;
+			return;
+		}
+		queueMicrotask(() => {
+			if (autoSelectingBranchRef.current) return;
+			setIsLocationModalOpen(true);
+		});
 	}, [isEmbeddedPreview, selectedBranchId]);
 
 	const selectedBranch = useMemo(
@@ -423,7 +438,9 @@ export function useMenuClientController(props: MenuClientProps) {
 		if (isEmbeddedPreview || selectedBranchId) return;
 		const enabled = modalBranches.filter((branch) => !branch.disabled);
 		if (enabled.length !== 1) return;
-		// Fuera del cuerpo del efecto: navega y cierra el modal en el siguiente tick.
+		// La bandera va ya, en el efecto: el microtask que reabre el modal la lee
+		// antes de que corra la selección, que navega y cierra en el siguiente tick.
+		autoSelectingBranchRef.current = true;
 		queueMicrotask(() => handleBranchSelect(enabled[0]));
 	}, [handleBranchSelect, isEmbeddedPreview, modalBranches, selectedBranchId]);
 
@@ -444,6 +461,12 @@ export function useMenuClientController(props: MenuClientProps) {
 	 * nunca es la unica via para elegir — solo para cambiar.
 	 */
 	const branchSelectorInBottomNav = resolveBranchSelectorPlacement(showBottomNav) === "bottom-nav";
+	/**
+	 * Con un solo local no hay nada que elegir: el efecto de arriba lo
+	 * autoselecciona y el modal solo enseñaría una única opción. El control
+	 * sirve para CAMBIAR de sucursal, así que sin alternativa no se pinta.
+	 */
+	const canSwitchBranch = branches.length > 1;
 
 	const navbar = (
 		<MenuNavbar
@@ -455,7 +478,7 @@ export function useMenuClientController(props: MenuClientProps) {
 			selectedBranch={selectedBranch}
 			isEmbeddedPreview={isEmbeddedPreview}
 			onOpenBranchModal={() => setIsLocationModalOpen(true)}
-			showBranchSelector={!branchSelectorInBottomNav}
+			showBranchSelector={!branchSelectorInBottomNav && canSwitchBranch}
 			onBackHome={() => {
 				if (isEmbeddedPreview || readEmbeddedPreviewFromLocation()) return;
 				router.replace(homePath);
@@ -491,7 +514,7 @@ export function useMenuClientController(props: MenuClientProps) {
 			totalItems={totalItems}
 			activeBottomTab={activeBottomTab}
 			showContactTab={showContactTab}
-			showBranchSelector={branchSelectorInBottomNav}
+			showBranchSelector={branchSelectorInBottomNav && canSwitchBranch}
 			isEmbeddedPreview={isEmbeddedPreview}
 			showAccountTab={MENU_ACCOUNT_ENABLED && !isEmbeddedPreview}
 			onOpenBranchModal={() => {
@@ -564,6 +587,7 @@ export function useMenuClientController(props: MenuClientProps) {
 		hasOpenBranches,
 		modalBranches,
 		branches,
+		canSwitchBranch,
 		handleBranchSelect,
 		selectedBranchId,
 		businessName: name,

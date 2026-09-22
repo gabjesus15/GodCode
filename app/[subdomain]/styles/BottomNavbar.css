@@ -180,8 +180,10 @@
     position: absolute;
     top: -6px;
     right: -8px;
-    background: var(--menu-fg);
-    color: var(--menu-surface);
+    /* Contador en el color del local (decisión del cliente): es el único punto
+       de color de la barra y así se lee de un vistazo. */
+    background: var(--menu-accent);
+    color: var(--menu-on-accent);
     font-size: 0.6rem;
     font-weight: 700;
     line-height: 1;

@@ -90,6 +90,7 @@ export function CartCouponFields({
 			"coupon_expired",
 			"coupon_phone_required",
 			"coupon_wrong_client",
+			"coupon_login_required",
 			"coupon_usage_exhausted",
 			"coupon_usage_exhausted_client",
 			"branch_not_found",

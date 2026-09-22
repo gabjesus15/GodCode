@@ -33,6 +33,7 @@ export type MenuClientViewProps = {
 	selectedBranch: BranchInfo | null;
 	isEmbeddedPreview: boolean;
 	onOpenBranchModal: () => void;
+	canSwitchBranch: boolean;
 	categoriesList: CategoryListItem[];
 	activeCategory: string | null;
 	onCategoryClick: (id: string) => void;
@@ -100,6 +101,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 		selectedBranch,
 		isEmbeddedPreview,
 		onOpenBranchModal,
+		canSwitchBranch,
 		categoriesList,
 		activeCategory,
 		onCategoryClick,
@@ -167,6 +169,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 					selectedBranch={selectedBranch}
 					isEmbeddedPreview={isEmbeddedPreview}
 					onOpenBranchModal={onOpenBranchModal}
+					showBranchSelector={canSwitchBranch}
 					categories={categoriesList}
 					activeCategory={activeCategory}
 					onCategoryClick={onCategoryClick}

@@ -31,6 +31,8 @@ export type SubmitOrderParams = {
   client_request_id: string;
   currency?: string | null;
   requires_receipt?: boolean;
+  /** Pedido de una persona con sesión: lo crea `POST /api/menu-account/order`. */
+  account_order?: boolean;
 };
 
 /**

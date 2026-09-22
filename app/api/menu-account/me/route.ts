@@ -1,3 +1,4 @@
+/** @service-role menu-client-session */
 import type { NextRequest } from "next/server";
 
 import { jsonOk } from "@/lib/api/response";
@@ -5,12 +6,18 @@ import { enforceRateLimit } from "@/lib/infra/api-guard";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { resolveCompanyForMenuAccount } from "@/lib/menu-account/company-resolve";
 import { requireMenuAccount, toMenuAccountDto } from "@/lib/menu-account/session";
-import { toMenuAccountErrorResponse } from "@/lib/menu-account/route-helpers";
+import {
+	menuAccountDisabledResponse,
+	toMenuAccountErrorResponse,
+} from "@/lib/menu-account/route-helpers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+	const disabled = menuAccountDisabledResponse();
+	if (disabled) return disabled;
+
 	const limited = await enforceRateLimit(req, "menu_account_me", 60, 60_000);
 	if (limited) return limited;
 

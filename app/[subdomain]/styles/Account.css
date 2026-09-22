@@ -152,8 +152,7 @@
     align-self: center;
 }
 
-.account-card--form .account-card-title,
-.account-card--soon .account-card-text {
+.account-card--form .account-card-title {
     text-align: left;
 }
 
@@ -235,6 +234,15 @@ select.account-input {
     cursor: pointer;
 }
 
+/* Código de 6 dígitos del correo: grande y espaciado para leerlo y teclearlo bien. */
+.account-input--code {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.4em;
+    font-variant-numeric: tabular-nums;
+}
+
 .account-submit {
     height: 48px;
     border: none;
@@ -305,90 +313,656 @@ select.account-input {
     color: #86efac;
 }
 
+@media (max-width: 480px) {
+    /* Cualquier fuente por debajo de 16px hace que iOS haga zoom al enfocar. */
+    .account-input {
+        font-size: 16px;
+    }
+}
+
+.account-inline-link {
+    padding: 0;
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* =========================================
+   PANEL DE CUENTA (estilo ajustes: menú lateral limpio,
+   filas etiqueta/campo separadas por líneas punteadas)
+   ========================================= */
+
+.account-page-body:has(.account-dashboard) {
+    align-items: stretch;
+    padding-top: 32px;
+}
+
 .account-dashboard {
     width: 100%;
-    max-width: 420px;
+    max-width: 1040px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    align-items: start;
+    gap: 56px;
+}
+
+.account-nav {
+    position: sticky;
+    top: 24px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 2px;
 }
 
-.account-section-title {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    margin: 0;
-    font-size: 0.92rem;
-    font-weight: 800;
-    letter-spacing: -0.01em;
-}
-
-.account-readonly {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin: 0;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.04);
-}
-
-.account-readonly > div {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    min-width: 0;
-}
-
-.account-readonly dt {
-    font-size: 0.78rem;
+.account-nav-heading {
+    margin: 0 0 10px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     color: #8d8d95;
 }
 
-.account-readonly dd {
+.account-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 36px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #a1a1aa;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.account-nav-item:hover {
+    color: #f2f2f7;
+}
+
+/* Link al menú: mismo aspecto que las pestañas, pero separado del bloque de secciones. */
+.account-nav-item--link {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0 0 8px 8px;
+    text-decoration: none;
+}
+
+.account-nav-item.is-active {
+    background: rgba(255, 255, 255, 0.07);
+    color: #f2f2f7;
+}
+
+.account-dashboard-content {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    min-width: 0;
+    max-width: 640px;
+}
+
+.account-section-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.account-section-heading {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.account-section-description {
     margin: 0;
     font-size: 0.82rem;
-    font-weight: 600;
+    color: #8d8d95;
+}
+
+.account-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.account-group-title {
+    margin: 0;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #c8c8cf;
+}
+
+.account-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.account-row-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #d4d4da;
+}
+
+.account-row-control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.account-row-value {
+    font-size: 0.85rem;
+    color: #a1a1aa;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.account-card--soon {
-    gap: 8px;
-    opacity: 0.72;
+.account-dashboard .account-input {
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 0.85rem;
 }
 
-.account-logout {
+.account-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+form > .account-actions {
+    margin-top: 16px;
+}
+
+.account-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    height: 46px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #f2f2f7;
-    font-size: 0.88rem;
-    font-weight: 700;
+    gap: 7px;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid var(--accent-primary, #e63946);
+    background: var(--accent-primary, #e63946);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
     cursor: pointer;
-    transition: background 0.18s ease;
+    transition: filter 0.15s ease, background 0.15s ease, opacity 0.15s ease;
     -webkit-tap-highlight-color: transparent;
 }
 
-.account-logout:hover:not(:disabled) {
-    background: rgba(255, 68, 68, 0.16);
-    border-color: rgba(255, 68, 68, 0.3);
+.account-button:hover:not(:disabled) {
+    filter: brightness(1.08);
 }
 
-.account-logout:disabled {
+.account-button:disabled {
     opacity: 0.6;
     cursor: default;
 }
 
-@media (max-width: 480px) {
-    /* Cualquier fuente por debajo de 16px hace que iOS haga zoom al enfocar. */
-    .account-input {
+.account-button--ghost {
+    align-self: flex-start;
+    border-color: rgba(255, 255, 255, 0.14);
+    background: transparent;
+    color: #f2f2f7;
+}
+
+.account-button--ghost:hover:not(:disabled) {
+    filter: none;
+    background: rgba(255, 107, 107, 0.1);
+    border-color: rgba(255, 107, 107, 0.35);
+}
+
+.account-empty {
+    margin: 0;
+    padding: 28px 0;
+    border-top: 1px dashed rgba(255, 255, 255, 0.12);
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+    font-size: 0.85rem;
+    color: #8d8d95;
+    text-align: center;
+}
+
+/* Listas de pedidos y direcciones: filas separadas por líneas, sin tarjetas. */
+.account-list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.account-order,
+.account-address {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.account-order-main,
+.account-address-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+.account-order-number,
+.account-address-line {
+    font-size: 0.87rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.account-order-meta,
+.account-address-reference {
+    font-size: 0.76rem;
+    color: #8d8d95;
+    overflow-wrap: anywhere;
+}
+
+.account-order-items {
+    font-size: 0.78rem;
+    color: #a1a1aa;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-order-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.account-order-total {
+    font-size: 0.87rem;
+    font-weight: 700;
+}
+
+.account-order-status {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08);
+    color: #d4d4da;
+}
+
+.account-order-status--pending,
+.account-order-status--in_progress,
+.account-order-status--other {
+    background: rgba(250, 204, 21, 0.12);
+    color: #facc15;
+}
+
+.account-order-status--ready,
+.account-order-status--picked_up,
+.account-order-status--delivered,
+.account-order-status--completed {
+    background: rgba(74, 222, 128, 0.12);
+    color: #4ade80;
+}
+
+.account-order-status--cancelled,
+.account-order-status--rejected {
+    background: rgba(255, 107, 107, 0.12);
+    color: #ff6b6b;
+}
+
+.account-address-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #a1a1aa;
+}
+
+.account-icon-button {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: #8d8d95;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.account-icon-button:hover:not(:disabled) {
+    color: #ff6b6b;
+    border-color: rgba(255, 107, 107, 0.35);
+}
+
+.account-icon-button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+@media (max-width: 760px) {
+    .account-page-body:has(.account-dashboard) {
+        padding-top: 16px;
+    }
+
+    .account-dashboard {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 20px;
+    }
+
+    .account-nav {
+        position: static;
+        flex-direction: row;
+        gap: 4px;
+        overflow-x: auto;
+        margin: 0 -18px;
+        padding: 0 18px 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        scrollbar-width: none;
+    }
+
+    .account-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .account-nav-heading {
+        display: none;
+    }
+
+    .account-nav-item {
+        flex: 0 0 auto;
+    }
+
+    /* En fila horizontal el separador superior sobra. */
+    .account-nav-item--link {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+        border-radius: 8px;
+    }
+
+    /* En móvil la etiqueta va encima del campo. */
+    .account-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .account-dashboard .account-input {
+        height: 42px;
         font-size: 16px;
+    }
+}
+
+/* Pedido como botón: toda la fila abre el detalle. */
+button.account-order {
+    width: 100%;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button.account-order:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.account-order-chevron {
+    flex-shrink: 0;
+    color: #6b6b73;
+}
+
+/* Detalle del pedido */
+.account-detail-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.account-back-link {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0 0 6px -4px;
+    padding: 4px;
+    border: none;
+    background: none;
+    color: #a1a1aa;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.account-back-link:hover {
+    color: #f2f2f7;
+}
+
+.account-detail-title-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.account-detail-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.account-row-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.85rem;
+    color: #d4d4da;
+    overflow-wrap: anywhere;
+}
+
+.account-row-subtext {
+    font-size: 0.76rem;
+    color: #8d8d95;
+}
+
+.account-payment-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08);
+    color: #d4d4da;
+}
+
+.account-payment-status--paid {
+    background: rgba(74, 222, 128, 0.12);
+    color: #4ade80;
+}
+
+.account-payment-status--pending,
+.account-payment-status--partial {
+    background: rgba(250, 204, 21, 0.12);
+    color: #facc15;
+}
+
+.account-handoff-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+.account-list--flush {
+    border-top: none;
+}
+
+.account-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.account-line-qty {
+    min-width: 26px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent-primary, #e63946);
+}
+
+.account-line-main {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+.account-line-name {
+    font-size: 0.87rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.account-line-extra {
+    font-size: 0.76rem;
+    color: #a1a1aa;
+    overflow-wrap: anywhere;
+}
+
+.account-line-note {
+    font-size: 0.76rem;
+    font-style: italic;
+    color: #8d8d95;
+    overflow-wrap: anywhere;
+}
+
+.account-line-total {
+    flex-shrink: 0;
+    font-size: 0.87rem;
+    font-weight: 600;
+}
+
+.account-detail-note {
+    margin: 12px 0 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #d4d4da;
+    white-space: pre-line;
+}
+
+.account-row--compact {
+    padding: 10px 0;
+}
+
+.account-row-amount {
+    justify-self: end;
+    font-size: 0.87rem;
+    font-weight: 600;
+}
+
+.account-row-amount--discount {
+    color: #4ade80;
+}
+
+.account-row--total {
+    border-bottom: none;
+}
+
+.account-row--total .account-row-label,
+.account-row--total .account-row-amount {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #f2f2f7;
+}
+
+.account-actions--between {
+    justify-content: space-between;
+}
+
+@media (max-width: 760px) {
+    /* Montos siempre a la derecha, también en móvil. */
+    .account-row--compact,
+    .account-row--total {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .account-actions--between .account-button {
+        width: 100%;
+    }
+}
+
+.account-order-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.account-order-actions-hint {
+    flex-basis: 100%;
+    font-size: 0.74rem;
+}
+
+a.account-button {
+    text-decoration: none;
+}
+
+a.account-button--ghost {
+    align-self: auto;
+}
+
+@media (max-width: 760px) {
+    .account-order-actions .account-button {
+        flex: 1 1 0;
     }
 }

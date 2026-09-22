@@ -200,6 +200,8 @@ export type BuildOrderPayloadInput = {
 	currency: string;
 	uberQuoteId: string | null;
 	couponCode: string | null;
+	/** Con sesión en "Mi cuenta" el pedido lo crea el servidor con la cuenta de la sesión. */
+	accountOrder?: boolean;
 };
 
 export function buildOrderPayload(input: BuildOrderPayloadInput): SubmitOrderParams {
@@ -235,5 +237,6 @@ export function buildOrderPayload(input: BuildOrderPayloadInput): SubmitOrderPar
 		delivery_named_area_id: input.delivery.namedAreaId?.trim() || null,
 		uber_quote_id: input.uberQuoteId || null,
 		coupon_code: couponCode,
+		account_order: input.accountOrder === true,
 	};
 }

@@ -60,4 +60,6 @@ next-env.d.ts
 # editor / IDE (optional: remove if you want to commit shared settings)
 .cursor/
 .turbo
+
+# MCP local (apunta a una IP privada)
 .mcp.json

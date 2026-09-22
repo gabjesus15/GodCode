@@ -79,6 +79,19 @@
     "account": {
       "title": "Mi cuenta",
       "back": "Volver al menú",
+      "nav": {
+        "account": "Mi cuenta",
+        "orders": "Mis pedidos",
+        "addresses": "Mis direcciones",
+        "settings": "Configuración",
+        "menu": "Ver menú"
+      },
+      "sectionDescriptions": {
+        "account": "Tus datos de contacto para agilizar tus pedidos.",
+        "orders": "El historial de tus pedidos en este negocio.",
+        "addresses": "Las direcciones que usaste para delivery.",
+        "settings": "Contraseña y sesión de tu cuenta."
+      },
       "tabs": {
         "login": "Entrar",
         "register": "Crear cuenta"
@@ -103,22 +116,8 @@
         "branchLabel": "Sucursal habitual",
         "branchPlaceholder": "Elige una sucursal",
         "submit": "Crear cuenta",
-        "submitting": "Creando…"
-      },
-      "recover": {
-        "title": "Recuperar contraseña",
-        "description": "Escribe tu documento y te enviamos un enlace al correo de tu cuenta.",
-        "documentLabel": "Número de documento",
-        "submit": "Enviar enlace",
-        "submitting": "Enviando…",
-        "back": "Volver a entrar",
-        "sentTitle": "Revisa tu correo",
-        "sentDescription": "Si hay una cuenta con ese documento, le enviamos un enlace para crear una contraseña nueva. El enlace vence en una hora."
-      },
-      "linkSent": {
-        "title": "Revisa tu correo",
-        "description": "Ya tienes una cuenta con ese correo. Te enviamos un enlace para vincular este negocio a tu cuenta; al abrirlo entrarás automáticamente.",
-        "note": "Tu contraseña seguirá siendo la que ya usabas."
+        "submitting": "Creando…",
+        "existingEmailHint": "Si ya tienes cuenta en otro local con este correo, usa esa misma contraseña."
       },
       "dashboard": {
         "greeting": "Hola, {name}",
@@ -133,7 +132,6 @@
         "saving": "Guardando…",
         "saved": "Datos actualizados.",
         "passwordTitle": "Contraseña",
-        "currentPassword": "Contraseña actual",
         "newPassword": "Contraseña nueva",
         "changePassword": "Cambiar contraseña",
         "changingPassword": "Cambiando…",
@@ -141,15 +139,18 @@
         "passwordSharedNote": "Tu contraseña es la misma en todos los negocios donde tengas cuenta.",
         "logout": "Cerrar sesión",
         "loggingOut": "Cerrando…",
-        "ordersTitle": "Mis pedidos",
-        "ordersSoon": "Muy pronto vas a ver aquí tu historial de pedidos.",
-        "addressesTitle": "Mis direcciones",
-        "addressesSoon": "Muy pronto vas a poder guardar tus direcciones de entrega."
+        "sessionTitle": "Sesión",
+        "preferencesTitle": "Preferencias",
+        "logoutLabel": "Cerrar sesión en este dispositivo",
+        "passwordCodeLabel": "Código de seguridad",
+        "sendCode": "Enviarme un código",
+        "sendingCode": "Enviando…",
+        "passwordCodeHint": "Para cambiar la contraseña te enviamos un código a tu correo.",
+        "codeSentHint": "Revisa tu correo: el código caduca en 1 hora."
       },
       "notices": {
         "passwordChanged": "Contraseña actualizada. Entra de nuevo con la nueva.",
-        "linked": "Listo, vinculamos este negocio a tu cuenta.",
-        "reset": "Elige tu contraseña nueva."
+        "linked": "Listo, vinculamos este negocio a tu cuenta."
       },
       "errors": {
         "company_not_found": "Este negocio no está disponible.",
@@ -162,12 +163,113 @@
         "email_unavailable": "Ese correo no está disponible.",
         "invalid_credentials": "Documento o contraseña incorrectos.",
         "unauthorized": "Tu sesión expiró. Vuelve a entrar.",
-        "link_invalid": "Este enlace ya no es válido. Pide uno nuevo.",
-        "reset_required": "Necesitas tu contraseña actual para cambiarla.",
         "weak_password": "La contraseña debe tener al menos 8 caracteres.",
         "validation_error": "Revisa los datos del formulario.",
         "network": "No pudimos conectar. Revisa tu conexión e intenta de nuevo.",
-        "internal": "No se pudo completar la operación. Intenta de nuevo."
+        "internal": "No se pudo completar la operación. Intenta de nuevo.",
+        "rate_limited": "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+        "link_password_mismatch": "Ese correo ya tiene una cuenta. Escribe la misma contraseña que usas en ella.",
+        "address_limit": "Llegaste al máximo de direcciones. Borra una para agregar otra.",
+        "invalid_zone": "Elige una zona de entrega de la lista.",
+        "invalid_address": "Escribe la dirección con calle y número.",
+        "delivery_unavailable": "Este negocio no hace delivery.",
+        "email_not_verified": "Confirma tu correo con el código que te enviamos.",
+        "invalid_code": "El código no es válido o ya caducó."
+      },
+      "orders": {
+        "loading": "Cargando pedidos…",
+        "empty": "Todavía no tienes pedidos en este negocio. Cuando pidas con tu sesión iniciada, aparecerán aquí.",
+        "number": "Pedido #{number}",
+        "moreItems": "y {count} más",
+        "fulfillment": {
+          "delivery": "Delivery",
+          "pickup": "Retiro"
+        },
+        "status": {
+          "pending": "Recibido",
+          "in_progress": "En preparación",
+          "ready": "Listo",
+          "picked_up": "Entregado",
+          "delivered": "Entregado",
+          "completed": "Completado",
+          "cancelled": "Cancelado",
+          "rejected": "Rechazado",
+          "other": "En proceso"
+        },
+        "detail": {
+          "open": "Ver detalle del pedido #{number}",
+          "back": "Volver a mis pedidos",
+          "payment": "Pago",
+          "paymentMethod": "Método de pago",
+          "paymentStatus": "Estado del pago",
+          "fulfillment": "Entrega",
+          "type": "Tipo",
+          "address": "Dirección",
+          "reference": "Referencia",
+          "handoffCode": "Código de entrega",
+          "branch": "Sucursal",
+          "products": "Productos ({count})",
+          "itemNote": "Nota: {note}",
+          "note": "Nota del pedido",
+          "summary": "Resumen",
+          "subtotal": "Subtotal",
+          "discount": "Descuento",
+          "deliveryFee": "Envío",
+          "free": "Gratis",
+          "total": "Total",
+          "notAvailable": "Sin datos"
+        },
+        "paymentStatus": {
+          "paid": "Pagado",
+          "pending": "Pendiente",
+          "partial": "Pago parcial",
+          "other": "En revisión"
+        },
+        "repeat": "Repetir pedido",
+        "goToMenu": "Ir al menú",
+        "orderNow": "Hacer mi primer pedido",
+        "repeatHint": "Al repetir, los productos se cargan en tu carrito con los precios de hoy. Puedes cambiarlos antes de confirmar.",
+        "repeatUnavailable": "Este pedido no tiene productos que se puedan repetir."
+      },
+      "addresses": {
+        "loading": "Cargando direcciones…",
+        "empty": "Aún no tienes direcciones guardadas.",
+        "hint": "También se guardan solas cuando pides con delivery.",
+        "delete": "Eliminar dirección",
+        "noStreet": "Dirección sin calle",
+        "add": "Agregar dirección",
+        "newTitle": "Nueva dirección",
+        "addressLabel": "Dirección",
+        "addressPlaceholder": "Calle, número y comuna",
+        "referenceLabel": "Referencia",
+        "referencePlaceholder": "Depto, casa, color del portón…",
+        "save": "Guardar dirección",
+        "saving": "Guardando…",
+        "cancel": "Cancelar",
+        "zoneLabel": "Zona de entrega",
+        "zonePlaceholder": "Elige tu zona",
+        "zoneHint": "Este negocio reparte por zonas: elige la tuya y escribe tu dirección.",
+        "noDelivery": "Este negocio no hace delivery, así que no hace falta guardar direcciones.",
+        "zoneAddressPlaceholder": "Calle, número, depto o casa"
+      },
+      "code": {
+        "label": "Código del correo",
+        "resend": "Enviar otro código",
+        "resent": "Te enviamos un código nuevo.",
+        "back": "Volver"
+      },
+      "verify": {
+        "intro": "Te enviamos un código de 6 dígitos a tu correo. Escríbelo para confirmar tu cuenta.",
+        "submit": "Confirmar correo",
+        "submitting": "Confirmando…"
+      },
+      "recover": {
+        "intro": "Escribe tu número de documento y te enviaremos un código al correo de tu cuenta.",
+        "send": "Enviar código",
+        "sending": "Enviando…",
+        "codeIntro": "Si el documento tiene cuenta, te llegó un código al correo. Escríbelo junto con tu contraseña nueva.",
+        "confirm": "Cambiar contraseña",
+        "confirming": "Cambiando…"
       }
     },
     "cart": {
@@ -249,7 +351,8 @@
             "coupon_usage_exhausted_client": "Ya usaste este cupón el máximo de veces permitidas.",
             "branch_not_found": "No encontramos la sucursal.",
             "bad_request": "Datos inválidos.",
-            "server": "No pudimos validar el cupón. Inténtalo de nuevo."
+            "server": "No pudimos validar el cupón. Inténtalo de nuevo.",
+            "coupon_login_required": "Inicia sesión en tu cuenta para usar este cupón."
           }
         },
         "actions": {
@@ -267,7 +370,8 @@
           "cancel": "Cancelar",
           "newOrder": "Nuevo pedido",
           "backToMenu": "Volver al menú",
-          "backToDelivery": "Volver a la entrega"
+          "backToDelivery": "Volver a la entrega",
+          "repeatLastOrder": "Repetir último pedido"
         },
         "delivery": {
           "pickNamedArea": "Elige una zona",
@@ -323,7 +427,8 @@
           "shippingPending": "Lo calculamos con tu ubicación",
           "pickupTitle": "Retiras en el local",
           "pickupNoAddress": "Te damos la dirección al confirmar el pedido.",
-          "pickupOpenMap": "Cómo llegar"
+          "pickupOpenMap": "Cómo llegar",
+          "savedAddresses": "Tus direcciones guardadas"
         },
         "errors": {
           "noOrdersNow": "No se pueden recibir pedidos en este momento.",

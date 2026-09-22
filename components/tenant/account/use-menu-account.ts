@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import type { MenuAccountView } from "./menu-account-types";
 
 type RequestOptions = {
-	method?: "GET" | "POST" | "PATCH";
+	method?: "GET" | "POST" | "PATCH" | "DELETE";
 	body?: Record<string, unknown>;
 };
 
@@ -38,6 +38,8 @@ async function requestMenuAccount<T>(
 			| null;
 
 		if (!response.ok) {
+			// El rate limiter responde 429 sin `code`: sin esto se mostraría el error genérico.
+			if (response.status === 429) return { ok: false, code: "rate_limited" };
 			return { ok: false, code: payload?.code ?? "internal" };
 		}
 		return { ok: true, data: (payload ?? {}) as T };

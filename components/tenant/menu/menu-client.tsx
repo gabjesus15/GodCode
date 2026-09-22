@@ -21,6 +21,7 @@ function MenuClientViewFromVm({ vm }: { vm: ReturnType<typeof useMenuClientContr
 				selectedBranch={vm.selectedBranch}
 				isEmbeddedPreview={vm.isEmbeddedPreview}
 				onOpenBranchModal={() => vm.setIsLocationModalOpen(true)}
+				canSwitchBranch={vm.canSwitchBranch}
 				categoriesList={vm.categoriesList}
 				activeCategory={vm.activeCategory}
 				onCategoryClick={vm.handleCategoryClick}

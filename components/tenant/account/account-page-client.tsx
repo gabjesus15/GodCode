@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChevronLeft } from "lucide-react";
 
+import type { MenuAccountDeliveryOptions } from "@/lib/menu-account/delivery-options";
+
 import { getTenantScopedPath } from "../utils/tenant-route";
 
 import { MenuAccountAuthPanel } from "./menu-account-auth-panel";
@@ -18,9 +20,7 @@ type AccountPageClientProps = {
 	countryCode: string;
 	branches: MenuAccountBranchOption[];
 	account: MenuAccountPublic | null;
-	/** Query de la vuelta desde un enlace de correo: `linked`, `reset`, `error`. */
-	notice: "linked" | "reset" | null;
-	errorCode: string | null;
+	deliveryOptions: MenuAccountDeliveryOptions;
 };
 
 export function AccountPageClient({
@@ -29,18 +29,14 @@ export function AccountPageClient({
 	countryCode,
 	branches,
 	account: initialAccount,
-	notice,
-	errorCode,
+	deliveryOptions,
 }: AccountPageClientProps) {
 	const t = useTranslations("tenant.account");
 	const pathname = usePathname();
 	const menuPath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/menu"), [pathname]);
 
 	const [account, setAccount] = useState<MenuAccountPublic | null>(initialAccount);
-	/** Aviso generado en el cliente; pisa al que venga por query de la URL. */
-	const [localNotice, setLocalNotice] = useState<"passwordChanged" | null>(null);
-
-	const activeNotice = localNotice ?? notice;
+	const [notice, setNotice] = useState<"passwordChanged" | "linked" | null>(null);
 
 	return (
 		<div className="account-page">
@@ -55,22 +51,22 @@ export function AccountPageClient({
 			</header>
 
 			<div className="account-page-body">
-				{activeNotice ? (
-					<p className="account-notice">{t(`notices.${activeNotice}`)}</p>
-				) : null}
+				{notice ? <p className="account-notice">{t(`notices.${notice}`)}</p> : null}
 
 				{account ? (
 					<MenuAccountDashboard
 						companySlug={companySlug}
+						countryCode={countryCode}
 						branches={branches}
 						account={account}
-						resetMode={notice === "reset"}
+						deliveryOptions={deliveryOptions}
+						menuPath={menuPath}
 						onSignedOut={() => {
-							setLocalNotice(null);
+							setNotice(null);
 							setAccount(null);
 						}}
 						onPasswordChanged={() => {
-							setLocalNotice("passwordChanged");
+							setNotice("passwordChanged");
 							setAccount(null);
 						}}
 					/>
@@ -79,9 +75,11 @@ export function AccountPageClient({
 						companySlug={companySlug}
 						countryCode={countryCode}
 						branches={branches}
-						initialView="login"
-						initialErrorCode={errorCode}
-						onAuthenticated={setAccount}
+						onAuthenticated={(nextAccount, how) => {
+							setNotice(how === "linked" ? "linked" : null);
+							setAccount(nextAccount);
+						}}
+						onPasswordReset={() => setNotice("passwordChanged")}
 					/>
 				)}
 			</div>

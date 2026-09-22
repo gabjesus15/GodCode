@@ -14,6 +14,9 @@ export default defineConfig({
 	test: {
 		environment: "node",
 		include: ["__tests__/**/*.test.ts"],
+		// Llave fija solo para tests (32 bytes de ceros): el cifrado de "Mi cuenta" falla
+		// cerrado sin llave.
+		env: { MENU_ACCOUNT_PII_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" },
 		coverage: {
 			include: ["lib/**/*.ts"],
 			exclude: ["lib/onboarding/emails.ts"],

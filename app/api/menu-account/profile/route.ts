@@ -6,7 +6,10 @@ import { enforceRateLimit } from "@/lib/infra/api-guard";
 import { updateMenuAccountProfile } from "@/lib/menu-account/account-service";
 import { resolveCompanyForMenuAccount } from "@/lib/menu-account/company-resolve";
 import { requireMenuAccount } from "@/lib/menu-account/session";
-import { toMenuAccountErrorResponse } from "@/lib/menu-account/route-helpers";
+import {
+	menuAccountDisabledResponse,
+	toMenuAccountErrorResponse,
+} from "@/lib/menu-account/route-helpers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +20,9 @@ export const dynamic = "force-dynamic";
  * ningún correo — la vinculación solo aplica entre negocios distintos.
  */
 export async function PATCH(req: NextRequest) {
+	const disabled = menuAccountDisabledResponse();
+	if (disabled) return disabled;
+
 	const limited = await enforceRateLimit(req, "menu_account_profile", 20, 60_000);
 	if (limited) return limited;
 
@@ -30,6 +36,7 @@ export async function PATCH(req: NextRequest) {
 		const updated = await updateMenuAccountProfile({
 			accountId: account.id,
 			companyId: company.id,
+			email: account.email,
 			fullName: parsed.data.fullName,
 			phone: parsed.data.phone,
 			preferredBranchId: parsed.data.preferredBranchId,

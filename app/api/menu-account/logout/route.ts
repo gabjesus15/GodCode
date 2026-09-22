@@ -5,6 +5,7 @@ import { enforceRateLimit } from "@/lib/infra/api-guard";
 import { createMenuClientResponseClient } from "@/lib/menu-account/cookies";
 import {
 	createCookieCarrier,
+	menuAccountDisabledResponse,
 	toMenuAccountErrorResponse,
 	withCarriedCookies,
 } from "@/lib/menu-account/route-helpers";
@@ -18,6 +19,9 @@ export const dynamic = "force-dynamic";
  * menú como cliente no debe perder una sesión al salir de la otra.
  */
 export async function POST(req: NextRequest) {
+	const disabled = menuAccountDisabledResponse();
+	if (disabled) return disabled;
+
 	const limited = await enforceRateLimit(req, "menu_account_logout", 30, 60_000);
 	if (limited) return limited;
 

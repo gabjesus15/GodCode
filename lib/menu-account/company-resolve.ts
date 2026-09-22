@@ -41,6 +41,23 @@ export async function resolveCompanyForMenuAccount(
 	};
 }
 
+/**
+ * Variante por id, para el carrito: conoce la sucursal (y con ella `company_id`) pero
+ * no el slug. Pasa por la resolución por slug para aplicar las mismas reglas de
+ * suscripción accesible.
+ */
+export async function resolveCompanyByIdForMenuAccount(
+	companyId: string,
+): Promise<MenuAccountCompany> {
+	const { data } = await supabaseAdmin
+		.from("companies")
+		.select("public_slug")
+		.eq("id", companyId)
+		.maybeSingle();
+	if (!data?.public_slug) throw menuAccountErrors.companyNotFound();
+	return resolveCompanyForMenuAccount(data.public_slug);
+}
+
 /** Valida que la sucursal exista, esté activa y pertenezca a este negocio. */
 export async function assertBranchBelongsToCompany(
 	branchId: string | null | undefined,

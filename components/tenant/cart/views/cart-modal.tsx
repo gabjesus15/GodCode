@@ -22,6 +22,7 @@ import {
 } from "@/lib/tenant/menu-settings";
 import { useDismissKeyboardOnOutsideTap } from "@/lib/tenant/mobile/use-dismiss-keyboard";
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
+import { useCheckoutProfile } from "../../account/use-checkout-profile";
 import { getTenantScopedPath } from "../../utils/tenant-route";
 import type { CartFulfillment } from "../cart-context";
 import {
@@ -98,6 +99,9 @@ export function CartModal({
 	// --- Sucursal en vivo y configuración derivada ---------------------------------
 	const live = useCheckoutBranchLive({ branch: selectedBranch, isCartOpen: cart.isCartOpen, supabase });
 	const branch = live.branch;
+	// Persona con sesión en "Mi cuenta": rellena sus datos y ata el pedido a su cuenta.
+	const checkoutProfile = useCheckoutProfile(selectedBranch?.company_id, cart.isCartOpen);
+	const accountCompanyId = checkoutProfile ? (selectedBranch?.company_id ?? null) : null;
 	const settings = useMemo(
 		() => normalizeDeliverySettings(stripStaffOnlyDeliverySettings(branch?.delivery_settings)),
 		[branch?.delivery_settings],
@@ -257,6 +261,19 @@ export function CartModal({
 	useCartDialog(panelRef, cart.isCartOpen);
 	useDismissKeyboardOnOutsideTap(panelRef);
 
+	// Los datos de la cuenta solo completan campos vacíos: nunca pisan lo que la
+	// persona ya escribió en este checkout o dejó en el borrador.
+	const { getValues, setValue } = form.form;
+	useEffect(() => {
+		if (!checkoutProfile) return;
+		if (!getValues("name")?.trim()) setValue("name", checkoutProfile.fullName);
+		if (!getValues("rut")?.trim()) setValue("rut", checkoutProfile.document);
+		const phone = getValues("phone")?.trim() ?? "";
+		if ((!phone || phone === strategy.phonePrefix.trim()) && checkoutProfile.phone) {
+			setValue("phone", checkoutProfile.phone);
+		}
+	}, [checkoutProfile, getValues, setValue, strategy.phonePrefix]);
+
 	// Si el admin quita el método elegido, el checkout vuelve a la lista.
 	const { paymentMethodKey, setPaymentMethodKey } = flow;
 	useEffect(() => {
@@ -384,6 +401,7 @@ export function CartModal({
 				currency,
 				uberQuoteId: cart.uberQuoteId,
 				couponCode: cart.appliedCouponCode,
+				accountOrder: Boolean(checkoutProfile),
 			});
 
 			let parsed: ReturnType<typeof parseOrderRpcPayload> = null;
@@ -570,7 +588,7 @@ export function CartModal({
 
 	const body =
 		phase === "summary" ? (
-			<CartSummaryBody lines={lines} onBackToMenu={flow.dismissCart} />
+			<CartSummaryBody lines={lines} onBackToMenu={flow.dismissCart} accountCompanyId={accountCompanyId} />
 		) : phase === "fulfillment" ? (
 			<CartFulfillmentBody
 				settings={settings}
@@ -582,6 +600,7 @@ export function CartModal({
 				onTouch={touchFulfillment}
 				onFulfillmentChange={changeFulfillment}
 				pickup={pickupInfo}
+				savedAddresses={checkoutProfile?.addresses}
 			/>
 		) : (
 			<CartPaymentBody
@@ -660,6 +679,7 @@ export function CartModal({
 			aside={aside}
 			onClose={flow.dismissCart}
 			onOpenAccount={MENU_ACCOUNT_ENABLED ? openAccount : undefined}
+			accountLabel={checkoutProfile?.fullName.trim().split(/\s+/)[0] || null}
 			footer={footer}
 		>
 			{body}

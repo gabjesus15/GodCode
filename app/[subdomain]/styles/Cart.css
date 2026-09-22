@@ -757,6 +757,50 @@
 	gap: 8px;
 }
 
+.cart-chips--start {
+	justify-content: flex-start;
+}
+
+/* Direcciones guardadas de "Mi cuenta": chips que rellenan el formulario. */
+.cart-saved {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.cart-saved .cart-chip {
+	max-width: 100%;
+}
+
+.cart-saved .cart-chip span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Botón de cuenta con el nombre de la persona: pastilla en vez de círculo. */
+.cart-icon-btn--labeled {
+	width: auto;
+	grid-auto-flow: column;
+	gap: 6px;
+	padding: 0 12px 0 10px;
+	font: inherit;
+	font-size: 0.8125rem;
+	font-weight: 600;
+}
+
+.cart-icon-btn__label {
+	max-width: 110px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Repetir el último pedido: misma columna que "Volver al menú". */
+.cart-empty__repeat {
+	margin-top: 8px;
+}
+
 .cart-chip {
 	display: inline-flex;
 	align-items: center;

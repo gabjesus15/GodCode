@@ -79,6 +79,19 @@
     "account": {
       "title": "My account",
       "back": "Back to menu",
+      "nav": {
+        "account": "My account",
+        "orders": "My orders",
+        "addresses": "My addresses",
+        "settings": "Settings",
+        "menu": "View menu"
+      },
+      "sectionDescriptions": {
+        "account": "Your contact details to speed up your orders.",
+        "orders": "Your order history at this business.",
+        "addresses": "The addresses you used for delivery.",
+        "settings": "Your account password and session."
+      },
       "tabs": {
         "login": "Sign in",
         "register": "Create account"
@@ -103,22 +116,8 @@
         "branchLabel": "Usual location",
         "branchPlaceholder": "Choose a location",
         "submit": "Create account",
-        "submitting": "Creating…"
-      },
-      "recover": {
-        "title": "Reset password",
-        "description": "Enter your ID number and we'll email your account a reset link.",
-        "documentLabel": "ID number",
-        "submit": "Send link",
-        "submitting": "Sending…",
-        "back": "Back to sign in",
-        "sentTitle": "Check your email",
-        "sentDescription": "If an account exists for that ID number, we sent a link to set a new password. The link expires in one hour."
-      },
-      "linkSent": {
-        "title": "Check your email",
-        "description": "You already have an account with that email. We sent a link to connect this business to it; opening the link signs you in.",
-        "note": "Your password stays the same as before."
+        "submitting": "Creating…",
+        "existingEmailHint": "If you already have an account at another place with this email, use that same password."
       },
       "dashboard": {
         "greeting": "Hi, {name}",
@@ -133,7 +132,6 @@
         "saving": "Saving…",
         "saved": "Details updated.",
         "passwordTitle": "Password",
-        "currentPassword": "Current password",
         "newPassword": "New password",
         "changePassword": "Change password",
         "changingPassword": "Changing…",
@@ -141,15 +139,18 @@
         "passwordSharedNote": "Your password is the same across every business where you have an account.",
         "logout": "Sign out",
         "loggingOut": "Signing out…",
-        "ordersTitle": "My orders",
-        "ordersSoon": "Your order history will show up here soon.",
-        "addressesTitle": "My addresses",
-        "addressesSoon": "You'll be able to save delivery addresses here soon."
+        "sessionTitle": "Session",
+        "preferencesTitle": "Preferences",
+        "logoutLabel": "Sign out on this device",
+        "passwordCodeLabel": "Security code",
+        "sendCode": "Send me a code",
+        "sendingCode": "Sending…",
+        "passwordCodeHint": "To change your password we'll send a code to your email.",
+        "codeSentHint": "Check your email: the code expires in 1 hour."
       },
       "notices": {
         "passwordChanged": "Password updated. Please sign in again with the new one.",
-        "linked": "Done, this business is now connected to your account.",
-        "reset": "Choose your new password."
+        "linked": "Done, we linked this business to your account."
       },
       "errors": {
         "company_not_found": "This business is not available.",
@@ -162,12 +163,113 @@
         "email_unavailable": "That email is not available.",
         "invalid_credentials": "Incorrect ID number or password.",
         "unauthorized": "Your session expired. Please sign in again.",
-        "link_invalid": "This link is no longer valid. Request a new one.",
-        "reset_required": "You need your current password to change it.",
         "weak_password": "The password must be at least 8 characters.",
         "validation_error": "Please check the form fields.",
         "network": "We couldn't connect. Check your connection and try again.",
-        "internal": "We couldn't complete the operation. Please try again."
+        "internal": "We couldn't complete the operation. Please try again.",
+        "rate_limited": "Too many attempts. Wait a few minutes and try again.",
+        "link_password_mismatch": "That email already has an account. Enter the same password you use there.",
+        "address_limit": "You reached the maximum number of addresses. Delete one to add another.",
+        "invalid_zone": "Choose a delivery zone from the list.",
+        "invalid_address": "Enter the address with street and number.",
+        "delivery_unavailable": "This business doesn’t deliver.",
+        "email_not_verified": "Confirm your email with the code we sent you.",
+        "invalid_code": "The code is invalid or has expired."
+      },
+      "orders": {
+        "loading": "Loading orders…",
+        "empty": "You don't have orders at this business yet. Orders placed while signed in will show up here.",
+        "number": "Order #{number}",
+        "moreItems": "and {count} more",
+        "fulfillment": {
+          "delivery": "Delivery",
+          "pickup": "Pickup"
+        },
+        "status": {
+          "pending": "Received",
+          "in_progress": "Preparing",
+          "ready": "Ready",
+          "picked_up": "Delivered",
+          "delivered": "Delivered",
+          "completed": "Completed",
+          "cancelled": "Cancelled",
+          "rejected": "Rejected",
+          "other": "In progress"
+        },
+        "detail": {
+          "open": "View details of order #{number}",
+          "back": "Back to my orders",
+          "payment": "Payment",
+          "paymentMethod": "Payment method",
+          "paymentStatus": "Payment status",
+          "fulfillment": "Delivery",
+          "type": "Type",
+          "address": "Address",
+          "reference": "Reference",
+          "handoffCode": "Handoff code",
+          "branch": "Branch",
+          "products": "Products ({count})",
+          "itemNote": "Note: {note}",
+          "note": "Order note",
+          "summary": "Summary",
+          "subtotal": "Subtotal",
+          "discount": "Discount",
+          "deliveryFee": "Delivery fee",
+          "free": "Free",
+          "total": "Total",
+          "notAvailable": "Not available"
+        },
+        "paymentStatus": {
+          "paid": "Paid",
+          "pending": "Pending",
+          "partial": "Partially paid",
+          "other": "Under review"
+        },
+        "repeat": "Reorder",
+        "goToMenu": "Go to menu",
+        "orderNow": "Place my first order",
+        "repeatHint": "Reordering adds the products to your cart at today's prices. You can change them before confirming.",
+        "repeatUnavailable": "This order has no products that can be reordered."
+      },
+      "addresses": {
+        "loading": "Loading addresses…",
+        "empty": "You don't have saved addresses yet.",
+        "hint": "They are also saved automatically when you order delivery.",
+        "delete": "Delete address",
+        "noStreet": "Address without street",
+        "add": "Add address",
+        "newTitle": "New address",
+        "addressLabel": "Address",
+        "addressPlaceholder": "Street, number and city",
+        "referenceLabel": "Reference",
+        "referencePlaceholder": "Apartment, house, gate color…",
+        "save": "Save address",
+        "saving": "Saving…",
+        "cancel": "Cancel",
+        "zoneLabel": "Delivery zone",
+        "zonePlaceholder": "Choose your zone",
+        "zoneHint": "This business delivers by zone: choose yours and enter your address.",
+        "noDelivery": "This business doesn’t deliver, so there’s no need to save addresses.",
+        "zoneAddressPlaceholder": "Street, number, apartment or house"
+      },
+      "code": {
+        "label": "Email code",
+        "resend": "Send another code",
+        "resent": "We sent you a new code.",
+        "back": "Back"
+      },
+      "verify": {
+        "intro": "We sent a 6-digit code to your email. Enter it to confirm your account.",
+        "submit": "Confirm email",
+        "submitting": "Confirming…"
+      },
+      "recover": {
+        "intro": "Enter your ID number and we'll send a code to your account's email.",
+        "send": "Send code",
+        "sending": "Sending…",
+        "codeIntro": "If that ID has an account, a code is on its way to the email. Enter it along with your new password.",
+        "confirm": "Change password",
+        "confirming": "Changing…"
       }
     },
     "cart": {
@@ -245,6 +347,7 @@
             "coupon_min_subtotal": "Your subtotal must be at least {amount} to use this coupon.",
             "coupon_phone_required": "Enter your phone to use this coupon.",
             "coupon_wrong_client": "This coupon does not apply to your details.",
+            "coupon_login_required": "Sign in to your account to use this coupon.",
             "coupon_usage_exhausted": "This coupon has no uses left.",
             "coupon_usage_exhausted_client": "You have already used this coupon the maximum times allowed.",
             "branch_not_found": "Branch not found.",
@@ -267,7 +370,8 @@
           "cancel": "Cancel",
           "newOrder": "New Order",
           "backToMenu": "Back to Menu",
-          "backToDelivery": "Back to delivery"
+          "backToDelivery": "Back to delivery",
+          "repeatLastOrder": "Reorder last order"
         },
         "delivery": {
           "pickNamedArea": "Choose an area",
@@ -323,7 +427,8 @@
           "shippingPending": "We work it out from your location",
           "pickupTitle": "You pick it up at the store",
           "pickupNoAddress": "We share the address once you confirm the order.",
-          "pickupOpenMap": "Get directions"
+          "pickupOpenMap": "Get directions",
+          "savedAddresses": "Your saved addresses"
         },
         "errors": {
           "noOrdersNow": "Orders are not available right now.",

@@ -6,6 +6,7 @@ import { resolveCheckoutCountryCode } from "@/lib/geo/country-forms";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
 import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
 import { getMenuAccountSession, toMenuAccountDto } from "@/lib/menu-account/session";
+import { resolveMenuAccountDeliveryOptions } from "@/lib/menu-account/delivery-options";
 import { AccountPageClient } from "../../../components/tenant/account/account-page-client";
 
 import "../styles/Account.css";
@@ -16,21 +17,14 @@ export const dynamic = "force-dynamic";
 
 interface TenantAccountPageProps {
   params: Promise<{ subdomain: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 interface TenantAccountThemeConfig {
   displayName?: string;
 }
 
-function firstParam(value: string | string[] | undefined): string | null {
-  if (Array.isArray(value)) return value[0] ?? null;
-  return value ?? null;
-}
-
 export default async function TenantAccountPage({
   params,
-  searchParams,
 }: TenantAccountPageProps) {
   // La cuenta de cliente del menú aún no está terminada: mientras el flag esté
   // apagado la ruta no existe. Ocultar sólo los botones dejaría el registro
@@ -39,7 +33,7 @@ export default async function TenantAccountPage({
     notFound();
   }
 
-  const [resolvedParams, resolvedSearch] = await Promise.all([params, searchParams]);
+  const resolvedParams = await params;
   const company = await getCachedCompany(resolvedParams.subdomain);
 
   if (!company || !isTenantSubscriptionAccessible(company)) {
@@ -55,19 +49,13 @@ export default async function TenantAccountPage({
   const supabase = createSupabasePublicServerClient();
   const { data: branchRows } = await supabase
     .from("branches")
-    .select("id, name")
+    .select("id, name, delivery_settings")
     .eq("company_id", companyId)
     .eq("is_active", true)
     .order("name");
 
   const theme = (company.theme_config as unknown as TenantAccountThemeConfig) ?? {};
   const businessName = theme.displayName || company.name || resolvedParams.subdomain;
-
-  const noticeParam = firstParam(resolvedSearch.linked)
-    ? "linked"
-    : firstParam(resolvedSearch.reset)
-      ? "reset"
-      : null;
 
   return (
     <AccountPageClient
@@ -79,8 +67,13 @@ export default async function TenantAccountPage({
         name: branch.name,
       }))}
       account={session ? toMenuAccountDto(session.account) : null}
-      notice={noticeParam}
-      errorCode={firstParam(resolvedSearch.error)}
+      deliveryOptions={resolveMenuAccountDeliveryOptions(
+        (branchRows ?? []).map((branch) => ({
+          id: String(branch.id),
+          name: branch.name,
+          delivery_settings: branch.delivery_settings,
+        })),
+      )}
     />
   );
 }

@@ -2,6 +2,8 @@ import "server-only";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
+import { emailLookupValues } from "./account-records";
+
 /**
  * A quién pertenece un correo dentro del proyecto Supabase.
  *
@@ -54,11 +56,12 @@ export async function classifyEmail(rawEmail: string): Promise<EmailClassificati
 		if (staffRawRow) return { ownership: "staff", authUserId: null };
 	}
 
-	// 2) ¿Ya es cliente del menú? Basta con nuestra tabla: nosotros la escribimos.
+	// 2) ¿Ya es cliente del menú? Basta con nuestra tabla: nosotros la escribimos. Se
+	// busca por la huella del correo (y en claro, para cuentas antiguas sin cifrar).
 	const { data: accountRow } = await supabaseAdmin
 		.from("menu_client_accounts")
 		.select("auth_user_id")
-		.eq("email", email)
+		.in("email", emailLookupValues(email))
 		.not("auth_user_id", "is", null)
 		.limit(1)
 		.maybeSingle();

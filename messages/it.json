@@ -79,6 +79,19 @@
     "account": {
       "title": "Il mio account",
       "back": "Torna al menu",
+      "nav": {
+        "account": "Il mio account",
+        "orders": "I miei ordini",
+        "addresses": "I miei indirizzi",
+        "settings": "Impostazioni",
+        "menu": "Vedi il menu"
+      },
+      "sectionDescriptions": {
+        "account": "I tuoi dati di contatto per ordinare più velocemente.",
+        "orders": "Lo storico dei tuoi ordini in questo negozio.",
+        "addresses": "Gli indirizzi usati per la consegna.",
+        "settings": "Password e sessione del tuo account."
+      },
       "tabs": {
         "login": "Accedi",
         "register": "Crea account"
@@ -89,7 +102,7 @@
         "passwordLabel": "Password",
         "submit": "Accedi",
         "submitting": "Accesso…",
-        "forgot": "Password dimenticata?"
+        "forgot": "Hai dimenticato la password?"
       },
       "register": {
         "title": "Crea il tuo account",
@@ -103,22 +116,8 @@
         "branchLabel": "Sede abituale",
         "branchPlaceholder": "Scegli una sede",
         "submit": "Crea account",
-        "submitting": "Creazione…"
-      },
-      "recover": {
-        "title": "Recupera password",
-        "description": "Inserisci il numero del documento e invieremo un link all'e-mail del tuo account.",
-        "documentLabel": "Numero del documento",
-        "submit": "Invia link",
-        "submitting": "Invio…",
-        "back": "Torna ad accedere",
-        "sentTitle": "Controlla la tua e-mail",
-        "sentDescription": "Se esiste un account con quel documento, abbiamo inviato un link per impostare una nuova password. Il link scade tra un'ora."
-      },
-      "linkSent": {
-        "title": "Controlla la tua e-mail",
-        "description": "Hai già un account con quell'e-mail. Ti abbiamo inviato un link per collegare questa attività al tuo account; aprendolo accederai automaticamente.",
-        "note": "La tua password resta quella di prima."
+        "submitting": "Creazione…",
+        "existingEmailHint": "Se hai già un account in un altro locale con questa email, usa la stessa password."
       },
       "dashboard": {
         "greeting": "Ciao, {name}",
@@ -133,7 +132,6 @@
         "saving": "Salvataggio…",
         "saved": "Dati aggiornati.",
         "passwordTitle": "Password",
-        "currentPassword": "Password attuale",
         "newPassword": "Nuova password",
         "changePassword": "Cambia password",
         "changingPassword": "Modifica…",
@@ -141,15 +139,18 @@
         "passwordSharedNote": "La tua password è la stessa in tutte le attività dove hai un account.",
         "logout": "Esci",
         "loggingOut": "Uscita…",
-        "ordersTitle": "I miei ordini",
-        "ordersSoon": "Presto qui vedrai lo storico dei tuoi ordini.",
-        "addressesTitle": "I miei indirizzi",
-        "addressesSoon": "Presto potrai salvare qui i tuoi indirizzi di consegna."
+        "sessionTitle": "Sessione",
+        "preferencesTitle": "Preferenze",
+        "logoutLabel": "Esci da questo dispositivo",
+        "passwordCodeLabel": "Codice di sicurezza",
+        "sendCode": "Inviami un codice",
+        "sendingCode": "Invio…",
+        "passwordCodeHint": "Per cambiare la password ti inviamo un codice via email.",
+        "codeSentHint": "Controlla la tua email: il codice scade tra 1 ora."
       },
       "notices": {
         "passwordChanged": "Password aggiornata. Accedi di nuovo con quella nuova.",
-        "linked": "Fatto, questa attività è collegata al tuo account.",
-        "reset": "Scegli la tua nuova password."
+        "linked": "Fatto, abbiamo collegato questo negozio al tuo account."
       },
       "errors": {
         "company_not_found": "Questa attività non è disponibile.",
@@ -162,12 +163,113 @@
         "email_unavailable": "Quell'e-mail non è disponibile.",
         "invalid_credentials": "Documento o password errati.",
         "unauthorized": "La tua sessione è scaduta. Accedi di nuovo.",
-        "link_invalid": "Questo link non è più valido. Richiedine uno nuovo.",
-        "reset_required": "Ti serve la password attuale per cambiarla.",
         "weak_password": "La password deve avere almeno 8 caratteri.",
         "validation_error": "Controlla i campi del modulo.",
         "network": "Impossibile connettersi. Controlla la connessione e riprova.",
-        "internal": "Impossibile completare l'operazione. Riprova."
+        "internal": "Impossibile completare l'operazione. Riprova.",
+        "rate_limited": "Troppi tentativi. Attendi qualche minuto e riprova.",
+        "link_password_mismatch": "Questa email ha già un account. Inserisci la stessa password che usi lì.",
+        "address_limit": "Hai raggiunto il numero massimo di indirizzi. Eliminane uno per aggiungerne un altro.",
+        "invalid_zone": "Scegli una zona di consegna dall’elenco.",
+        "invalid_address": "Scrivi l’indirizzo con via e numero.",
+        "delivery_unavailable": "Questo locale non fa consegne.",
+        "email_not_verified": "Conferma la tua email con il codice che ti abbiamo inviato.",
+        "invalid_code": "Il codice non è valido o è scaduto."
+      },
+      "code": {
+        "label": "Codice dell'email",
+        "resend": "Invia un altro codice",
+        "resent": "Ti abbiamo inviato un nuovo codice.",
+        "back": "Indietro"
+      },
+      "verify": {
+        "intro": "Ti abbiamo inviato un codice di 6 cifre via email. Inseriscilo per confermare il tuo account.",
+        "submit": "Conferma email",
+        "submitting": "Conferma in corso…"
+      },
+      "recover": {
+        "intro": "Inserisci il numero del documento e invieremo un codice all'email del tuo account.",
+        "send": "Invia codice",
+        "sending": "Invio…",
+        "codeIntro": "Se il documento ha un account, è arrivato un codice via email. Inseriscilo insieme alla nuova password.",
+        "confirm": "Cambia password",
+        "confirming": "Modifica in corso…"
+      },
+      "orders": {
+        "loading": "Caricamento ordini…",
+        "empty": "Non hai ancora ordini in questo negozio. Gli ordini fatti con l'accesso effettuato appariranno qui.",
+        "number": "Ordine #{number}",
+        "moreItems": "e altri {count}",
+        "fulfillment": {
+          "delivery": "Consegna",
+          "pickup": "Ritiro"
+        },
+        "status": {
+          "pending": "Ricevuto",
+          "in_progress": "In preparazione",
+          "ready": "Pronto",
+          "picked_up": "Consegnato",
+          "delivered": "Consegnato",
+          "completed": "Completato",
+          "cancelled": "Annullato",
+          "rejected": "Rifiutato",
+          "other": "In corso"
+        },
+        "detail": {
+          "open": "Vedi dettagli dell’ordine #{number}",
+          "back": "Torna ai miei ordini",
+          "payment": "Pagamento",
+          "paymentMethod": "Metodo di pagamento",
+          "paymentStatus": "Stato del pagamento",
+          "fulfillment": "Consegna",
+          "type": "Tipo",
+          "address": "Indirizzo",
+          "reference": "Riferimento",
+          "handoffCode": "Codice di consegna",
+          "branch": "Sede",
+          "products": "Prodotti ({count})",
+          "itemNote": "Nota: {note}",
+          "note": "Nota dell’ordine",
+          "summary": "Riepilogo",
+          "subtotal": "Subtotale",
+          "discount": "Sconto",
+          "deliveryFee": "Consegna",
+          "free": "Gratis",
+          "total": "Totale",
+          "notAvailable": "Non disponibile"
+        },
+        "paymentStatus": {
+          "paid": "Pagato",
+          "pending": "In attesa",
+          "partial": "Pagato in parte",
+          "other": "In verifica"
+        },
+        "repeat": "Ripeti ordine",
+        "goToMenu": "Vai al menù",
+        "orderNow": "Fai il mio primo ordine",
+        "repeatHint": "Ripetendo, i prodotti vanno nel carrello ai prezzi di oggi. Puoi modificarli prima di confermare.",
+        "repeatUnavailable": "Questo ordine non ha prodotti che si possano ripetere."
+      },
+      "addresses": {
+        "loading": "Caricamento indirizzi…",
+        "empty": "Non hai ancora indirizzi salvati.",
+        "hint": "Vengono salvati anche automaticamente quando ordini con consegna.",
+        "delete": "Elimina indirizzo",
+        "noStreet": "Indirizzo senza via",
+        "add": "Aggiungi indirizzo",
+        "newTitle": "Nuovo indirizzo",
+        "addressLabel": "Indirizzo",
+        "addressPlaceholder": "Via, numero e città",
+        "referenceLabel": "Riferimento",
+        "referencePlaceholder": "Interno, citofono, colore del cancello…",
+        "save": "Salva indirizzo",
+        "saving": "Salvataggio…",
+        "cancel": "Annulla",
+        "zoneLabel": "Zona di consegna",
+        "zonePlaceholder": "Scegli la tua zona",
+        "zoneHint": "Questo locale consegna per zone: scegli la tua e scrivi il tuo indirizzo.",
+        "noDelivery": "Questo locale non fa consegne, quindi non serve salvare indirizzi.",
+        "zoneAddressPlaceholder": "Via, numero, interno o casa"
       }
     },
     "cart": {
@@ -245,6 +347,7 @@
             "coupon_min_subtotal": "Subtotale minimo {amount}.",
             "coupon_phone_required": "Inserisci il telefono.",
             "coupon_wrong_client": "Coupon non valido per te.",
+            "coupon_login_required": "Accedi al tuo account per usare questo coupon.",
             "coupon_usage_exhausted": "Coupon esaurito.",
             "coupon_usage_exhausted_client": "Utilizzi massimi raggiunti.",
             "branch_not_found": "Filiale non trovata.",
@@ -267,7 +370,8 @@
           "cancel": "Annulla",
           "newOrder": "Nuovo Ordine",
           "backToMenu": "Torna al Menu",
-          "backToDelivery": "Torna alla consegna"
+          "backToDelivery": "Torna alla consegna",
+          "repeatLastOrder": "Ripeti ultimo ordine"
         },
         "delivery": {
           "pickNamedArea": "Scegli una zona",
@@ -323,7 +427,8 @@
           "shippingPending": "Lo calcoliamo con la tua posizione",
           "pickupTitle": "Ritiri in negozio",
           "pickupNoAddress": "Ti diamo l’indirizzo quando confermi l’ordine.",
-          "pickupOpenMap": "Come arrivare"
+          "pickupOpenMap": "Come arrivare",
+          "savedAddresses": "I tuoi indirizzi salvati"
         },
         "errors": {
           "noOrdersNow": "Ordini non disponibili al momento.",

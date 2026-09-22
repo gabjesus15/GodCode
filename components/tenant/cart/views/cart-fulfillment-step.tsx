@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 
 import type { DeliverySettingsNormalized } from "@/lib/delivery/delivery-settings";
 import type { CountryFormStrategy } from "@/lib/geo/country-forms";
+import type { MenuAccountAddress } from "../../account/menu-account-types";
 import type { CartFulfillment } from "../cart-context";
 import type { DeliveryAddressController } from "../hooks/use-delivery-address";
 import { useCart } from "../use-cart";
@@ -23,6 +24,8 @@ export type CartFulfillmentBodyProps = {
 	onTouch: () => void;
 	onFulfillmentChange: (next: CartFulfillment) => void;
 	pickup: { branchName?: string | null; address?: string | null; schedule?: string | null };
+	/** Direcciones guardadas en "Mi cuenta"; vacío o ausente sin sesión. */
+	savedAddresses?: MenuAccountAddress[];
 };
 
 /** Paso "cómo recibes tu pedido": elegir entre retiro y delivery, y resolver la entrega. */
@@ -36,6 +39,7 @@ export function CartFulfillmentBody({
 	onTouch,
 	onFulfillmentChange,
 	pickup,
+	savedAddresses,
 }: CartFulfillmentBodyProps) {
 	const t = useTranslations("tenant.cart.modal");
 	const { fulfillment } = useCart();
@@ -76,6 +80,7 @@ export function CartFulfillmentBody({
 							evaluation={evaluation}
 							touched={touched}
 							onTouch={onTouch}
+							savedAddresses={savedAddresses}
 						/>
 					) : (
 						<CartPickupCard {...pickup} />

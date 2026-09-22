@@ -1349,6 +1349,7 @@ export type Database = {
           max_redemptions_per_client: number
           min_order_subtotal: number | null
           redemptions_count: number
+          restricted_account_id: string | null
           restricted_client_id: string | null
           scope: string
           updated_at: string
@@ -1367,6 +1368,7 @@ export type Database = {
           max_redemptions_per_client?: number
           min_order_subtotal?: number | null
           redemptions_count?: number
+          restricted_account_id?: string | null
           restricted_client_id?: string | null
           scope?: string
           updated_at?: string
@@ -1385,6 +1387,7 @@ export type Database = {
           max_redemptions_per_client?: number
           min_order_subtotal?: number | null
           redemptions_count?: number
+          restricted_account_id?: string | null
           restricted_client_id?: string | null
           scope?: string
           updated_at?: string
@@ -1396,6 +1399,12 @@ export type Database = {
             foreignKeyName: "discount_coupons_company_id_fkey"
             columns: ["company_id"]
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_coupons_restricted_account_id_fkey"
+            columns: ["restricted_account_id"]
+            referencedRelation: "menu_client_accounts"
             referencedColumns: ["id"]
           },
           {

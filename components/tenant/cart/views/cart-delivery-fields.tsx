@@ -4,8 +4,11 @@ import { useState } from "react";
 import { Crosshair, MapPin, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { parseUnifiedAddressSearch } from "@/lib/delivery/address-search-query";
 import type { DeliverySettingsNormalized } from "@/lib/delivery/delivery-settings";
 import type { CountryFormStrategy } from "@/lib/geo/country-forms";
+import { cleanSavedAddressLine, savedAddressLabel } from "@/lib/menu-account/delivery-options";
+import type { MenuAccountAddress } from "../../account/menu-account-types";
 import { LazyDeliveryPreviewMap } from "@/lib/tenant/lazy/tenant-dynamic";
 import type { DeliveryAddressController } from "../hooks/use-delivery-address";
 import { useCart } from "../use-cart";
@@ -25,6 +28,8 @@ export type CartDeliveryFieldsProps = {
 	/** Las ayudas de validación solo aparecen después de que el cliente tocó algo. */
 	touched: boolean;
 	onTouch: () => void;
+	/** Direcciones guardadas en "Mi cuenta": un toque rellena los campos. */
+	savedAddresses?: MenuAccountAddress[];
 };
 
 /**
@@ -40,6 +45,7 @@ export function CartDeliveryFields({
 	evaluation,
 	touched,
 	onTouch,
+	savedAddresses,
 }: CartDeliveryFieldsProps) {
 	const t = useTranslations("tenant.cart.modal");
 	const {
@@ -87,6 +93,32 @@ export function CartDeliveryFields({
 	};
 	const editByHand = () => setSource("manual");
 
+	/**
+	 * Una dirección guardada entra por el mismo camino que si la persona la
+	 * tecleara: zona, calle y número, comuna y referencia por sus propios setters,
+	 * así la cotización de envío se recalcula con el flujo normal.
+	 */
+	const pickSavedAddress = (saved: MenuAccountAddress) => {
+		onTouch();
+		const area = saved.namedAreaId ? settings.namedAreas.find((entry) => entry.id === saved.namedAreaId) : undefined;
+		if (area) {
+			setDeliveryNamedAreaId(area.id);
+			if (area.name) setDeliveryCommune(area.name);
+		}
+		const line = cleanSavedAddressLine(saved.addressLine);
+		// Guardada solo con zona, la línea trae el nombre de la zona: no es una calle.
+		const zoneOnly = Boolean(area && line && area.name.startsWith(line));
+		if (line && !zoneOnly) {
+			const parsed = parseUnifiedAddressSearch(line);
+			const match = parsed.line1.match(/^(.*?)[\s,]+(\d+[A-Za-z-]*)$/);
+			address.onStreetChange(match ? match[1] : parsed.line1);
+			address.onNumberChange(match ? match[2] : "");
+			if (!area && parsed.commune) address.onAreaChange(parsed.commune);
+		}
+		if (saved.reference) setDeliveryReference(saved.reference);
+		setSource("manual");
+	};
+
 	const feeValue = deliveryWaivedFree ? (
 		<span className="cart-ship__free">{t("summary.free")}</span>
 	) : isDeliveryOutOfZone ? (
@@ -112,6 +144,20 @@ export function CartDeliveryFields({
 	return (
 		<div className="cart-delivery">
 			{settings.customerNotes ? <p className="cart-hint">{settings.customerNotes}</p> : null}
+
+			{savedAddresses && savedAddresses.length > 0 ? (
+				<div className="cart-saved">
+					<span className="cart-label">{t("delivery.savedAddresses")}</span>
+					<div className="cart-chips cart-chips--start">
+						{savedAddresses.map((saved) => (
+							<button key={saved.id} type="button" className="cart-chip" onClick={() => pickSavedAddress(saved)}>
+								<MapPin size={13} aria-hidden />
+								<span>{savedAddressLabel(saved, settings.namedAreas)}</span>
+							</button>
+						))}
+					</div>
+				</div>
+			) : null}
 
 			{manualZone ? (
 				<div className="cart-fields">

@@ -43,6 +43,7 @@ o con un método nuevo que se saltó la comprobación, rompe el CI (job
 | `super-admin` | `validateAdminRolesOnServer` |
 | `layout-guard` | el fichero vive bajo `app/(super-admin)/`, cuyo layout ya exige el rol |
 | `customer-account` | `getCustomerAccountContext` (fija el `company_id` desde la sesión) |
+| `menu-client-session` | sesión de la cuenta del menú: `getMenuAccountSession` / `requireMenuAccount` (filtran por `company_id`) |
 | `tenant-session` | sesión del panel del tenant: `getTicketAuthContext`, `getCeoSession`, `getCustomerMembership`… |
 | `internal-api-key` | `validateApiKey` (cabecera `x-internal-api-key`) |
 | `cron-secret` | `CRON_SECRET` en la cabecera `Authorization` |

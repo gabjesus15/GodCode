@@ -13,9 +13,18 @@ import { CartEnhanceRail } from "./cart-enhance-rail";
 import { CartLine } from "./cart-line";
 import { CartTotals } from "./cart-totals";
 
-export function CartSummaryBody({ lines, onBackToMenu }: { lines: CartLineItem[]; onBackToMenu: () => void }) {
+export function CartSummaryBody({
+	lines,
+	onBackToMenu,
+	accountCompanyId,
+}: {
+	lines: CartLineItem[];
+	onBackToMenu: () => void;
+	/** Solo con sesión en "Mi cuenta": habilita "repetir último pedido" en el vacío. */
+	accountCompanyId?: string | null;
+}) {
 	const { getPrice, addToCart, decreaseQuantity, removeFromCart, setLineNote } = useCart();
-	if (lines.length === 0) return <CartEmptyState onMenu={onBackToMenu} />;
+	if (lines.length === 0) return <CartEmptyState onMenu={onBackToMenu} accountCompanyId={accountCompanyId} />;
 	return (
 		<ul className="cart-lines">
 			{lines.map((item, index) => (

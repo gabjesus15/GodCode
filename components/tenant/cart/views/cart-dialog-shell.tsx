@@ -30,6 +30,8 @@ export type CartDialogShellProps = {
 	aside?: ReactNode;
 	onClose: () => void;
 	onOpenAccount?: () => void;
+	/** Nombre corto de la persona con sesión; el botón de cuenta lo enseña junto al icono. */
+	accountLabel?: string | null;
 	children: ReactNode;
 	footer?: ReactNode;
 };
@@ -52,6 +54,7 @@ export function CartDialogShell({
 	aside,
 	onClose,
 	onOpenAccount,
+	accountLabel,
 	children,
 	footer,
 }: CartDialogShellProps) {
@@ -100,12 +103,13 @@ export function CartDialogShell({
 						{onOpenAccount ? (
 							<button
 								type="button"
-								className="cart-icon-btn"
+								className={accountLabel ? "cart-icon-btn cart-icon-btn--labeled" : "cart-icon-btn"}
 								onClick={onOpenAccount}
-								aria-label={t("header.account")}
+								aria-label={accountLabel ? `${t("header.account")}: ${accountLabel}` : t("header.account")}
 								title={t("header.account")}
 							>
 								<UserRound size={18} aria-hidden />
+								{accountLabel ? <span className="cart-icon-btn__label">{accountLabel}</span> : null}
 							</button>
 						) : null}
 						<button
