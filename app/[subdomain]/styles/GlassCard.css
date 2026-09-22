@@ -75,7 +75,10 @@
 	position: relative;
 	aspect-ratio: 4 / 3;
 	overflow: hidden;
-	background: var(--menu-surface-2);
+	background:
+		radial-gradient(ellipse 70% 60% at 50% 42%, var(--menu-media-glow, transparent), transparent 100%),
+		var(--menu-media, var(--menu-surface-2));
+	border-bottom: 1px solid var(--menu-line);
 }
 
 .gcard__media .product-card-media {

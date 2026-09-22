@@ -23,6 +23,12 @@
     --menu-chrome-glass: rgba(21, 21, 24, 0.84);
     --menu-surface: #1b1b1e;
     --menu-surface-2: #27272b;
+    /* Escenario de la foto de producto: solo se ve con imágenes sin fondo
+       (PNG recortados) y mientras carga. Más claro que la tarjeta para que un
+       producto oscuro no se pierda, con una luz suave en el centro que lo
+       "apoya" sobre la superficie. */
+    --menu-media: #35353b;
+    --menu-media-glow: rgba(255, 255, 255, 0.07);
     --menu-surface-glass: rgba(27, 27, 30, 0.76);
     --menu-line: rgba(255, 255, 255, 0.1);
     --menu-line-strong: rgba(255, 255, 255, 0.22);
@@ -62,6 +68,9 @@
        interior, gris neutro cálido. */
     --menu-surface: #ffffff;
     --menu-surface-2: #f4f2ee;
+    /* Gris suave, no blanco: un producto claro sobre blanco puro desaparece. */
+    --menu-media: #ebe9e4;
+    --menu-media-glow: rgba(255, 255, 255, 0.75);
     --menu-surface-glass: rgba(255, 255, 255, 0.86);
     --menu-line: rgba(31, 27, 22, 0.12);
     --menu-line-strong: rgba(31, 27, 22, 0.24);
