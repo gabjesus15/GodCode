@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent, FormEvent, MouseEvent } from "react";
+import type { ChangeEvent, CSSProperties, FormEvent, MouseEvent } from "react";
 import { ArrowLeft, ChevronRight, Store } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -107,6 +107,7 @@ export function CartPaymentBody({
 						const config = PAYMENT_METHOD_CONFIG[key];
 						if (!config) return null;
 						const Icon = config.icon;
+						const tileStyle = { "--method-color": config.color } as CSSProperties;
 						const hint = !config.isOnline
 							? t("payment.hints.presential")
 							: paymentMethodRequiresReceipt(key, receiptRequiredMethods)
@@ -115,8 +116,8 @@ export function CartPaymentBody({
 						return (
 							<li key={key}>
 								<button type="button" className="cart-method" onClick={() => onPickMethod(key)}>
-									<span className="cart-method__icon" aria-hidden>
-										<Icon size={18} />
+									<span className="cart-method__icon" style={tileStyle} aria-hidden>
+										{Icon ? <Icon size={22} strokeWidth={1.75} /> : <span className="cart-method__mark">{config.mark}</span>}
 									</span>
 									<span className="cart-method__text">
 										<span className="cart-method__name">{resolvePaymentMethodLabel(key, t)}</span>

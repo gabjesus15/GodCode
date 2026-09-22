@@ -1693,21 +1693,28 @@ textarea.cart-field {
 
 /* --- Pago -------------------------------------------------------------------- */
 
+/* La lista de métodos se apoya abajo en cualquier ancho: queda a mano y el
+   hueco, si sobra, va arriba. */
+.cart-panel[data-phase="payment"] .cart-body > :first-child {
+	margin-top: auto;
+}
+
 .cart-methods {
 	list-style: none;
 	margin: 0;
 	padding: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 10px;
 }
 
 .cart-method {
 	width: 100%;
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	padding: 10px 12px;
+	gap: 14px;
+	min-height: 68px;
+	padding: 12px 14px;
 	border-radius: var(--cart-r-md);
 	border: 1px solid var(--cart-line);
 	background: var(--cart-raised);
@@ -1715,26 +1722,36 @@ textarea.cart-field {
 	font: inherit;
 	text-align: left;
 	cursor: pointer;
+	box-shadow: var(--cart-shadow-pop);
 	transition:
 		border-color 150ms ease,
-		background-color 150ms ease;
+		background-color 150ms ease,
+		transform 150ms ease;
 }
 
 .cart-method:hover {
-	border-color: var(--cart-line-strong);
+	border-color: var(--cart-accent);
 	background: var(--cart-raised-2);
 }
 
+/* Azulejo con el color propio del método (efectivo verde, tarjeta azul,
+   Zelle morado…): el tinte al 16% de fondo y el icono o la sigla a color pleno.
+   Es lo que distingue una lista de pagos profesional de cuatro iconos grises. */
 .cart-method__icon {
 	flex-shrink: 0;
-	width: 38px;
-	height: 38px;
+	width: 44px;
+	height: 44px;
 	display: grid;
 	place-items: center;
-	border-radius: 10px;
-	border: 1px solid var(--cart-line);
-	background: var(--cart-bg);
-	color: var(--cart-accent-ink);
+	border-radius: 12px;
+	background: color-mix(in srgb, var(--method-color, var(--cart-accent)) 16%, transparent);
+	color: var(--method-color, var(--cart-accent));
+}
+
+.cart-method__mark {
+	font-size: 0.875rem;
+	font-weight: 800;
+	letter-spacing: -0.02em;
 }
 
 .cart-method__text {
@@ -1751,7 +1768,7 @@ textarea.cart-field {
 }
 
 .cart-method__hint {
-	font-size: 0.75rem;
+	font-size: 0.8125rem;
 	color: var(--cart-fg-2);
 }
 
@@ -2105,8 +2122,7 @@ textarea.cart-field {
 	/* Los pasos con controles se apoyan abajo, donde llega el pulgar. Con
 	   `margin-top: auto` en el primer hijo el hueco queda arriba cuando sobra
 	   sitio y desaparece (scroll normal) cuando el contenido no cabe. */
-	.cart-panel[data-phase="fulfillment"] .cart-body > :first-child,
-	.cart-panel[data-phase="payment"] .cart-body > :first-child {
+	.cart-panel[data-phase="fulfillment"] .cart-body > :first-child {
 		margin-top: auto;
 	}
 
