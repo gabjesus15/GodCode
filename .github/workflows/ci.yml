@@ -45,7 +45,17 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Run strict lint
-        run: npm run lint:strict
+        run: |
+          set -o pipefail
+          npm run lint:strict 2>&1 | tee lint.log
+
+      # Si ESLint revienta (no un aviso de regla), el problem matcher no pinta nada:
+      # sube las últimas líneas como anotación para verlas sin abrir el log.
+      - name: Surface lint output
+        if: failure()
+        run: >-
+          node -e "const s=require('fs').readFileSync('lint.log','utf8').split('\n').slice(-60).join('\n');
+          console.log('::error title=Lint output::'+s.replace(/%/g,'%25').replace(/\r/g,'%0D').replace(/\n/g,'%0A'))"
 
   typecheck:
     name: Typecheck
