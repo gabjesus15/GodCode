@@ -14,21 +14,18 @@
 .tenant-theme-vars {
     /* Lienzo de página en modo manual (App.css): neutro, sin tinte. */
     --menu-canvas: #0c0c0e;
-    /* Cromo (cabecera y barra inferior): gris oscuro con un 9% del color del
-       local. A #0c0c0e casi negro la cabecera se leía como una franja ajena
-       pegada encima del menú; así es un poco más clara y "es del negocio":
-       cálida con un rojo, fría con un azul, verdosa con un verde. */
-    --menu-chrome: color-mix(in srgb, var(--menu-accent) 9%, #18181c);
-    --menu-chrome-glass: color-mix(in srgb, var(--menu-chrome) 84%, transparent);
-    /* Superficies (tarjetas, hojas, chips): gris oscuro con un 6-8% del color
-       del local, y los bordes con algo más de tinte para que la tarjeta se
-       recorte del fondo sin necesitar un borde blanco. Tres escalones bien
-       separados: fondo de página < tarjeta < superficie interior. */
-    --menu-surface: color-mix(in srgb, var(--menu-accent) 6%, #1b1a1f);
-    --menu-surface-2: color-mix(in srgb, var(--menu-accent) 8%, #27262c);
-    --menu-surface-glass: color-mix(in srgb, var(--menu-surface) 76%, transparent);
-    --menu-line: color-mix(in srgb, var(--menu-accent) 18%, rgba(255, 255, 255, 0.1));
-    --menu-line-strong: color-mix(in srgb, var(--menu-accent) 30%, rgba(255, 255, 255, 0.22));
+    /* Cromo (cabecera y barra inferior) y superficies (tarjetas, hojas,
+       chips): grises neutros, sin tinte del local (decisión del cliente: o
+       negro o blanco). Tres escalones bien separados: fondo de página <
+       cromo < tarjeta < superficie interior. El cromo sube de #0c0c0e a
+       #151518 para no leerse como una franja negra pegada al menú. */
+    --menu-chrome: #151518;
+    --menu-chrome-glass: rgba(21, 21, 24, 0.84);
+    --menu-surface: #1b1b1e;
+    --menu-surface-2: #27272b;
+    --menu-surface-glass: rgba(27, 27, 30, 0.76);
+    --menu-line: rgba(255, 255, 255, 0.1);
+    --menu-line-strong: rgba(255, 255, 255, 0.22);
     --menu-fg: #f7f6f4;
     --menu-fg-2: rgba(245, 244, 242, 0.76);
     --menu-fg-3: rgba(245, 244, 242, 0.6);
@@ -59,15 +56,15 @@
 .tenant-theme-vars[data-scheme="light"] {
     color-scheme: light;
     --menu-canvas: #fffdfa;
-    --menu-chrome: color-mix(in srgb, var(--menu-accent) 4%, #fffdfa);
-    --menu-chrome-glass: color-mix(in srgb, var(--menu-chrome) 86%, transparent);
+    --menu-chrome: #fffdfa;
+    --menu-chrome-glass: rgba(255, 253, 250, 0.86);
     /* Tarjeta blanca pura para separarse de una página casi blanca; el
-       interior y los bordes llevan el tinte del local. */
+       interior, gris neutro cálido. */
     --menu-surface: #ffffff;
-    --menu-surface-2: color-mix(in srgb, var(--menu-accent) 6%, #f6f3ee);
+    --menu-surface-2: #f4f2ee;
     --menu-surface-glass: rgba(255, 255, 255, 0.86);
-    --menu-line: color-mix(in srgb, var(--menu-accent) 18%, rgba(31, 27, 22, 0.12));
-    --menu-line-strong: color-mix(in srgb, var(--menu-accent) 30%, rgba(31, 27, 22, 0.24));
+    --menu-line: rgba(31, 27, 22, 0.12);
+    --menu-line-strong: rgba(31, 27, 22, 0.24);
     --menu-fg: #1f1b16;
     --menu-fg-2: rgba(31, 27, 22, 0.68);
     --menu-fg-3: rgba(31, 27, 22, 0.56);
