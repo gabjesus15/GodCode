@@ -1322,7 +1322,7 @@ html, body {
 
 /* Sello "local | Gcode" al pie del menú. */
 .powered-by-lockup {
-    gap: 14px;
+    gap: 20px;
     opacity: 0.85;
     text-transform: none;
     letter-spacing: 0;
@@ -1336,9 +1336,9 @@ html, body {
 
 .powered-by-lockup__tenant {
     display: inline-flex;
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
     overflow: hidden;
     background: var(--menu-surface);
     border: 1px solid var(--menu-line);
@@ -1352,7 +1352,7 @@ html, body {
 
 .powered-by-lockup__divider {
     width: 1px;
-    height: 26px;
+    height: 40px;
     background: var(--menu-line-strong);
 }
 
@@ -1363,18 +1363,10 @@ html, body {
 }
 
 .powered-by-lockup__gmark {
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
     object-fit: cover;
-}
-
-.powered-by-lockup__wordmark {
-    font-size: 1rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    color: var(--menu-fg);
-    line-height: 1;
 }
 
 .powered-by-gcode--sidebar {

@@ -44,12 +44,11 @@ export function PoweredByGcode({
 		return (
 			<a href={href} className="powered-by-gcode powered-by-gcode--menu powered-by-lockup" rel="noopener noreferrer" aria-label={ariaLabel}>
 				<span className="powered-by-lockup__tenant">
-					<Image src={logoUrl} alt={brandName} width={36} height={36} className="powered-by-lockup__tenant-logo" unoptimized />
+					<Image src={logoUrl} alt={brandName} width={56} height={56} className="powered-by-lockup__tenant-logo" unoptimized />
 				</span>
 				<span className="powered-by-lockup__divider" aria-hidden />
 				<span className="powered-by-lockup__gcode" aria-hidden>
-					<Image src="/favicon.png" alt="" width={22} height={22} className="powered-by-lockup__gmark" />
-					<span className="powered-by-lockup__wordmark">{LANDING_BRAND_NAME.toUpperCase()}</span>
+					<Image src="/favicon.png" alt="" width={56} height={56} className="powered-by-lockup__gmark" />
 				</span>
 			</a>
 		);
