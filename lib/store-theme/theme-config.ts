@@ -45,9 +45,13 @@ export function normalizeFontFamily(value: unknown): StoreThemeFontId {
   return STORE_THEME_FONTS.some((font) => font.id === raw) ? (raw as StoreThemeFontId) : "montserrat";
 }
 
-/** Hex de 6 dígitos o vacío (= automático). Cualquier otra cosa se descarta. */
+/**
+ * Color del nombre del local: "" = color primario, "hover" = color hover,
+ * o un hex de 6 dígitos elegido a mano. Cualquier otra cosa se descarta.
+ */
 export function normalizeBrandNameColor(value: unknown): string {
   const raw = String(value ?? "").trim();
+  if (raw.toLowerCase() === "hover") return "hover";
   if (/^#[a-fA-F0-9]{6}$/.test(raw)) return raw.toLowerCase();
   if (/^#[a-fA-F0-9]{3}$/.test(raw)) {
     return `#${raw.slice(1).split("").map((c) => c + c).join("")}`.toLowerCase();

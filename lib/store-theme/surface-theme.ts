@@ -44,7 +44,11 @@ export function tenantSurfaceCssVarEntries(theme: Partial<StoreThemeConfig>): Ar
 		["--tenant-surface-scheme", vars.surfaceScheme],
 		["--tenant-font", vars.fontStack],
 	];
-	if (vars.brandNameColor) entries.push(["--menu-brand-color", vars.brandNameColor]);
+	if (vars.brandNameColor === "hover") {
+		entries.push(["--menu-brand-color", "var(--accent-hover, var(--accent-primary))"]);
+	} else if (vars.brandNameColor) {
+		entries.push(["--menu-brand-color", vars.brandNameColor]);
+	}
 	return entries;
 }
 

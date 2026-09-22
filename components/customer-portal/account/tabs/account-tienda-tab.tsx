@@ -454,22 +454,45 @@ export function AccountTiendaTab({
 
                   <div className="text-xs font-medium text-[#6e6e73] sm:col-span-2">
                     Color del nombre del local
+                    {(() => {
+                      const current = normalizeBrandNameColor(storeThemeDraft.brandNameColor);
+                      const mode = current === "" ? "primary" : current === "hover" ? "hover" : "custom";
+                      const options: Array<["primary" | "hover" | "custom", string, string]> = [
+                        ["primary", "Primario", storeThemeDraft.primaryColor],
+                        ["hover", "Hover", storeThemeDraft.hoverColor],
+                        ["custom", "Personalizado", mode === "custom" ? current : storeThemeDraft.primaryColor],
+                      ];
+                      return (
                     <div className="mt-1.5 flex flex-wrap items-center gap-3 rounded-xl border border-[#d2d2d7] bg-white px-3 py-2">
-                      <label className="flex items-center gap-2 text-xs text-[#1d1d1f]">
-                        <input
-                          type="checkbox"
-                          checked={!storeThemeDraft.brandNameColor}
-                          disabled={busy}
-                          onChange={(e) =>
-                            setStoreThemeDraft((prev) =>
-                              prev ? { ...prev, brandNameColor: e.target.checked ? "" : prev.primaryColor } : prev,
-                            )
-                          }
-                          className="h-4 w-4 accent-indigo-500"
-                        />
-                        Usar el color primario
-                      </label>
-                      {storeThemeDraft.brandNameColor ? (
+                      <div className="grid grid-cols-3 gap-1 rounded-lg bg-[#f0f0f5] p-1" role="radiogroup" aria-label="Origen del color del nombre">
+                        {options.map(([value, label, swatch]) => (
+                          <button
+                            key={value}
+                            type="button"
+                            role="radio"
+                            aria-checked={mode === value}
+                            disabled={busy}
+                            onClick={() =>
+                              setStoreThemeDraft((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      brandNameColor:
+                                        value === "primary" ? "" : value === "hover" ? "hover" : normalizeBrandNameColor(prev.brandNameColor) || prev.primaryColor,
+                                    }
+                                  : prev,
+                              )
+                            }
+                            className={`flex h-8 items-center justify-center gap-1.5 rounded-md px-2 text-xs font-semibold transition-colors ${
+                              mode === value ? "bg-white text-[#1d1d1f] shadow-sm" : "text-[#6e6e73] hover:text-[#1d1d1f]"
+                            } disabled:opacity-60`}
+                          >
+                            <span className="h-3 w-3 rounded-full border border-black/10" style={{ background: swatch }} aria-hidden />
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      {mode === "custom" ? (
                         <>
                           <input
                             type="color"
@@ -483,8 +506,10 @@ export function AccountTiendaTab({
                         </>
                       ) : null}
                     </div>
+                      );
+                    })()}
                     <p className="mt-1 text-[10px] text-[#a1a1a6]">
-                      El nombre va en la cabecera del menú. Sin elegir, usa tu color primario tal cual.
+                      El nombre va en la cabecera del menú: tu color primario, el de hover o uno propio.
                     </p>
                   </div>
                 </div>

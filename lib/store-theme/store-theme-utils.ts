@@ -170,7 +170,8 @@ export function buildStoreThemeChecklist(draft: StoreThemeConfig | null): ThemeC
   // El nombre va sobre el cromo del header, que sigue al modo elegido (o al fondo).
   const chromeBg =
     draft.surfaceScheme === "light" ? "#fffdfa" : draft.surfaceScheme === "dark" ? "#0c0c0e" : draft.backgroundColor;
-  const brandNameContrast = draft.brandNameColor ? contrastRatio(draft.brandNameColor, chromeBg) : null;
+  const brandNameHex = draft.brandNameColor === "hover" ? draft.hoverColor : draft.brandNameColor;
+  const brandNameContrast = brandNameHex ? contrastRatio(brandNameHex, chromeBg) : null;
   return [
     {
       id:     "cta-contrast",
@@ -190,7 +191,7 @@ export function buildStoreThemeChecklist(draft: StoreThemeConfig | null): ThemeC
       ok:     (discountContrast ?? 0) >= 3,
       detail: discountContrast == null ? "No se pudo calcular" : `Ratio ${discountContrast.toFixed(2)} (objetivo >= 3.0)`,
     },
-    ...(draft.brandNameColor
+    ...(brandNameHex
       ? [{
           id:     "brand-name-contrast",
           title:  "Contraste del color del nombre",

@@ -21,6 +21,7 @@ describe("ajustes de superficie del menú", () => {
 		expect(normalizeFontFamily("playfair")).toBe("playfair");
 		expect(normalizeFontFamily("comic sans")).toBe("montserrat");
 		expect(normalizeBrandNameColor("#ABC")).toBe("#aabbcc");
+		expect(normalizeBrandNameColor("hover")).toBe("hover");
 		expect(normalizeBrandNameColor("rojo")).toBe("");
 	});
 
@@ -36,6 +37,10 @@ describe("ajustes de superficie del menú", () => {
 		expect(extractCssVarNames(css)).toEqual(["--tenant-surface-scheme", "--tenant-font", "--menu-brand-color"]);
 		expect(css).toContain("--tenant-font:var(--font-lora), \"Lora\", serif;");
 		expect(css).toContain("--menu-brand-color:#112233;");
+	});
+
+	it("con \"hover\" el nombre apunta a la variable del color hover", () => {
+		expect(buildTenantSurfaceCssString({ brandNameColor: "hover" })).toContain("--menu-brand-color:var(--accent-hover, var(--accent-primary));");
 	});
 
 	it("sin color elegido no declara la variable: el CSS cae al color de marca", () => {
