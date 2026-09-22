@@ -921,13 +921,19 @@ html, body {
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+    /* El anillo de la activa es un outline, no una capa de box-shadow: al
+       animar una sombra de dos capas hacia una de tres el navegador
+       reasignaba las capas y se veía un doble movimiento. Así la sombra no
+       cambia y solo se funde el color del anillo. */
+    outline: 2px solid transparent;
+    outline-offset: 0;
+    transition: border-color 0.2s ease, outline-color 0.2s ease;
     box-sizing: border-box;
 }
 
 .icon-list-card.active .icon-list-card-image-wrapper {
     border-color: var(--menu-accent);
-    box-shadow: 0 0 0 2px var(--menu-accent);
+    outline-color: var(--menu-accent);
 }
 
 .icon-list-card-image {
@@ -986,12 +992,6 @@ html, body {
     background: #ffffff;
     border-color: var(--menu-line-strong);
     box-shadow: var(--menu-shadow-chip);
-}
-
-.tenant-theme-vars[data-scheme="light"] .icon-list-card.active .icon-list-card-image-wrapper {
-    box-shadow:
-        0 0 0 2px var(--menu-accent),
-        var(--menu-shadow-chip);
 }
 
 .tenant-theme-vars[data-scheme="light"] .icon-list-card-name {
