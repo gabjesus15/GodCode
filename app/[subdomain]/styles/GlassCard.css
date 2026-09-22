@@ -335,13 +335,9 @@
 	color: var(--menu-fg);
 }
 
-/* Escritorio: la tarjeta crece hacia arriba, no hacia los lados. Foto cuadrada
-   en vez de 4:3, descripción a tres líneas y algo más de aire en el cuerpo. */
+/* Escritorio: la foto se queda en 4:3 (cuadrada se comía la tarjeta); la
+   altura extra la ponen la descripción a tres líneas y algo más de aire. */
 @media (min-width: 769px) {
-	.gcard__media {
-		aspect-ratio: 1 / 1;
-	}
-
 	.gcard__body {
 		gap: 6px;
 		padding: 14px 16px 0;
