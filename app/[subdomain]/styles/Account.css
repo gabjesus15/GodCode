@@ -163,7 +163,7 @@
 
 .account-tab {
     flex: 1;
-    height: 38px;
+    height: 42px;
     border: none;
     border-radius: 999px;
     background: transparent;
@@ -501,7 +501,7 @@ form > .account-actions {
     align-items: center;
     justify-content: center;
     gap: 7px;
-    height: 36px;
+    height: 42px;
     padding: 0 14px;
     border-radius: 8px;
     border: 1px solid var(--menu-accent);
@@ -961,5 +961,187 @@ a.account-button--ghost {
 @media (max-width: 760px) {
     .account-order-actions .account-button {
         flex: 1 1 0;
+    }
+}
+
+/* =========================================
+   MICRO-INTERACCIONES, ANIMACIONES Y TACTO
+   ========================================= */
+
+/* Sin retardo de doble toque ni destello azul en los controles. */
+.account-page button,
+.account-page a,
+.account-page input,
+.account-page select {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Respuesta al pulsar: un leve encogido, como los botones del carrito. */
+.account-submit,
+.account-button,
+.account-tab,
+.account-nav-item,
+.account-icon-button,
+.account-back-button,
+.account-order {
+    transition-property: background-color, border-color, color, filter, opacity, transform, box-shadow;
+    transition-duration: 0.18s;
+    transition-timing-function: ease;
+}
+
+.account-submit:active:not(:disabled),
+.account-button:active:not(:disabled),
+.account-tab:active,
+.account-icon-button:active:not(:disabled),
+.account-back-button:active {
+    transform: scale(0.97);
+}
+
+button.account-order:active {
+    transform: scale(0.995);
+}
+
+/* Foco visible con el color del local (teclado y lectores). */
+.account-input:focus-visible,
+.account-submit:focus-visible,
+.account-button:focus-visible,
+.account-tab:focus-visible,
+.account-nav-item:focus-visible,
+.account-icon-button:focus-visible,
+.account-back-button:focus-visible,
+.account-order:focus-visible,
+.account-link-button:focus-visible {
+    outline: 2px solid var(--menu-accent);
+    outline-offset: 2px;
+}
+
+/* Campo con error: filo en peligro y mensaje debajo, sin mover el layout. */
+.account-input[aria-invalid="true"] {
+    border-color: var(--menu-danger);
+    box-shadow: 0 0 0 3px var(--menu-danger-soft);
+}
+
+.account-field-error {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--menu-danger);
+    animation: account-rise 0.2s ease both;
+}
+
+/* Contraseña con ojo. */
+.account-password {
+    position: relative;
+}
+
+.account-password .account-input {
+    padding-right: 46px;
+}
+
+.account-password__toggle {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    width: 40px;
+    height: 40px;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--menu-fg-3);
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.account-password__toggle:hover,
+.account-password__toggle[aria-pressed="true"] {
+    color: var(--menu-fg);
+    background: var(--menu-surface-2);
+}
+
+/* Código de 6 dígitos: grande, espaciado, centrado. */
+.account-input--code {
+    text-align: center;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.35em;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Confirmación de borrado en línea: "¿Eliminar?" + sí / no. */
+.account-confirm {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    animation: account-rise 0.18s ease both;
+}
+
+.account-confirm__text {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--menu-danger);
+    white-space: nowrap;
+}
+
+.account-icon-button--danger {
+    color: var(--menu-danger);
+    border-color: var(--menu-danger-line);
+    background: var(--menu-danger-soft);
+}
+
+/* Spinner de los botones ocupados. */
+.account-spin {
+    animation: account-spin 0.8s linear infinite;
+}
+
+/* Entrada de cada vista y sección: un fundido corto con leve subida. */
+.account-view {
+    animation: account-rise 0.24s var(--menu-ease, ease) both;
+}
+
+.account-panel {
+    animation: account-fade 0.22s ease both;
+}
+
+@keyframes account-rise {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes account-fade {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes account-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .account-view,
+    .account-panel,
+    .account-field-error,
+    .account-confirm {
+        animation: none;
+    }
+
+    .account-submit:active:not(:disabled),
+    .account-button:active:not(:disabled),
+    .account-tab:active,
+    .account-icon-button:active:not(:disabled),
+    .account-back-button:active,
+    button.account-order:active {
+        transform: none;
     }
 }

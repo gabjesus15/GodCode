@@ -180,7 +180,8 @@
         "label": "Code reçu par e-mail",
         "resend": "Envoyer un autre code",
         "resent": "Nous vous avons envoyé un nouveau code.",
-        "back": "Retour"
+        "back": "Retour",
+        "resendIn": "Renvoyer dans {seconds} s"
       },
       "verify": {
         "intro": "Nous avons envoyé un code à 6 chiffres à votre e-mail. Saisissez-le pour confirmer votre compte.",
@@ -248,7 +249,8 @@
         "goToMenu": "Voir le menu",
         "orderNow": "Passer ma première commande",
         "repeatHint": "Les produits sont ajoutés à votre panier aux prix du jour. Vous pouvez les modifier avant de confirmer.",
-        "repeatUnavailable": "Cette commande ne contient aucun produit pouvant être recommandé."
+        "repeatUnavailable": "Cette commande ne contient aucun produit pouvant être recommandé.",
+        "repeating": "Préparation…"
       },
       "addresses": {
         "loading": "Chargement des adresses…",
@@ -269,7 +271,20 @@
         "zonePlaceholder": "Choisissez votre zone",
         "zoneHint": "Cet établissement livre par zone : choisissez la vôtre et saisissez votre adresse.",
         "noDelivery": "Cet établissement ne livre pas, inutile d’enregistrer des adresses.",
-        "zoneAddressPlaceholder": "Rue, numéro, appartement ou maison"
+        "zoneAddressPlaceholder": "Rue, numéro, appartement ou maison",
+        "confirmDelete": "Supprimer ?"
+      },
+      "fields": {
+        "document": "Vérifie le champ {idName}.",
+        "email": "Saisis un e-mail valide.",
+        "name": "Saisis ton nom complet.",
+        "phone": "Vérifie le téléphone.",
+        "password": "Au moins 8 caractères.",
+        "code": "Saisis le code à 6 chiffres."
+      },
+      "password": {
+        "show": "Afficher le mot de passe",
+        "hide": "Masquer le mot de passe"
       }
     },
     "cart": {

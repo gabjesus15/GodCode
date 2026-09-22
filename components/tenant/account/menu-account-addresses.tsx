@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { MapPin, Plus, Trash2 } from "lucide-react";
+import { Check, MapPin, Plus, Trash2, X } from "lucide-react";
 
 import type {
 	MenuAccountDeliveryOptions,
@@ -10,6 +10,7 @@ import type {
 } from "@/lib/menu-account/delivery-options";
 
 import type { MenuAccountAddress } from "./menu-account-types";
+import { AccountBusyLabel } from "./account-fields";
 import { errorMessage } from "./menu-account-auth-panel";
 import { useMenuAccount } from "./use-menu-account";
 
@@ -48,6 +49,9 @@ export function MenuAccountAddresses({ companySlug, deliveryOptions }: MenuAccou
 	const mutation = useMenuAccount("login");
 	const [addresses, setAddresses] = useState<MenuAccountAddress[] | null>(null);
 	const [deletingId, setDeletingId] = useState<string | null>(null);
+	/* Borrar pide un segundo toque: el primero convierte la papelera en "¿Eliminar?"
+	   con confirmar y cancelar. Sin diálogo modal, y sin borrar por un roce. */
+	const [confirmId, setConfirmId] = useState<string | null>(null);
 
 	const [formOpen, setFormOpen] = useState(false);
 	const [namedAreaId, setNamedAreaId] = useState("");
@@ -102,6 +106,7 @@ export function MenuAccountAddresses({ companySlug, deliveryOptions }: MenuAccou
 	};
 
 	const handleDelete = async (address: MenuAccountAddress) => {
+		setConfirmId(null);
 		setDeletingId(address.id);
 		const result = await mutation.run(
 			`addresses?companySlug=${encodeURIComponent(companySlug)}&id=${encodeURIComponent(address.id)}`,
@@ -148,15 +153,39 @@ export function MenuAccountAddresses({ companySlug, deliveryOptions }: MenuAccou
 										<span className="account-address-reference">{address.reference}</span>
 									) : null}
 								</div>
-								<button
-									type="button"
-									className="account-icon-button"
-									onClick={() => handleDelete(address)}
-									disabled={deletingId !== null}
-									aria-label={t("delete")}
-								>
-									<Trash2 size={16} aria-hidden />
-								</button>
+								{confirmId === address.id ? (
+									<span className="account-confirm" role="group" aria-label={t("delete")}>
+										<span className="account-confirm__text">{t("confirmDelete")}</span>
+										<button
+											type="button"
+											className="account-icon-button account-icon-button--danger"
+											onClick={() => handleDelete(address)}
+											disabled={deletingId !== null}
+											aria-label={t("delete")}
+										>
+											<Check size={16} aria-hidden />
+										</button>
+										<button
+											type="button"
+											className="account-icon-button"
+											onClick={() => setConfirmId(null)}
+											aria-label={t("cancel")}
+										>
+											<X size={16} aria-hidden />
+										</button>
+									</span>
+								) : (
+									<button
+										type="button"
+										className="account-icon-button"
+										onClick={() => setConfirmId(address.id)}
+										disabled={deletingId !== null}
+										aria-label={t("delete")}
+										aria-busy={deletingId === address.id || undefined}
+									>
+										{deletingId === address.id ? <AccountBusyLabel busy idle={null} working={null} /> : <Trash2 size={16} aria-hidden />}
+									</button>
+								)}
 							</li>
 						);
 					})}
@@ -259,7 +288,7 @@ export function MenuAccountAddresses({ companySlug, deliveryOptions }: MenuAccou
 							{t("cancel")}
 						</button>
 						<button type="submit" className="account-button" disabled={mutation.pending}>
-							{mutation.pending ? t("saving") : t("save")}
+							<AccountBusyLabel busy={mutation.pending} idle={t("save")} working={t("saving")} />
 						</button>
 					</div>
 				</form>

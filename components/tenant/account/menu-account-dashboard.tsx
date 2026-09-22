@@ -8,6 +8,7 @@ import { LogOut, MapPin, Package, Settings, UserRound, UtensilsCrossed } from "l
 import { getFormStrategy } from "@/lib/geo/country-forms";
 import type { MenuAccountDeliveryOptions } from "@/lib/menu-account/delivery-options";
 
+import { AccountBusyLabel, AccountPasswordInput, accountFieldRules } from "./account-fields";
 import type { MenuAccountBranchOption, MenuAccountPublic } from "./menu-account-types";
 import { MenuAccountAddresses } from "./menu-account-addresses";
 import { errorMessage } from "./menu-account-auth-panel";
@@ -86,7 +87,8 @@ export function MenuAccountDashboard({
 
 			{/* Cada sección se monta solo al abrirla: pedidos y direcciones hacen su
 			    petición al entrar, no todas al cargar la página. */}
-			<div className="account-dashboard-content">
+			{/* `key={section}`: cada sección entra con su animación al cambiar. */}
+			<div className="account-dashboard-content account-view" key={section}>
 				{section === "orders" && orderDetailOpen ? null : (
 					<header className="account-section-head">
 						<h2 className="account-section-heading">{t(`nav.${section}`)}</h2>
@@ -178,10 +180,17 @@ function ProfileSection({
 	const [phone, setPhone] = useState(account.phone);
 	const [branchId, setBranchId] = useState(account.preferredBranchId ?? "");
 	const [profileSaved, setProfileSaved] = useState(false);
+	const [attempted, setAttempted] = useState(false);
+	const nameError = accountFieldRules.name(fullName) ? null : t("fields.name");
+	const phoneError = accountFieldRules.phone(strategy, phone) ? null : t("fields.phone");
 
 	const handleProfileSubmit = async (event: React.FormEvent) => {
 		event.preventDefault();
 		setProfileSaved(false);
+		if (nameError || phoneError) {
+			setAttempted(true);
+			return;
+		}
 		const result = await run<{ account: MenuAccountPublic }>("profile", {
 			method: "PATCH",
 			body: { companySlug, fullName, phone, preferredBranchId: branchId || null },
@@ -193,7 +202,7 @@ function ProfileSection({
 	};
 
 	return (
-		<form className="account-panel" onSubmit={handleProfileSubmit}>
+		<form className="account-panel" onSubmit={handleProfileSubmit} noValidate>
 			<SettingsGroup title={t("dashboard.profileTitle")}>
 				<SettingsRow label={t("dashboard.fullNameLabel")} htmlFor="account-full-name">
 					<input
@@ -202,8 +211,10 @@ function ProfileSection({
 						value={fullName}
 						onChange={(event) => setFullName(event.target.value)}
 						autoComplete="name"
-						required
+						aria-invalid={attempted && nameError ? true : undefined}
+						enterKeyHint="next"
 					/>
+					{attempted && nameError ? <span className="account-field-error" role="alert">{nameError}</span> : null}
 				</SettingsRow>
 				<SettingsRow label={t("dashboard.phoneLabel")} htmlFor="account-phone">
 					<input
@@ -213,8 +224,11 @@ function ProfileSection({
 						onChange={(event) => setPhone(strategy.normalizePhone(event.target.value))}
 						placeholder={strategy.phonePlaceholder}
 						autoComplete="tel"
-						required
+						inputMode="tel"
+						aria-invalid={attempted && phoneError ? true : undefined}
+						enterKeyHint="done"
 					/>
+					{attempted && phoneError ? <span className="account-field-error" role="alert">{phoneError}</span> : null}
 				</SettingsRow>
 				<SettingsRow label={t("dashboard.emailLabel")}>
 					<span className="account-row-value">{account.email}</span>
@@ -224,7 +238,7 @@ function ProfileSection({
 				</SettingsRow>
 			</SettingsGroup>
 
-			{branches.length > 0 ? (
+			{branches.length > 1 ? (
 				<SettingsGroup title={t("dashboard.preferencesTitle")}>
 					<SettingsRow label={t("dashboard.branchLabel")} htmlFor="account-branch">
 						<select
@@ -245,10 +259,10 @@ function ProfileSection({
 			) : null}
 
 			<div className="account-actions">
-				{profileSaved ? <p className="account-success">{t("dashboard.saved")}</p> : null}
-				{errorCode ? <p className="account-error">{errorMessage(t, errorCode)}</p> : null}
+				{profileSaved ? <p className="account-success" role="status">{t("dashboard.saved")}</p> : null}
+				{errorCode ? <p className="account-error" role="alert">{errorMessage(t, errorCode)}</p> : null}
 				<button type="submit" className="account-button" disabled={pending}>
-					{pending ? t("dashboard.saving") : t("dashboard.save")}
+					<AccountBusyLabel busy={pending} idle={t("dashboard.save")} working={t("dashboard.saving")} />
 				</button>
 			</div>
 		</form>
@@ -270,6 +284,9 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 	const [newPassword, setNewPassword] = useState("");
 	/** El formulario de la clave nueva solo aparece una vez enviado el código. */
 	const [codeSent, setCodeSent] = useState(false);
+	const [attempted, setAttempted] = useState(false);
+	const codeError = code.length === 6 ? null : t("fields.code");
+	const passwordError = accountFieldRules.password(newPassword) ? null : t("fields.password");
 
 	const handleSendCode = async () => {
 		const result = await password.run("password/code", { body: { companySlug } });
@@ -278,6 +295,10 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 
 	const handlePasswordSubmit = async (event: React.FormEvent) => {
 		event.preventDefault();
+		if (codeError || passwordError) {
+			setAttempted(true);
+			return;
+		}
 		const result = await password.run("password", {
 			body: { companySlug, code, newPassword },
 		});
@@ -296,7 +317,7 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 
 	return (
 		<div className="account-panel">
-			<form onSubmit={handlePasswordSubmit}>
+			<form onSubmit={handlePasswordSubmit} noValidate>
 				<SettingsGroup title={t("dashboard.passwordTitle")}>
 					{!codeSent ? (
 						<SettingsRow label={t("dashboard.passwordCodeLabel")}>
@@ -306,7 +327,7 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 								onClick={handleSendCode}
 								disabled={password.pending}
 							>
-								{password.pending ? t("dashboard.sendingCode") : t("dashboard.sendCode")}
+								<AccountBusyLabel busy={password.pending} idle={t("dashboard.sendCode")} working={t("dashboard.sendingCode")} />
 							</button>
 							<span className="account-field-hint">{t("dashboard.passwordCodeHint")}</span>
 						</SettingsRow>
@@ -321,22 +342,21 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 							inputMode="numeric"
 							autoComplete="one-time-code"
 							placeholder="000000"
-							pattern="\d{6}"
-							required
+							aria-invalid={attempted && codeError ? true : undefined}
+							autoFocus
 						/>
+						{attempted && codeError ? <span className="account-field-error" role="alert">{codeError}</span> : null}
 						<span className="account-field-hint">{t("dashboard.codeSentHint")}</span>
 					</SettingsRow>
 					<SettingsRow label={t("dashboard.newPassword")} htmlFor="account-new-password">
-						<input
+						<AccountPasswordInput
 							id="account-new-password"
-							className="account-input"
-							type="password"
 							value={newPassword}
 							onChange={(event) => setNewPassword(event.target.value)}
 							autoComplete="new-password"
-							minLength={8}
-							required
+							aria-invalid={attempted && passwordError ? true : undefined}
 						/>
+						{attempted && passwordError ? <span className="account-field-error" role="alert">{passwordError}</span> : null}
 						<span className="account-field-hint">{t("dashboard.passwordSharedNote")}</span>
 					</SettingsRow>
 					</>
@@ -350,7 +370,7 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 					    sesión y el aviso lo da el panel de acceso. */}
 					{codeSent ? (
 						<button type="submit" className="account-button" disabled={password.pending}>
-							{password.pending ? t("dashboard.changingPassword") : t("dashboard.changePassword")}
+							<AccountBusyLabel busy={password.pending} idle={t("dashboard.changePassword")} working={t("dashboard.changingPassword")} />
 						</button>
 					) : null}
 				</div>
@@ -364,8 +384,8 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 						onClick={handleLogout}
 						disabled={logout.pending}
 					>
-						<LogOut size={15} aria-hidden />
-						{logout.pending ? t("dashboard.loggingOut") : t("dashboard.logout")}
+						{logout.pending ? null : <LogOut size={15} aria-hidden />}
+						<AccountBusyLabel busy={logout.pending} idle={t("dashboard.logout")} working={t("dashboard.loggingOut")} />
 					</button>
 					{logout.errorCode ? (
 						<p className="account-error">{errorMessage(t, logout.errorCode)}</p>

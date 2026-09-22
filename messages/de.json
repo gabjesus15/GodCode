@@ -180,7 +180,8 @@
         "label": "Code aus der E-Mail",
         "resend": "Neuen Code senden",
         "resent": "Wir haben dir einen neuen Code gesendet.",
-        "back": "Zurück"
+        "back": "Zurück",
+        "resendIn": "Erneut senden in {seconds} s"
       },
       "verify": {
         "intro": "Wir haben dir einen 6-stelligen Code per E-Mail gesendet. Gib ihn ein, um dein Konto zu bestätigen.",
@@ -248,7 +249,8 @@
         "goToMenu": "Zur Speisekarte",
         "orderNow": "Meine erste Bestellung aufgeben",
         "repeatHint": "Die Produkte kommen mit den heutigen Preisen in deinen Warenkorb. Du kannst sie vor dem Bestätigen ändern.",
-        "repeatUnavailable": "Diese Bestellung enthält keine Produkte, die erneut bestellt werden können."
+        "repeatUnavailable": "Diese Bestellung enthält keine Produkte, die erneut bestellt werden können.",
+        "repeating": "Wird vorbereitet…"
       },
       "addresses": {
         "loading": "Adressen werden geladen…",
@@ -269,7 +271,20 @@
         "zonePlaceholder": "Wähle dein Gebiet",
         "zoneHint": "Dieses Geschäft liefert nach Gebieten: Wähle deins und gib deine Adresse ein.",
         "noDelivery": "Dieses Geschäft liefert nicht, daher musst du keine Adressen speichern.",
-        "zoneAddressPlaceholder": "Straße, Hausnummer, Wohnung oder Haus"
+        "zoneAddressPlaceholder": "Straße, Hausnummer, Wohnung oder Haus",
+        "confirmDelete": "Löschen?"
+      },
+      "fields": {
+        "document": "Prüfe das Feld {idName}.",
+        "email": "Gib eine gültige E-Mail ein.",
+        "name": "Gib deinen vollständigen Namen ein.",
+        "phone": "Prüfe die Telefonnummer.",
+        "password": "Mindestens 8 Zeichen.",
+        "code": "Gib den 6-stelligen Code ein."
+      },
+      "password": {
+        "show": "Passwort anzeigen",
+        "hide": "Passwort ausblenden"
       }
     },
     "cart": {

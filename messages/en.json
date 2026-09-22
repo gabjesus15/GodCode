@@ -229,7 +229,8 @@
         "goToMenu": "Go to menu",
         "orderNow": "Place my first order",
         "repeatHint": "Reordering adds the products to your cart at today's prices. You can change them before confirming.",
-        "repeatUnavailable": "This order has no products that can be reordered."
+        "repeatUnavailable": "This order has no products that can be reordered.",
+        "repeating": "Preparing…"
       },
       "addresses": {
         "loading": "Loading addresses…",
@@ -250,13 +251,15 @@
         "zonePlaceholder": "Choose your zone",
         "zoneHint": "This business delivers by zone: choose yours and enter your address.",
         "noDelivery": "This business doesn’t deliver, so there’s no need to save addresses.",
-        "zoneAddressPlaceholder": "Street, number, apartment or house"
+        "zoneAddressPlaceholder": "Street, number, apartment or house",
+        "confirmDelete": "Delete?"
       },
       "code": {
         "label": "Email code",
         "resend": "Send another code",
         "resent": "We sent you a new code.",
-        "back": "Back"
+        "back": "Back",
+        "resendIn": "Resend in {seconds}s"
       },
       "verify": {
         "intro": "We sent a 6-digit code to your email. Enter it to confirm your account.",
@@ -270,6 +273,18 @@
         "codeIntro": "If that ID has an account, a code is on its way to the email. Enter it along with your new password.",
         "confirm": "Change password",
         "confirming": "Changing…"
+      },
+      "fields": {
+        "document": "Check the {idName} field.",
+        "email": "Enter a valid email.",
+        "name": "Enter your full name.",
+        "phone": "Check the phone number.",
+        "password": "At least 8 characters.",
+        "code": "Enter the 6-digit code."
+      },
+      "password": {
+        "show": "Show password",
+        "hide": "Hide password"
       }
     },
     "cart": {

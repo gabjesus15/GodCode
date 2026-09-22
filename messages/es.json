@@ -229,7 +229,8 @@
         "goToMenu": "Ir al menú",
         "orderNow": "Hacer mi primer pedido",
         "repeatHint": "Al repetir, los productos se cargan en tu carrito con los precios de hoy. Puedes cambiarlos antes de confirmar.",
-        "repeatUnavailable": "Este pedido no tiene productos que se puedan repetir."
+        "repeatUnavailable": "Este pedido no tiene productos que se puedan repetir.",
+        "repeating": "Preparando…"
       },
       "addresses": {
         "loading": "Cargando direcciones…",
@@ -250,13 +251,15 @@
         "zonePlaceholder": "Elige tu zona",
         "zoneHint": "Este negocio reparte por zonas: elige la tuya y escribe tu dirección.",
         "noDelivery": "Este negocio no hace delivery, así que no hace falta guardar direcciones.",
-        "zoneAddressPlaceholder": "Calle, número, depto o casa"
+        "zoneAddressPlaceholder": "Calle, número, depto o casa",
+        "confirmDelete": "¿Eliminar?"
       },
       "code": {
         "label": "Código del correo",
         "resend": "Enviar otro código",
         "resent": "Te enviamos un código nuevo.",
-        "back": "Volver"
+        "back": "Volver",
+        "resendIn": "Reenviar en {seconds} s"
       },
       "verify": {
         "intro": "Te enviamos un código de 6 dígitos a tu correo. Escríbelo para confirmar tu cuenta.",
@@ -270,6 +273,18 @@
         "codeIntro": "Si el documento tiene cuenta, te llegó un código al correo. Escríbelo junto con tu contraseña nueva.",
         "confirm": "Cambiar contraseña",
         "confirming": "Cambiando…"
+      },
+      "fields": {
+        "document": "Revisa el campo {idName}.",
+        "email": "Escribe un correo válido.",
+        "name": "Escribe tu nombre completo.",
+        "phone": "Revisa el teléfono.",
+        "password": "Mínimo 8 caracteres.",
+        "code": "Escribe los 6 dígitos del código."
+      },
+      "password": {
+        "show": "Mostrar contraseña",
+        "hide": "Ocultar contraseña"
       }
     },
     "cart": {

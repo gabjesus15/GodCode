@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ChevronLeft, RotateCcw, UtensilsCrossed } from "lucide-react";
 
 import { formatCartMoney } from "../cart/utils/format-cart-money";
 
+import { AccountBusyLabel } from "./account-fields";
 import type { MenuAccountOrder } from "./menu-account-types";
 import { repeatableItems, useRepeatOrder } from "./use-repeat-order";
 
@@ -55,6 +57,16 @@ export function MenuAccountOrderDetail({ order, onBack }: MenuAccountOrderDetail
 	const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
 	const { repeatOrder, menuPath } = useRepeatOrder();
 	const canRepeat = repeatableItems(order).length > 0;
+	/* Deshabilitado hasta que navegue: repetir reescribe el carrito y empuja la
+	   ruta, y un segundo toque duplicaría ese trabajo. */
+	const [repeating, setRepeating] = useState(false);
+	const handleRepeat = () => {
+		if (repeating) return;
+		setRepeating(true);
+		void repeatOrder(order).then((ok) => {
+			if (!ok) setRepeating(false);
+		});
+	};
 
 	return (
 		<div className="account-panel">
@@ -73,7 +85,8 @@ export function MenuAccountOrderDetail({ order, onBack }: MenuAccountOrderDetail
 				<OrderActions
 					menuHref={menuPath(order.branchId)}
 					canRepeat={canRepeat}
-					onRepeat={() => void repeatOrder(order)}
+					repeating={repeating}
+					onRepeat={handleRepeat}
 				/>
 			</div>
 
@@ -212,10 +225,11 @@ export function MenuAccountOrderDetail({ order, onBack }: MenuAccountOrderDetail
 type OrderActionsProps = {
 	menuHref: string;
 	canRepeat: boolean;
+	repeating: boolean;
 	onRepeat: () => void;
 };
 
-function OrderActions({ menuHref, canRepeat, onRepeat }: OrderActionsProps) {
+function OrderActions({ menuHref, canRepeat, repeating, onRepeat }: OrderActionsProps) {
 	const t = useTranslations("tenant.account.orders");
 	return (
 		<div className="account-order-actions">
@@ -223,11 +237,11 @@ function OrderActions({ menuHref, canRepeat, onRepeat }: OrderActionsProps) {
 				type="button"
 				className="account-button"
 				onClick={onRepeat}
-				disabled={!canRepeat}
+				disabled={!canRepeat || repeating}
 				title={canRepeat ? undefined : t("repeatUnavailable")}
 			>
-				<RotateCcw size={15} aria-hidden />
-				{t("repeat")}
+				{repeating ? null : <RotateCcw size={15} aria-hidden />}
+				<AccountBusyLabel busy={repeating} idle={t("repeat")} working={t("repeating")} />
 			</button>
 			<Link href={menuHref} className="account-button account-button--ghost">
 				<UtensilsCrossed size={15} aria-hidden />

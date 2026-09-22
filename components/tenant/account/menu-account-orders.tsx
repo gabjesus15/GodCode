@@ -43,18 +43,35 @@ export function MenuAccountOrders({ companySlug, onDetailChange }: MenuAccountOr
 		};
 	}, [companySlug, run]);
 
+	/* El detalle es una "pantalla" dentro de la sección: entra con un estado en el
+	   historial para que el gesto de volver del teléfono (o el botón atrás) lo
+	   cierre en vez de sacar a la persona de su cuenta. */
 	const openDetail = (id: string | null) => {
 		setSelectedId(id);
 		onDetailChange?.(id !== null);
 		window.scrollTo({ top: 0, behavior: "smooth" });
 	};
+	const showDetail = (id: string) => {
+		window.history.pushState({ accountOrder: id }, "");
+		openDetail(id);
+	};
+	const closeDetail = () => {
+		if (window.history.state?.accountOrder) window.history.back();
+		else openDetail(null);
+	};
+	useEffect(() => {
+		const onPopState = () => {
+			if (!window.history.state?.accountOrder) openDetail(null);
+		};
+		window.addEventListener("popstate", onPopState);
+		return () => window.removeEventListener("popstate", onPopState);
+		// openDetail solo toca estado propio; no hace falta rehacer el listener.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const selected = selectedId ? orders?.find((order) => order.id === selectedId) : null;
 	if (selected) {
-		return <MenuAccountOrderDetail
-				order={selected}
-				onBack={() => openDetail(null)}
-			/>;
+		return <MenuAccountOrderDetail order={selected} onBack={closeDetail} />;
 	}
 
 	const dateFormatter = new Intl.DateTimeFormat(locale, {
@@ -85,7 +102,7 @@ export function MenuAccountOrders({ companySlug, onDetailChange }: MenuAccountOr
 								<button
 									type="button"
 									className="account-order"
-									onClick={() => openDetail(order.id)}
+									onClick={() => showDetail(order.id)}
 									aria-label={t("detail.open", { number: order.number })}
 								>
 									<div className="account-order-main">
