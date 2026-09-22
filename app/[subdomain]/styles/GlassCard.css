@@ -410,6 +410,15 @@
 	}
 }
 
+/* Teléfono: el "+" que queda solo mide lo mismo que el "+" de agregar (40px).
+   Va después del bloque compacto de arriba, que lo dejaba en 28px. */
+@media (max-width: 640px) {
+	.gcard .gcard__step--plus {
+		width: 40px;
+		height: 40px;
+	}
+}
+
 /* --- Móvil: esquinas algo más cerradas, misma jerarquía --------------------- */
 
 @media (max-width: 640px) {
