@@ -64,31 +64,35 @@
 .tenant-theme-vars[data-scheme="light"] {
     color-scheme: light;
     --menu-canvas: #fffdfa;
-    --menu-chrome: #fffdfa;
-    --menu-chrome-glass: rgba(255, 253, 250, 0.86);
-    /* Tarjeta blanca pura para separarse de una página casi blanca; el
+    /* Cromo en gris cálido muy claro, no blanco: así se distingue de las
+       tarjetas (blanco puro) y no se funde con una página clara. */
+    --menu-chrome: #f3f0eb;
+    --menu-chrome-glass: rgba(243, 240, 235, 0.9);
+    /* Tarjeta blanca pura para separarse del cromo y de la página; el
        interior, gris neutro cálido. */
     --menu-surface: #ffffff;
-    --menu-surface-2: #f4f2ee;
+    --menu-surface-2: #f1eee9;
     /* Marfil muy suave, no blanco: un producto claro sobre blanco puro
        desaparece; abajo se funde con la tarjeta. */
     --menu-media-top: #f1efea;
     --menu-media-bottom: #faf9f7;
     --menu-media-glow: rgba(255, 255, 255, 0.85);
-    --menu-surface-glass: rgba(255, 255, 255, 0.86);
-    --menu-line: rgba(31, 27, 22, 0.12);
-    --menu-line-strong: rgba(31, 27, 22, 0.24);
-    --menu-fg: #1f1b16;
-    --menu-fg-2: rgba(31, 27, 22, 0.68);
-    --menu-fg-3: rgba(31, 27, 22, 0.56);
+    --menu-surface-glass: rgba(255, 255, 255, 0.9);
+    --menu-line: rgba(31, 27, 22, 0.16);
+    --menu-line-strong: rgba(31, 27, 22, 0.3);
+    --menu-fg: #1a1714;
+    /* Texto secundario más firme que en oscuro: sobre blanco, un 68% de tinta
+       se quedaba en gris pálido (descripciones, categorías inactivas). */
+    --menu-fg-2: rgba(26, 23, 20, 0.8);
+    --menu-fg-3: rgba(26, 23, 20, 0.64);
     --menu-ok: #1e7f47;
     --menu-accent-ink: color-mix(in srgb, var(--menu-accent) 82%, var(--menu-fg));
     --menu-accent-soft: color-mix(in srgb, var(--menu-accent) 10%, transparent);
-    /* Tarjeta blanca sobre página casi blanca: la sombra hace de borde. */
+    /* Tarjeta blanca sobre página clara: borde y sombra la recortan. */
     --menu-shadow-card:
-        0 1px 2px rgba(31, 27, 22, 0.06),
-        0 12px 28px -12px rgba(31, 27, 22, 0.3);
-    --menu-shadow-chrome: 0 10px 28px rgba(31, 27, 22, 0.14);
+        0 1px 2px rgba(31, 27, 22, 0.08),
+        0 14px 30px -12px rgba(31, 27, 22, 0.38);
+    --menu-shadow-chrome: 0 10px 28px rgba(31, 27, 22, 0.18);
 }
 :root {
     --menu-header-height: 130px;
@@ -181,6 +185,14 @@
     color: var(--menu-brand-color, var(--menu-accent));
     line-height: 1.2;
     letter-spacing: -0.01em;
+}
+
+/* En claro, un nombre blanco o amarillo sobre cabecera clara no se lee:
+   surface-theme.ts emite `--menu-brand-color-light` con el color elegido si
+   es oscuro, o con la tinta del local si es claro. Sin elección, el primario
+   oscurecido lo justo. */
+.tenant-theme-vars[data-scheme="light"] .nav-brand-title {
+    color: var(--menu-brand-color-light, var(--menu-accent-ink));
 }
 
 .nav-location-button {

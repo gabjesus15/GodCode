@@ -1,4 +1,5 @@
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import { isLightTextColor } from "@/lib/tenant/theme/surface-scheme";
 import {
 	STORE_THEME_FONTS,
 	normalizeBrandNameColor,
@@ -22,6 +23,7 @@ export const TENANT_SURFACE_CSS_VARS = [
 	"--tenant-font",
 	"--tenant-font-weight",
 	"--menu-brand-color",
+	"--menu-brand-color-light",
 ] as const;
 
 export type TenantSurfaceVars = {
@@ -53,10 +55,18 @@ export function tenantSurfaceCssVarEntries(theme: Partial<StoreThemeConfig>): Ar
 		["--tenant-font", vars.fontStack],
 		["--tenant-font-weight", vars.fontWeight],
 	];
+	/* En modo claro el color elegido solo vale si es oscuro; uno claro (blanco,
+	   amarillo) sobre cabecera clara desaparece y cede a la tinta del local. */
+	const LIGHT_FALLBACK = "var(--menu-accent-ink)";
 	if (vars.brandNameColor === "hover") {
 		entries.push(["--menu-brand-color", "var(--accent-hover, var(--accent-primary))"]);
+		entries.push([
+			"--menu-brand-color-light",
+			isLightTextColor(theme.hoverColor) ? LIGHT_FALLBACK : "var(--accent-hover, var(--accent-primary))",
+		]);
 	} else if (vars.brandNameColor) {
 		entries.push(["--menu-brand-color", vars.brandNameColor]);
+		entries.push(["--menu-brand-color-light", isLightTextColor(vars.brandNameColor) ? LIGHT_FALLBACK : vars.brandNameColor]);
 	}
 	return entries;
 }

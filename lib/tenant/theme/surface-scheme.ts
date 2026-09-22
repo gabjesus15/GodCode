@@ -21,6 +21,16 @@ function luminance(hex: string): number {
 const LIGHT_THRESHOLD = 0.4;
 
 /**
+ * Un color de texto "claro" (blanco, amarillo, pastel) que sobre una cabecera
+ * clara no se leería. Acepta lo mismo que `resolveSurfaceScheme`.
+ */
+export function isLightTextColor(color: string | null | undefined): boolean {
+	const parsed = parseThemeColor(String(color ?? "").trim(), "#000000");
+	if (parsed.alpha < 0.05) return false;
+	return luminance(parsed.hex) >= 0.45;
+}
+
+/**
  * Decide si las superficies del menú (carrito, hojas) van claras u oscuras a
  * partir del color de fondo que configuró el local. Acepta hex, rgb(a) o
  * `transparent`; un fondo casi transparente deja ver el `#0a0a0a` del sitio,
