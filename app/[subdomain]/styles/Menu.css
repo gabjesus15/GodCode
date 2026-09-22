@@ -89,8 +89,10 @@
     --menu-media-bottom: #f8f8f8;
     --menu-media-glow: rgba(255, 255, 255, 0.85);
     --menu-surface-glass: rgba(255, 255, 255, 0.9);
-    --menu-line: rgba(0, 0, 0, 0.12);
-    --menu-line-strong: rgba(0, 0, 0, 0.26);
+    /* Bordes opacos y nítidos: sobre gris liso, la tarjeta blanca se define
+       por el borde y la sombra solo aporta profundidad, no contorno. */
+    --menu-line: #d9d9d9;
+    --menu-line-strong: #bdbdbd;
     --menu-fg: #1b1b1b;
     /* Texto secundario más firme que en oscuro: sobre blanco, un 68% de tinta
        se quedaba en gris pálido (descripciones, categorías inactivas). */
@@ -104,11 +106,11 @@
         0 1px 2px rgba(0, 0, 0, 0.07),
         0 4px 10px -4px rgba(0, 0, 0, 0.18);
     --menu-shadow-card:
-        0 1px 2px rgba(0, 0, 0, 0.05),
-        0 8px 20px -10px rgba(0, 0, 0, 0.16);
+        0 1px 2px rgba(0, 0, 0, 0.04),
+        0 8px 20px -10px rgba(0, 0, 0, 0.12);
     --menu-shadow-card-hover:
-        0 2px 4px rgba(0, 0, 0, 0.06),
-        0 18px 36px -14px rgba(0, 0, 0, 0.24);
+        0 2px 4px rgba(0, 0, 0, 0.05),
+        0 18px 36px -14px rgba(0, 0, 0, 0.2);
     --menu-shadow-header: 0 10px 24px -16px rgba(0, 0, 0, 0.22);
     --menu-shadow-chrome:
         0 1px 2px rgba(0, 0, 0, 0.06),
