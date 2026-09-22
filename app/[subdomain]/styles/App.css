@@ -130,9 +130,12 @@
     var(--menu-chrome, #fffdfa);
 }
 
+/* Espejo del oscuro: allí la imagen se hunde hacia el negro (brillo 0.46);
+   aquí se desvanece hacia el blanco. A plena opacidad el patrón competía con
+   las tarjetas y la página parecía un mantel; al 14% queda como textura. */
 .tenant-theme-vars[data-scheme="light"][data-scheme-mode="manual"] .tenant-shell-bg-layer {
-  filter: brightness(1) contrast(1) saturate(1);
-  opacity: min(var(--tenant-bg-layer-opacity, 0), 0.55);
+  filter: brightness(1.04) contrast(0.92) saturate(0.85);
+  opacity: min(var(--tenant-bg-layer-opacity, 0), 0.14);
 }
 
 .tenant-theme-vars[data-scheme="dark"][data-scheme-mode="manual"] .tenant-shell-root {

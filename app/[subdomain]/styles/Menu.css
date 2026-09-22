@@ -61,9 +61,10 @@
     --menu-ok: #1e7f47;
     --menu-accent-ink: color-mix(in srgb, var(--menu-accent) 82%, var(--menu-fg));
     --menu-accent-soft: color-mix(in srgb, var(--menu-accent) 10%, transparent);
+    /* Tarjeta blanca sobre página casi blanca: la sombra hace de borde. */
     --menu-shadow-card:
-        0 1px 2px rgba(31, 27, 22, 0.08),
-        0 10px 24px -10px rgba(31, 27, 22, 0.18);
+        0 1px 2px rgba(31, 27, 22, 0.06),
+        0 12px 28px -12px rgba(31, 27, 22, 0.3);
     --menu-shadow-chrome: 0 10px 28px rgba(31, 27, 22, 0.14);
 }
 :root {
