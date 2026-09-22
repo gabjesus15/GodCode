@@ -813,8 +813,10 @@ html, body {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
     touch-action: pan-x pan-y;
-    scroll-behavior: smooth;
-    scroll-snap-type: x proximity;
+    /* Sin snap ni scroll suave: la tira vive dentro de la cabecera fija y, al
+       hacer scroll vertical, cualquier cambio de layout (la categoría activa
+       cambia de peso) hacía que el snap se recalculara y la tira "vibrara". */
+    scroll-behavior: auto;
     scroll-padding-inline: 12px;
 }
 
@@ -872,19 +874,24 @@ html, body {
     border: none;
     cursor: pointer;
     flex-shrink: 0;
-    min-width: 68px;
-    max-width: 84px;
+    /* Ancho fijo: al activarse el nombre pasa a negrita y, con ancho
+       automático, la tarjeta crecía 1-2px y movía a todas las de al lado. */
+    width: 80px;
     padding: 0;
-    scroll-snap-align: center;
-    transition: transform 0.2s ease;
 }
 
-.icon-list-card:hover {
-    transform: translateY(-2px);
-}
+@media (hover: hover) {
+    .icon-list-card {
+        transition: transform 0.2s ease;
+    }
 
-.icon-list-card:hover .icon-list-card-image-wrapper {
-    border-color: var(--menu-accent);
+    .icon-list-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .icon-list-card:hover .icon-list-card-image-wrapper {
+        border-color: var(--menu-accent);
+    }
 }
 
 .icon-list-card:active {
@@ -921,7 +928,6 @@ html, body {
 .icon-list-card.active .icon-list-card-image-wrapper {
     border-color: var(--menu-accent);
     box-shadow: 0 0 0 2px var(--menu-accent);
-    transform: scale(1.04);
 }
 
 .icon-list-card-image {
@@ -1366,6 +1372,7 @@ html, body {
 
     .icon-list-card {
         gap: 6px;
+        width: 76px;
     }
 
     .icon-list-card-image-wrapper {
