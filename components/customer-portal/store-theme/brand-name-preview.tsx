@@ -73,7 +73,7 @@ export function BrandNamePreview({ theme, logoUrl, backgroundImageUrl }: Props) 
 					)}
 				</span>
 				<span
-					className="min-w-0 flex-1 truncate text-[1.35rem] leading-tight"
+					className="min-w-0 flex-1 truncate text-[1.6rem] leading-tight"
 					style={{ fontFamily: `var(${font.cssVar}), "${font.label}", ${font.generic}`, fontWeight: font.weight, color, letterSpacing: "-0.01em" }}
 				>
 					{name}

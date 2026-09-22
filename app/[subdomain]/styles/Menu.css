@@ -145,11 +145,12 @@
  * 52px quedaba 3.25 veces mas pequeno que el, asi que se leia como un pie de
  * foto del logo en vez de como el titulo del sitio.
  *
- * Escala con el ancho hasta 1.35rem. A 1111px sale 21px, que deja el logo 2.4
- * veces mas alto: la proporcion habitual de un logotipo con su nombre al lado.
+ * Escala con el ancho hasta 1.8rem. A 1111px sale 27px, que deja el logo de
+ * 48px 1.8 veces mas alto: el nombre acompaña al logo en vez de quedar como
+ * su pie de foto (a 1.35rem el cliente seguia viendolo "chiquito").
  */
 .nav-brand-title {
-    font-size: clamp(1.05rem, 0.85rem + 0.7vw, 1.35rem);
+    font-size: clamp(1.3rem, 1rem + 1vw, 1.8rem);
     margin: 0;
     font-weight: 700;
     /* El nombre del local en el color que eligió en el panel; sin elegir, su
@@ -371,14 +372,14 @@ section {
     }
 
     .nav-brand-info {
-        max-width: 116px;
+        max-width: 150px;
         margin-top: 1px;
     }
 
     .nav-brand-title {
-        font-size: 0.95rem;
+        font-size: 1.2rem;
         line-height: 1.1;
-        max-width: 116px;
+        max-width: 150px;
         overflow: hidden;
         text-overflow: ellipsis;
     }
@@ -580,7 +581,7 @@ html, body {
 }
 
 .sidebar-brand-title {
-    font-size: 1rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--menu-fg);
     margin: 0;
@@ -1279,12 +1280,12 @@ html, body {
     /* Sin el selector de sucursal debajo, el nombre del local se queda con toda
        la linea: pasa de 116px recortados a dos lineas de ancho completo. */
     .nav-brand-info--solo-titulo {
-        max-width: min(190px, 52vw);
+        max-width: min(210px, 54vw);
         white-space: normal;
     }
 
     .nav-brand-info--solo-titulo .nav-brand-title {
-        font-size: 1.1rem;
+        font-size: 1.35rem;
         line-height: 1.15;
         max-width: 100%;
         display: -webkit-box;
