@@ -484,7 +484,7 @@ export function AccountTiendaTab({
                       ) : null}
                     </div>
                     <p className="mt-1 text-[10px] text-[#a1a1a6]">
-                      El nombre va en la cabecera del menú. Con el color primario se ajusta solo para que se lea sobre el fondo.
+                      El nombre va en la cabecera del menú. Sin elegir, usa tu color primario tal cual.
                     </p>
                   </div>
                 </div>

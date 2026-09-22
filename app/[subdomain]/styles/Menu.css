@@ -153,8 +153,8 @@
     margin: 0;
     font-weight: 700;
     /* El nombre del local en el color que eligió en el panel; sin elegir, su
-       color de marca corregido lo justo para que lea sobre el cromo. */
-    color: var(--menu-brand-color, var(--menu-accent-ink));
+       color primario tal cual (decisión del cliente: la marca, sin corregir). */
+    color: var(--menu-brand-color, var(--menu-accent));
     line-height: 1.2;
     letter-spacing: -0.01em;
 }
