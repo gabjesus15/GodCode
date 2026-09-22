@@ -355,6 +355,8 @@ export type StoreThemeConfig = {
   productDetailsMode?: string;
   /** Claro u oscuro para tarjetas y cromo del menú; "auto" sigue al color de fondo. */
   surfaceScheme?: string;
+  /** "image" (imagen + color) o "solid" (solo color liso, sin imagen). */
+  backgroundMode?: string;
   /** Color del nombre del local en el header; vacío = color primario. */
   brandNameColor?: string;
   /** Tipografía del menú público (id de STORE_THEME_FONTS). */

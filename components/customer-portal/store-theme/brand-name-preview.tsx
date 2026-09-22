@@ -4,7 +4,7 @@ import { ChevronLeft, Search } from "lucide-react";
 import Image from "next/image";
 
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
-import { STORE_THEME_FONTS, normalizeBrandNameColor, normalizeFontFamily } from "@/lib/store-theme/theme-config";
+import { STORE_THEME_FONTS, normalizeBackgroundMode, normalizeBrandNameColor, normalizeFontFamily } from "@/lib/store-theme/theme-config";
 import { resolveSurfaceScheme } from "@/lib/tenant/theme/surface-scheme";
 import type { StoreThemeConfig } from "../shared/customer-account-types";
 
@@ -39,6 +39,7 @@ export function BrandNamePreview({ theme, logoUrl, backgroundImageUrl }: Props) 
 	const chrome = CHROME[scheme];
 	const color = resolveBrandNamePreviewColor(theme);
 	const name = theme.displayName.trim() || "Tu local";
+	const showImage = Boolean(backgroundImageUrl) && normalizeBackgroundMode(theme.backgroundMode) !== "solid";
 
 	return (
 		<div
@@ -46,7 +47,7 @@ export function BrandNamePreview({ theme, logoUrl, backgroundImageUrl }: Props) 
 			style={{ background: `linear-gradient(${theme.backgroundColor}, ${theme.backgroundColor}), ${chrome.base}` }}
 			aria-label={`Vista previa del nombre del local en ${font.label}`}
 		>
-			{backgroundImageUrl ? (
+			{showImage ? (
 				<span
 					aria-hidden
 					className="pointer-events-none absolute inset-0 bg-cover bg-center"

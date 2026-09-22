@@ -6,6 +6,7 @@ import {
 	tenantSurfaceCssVarEntries,
 } from "@/lib/store-theme/surface-theme";
 import {
+	normalizeBackgroundMode,
 	normalizeBrandNameColor,
 	normalizeFontFamily,
 	normalizeStoreThemeConfig,
@@ -61,6 +62,16 @@ describe("ajustes de superficie del menú", () => {
 		expect(buildTenantSurfaceCssString({ brandNameColor: "hover", hoverColor: "#ffd166" })).toContain(
 			"--menu-brand-color-light:var(--menu-accent-ink);",
 		);
+	});
+
+	it("con fondo sólido apaga la imagen; con imagen no toca esas variables", () => {
+		expect(normalizeBackgroundMode("SOLID")).toBe("solid");
+		expect(normalizeBackgroundMode("lo que sea")).toBe("image");
+		const solid = buildTenantSurfaceCssString({ backgroundMode: "solid" });
+		expect(solid).toContain("--tenant-bg-image:none;");
+		expect(solid).toContain("--tenant-bg-layer-opacity:0;");
+		const names = tenantSurfaceCssVarEntries({ backgroundMode: "image", backgroundImageUrl: "x.png" }).map(([name]) => name);
+		expect(names).not.toContain("--tenant-bg-image");
 	});
 
 	it("sin color elegido no declara la variable: el CSS cae al color de marca", () => {

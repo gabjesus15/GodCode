@@ -9,10 +9,13 @@ import { STORE_THEME_COLOR_FIELDS, STORE_THEME_COLOR_HELPERS, STORE_THEME_TEMPLA
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { formatThemeColor, parseThemeColor } from "@/lib/store-theme/apply-theme-css-vars";
 import {
+  SOLID_BACKGROUND_PRESETS,
   STORE_THEME_FONTS,
+  normalizeBackgroundMode,
   normalizeBrandNameColor,
   normalizeFontFamily,
   normalizeSurfaceScheme,
+  type BackgroundMode,
   type StoreThemeFontId,
   type SurfaceSchemeSetting,
 } from "@/lib/store-theme/theme-config";
@@ -391,6 +394,81 @@ export function AccountTiendaTab({
               <Card compact>
                 <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Apariencia</p>
                 <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="text-xs font-medium text-[#6e6e73] sm:col-span-2">
+                    Fondo del menú
+                    {(() => {
+                      const mode = normalizeBackgroundMode(storeThemeDraft.backgroundMode);
+                      const current = storeThemeDraft.backgroundColor.trim().toLowerCase();
+                      return (
+                        <>
+                          <div className="mt-1.5 grid grid-cols-2 gap-1 rounded-xl border border-[#d2d2d7] bg-white p-1" role="radiogroup" aria-label="Fondo del menú">
+                            {(
+                              [
+                                ["image", "Imagen del local"],
+                                ["solid", "Color sólido"],
+                              ] as Array<[BackgroundMode, string]>
+                            ).map(([value, label]) => (
+                              <button
+                                key={value}
+                                type="button"
+                                role="radio"
+                                aria-checked={mode === value}
+                                disabled={busy}
+                                onClick={() =>
+                                  setStoreThemeDraft((prev) => {
+                                    if (!prev) return prev;
+                                    /* Al pasar a sólido con un color translúcido (habitual con imagen,
+                                       p. ej. negro al 40%) se parte de un neutro opaco. */
+                                    const opaque = /^#[a-fA-F0-9]{6}$/.test(prev.backgroundColor.trim());
+                                    return {
+                                      ...prev,
+                                      backgroundMode: value,
+                                      backgroundColor: value === "solid" && !opaque ? SOLID_BACKGROUND_PRESETS[5].hex : prev.backgroundColor,
+                                    };
+                                  })
+                                }
+                                className={`h-9 rounded-lg text-xs font-semibold transition-colors ${
+                                  mode === value ? "bg-[#1d1d1f] text-white" : "text-[#6e6e73] hover:bg-[#f0f0f5]"
+                                } disabled:opacity-60`}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                          {mode === "solid" ? (
+                            <div className="mt-2 flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Color del fondo sólido">
+                              {SOLID_BACKGROUND_PRESETS.map((preset) => {
+                                const active = current === preset.hex;
+                                return (
+                                  <button
+                                    key={preset.id}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={active}
+                                    title={preset.label}
+                                    disabled={busy}
+                                    onClick={() => setStoreThemeDraft((prev) => (prev ? { ...prev, backgroundColor: preset.hex } : prev))}
+                                    className={`flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-[11px] font-medium transition ${
+                                      active ? "border-[#1d1d1f] bg-[#1d1d1f] text-white" : "border-[#d2d2d7] bg-white text-[#1d1d1f] hover:border-[#a1a1a6]"
+                                    } disabled:opacity-60`}
+                                  >
+                                    <span className="h-5 w-5 rounded-full border border-black/10" style={{ background: preset.hex }} aria-hidden />
+                                    {preset.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ) : null}
+                          <p className="mt-1 text-[10px] text-[#a1a1a6]">
+                            {mode === "solid"
+                              ? "Sin imagen: un color liso del blanco al negro. Cabecera, tarjetas y sombras se ajustan solos al tono; puedes afinar el hex en “Color fondo”."
+                              : "La imagen que subiste en “Logo y fondo”, sobre tu color de fondo."}
+                          </p>
+                        </>
+                      );
+                    })()}
+                  </div>
+
                   <div className="text-xs font-medium text-[#6e6e73]">
                     Modo claro u oscuro
                     <div className="mt-1.5 grid grid-cols-3 gap-1 rounded-xl border border-[#d2d2d7] bg-white p-1" role="radiogroup" aria-label="Modo claro u oscuro">

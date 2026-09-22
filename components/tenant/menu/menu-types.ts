@@ -133,6 +133,7 @@ export type PreviewThemePayload = {
 	productCardStyle?: string;
 	productDetailsMode?: string;
 	surfaceScheme?: string;
+	backgroundMode?: string;
 	brandNameColor?: string;
 	fontFamily?: string;
 };

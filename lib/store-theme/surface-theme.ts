@@ -2,6 +2,7 @@ import type { StoreThemeConfig } from "@/components/customer-portal/shared/custo
 import { isLightTextColor } from "@/lib/tenant/theme/surface-scheme";
 import {
 	STORE_THEME_FONTS,
+	normalizeBackgroundMode,
 	normalizeBrandNameColor,
 	normalizeFontFamily,
 	normalizeSurfaceScheme,
@@ -24,6 +25,10 @@ export const TENANT_SURFACE_CSS_VARS = [
 	"--tenant-font-weight",
 	"--menu-brand-color",
 	"--menu-brand-color-light",
+	/* Solo con fondo sólido: apagan la imagen que declara el bloque de colores.
+	   Este bloque va después, así que sus declaraciones ganan. */
+	"--tenant-bg-image",
+	"--tenant-bg-layer-opacity",
 ] as const;
 
 export type TenantSurfaceVars = {
@@ -55,6 +60,9 @@ export function tenantSurfaceCssVarEntries(theme: Partial<StoreThemeConfig>): Ar
 		["--tenant-font", vars.fontStack],
 		["--tenant-font-weight", vars.fontWeight],
 	];
+	if (normalizeBackgroundMode(theme.backgroundMode) === "solid") {
+		entries.push(["--tenant-bg-image", "none"], ["--tenant-bg-layer-opacity", "0"]);
+	}
 	/* En modo claro el color elegido solo vale si es oscuro; uno claro (blanco,
 	   amarillo) sobre cabecera clara desaparece y cede a la tinta del local. */
 	const LIGHT_FALLBACK = "var(--menu-accent-ink)";

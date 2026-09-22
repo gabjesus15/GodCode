@@ -45,6 +45,30 @@ export const STORE_THEME_FONTS = [
 ] as const;
 export type StoreThemeFontId = (typeof STORE_THEME_FONTS)[number]["id"];
 
+/**
+ * Fondo del menú: "image" usa la imagen y el color que subió el local;
+ * "solid" apaga la imagen y pinta un color liso. Pensado para locales sin
+ * imagen de fondo: eligen un neutro de la paleta y el menú se resuelve solo
+ * (claro u oscuro según el tono, sombras y bordes ya calibrados para liso).
+ */
+export const BACKGROUND_MODES = ["image", "solid"] as const;
+export type BackgroundMode = (typeof BACKGROUND_MODES)[number];
+
+export function normalizeBackgroundMode(value: unknown): BackgroundMode {
+  return String(value ?? "").trim().toLowerCase() === "solid" ? "solid" : "image";
+}
+
+/** Paleta del fondo sólido: del blanco al negro, sin tinte. */
+export const SOLID_BACKGROUND_PRESETS = [
+  { id: "blanco", label: "Blanco", hex: "#ffffff" },
+  { id: "marfil", label: "Marfil", hex: "#f6f4f0" },
+  { id: "niebla", label: "Niebla", hex: "#e9e7e3" },
+  { id: "piedra", label: "Piedra", hex: "#77777b" },
+  { id: "grafito", label: "Grafito", hex: "#2b2b30" },
+  { id: "carbon", label: "Carbón", hex: "#161618" },
+  { id: "negro", label: "Negro", hex: "#0a0a0a" },
+] as const;
+
 export function normalizeSurfaceScheme(value: unknown): SurfaceSchemeSetting {
   const raw = String(value ?? "").trim().toLowerCase();
   return (SURFACE_SCHEMES as readonly string[]).includes(raw) ? (raw as SurfaceSchemeSetting) : "auto";
@@ -167,6 +191,7 @@ export function normalizeStoreThemeConfig(
     productCardStyle: normalizeProductCardStyle(value.productCardStyle ?? defaults.productCardStyle),
     productDetailsMode: normalizeProductDetailsMode(value.productDetailsMode ?? defaults.productDetailsMode),
     surfaceScheme: normalizeSurfaceScheme(value.surfaceScheme ?? defaults.surfaceScheme),
+    backgroundMode: normalizeBackgroundMode(value.backgroundMode ?? defaults.backgroundMode),
     brandNameColor: normalizeBrandNameColor(value.brandNameColor ?? defaults.brandNameColor),
     fontFamily: normalizeFontFamily(value.fontFamily ?? defaults.fontFamily),
   };

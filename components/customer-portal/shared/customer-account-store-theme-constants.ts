@@ -25,6 +25,7 @@ export const STORE_THEME_FIELD_LABELS: Record<keyof StoreThemeConfig, string> = 
   productCardStyle: "Estilo de Tarjeta",
   productDetailsMode: "Modo de Detalles del Producto",
   surfaceScheme: "Modo claro u oscuro",
+  backgroundMode: "Fondo",
   brandNameColor: "Color del nombre",
   fontFamily: "Tipografía del nombre",
 };
@@ -45,6 +46,7 @@ export const DEFAULT_STORE_THEME: StoreThemeConfig = {
   productCardStyle: "glass",
   productDetailsMode: "modal-premium",
   surfaceScheme: "auto",
+  backgroundMode: "image",
   brandNameColor: "",
   fontFamily: "montserrat",
 };

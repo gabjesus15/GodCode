@@ -36,6 +36,7 @@ export const STORE_THEME_PATCH_KEYS = [
 	"productCardStyle",
 	"productDetailsMode",
 	"surfaceScheme",
+	"backgroundMode",
 	"brandNameColor",
 	"fontFamily",
 ] as const;
