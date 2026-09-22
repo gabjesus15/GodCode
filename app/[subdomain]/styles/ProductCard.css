@@ -118,26 +118,41 @@
   }
 }
 
-/* Cristal y sidebar */
+/* Cristal y sidebar. La Cristal entra en columnas de ~190-230px: a 3 columnas
+   en escritorio salía una tarjeta de 330px, más ancha que alta, y la foto
+   dominaba tanto que la parrilla parecía de banners. */
 .product-grid.grid-glass,
 .product-grid.grid-layout-sidebar {
   --grid-gap: 12px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-@container product-catalog (min-width: 720px) {
+@container product-catalog (min-width: 560px) {
   .product-grid.grid-glass,
   .product-grid.grid-layout-sidebar {
-    --grid-gap: 16px;
+    --grid-gap: 14px;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@container product-catalog (min-width: 1024px) {
+@container product-catalog (min-width: 760px) {
   .product-grid.grid-glass,
   .product-grid.grid-layout-sidebar {
-    --grid-gap: 20px;
+    --grid-gap: 16px;
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@container product-catalog (min-width: 980px) {
+  .product-grid.grid-glass,
+  .product-grid.grid-layout-sidebar {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@container product-catalog (min-width: 1180px) {
+  .product-grid.grid-glass {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
@@ -207,7 +222,7 @@
     }
     .product-grid.grid-glass,
     .product-grid.grid-layout-sidebar {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
     .product-grid.grid-layout-food {
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -219,7 +234,9 @@
   }
   @media (min-width: 1024px) {
     .product-grid.grid-glass,
-    .product-grid.grid-layout-sidebar,
+    .product-grid.grid-layout-sidebar {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
     .product-grid.grid-layout-food {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
