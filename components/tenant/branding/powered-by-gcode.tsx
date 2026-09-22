@@ -40,9 +40,14 @@ export function PoweredByGcode({
 	   "Hecho con" en el pie del menú (decisión del cliente); el nombre accesible
 	   lo conserva. La marca Gcode es la "G" del favicon, que funciona igual en
 	   claro y en oscuro. */
-	if (surface === "menu" && logoUrl) {
+	if ((surface === "menu" || surface === "account") && logoUrl) {
 		return (
-			<a href={href} className="powered-by-gcode powered-by-gcode--menu powered-by-lockup" rel="noopener noreferrer" aria-label={ariaLabel}>
+			<a
+				href={href}
+				className={`powered-by-gcode powered-by-gcode--menu powered-by-gcode--${surface} powered-by-lockup`}
+				rel="noopener noreferrer"
+				aria-label={ariaLabel}
+			>
 				<span className="powered-by-lockup__tenant">
 					<Image src={logoUrl} alt={brandName} width={56} height={56} className="powered-by-lockup__tenant-logo" unoptimized />
 				</span>

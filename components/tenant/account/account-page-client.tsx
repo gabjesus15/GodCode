@@ -9,6 +9,7 @@ import { ChevronLeft } from "lucide-react";
 import type { MenuAccountDeliveryOptions } from "@/lib/menu-account/delivery-options";
 import { useApplyTenantSurfaceScheme } from "@/lib/tenant/hooks/use-tenant-surface-scheme";
 
+import { PoweredByGcode } from "../branding/powered-by-gcode";
 import { useCartStore } from "../cart/cart-store";
 import { getTenantScopedPath } from "../utils/tenant-route";
 
@@ -18,6 +19,8 @@ import type { MenuAccountBranchOption, MenuAccountPublic } from "./menu-account-
 
 type AccountPageClientProps = {
 	businessName: string;
+	/** Logo del local para el sello del pie ("local | Gcode"); sin logo, crédito de texto. */
+	logoUrl?: string | null;
 	companySlug: string;
 	countryCode: string;
 	branches: MenuAccountBranchOption[];
@@ -27,6 +30,7 @@ type AccountPageClientProps = {
 
 export function AccountPageClient({
 	businessName,
+	logoUrl = null,
 	companySlug,
 	countryCode,
 	branches,
@@ -97,6 +101,8 @@ export function AccountPageClient({
 					/>
 				)}
 			</div>
+
+			<PoweredByGcode tenantSlug={companySlug} surface="account" logoUrl={logoUrl} brandName={businessName} />
 		</div>
 	);
 }

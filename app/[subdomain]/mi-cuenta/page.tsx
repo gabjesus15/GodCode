@@ -7,6 +7,9 @@ import { createSupabasePublicServerClient } from "@/utils/supabase/server";
 import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
 import { getMenuAccountSession, toMenuAccountDto } from "@/lib/menu-account/session";
 import { resolveMenuAccountDeliveryOptions } from "@/lib/menu-account/delivery-options";
+import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
+import { resolveStorefrontThemeAssets } from "@/lib/storage/storefront-branding";
+import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
 import { AccountPageClient } from "../../../components/tenant/account/account-page-client";
 
 import "../styles/Account.css";
@@ -17,10 +20,6 @@ export const dynamic = "force-dynamic";
 
 interface TenantAccountPageProps {
   params: Promise<{ subdomain: string }>;
-}
-
-interface TenantAccountThemeConfig {
-  displayName?: string;
 }
 
 export default async function TenantAccountPage({
@@ -54,12 +53,18 @@ export default async function TenantAccountPage({
     .eq("is_active", true)
     .order("name");
 
-  const theme = (company.theme_config as unknown as TenantAccountThemeConfig) ?? {};
+  // Mismo camino que el menú: el logo puede vivir en un bucket privado y llegar firmado.
+  const theme = await resolveStorefrontThemeAssets(
+    normalizeStoreThemeConfig(company.theme_config, company.name ?? resolvedParams.subdomain),
+    companyId,
+  );
   const businessName = theme.displayName || company.name || resolvedParams.subdomain;
+  const logoUrl = theme.logoUrl?.trim() || parseThemeLogoUrl(company.theme_config) || null;
 
   return (
     <AccountPageClient
       businessName={businessName}
+      logoUrl={logoUrl}
       companySlug={company.public_slug ?? resolvedParams.subdomain}
       countryCode={resolveCheckoutCountryCode({ businessCountry: company.country })}
       branches={(branchRows ?? []).map((branch) => ({

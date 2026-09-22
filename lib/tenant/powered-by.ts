@@ -1,6 +1,6 @@
 import { getAppUrl } from "@/lib/tenant/app-url";
 
-export type PoweredBySurface = "menu" | "home" | "sidebar";
+export type PoweredBySurface = "menu" | "home" | "sidebar" | "account";
 
 /** Landing de marketing con UTM para atribuir tráfico desde storefronts. */
 export function buildPoweredByHref(opts: {
