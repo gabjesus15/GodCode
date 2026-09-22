@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Auditoría del uso de la Service Role Key (discrepancia nº3 del nodo).
  *
@@ -59,6 +58,10 @@ export const POSTURES = {
 	"customer-account": {
 		description: "sesión de CEO del portal, con company_id tomado del contexto",
 		evidence: /getCustomerAccountContext/,
+	},
+	"menu-client-session": {
+		description: "sesión de la cuenta del menú (cookie del servidor), filtrada por company_id",
+		evidence: /getMenuAccountSession|requireMenuAccount/,
 	},
 	"tenant-session": {
 		description: "sesión del panel del tenant, con company_id tomado de la sesión",

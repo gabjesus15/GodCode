@@ -1,5 +1,3 @@
-import { getTenantMenuUrl } from "@/utils/tenant-url";
-
 /** Caso público destacado en landing (Oishi Sushi). */
 export const LANDING_SHOWCASE_TENANT = {
 	slug: "oishisushi",

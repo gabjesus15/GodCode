@@ -13,7 +13,11 @@ describe("sitemap.ts SEO rules", () => {
 
 	it("uses a fresh marketing lastModified default (post July 2026 crawl)", () => {
 		const source = readFileSync(join(process.cwd(), "app", "sitemap.ts"), "utf8");
-		expect(source).toContain('DEFAULT_SITEMAP_LAST_MODIFIED = "2026-08-14T00:00:00.000Z"');
+		const match = source.match(/DEFAULT_SITEMAP_LAST_MODIFIED = "(\d{4}-\d{2}-\d{2})T00:00:00\.000Z"/);
+		expect(match).not.toBeNull();
+		// Basta con que sea posterior al último rastreo de julio de 2026: la fecha
+		// se sube en cada despliegue de marketing y no puede fijarse aquí.
+		expect(new Date(`${match?.[1]}T00:00:00.000Z`).getTime()).toBeGreaterThan(Date.UTC(2026, 6, 31));
 	});
 
 	it("lists tenants with path-based URLs on the main domain (no subdomains)", () => {

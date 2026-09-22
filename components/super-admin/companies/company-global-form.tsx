@@ -225,7 +225,6 @@ export function CompanyGlobalForm({
   );
 
   const isDevPlan = selectedPlan?.name?.toLowerCase().includes("dev") ?? false;
-  const isBetaPlan = selectedPlan?.name?.toLowerCase().includes("beta") ?? false;
   const currentEndsAt = company.subscription_ends_at ? new Date(company.subscription_ends_at) : null;
 
   const panelAccessByPlan = useMemo(

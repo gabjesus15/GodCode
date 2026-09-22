@@ -122,7 +122,6 @@ export async function POST(req: NextRequest) {
 
 		const orderId = typeof body.orderId === "string" ? body.orderId.trim() : "";
 		const orderTypeRaw = String(body.orderType ?? "pickup");
-		const deliveryKm = Number(body.deliveryKm);
 		const deliveryFeeClient = Number(body.deliveryFee);
 		const deliveryLat = Number(body.deliveryLat);
 		const deliveryLng = Number(body.deliveryLng);

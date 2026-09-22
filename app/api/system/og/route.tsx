@@ -28,6 +28,8 @@ export async function GET(req: Request) {
 						marginBottom: 36,
 					}}
 				>
+					{/* ImageResponse renderiza con Satori: aquí solo vale <img> plano. */}
+					{/* eslint-disable-next-line @next/next/no-img-element */}
 					<img src={logoUrl} width={72} height={72} alt="" style={{ borderRadius: 16 }} />
 					<div
 						style={{

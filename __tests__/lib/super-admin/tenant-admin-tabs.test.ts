@@ -35,7 +35,8 @@ const TABS_DEL_PANEL_DEL_LOCAL = [
 
 describe("catálogo de pestañas del panel del local", () => {
 	it("ofrece todas las secciones que el panel del local sabe mostrar", () => {
-		const faltantes = TABS_DEL_PANEL_DEL_LOCAL.filter((id) => !TENANT_ADMIN_TAB_IDS.includes(id));
+		const conocidas: readonly string[] = TENANT_ADMIN_TAB_IDS;
+		const faltantes = TABS_DEL_PANEL_DEL_LOCAL.filter((id) => !conocidas.includes(id));
 		expect(faltantes).toEqual([]);
 	});
 

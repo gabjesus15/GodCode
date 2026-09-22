@@ -27,13 +27,14 @@ export function BentoShowcaseMetric() {
 
 		const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 		if (prefersReduced) {
+			// El estado ya arranca en metricEnd: no hay nada que animar ni que fijar.
 			playedRef.current = true;
-			setValue(metricEnd);
 			return;
 		}
 
-		// Parte en 0 y espera a entrar en vista.
-		setValue(0);
+		// Parte en 0 y espera a entrar en vista. En un frame aparte: un setState
+		// síncrono en el cuerpo del efecto encadenaría un segundo render.
+		const resetFrame = requestAnimationFrame(() => setValue(0));
 
 		const observer = new IntersectionObserver(
 			(entries) => {
@@ -47,7 +48,10 @@ export function BentoShowcaseMetric() {
 		);
 
 		observer.observe(node);
-		return () => observer.disconnect();
+		return () => {
+			cancelAnimationFrame(resetFrame);
+			observer.disconnect();
+		};
 	}, [metricEnd]);
 
 	useEffect(() => {
