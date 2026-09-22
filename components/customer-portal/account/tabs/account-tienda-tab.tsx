@@ -16,6 +16,7 @@ import {
   type StoreThemeFontId,
   type SurfaceSchemeSetting,
 } from "@/lib/store-theme/theme-config";
+import { BrandNamePreview } from "../../store-theme/brand-name-preview";
 import { StoreThemePreviewPanel } from "../../store-theme/store-theme-preview-panel";
 import {
   StoreThemeNavbarPicker,
@@ -439,22 +440,22 @@ export function AccountTiendaTab({
                         </option>
                       ))}
                     </select>
-                    {(() => {
-                      const font = STORE_THEME_FONTS.find((entry) => entry.id === normalizeFontFamily(storeThemeDraft.fontFamily)) ?? STORE_THEME_FONTS[0];
-                      return (
-                        <>
-                          <p
-                            className="mt-2 truncate rounded-xl border border-[#e5e5ea] bg-[#fbfbfd] px-3 py-2 text-base text-[#1d1d1f]"
-                            style={{ fontFamily: `var(${font.cssVar}), "${font.label}", ${font.generic}`, fontWeight: font.weight }}
-                            aria-hidden
-                          >
-                            {storeThemeDraft.displayName.trim() || "Tu local"} · Pizza Margarita $9.90
-                          </p>
-                          <p className="mt-1 text-[10px] text-[#a1a1a6]">{font.description} Solo cambia el nombre en la cabecera; el catálogo sigue en Montserrat.</p>
-                        </>
-                      );
-                    })()}
+                    <p className="mt-1 text-[10px] text-[#a1a1a6]">
+                      {(STORE_THEME_FONTS.find((entry) => entry.id === normalizeFontFamily(storeThemeDraft.fontFamily)) ?? STORE_THEME_FONTS[0]).description}{" "}
+                      Solo cambia el nombre en la cabecera; el catálogo sigue en Montserrat.
+                    </p>
                   </label>
+
+                  <div className="text-xs font-medium text-[#6e6e73] sm:col-span-2">
+                    Así se verá en la cabecera del menú
+                    <div className="mt-1.5">
+                      <BrandNamePreview
+                        theme={storeThemeDraft}
+                        logoUrl={storeThemeAssetLocalPreview.logoUrl || storeThemeDraft.logoUrl || undefined}
+                        backgroundImageUrl={storeThemeAssetLocalPreview.backgroundImageUrl || storeThemeDraft.backgroundImageUrl || undefined}
+                      />
+                    </div>
+                  </div>
 
                   <div className="text-xs font-medium text-[#6e6e73] sm:col-span-2">
                     Color del nombre del local

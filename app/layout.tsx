@@ -186,7 +186,9 @@ export default async function RootLayout({
         className={
           isTenantRoute
             ? `${tenantFontVariables} bg-background text-foreground antialiased transition-colors duration-200`
-            : `${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} bg-background text-foreground antialiased transition-colors duration-200`
+            : /* El panel también las lleva: la vista previa del nombre del local las
+                 necesita. Solo son declaraciones; cada fuente se descarga al usarse. */
+              `${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${tenantFontVariables} bg-background text-foreground antialiased transition-colors duration-200`
         }
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
