@@ -274,11 +274,12 @@
 	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
-/* Tarjeta estrecha (dos columnas en teléfono): el pie no tiene sitio para
-   "− 1 +" junto al precio, así que el control se reduce a "+" (solo agrega,
-   como antes) y la cantidad pasa a la esquina de la foto. Quitar se hace en el
-   carrito. Así precio y botón siempre comparten línea y la tarjeta no se parte. */
-@container (max-width: 240px) {
+/* Teléfono: el pie no tiene sitio para "− 1 +" junto al precio, así que el
+   control se reduce a "+" (solo agrega, como antes) y la cantidad pasa a la
+   esquina de la foto; quitar se hace en el carrito. Va por ancho de pantalla y
+   no de tarjeta a propósito: en escritorio las tarjetas también son estrechas
+   (5-6 columnas) y ahí sí se quiere el stepper completo. */
+@media (max-width: 640px) {
 	.gcard .gcard__qty.tenant-ui-badge {
 		display: inline-flex;
 		align-items: center;
