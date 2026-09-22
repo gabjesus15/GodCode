@@ -22,6 +22,8 @@ export type MenuAccountErrorCode =
 	| "delivery_unavailable"
 	| "unauthorized"
 	| "weak_password"
+	| "email_not_verified"
+	| "invalid_code"
 	| "internal";
 
 export class MenuAccountError extends Error {
@@ -75,6 +77,11 @@ export const menuAccountErrors = {
 		new MenuAccountError(400, "invalid_zone", "Elige una zona de entrega de la lista."),
 	deliveryUnavailable: () =>
 		new MenuAccountError(409, "delivery_unavailable", "Este negocio no hace delivery."),
+	/** Contraseña correcta pero correo sin confirmar: ya se le envió un código. */
+	emailNotVerified: () =>
+		new MenuAccountError(403, "email_not_verified", "Confirma tu correo con el código que te enviamos."),
+	invalidCode: () =>
+		new MenuAccountError(400, "invalid_code", "El código no es válido o ya caducó."),
 	unauthorized: () =>
 		new MenuAccountError(401, "unauthorized", "Tu sesión expiró. Vuelve a entrar."),
 	internal: (message = "No se pudo completar la operación. Intenta de nuevo.") =>

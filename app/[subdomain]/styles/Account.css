@@ -234,6 +234,15 @@ select.account-input {
     cursor: pointer;
 }
 
+/* Código de 6 dígitos del correo: grande y espaciado para leerlo y teclearlo bien. */
+.account-input--code {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.4em;
+    font-variant-numeric: tabular-nums;
+}
+
 .account-submit {
     height: 48px;
     border: none;

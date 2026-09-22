@@ -102,7 +102,7 @@
         "passwordLabel": "Contraseña",
         "submit": "Entrar",
         "submitting": "Entrando…",
-        "forgotHint": "¿Olvidaste tu contraseña? Pídele al negocio que te ayude a recuperarla."
+        "forgot": "¿Olvidaste tu contraseña?"
       },
       "register": {
         "title": "Crea tu cuenta",
@@ -132,7 +132,6 @@
         "saving": "Guardando…",
         "saved": "Datos actualizados.",
         "passwordTitle": "Contraseña",
-        "currentPassword": "Contraseña actual",
         "newPassword": "Contraseña nueva",
         "changePassword": "Cambiar contraseña",
         "changingPassword": "Cambiando…",
@@ -142,7 +141,12 @@
         "loggingOut": "Cerrando…",
         "sessionTitle": "Sesión",
         "preferencesTitle": "Preferencias",
-        "logoutLabel": "Cerrar sesión en este dispositivo"
+        "logoutLabel": "Cerrar sesión en este dispositivo",
+        "passwordCodeLabel": "Código de seguridad",
+        "sendCode": "Enviarme un código",
+        "sendingCode": "Enviando…",
+        "passwordCodeHint": "Para cambiar la contraseña te enviamos un código a tu correo.",
+        "codeSentHint": "Revisa tu correo: el código caduca en 1 hora."
       },
       "notices": {
         "passwordChanged": "Contraseña actualizada. Entra de nuevo con la nueva.",
@@ -168,7 +172,9 @@
         "address_limit": "Llegaste al máximo de direcciones. Borra una para agregar otra.",
         "invalid_zone": "Elige una zona de entrega de la lista.",
         "invalid_address": "Escribe la dirección con calle y número.",
-        "delivery_unavailable": "Este negocio no hace delivery."
+        "delivery_unavailable": "Este negocio no hace delivery.",
+        "email_not_verified": "Confirma tu correo con el código que te enviamos.",
+        "invalid_code": "El código no es válido o ya caducó."
       },
       "orders": {
         "loading": "Cargando pedidos…",
@@ -245,6 +251,25 @@
         "zoneHint": "Este negocio reparte por zonas: elige la tuya y escribe tu dirección.",
         "noDelivery": "Este negocio no hace delivery, así que no hace falta guardar direcciones.",
         "zoneAddressPlaceholder": "Calle, número, depto o casa"
+      },
+      "code": {
+        "label": "Código del correo",
+        "resend": "Enviar otro código",
+        "resent": "Te enviamos un código nuevo.",
+        "back": "Volver"
+      },
+      "verify": {
+        "intro": "Te enviamos un código de 6 dígitos a tu correo. Escríbelo para confirmar tu cuenta.",
+        "submit": "Confirmar correo",
+        "submitting": "Confirmando…"
+      },
+      "recover": {
+        "intro": "Escribe tu número de documento y te enviaremos un código al correo de tu cuenta.",
+        "send": "Enviar código",
+        "sending": "Enviando…",
+        "codeIntro": "Si el documento tiene cuenta, te llegó un código al correo. Escríbelo junto con tu contraseña nueva.",
+        "confirm": "Cambiar contraseña",
+        "confirming": "Cambiando…"
       }
     },
     "cart": {

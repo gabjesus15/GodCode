@@ -32,6 +32,11 @@ const ACCOUNT = {
 	is_active: true,
 };
 
+const VERIFIED_USER = {
+	id: "auth-1",
+	app_metadata: { kind: "menu_client", menu_email_verified_at: "2026-09-22T00:00:00.000Z" },
+};
+
 function setAccountRow(row: unknown) {
 	adminHolder.current = makeAdminMock({
 		tables: { menu_client_accounts: [row ?? emptyResult] },
@@ -41,7 +46,7 @@ function setAccountRow(row: unknown) {
 describe("getMenuAccountSession", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockGetUser.mockResolvedValue({ data: { user: { id: "auth-1" } }, error: null });
+		mockGetUser.mockResolvedValue({ data: { user: VERIFIED_USER }, error: null });
 	});
 
 	it("devuelve la cuenta cuando la sesión corresponde a este negocio", async () => {
@@ -49,6 +54,13 @@ describe("getMenuAccountSession", () => {
 		const session = await getMenuAccountSession("company-a");
 		expect(session?.authUserId).toBe("auth-1");
 		expect(session?.account.id).toBe("acc-1");
+	});
+
+	it("devuelve null si el correo no está confirmado, sin mirar la cuenta", async () => {
+		mockGetUser.mockResolvedValue({ data: { user: { id: "auth-1", app_metadata: {} } }, error: null });
+		setAccountRow({ data: ACCOUNT, error: null });
+		expect(await getMenuAccountSession("company-a")).toBeNull();
+		expect(adminHolder.current.fromCalls).toEqual([]);
 	});
 
 	it("devuelve null si no hay sesión", async () => {
@@ -85,7 +97,7 @@ describe("getMenuAccountSession", () => {
 describe("requireMenuAccount", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockGetUser.mockResolvedValue({ data: { user: { id: "auth-1" } }, error: null });
+		mockGetUser.mockResolvedValue({ data: { user: VERIFIED_USER }, error: null });
 	});
 
 	it("lanza 401 cuando no hay sesión válida", async () => {

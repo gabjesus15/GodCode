@@ -39,9 +39,34 @@ export const menuAccountProfileSchema = z.object({
 	preferredBranchId: z.string().uuid().nullable().optional(),
 });
 
+/** Código de 6 dígitos que genera Supabase Auth; se aceptan espacios al pegarlo. */
+const codeField = z
+	.string()
+	.transform((value) => value.replace(/\s+/g, ""))
+	.pipe(z.string().regex(/^\d{6}$/));
+
 export const menuAccountPasswordSchema = z.object({
 	companySlug,
-	currentPassword: z.string().min(1).max(72),
+	code: codeField,
+	newPassword: passwordField,
+});
+
+/** Pedir un código (confirmación o recuperación): solo identifica la cuenta. */
+export const menuAccountDocumentSchema = z.object({
+	companySlug,
+	document: documentField,
+});
+
+export const menuAccountVerifySchema = z.object({
+	companySlug,
+	document: documentField,
+	code: codeField,
+});
+
+export const menuAccountRecoverConfirmSchema = z.object({
+	companySlug,
+	document: documentField,
+	code: codeField,
 	newPassword: passwordField,
 });
 

@@ -28,8 +28,8 @@ export async function POST(req: NextRequest) {
 		const company = await resolveCompanyForMenuAccount(parsed.data.companySlug);
 		const { account, authUserId } = await requireMenuAccount(company.id);
 
-		// Límite por cuenta (no por IP): el objetivo es frenar el sondeo de la
-		// contraseña actual desde una sesión ya iniciada.
+		// Límite por cuenta (no por IP): el objetivo es frenar que se adivine el
+		// código desde una sesión ya iniciada.
 		const limited = await enforceScopedRateLimit(
 			`menu_account_password:${account.id}`,
 			5,
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 		await changeMenuAccountPassword({
 			account,
 			authUserId,
-			currentPassword: parsed.data.currentPassword,
+			code: parsed.data.code,
 			newPassword: parsed.data.newPassword,
 		});
 

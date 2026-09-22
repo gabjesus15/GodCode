@@ -102,7 +102,7 @@
         "passwordLabel": "Passwort",
         "submit": "Anmelden",
         "submitting": "Anmeldung…",
-        "forgotHint": "Passwort vergessen? Bitte das Geschäft, dir bei der Wiederherstellung zu helfen."
+        "forgot": "Passwort vergessen?"
       },
       "register": {
         "title": "Konto erstellen",
@@ -132,7 +132,6 @@
         "saving": "Wird gespeichert…",
         "saved": "Daten aktualisiert.",
         "passwordTitle": "Passwort",
-        "currentPassword": "Aktuelles Passwort",
         "newPassword": "Neues Passwort",
         "changePassword": "Passwort ändern",
         "changingPassword": "Wird geändert…",
@@ -142,7 +141,12 @@
         "loggingOut": "Abmeldung…",
         "sessionTitle": "Sitzung",
         "preferencesTitle": "Einstellungen",
-        "logoutLabel": "Auf diesem Gerät abmelden"
+        "logoutLabel": "Auf diesem Gerät abmelden",
+        "passwordCodeLabel": "Sicherheitscode",
+        "sendCode": "Code senden",
+        "sendingCode": "Wird gesendet…",
+        "passwordCodeHint": "Um dein Passwort zu ändern, senden wir dir einen Code per E-Mail.",
+        "codeSentHint": "Sieh in deinen E-Mails nach: Der Code läuft in 1 Stunde ab."
       },
       "notices": {
         "passwordChanged": "Passwort aktualisiert. Melde dich mit dem neuen an.",
@@ -168,7 +172,28 @@
         "address_limit": "Du hast die maximale Anzahl an Adressen erreicht. Lösche eine, um eine neue hinzuzufügen.",
         "invalid_zone": "Wähle ein Liefergebiet aus der Liste.",
         "invalid_address": "Gib die Adresse mit Straße und Hausnummer ein.",
-        "delivery_unavailable": "Dieses Geschäft liefert nicht."
+        "delivery_unavailable": "Dieses Geschäft liefert nicht.",
+        "email_not_verified": "Bestätige deine E-Mail mit dem Code, den wir dir gesendet haben.",
+        "invalid_code": "Der Code ist ungültig oder abgelaufen."
+      },
+      "code": {
+        "label": "Code aus der E-Mail",
+        "resend": "Neuen Code senden",
+        "resent": "Wir haben dir einen neuen Code gesendet.",
+        "back": "Zurück"
+      },
+      "verify": {
+        "intro": "Wir haben dir einen 6-stelligen Code per E-Mail gesendet. Gib ihn ein, um dein Konto zu bestätigen.",
+        "submit": "E-Mail bestätigen",
+        "submitting": "Wird bestätigt…"
+      },
+      "recover": {
+        "intro": "Gib deine Ausweisnummer ein und wir senden einen Code an die E-Mail deines Kontos.",
+        "send": "Code senden",
+        "sending": "Wird gesendet…",
+        "codeIntro": "Falls zu dieser Nummer ein Konto existiert, ist ein Code per E-Mail unterwegs. Gib ihn zusammen mit deinem neuen Passwort ein.",
+        "confirm": "Passwort ändern",
+        "confirming": "Wird geändert…"
       },
       "orders": {
         "loading": "Bestellungen werden geladen…",

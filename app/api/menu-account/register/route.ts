@@ -62,13 +62,11 @@ export async function POST(req: NextRequest) {
 			carrier,
 		);
 
-		return withCarriedCookies(
-			carrier,
-			jsonOk(
-				{ status: result.status, account: result.account },
-				{ status: result.status === "created" ? 201 : 200 },
-			),
-		);
+		if (result.status === "verification_required") {
+			// Sin sesión todavía: las cookies de la portadora no se copian.
+			return jsonOk({ status: result.status }, { status: 201 });
+		}
+		return withCarriedCookies(carrier, jsonOk({ status: result.status, account: result.account }));
 	} catch (error) {
 		return toMenuAccountErrorResponse(error, "menu_account_register");
 	}

@@ -15,13 +15,20 @@ type MenuAccountAuthPanelProps = {
 	branches: MenuAccountBranchOption[];
 	/** `linked`: el correo ya tenía cuenta en otro negocio y se vinculó con su contraseña. */
 	onAuthenticated: (account: MenuAccountPublic, how: "login" | "created" | "linked") => void;
+	/** La contraseña se cambió con el código de recuperación; toca entrar con la nueva. */
+	onPasswordReset: () => void;
 };
+
+type RegisterResponse =
+	| { status: "verification_required" }
+	| { status: "linked"; account: MenuAccountPublic };
 
 export function MenuAccountAuthPanel({
 	companySlug,
 	countryCode,
 	branches,
 	onAuthenticated,
+	onPasswordReset,
 }: MenuAccountAuthPanelProps) {
 	const t = useTranslations("tenant.account");
 	const strategy = useMemo(() => getFormStrategy(countryCode), [countryCode]);
@@ -34,8 +41,13 @@ export function MenuAccountAuthPanel({
 	const [fullName, setFullName] = useState("");
 	const [phone, setPhone] = useState(strategy.phonePrefix);
 	const [branchId, setBranchId] = useState("");
+	const [code, setCode] = useState("");
+	/** Desde dónde se llegó a confirmar el correo: decide el aviso tras entrar. */
+	const [verifyOrigin, setVerifyOrigin] = useState<"login" | "created">("created");
+	const [codeResent, setCodeResent] = useState(false);
 
 	const shownError = errorCode;
+	const showTabs = view === "login" || view === "register";
 
 	/** El formato del documento es por país: RUT, Cédula/RIF o Cédula. */
 	const handleDocumentChange = (value: string) => {
@@ -44,6 +56,8 @@ export function MenuAccountAuthPanel({
 
 	const switchView = (next: MenuAccountView) => {
 		setErrorCode(null);
+		setCode("");
+		setCodeResent(false);
 		setView(next);
 	};
 
@@ -52,12 +66,18 @@ export function MenuAccountAuthPanel({
 		const result = await run<{ account: MenuAccountPublic }>("login", {
 			body: { companySlug, document, password },
 		});
-		if (result.ok) onAuthenticated(result.data.account, "login");
+		if (result.ok) {
+			onAuthenticated(result.data.account, "login");
+		} else if (result.code === "email_not_verified") {
+			// El servidor ya mandó un código nuevo al acertar la contraseña.
+			setVerifyOrigin("login");
+			switchView("verify");
+		}
 	};
 
 	const handleRegister = async (event: React.FormEvent) => {
 		event.preventDefault();
-		const result = await run<{ status: "created" | "linked"; account: MenuAccountPublic }>("register", {
+		const result = await run<RegisterResponse>("register", {
 			body: {
 				companySlug,
 				document,
@@ -68,8 +88,62 @@ export function MenuAccountAuthPanel({
 				preferredBranchId: branchId || null,
 			},
 		});
-		if (result.ok) onAuthenticated(result.data.account, result.data.status);
+		if (!result.ok) return;
+		if (result.data.status === "linked") {
+			onAuthenticated(result.data.account, "linked");
+			return;
+		}
+		setVerifyOrigin("created");
+		switchView("verify");
 	};
+
+	const handleVerify = async (event: React.FormEvent) => {
+		event.preventDefault();
+		const result = await run<{ account: MenuAccountPublic }>("verify", {
+			body: { companySlug, document, code },
+		});
+		if (result.ok) onAuthenticated(result.data.account, verifyOrigin);
+	};
+
+	const handleResendCode = async () => {
+		setCodeResent(false);
+		const result = await run("verify/resend", { body: { companySlug, document } });
+		if (result.ok) setCodeResent(true);
+	};
+
+	const handleRecoverRequest = async (event: React.FormEvent) => {
+		event.preventDefault();
+		const result = await run("recover", { body: { companySlug, document } });
+		if (result.ok) switchView("recover-code");
+	};
+
+	const handleRecoverConfirm = async (event: React.FormEvent) => {
+		event.preventDefault();
+		const result = await run("recover/confirm", {
+			body: { companySlug, document, code, newPassword: password },
+		});
+		if (result.ok) {
+			setPassword("");
+			switchView("login");
+			onPasswordReset();
+		}
+	};
+
+	const codeInput = (
+		<label className="account-field">
+			<span className="account-field-label">{t("code.label")}</span>
+			<input
+				className="account-input account-input--code"
+				value={code}
+				onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+				inputMode="numeric"
+				autoComplete="one-time-code"
+				placeholder="000000"
+				pattern="\d{6}"
+				required
+			/>
+		</label>
+	);
 
 	return (
 		<div className="account-card account-card--form">
@@ -77,6 +151,76 @@ export function MenuAccountAuthPanel({
 				<UserRound size={28} strokeWidth={1.8} />
 			</span>
 
+			{view === "verify" ? (
+				<form className="account-form" onSubmit={handleVerify}>
+					<p className="account-card-text">{t("verify.intro")}</p>
+					{codeInput}
+					{shownError ? <p className="account-error">{errorMessage(t, shownError)}</p> : null}
+					{codeResent ? <p className="account-note">{t("code.resent")}</p> : null}
+					<button type="submit" className="account-submit" disabled={pending}>
+						{pending ? t("verify.submitting") : t("verify.submit")}
+					</button>
+					<button type="button" className="account-link-button" onClick={handleResendCode} disabled={pending}>
+						{t("code.resend")}
+					</button>
+					<button type="button" className="account-link-button" onClick={() => switchView("login")}>
+						{t("code.back")}
+					</button>
+				</form>
+			) : null}
+
+			{view === "recover" ? (
+				<form className="account-form" onSubmit={handleRecoverRequest}>
+					<p className="account-card-text">{t("recover.intro")}</p>
+					<label className="account-field">
+						<span className="account-field-label">{t("login.documentLabel")}</span>
+						<input
+							className="account-input"
+							value={document}
+							onChange={(event) => handleDocumentChange(event.target.value)}
+							placeholder={strategy.idPlaceholder}
+							autoComplete="username"
+							required
+						/>
+					</label>
+					{shownError ? <p className="account-error">{errorMessage(t, shownError)}</p> : null}
+					<button type="submit" className="account-submit" disabled={pending}>
+						{pending ? t("recover.sending") : t("recover.send")}
+					</button>
+					<button type="button" className="account-link-button" onClick={() => switchView("login")}>
+						{t("code.back")}
+					</button>
+				</form>
+			) : null}
+
+			{view === "recover-code" ? (
+				<form className="account-form" onSubmit={handleRecoverConfirm}>
+					<p className="account-card-text">{t("recover.codeIntro")}</p>
+					{codeInput}
+					<label className="account-field">
+						<span className="account-field-label">{t("dashboard.newPassword")}</span>
+						<input
+							className="account-input"
+							type="password"
+							value={password}
+							onChange={(event) => setPassword(event.target.value)}
+							autoComplete="new-password"
+							minLength={8}
+							required
+						/>
+						<span className="account-field-hint">{t("register.passwordHint")}</span>
+					</label>
+					{shownError ? <p className="account-error">{errorMessage(t, shownError)}</p> : null}
+					<button type="submit" className="account-submit" disabled={pending}>
+						{pending ? t("recover.confirming") : t("recover.confirm")}
+					</button>
+					<button type="button" className="account-link-button" onClick={() => switchView("recover")}>
+						{t("code.resend")}
+					</button>
+				</form>
+			) : null}
+
+			{showTabs ? (
 			<div className="account-tabs" role="tablist">
 				<button
 					type="button"
@@ -97,6 +241,7 @@ export function MenuAccountAuthPanel({
 					{t("tabs.register")}
 				</button>
 			</div>
+			) : null}
 
 			{view === "login" ? (
 				<form className="account-form" onSubmit={handleLogin}>
@@ -126,10 +271,13 @@ export function MenuAccountAuthPanel({
 					<button type="submit" className="account-submit" disabled={pending}>
 						{pending ? t("login.submitting") : t("login.submit")}
 					</button>
-					{/* Sin correo no hay recuperación autoservicio: la resetea el negocio. */}
-					<p className="account-note">{t("login.forgotHint")}</p>
+					<button type="button" className="account-link-button" onClick={() => switchView("recover")}>
+						{t("login.forgot")}
+					</button>
 				</form>
-			) : (
+			) : null}
+
+			{view === "register" ? (
 				<form className="account-form" onSubmit={handleRegister}>
 					<p className="account-card-text">{t("register.intro")}</p>
 					<label className="account-field">
@@ -211,7 +359,7 @@ export function MenuAccountAuthPanel({
 						{pending ? t("register.submitting") : t("register.submit")}
 					</button>
 				</form>
-			)}
+			) : null}
 		</div>
 	);
 }
@@ -235,6 +383,8 @@ export function errorMessage(t: ReturnType<typeof useTranslations>, code: string
 		"invalid_address",
 		"delivery_unavailable",
 		"weak_password",
+		"email_not_verified",
+		"invalid_code",
 		"validation_error",
 		"network",
 		"rate_limited",

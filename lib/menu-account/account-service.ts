@@ -1,9 +1,9 @@
 import "server-only";
 
+import type { User } from "@supabase/supabase-js";
 import type { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { createSupabasePublicServerClient } from "@/utils/supabase/server";
 import { logger } from "@/lib/infra/logger";
 import { normalizeDocument } from "@/lib/geo/document-normalize";
 
@@ -18,6 +18,13 @@ import {
 import { createMenuClientResponseClient } from "./cookies";
 import { syncMenuAccountClient } from "./client-link";
 import { assertBranchBelongsToCompany, type MenuAccountCompany } from "./company-resolve";
+import {
+	isMenuEmailVerified,
+	markMenuEmailVerified,
+	sendEmailCode,
+	verifyEmailCode,
+	verifyEmailCodeAndSignIn,
+} from "./email-code";
 import { menuAccountErrors, MenuAccountError } from "./errors";
 import { classifyEmail, normalizeEmail } from "./identity-guard";
 import { sealPii } from "./pii";
@@ -55,13 +62,18 @@ export type RegisterMenuAccountInput = {
 	preferredBranchId?: string | null;
 };
 
+/**
+ * `verification_required`: la cuenta existe pero no hay sesión hasta que la persona
+ * escriba el código que le llegó al correo (`verifyMenuAccountEmail`).
+ */
 export type RegisterMenuAccountResult =
-	| { status: "created"; account: MenuAccountDto }
+	| { status: "verification_required" }
 	| { status: "linked"; account: MenuAccountDto };
 
 /**
  * Alta de cuenta, o vinculación de este negocio si el correo ya es de un cliente.
  *
+ * Un alta nueva nunca abre sesión: primero se confirma el correo con un código.
  * El orden importa: se reserva la fila ANTES de crear el usuario de auth, porque el
  * índice único `(company_id, document_normalized)` es el único guardia real contra
  * dos altas simultáneas del mismo documento. Esa columna guarda la huella HMAC del
@@ -110,7 +122,7 @@ export async function registerMenuAccount(
 	};
 
 	if (ownership.ownership === "menu_client" && ownership.authUserId) {
-		const account = await linkExistingMenuClient({
+		return linkExistingMenuClient({
 			authUserId: ownership.authUserId,
 			email,
 			shared,
@@ -119,7 +131,6 @@ export async function registerMenuAccount(
 			request,
 			response,
 		});
-		return { status: "linked", account };
 	}
 
 	// --- Alta normal -------------------------------------------------------
@@ -175,13 +186,11 @@ export async function registerMenuAccount(
 		throw menuAccountErrors.internal();
 	}
 
-	await signInOnResponse(request, response, email, input.password);
-	await touchLastLogin(linked.id);
+	// Si el correo no sale, la cuenta queda creada igual: la persona pide otro código
+	// desde la pantalla de verificación, o al intentar entrar.
+	await sendEmailCode(email, "email").catch(() => undefined);
 
-	return {
-		status: "created",
-		account: toMenuAccountDto(openAccountRow(linked as MenuClientAccountRow, email)),
-	};
+	return { status: "verification_required" };
 }
 
 type LinkExistingMenuClientInput = {
@@ -207,7 +216,9 @@ type LinkExistingMenuClientInput = {
  * que supiera un correo ajeno podría colgarse de esa identidad. Nunca se cambia la
  * contraseña existente: si no coincide, se rechaza.
  */
-async function linkExistingMenuClient(input: LinkExistingMenuClientInput): Promise<MenuAccountDto> {
+async function linkExistingMenuClient(
+	input: LinkExistingMenuClientInput,
+): Promise<RegisterMenuAccountResult> {
 	const { authUserId, shared, company } = input;
 
 	const { data: existingAccount } = await supabaseAdmin
@@ -241,8 +252,19 @@ async function linkExistingMenuClient(input: LinkExistingMenuClientInput): Promi
 		throw menuAccountErrors.internal();
 	}
 
+	// La contraseña prueba que es la misma persona, pero no que el correo sea suyo: una
+	// cuenta antigua sin confirmar tiene que pasar por el código antes de quedar dentro.
+	if (!isMenuEmailVerified(signIn.user)) {
+		await supabase.auth.signOut().catch(() => undefined);
+		await sendEmailCode(input.email, "email").catch(() => undefined);
+		return { status: "verification_required" };
+	}
+
 	await touchLastLogin(linked.id);
-	return toMenuAccountDto(openAccountRow(linked as MenuClientAccountRow, input.email));
+	return {
+		status: "linked",
+		account: toMenuAccountDto(openAccountRow(linked as MenuClientAccountRow, input.email)),
+	};
 }
 
 export type LoginMenuAccountInput = {
@@ -256,27 +278,22 @@ export async function loginMenuAccount(
 	request: NextRequest,
 	response: NextResponse,
 ): Promise<MenuAccountDto> {
-	const documentResult = normalizeDocument(input.document, input.company.countryCode);
 	// Documento mal formado y cuenta inexistente devuelven lo mismo: no se filtra
 	// qué documentos existen en este negocio.
-	if (!documentResult.ok) throw menuAccountErrors.invalidCredentials();
+	const found = await findAccountByDocument(input.company, input.document);
+	if (!found) throw menuAccountErrors.invalidCredentials();
+	const { account, email } = found;
 
-	const { data: rows } = await supabaseAdmin
-		.from("menu_client_accounts")
-		.select("*")
-		.eq("company_id", input.company.id)
-		.in("document_normalized", documentLookupValues(documentResult.normalized))
-		.limit(1);
-	const account = (rows?.[0] ?? null) as MenuClientAccountRow | null;
+	const { user, supabase } = await signInOnResponse(request, response, email, input.password);
 
-	if (!account || account.is_active === false || !account.auth_user_id) {
-		throw menuAccountErrors.invalidCredentials();
+	// El aviso de "confirma tu correo" solo llega tras acertar la contraseña, así que
+	// no revela nada a quien no la conoce. La sesión recién abierta se descarta.
+	if (!isMenuEmailVerified(user)) {
+		await supabase.auth.signOut().catch(() => undefined);
+		await sendEmailCode(email, "email").catch(() => undefined);
+		throw menuAccountErrors.emailNotVerified();
 	}
 
-	const email = await readAccountEmail(account);
-	if (!email) throw menuAccountErrors.invalidCredentials();
-
-	await signInOnResponse(request, response, email, input.password);
 	await touchLastLogin(account.id);
 	if (isLegacyAccountRow(account)) await upgradeLegacyAccountRow(account);
 
@@ -288,13 +305,114 @@ async function signInOnResponse(
 	response: NextResponse,
 	email: string,
 	password: string,
-): Promise<void> {
+): Promise<{ user: User; supabase: ReturnType<typeof createMenuClientResponseClient> }> {
 	const supabase = createMenuClientResponseClient(request, response);
-	const { error } = await supabase.auth.signInWithPassword({ email, password });
-	if (error) {
+	const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+	if (error || !data?.user) {
 		// El detalle se queda en el log; al navegador va siempre el error genérico.
-		logger.warn("menu_account_sign_in_failed", { message: error.message });
+		logger.warn("menu_account_sign_in_failed", { message: error?.message });
 		throw menuAccountErrors.invalidCredentials();
+	}
+	return { user: data.user, supabase };
+}
+
+type FoundAccount = { account: MenuClientAccountRow; email: string };
+
+/** Cuenta activa de este negocio por documento, con su correo real. */
+async function findAccountByDocument(
+	company: MenuAccountCompany,
+	document: string,
+): Promise<FoundAccount | null> {
+	const documentResult = normalizeDocument(document, company.countryCode);
+	if (!documentResult.ok) return null;
+
+	const { data: rows } = await supabaseAdmin
+		.from("menu_client_accounts")
+		.select("*")
+		.eq("company_id", company.id)
+		.in("document_normalized", documentLookupValues(documentResult.normalized))
+		.limit(1);
+	const account = (rows?.[0] ?? null) as MenuClientAccountRow | null;
+	if (!account || account.is_active === false || !account.auth_user_id) return null;
+
+	const email = await readAccountEmail(account);
+	return email ? { account, email } : null;
+}
+
+export type DocumentCodeInput = {
+	company: MenuAccountCompany;
+	document: string;
+};
+
+/**
+ * Confirma el correo con el código y abre la sesión. El código se valida contra el
+ * correo de la cuenta de ese documento, así que no sirve para entrar en otra.
+ */
+export async function verifyMenuAccountEmail(
+	input: DocumentCodeInput & { code: string },
+	request: NextRequest,
+	response: NextResponse,
+): Promise<MenuAccountDto> {
+	const found = await findAccountByDocument(input.company, input.document);
+	if (!found) throw menuAccountErrors.invalidCode();
+	const { account, email } = found;
+
+	const user = await verifyEmailCodeAndSignIn(email, input.code, request, response);
+	if (user.id !== account.auth_user_id) throw menuAccountErrors.invalidCode();
+
+	if (!isMenuEmailVerified(user)) await markMenuEmailVerified(user);
+	await touchLastLogin(account.id);
+	if (isLegacyAccountRow(account)) await upgradeLegacyAccountRow(account);
+
+	return toMenuAccountDto(openAccountRow(account, email));
+}
+
+/**
+ * Reenvía el código de confirmación. No dice nada si el documento no existe o ya está
+ * confirmado: la respuesta es siempre la misma.
+ */
+export async function resendMenuAccountVerification(input: DocumentCodeInput): Promise<void> {
+	const found = await findAccountByDocument(input.company, input.document);
+	if (!found) return;
+
+	const { data } = await supabaseAdmin.auth.admin.getUserById(found.account.auth_user_id as string);
+	if (!data?.user || isMenuEmailVerified(data.user)) return;
+
+	await sendEmailCode(found.email, "email").catch(() => undefined);
+}
+
+/** Manda el código para recuperar la contraseña. Misma respuesta exista o no la cuenta. */
+export async function requestMenuAccountRecovery(input: DocumentCodeInput): Promise<void> {
+	const found = await findAccountByDocument(input.company, input.document);
+	if (!found) return;
+	await sendEmailCode(found.email, "recovery").catch(() => undefined);
+}
+
+/**
+ * Fija una contraseña nueva con el código de recuperación. No abre sesión: la persona
+ * entra después con la contraseña nueva, como cualquier otra vez.
+ */
+export async function resetMenuAccountPassword(
+	input: DocumentCodeInput & { code: string; newPassword: string },
+): Promise<void> {
+	const found = await findAccountByDocument(input.company, input.document);
+	if (!found) throw menuAccountErrors.invalidCode();
+
+	const user = await verifyEmailCode(found.email, input.code, "recovery");
+	if (user.id !== found.account.auth_user_id) throw menuAccountErrors.invalidCode();
+
+	await updatePassword(user.id, input.newPassword);
+	// Recibir el código ya prueba que el correo es suyo.
+	if (!isMenuEmailVerified(user)) await markMenuEmailVerified(user);
+}
+
+async function updatePassword(authUserId: string, newPassword: string): Promise<void> {
+	const { error } = await supabaseAdmin.auth.admin.updateUserById(authUserId, {
+		password: newPassword,
+	});
+	if (error) {
+		logger.error("menu_account_password_update_failed", { message: error.message });
+		throw menuAccountErrors.internal();
 	}
 }
 
@@ -371,34 +489,28 @@ export async function updateMenuAccountProfile(
 	return toMenuAccountDto(updated);
 }
 
+/** Manda al correo de la sesión el código que autoriza cambiar la contraseña. */
+export async function sendPasswordChangeCode(account: MenuClientAccountRow): Promise<void> {
+	await sendEmailCode(account.email, "email");
+}
+
 export type ChangePasswordInput = {
 	account: MenuClientAccountRow;
 	authUserId: string;
-	currentPassword: string;
+	code: string;
 	newPassword: string;
 };
 
 /**
- * Cambia la contraseña exigiendo siempre la actual. No hay recuperación por correo,
- * así que no existe otra forma de probar que quien cambia la clave es el dueño.
+ * Cambia la contraseña con el código enviado al correo. Una sesión abierta en un
+ * equipo ajeno no basta: hace falta acceso al correo de la cuenta.
  */
 export async function changeMenuAccountPassword(input: ChangePasswordInput): Promise<void> {
-	// Verificación con un cliente efímero: no debe tocar las cookies de la sesión.
-	const ephemeral = createSupabasePublicServerClient();
-	const { error } = await ephemeral.auth.signInWithPassword({
-		email: input.account.email,
-		password: input.currentPassword,
-	});
-	if (error) throw menuAccountErrors.invalidCredentials();
-	await ephemeral.auth.signOut();
+	// Se valida con un cliente efímero: no debe tocar las cookies de la sesión.
+	const user = await verifyEmailCode(input.account.email, input.code, "email");
+	if (user.id !== input.authUserId) throw menuAccountErrors.invalidCode();
 
-	const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(input.authUserId, {
-		password: input.newPassword,
-	});
-	if (updateError) {
-		logger.error("menu_account_password_update_failed", { message: updateError.message });
-		throw menuAccountErrors.internal();
-	}
+	await updatePassword(input.authUserId, input.newPassword);
 }
 
 export { MenuAccountError };

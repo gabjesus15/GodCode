@@ -102,7 +102,7 @@
         "passwordLabel": "Senha",
         "submit": "Entrar",
         "submitting": "Entrando…",
-        "forgotHint": "Esqueceu sua senha? Peça ao negócio para ajudar a recuperá-la."
+        "forgot": "Esqueceu sua senha?"
       },
       "register": {
         "title": "Crie sua conta",
@@ -132,7 +132,6 @@
         "saving": "Salvando…",
         "saved": "Dados atualizados.",
         "passwordTitle": "Senha",
-        "currentPassword": "Senha atual",
         "newPassword": "Nova senha",
         "changePassword": "Alterar senha",
         "changingPassword": "Alterando…",
@@ -142,7 +141,12 @@
         "loggingOut": "Saindo…",
         "sessionTitle": "Sessão",
         "preferencesTitle": "Preferências",
-        "logoutLabel": "Sair neste dispositivo"
+        "logoutLabel": "Sair neste dispositivo",
+        "passwordCodeLabel": "Código de segurança",
+        "sendCode": "Enviar um código",
+        "sendingCode": "Enviando…",
+        "passwordCodeHint": "Para alterar a senha, enviamos um código para seu e-mail.",
+        "codeSentHint": "Confira seu e-mail: o código expira em 1 hora."
       },
       "notices": {
         "passwordChanged": "Senha atualizada. Entre novamente com a nova.",
@@ -168,7 +172,28 @@
         "address_limit": "Você atingiu o máximo de endereços. Exclua um para adicionar outro.",
         "invalid_zone": "Escolha uma zona de entrega da lista.",
         "invalid_address": "Informe o endereço com rua e número.",
-        "delivery_unavailable": "Este negócio não faz entregas."
+        "delivery_unavailable": "Este negócio não faz entregas.",
+        "email_not_verified": "Confirme seu e-mail com o código que enviamos.",
+        "invalid_code": "O código é inválido ou expirou."
+      },
+      "code": {
+        "label": "Código do e-mail",
+        "resend": "Enviar outro código",
+        "resent": "Enviamos um novo código.",
+        "back": "Voltar"
+      },
+      "verify": {
+        "intro": "Enviamos um código de 6 dígitos para seu e-mail. Digite-o para confirmar sua conta.",
+        "submit": "Confirmar e-mail",
+        "submitting": "Confirmando…"
+      },
+      "recover": {
+        "intro": "Digite seu número de documento e enviaremos um código para o e-mail da sua conta.",
+        "send": "Enviar código",
+        "sending": "Enviando…",
+        "codeIntro": "Se o documento tiver conta, um código chegou ao e-mail. Digite-o junto com sua nova senha.",
+        "confirm": "Alterar senha",
+        "confirming": "Alterando…"
       },
       "orders": {
         "loading": "Carregando pedidos…",

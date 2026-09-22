@@ -79,6 +79,7 @@ export function AccountPageClient({
 							setNotice(how === "linked" ? "linked" : null);
 							setAccount(nextAccount);
 						}}
+						onPasswordReset={() => setNotice("passwordChanged")}
 					/>
 				)}
 			</div>

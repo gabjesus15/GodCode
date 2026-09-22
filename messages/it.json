@@ -102,7 +102,7 @@
         "passwordLabel": "Password",
         "submit": "Accedi",
         "submitting": "Accesso…",
-        "forgotHint": "Hai dimenticato la password? Chiedi al negozio di aiutarti a recuperarla."
+        "forgot": "Hai dimenticato la password?"
       },
       "register": {
         "title": "Crea il tuo account",
@@ -132,7 +132,6 @@
         "saving": "Salvataggio…",
         "saved": "Dati aggiornati.",
         "passwordTitle": "Password",
-        "currentPassword": "Password attuale",
         "newPassword": "Nuova password",
         "changePassword": "Cambia password",
         "changingPassword": "Modifica…",
@@ -142,7 +141,12 @@
         "loggingOut": "Uscita…",
         "sessionTitle": "Sessione",
         "preferencesTitle": "Preferenze",
-        "logoutLabel": "Esci da questo dispositivo"
+        "logoutLabel": "Esci da questo dispositivo",
+        "passwordCodeLabel": "Codice di sicurezza",
+        "sendCode": "Inviami un codice",
+        "sendingCode": "Invio…",
+        "passwordCodeHint": "Per cambiare la password ti inviamo un codice via email.",
+        "codeSentHint": "Controlla la tua email: il codice scade tra 1 ora."
       },
       "notices": {
         "passwordChanged": "Password aggiornata. Accedi di nuovo con quella nuova.",
@@ -168,7 +172,28 @@
         "address_limit": "Hai raggiunto il numero massimo di indirizzi. Eliminane uno per aggiungerne un altro.",
         "invalid_zone": "Scegli una zona di consegna dall’elenco.",
         "invalid_address": "Scrivi l’indirizzo con via e numero.",
-        "delivery_unavailable": "Questo locale non fa consegne."
+        "delivery_unavailable": "Questo locale non fa consegne.",
+        "email_not_verified": "Conferma la tua email con il codice che ti abbiamo inviato.",
+        "invalid_code": "Il codice non è valido o è scaduto."
+      },
+      "code": {
+        "label": "Codice dell'email",
+        "resend": "Invia un altro codice",
+        "resent": "Ti abbiamo inviato un nuovo codice.",
+        "back": "Indietro"
+      },
+      "verify": {
+        "intro": "Ti abbiamo inviato un codice di 6 cifre via email. Inseriscilo per confermare il tuo account.",
+        "submit": "Conferma email",
+        "submitting": "Conferma in corso…"
+      },
+      "recover": {
+        "intro": "Inserisci il numero del documento e invieremo un codice all'email del tuo account.",
+        "send": "Invia codice",
+        "sending": "Invio…",
+        "codeIntro": "Se il documento ha un account, è arrivato un codice via email. Inseriscilo insieme alla nuova password.",
+        "confirm": "Cambia password",
+        "confirming": "Modifica in corso…"
       },
       "orders": {
         "loading": "Caricamento ordini…",

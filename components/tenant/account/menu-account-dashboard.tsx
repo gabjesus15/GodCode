@@ -266,17 +266,25 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 	const password = useMenuAccount("login");
 	const logout = useMenuAccount("login");
 
-	const [currentPassword, setCurrentPassword] = useState("");
+	const [code, setCode] = useState("");
 	const [newPassword, setNewPassword] = useState("");
+	/** El formulario de la clave nueva solo aparece una vez enviado el código. */
+	const [codeSent, setCodeSent] = useState(false);
+
+	const handleSendCode = async () => {
+		const result = await password.run("password/code", { body: { companySlug } });
+		if (result.ok) setCodeSent(true);
+	};
 
 	const handlePasswordSubmit = async (event: React.FormEvent) => {
 		event.preventDefault();
 		const result = await password.run("password", {
-			body: { companySlug, currentPassword, newPassword },
+			body: { companySlug, code, newPassword },
 		});
 		if (result.ok) {
-			setCurrentPassword("");
+			setCode("");
 			setNewPassword("");
+			setCodeSent(false);
 			onPasswordChanged();
 		}
 	};
@@ -290,16 +298,33 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 		<div className="account-panel">
 			<form onSubmit={handlePasswordSubmit}>
 				<SettingsGroup title={t("dashboard.passwordTitle")}>
-					<SettingsRow label={t("dashboard.currentPassword")} htmlFor="account-current-password">
+					{!codeSent ? (
+						<SettingsRow label={t("dashboard.passwordCodeLabel")}>
+							<button
+								type="button"
+								className="account-button account-button--ghost"
+								onClick={handleSendCode}
+								disabled={password.pending}
+							>
+								{password.pending ? t("dashboard.sendingCode") : t("dashboard.sendCode")}
+							</button>
+							<span className="account-field-hint">{t("dashboard.passwordCodeHint")}</span>
+						</SettingsRow>
+					) : (
+					<>
+					<SettingsRow label={t("code.label")} htmlFor="account-password-code">
 						<input
-							id="account-current-password"
-							className="account-input"
-							type="password"
-							value={currentPassword}
-							onChange={(event) => setCurrentPassword(event.target.value)}
-							autoComplete="current-password"
+							id="account-password-code"
+							className="account-input account-input--code"
+							value={code}
+							onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+							inputMode="numeric"
+							autoComplete="one-time-code"
+							placeholder="000000"
+							pattern="\d{6}"
 							required
 						/>
+						<span className="account-field-hint">{t("dashboard.codeSentHint")}</span>
 					</SettingsRow>
 					<SettingsRow label={t("dashboard.newPassword")} htmlFor="account-new-password">
 						<input
@@ -314,6 +339,8 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 						/>
 						<span className="account-field-hint">{t("dashboard.passwordSharedNote")}</span>
 					</SettingsRow>
+					</>
+					)}
 				</SettingsGroup>
 				<div className="account-actions">
 					{password.errorCode ? (
@@ -321,9 +348,11 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 					) : null}
 					{/* El éxito no se muestra aquí: al cambiar la contraseña se cierra la
 					    sesión y el aviso lo da el panel de acceso. */}
-					<button type="submit" className="account-button" disabled={password.pending}>
-						{password.pending ? t("dashboard.changingPassword") : t("dashboard.changePassword")}
-					</button>
+					{codeSent ? (
+						<button type="submit" className="account-button" disabled={password.pending}>
+							{password.pending ? t("dashboard.changingPassword") : t("dashboard.changePassword")}
+						</button>
+					) : null}
 				</div>
 			</form>
 

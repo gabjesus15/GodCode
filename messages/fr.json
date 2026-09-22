@@ -102,7 +102,7 @@
         "passwordLabel": "Mot de passe",
         "submit": "Se connecter",
         "submitting": "Connexion…",
-        "forgotHint": "Mot de passe oublié ? Demandez au commerce de vous aider à le récupérer."
+        "forgot": "Mot de passe oublié ?"
       },
       "register": {
         "title": "Créez votre compte",
@@ -132,7 +132,6 @@
         "saving": "Enregistrement…",
         "saved": "Informations mises à jour.",
         "passwordTitle": "Mot de passe",
-        "currentPassword": "Mot de passe actuel",
         "newPassword": "Nouveau mot de passe",
         "changePassword": "Changer le mot de passe",
         "changingPassword": "Modification…",
@@ -142,7 +141,12 @@
         "loggingOut": "Déconnexion…",
         "sessionTitle": "Session",
         "preferencesTitle": "Préférences",
-        "logoutLabel": "Se déconnecter sur cet appareil"
+        "logoutLabel": "Se déconnecter sur cet appareil",
+        "passwordCodeLabel": "Code de sécurité",
+        "sendCode": "M'envoyer un code",
+        "sendingCode": "Envoi…",
+        "passwordCodeHint": "Pour changer le mot de passe, nous envoyons un code à votre e-mail.",
+        "codeSentHint": "Consultez votre e-mail : le code expire dans 1 heure."
       },
       "notices": {
         "passwordChanged": "Mot de passe mis à jour. Reconnectez-vous avec le nouveau.",
@@ -168,7 +172,28 @@
         "address_limit": "Vous avez atteint le nombre maximum d’adresses. Supprimez-en une pour en ajouter une autre.",
         "invalid_zone": "Choisissez une zone de livraison dans la liste.",
         "invalid_address": "Saisissez l’adresse avec la rue et le numéro.",
-        "delivery_unavailable": "Cet établissement ne livre pas."
+        "delivery_unavailable": "Cet établissement ne livre pas.",
+        "email_not_verified": "Confirmez votre e-mail avec le code que nous vous avons envoyé.",
+        "invalid_code": "Le code est invalide ou a expiré."
+      },
+      "code": {
+        "label": "Code reçu par e-mail",
+        "resend": "Envoyer un autre code",
+        "resent": "Nous vous avons envoyé un nouveau code.",
+        "back": "Retour"
+      },
+      "verify": {
+        "intro": "Nous avons envoyé un code à 6 chiffres à votre e-mail. Saisissez-le pour confirmer votre compte.",
+        "submit": "Confirmer l'e-mail",
+        "submitting": "Confirmation…"
+      },
+      "recover": {
+        "intro": "Saisissez votre numéro de pièce d'identité et nous enverrons un code à l'e-mail de votre compte.",
+        "send": "Envoyer le code",
+        "sending": "Envoi…",
+        "codeIntro": "Si ce numéro a un compte, un code a été envoyé par e-mail. Saisissez-le avec votre nouveau mot de passe.",
+        "confirm": "Changer le mot de passe",
+        "confirming": "Modification…"
       },
       "orders": {
         "loading": "Chargement des commandes…",

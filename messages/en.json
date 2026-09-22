@@ -102,7 +102,7 @@
         "passwordLabel": "Password",
         "submit": "Sign in",
         "submitting": "Signing in…",
-        "forgotHint": "Forgot your password? Ask the business to help you recover it."
+        "forgot": "Forgot your password?"
       },
       "register": {
         "title": "Create your account",
@@ -132,7 +132,6 @@
         "saving": "Saving…",
         "saved": "Details updated.",
         "passwordTitle": "Password",
-        "currentPassword": "Current password",
         "newPassword": "New password",
         "changePassword": "Change password",
         "changingPassword": "Changing…",
@@ -142,7 +141,12 @@
         "loggingOut": "Signing out…",
         "sessionTitle": "Session",
         "preferencesTitle": "Preferences",
-        "logoutLabel": "Sign out on this device"
+        "logoutLabel": "Sign out on this device",
+        "passwordCodeLabel": "Security code",
+        "sendCode": "Send me a code",
+        "sendingCode": "Sending…",
+        "passwordCodeHint": "To change your password we'll send a code to your email.",
+        "codeSentHint": "Check your email: the code expires in 1 hour."
       },
       "notices": {
         "passwordChanged": "Password updated. Please sign in again with the new one.",
@@ -168,7 +172,9 @@
         "address_limit": "You reached the maximum number of addresses. Delete one to add another.",
         "invalid_zone": "Choose a delivery zone from the list.",
         "invalid_address": "Enter the address with street and number.",
-        "delivery_unavailable": "This business doesn’t deliver."
+        "delivery_unavailable": "This business doesn’t deliver.",
+        "email_not_verified": "Confirm your email with the code we sent you.",
+        "invalid_code": "The code is invalid or has expired."
       },
       "orders": {
         "loading": "Loading orders…",
@@ -245,6 +251,25 @@
         "zoneHint": "This business delivers by zone: choose yours and enter your address.",
         "noDelivery": "This business doesn’t deliver, so there’s no need to save addresses.",
         "zoneAddressPlaceholder": "Street, number, apartment or house"
+      },
+      "code": {
+        "label": "Email code",
+        "resend": "Send another code",
+        "resent": "We sent you a new code.",
+        "back": "Back"
+      },
+      "verify": {
+        "intro": "We sent a 6-digit code to your email. Enter it to confirm your account.",
+        "submit": "Confirm email",
+        "submitting": "Confirming…"
+      },
+      "recover": {
+        "intro": "Enter your ID number and we'll send a code to your account's email.",
+        "send": "Send code",
+        "sending": "Sending…",
+        "codeIntro": "If that ID has an account, a code is on its way to the email. Enter it along with your new password.",
+        "confirm": "Change password",
+        "confirming": "Changing…"
       }
     },
     "cart": {

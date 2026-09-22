@@ -1,5 +1,9 @@
-/** Vistas del panel de acceso cuando no hay sesión. */
-export type MenuAccountView = "login" | "register";
+/**
+ * Vistas del panel de acceso cuando no hay sesión. `verify` pide el código que
+ * confirma el correo; `recover` y `recover-code` son los dos pasos de "olvidé mi
+ * contraseña".
+ */
+export type MenuAccountView = "login" | "register" | "verify" | "recover" | "recover-code";
 
 export type MenuAccountBranchOption = {
 	id: string;

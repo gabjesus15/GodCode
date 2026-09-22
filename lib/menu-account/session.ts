@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { maskDocument } from "@/lib/geo/document-normalize";
 
 import { isLegacyAccountRow, openAccountRow, upgradeLegacyAccountRow } from "./account-records";
+import { isMenuEmailVerified } from "./email-code";
 import { menuAccountErrors } from "./errors";
 import type { MenuAccountDto, MenuAccountSession, MenuClientAccountRow } from "./types";
 
@@ -27,6 +28,8 @@ export async function getMenuAccountSession(
 
 	const { data, error } = await supabase.auth.getUser();
 	if (error || !data?.user?.id) return null;
+	// Una sesión abierta antes de exigir la confirmación no vale hasta confirmar el correo.
+	if (!isMenuEmailVerified(data.user)) return null;
 
 	const authUserId = data.user.id;
 
