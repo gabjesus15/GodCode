@@ -232,9 +232,15 @@
 	color: var(--discount-color, var(--menu-ok));
 }
 
-.tenant-theme-vars[data-scheme="light"] .gcard__price-main,
-.tenant-theme-vars[data-scheme="light"] .gcard__price-main--sale {
+.tenant-theme-vars[data-scheme="light"] .gcard__price-main {
 	color: var(--menu-fg);
+}
+
+/* En claro el precio de oferta va en el color del local oscurecido hasta ser
+   legible sobre blanco: el amarillo o el verde claro que el local eligió para
+   el modo oscuro no se leerían. */
+.tenant-theme-vars[data-scheme="light"] .gcard__price-main--sale {
+	color: var(--menu-accent-ink);
 }
 
 .gcard__price--was {

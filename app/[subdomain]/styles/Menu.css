@@ -20,12 +20,16 @@
        cálida con un rojo, fría con un azul, verdosa con un verde. */
     --menu-chrome: color-mix(in srgb, var(--menu-accent) 9%, #18181c);
     --menu-chrome-glass: color-mix(in srgb, var(--menu-chrome) 84%, transparent);
-    --menu-surface: #161518;
-    --menu-surface-2: #201f23;
-    --menu-surface-glass: rgba(22, 21, 24, 0.72);
-    --menu-line: rgba(255, 255, 255, 0.09);
-    --menu-line-strong: rgba(255, 255, 255, 0.2);
-    --menu-fg: #f5f4f2;
+    /* Superficies (tarjetas, hojas, chips): gris oscuro con un 6-8% del color
+       del local, y los bordes con algo más de tinte para que la tarjeta se
+       recorte del fondo sin necesitar un borde blanco. Tres escalones bien
+       separados: fondo de página < tarjeta < superficie interior. */
+    --menu-surface: color-mix(in srgb, var(--menu-accent) 6%, #1b1a1f);
+    --menu-surface-2: color-mix(in srgb, var(--menu-accent) 8%, #27262c);
+    --menu-surface-glass: color-mix(in srgb, var(--menu-surface) 76%, transparent);
+    --menu-line: color-mix(in srgb, var(--menu-accent) 18%, rgba(255, 255, 255, 0.1));
+    --menu-line-strong: color-mix(in srgb, var(--menu-accent) 30%, rgba(255, 255, 255, 0.22));
+    --menu-fg: #f7f6f4;
     --menu-fg-2: rgba(245, 244, 242, 0.76);
     --menu-fg-3: rgba(245, 244, 242, 0.6);
     --menu-ok: #5fd38d;
@@ -57,11 +61,13 @@
     --menu-canvas: #fffdfa;
     --menu-chrome: color-mix(in srgb, var(--menu-accent) 4%, #fffdfa);
     --menu-chrome-glass: color-mix(in srgb, var(--menu-chrome) 86%, transparent);
+    /* Tarjeta blanca pura para separarse de una página casi blanca; el
+       interior y los bordes llevan el tinte del local. */
     --menu-surface: #ffffff;
-    --menu-surface-2: #f5f2ec;
-    --menu-surface-glass: rgba(255, 255, 255, 0.78);
-    --menu-line: rgba(31, 27, 22, 0.1);
-    --menu-line-strong: rgba(31, 27, 22, 0.2);
+    --menu-surface-2: color-mix(in srgb, var(--menu-accent) 6%, #f6f3ee);
+    --menu-surface-glass: rgba(255, 255, 255, 0.86);
+    --menu-line: color-mix(in srgb, var(--menu-accent) 18%, rgba(31, 27, 22, 0.12));
+    --menu-line-strong: color-mix(in srgb, var(--menu-accent) 30%, rgba(31, 27, 22, 0.24));
     --menu-fg: #1f1b16;
     --menu-fg-2: rgba(31, 27, 22, 0.68);
     --menu-fg-3: rgba(31, 27, 22, 0.56);
