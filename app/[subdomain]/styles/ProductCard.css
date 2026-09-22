@@ -143,11 +143,9 @@
   }
 }
 
-/* El catálogo tope mide 1160px (contenedor de 1200 menos relleno): ahí quedan
-   4 columnas de ~278px, el punto medio entre las 330 de antes y las 219 de la
-   pasada anterior, que se quedaron cortas. Las 5 columnas solo entran en un
-   catálogo más ancho que el contenedor normal. */
-@container product-catalog (min-width: 1280px) {
+/* El catálogo tope mide 1160px (contenedor de 1200 menos relleno): con 5
+   columnas la tarjeta queda en ~219px, más alta que ancha, con la foto 4:3. */
+@container product-catalog (min-width: 980px) {
   .product-grid.grid-glass,
   .product-grid.grid-layout-sidebar {
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -232,7 +230,9 @@
   }
   @media (min-width: 1024px) {
     .product-grid.grid-glass,
-    .product-grid.grid-layout-sidebar,
+    .product-grid.grid-layout-sidebar {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
     .product-grid.grid-layout-food {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
