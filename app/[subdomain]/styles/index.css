@@ -62,7 +62,11 @@ body {
   min-height: 100%;
 }
 
-html, body, #root {
+/* Solo `html` lleva alto fijo. El `body` crece con el contenido: el color de
+   fondo del local (que puede ser translúcido) se pinta en `html`, en `body` y
+   en `.tenant-shell-root`; si `body` midiera solo una pantalla, a partir de
+   ahí faltaría una capa y el tinte cambiaría de golpe al hacer scroll. */
+html, #root {
   height: 100%;
 }
 
