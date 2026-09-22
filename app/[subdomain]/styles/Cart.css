@@ -531,6 +531,7 @@
 
 .cart-secondary-btn:hover {
 	background: var(--cart-raised-2);
+	border-color: var(--cart-accent);
 }
 
 .cart-secondary-btn:disabled {
@@ -778,8 +779,8 @@
 
 .cart-chip.is-active {
 	color: var(--cart-fg);
-	border-color: var(--cart-fg);
-	background: var(--cart-raised-2);
+	border-color: var(--cart-accent);
+	background: var(--cart-accent-soft);
 }
 
 .cart-enhance__panel {
@@ -894,8 +895,8 @@
 	display: grid;
 	place-items: center;
 	border-radius: 999px;
-	background: var(--cart-fg);
-	color: var(--cart-bg);
+	background: var(--cart-accent);
+	color: var(--cart-on-accent);
 }
 
 .cart-pick__action.is-selected {
@@ -1281,7 +1282,7 @@ textarea.cart-field {
 }
 
 .cart-locate__btn:hover {
-	border-color: var(--cart-fg-3);
+	border-color: var(--cart-accent);
 }
 
 .cart-locate__icon {
@@ -1405,7 +1406,8 @@ textarea.cart-field {
 }
 
 .cart-address-card__edit:hover {
-	border-color: var(--cart-fg-3);
+	border-color: var(--cart-accent);
+	color: var(--cart-accent-ink);
 }
 
 .cart-address-card__warn {
@@ -1718,7 +1720,7 @@ textarea.cart-field {
 	border-radius: 10px;
 	border: 1px solid var(--cart-line);
 	background: var(--cart-bg);
-	color: var(--cart-fg-2);
+	color: var(--cart-accent-ink);
 }
 
 .cart-method__text {

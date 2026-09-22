@@ -182,7 +182,7 @@
 }
 
 .nav-location-button:hover {
-    border-color: var(--menu-line-strong);
+    border-color: var(--menu-accent);
 }
 
 .nav-location-icon {
@@ -803,6 +803,10 @@ html, body {
     transform: translateY(-2px);
 }
 
+.icon-list-card:hover .icon-list-card-image-wrapper {
+    border-color: var(--menu-accent);
+}
+
 .icon-list-card:active {
     transform: scale(0.95);
 }
@@ -1119,7 +1123,7 @@ html, body {
 }
 
 .mega-menu-header-trigger:hover {
-    border-color: var(--menu-line-strong);
+    border-color: var(--menu-accent);
     transform: scale(1.06);
 }
 

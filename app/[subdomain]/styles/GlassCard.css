@@ -43,7 +43,7 @@
 @media (hover: hover) {
 	.gcard:hover {
 		transform: translateY(-3px);
-		border-color: var(--menu-line-strong);
+		border-color: color-mix(in srgb, var(--menu-accent) 55%, var(--menu-line-strong));
 	}
 
 	.gcard:hover .gcard__media img {

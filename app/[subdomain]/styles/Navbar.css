@@ -76,9 +76,10 @@
 
 /* Estado Activo */
 .tab-item.active {
-    background: var(--menu-fg);
-    color: var(--menu-surface);
-    border-color: var(--menu-fg);
+    background: var(--menu-accent);
+    color: var(--menu-on-accent);
+    border-color: var(--menu-accent);
+    box-shadow: 0 4px 12px var(--accent-shadow, rgba(0, 0, 0, 0.25));
     font-weight: 600;
 }
 
@@ -121,9 +122,14 @@
 
 .search-pill-wrapper.expanded {
     width: 160px;
-    border-color: var(--menu-line-strong);
+    border-color: var(--menu-accent);
+    box-shadow: 0 4px 14px var(--accent-shadow, rgba(0, 0, 0, 0.25));
     justify-content: flex-start;
     padding-left: 10px;
+}
+
+.search-pill-wrapper.expanded .search-icon-pill {
+    color: var(--menu-accent-ink);
 }
 
 .search-icon-pill {
