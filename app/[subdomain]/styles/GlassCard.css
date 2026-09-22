@@ -74,7 +74,10 @@
 .gcard__media {
 	position: relative;
 	aspect-ratio: 4 / 3;
+	margin: var(--gcard-media-inset) var(--gcard-media-inset) 0;
+	border-radius: calc(var(--menu-r-lg) - var(--gcard-media-inset) + 2px);
 	overflow: hidden;
+	box-shadow: inset 0 0 0 1px var(--menu-line);
 	background:
 		radial-gradient(ellipse 65% 55% at 50% 45%, var(--menu-media-glow, transparent), transparent 100%),
 		linear-gradient(180deg, var(--menu-media-top, var(--menu-surface-2)), var(--menu-media-bottom, var(--menu-surface)));
@@ -96,7 +99,11 @@
    se queda estable (~1.6) en vez de "engordar" en las columnas anchas. */
 .gcard {
 	--gcard-pad-x: clamp(12px, 2px + 6cqi, 16px);
-	--gcard-pad-top: clamp(10px, 4px + 4cqi, 14px);
+	--gcard-pad-top: clamp(8px, 3px + 3cqi, 12px);
+	/* La foto va como baldosa dentro de la tarjeta, no a sangre: con margen y
+	   sus propias esquinas. Así su borde no choca contra la tarjeta y una
+	   imagen recortada se apoya en el escenario como en un marco. */
+	--gcard-media-inset: clamp(8px, 2px + 3.5cqi, 12px);
 	--gcard-name-size: clamp(0.875rem, 0.55rem + 3.3cqi, 1.05rem);
 	--gcard-desc-size: clamp(0.75rem, 0.58rem + 1.7cqi, 0.8125rem);
 	--gcard-price-size: clamp(0.9375rem, 0.77rem + 1.7cqi, 1.0625rem);
