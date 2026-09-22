@@ -951,6 +951,31 @@ html, body {
     font-weight: 600;
 }
 
+/* En claro el círculo iba del mismo gris cálido que la cabecera y se perdía:
+   blanco con borde y una sombra corta lo despegan; el nombre inactivo sube
+   casi a tinta plena. */
+.tenant-theme-vars[data-scheme="light"] .icon-list-card-image-wrapper {
+    background: #ffffff;
+    border-color: var(--menu-line-strong);
+    box-shadow:
+        0 1px 2px rgba(31, 27, 22, 0.08),
+        0 4px 10px -4px rgba(31, 27, 22, 0.28);
+}
+
+.tenant-theme-vars[data-scheme="light"] .icon-list-card.active .icon-list-card-image-wrapper {
+    box-shadow:
+        0 0 0 2px var(--menu-accent),
+        0 4px 10px -4px rgba(31, 27, 22, 0.28);
+}
+
+.tenant-theme-vars[data-scheme="light"] .icon-list-card-name {
+    color: rgba(26, 23, 20, 0.9);
+}
+
+.tenant-theme-vars[data-scheme="light"] .icon-list-card-initial {
+    color: var(--menu-fg-2);
+}
+
 .mega-menu-fab {
     position: fixed;
     bottom: 24px;
