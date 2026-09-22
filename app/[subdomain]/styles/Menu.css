@@ -1353,7 +1353,9 @@ html, body {
 .powered-by-lockup__divider {
     width: 1px;
     height: 40px;
-    background: var(--menu-line-strong);
+    /* Más oscuro que un borde: tiene que leerse como separador entre dos
+       logos, no como un filo. */
+    background: color-mix(in srgb, var(--menu-fg) 45%, transparent);
 }
 
 .powered-by-lockup__gcode {
