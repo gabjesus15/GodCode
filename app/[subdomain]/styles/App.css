@@ -117,6 +117,30 @@
   opacity: 0;
 }
 
+/*
+ * Modo claro elegido a mano en el panel: el fondo de página también se aclara.
+ * El color del local sigue encima (un color opaco se ve tal cual; uno
+ * transparente deja ver la base clara) y la imagen de fondo pierde el
+ * oscurecido con el que se integra en oscuro. Con modo automático nada de esto
+ * aplica: el fondo es el que el local configuró.
+ */
+.tenant-theme-vars[data-scheme="light"][data-scheme-mode="manual"] .tenant-shell-root {
+  background:
+    linear-gradient(var(--bg-primary, transparent), var(--bg-primary, transparent)),
+    var(--menu-chrome, #fffdfa);
+}
+
+.tenant-theme-vars[data-scheme="light"][data-scheme-mode="manual"] .tenant-shell-bg-layer {
+  filter: brightness(1) contrast(1) saturate(1);
+  opacity: min(var(--tenant-bg-layer-opacity, 0), 0.55);
+}
+
+.tenant-theme-vars[data-scheme="dark"][data-scheme-mode="manual"] .tenant-shell-root {
+  background:
+    linear-gradient(var(--bg-primary, transparent), var(--bg-primary, transparent)),
+    var(--menu-chrome, #0c0c0e);
+}
+
 .tenant-content-layer {
   position: relative;
   z-index: 1;

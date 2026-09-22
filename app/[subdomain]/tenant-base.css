@@ -28,10 +28,11 @@ body {
 	color: var(--text-primary) !important;
 }
 
-/* La tipografía que eligió el local en el panel (ver surface-theme.ts). Todas
-   las caras se autoalojan en app/layout.tsx; aquí solo se elige cuál manda. */
-.tenant-theme-vars {
-	font-family: var(--tenant-font, var(--font-montserrat), "Montserrat"), system-ui, sans-serif;
+/* La tipografía que eligió el local en el panel viste solo su nombre (cabecera
+   y barra lateral), no el catálogo. Las caras se autoalojan en app/layout.tsx. */
+.tenant-theme-vars .nav-brand-title,
+.tenant-theme-vars .sidebar-brand-title {
+	font-family: var(--tenant-font, inherit);
 }
 
 :root {

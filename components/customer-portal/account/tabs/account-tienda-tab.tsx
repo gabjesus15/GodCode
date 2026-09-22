@@ -420,7 +420,7 @@ export function AccountTiendaTab({
                   </div>
 
                   <label className="block text-xs font-medium text-[#6e6e73]">
-                    Tipografía
+                    Tipografía del nombre del local
                     <select
                       value={normalizeFontFamily(storeThemeDraft.fontFamily)}
                       onChange={(e) =>
@@ -446,7 +446,7 @@ export function AccountTiendaTab({
                           >
                             {storeThemeDraft.displayName.trim() || "Tu local"} · Pizza Margarita $9.90
                           </p>
-                          <p className="mt-1 text-[10px] text-[#a1a1a6]">{font.description}</p>
+                          <p className="mt-1 text-[10px] text-[#a1a1a6]">{font.description} Solo cambia el nombre en la cabecera; el catálogo sigue en Montserrat.</p>
                         </>
                       );
                     })()}

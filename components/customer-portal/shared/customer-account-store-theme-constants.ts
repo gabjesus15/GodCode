@@ -26,7 +26,7 @@ export const STORE_THEME_FIELD_LABELS: Record<keyof StoreThemeConfig, string> = 
   productDetailsMode: "Modo de Detalles del Producto",
   surfaceScheme: "Modo claro u oscuro",
   brandNameColor: "Color del nombre",
-  fontFamily: "Tipografía",
+  fontFamily: "Tipografía del nombre",
 };
 
 export const DEFAULT_STORE_THEME: StoreThemeConfig = {

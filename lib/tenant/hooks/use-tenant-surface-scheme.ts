@@ -16,6 +16,14 @@ function readScheme(): SurfaceScheme {
 	);
 }
 
+/** "manual" si el local fijó claro/oscuro en el panel; "auto" si decide el fondo. */
+function readSchemeMode(): "manual" | "auto" {
+	if (typeof document === "undefined") return "auto";
+	const root = document.querySelector<HTMLElement>(THEME_ROOT_SELECTOR) ?? document.documentElement;
+	const chosen = getComputedStyle(root).getPropertyValue("--tenant-surface-scheme").trim().toLowerCase();
+	return chosen === "light" || chosen === "dark" ? "manual" : "auto";
+}
+
 /**
  * Claro u oscuro según el fondo del local (`--bg-primary`). Se lee del DOM y no
  * de props porque el tema llega por `<style>` en SSR y por `setProperty` en el
@@ -48,8 +56,10 @@ export function useApplyTenantSurfaceScheme(): SurfaceScheme {
 		const root = document.querySelector<HTMLElement>(THEME_ROOT_SELECTOR);
 		if (!root) return;
 		root.dataset.scheme = scheme;
+		root.dataset.schemeMode = readSchemeMode();
 		return () => {
 			delete root.dataset.scheme;
+			delete root.dataset.schemeMode;
 		};
 	}, [scheme]);
 	return scheme;

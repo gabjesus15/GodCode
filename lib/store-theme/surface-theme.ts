@@ -63,6 +63,15 @@ export function resolveTenantSurfaceSchemeAttr(theme: Partial<StoreThemeConfig>)
 }
 
 /**
+ * `data-scheme-mode`: "manual" cuando el local eligió claro u oscuro a mano.
+ * El CSS lo usa para aclarar también el fondo de página en modo claro; con
+ * "auto" el fondo es el que el local ya configuró y no se toca.
+ */
+export function resolveTenantSurfaceSchemeMode(theme: Partial<StoreThemeConfig>): "manual" | "auto" {
+	return normalizeSurfaceScheme(theme.surfaceScheme) === "auto" ? "auto" : "manual";
+}
+
+/**
  * Vista previa: escribe las variables en el nodo del tema y devuelve cómo
  * deshacerlo. Cambiar el atributo `style` dispara al observador de
  * `useTenantSurfaceScheme`, así que el modo claro/oscuro se recalcula solo.
