@@ -40,6 +40,32 @@
 	}
 }
 
+/* Escritorio: la tarjeta crece hacia arriba, no hacia los lados. Foto cuadrada
+   en vez de 4:3, descripción a tres líneas y algo más de aire en el cuerpo. */
+@media (min-width: 769px) {
+	.gcard__media {
+		aspect-ratio: 1 / 1;
+	}
+
+	.gcard__body {
+		gap: 6px;
+		padding: 14px 16px 0;
+	}
+
+	.gcard__name {
+		font-size: 1rem;
+	}
+
+	.gcard__desc {
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+	}
+
+	.gcard__foot {
+		padding: 12px 16px 14px;
+	}
+}
+
 @media (hover: hover) {
 	.gcard:hover {
 		transform: translateY(-3px);
