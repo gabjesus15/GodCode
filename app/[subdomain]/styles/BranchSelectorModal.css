@@ -19,7 +19,7 @@
   width: 100%;
   max-width: 480px;
   /* FONDO GRIS GRAFITO (No negro puro) */
-  background-color: #121212; 
+  background-color: var(--menu-surface, #121212);
   
   /* PATRÓN DE BAMBÚ SVG */
   background-image: url("data:image/svg+xml,%3Csvg width='300' height='300' viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3C!-- Tallo 1 --%3E%3Cpath d='M40 0v300M35 50q5 10 10 0M35 120q5 10 10 0M35 200q5 10 10 0M35 260q5 10 10 0'/%3E%3Cpath d='M40 70q15-10 25 0t-25 0zM40 150q-15-10-25 0t25 0z' fill='rgba(255,255,255,0.02)' stroke='none'/%3E%3C!-- Tallo 2 --%3E%3Cpath d='M120 0v300M115 30q5 8 10 0M115 90q5 8 10 0M115 170q5 8 10 0M115 230q5 8 10 0'/%3E%3Cpath d='M120 110q20-5 30 5t-30 0zM120 200q-18-8-28 5t28 0z' fill='rgba(255,255,255,0.02)' stroke='none'/%3E%3C!-- Tallo 3 --%3E%3Cpath d='M220 0v300M215 60q5 12 10 0M215 140q5 12 10 0M215 240q5 12 10 0' stroke-width='2'/%3E%3Cpath d='M220 80q25-15 35 5t-35 0zM220 180q-22-12-32 5t32 0z' fill='rgba(255,255,255,0.02)' stroke='none'/%3E%3C!-- Tallo 4 --%3E%3Cpath d='M280 0v300M277 100q3 5 6 0M277 200q3 5 6 0' stroke-width='1' opacity='0.5'/%3E%3C/g%3E%3C/svg%3E"),
@@ -27,7 +27,7 @@
   background-size: 300px 300px, cover;
   background-blend-mode: overlay;
   
-  border: 1px solid rgba(255, 255, 255, 0.1); 
+  border: 1px solid var(--menu-line, rgba(255, 255, 255, 0.1));
   border-radius: 24px;
   
   /* Sombra base suave + Resplandor del color de tu marca */
@@ -39,18 +39,7 @@
   position: relative;
 }
 
-.branch-modal-wrapper::before {
-  content: '🍜'; 
-  position: absolute;
-  top: -40px;
-  right: -30px;
-  font-size: 11rem;
-  opacity: 0.025; 
-  filter: grayscale(100%); 
-  pointer-events: none;
-  z-index: 0;
-  transform: rotate(15deg);
-}
+
 
 .branch-modal-content {
   padding: 2.5rem 2rem;
@@ -79,29 +68,28 @@
   margin: 0;
   font-size: 1.7rem;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--menu-fg, #ffffff);
   letter-spacing: -0.02em;
-  filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));
 }
 
 .branch-modal-subtitle {
   margin: 0;
   font-size: 0.95rem;
   font-weight: 500;
-  color: #a1a1aa; /* Gris claro */
+  color: var(--menu-fg-2, #a1a1aa);
 }
 
 /* Botón Cerrar */
 .branch-modal-close-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--menu-surface-2, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--menu-line, rgba(255, 255, 255, 0.1));
   border-radius: 50%;
   width: 38px;
   height: 38px;
   display: grid;
   place-items: center;
   cursor: pointer;
-  color: #d4d4d8;
+  color: var(--menu-fg, #d4d4d8);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: absolute; 
   right: 0;
@@ -111,7 +99,7 @@
 .branch-modal-close-btn:hover {
   background-color: var(--accent-primary, #ff4757); 
   border-color: var(--accent-primary, #ff4757);
-  color: #ffffff;
+  color: var(--menu-fg, #ffffff);
   transform: rotate(90deg);
   box-shadow: 0 0 15px color-mix(in srgb, var(--accent-primary, #ff4757) 50%, transparent); 
 }
@@ -128,8 +116,8 @@
   width: 100%;
   text-align: left;
   /* Gris sutil (más claro que el fondo) para separar elementos */
-  background: rgba(30, 30, 30, 0.6); 
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--menu-surface-2, rgba(30, 30, 30, 0.6));
+  border: 1px solid var(--menu-line, rgba(255, 255, 255, 0.06));
   border-radius: 16px;
   padding: 1.4rem;
   cursor: pointer;
@@ -157,8 +145,8 @@
 
 /* HOVER ADAPTATIVO AL COLOR GLOBAL */
 .branch-button:not(:disabled):hover {
-  background: rgba(45, 45, 45, 0.88);
-  border-color: rgba(255, 71, 87, 0.45);
+  background: var(--menu-surface-2, rgba(45, 45, 45, 0.88));
+  border-color: var(--menu-accent, rgba(255, 71, 87, 0.45));
   transform: translateY(-4px);
   box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.6),
               0 0 20px rgba(255, 71, 87, 0.2);
@@ -217,12 +205,12 @@
 }
 
 .branch-pin-icon.icon-open { color: #4ade80; filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.4)); }
-.branch-pin-icon.icon-closed { color: #6b7280; }
+.branch-pin-icon.icon-closed { color: var(--menu-fg-3, #6b7280); }
 
 .branch-item-name {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #ffffff; 
+  color: var(--menu-fg, #ffffff);
   letter-spacing: 0.3px;
   white-space: nowrap;
   overflow: hidden;
@@ -253,9 +241,9 @@
 }
 
 .branch-status-badge.status-closed {
-  background-color: rgba(255, 255, 255, 0.04);
-  color: #a3a3a3;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--menu-surface, rgba(255, 255, 255, 0.04));
+  color: var(--menu-fg-2, #a3a3a3);
+  border: 1px solid var(--menu-line, rgba(255, 255, 255, 0.1));
 }
 
 .status-dot {
@@ -301,14 +289,14 @@
   align-items: flex-start; 
   gap: 0.6rem;
   font-size: 0.85rem;
-  color: #a1a1aa; /* Gris sutil */
+  color: var(--menu-fg-2, #a1a1aa);
   line-height: 1.5;
   transition: color 0.3s ease;
 }
 
 .branch-button:not(:disabled):hover .branch-address-row,
 .branch-button:not(:disabled):hover .branch-phone-row {
-  color: #f4f4f5; /* Se aclara al hover */
+  color: var(--menu-fg, #f4f4f5);
 }
 
 .branch-icon-small {
@@ -357,14 +345,14 @@
 }
 
 .branch-empty-state h4 {
-  color: #ffffff;
+  color: var(--menu-fg, #ffffff);
   margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
   font-weight: 700;
 }
 
 .branch-empty-state p {
-  color: #a1a1aa;
+  color: var(--menu-fg-2, #a1a1aa);
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.5;
@@ -397,12 +385,12 @@
 
 .branch-empty-title {
   font-weight: 600;
-  color: #f5f5f5;
+  color: var(--menu-fg, #ffffff);
   margin-bottom: 8px;
 }
 
 .branch-empty-description {
-  color: #bdbdbd;
+  color: var(--menu-fg-2, #a1a1aa);
   font-weight: 400;
   line-height: 1.45;
 }
@@ -431,7 +419,7 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.25;
-  color: #f4f4f5;
+  color: var(--menu-fg, #ffffff);
 }
 
 .branch-closed-minimal__copy {
@@ -440,7 +428,7 @@
   font-size: 0.92rem;
   font-weight: 450;
   line-height: 1.45;
-  color: #a1a1aa;
+  color: var(--menu-fg-2, #a1a1aa);
 }
 
 .branch-closed-minimal .branch-go-home-btn {
@@ -452,14 +440,14 @@
   padding: 0.45rem 0.75rem;
   border: none;
   background: transparent;
-  color: #71717a;
+  color: var(--menu-fg-3, #71717a);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
 }
 
 .branch-closed-minimal__dismiss:hover {
-  color: #d4d4d8;
+  color: var(--menu-fg-2, #a1a1aa);
 }
 
 .branch-go-home-btn {
@@ -474,7 +462,7 @@
   border: 1px solid color-mix(in srgb, var(--accent-primary, #ff4757) 55%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent-primary, #ff4757) 18%, transparent);
-  color: #fff;
+  color: var(--menu-fg, #ffffff);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;

@@ -319,6 +319,16 @@
 }
 
 .menu-contact-sheet-overlay--closing .menu-contact-sheet {
+    animation: menu-contact-sheet-out 0.34s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+
+.menu-contact-sheet-overlay--closing .menu-contact-sheet__btn {
+    animation: menu-contact-item-out 0.24s ease-in both;
+}
+
+
+.menu-contact-sheet {
     width: 100%;
     max-width: 420px;
     max-height: min(65dvh, calc(100dvh - 124px - env(safe-area-inset-bottom, 0px)));
@@ -331,37 +341,6 @@
     box-shadow: var(--menu-shadow-chrome);
     transform: translateY(0);
     animation: menu-contact-sheet-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.menu-contact-sheet-overlay--closing .menu-contact-sheet__btn {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    width: 100%;
-    padding: 14px 16px;
-    border-radius: 16px;
-    border: 1px solid var(--menu-line);
-    background: var(--menu-surface-2);
-    color: var(--menu-fg);
-    cursor: pointer;
-    text-align: left;
-    min-height: 56px;
-    animation: menu-contact-item-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.menu-contact-sheet {
-    width: 100%;
-    max-width: 420px;
-    max-height: min(65dvh, calc(100dvh - 124px - env(safe-area-inset-bottom, 0px)));
-    overflow-y: auto;
-    background: rgba(28, 28, 32, 0.96);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
-    padding: 20px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-    transform: translateY(0);
-    animation: menu-contact-sheet-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
-    will-change: transform, opacity;
 }
 
 .menu-contact-sheet__header {
@@ -411,9 +390,9 @@
     width: 100%;
     padding: 14px 16px;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
+    border: 1px solid var(--menu-line);
+    background: var(--menu-surface-2);
+    color: var(--menu-fg);
     cursor: pointer;
     text-align: left;
     min-height: 56px;
