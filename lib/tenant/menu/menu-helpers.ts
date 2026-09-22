@@ -1,5 +1,5 @@
-/** Llama estática servida desde el propio sitio: antes era un GIF animado de fonts.gstatic. */
-export const FIRE_ICON = "/tenant/flame.svg";
+/** Emoji de fuego animado (Noto) de Google: la llama que se mueve en "Promociones" y "Solo hoy". */
+export const FIRE_ICON = "https://fonts.gstatic.com/s/e/notoemoji/latest/1f525/512.gif";
 
 export function isPromocionesCategoryName(name: string | null | undefined): boolean {
 	const normalized = String(name || "")

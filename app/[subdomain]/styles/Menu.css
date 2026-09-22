@@ -832,13 +832,21 @@ html, body {
        cambia y solo se funde el color del anillo. */
     outline: 2px solid transparent;
     outline-offset: 0;
-    transition: border-color 0.2s ease, outline-color 0.2s ease;
+    transition: border-color 0.2s ease, outline-color 0.2s ease, transform 0.25s ease;
     box-sizing: border-box;
 }
 
+/* La activa crece un poco: es transform, así que no empuja a las vecinas. */
 .icon-list-card.active .icon-list-card-image-wrapper {
     border-color: var(--menu-accent);
     outline-color: var(--menu-accent);
+    transform: scale(1.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .icon-list-card-image-wrapper {
+        transition: border-color 0.2s ease, outline-color 0.2s ease;
+    }
 }
 
 .icon-list-card-image {

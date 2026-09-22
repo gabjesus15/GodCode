@@ -270,7 +270,7 @@ export function useMenuClientController(props: MenuClientProps) {
 
 	const handleCategoryClick = useCallback((id: string) => {
 		resetInlineOnNavigation();
-		scrollToCategory(id, { syncNavbar: true });
+		scrollToCategory(id);
 	}, [resetInlineOnNavigation, scrollToCategory]);
 
 	const totalItems = useCartStore((state) =>

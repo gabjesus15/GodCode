@@ -7,6 +7,7 @@ import { resolveHomeCategoryId } from "@/lib/tenant/menu/menu-helpers";
 import { resolveActiveSectionIdFromDom } from "@/lib/tenant/menu/menu-scroll-spy";
 import {
 	getMenuScrollAnchorPx,
+	prefersReducedMotion,
 	resolveCategoryScrollBehavior,
 	scheduleScrollSpyRelease,
 	syncNavbarCategoryTab,
@@ -42,7 +43,6 @@ export function useMenuCategoryScroll({
 }: UseMenuCategoryScrollArgs) {
 	const observerBlockRef = useRef(false);
 	const releaseSpyRef = useRef<(() => void) | null>(null);
-	const syncNavbarOnNextActiveRef = useRef(false);
 	const activeCategoryRef = useRef(activeCategory);
 
 	useEffect(() => {
@@ -57,14 +57,10 @@ export function useMenuCategoryScroll({
 		}, behavior);
 	}, []);
 
-	const scrollToCategory = useCallback((id: string, options?: { syncNavbar?: boolean }) => {
+	const scrollToCategory = useCallback((id: string) => {
 		setActiveCategory(id);
 		setActiveBottomTab("home");
 		onNavigate?.();
-
-		if (options?.syncNavbar) {
-			syncNavbarOnNextActiveRef.current = true;
-		}
 
 		if (navigationMode === "pagination") return;
 
@@ -85,7 +81,7 @@ export function useMenuCategoryScroll({
 
 	const scrollToHome = useCallback(() => {
 		const homeId = resolveHomeCategoryId(specialProductsCount, visibleCategoryIds);
-		if (homeId) scrollToCategory(homeId, { syncNavbar: true });
+		if (homeId) scrollToCategory(homeId);
 	}, [scrollToCategory, specialProductsCount, visibleCategoryIds]);
 
 	// Scroll-spy en catálogo NO virtualizado (el virtualizado lo resuelve en su componente)
@@ -122,9 +118,9 @@ export function useMenuCategoryScroll({
 			return;
 		}
 
-		const fromClick = syncNavbarOnNextActiveRef.current;
-		syncNavbarOnNextActiveRef.current = false;
-		const behavior = fromClick ? resolveCategoryScrollBehavior() : "auto";
+		// La tira siempre se desliza hasta la activa (también en móvil y al hacer
+		// scroll): es un scroll horizontal corto, no el de la página.
+		const behavior: ScrollBehavior = prefersReducedMotion() ? "auto" : "smooth";
 
 		const rafId = requestAnimationFrame(() => {
 			syncNavbarCategoryTab(navbarType, activeCategory, behavior);
