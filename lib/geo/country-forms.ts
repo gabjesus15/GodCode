@@ -1,11 +1,23 @@
 import { validateRutChile, formatRutOnInput } from "../../utils/chile-forms";
 import { normalizeCountryCode } from "./country-registry";
 
+/** Cómo se llama la división territorial que pide el formulario de entrega. */
+export type AddressAreaKind = "commune" | "municipality" | "city";
+
+export interface CountryAddressVocabulary {
+  areaKind: AddressAreaKind;
+  /** Ejemplos reales del país para los placeholders (nombres propios, no se traducen). */
+  areaExample: string;
+  streetExample: string;
+  numberExample: string;
+}
+
 export interface CountryFormStrategy {
   idName: string; // RUT, DNI, RIF, etc.
   idPlaceholder: string;
   phonePlaceholder: string;
   phonePrefix: string;
+  address: CountryAddressVocabulary;
   formatId?: (val: string) => string;
   validateId: (val: string) => boolean;
   validatePhone: (val: string) => boolean;
@@ -18,6 +30,12 @@ export const COUNTRY_FORM_STRATEGIES: Record<string, CountryFormStrategy> = {
     idPlaceholder: "12.345.678-9",
     phonePlaceholder: "+56 9 1234 5678",
     phonePrefix: "+56 9 ",
+    address: {
+      areaKind: "commune",
+      areaExample: "Ñuñoa",
+      streetExample: "Av. Vicuña Mackenna",
+      numberExample: "1432",
+    },
     formatId: formatRutOnInput,
     validateId: validateRutChile,
     validatePhone: (val: string) => {
@@ -36,6 +54,12 @@ export const COUNTRY_FORM_STRATEGIES: Record<string, CountryFormStrategy> = {
     idPlaceholder: "V-12345678",
     phonePlaceholder: "+58 412 123 4567",
     phonePrefix: "+58 ",
+    address: {
+      areaKind: "municipality",
+      areaExample: "Chacao",
+      streetExample: "Av. Francisco de Miranda",
+      numberExample: "12",
+    },
     formatId: (val: string) => {
       const clean = val.replace(/[^0-9vVjJeEgG]/g, "").toUpperCase();
       if (!clean) return "";
@@ -59,6 +83,12 @@ export const COUNTRY_FORM_STRATEGIES: Record<string, CountryFormStrategy> = {
     idPlaceholder: "1.234.567.890",
     phonePlaceholder: "+57 300 123 4567",
     phonePrefix: "+57 ",
+    address: {
+      areaKind: "city",
+      areaExample: "Chapinero",
+      streetExample: "Carrera 7",
+      numberExample: "45-10",
+    },
     validateId: (val: string) => val.replace(/\D/g, "").length >= 6,
     validatePhone: (val: string) => {
       const clean = val.replace(/\D/g, "");

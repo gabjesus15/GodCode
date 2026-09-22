@@ -1,78 +1,93 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { useCartStore } from "../cart-store";
+
 import {
+	checkoutSessionToViewFlags,
 	getCartOverlayHistoryDepth,
 	popCartCheckoutStep,
-	checkoutSessionToViewFlags,
+	type CheckoutEnhancePanel,
 } from "@/lib/tenant/mobile/checkout-session";
 import {
 	useOverlayHistoryDepthSync,
 	useOverlayHistoryHandler,
 } from "@/lib/tenant/mobile/overlay-history";
-
 import { TENANT_OVERLAY_PRIORITIES } from "@/lib/tenant/config/tenant-ui-config";
+import { useCartStore } from "../cart-store";
 
-export function useCartCheckoutFlow(options: {
+export type UseCartCheckoutFlowOptions = {
 	isCartOpen: boolean;
 	showSuccess: boolean;
-}) {
+	/**
+	 * Si el método tiene una pantalla de datos entre "elegir método" y "tus datos".
+	 * Los presenciales no tienen nada que copiar, así que se la saltan: eso cambia
+	 * tanto el botón "Volver" como el gesto atrás del navegador.
+	 */
+	hasPaymentDetailStep: (key: string | null) => boolean;
+};
+
+/** Pasos del checkout (viven en el store) + integración con el botón "atrás" del navegador. */
+export function useCartCheckoutFlow({
+	isCartOpen,
+	showSuccess,
+	hasPaymentDetailStep,
+}: UseCartCheckoutFlowOptions) {
 	const checkoutSession = useCartStore((state) => state.checkoutSession);
 	const patchCheckoutSession = useCartStore((state) => state.patchCheckoutSession);
 	const resetCheckoutSession = useCartStore((state) => state.resetCheckoutSession);
 	const closeCart = useCartStore((state) => state.closeCart);
-	const openCart = useCartStore((state) => state.openCart);
 
-	const stepFlags = useMemo(
-		() => checkoutSessionToViewFlags(checkoutSession),
-		[checkoutSession],
-	);
+	const stepFlags = useMemo(() => checkoutSessionToViewFlags(checkoutSession), [checkoutSession]);
 
 	const historyDepth = useMemo(
 		() =>
 			getCartOverlayHistoryDepth({
-				isOpen: options.isCartOpen,
-				showSuccess: options.showSuccess,
+				isOpen: isCartOpen,
+				showSuccess,
 				...stepFlags,
 				showForm: checkoutSession.showForm,
 			}),
-		[checkoutSession.showForm, options.isCartOpen, options.showSuccess, stepFlags],
+		[checkoutSession.showForm, isCartOpen, showSuccess, stepFlags],
 	);
 
 	useOverlayHistoryDepthSync(historyDepth, "cart");
 
+	const skipPaymentDetail = !hasPaymentDetailStep(checkoutSession.paymentMethodKey);
+
 	const goBackCheckoutStep = useCallback(() => {
-		const { next, result } = popCartCheckoutStep(checkoutSession);
+		const { next, result } = popCartCheckoutStep(checkoutSession, { skipPaymentDetail });
 		if (result === "consumed") {
-			patchCheckoutSession?.(next);
+			patchCheckoutSession(next);
 			return true;
 		}
 		if (result === "close-cart") {
-			closeCart?.();
+			closeCart();
 			return true;
 		}
 		return false;
-	}, [checkoutSession, closeCart, patchCheckoutSession]);
-
-	const dismissCart = useCallback(() => {
-		closeCart?.();
-	}, [closeCart]);
-
-	const toggleCartPreservingSession = useCallback(() => {
-		if (options.isCartOpen) {
-			dismissCart();
-			return;
-		}
-		openCart?.();
-	}, [dismissCart, openCart, options.isCartOpen]);
+	}, [checkoutSession, closeCart, patchCheckoutSession, skipPaymentDetail]);
 
 	useOverlayHistoryHandler({
 		id: "cart",
 		priority: TENANT_OVERLAY_PRIORITIES.cart,
-		isActive: () => options.isCartOpen && !options.showSuccess,
+		isActive: () => isCartOpen && !showSuccess,
 		onPop: goBackCheckoutStep,
 	});
+
+	const setPaymentMethodKey = useCallback(
+		(key: string | null) => patchCheckoutSession({ paymentMethodKey: key }),
+		[patchCheckoutSession],
+	);
+	/** Elegir método: los presenciales entran directo a "Tus datos". */
+	const pickPaymentMethod = useCallback(
+		(key: string) =>
+			patchCheckoutSession({ paymentMethodKey: key, showForm: !hasPaymentDetailStep(key) }),
+		[hasPaymentDetailStep, patchCheckoutSession],
+	);
+	const setActiveEnhancePanel = useCallback(
+		(panel: CheckoutEnhancePanel) => patchCheckoutSession({ activeEnhancePanel: panel }),
+		[patchCheckoutSession],
+	);
 
 	return {
 		checkoutSession,
@@ -80,12 +95,12 @@ export function useCartCheckoutFlow(options: {
 		resetCheckoutSession,
 		stepFlags,
 		goBackCheckoutStep,
-		dismissCart,
-		toggleCartPreservingSession,
+		dismissCart: closeCart,
 		paymentMethodKey: checkoutSession.paymentMethodKey,
-		setPaymentMethodKey: (key: string | null) => patchCheckoutSession?.({ paymentMethodKey: key }),
+		setPaymentMethodKey,
+		pickPaymentMethod,
+		skipPaymentDetail,
 		activeEnhancePanel: checkoutSession.activeEnhancePanel,
-		setActiveEnhancePanel: (panel: typeof checkoutSession.activeEnhancePanel) =>
-			patchCheckoutSession?.({ activeEnhancePanel: panel }),
+		setActiveEnhancePanel,
 	};
 }

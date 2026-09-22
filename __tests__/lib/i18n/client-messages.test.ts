@@ -24,11 +24,11 @@ describe("getClientMessagesForPath", () => {
 
 	it("dominio personalizado en / incluye traducciones del carrito", () => {
 		const messages = getClientMessagesForPath("/", "es", { tenantSlug: "oishisushi" });
-		expect(messages.tenant?.cart?.modal?.header?.title).toBe("Tu Pedido");
+		expect(messages.tenant?.cart?.modal?.header?.title).toBe("Tu pedido");
 	});
 
 	it("/menu en dominio personalizado incluye traducciones del carrito", () => {
 		const messages = getClientMessagesForPath("/menu", "es", { tenantSlug: "oishisushi" });
-		expect(messages.tenant?.cart?.modal?.actions?.goToPay).toBe("Ir a Pagar");
+		expect(messages.tenant?.cart?.modal?.actions?.goToPay).toBe("Ir a pagar");
 	});
 });

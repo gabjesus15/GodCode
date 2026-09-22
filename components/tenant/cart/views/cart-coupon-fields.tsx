@@ -4,201 +4,181 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { useTenantCartStore } from "../cart-store";
 import { useCart } from "../use-cart";
-import { useTenantCartStore } from "../provider/cart-provider";
 import { formatCartMoney } from "../utils/format-cart-money";
 
+type CouponPreviewPayload = {
+	ok?: boolean;
+	discountAmount?: number;
+	normalizedCode?: string;
+	error?: string;
+	minSubtotal?: number;
+};
+
+async function previewCoupon(
+	body: { branchId: string; code: string; subtotal: number; clientPhone?: string },
+	signal?: AbortSignal,
+): Promise<{ ok: boolean; payload: CouponPreviewPayload }> {
+	const response = await fetch("/api/geo/discount-coupon-preview", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(body),
+		signal,
+	});
+	const payload = (await response.json()) as CouponPreviewPayload;
+	return { ok: response.ok && Boolean(payload.ok), payload };
+}
+
 export function CartCouponFields({
-  branchId,
-  cartSubtotal,
-  clientPhone,
-  currency,
-  variant = "panel",
+	branchId,
+	cartSubtotal,
+	clientPhone,
+	currency,
 }: {
-  branchId: string | null;
-  cartSubtotal: number;
-  clientPhone?: string | null;
-  currency: string;
-  variant?: "panel";
+	branchId: string | null;
+	cartSubtotal: number;
+	clientPhone?: string | null;
+	currency: string;
 }) {
-  const t = useTranslations("tenant.cart.modal");
-  const {
-    appliedCouponCode,
-    appliedCouponDiscount,
-    setAppliedCoupon,
-    clearAppliedCoupon,
-  } = useCart();
+	const t = useTranslations("tenant.cart.modal");
+	const { appliedCouponCode, appliedCouponDiscount, setAppliedCoupon, clearAppliedCoupon } =
+		useCart();
 
-  const [draft, setDraft] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [localError, setLocalError] = useState<string | null>(null);
+	const [draft, setDraft] = useState("");
+	const [busy, setBusy] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const phone = clientPhone?.trim() || undefined;
 
-  useEffect(() => {
-    if (!appliedCouponCode || !branchId) return;
-    const ctrl = new AbortController();
-    const tid = window.setTimeout(() => {
-      void (async () => {
-        try {
-          const res = await fetch("/api/geo/discount-coupon-preview", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              branchId,
-              code: appliedCouponCode,
-              subtotal: Math.round(cartSubtotal),
-              ...(clientPhone?.trim() ? { clientPhone: clientPhone.trim() } : {}),
-            }),
-            signal: ctrl.signal,
-          });
-          const j = (await res.json()) as {
-            ok?: boolean;
-            discountAmount?: number;
-            normalizedCode?: string;
-            error?: string;
-          };
-          if (!res.ok || !j.ok) {
-            clearAppliedCoupon();
-            return;
-          }
-          const nextDisc = Math.round(Number(j.discountAmount) || 0);
-          const codeNorm = String(j.normalizedCode ?? appliedCouponCode)
-            .trim()
-            .toUpperCase();
-          const st = useTenantCartStore.getState();
-          if (st.appliedCouponDiscount !== nextDisc || st.appliedCouponCode !== codeNorm) {
-            setAppliedCoupon(codeNorm, nextDisc);
-          }
-        } catch {
-          if (!ctrl.signal.aborted) clearAppliedCoupon();
-        }
-      })();
-    }, 480);
-    return () => {
-      ctrl.abort();
-      window.clearTimeout(tid);
-    };
-  }, [branchId, cartSubtotal, appliedCouponCode, clientPhone, clearAppliedCoupon, setAppliedCoupon]);
+	// El descuento depende del subtotal: se revalida en silencio cuando el carrito cambia.
+	useEffect(() => {
+		if (!appliedCouponCode || !branchId) return;
+		const controller = new AbortController();
+		const timer = window.setTimeout(() => {
+			previewCoupon(
+				{ branchId, code: appliedCouponCode, subtotal: Math.round(cartSubtotal), clientPhone: phone },
+				controller.signal,
+			)
+				.then(({ ok, payload }) => {
+					if (!ok) {
+						clearAppliedCoupon();
+						return;
+					}
+					const discount = Math.round(Number(payload.discountAmount) || 0);
+					const code = String(payload.normalizedCode ?? appliedCouponCode).trim().toUpperCase();
+					const state = useTenantCartStore.getState();
+					if (state.appliedCouponDiscount !== discount || state.appliedCouponCode !== code) {
+						setAppliedCoupon(code, discount);
+					}
+				})
+				.catch(() => {
+					if (!controller.signal.aborted) clearAppliedCoupon();
+				});
+		}, 480);
+		return () => {
+			controller.abort();
+			window.clearTimeout(timer);
+		};
+	}, [branchId, cartSubtotal, appliedCouponCode, phone, clearAppliedCoupon, setAppliedCoupon]);
 
-  const resolveCouponErrorMessage = (errKey: string | undefined, minSubtotal?: number): string => {
-    const key = errKey ?? "server";
-    if (key === "coupon_min_subtotal" && typeof minSubtotal === "number") {
-      return t("coupon.errors.coupon_min_subtotal", {
-        amount: formatCartMoney(minSubtotal, currency),
-      });
-    }
-    if (key === "invalid_coupon") return t("coupon.errors.invalid_coupon");
-    if (key === "coupon_expired") return t("coupon.errors.coupon_expired");
-    if (key === "coupon_phone_required") return t("coupon.errors.coupon_phone_required");
-    if (key === "coupon_wrong_client") return t("coupon.errors.coupon_wrong_client");
-    if (key === "coupon_usage_exhausted") return t("coupon.errors.coupon_usage_exhausted");
-    if (key === "coupon_usage_exhausted_client") return t("coupon.errors.coupon_usage_exhausted_client");
-    if (key === "branch_not_found") return t("coupon.errors.branch_not_found");
-    if (key === "bad_request") return t("coupon.errors.bad_request");
-    return t("coupon.errors.server");
-  };
+	const errorMessage = (key: string | undefined, minSubtotal?: number): string => {
+		if (key === "coupon_min_subtotal" && typeof minSubtotal === "number") {
+			return t("coupon.errors.coupon_min_subtotal", { amount: formatCartMoney(minSubtotal, currency) });
+		}
+		const known = [
+			"invalid_coupon",
+			"coupon_expired",
+			"coupon_phone_required",
+			"coupon_wrong_client",
+			"coupon_usage_exhausted",
+			"coupon_usage_exhausted_client",
+			"branch_not_found",
+			"bad_request",
+		];
+		return t(`coupon.errors.${key && known.includes(key) ? key : "server"}`);
+	};
 
-  const onApply = async () => {
-    if (!branchId) return;
-    const code = draft.trim();
-    if (!code) {
-      setLocalError(t("coupon.errors.empty"));
-      return;
-    }
-    setBusy(true);
-    setLocalError(null);
-    try {
-      const res = await fetch("/api/geo/discount-coupon-preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          branchId,
-          code,
-          subtotal: Math.round(cartSubtotal),
-          ...(clientPhone?.trim() ? { clientPhone: clientPhone.trim() } : {}),
-        }),
-      });
-      const j = (await res.json()) as {
-        ok?: boolean;
-        discountAmount?: number;
-        normalizedCode?: string;
-        error?: string;
-        minSubtotal?: number;
-      };
-      setBusy(false);
-      if (!res.ok || !j.ok) {
-        setLocalError(resolveCouponErrorMessage(j.error, j.minSubtotal));
-        return;
-      }
-      const disc = Math.round(Number(j.discountAmount) || 0);
-      setAppliedCoupon(String(j.normalizedCode ?? code).trim().toUpperCase(), disc);
-      setDraft("");
-    } catch {
-      setBusy(false);
-      setLocalError(t("coupon.errors.server"));
-    }
-  };
+	const apply = async () => {
+		if (!branchId) return;
+		const code = draft.trim();
+		if (!code) {
+			setError(t("coupon.errors.empty"));
+			return;
+		}
+		setBusy(true);
+		setError(null);
+		try {
+			const { ok, payload } = await previewCoupon({
+				branchId,
+				code,
+				subtotal: Math.round(cartSubtotal),
+				clientPhone: phone,
+			});
+			if (!ok) {
+				setError(errorMessage(payload.error, payload.minSubtotal));
+				return;
+			}
+			setAppliedCoupon(
+				String(payload.normalizedCode ?? code).trim().toUpperCase(),
+				Math.round(Number(payload.discountAmount) || 0),
+			);
+			setDraft("");
+		} catch {
+			setError(t("coupon.errors.server"));
+		} finally {
+			setBusy(false);
+		}
+	};
 
-  if (!branchId) return null;
+	if (!branchId) return null;
 
-  const rootClassName =
-    variant === "panel"
-      ? "cart-enhance-panel glass cart-enhance-panel--in-footer cart-coupon-panel"
-      : "cart-coupon-block";
-
-  return (
-    <div className={rootClassName}>
-      {appliedCouponCode && appliedCouponDiscount > 0 ? (
-        <div className="cart-coupon-applied">
-          <span className="cart-coupon-applied-text">
-            {t("coupon.applied", { code: appliedCouponCode })}
-          </span>
-          <button
-            type="button"
-            className="cart-enhance-seg cart-coupon-remove-seg"
-            onClick={() => {
-              clearAppliedCoupon();
-              setLocalError(null);
-            }}
-          >
-            {t("coupon.remove")}
-          </button>
-        </div>
-      ) : (
-        <div className="cart-coupon-row">
-          <input
-            type="text"
-            className="form-input cart-coupon-input"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder={t("coupon.placeholder")}
-            autoCapitalize="characters"
-            autoCorrect="off"
-            spellCheck={false}
-            aria-label={t("coupon.inputAria")}
-            disabled={busy}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                void onApply();
-              }
-            }}
-          />
-          <button
-            type="button"
-            className="cart-enhance-seg cart-coupon-apply-seg"
-            disabled={busy}
-            onClick={() => void onApply()}
-          >
-            {busy ? <Loader2 className="cart-coupon-spinner" size={17} aria-hidden /> : null}
-            <span>{t("coupon.apply")}</span>
-          </button>
-        </div>
-      )}
-      {localError ? (
-        <p className="cart-coupon-error" role="alert">
-          {localError}
-        </p>
-      ) : null}
-    </div>
-  );
+	return (
+		<div className="cart-coupon">
+			{appliedCouponCode && appliedCouponDiscount > 0 ? (
+				<div className="cart-coupon__applied">
+					<span>{t("coupon.applied", { code: appliedCouponCode })}</span>
+					<button
+						type="button"
+						className="cart-link-btn"
+						onClick={() => {
+							clearAppliedCoupon();
+							setError(null);
+						}}
+					>
+						{t("coupon.remove")}
+					</button>
+				</div>
+			) : (
+				<div className="cart-coupon__row">
+					<input
+						type="text"
+						className="cart-field cart-coupon__input"
+						value={draft}
+						onChange={(event) => setDraft(event.target.value)}
+						placeholder={t("coupon.placeholder")}
+						autoCapitalize="characters"
+						autoCorrect="off"
+						spellCheck={false}
+						aria-label={t("coupon.inputAria")}
+						disabled={busy}
+						onKeyDown={(event) => {
+							if (event.key === "Enter") {
+								event.preventDefault();
+								void apply();
+							}
+						}}
+					/>
+					<button type="button" className="cart-secondary-btn" disabled={busy} onClick={() => void apply()}>
+						{busy ? <Loader2 className="cart-spin" size={16} aria-hidden /> : null}
+						<span>{t("coupon.apply")}</span>
+					</button>
+				</div>
+			)}
+			{error ? (
+				<p className="cart-hint cart-hint--error" role="alert">
+					{error}
+				</p>
+			) : null}
+		</div>
+	);
 }

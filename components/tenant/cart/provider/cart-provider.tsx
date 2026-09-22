@@ -2,708 +2,450 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import CartContext from "../cart-context";
-import type { CartItem } from "../cart-context";
-import { isUpsellBeverageLineId } from "../cart-context";
-import { createSupabaseBrowserClient } from "../../../../utils/supabase/client";
-import { useCartStore, sanitizeQty, sanitizePrice } from "../cart-store";
+
 import {
-  computeDeliveryFee,
-  effectiveDeliveryPricingMode,
-  normalizeDeliverySettings,
-  stripStaffOnlyDeliverySettings,
-  type DeliveryNamedArea,
+	effectiveDeliveryPricingMode,
+	normalizeDeliverySettings,
+	stripStaffOnlyDeliverySettings,
 } from "@/lib/delivery/delivery-settings";
 import { haversineKm, isValidLatLng } from "@/lib/geo/geo";
-import { formatCartMoney } from "../utils/format-cart-money";
+import { createSupabaseBrowserClient } from "../../../../utils/supabase/client";
+import CartContext, {
+	isUpsellBeverageLineId,
+	type CartContextType,
+	type CartItem,
+	type CartProduct,
+} from "../cart-context";
+import { sanitizePrice, sanitizeQty, useCartStore } from "../cart-store";
 import { useBranchPrices } from "../hooks/use-branch-prices";
 import { useCartBranchFeatureFlags } from "../hooks/use-cart-branch-feature-flags";
 import { useDeliveryQuote } from "../hooks/use-delivery-quote";
 import { calculateCartTotals } from "../utils/cart-pricing";
+import { resolveDeliveryQuoteState } from "../utils/delivery-quote-state";
+import { parseManualKm } from "../utils/fulfillment-validation";
+import { joinAddressLine } from "../utils/street-number";
+import { isVenezuelaCountry } from "../utils/venezuela-payment-copy";
 
 export { useTenantCartStore } from "../cart-store";
 
-interface CartProduct {
-  id: string;
-  name?: string | null;
-  description?: string | null;
-  image_url?: string | null;
-  price?: number | null;
-  has_discount?: boolean | null;
-  discount_price?: number | null;
-  is_active?: boolean | null;
+const BCV_RATE_ENDPOINT = "https://ve.dolarapi.com/v1/dolares/oficial";
+
+type PersistApi = {
+	setOptions?: (options: { name: string }) => void;
+	rehydrate?: () => Promise<void> | void;
+	hasHydrated?: () => boolean;
+	onFinishHydration?: (cb: () => void) => () => void;
+};
+
+function persistApi(): PersistApi | undefined {
+	return (useCartStore as unknown as { persist?: PersistApi }).persist;
+}
+
+function lineTotal(item: CartItem, unitPrice: number): number {
+	const extrasTotal = (item.selected_extras ?? []).reduce(
+		(sum, extra) => sum + sanitizePrice(extra.price) * sanitizeQty(extra.qty),
+		0,
+	);
+	const beveragesTotal = isUpsellBeverageLineId(item.id)
+		? 0
+		: (item.selected_beverages ?? []).reduce(
+				(sum, beverage) => sum + sanitizePrice(beverage.price) * sanitizeQty(beverage.qty),
+				0,
+			);
+	return (unitPrice + extrasTotal + beveragesTotal) * item.quantity;
 }
 
 export function CartProvider({
-  children,
-  tenantSlug,
-  selectedBranchId,
-  branchDeliverySettings,
-  branchOriginLat,
-  branchOriginLng,
-  currency = "CLP",
-  country = "CL",
+	children,
+	tenantSlug,
+	selectedBranchId,
+	branchDeliverySettings,
+	branchOriginLat,
+	branchOriginLng,
+	currency = "CLP",
+	country = "CL",
 }: {
-  children: React.ReactNode;
-  tenantSlug?: string | null;
-  selectedBranchId?: string | null;
-  branchDeliverySettings?: unknown;
-  branchOriginLat?: number | null;
-  branchOriginLng?: number | null;
-  currency?: string;
-  country?: string;
+	children: React.ReactNode;
+	tenantSlug?: string | null;
+	selectedBranchId?: string | null;
+	branchDeliverySettings?: unknown;
+	branchOriginLat?: number | null;
+	branchOriginLng?: number | null;
+	currency?: string;
+	country?: string;
 }) {
-  const store = useCartStore(
-    useShallow((state) => ({
-      cart: state.cart,
-      isCartOpen: state.isCartOpen,
-      toggleCart: state.toggleCart,
-      openCart: state.openCart,
-      closeCart: state.closeCart,
-      addToCart: state.addToCart,
-      decreaseQuantity: state.decreaseQuantity,
-      removeFromCart: state.removeFromCart,
-      clearCart: state.clearCart,
-      orderNote: state.orderNote,
-      setOrderNote: state.setOrderNote,
-      setLineNote: state.setLineNote,
-      fulfillment: state.fulfillment,
-      setFulfillment: state.setFulfillment,
-      deliveryLine1: state.deliveryLine1,
-      setDeliveryLine1: state.setDeliveryLine1,
-      deliveryCommune: state.deliveryCommune,
-      setDeliveryCommune: state.setDeliveryCommune,
-      deliveryRegion: state.deliveryRegion,
-      setDeliveryRegion: state.setDeliveryRegion,
-      deliveryReference: state.deliveryReference,
-      setDeliveryReference: state.setDeliveryReference,
-      deliveryLat: state.deliveryLat,
-      deliveryLng: state.deliveryLng,
-      setDeliveryCoords: state.setDeliveryCoords,
-      deliveryNamedAreaId: state.deliveryNamedAreaId,
-      setDeliveryNamedAreaId: state.setDeliveryNamedAreaId,
-      deliveryKmManual: state.deliveryKmManual,
-      setDeliveryKmManual: state.setDeliveryKmManual,
-      showDeliveryReference: state.showDeliveryReference,
-      setShowDeliveryReference: state.setShowDeliveryReference,
-      globalExtras: state.globalExtras,
-      setGlobalExtras: state.setGlobalExtras,
-      appliedCouponCode: state.appliedCouponCode,
-      appliedCouponDiscount: state.appliedCouponDiscount,
-      setAppliedCoupon: state.setAppliedCoupon,
-      clearAppliedCoupon: state.clearAppliedCoupon,
-    })),
-  );
-  const isCartOpen = store.isCartOpen;
-  const [isHydrated, setIsHydrated] = useState(false);
-  const supabase = useMemo(() => createSupabaseBrowserClient("tenant"), []);
+	const store = useCartStore(
+		useShallow((state) => ({
+			cart: state.cart,
+			isCartOpen: state.isCartOpen,
+			openCart: state.openCart,
+			closeCart: state.closeCart,
+			addToCart: state.addToCart,
+			decreaseQuantity: state.decreaseQuantity,
+			removeFromCart: state.removeFromCart,
+			clearCart: state.clearCart,
+			setLineNote: state.setLineNote,
+			fulfillment: state.fulfillment,
+			setFulfillment: state.setFulfillment,
+			deliveryLine1: state.deliveryLine1,
+			setDeliveryLine1: state.setDeliveryLine1,
+			deliveryCommune: state.deliveryCommune,
+			setDeliveryCommune: state.setDeliveryCommune,
+			deliveryReference: state.deliveryReference,
+			setDeliveryReference: state.setDeliveryReference,
+			deliveryLat: state.deliveryLat,
+			deliveryLng: state.deliveryLng,
+			setDeliveryCoords: state.setDeliveryCoords,
+			deliveryNamedAreaId: state.deliveryNamedAreaId,
+			setDeliveryNamedAreaId: state.setDeliveryNamedAreaId,
+			deliveryKmManual: state.deliveryKmManual,
+			setDeliveryKmManual: state.setDeliveryKmManual,
+			globalExtras: state.globalExtras,
+			setGlobalExtras: state.setGlobalExtras,
+			appliedCouponCode: state.appliedCouponCode,
+			appliedCouponDiscount: state.appliedCouponDiscount,
+			setAppliedCoupon: state.setAppliedCoupon,
+			clearAppliedCoupon: state.clearAppliedCoupon,
+		})),
+	);
+	const isCartOpen = store.isCartOpen;
+	const [isHydrated, setIsHydrated] = useState(false);
+	const supabase = useMemo(() => createSupabaseBrowserClient("tenant"), []);
 
-  const isVenezuela = country === "VE" || country === "Venezuela";
-  const cartCurrency = isVenezuela ? "USD" : currency;
+	// En Venezuela el catálogo está en dólares aunque la sucursal declare VES.
+	const isVenezuela = isVenezuelaCountry(country);
+	const cartCurrency = isVenezuela ? "USD" : currency;
 
-  const parsedDelivery = useMemo(
-    () => normalizeDeliverySettings(stripStaffOnlyDeliverySettings(branchDeliverySettings)),
-    [branchDeliverySettings],
-  );
+	const settings = useMemo(
+		() => normalizeDeliverySettings(stripStaffOnlyDeliverySettings(branchDeliverySettings)),
+		[branchDeliverySettings],
+	);
+	const pricingMode = useMemo(() => effectiveDeliveryPricingMode(settings), [settings]);
+	const branchFeatureFlags = useCartBranchFeatureFlags(branchDeliverySettings, selectedBranchId);
 
-  const [bcvRate, setBcvRate] = useState<number | null>(null);
+	const [bcvRate, setBcvRate] = useState<number | null>(null);
+	useEffect(() => {
+		if (!isVenezuela || !isCartOpen) return;
+		const controller = new AbortController();
+		fetch(BCV_RATE_ENDPOINT, { signal: controller.signal })
+			.then((response) => (response.ok ? response.json() : null))
+			.then((data: { promedio?: unknown } | null) => {
+				if (data && typeof data.promedio === "number") setBcvRate(data.promedio);
+			})
+			.catch(() => {
+				/* sin tasa en vivo: se usa la configurada por el local */
+			});
+		return () => controller.abort();
+	}, [isVenezuela, isCartOpen]);
 
-  useEffect(() => {
-    if (!isVenezuela || !isCartOpen) return;
-    let active = true;
-    fetch("https://ve.dolarapi.com/v1/dolares/oficial")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch BCV rate");
-        return res.json();
-      })
-      .then((data) => {
-        if (active && data && typeof data.promedio === "number") {
-          setBcvRate(data.promedio);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [isVenezuela, isCartOpen]);
+	const exchangeRate = useMemo(() => {
+		if (isVenezuela) return bcvRate ?? settings.exchangeRate ?? null;
+		return settings.exchangeRate ?? null;
+	}, [isVenezuela, bcvRate, settings.exchangeRate]);
 
-  const effectiveExchangeRate = useMemo(() => {
-    if (isVenezuela) {
-      return bcvRate ?? parsedDelivery.exchangeRate ?? null;
-    }
-    return parsedDelivery.exchangeRate ?? null;
-  }, [isVenezuela, bcvRate, parsedDelivery.exchangeRate]);
+	// Persistencia por tenant: el nombre del storage lleva el slug y se rehidrata al cambiar.
+	useEffect(() => {
+		if (!tenantSlug) return;
+		let cancelled = false;
+		const api = persistApi();
+		api?.setOptions?.({ name: `tenant_cart_storage_${tenantSlug}` });
+		const finish = () => {
+			if (!cancelled) setIsHydrated(true);
+		};
+		const result = api?.rehydrate?.();
+		if (result && typeof (result as Promise<void>).then === "function") {
+			void (result as Promise<void>).then(finish).catch(finish);
+		} else {
+			window.setTimeout(finish, 0);
+		}
+		return () => {
+			cancelled = true;
+		};
+	}, [tenantSlug]);
 
-  const pricingMode = useMemo(() => effectiveDeliveryPricingMode(parsedDelivery), [parsedDelivery]);
+	// Dominios propios llegan sin slug: hidratación por defecto con respaldo temporal.
+	useEffect(() => {
+		if (typeof window === "undefined") return;
+		const markHydrated = () => setIsHydrated(true);
+		const api = persistApi();
+		if (api?.hasHydrated?.()) {
+			window.setTimeout(markHydrated, 0);
+			return;
+		}
+		const unsubscribe = api?.onFinishHydration?.(markHydrated);
+		const fallback = window.setTimeout(markHydrated, 250);
+		return () => {
+			unsubscribe?.();
+			window.clearTimeout(fallback);
+		};
+	}, []);
 
-  const branchFeatureFlags = useCartBranchFeatureFlags(branchDeliverySettings, selectedBranchId);
+	// Cambiar de sucursal vacía el carrito; la primera asignación (null → id) lo conserva.
+	useEffect(() => {
+		if (!isHydrated) return;
+		const { setStoredBranchId, storedBranchId, clearCart } = useCartStore.getState();
+		if (!selectedBranchId) {
+			if (storedBranchId !== null) {
+				setStoredBranchId(null);
+				clearCart();
+			}
+			return;
+		}
+		if (storedBranchId == null) {
+			setStoredBranchId(selectedBranchId);
+			return;
+		}
+		if (storedBranchId !== selectedBranchId) {
+			clearCart();
+			setStoredBranchId(selectedBranchId);
+		}
+	}, [isHydrated, selectedBranchId]);
 
-  useEffect(() => {
-    if (!tenantSlug) return;
-    let cancelled = false;
-    // Sync: queueMicrotask(set false) after a sync finish() left isHydrated stuck
-    // false on path tenants (godcode.me/la-parada) while custom domains (null slug) skipped this effect.
-    setIsHydrated(false);
-    const storageKey = `tenant_cart_storage_${tenantSlug}`;
-    const persistApi = (
-      useCartStore as {
-        persist?: {
-          setOptions?: (options: { name: string }) => void;
-          rehydrate?: () => Promise<void> | void;
-        };
-      }
-    ).persist;
-    persistApi?.setOptions?.({ name: storageKey });
-    const finish = () => {
-      if (!cancelled) setIsHydrated(true);
-    };
-    const rehydrateResult = persistApi?.rehydrate?.();
-    if (rehydrateResult && typeof (rehydrateResult as Promise<void>).then === "function") {
-      void (rehydrateResult as Promise<void>).then(finish).catch(finish);
-    } else {
-      finish();
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [tenantSlug]);
+	// Nota global heredada de versiones anteriores → nota de la primera línea.
+	useEffect(() => {
+		if (!isHydrated) return;
+		const { cart, orderNote, setLineNote, setOrderNote } = useCartStore.getState();
+		const legacy = typeof orderNote === "string" ? orderNote.trim() : "";
+		if (!legacy || cart.length === 0) return;
+		if (cart.some((item) => typeof item.line_note === "string" && item.line_note.trim())) return;
+		const first = cart[0];
+		if (!first?.lineId) return;
+		setLineNote(first.lineId, legacy);
+		setOrderNote("");
+	}, [isHydrated]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const setHydrated = () => setIsHydrated(true);
-    try {
-      const persistApi = (
-        useCartStore as {
-          persist?: { hasHydrated?: () => boolean; onFinishHydration?: (cb: () => void) => () => void };
-        }
-      ).persist;
-      if (persistApi?.hasHydrated?.()) {
-        setHydrated();
-        return;
-      }
-      const unsub = persistApi?.onFinishHydration?.(setHydrated);
-      if (typeof unsub === "function") {
-        const t = window.setTimeout(setHydrated, 200);
-        return () => {
-          unsub();
-          window.clearTimeout(t);
-        };
-      }
-    } catch {
-      /* empty */
-    }
-    window.requestAnimationFrame(() => window.requestAnimationFrame(setHydrated));
-    const fallback = window.setTimeout(setHydrated, 250);
-    return () => window.clearTimeout(fallback);
-  }, []);
+	useEffect(() => {
+		if (!isHydrated || !selectedBranchId) return;
+		const state = useCartStore.getState();
+		if (!settings.enabled && state.fulfillment === "delivery") state.setFulfillment("pickup");
+	}, [isHydrated, selectedBranchId, settings.enabled]);
 
-  useEffect(() => {
-    if (!isHydrated) return;
-    const { setStoredBranchId, storedBranchId, clearCart } = useCartStore.getState();
-    if (!selectedBranchId) {
-      if (storedBranchId !== null) {
-        if (typeof setStoredBranchId === "function") setStoredBranchId(null);
-        if (typeof clearCart === "function") clearCart();
-      }
-      return;
-    }
-    // Primera asignación de sucursal (null → id): no vaciar. Si el usuario agregó
-    // productos antes de hidratar/persistir la sucursal, clearCart los borraba.
-    if (storedBranchId == null) {
-      if (typeof setStoredBranchId === "function") setStoredBranchId(selectedBranchId);
-      return;
-    }
-    if (storedBranchId !== selectedBranchId) {
-      if (typeof clearCart === "function") clearCart();
-      if (typeof setStoredBranchId === "function") setStoredBranchId(selectedBranchId);
-    }
-  }, [isHydrated, selectedBranchId]);
+	const branchPriceRows = useBranchPrices(isHydrated, selectedBranchId, supabase);
 
-  useEffect(() => {
-    if (!isHydrated) return;
-    const { cart, orderNote, setLineNote, setOrderNote } = useCartStore.getState();
-    const legacy = typeof orderNote === "string" ? orderNote.trim() : "";
-    if (!legacy || !Array.isArray(cart) || cart.length === 0) return;
-    if (cart.some((item) => typeof item.line_note === "string" && item.line_note.trim())) {
-      return;
-    }
-    const first = cart[0];
-    if (!first?.lineId || typeof setLineNote !== "function") return;
-    setLineNote(first.lineId, legacy);
-    if (typeof setOrderNote === "function") setOrderNote("");
-  }, [isHydrated]);
+	const getPrice = useCallback((product: CartProduct | CartItem) => {
+		if (typeof product !== "object" || product == null) return 0;
+		const coerce = (value: unknown): number => {
+			const n = Number(value);
+			return Number.isFinite(n) ? n : 0;
+		};
+		const discount = coerce(product.discount_price);
+		if (product.has_discount && discount > 0) return discount;
+		return coerce(product.price);
+	}, []);
 
-  useEffect(() => {
-    if (!isHydrated || !selectedBranchId) return;
-    const st = useCartStore.getState();
-    const setF = st.setFulfillment;
-    if (typeof setF !== "function") return;
-    if (!parsedDelivery.enabled && st.fulfillment === "delivery") {
-      setF("pickup");
-    }
-  }, [isHydrated, selectedBranchId, parsedDelivery.enabled]);
+	const productsTotal = useMemo(
+		() =>
+			Math.round(
+				store.cart.reduce((acc, item) => {
+					if (typeof item.quantity !== "number" || item.quantity < 1) return acc;
+					return acc + lineTotal(item, getPrice(item));
+				}, 0),
+			),
+		[store.cart, getPrice],
+	);
+	const globalExtrasTotal = useMemo(
+		() =>
+			store.globalExtras.reduce(
+				(sum, extra) => sum + sanitizePrice(extra.price) * sanitizeQty(extra.qty),
+				0,
+			),
+		[store.globalExtras],
+	);
+	const cartSubtotal = Math.round(productsTotal + globalExtrasTotal);
 
-  const branchPriceRows = useBranchPrices(isHydrated, selectedBranchId, supabase);
+	const isDelivery = store.fulfillment === "delivery";
 
-  const getPrice = useCallback((product: CartProduct | CartItem) => {
-    if (typeof product !== "object" || product == null) return 0;
-    const coerce = (v: unknown): number => {
-      if (typeof v === "bigint") {
-        const n = Number(v);
-        return Number.isFinite(n) ? n : 0;
-      }
-      const n = Number(v);
-      return Number.isFinite(n) ? n : 0;
-    };
-    const discount = coerce(product.discount_price);
-    if (product.has_discount && discount > 0) return discount;
-    return coerce(product.price);
-  }, []);
+	const haversineKmValue = useMemo(() => {
+		if (pricingMode !== "distance" || !isDelivery || !settings.enabled) return null;
+		if (
+			!isValidLatLng(branchOriginLat, branchOriginLng) ||
+			!isValidLatLng(store.deliveryLat, store.deliveryLng)
+		) {
+			return null;
+		}
+		return haversineKm(
+			{ lat: branchOriginLat as number, lng: branchOriginLng as number },
+			{ lat: store.deliveryLat as number, lng: store.deliveryLng as number },
+		);
+	}, [
+		pricingMode,
+		isDelivery,
+		store.deliveryLat,
+		store.deliveryLng,
+		branchOriginLat,
+		branchOriginLng,
+		settings.enabled,
+	]);
 
-  const cartTotal = useMemo(() => {
-    if (!Array.isArray(store.cart)) return 0;
-    const raw = store.cart.reduce((acc, item) => {
-      const price = getPrice(item);
-      if (typeof item.quantity !== "number" || item.quantity < 1) return acc;
-      const extrasTotal = (item.selected_extras ?? []).reduce(
-        (sum, ex) => sum + sanitizePrice(ex.price) * sanitizeQty(ex.qty),
-        0,
-      );
-      const beveragesTotal = isUpsellBeverageLineId(item.id)
-        ? 0
-        : (item.selected_beverages ?? []).reduce(
-            (sum, bev) => sum + sanitizePrice(bev.price) * sanitizeQty(bev.qty),
-            0,
-          );
-      return acc + (price + extrasTotal + beveragesTotal) * item.quantity;
-    }, 0);
-    return Math.round(raw);
-  }, [store.cart, getPrice]);
+	const addressLine = joinAddressLine(store.deliveryLine1, store.deliveryCommune);
 
-  const globalExtrasTotal = useMemo(
-    () =>
-      (store.globalExtras ?? []).reduce((sum, ex) => sum + sanitizePrice(ex.price) * sanitizeQty(ex.qty), 0),
-    [store.globalExtras],
-  );
+	const quoteQuery = useDeliveryQuote({
+		branchId: selectedBranchId,
+		fulfillment: store.fulfillment,
+		pricingMode,
+		addressLine,
+		lat: store.deliveryLat,
+		lng: store.deliveryLng,
+		namedAreaId: store.deliveryNamedAreaId,
+		subtotal: cartSubtotal,
+		minOrderSubtotal: settings.minOrderSubtotal,
+		maxDeliveryKm: settings.maxDeliveryKm,
+		namedAreaResolution: settings.namedAreaResolution,
+		enabledSettings: settings.enabled,
+		checkoutActive: isCartOpen,
+	});
+	const quoteData = quoteQuery.data;
 
-  const cartSubtotal = Math.round(cartTotal + globalExtrasTotal);
+	const quote = useMemo(
+		() =>
+			resolveDeliveryQuoteState({
+				isDelivery,
+				settings,
+				pricingMode,
+				cartSubtotal,
+				namedAreaId: store.deliveryNamedAreaId,
+				quote: quoteData,
+				quoteFetching: quoteQuery.isFetching,
+				quoteFetchError: quoteQuery.error instanceof Error ? quoteQuery.error.message : null,
+				haversineKm: haversineKmValue,
+				manualKm: parseManualKm(store.deliveryKmManual),
+			}),
+		[
+			isDelivery,
+			settings,
+			pricingMode,
+			cartSubtotal,
+			store.deliveryNamedAreaId,
+			store.deliveryKmManual,
+			quoteData,
+			quoteQuery.isFetching,
+			quoteQuery.error,
+			haversineKmValue,
+		],
+	);
 
-  const haversineKmVal = useMemo(() => {
-    if (pricingMode !== "distance" || store.fulfillment !== "delivery" || !parsedDelivery.enabled) {
-      return null;
-    }
-    if (!isValidLatLng(branchOriginLat, branchOriginLng) || !isValidLatLng(store.deliveryLat, store.deliveryLng)) {
-      return null;
-    }
-    return haversineKm(
-      { lat: branchOriginLat as number, lng: branchOriginLng as number },
-      { lat: store.deliveryLat as number, lng: store.deliveryLng as number },
-    );
-  }, [
-    pricingMode,
-    store.fulfillment,
-    store.deliveryLat,
-    store.deliveryLng,
-    branchOriginLat,
-    branchOriginLng,
-    parsedDelivery.enabled,
-  ]);
+	const externalDelivery = isDelivery && settings.enabled && pricingMode === "external";
+	const deliveryShowNumericFee = !externalDelivery
+		? true
+		: quoteData
+			? quoteData.fee !== 0 || quoteData.error == null
+			: settings.showExternalDeliveryFeeAmount;
+	const deliveryExternalHintText = !externalDelivery
+		? null
+		: (quoteData && quoteData.fee === 0 && quoteData.error == null) ||
+			  (!quoteData && !settings.showExternalDeliveryFeeAmount)
+			? settings.externalDeliveryDisplayText
+			: null;
 
-  const manualKmParsed = useMemo(() => {
-    const n = Number(String(store.deliveryKmManual).replace(",", "."));
-    return Number.isFinite(n) && n >= 0 ? n : NaN;
-  }, [store.deliveryKmManual]);
+	const appliedCouponDiscount = Math.min(
+		Math.round(cartSubtotal),
+		Math.max(0, Math.round(Number(store.appliedCouponDiscount) || 0)),
+	);
 
-  const addressLine = `${store.deliveryLine1}, ${store.deliveryCommune}`.trim();
+	const totals = useMemo(
+		() =>
+			calculateCartTotals({
+				subtotal: cartSubtotal,
+				discountAmount: appliedCouponDiscount,
+				deliveryFee: quote.deliveryFee,
+				taxRate: settings.taxRate,
+				taxIncluded: settings.taxIncluded,
+				exchangeRate,
+			}),
+		[
+			cartSubtotal,
+			appliedCouponDiscount,
+			quote.deliveryFee,
+			settings.taxRate,
+			settings.taxIncluded,
+			exchangeRate,
+		],
+	);
 
-  const deliveryQuoteQuery = useDeliveryQuote({
-    branchId: selectedBranchId,
-    fulfillment: store.fulfillment,
-    pricingMode: pricingMode,
-    addressLine,
-    lat: store.deliveryLat,
-    lng: store.deliveryLng,
-    namedAreaId: store.deliveryNamedAreaId,
-    subtotal: cartSubtotal,
-    minOrderSubtotal: parsedDelivery.minOrderSubtotal,
-    maxDeliveryKm: parsedDelivery.maxDeliveryKm,
-    namedAreaResolution: parsedDelivery.namedAreaResolution,
-    enabledSettings: parsedDelivery.enabled,
-    checkoutActive: isCartOpen,
-  });
+	const totalItems = useMemo(
+		() =>
+			store.cart.reduce(
+				(acc, item) =>
+					typeof item.quantity === "number" && item.quantity >= 1 ? acc + item.quantity : acc,
+				0,
+			),
+		[store.cart],
+	);
 
-  const quoteData = deliveryQuoteQuery.data;
+	const contextValue = useMemo<CartContextType>(
+		() => ({
+			cart: isHydrated ? store.cart : [],
+			isCartOpen: store.isCartOpen,
+			openCart: store.openCart,
+			closeCart: store.closeCart,
+			addToCart: store.addToCart,
+			decreaseQuantity: store.decreaseQuantity,
+			removeFromCart: store.removeFromCart,
+			clearCart: store.clearCart,
+			setLineNote: store.setLineNote,
+			cartSubtotal: isHydrated ? cartSubtotal : 0,
+			grandTotal: isHydrated ? totals.total : 0,
+			deliveryFee: isHydrated ? totals.deliveryFee : 0,
+			totalItems: isHydrated ? totalItems : 0,
+			taxTotal: isHydrated ? totals.taxTotal : 0,
+			localTotal: isHydrated ? totals.localTotal : null,
+			getPrice,
+			fulfillment: store.fulfillment,
+			setFulfillment: store.setFulfillment,
+			deliveryLine1: store.deliveryLine1,
+			setDeliveryLine1: store.setDeliveryLine1,
+			deliveryCommune: store.deliveryCommune,
+			setDeliveryCommune: store.setDeliveryCommune,
+			deliveryReference: store.deliveryReference,
+			setDeliveryReference: store.setDeliveryReference,
+			deliveryLat: store.deliveryLat,
+			deliveryLng: store.deliveryLng,
+			setDeliveryCoords: store.setDeliveryCoords,
+			deliveryNamedAreaId: store.deliveryNamedAreaId,
+			setDeliveryNamedAreaId: store.setDeliveryNamedAreaId,
+			deliveryKmManual: store.deliveryKmManual,
+			setDeliveryKmManual: store.setDeliveryKmManual,
+			globalExtras: store.globalExtras,
+			setGlobalExtras: store.setGlobalExtras,
+			deliveryWaivedFree: isHydrated ? quote.waivedFree : false,
+			deliveryNamedAreaLabel: isHydrated ? quote.namedLabel : null,
+			deliveryQuoteLoading: isHydrated ? quote.quoteLoading : false,
+			deliveryQuoteError: isHydrated ? quote.quoteError : null,
+			isDeliveryOutOfZone: isHydrated ? quote.outOfZone : false,
+			quotedRouteKm: isHydrated ? quote.quotedRouteKm : null,
+			extrasEnabledByBranch: branchFeatureFlags.extrasEnabledByBranch,
+			beveragesUpsellEnabledByBranch: branchFeatureFlags.beveragesUpsellEnabledByBranch,
+			deliveryShowNumericFee: isHydrated ? deliveryShowNumericFee : true,
+			deliveryExternalHintText: isHydrated ? deliveryExternalHintText : null,
+			uberQuoteId: isHydrated && pricingMode === "external" ? quote.uberQuoteId : null,
+			branchPriceRows,
+			appliedCouponCode: store.appliedCouponCode,
+			appliedCouponDiscount: isHydrated ? appliedCouponDiscount : 0,
+			setAppliedCoupon: store.setAppliedCoupon,
+			clearAppliedCoupon: store.clearAppliedCoupon,
+			currency: cartCurrency,
+			country,
+			exchangeRate: isHydrated ? exchangeRate : null,
+		}),
+		[
+			store,
+			isHydrated,
+			cartSubtotal,
+			appliedCouponDiscount,
+			totals,
+			totalItems,
+			getPrice,
+			quote,
+			branchFeatureFlags,
+			deliveryShowNumericFee,
+			deliveryExternalHintText,
+			pricingMode,
+			branchPriceRows,
+			cartCurrency,
+			country,
+			exchangeRate,
+		],
+	);
 
-  const quoteResolved = useMemo(() => {
-    if (store.fulfillment !== "delivery" || !parsedDelivery.enabled) {
-      return {
-        deliveryFee: 0,
-        waivedFree: false,
-        namedLabel: null as string | null,
-        quotedRouteKm: null as number | null,
-        outOfZone: false,
-        quoteLoading: false,
-        quoteError: null as string | null,
-        uberQuoteId: null as string | null,
-      };
-    }
-
-    const minOk =
-      parsedDelivery.minOrderSubtotal == null || cartSubtotal + 1e-9 >= parsedDelivery.minOrderSubtotal;
-    if (!minOk) {
-      return {
-        deliveryFee: 0,
-        waivedFree: false,
-        namedLabel: null,
-        quotedRouteKm: null,
-        outOfZone: false,
-        quoteLoading: false,
-        quoteError: null,
-        uberQuoteId: null,
-      };
-    }
-
-    if (quoteData) {
-      return {
-        deliveryFee: quoteData.fee,
-        waivedFree: quoteData.waivedFree,
-        namedLabel: quoteData.namedLabel ?? null,
-        quotedRouteKm: quoteData.quotedRouteKm ?? null,
-        outOfZone: quoteData.outOfZone,
-        quoteLoading: deliveryQuoteQuery.isFetching,
-        quoteError: quoteData.error ?? null,
-        uberQuoteId: quoteData.uberQuoteId ?? null,
-      };
-    }
-
-    if (deliveryQuoteQuery.isFetching) {
-      return {
-        deliveryFee: 0,
-        waivedFree: false,
-        namedLabel:
-          pricingMode === "named"
-            ? store.deliveryNamedAreaId
-              ? parsedDelivery.namedAreas.find((a: DeliveryNamedArea) => a.id === store.deliveryNamedAreaId)?.name ?? null
-              : null
-            : null,
-        quotedRouteKm: null,
-        outOfZone: false,
-        quoteLoading: true,
-        quoteError: null,
-        uberQuoteId: null,
-      };
-    }
-
-    // Fallbacks
-    if (pricingMode === "distance") {
-      const kmRaw = haversineKmVal ?? (Number.isFinite(manualKmParsed) ? manualKmParsed : 0);
-      if (parsedDelivery.maxDeliveryKm != null && kmRaw > parsedDelivery.maxDeliveryKm + 1e-9) {
-        return {
-          deliveryFee: 0,
-          waivedFree: false,
-          namedLabel: null,
-          quotedRouteKm: Math.max(0, Math.round(kmRaw)),
-          outOfZone: true,
-          quoteLoading: false,
-          quoteError: null,
-          uberQuoteId: null,
-        };
-      }
-      const kmBilled = Math.max(0, Math.round(kmRaw));
-      const r = computeDeliveryFee(parsedDelivery, kmBilled, cartSubtotal);
-      return {
-        deliveryFee: Math.round(r.fee < 0 ? 0 : r.fee),
-        waivedFree: r.waivedFreeShipping,
-        namedLabel: null,
-        quotedRouteKm: kmBilled,
-        outOfZone: r.fee === -1,
-        quoteLoading: false,
-        quoteError: null,
-        uberQuoteId: null,
-      };
-    }
-
-    if (pricingMode === "named" && parsedDelivery.namedAreaResolution === "manual_select") {
-      const id = store.deliveryNamedAreaId?.trim() || null;
-      const areaName =
-        id != null ? (parsedDelivery.namedAreas.find((a: DeliveryNamedArea) => a.id === id)?.name ?? null) : null;
-      const r = computeDeliveryFee(parsedDelivery, 0, cartSubtotal, {
-        namedAreaId: id,
-      });
-      return {
-        deliveryFee: Math.round(r.fee < 0 ? 0 : r.fee),
-        waivedFree: r.waivedFreeShipping,
-        namedLabel: areaName,
-        quotedRouteKm: null,
-        outOfZone: false,
-        quoteLoading: false,
-        quoteError: r.fee === -4 ? "Zona no valida." : null,
-        uberQuoteId: null,
-      };
-    }
-
-    return {
-      deliveryFee: 0,
-      waivedFree: false,
-      namedLabel: null,
-      quotedRouteKm: null,
-      outOfZone: false,
-      quoteLoading: false,
-      quoteError: deliveryQuoteQuery.error instanceof Error ? deliveryQuoteQuery.error.message : null,
-      uberQuoteId: null,
-    };
-  }, [
-    store.fulfillment,
-    store.deliveryNamedAreaId,
-    parsedDelivery,
-    pricingMode,
-    cartSubtotal,
-    quoteData,
-    deliveryQuoteQuery.isFetching,
-    deliveryQuoteQuery.error,
-    haversineKmVal,
-    manualKmParsed,
-  ]);
-
-  const deliveryShowNumericFee = useMemo(() => {
-    if (store.fulfillment !== "delivery" || !parsedDelivery.enabled || pricingMode !== "external") {
-      return true;
-    }
-    if (quoteData) return quoteData.fee !== 0 || quoteData.error == null;
-    return parsedDelivery.showExternalDeliveryFeeAmount;
-  }, [store.fulfillment, parsedDelivery.enabled, parsedDelivery.showExternalDeliveryFeeAmount, pricingMode, quoteData]);
-
-  const deliveryExternalHintText = useMemo(() => {
-    if (store.fulfillment !== "delivery" || !parsedDelivery.enabled || pricingMode !== "external") {
-      return null;
-    }
-    if (quoteData && quoteData.fee === 0 && quoteData.error == null) return parsedDelivery.externalDeliveryDisplayText;
-    if (!parsedDelivery.showExternalDeliveryFeeAmount && !quoteData) {
-      return parsedDelivery.externalDeliveryDisplayText;
-    }
-    return null;
-  }, [
-    store.fulfillment,
-    parsedDelivery.enabled,
-    pricingMode,
-    quoteData,
-    parsedDelivery.externalDeliveryDisplayText,
-    parsedDelivery.showExternalDeliveryFeeAmount,
-  ]);
-
-  const uberQuoteId = useMemo(() => {
-    if (pricingMode !== "external") return null;
-    return quoteResolved.uberQuoteId;
-  }, [pricingMode, quoteResolved.uberQuoteId]);
-
-  const appliedCouponDiscount = Math.min(
-    Math.round(cartSubtotal),
-    Math.max(0, Math.round(Number(store.appliedCouponDiscount) || 0)),
-  );
-
-  const totals = useMemo(() => {
-    return calculateCartTotals({
-      subtotal: cartSubtotal,
-      discountAmount: appliedCouponDiscount,
-      deliveryFee: quoteResolved.deliveryFee,
-      taxRate: parsedDelivery.taxRate,
-      taxIncluded: parsedDelivery.taxIncluded,
-      exchangeRate: effectiveExchangeRate,
-    });
-  }, [cartSubtotal, appliedCouponDiscount, quoteResolved.deliveryFee, parsedDelivery.taxRate, parsedDelivery.taxIncluded, effectiveExchangeRate]);
-
-  const grandTotal = totals.total;
-  const taxTotal = totals.taxTotal;
-  const localTotal = totals.localTotal;
-  const deliveryFee = totals.deliveryFee;
-
-  const totalItems = useMemo(() => {
-    if (!Array.isArray(store.cart)) return 0;
-    return store.cart.reduce((acc, item) => {
-      if (typeof item.quantity !== "number" || item.quantity < 1) return acc;
-      return acc + item.quantity;
-    }, 0);
-  }, [store.cart]);
-
-  const generateWhatsAppMessage = useCallback(() => {
-    if (!Array.isArray(store.cart) || store.cart.length === 0) return "";
-
-    const currencyCode = cartCurrency;
-
-    let message = "*NUEVO PEDIDO WEB - CLIENTE*\n";
-    message += "================================\n\n";
-
-    store.cart.forEach((item) => {
-      const price = getPrice(item);
-      const qty = typeof item.quantity === "number" && item.quantity > 0 ? item.quantity : 1;
-      const name = typeof item.name === "string" ? item.name : "Producto";
-      const extrasText = (item.selected_extras ?? []).map((ex) => `${ex.qty}x ${ex.name}`).join(", ");
-      const beveragesText = isUpsellBeverageLineId(item.id)
-        ? ""
-        : (item.selected_beverages ?? []).map((bev) => `${bev.qty}x ${bev.name}`).join(", ");
-      const extrasTotal = (item.selected_extras ?? []).reduce(
-        (sum, ex) => sum + sanitizePrice(ex.price) * sanitizeQty(ex.qty),
-        0,
-      );
-      const beveragesTotal = isUpsellBeverageLineId(item.id)
-        ? 0
-        : (item.selected_beverages ?? []).reduce(
-            (sum, bev) => sum + sanitizePrice(bev.price) * sanitizeQty(bev.qty),
-            0,
-          );
-      const sub = Math.round((price + extrasTotal + beveragesTotal) * qty);
-      message += `+ ${qty} x ${name.toUpperCase()}\n`;
-      if (typeof item.description === "string" && item.description.trim()) {
-        message += `   (Hacer: ${item.description})\n`;
-      }
-      if (extrasText) message += `   Extras: ${extrasText}\n`;
-      if (beveragesText) message += `   Bebidas: ${beveragesText}\n`;
-      if (typeof item.line_note === "string" && item.line_note.trim()) {
-        message += `   Nota: ${item.line_note.trim()}\n`;
-      }
-      message += `   Subtotal: ${formatCartMoney(sub, currencyCode)}\n`;
-      message += "--------------------------------\n";
-    });
-
-    if ((store.globalExtras ?? []).length > 0) {
-      const gtxt = store.globalExtras.map((ex) => `${ex.qty}x ${ex.name}`).join(", ");
-      message += `\nExtras globales: ${gtxt}\n`;
-    }
-
-    if (store.fulfillment === "delivery" && deliveryFee > 0) {
-      message += `\nEnvio: ${formatCartMoney(deliveryFee, currencyCode)}\n`;
-    }
-    const couponDisc = Math.min(
-      Math.round(cartSubtotal),
-      Math.max(0, Math.round(Number(store.appliedCouponDiscount) || 0)),
-    );
-    if (couponDisc > 0 && store.appliedCouponCode) {
-      message += `\nCupón (${store.appliedCouponCode}): -${formatCartMoney(couponDisc, currencyCode)}\n`;
-    }
-
-    if (taxTotal > 0) {
-      const isInc = parsedDelivery.taxIncluded ?? false;
-      const rateStr = parsedDelivery.taxRate ? ` (${parsedDelivery.taxRate}%)` : "";
-      const incStr = isInc ? " (Incluido)" : " (Adicional)";
-      message += `\nImpuesto${rateStr}${incStr}: ${formatCartMoney(taxTotal, currencyCode)}\n`;
-    }
-
-    if (localTotal != null && localTotal > 0) {
-      const localCode = currencyCode === "USD" ? "VES" : "USD";
-      message += `\n*TOTAL A PAGAR: ${formatCartMoney(grandTotal, currencyCode)} (${formatCartMoney(localTotal, localCode)})*\n`;
-    } else {
-      message += `\n*TOTAL A PAGAR: ${formatCartMoney(grandTotal, currencyCode)}*\n`;
-    }
-
-    message += "================================\n";
-
-    return encodeURIComponent(message);
-  }, [
-    store.cart,
-    store.globalExtras,
-    store.fulfillment,
-    store.appliedCouponCode,
-    store.appliedCouponDiscount,
-    grandTotal,
-    deliveryFee,
-    cartSubtotal,
-    getPrice,
-    taxTotal,
-    localTotal,
-    parsedDelivery,
-    cartCurrency,
-  ]);
-
-  const contextValue = useMemo(
-    () => ({
-      cart: isHydrated && Array.isArray(store.cart) ? store.cart : [],
-      isCartOpen: !!store.isCartOpen,
-      toggleCart: typeof store.toggleCart === "function" ? store.toggleCart : () => {},
-      openCart: typeof store.openCart === "function" ? store.openCart : () => {},
-      closeCart: typeof store.closeCart === "function" ? store.closeCart : () => {},
-      addToCart: typeof store.addToCart === "function" ? store.addToCart : () => {},
-      decreaseQuantity: typeof store.decreaseQuantity === "function" ? store.decreaseQuantity : () => {},
-      removeFromCart: typeof store.removeFromCart === "function" ? store.removeFromCart : () => {},
-      clearCart: typeof store.clearCart === "function" ? store.clearCart : () => {},
-      orderNote: typeof store.orderNote === "string" ? store.orderNote : "",
-      setOrderNote: typeof store.setOrderNote === "function" ? store.setOrderNote : () => {},
-      setLineNote: typeof store.setLineNote === "function" ? store.setLineNote : () => {},
-      cartTotal: isHydrated ? cartTotal : 0,
-      cartSubtotal: isHydrated ? cartSubtotal : 0,
-      grandTotal: isHydrated ? grandTotal : 0,
-      deliveryFee: isHydrated ? deliveryFee : 0,
-      totalItems: isHydrated ? totalItems : 0,
-      taxTotal: isHydrated ? taxTotal : 0,
-      localTotal: isHydrated ? localTotal : null,
-      getPrice,
-      generateWhatsAppMessage,
-      fulfillment: store.fulfillment,
-      setFulfillment: typeof store.setFulfillment === "function" ? store.setFulfillment : () => {},
-      deliveryLine1: store.deliveryLine1,
-      setDeliveryLine1: typeof store.setDeliveryLine1 === "function" ? store.setDeliveryLine1 : () => {},
-      deliveryCommune: store.deliveryCommune,
-      setDeliveryCommune: typeof store.setDeliveryCommune === "function" ? store.setDeliveryCommune : () => {},
-      deliveryRegion: store.deliveryRegion,
-      setDeliveryRegion: typeof store.setDeliveryRegion === "function" ? store.setDeliveryRegion : () => {},
-      deliveryReference: store.deliveryReference,
-      setDeliveryReference: typeof store.setDeliveryReference === "function" ? store.setDeliveryReference : () => {},
-      deliveryLat: store.deliveryLat,
-      deliveryLng: store.deliveryLng,
-      setDeliveryCoords: typeof store.setDeliveryCoords === "function" ? store.setDeliveryCoords : () => {},
-      deliveryNamedAreaId: store.deliveryNamedAreaId,
-      setDeliveryNamedAreaId:
-        typeof store.setDeliveryNamedAreaId === "function" ? store.setDeliveryNamedAreaId : () => {},
-      deliveryKmManual: store.deliveryKmManual,
-      setDeliveryKmManual: typeof store.setDeliveryKmManual === "function" ? store.setDeliveryKmManual : () => {},
-      showDeliveryReference: store.showDeliveryReference,
-      setShowDeliveryReference:
-        typeof store.setShowDeliveryReference === "function" ? store.setShowDeliveryReference : () => {},
-      globalExtras: Array.isArray(store.globalExtras) ? store.globalExtras : [],
-      setGlobalExtras: typeof store.setGlobalExtras === "function" ? store.setGlobalExtras : () => {},
-      deliveryWaivedFree: isHydrated ? quoteResolved.waivedFree : false,
-      deliveryNamedAreaLabel: isHydrated ? quoteResolved.namedLabel : null,
-      deliveryQuoteLoading: isHydrated ? quoteResolved.quoteLoading : false,
-      deliveryQuoteError: isHydrated ? quoteResolved.quoteError : null,
-      isDeliveryOutOfZone: isHydrated ? quoteResolved.outOfZone : false,
-      quotedRouteKm: isHydrated ? quoteResolved.quotedRouteKm : null,
-      extrasEnabledByBranch: branchFeatureFlags.extrasEnabledByBranch,
-      beveragesUpsellEnabledByBranch: branchFeatureFlags.beveragesUpsellEnabledByBranch,
-      deliveryShowNumericFee: isHydrated ? deliveryShowNumericFee : true,
-      deliveryExternalHintText: isHydrated ? deliveryExternalHintText : null,
-      uberQuoteId: isHydrated ? uberQuoteId : null,
-      branchPriceRows,
-      appliedCouponCode: store.appliedCouponCode ?? null,
-      appliedCouponDiscount: isHydrated ? appliedCouponDiscount : 0,
-      setAppliedCoupon: typeof store.setAppliedCoupon === "function" ? store.setAppliedCoupon : () => {},
-      clearAppliedCoupon: typeof store.clearAppliedCoupon === "function" ? store.clearAppliedCoupon : () => {},
-      currency: cartCurrency,
-      country,
-      exchangeRate: isHydrated ? effectiveExchangeRate : null,
-    }),
-    [
-      store,
-      isHydrated,
-      cartTotal,
-      cartSubtotal,
-      appliedCouponDiscount,
-      grandTotal,
-      deliveryFee,
-      totalItems,
-      taxTotal,
-      localTotal,
-      getPrice,
-      generateWhatsAppMessage,
-      quoteResolved,
-      branchFeatureFlags,
-      deliveryShowNumericFee,
-      deliveryExternalHintText,
-      uberQuoteId,
-      branchPriceRows,
-      cartCurrency,
-      country,
-      effectiveExchangeRate,
-    ],
-  );
-
-  return <CartContext.Provider value={contextValue}>{children}</CartContext.Provider>;
+	return <CartContext.Provider value={contextValue}>{children}</CartContext.Provider>;
 }

@@ -1343,3 +1343,30 @@
     transform: none;
   }
 }
+
+/* Badge de cantidad al agregar al carrito: "pop" de confirmación amortiguado,
+   con la curva expo de la casa. Antes vivía en CartFloat.css, así que solo
+   se animaba cuando el botón flotante estaba montado. */
+.animate-pop-in {
+  animation: product-qty-pop-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes product-qty-pop-in {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

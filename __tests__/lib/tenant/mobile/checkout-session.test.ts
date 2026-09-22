@@ -53,6 +53,22 @@ describe("checkout-session", () => {
 		expect(step4.result).toBe("close-cart");
 	});
 
+	it("desde el formulario vuelve a la lista cuando el metodo no tiene pantalla de datos", () => {
+		const presencial = {
+			...DEFAULT_CHECKOUT_SESSION,
+			showPaymentInfo: true,
+			showPaymentMethods: true,
+			showForm: true,
+			paymentMethodKey: "efectivo",
+		};
+		const back = popCartCheckoutStep(presencial, { skipPaymentDetail: true });
+		expect(back.result).toBe("consumed");
+		expect(back.next.showForm).toBe(false);
+		expect(back.next.showPaymentMethods).toBe(true);
+		// Sin metodo elegido el paso intermedio deja de existir: se ve la lista.
+		expect(back.next.paymentMethodKey).toBeNull();
+	});
+
 	it("resetea al resumen al modificar productos", () => {
 		const session = {
 			...DEFAULT_CHECKOUT_SESSION,

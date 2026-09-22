@@ -1,205 +1,155 @@
-/* =========================================
-   7. BOTÓN FLOTANTE DEL CARRITO (PREMIUM - CORREGIDO V2)
-   ========================================= */
+/* =============================================================================
+   Botón flotante del carrito (menús sin barra inferior).
+
+   Un solo objeto: círculo con el ícono que, con puntero, se estira hacia la
+   izquierda para mostrar el total. En táctil no se expande; solo confirma el
+   toque. Colores del tenant vía `--accent-primary` / `--accent-shadow`.
+   ============================================================================= */
+
 .cart-float {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
+	--cart-float-size: 64px;
+	--cart-float-ease: cubic-bezier(0.16, 1, 0.3, 1);
 
-    /* DIMENSIONES INICIALES (CÍRCULO) */
-    height: 64px;
-    width: 64px;
-
-    /* ESTILO VISUAL UNIFICADO (Para que parezca un solo objeto) */
-    background: var(--accent-primary);
-    color: white;
-    border-radius: 50px;
-    /* Radio alto para que siempre sea cápsula */
-    border: none;
-
-    /* SOMBRA ÚNICA (Se estira con el botón) */
-    box-shadow: 0 10px 25px var(--accent-shadow, rgba(255, 78, 80, 0.35)),
-        inset 0 2px 3px rgba(255, 255, 255, 0.2);
-
-    /* LAYOUT INTERNO */
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    /* Alinear a la izquierda para que crezca hacia la izquierda/centro */
-    padding: 0;
-    overflow: hidden;
-    z-index: 1000;
-    cursor: pointer;
-
-    /* TRANSICIÓN FLUIDA DE UN SOLO OBJETO */
-    /* Animamos el ancho, la sombra y la transformación al mismo tiempo */
-    transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-        transform 0.2s ease,
-        box-shadow 0.4s ease;
+	position: fixed;
+	right: 30px;
+	bottom: calc(30px + env(safe-area-inset-bottom));
+	z-index: var(--z-bottom-chrome, 1000);
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	width: var(--cart-float-size);
+	height: var(--cart-float-size);
+	padding: 0;
+	overflow: hidden;
+	border: 0;
+	border-radius: 999px;
+	background: var(--accent-primary, #e63946);
+	color: #fff;
+	cursor: pointer;
+	box-shadow:
+		0 10px 25px var(--accent-shadow, rgba(0, 0, 0, 0.35)),
+		inset 0 1px 0 rgba(255, 255, 255, 0.18);
+	transition:
+		width 320ms var(--cart-float-ease),
+		transform 160ms ease,
+		box-shadow 320ms ease;
+	-webkit-tap-highlight-color: transparent;
 }
 
-/* --- WRAPPER DEL ICONO (LADO IZQUIERDO) --- */
+.cart-float:focus-visible {
+	outline: 2px solid #fff;
+	outline-offset: 3px;
+}
+
 .cart-icon-wrapper {
-    width: 64px;
-    /* Ancho fijo igual a la altura */
-    height: 64px;
-    flex-shrink: 0;
-    /* Evita que el icono se aplaste al animar */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    z-index: 2;
-    /* IMPORTANTE: Sin background ni shadow aquí para evitar el efecto "doble bola" */
+	position: relative;
+	flex-shrink: 0;
+	display: grid;
+	place-items: center;
+	width: var(--cart-float-size);
+	height: var(--cart-float-size);
 }
 
-/* --- BADGE (CONTADOR) --- */
 .cart-float-badge {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    background: white;
-    color: var(--accent-primary);
-    font-weight: 900;
-    font-size: 0.75rem;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    border: 2px solid var(--accent-primary);
+	position: absolute;
+	top: 14px;
+	right: 14px;
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	border-radius: 999px;
+	border: 2px solid var(--accent-primary, #e63946);
+	background: #fff;
+	color: var(--accent-primary, #e63946);
+	font-size: 0.75rem;
+	font-weight: 800;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* --- TEXTO QUE SE EXPANDE (LADO DERECHO) --- */
 .cart-label-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    /* Estado inicial oculto */
-    opacity: 0;
-    transform: translateX(-10px);
-    white-space: nowrap;
-    transition: all 0.3s ease;
-    /* Retraso ligero para que aparezca mientras se abre */
-    transition-delay: 0.05s;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding-right: 20px;
+	white-space: nowrap;
+	opacity: 0;
+	transform: translateX(-10px);
+	transition:
+		opacity 200ms ease 50ms,
+		transform 200ms ease 50ms;
 }
 
 .cart-label-text {
-    font-weight: 700;
-    font-size: 0.95rem;
-    padding-right: 5px;
+	font-size: 0.95rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
 }
 
 .cart-total-prefix {
-    opacity: 0.8;
-    font-weight: 400;
-    margin-right: 4px;
+	margin-right: 4px;
+	font-weight: 400;
+	opacity: 0.8;
 }
 
 .cart-arrow {
-    margin-right: 20px;
-    /* Margen derecho para separar del borde final */
-    opacity: 0.8;
+	opacity: 0.8;
 }
 
-/* --- INTERACCIÓN HOVER (SOLO PC) --- */
 @media (hover: hover) {
-    .cart-float:hover {
-        width: 200px;
-        /* AQUÍ OCURRE LA MAGIA: El contenedor crece */
-        transform: translateY(-5px);
-        /* Se levanta un poco */
-        box-shadow: 0 20px 40px var(--accent-shadow-strong, rgba(255, 78, 80, 0.5));
-        /* La sombra crece con él */
-    }
+	.cart-float:hover {
+		width: 200px;
+		transform: translateY(-4px);
+		box-shadow: 0 20px 40px var(--accent-shadow-strong, rgba(0, 0, 0, 0.5));
+	}
 
-    .cart-float:hover .cart-label-container {
-        opacity: 1;
-        transform: translateX(0);
-    }
-
-    /* Ocultar tooltip viejo si existiera */
-    .cart-float-tooltip {
-        display: none !important;
-    }
+	.cart-float:hover .cart-label-container {
+		opacity: 1;
+		transform: translateX(0);
+	}
 }
 
-/* --- ESTADO MÓVIL (Mantiene forma circular perfecta) --- */
 @media (max-width: 768px) {
-    .cart-float {
-        width: 60px;
-        height: 60px;
-        bottom: 25px;
-        right: 25px;
-        /* En móvil no se expande el ancho, solo efecto pulsación */
-    }
+	.cart-float {
+		--cart-float-size: 60px;
+		right: 25px;
+		bottom: calc(25px + env(safe-area-inset-bottom));
+	}
 
-    .cart-icon-wrapper {
-        width: 60px;
-        height: 60px;
-    }
-
-    .cart-float:active {
-        transform: scale(0.95);
-        box-shadow: 0 5px 15px var(--accent-shadow, rgba(255, 78, 80, 0.35));
-    }
+	.cart-float:active {
+		transform: scale(0.95);
+		box-shadow: 0 5px 15px var(--accent-shadow, rgba(0, 0, 0, 0.35));
+	}
 }
 
-/* --- ANIMACIÓN PULSE (URGENTE) --- */
-/* Se aplica a todo el contenedor para que pulse como una unidad */
-@keyframes singlePulse {
-    0% {
-        box-shadow: 0 0 0 0 var(--accent-shadow-strong, rgba(255, 78, 80, 0.5));
-    }
+/* Tras 10 s sin interacción con productos en el carrito, un pulso suave recuerda el pedido. */
+@keyframes cart-float-pulse {
+	0% {
+		box-shadow: 0 0 0 0 var(--accent-shadow-strong, rgba(230, 57, 70, 0.5));
+	}
 
-    70% {
-        box-shadow: 0 0 0 15px rgba(230, 57, 70, 0);
-    }
+	70% {
+		box-shadow: 0 0 0 15px transparent;
+	}
 
-    100% {
-        box-shadow: 0 0 0 0 rgba(230, 57, 70, 0);
-    }
+	100% {
+		box-shadow: 0 0 0 0 transparent;
+	}
 }
 
-.pulse-urgent {
-    animation: singlePulse 2s infinite;
-}
-
-/**
- * Badge de cantidad al agregar al carrito.
- *
- * Traia easeOutBack (0.175, 0.885, 0.32, 1.275) con rebase a scale(1.1): el
- * unico rebote elastico del menu, contra la curva expo que usa todo lo demas.
- * El rebote se reserva para gestos que traen inercia propia — un lanzamiento,
- * un arrastre — y esto es la confirmacion de un toque, sin inercia que
- * devolver. Se queda el "pop" de confirmacion, ahora amortiguado y con la
- * curva de la casa.
- *
- * Renombrada desde `animate-bounce-in`: el nombre describia un rebote que ya no
- * existe. Consumidor unico en este repo y ningun uso en el repo del Panel.
- */
-.animate-pop-in {
-    animation: popIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes popIn {
-    0% {
-        transform: scale(0.6);
-        opacity: 0;
-    }
-
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
+.cart-float.pulse-urgent {
+	animation: cart-float-pulse 2s infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .animate-pop-in {
-        animation: none;
-        opacity: 1;
-        transform: none;
-    }
+	.cart-float,
+	.cart-label-container {
+		transition: none;
+	}
+
+	.cart-float.pulse-urgent {
+		animation: none;
+	}
 }

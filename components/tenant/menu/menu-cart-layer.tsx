@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { useCartStore } from "../cart/cart-store";
 import { LazyCartFloat, LazyCartModal } from "@/lib/tenant/lazy/tenant-dynamic";
 
@@ -9,6 +9,9 @@ import { resolveMenuCartUiMode } from "@/lib/tenant/menu/menu-helpers";
 import type { BranchInfo } from "./menu-types";
 import { MenuBottomNav } from "./menu-bottom-nav";
 import type { BottomNavTab } from "./menu-types";
+
+/** Un poco más que la animación de salida del panel (180 ms). */
+const CART_EXIT_MS = 220;
 
 type MenuCartLayerProps = {
 	selectedBranch: BranchInfo | null;
@@ -63,6 +66,16 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 	onAccount,
 }: MenuCartLayerProps) {
 	const isCartOpen = useCartStore((state) => state.isCartOpen);
+	// Al cerrar, el panel sigue montado unos ms para animar la salida (Cart.css: [data-closing]).
+	const [cartVisible, setCartVisible] = useState(isCartOpen);
+	if (isCartOpen && !cartVisible) setCartVisible(true);
+	useEffect(() => {
+		if (isCartOpen) return;
+		const timer = window.setTimeout(() => setCartVisible(false), CART_EXIT_MS);
+		return () => window.clearTimeout(timer);
+	}, [isCartOpen]);
+	const cartClosing = cartVisible && !isCartOpen;
+
 	const mode = resolveMenuCartUiMode({
 		hasBranch: Boolean(selectedBranch),
 		onlineOrderingEnabled,
@@ -104,7 +117,7 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 		return (
 			<>
 				{bottomNav}
-				{isCartOpen ? <LazyCartModal {...cartModalProps} /> : null}
+				{cartVisible ? <LazyCartModal {...cartModalProps} closing={cartClosing} /> : null}
 			</>
 		);
 	}
@@ -113,7 +126,7 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 		return (
 			<>
 				<LazyCartFloat currency={effectiveCurrency} />
-				{isCartOpen ? <LazyCartModal {...cartModalProps} /> : null}
+				{cartVisible ? <LazyCartModal {...cartModalProps} closing={cartClosing} /> : null}
 			</>
 		);
 	}

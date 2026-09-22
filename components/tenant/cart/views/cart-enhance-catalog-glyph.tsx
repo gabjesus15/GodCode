@@ -1,40 +1,36 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
+
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
-import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
+import { safeImageSrc } from "../utils/image-src";
 
+/** Miniatura de una bebida o extra del catálogo, con respaldo si la imagen falla o no es válida. */
 export function CartEnhanceCatalogGlyph({
-  imageUrl,
-  fallbackSrc,
+	imageUrl,
+	fallbackSrc,
 }: {
-  imageUrl: string | null | undefined;
-  fallbackSrc: string;
+	imageUrl: string | null | undefined;
+	fallbackSrc: string;
 }) {
-  const resolved = useMemo(() => {
-    const raw = typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null;
-    if (!raw || isCloudinaryImageUrl(raw)) return null;
-    return raw;
-  }, [imageUrl]);
+	const primary = safeImageSrc(imageUrl, fallbackSrc);
+	const [failed, setFailed] = useState(false);
+	const src = failed ? fallbackSrc : primary;
 
-  const primary = resolved ?? fallbackSrc;
-  const [failed, setFailed] = useState(false);
-  const src = failed ? fallbackSrc : primary;
-
-  return (
-    <span className="cart-enhance-tile-glyph cart-enhance-tile-glyph--media" aria-hidden>
-      <Image
-        key={primary}
-        src={src}
-        alt=""
-        width={44}
-        height={44}
-        quality={70}
-        unoptimized={shouldUnoptimizeImageSrc(src)}
-        className="cart-enhance-tile-img"
-        onError={() => setFailed(true)}
-      />
-    </span>
-  );
+	return (
+		<span className="cart-pick__glyph" aria-hidden>
+			<Image
+				key={primary}
+				src={src}
+				alt=""
+				width={44}
+				height={44}
+				quality={70}
+				unoptimized={shouldUnoptimizeImageSrc(src)}
+				className="cart-pick__img"
+				onError={() => setFailed(true)}
+			/>
+		</span>
+	);
 }

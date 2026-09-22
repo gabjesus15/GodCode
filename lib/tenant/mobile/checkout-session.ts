@@ -1,6 +1,11 @@
-import type { CartModalViewState } from "@/components/tenant/cart/cart-modal-types";
-
 export type CheckoutEnhancePanel = "none" | "beverages" | "extras" | "coupon";
+
+/** Qué paso del checkout está a la vista, derivado de la sesión. */
+export type CheckoutStepFlags = {
+	showPaymentInfo: boolean;
+	showPaymentMethods: boolean;
+	showForm: boolean;
+};
 
 export type CheckoutSessionState = {
 	showPaymentInfo: boolean;
@@ -26,7 +31,7 @@ export const DEFAULT_CHECKOUT_SESSION: CheckoutSessionState = {
 
 export function checkoutSessionToViewFlags(
 	session: CheckoutSessionState,
-): Pick<CartModalViewState, "showPaymentInfo" | "showPaymentMethods" | "showForm"> {
+): CheckoutStepFlags {
 	return {
 		showPaymentInfo: session.showPaymentInfo,
 		showPaymentMethods: session.showPaymentMethods,
@@ -51,14 +56,28 @@ export function getCartOverlayHistoryDepth(params: {
 
 export type CartCheckoutPopResult = "consumed" | "close-cart" | "ignored";
 
+export type PopCartCheckoutOptions = {
+	/**
+	 * El método elegido no tiene pantalla de datos que copiar (efectivo, tarjeta):
+	 * al volver desde el formulario se regresa a la lista de métodos y no a una
+	 * pantalla intermedia que el cliente nunca vio.
+	 */
+	skipPaymentDetail?: boolean;
+};
+
 /** Retrocede un paso en el checkout; devuelve si el gesto atrás fue consumido. */
-export function popCartCheckoutStep(session: CheckoutSessionState): {
+export function popCartCheckoutStep(
+	session: CheckoutSessionState,
+	options: PopCartCheckoutOptions = {},
+): {
 	next: CheckoutSessionState;
 	result: CartCheckoutPopResult;
 } {
 	if (session.showForm) {
 		return {
-			next: { ...session, showForm: false },
+			next: options.skipPaymentDetail
+				? { ...session, showForm: false, paymentMethodKey: null }
+				: { ...session, showForm: false },
 			result: "consumed",
 		};
 	}

@@ -177,13 +177,16 @@
       },
       "modal": {
         "common": {
-          "unknown": "Unknown"
+          "unknown": "Unknown",
+          "or": "or"
         },
         "dialog": {
           "currentOrderAria": "Your order"
         },
         "header": {
-          "title": "Your Order"
+          "title": "Your Order",
+          "itemCount": "{count, plural, =1 {1 item} other {# items}}",
+          "account": "My account"
         },
         "branchSelector": {
           "title": "Choose your branch",
@@ -213,16 +216,19 @@
         "notes": {
           "addTab": "Add note",
           "editTab": "Edit note",
-          "label": "Kitchen notes",
           "placeholder": "Ex: No sesame...",
-          "inputAria": "Note for this product"
+          "inputAria": "Note for this product",
+          "done": "Done"
         },
         "summary": {
           "subtotal": "Subtotal",
           "discount": "Discount (coupon)",
           "shipping": "Shipping",
           "free": "Free",
-          "total": "Total"
+          "total": "Total",
+          "tax": "Tax (VAT)",
+          "taxIncluded": "included",
+          "taxAdded": "added"
         },
         "coupon": {
           "segLabel": "Coupon",
@@ -260,13 +266,12 @@
           "chooseAnotherMethod": "Choose another method",
           "cancel": "Cancel",
           "newOrder": "New Order",
-          "backToMenu": "Back to Menu"
+          "backToMenu": "Back to Menu",
+          "backToDelivery": "Back to delivery"
         },
         "delivery": {
           "pickNamedArea": "Choose an area",
           "selectAreaAria": "Select delivery area",
-          "searchUnavailable": "Address service is unavailable. Please try again later.",
-          "addressFoundReviewFee": "Address found. Review the shipping fee.",
           "geoNotAvailable": "Your browser cannot access location. Type your address.",
           "geoNeedsHttps": "Location only works on HTTPS (or localhost). Open the site with https.",
           "searchingLocation": "Searching location...",
@@ -277,34 +282,21 @@
           "noSignal": "No location signal. Type street and district.",
           "timeout": "Timeout reached. Try again or type your address.",
           "cannotReadLocation": "We could not read your location. Type street and district.",
-          "addressFoundReview": "Address found. Review street, district and shipping cost.",
           "addressLabel": "Address",
           "howReceiveOrder": "How would you like to receive your order",
-          "fulfillmentSubtitle": "Choose an option to continue checkout.",
           "pickup": "Pickup",
           "delivery": "Delivery",
           "zoneLabel": "Delivery zone",
-          "writeStreetNumberCommune": "Type street, number and district/city; we will calculate the fee based on the store zones.",
           "useCurrentLocation": "Use current location",
           "preciseShippingHint": "We calculate shipping more precisely.",
-          "fullAddressHint": "Enter your full address (street and number and, if possible, district/city). With that we can quote shipping and coordinate your order on WhatsApp.",
-          "approxHintPrefix": "This suggestion is only area/city level: the map point may be far from your door. Prefer a more specific address option, adjust street or district/city, or use",
-          "useMyLocationStrong": "Use my location",
-          "communeOrCity": "District or city",
-          "communePlaceholder": "Ex: Brooklyn",
           "street": "Street",
-          "streetPlaceholder": "Ex: Main Street",
           "number": "Number",
-          "numberPlaceholder": "Ex: 1432",
-          "searchingAddresses": "Searching addresses...",
-          "addressSuggestionsAria": "Address suggestions",
           "updatingLocationFromStreet": "Updating location from street and number (recalculating shipping)...",
           "driverInstructionsRequired": "Driver instructions (required)",
           "driverInstructionsPlaceholder": "Apartment, buzzer, gate color, references...",
           "driverInstructionsMin": "Minimum {min} characters so the driver can find you.",
           "calculatingShipping": "Calculating shipping...",
           "detectedZone": "Detected zone: {zone}",
-          "approxDistance": "Approx. distance (straight line)",
           "shippingCost": "Shipping cost",
           "outOfZone": "Out of zone",
           "minOrderForDelivery": "Minimum order for delivery is ${amount}.",
@@ -314,9 +306,24 @@
           "needLocationStreetOrKm": "Set your location on the map, type street and number with district/city, or enter km manually to continue.",
           "addDriverInstructionsMin": "Add driver instructions (minimum {min} characters).",
           "locationOutsideArea": "Your location is outside this store's delivery area.",
-          "minAmountForDelivery": "Minimum amount for delivery: ${amount}.",
           "calculatingWithLocation": "Calculating shipping with your location...",
-          "completeDataToContinue": "Complete delivery details to continue."
+          "completeDataToContinue": "Complete delivery details to continue.",
+          "writeStreetNumberArea": "Enter street, number and {area}; we calculate the fee from the store's zones.",
+          "approxHint": "This location is approximate: the map may be far from your door. Adjust the street or use your current location.",
+          "areaLabel": {
+            "commune": "Commune",
+            "municipality": "Municipality or city",
+            "city": "City or neighborhood"
+          },
+          "example": "E.g. {value}",
+          "invalidNamedArea": "The selected zone is no longer available.",
+          "writeAddressInstead": "Type the address",
+          "detectedAddress": "Delivering to",
+          "editAddress": "Edit",
+          "shippingPending": "We work it out from your location",
+          "pickupTitle": "You pick it up at the store",
+          "pickupNoAddress": "We share the address once you confirm the order.",
+          "pickupOpenMap": "Get directions"
         },
         "errors": {
           "noOrdersNow": "Orders are not available right now.",
@@ -326,7 +333,8 @@
           "whatsappNotConfigured": "This business has no WhatsApp number configured.",
           "processOrderTryAgain": "Error processing order. Please try again.",
           "oneProductUnavailableInBranch": "1 item in your cart is not available at this branch.",
-          "productsUnavailableInBranch": "{count} items in your cart are not available at this branch."
+          "productsUnavailableInBranch": "{count} items in your cart are not available at this branch.",
+          "scheduleIs": "Our hours are: {schedule}"
         },
         "validation": {
           "nameShort": "Name is too short",
@@ -335,19 +343,13 @@
           "phoneLong": "Phone is too long",
           "phoneInvalid": "Invalid phone",
           "invalidFile": "Invalid file.",
-          "reviewFields": "Review these fields",
-          "completeCorrectly": "Please complete correctly"
+          "reviewFields": "Review these fields"
         },
         "validationItems": {
           "validName": "valid name",
-          "validRut": "valid RUT",
           "validId": "valid {id}",
-          "validPhone": "full phone (+56 9)",
-          "validPhoneVe": "full phone (+58)",
-          "transferReceipt": "transfer receipt",
-          "name": "name",
-          "phone": "phone",
-          "receipt": "receipt"
+          "validPhone": "full phone number ({prefix})",
+          "transferReceipt": "transfer receipt"
         },
         "catalog": {
           "suggestedDrink": "Suggested drink",
@@ -355,8 +357,9 @@
           "globalExtraDescription": "Global extra for this order",
           "inYourOrder": "In your order",
           "addDrinksOrExtras": "Add drinks or extras to your order",
-          "drinksForOrder": "Drinks for your order",
-          "globalExtrasForOrder": "Global extras for this order"
+          "beveragesTab": "Drinks",
+          "extrasTab": "Extras",
+          "addItemAria": "Add {name}"
         },
         "paymentMethods": {
           "unknown": "Not set",
@@ -400,6 +403,16 @@
             "uploadReceipt": "Upload receipt",
             "imageLoaded": "Image uploaded",
             "uploadCapture": "Upload screenshot"
+          },
+          "amount": "Amount",
+          "copy": "Copy",
+          "copied": "Copied",
+          "copyAll": "Copy all",
+          "copiedAll": "All copied",
+          "hints": {
+            "presential": "Pay at pickup or on delivery",
+            "receipt": "Pay and attach the receipt",
+            "online": "We'll show you the payment details"
           }
         },
         "success": {
@@ -415,7 +428,11 @@
           "pickupAt": "Pickup at",
           "addressUnavailable": "Address unavailable",
           "storeNameFallback": "Store name",
-          "orderNumber": "Order #"
+          "orderNumber": "Order #",
+          "paymentConfirmed": "Payment confirmed and recorded.",
+          "paymentPendingVerification": "Receipt received. The payment is pending verification.",
+          "keepCodesTitle": "Keep these details.",
+          "keepCodesBody": "We'll ask for them at delivery: show them or read them to the courier."
         },
         "empty": {
           "title": "Empty cart",
@@ -425,7 +442,8 @@
           "productFallback": "Product",
           "removeProduct": "Remove product",
           "decreaseQuantity": "Decrease quantity",
-          "increaseQuantity": "Increase quantity"
+          "increaseQuantity": "Increase quantity",
+          "quantityAria": "Quantity"
         },
         "ws": {
           "titlePrefix": "NEW WEB ORDER",
@@ -452,7 +470,21 @@
           "account": "Account",
           "holder": "Holder",
           "bankTransferHint": "When you complete the transfer, attach the receipt to your order.",
-          "note": "Note"
+          "note": "Note",
+          "taxLabel": "Tax (VAT)"
+        },
+        "intake": {
+          "paused": "Orders paused",
+          "pausedFallback": "We're very busy right now. Please try again in a few minutes."
+        },
+        "fulfillment": {
+          "editItems": "Edit",
+          "change": "Change",
+          "deliveryRecapLabel": "Delivery",
+          "paymentRecapLabel": "Payment",
+          "pickupValue": "Pickup at the store",
+          "orderRecapLabel": "Order",
+          "recapAria": "Your order summary"
         }
       }
     }

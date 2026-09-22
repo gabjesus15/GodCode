@@ -1,236 +1,191 @@
 "use client";
 
 import { useState } from "react";
+import clsx from "clsx";
 import { useTranslations } from "next-intl";
 
 import type { ActiveSessionInfo, BranchInfo } from "../cart-modal-types";
+import { resolvePaymentMethodLabel } from "../constants";
+import { useCart } from "../use-cart";
 import {
 	isVenezuelaCountry,
 	resolvePaymentAmountCopyValue,
 	resolvePaymentAmountDisplay,
 } from "../utils/venezuela-payment-copy";
-import { resolvePaymentMethodLabel } from "../constants";
-import { useCart } from "../use-cart";
 
 type TransferenciaBancariaConfig = NonNullable<BranchInfo["transferencia_bancaria"]>;
 type PagoMovilConfig = NonNullable<BranchInfo["pago_movil"]>;
 type ZelleConfig = NonNullable<BranchInfo["zelle"]>;
 
 interface PaymentDetailField {
-  key: string;
-  label: string;
-  value: string;
+	key: string;
+	label: string;
+	value: string;
 }
 
+function copyToClipboard(text: string): void {
+	if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+		navigator.clipboard.writeText(text).catch(() => {});
+	}
+}
+
+/** Datos de cobro del método online elegido, cada uno copiable por separado o todos juntos. */
 export function CartOnlinePaymentDetails({
-  methodKey,
-  cartTotal,
-  activeInfo,
+	methodKey,
+	cartTotal,
+	activeInfo,
 }: {
-  methodKey: string;
-  cartTotal: number;
-  activeInfo: ActiveSessionInfo;
+	methodKey: string;
+	cartTotal: number;
+	activeInfo: ActiveSessionInfo;
 }) {
-  const { currency, exchangeRate, country } = useCart();
-  const t = useTranslations("tenant.cart.modal");
+	const { currency, exchangeRate, country } = useCart();
+	const t = useTranslations("tenant.cart.modal");
+	const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [copiedAll, setCopiedAll] = useState(false);
+	let methodData: unknown = activeInfo[methodKey as keyof ActiveSessionInfo];
+	if (typeof methodData === "string") {
+		try {
+			methodData = JSON.parse(methodData) as unknown;
+		} catch {
+			methodData = null;
+		}
+	}
 
-  let methodData = activeInfo[methodKey as keyof ActiveSessionInfo];
+	const renderEmpty = (message: string) => (
+		<section className="cart-step cart-bank" key={methodKey}>
+			<h3 className="cart-step__title">{t("payment.detailsTitle")}</h3>
+			<p className="cart-hint">{message}</p>
+		</section>
+	);
 
-  if (typeof methodData === "string") {
-    try {
-      methodData = JSON.parse(methodData) as unknown;
-    } catch {
-      methodData = null;
-    }
-  }
+	if (!methodData || typeof methodData !== "object") {
+		return renderEmpty(`${t("payment.noDataConfiguredFor")} ${resolvePaymentMethodLabel(methodKey, t)}.`);
+	}
 
-  const renderEmptyMsg = (msg: string) => {
-    return (
-      <div className="bank-info glass payment-method-bank-card" key={methodKey}>
-        <h4>{t("payment.detailsTitle")}</h4>
-        <p className="bank-empty-msg">{msg}</p>
-      </div>
-    );
-  };
+	if (methodKey === "transferencia_bancaria") {
+		const data = methodData as TransferenciaBancariaConfig;
+		if (!data.banco && !data.nro_cuenta && !data.identificacion) {
+			return renderEmpty(t("payment.noBankData"));
+		}
+	}
+	if (methodKey === "pago_movil") {
+		const data = methodData as PagoMovilConfig;
+		if (!data.telefono || !data.banco) return renderEmpty(t("payment.noMobilePaymentData"));
+	}
+	if (methodKey === "zelle") {
+		const data = methodData as ZelleConfig;
+		if (!data.email) return renderEmpty(t("payment.noZelleData"));
+	}
 
-  if (!methodData || typeof methodData !== "object") {
-    return (
-      <div className="bank-info glass payment-method-bank-card" key={methodKey}>
-        <h4>{t("payment.detailsTitle")}</h4>
-        <p className="bank-empty-msg">
-          {t("payment.noDataConfiguredFor")} {resolvePaymentMethodLabel(methodKey, t)}.
-        </p>
-      </div>
-    );
-  }
+	const labels = {
+		bank: t("payment.configLabels.bank"),
+		accountType: t("payment.configLabels.accountType"),
+		accountNumber: t("payment.configLabels.accountNumber"),
+		document: t("payment.configLabels.document"),
+		holder: t("payment.configLabels.holder"),
+		email: t("payment.configLabels.email"),
+		phone: t("payment.configLabels.phone"),
+		idCard: t("payment.configLabels.idCard"),
+		zelleEmail: t("payment.configLabels.zelleEmail"),
+		connected: t("payment.configLabels.connected"),
+	};
 
-  // Early validation of configurations
-  if (methodKey === "transferencia_bancaria") {
-    const data = methodData as TransferenciaBancariaConfig | null | undefined;
-    if (!data) return renderEmptyMsg(t("payment.noBankData"));
-    const bankName = data.banco;
-    const hasAccount = data.nro_cuenta || data.identificacion;
-    if (!bankName && !hasAccount) return renderEmptyMsg(t("payment.noBankData"));
-  }
+	const fields: PaymentDetailField[] = [];
+	const push = (key: string, label: string, value: unknown) => {
+		if (typeof value === "string" && value.trim()) fields.push({ key, label, value });
+	};
 
-  if (methodKey === "pago_movil") {
-    const data = methodData as PagoMovilConfig | null | undefined;
-    if (!data || !data.telefono || !data.banco) {
-      return renderEmptyMsg(t("payment.noMobilePaymentData"));
-    }
-  }
+	if (methodKey === "transferencia_bancaria") {
+		const data = methodData as TransferenciaBancariaConfig;
+		push("bank", labels.bank, data.banco);
+		push("accountType", labels.accountType, data.tipo_cuenta);
+		push("accountNumber", labels.accountNumber, data.nro_cuenta);
+		push("document", labels.document, data.identificacion);
+		push("holder", labels.holder, data.titular);
+		push("email", labels.email, data.email);
+	} else if (methodKey === "pago_movil") {
+		const data = methodData as PagoMovilConfig;
+		push("bank", labels.bank, data.banco);
+		push("phone", labels.phone, data.telefono);
+		push("idCard", labels.idCard, data.identificacion);
+	} else if (methodKey === "zelle") {
+		const data = methodData as ZelleConfig;
+		push("zelleEmail", labels.zelleEmail, data.email);
+		push("holder", labels.holder, data.name);
+	} else {
+		const genericLabels: Record<string, string> = {
+			email: labels.email,
+			name: labels.holder,
+			banco: labels.bank,
+			telefono: labels.phone,
+			identificacion: labels.document,
+			tipo_cuenta: labels.accountType,
+			nro_cuenta: labels.accountNumber,
+			titular: labels.holder,
+			connected: labels.connected,
+		};
+		Object.entries(methodData as Record<string, unknown>).forEach(([key, value]) => {
+			push(key, genericLabels[key] ?? key.replace(/_/g, " "), value);
+		});
+	}
 
-  if (methodKey === "zelle") {
-    const data = methodData as ZelleConfig | null | undefined;
-    if (!data || !data.email) {
-      return renderEmptyMsg(t("payment.noZelleData"));
-    }
-  }
+	if (fields.length === 0) {
+		return renderEmpty(`${t("payment.followInstructions")} ${resolvePaymentMethodLabel(methodKey, t)}.`);
+	}
 
-  // Parse fields
-  const fields: PaymentDetailField[] = [];
+	const amountArgs = { cartTotal, currency, exchangeRate, country };
+	fields.push({
+		key: "total",
+		label: isVenezuelaCountry(country) || currency === "VES" ? t("payment.amount") : t("summary.total"),
+		value: resolvePaymentAmountDisplay(amountArgs),
+	});
+	const copyValue = (field: PaymentDetailField) =>
+		field.key === "total" ? resolvePaymentAmountCopyValue({ methodKey, ...amountArgs }) : field.value;
 
-  if (methodKey === "transferencia_bancaria") {
-    const data = methodData as TransferenciaBancariaConfig;
-    if (data.banco) fields.push({ key: "bank", label: t("payment.configLabels.bank"), value: data.banco });
-    if (data.tipo_cuenta) fields.push({ key: "accountType", label: t("payment.configLabels.accountType"), value: data.tipo_cuenta });
-    if (data.nro_cuenta) fields.push({ key: "accountNumber", label: t("payment.configLabels.accountNumber"), value: data.nro_cuenta });
-    if (data.identificacion) fields.push({ key: "document", label: t("payment.configLabels.document"), value: data.identificacion });
-    if (data.titular) fields.push({ key: "holder", label: t("payment.configLabels.holder"), value: data.titular });
-    if (data.email) fields.push({ key: "email", label: t("payment.configLabels.email"), value: data.email });
-  } else if (methodKey === "pago_movil") {
-    const data = methodData as PagoMovilConfig;
-    if (data.banco) fields.push({ key: "bank", label: t("payment.configLabels.bank"), value: data.banco });
-    if (data.telefono) fields.push({ key: "phone", label: t("payment.configLabels.phone"), value: data.telefono });
-    if (data.identificacion) fields.push({ key: "idCard", label: t("payment.configLabels.idCard"), value: data.identificacion });
-  } else if (methodKey === "zelle") {
-    const data = methodData as ZelleConfig;
-    if (data.email) fields.push({ key: "zelleEmail", label: t("payment.configLabels.zelleEmail"), value: data.email });
-    if (data.name) fields.push({ key: "holder", label: t("payment.configLabels.holder"), value: data.name });
-  } else {
-    const CART_CONFIG_LABELS: Record<string, string> = {
-      email: t("payment.configLabels.email"),
-      name: t("payment.configLabels.holder"),
-      banco: t("payment.configLabels.bank"),
-      telefono: t("payment.configLabels.phone"),
-      identificacion: t("payment.configLabels.document"),
-      tipo_cuenta: t("payment.configLabels.accountType"),
-      nro_cuenta: t("payment.configLabels.accountNumber"),
-      titular: t("payment.configLabels.holder"),
-      connected: t("payment.configLabels.connected"),
-    };
-    Object.entries(methodData as Record<string, unknown>).forEach(([k, v]) => {
-      if (v && typeof v === "string") {
-        fields.push({
-          key: k,
-          label: CART_CONFIG_LABELS[k] ?? k.replace(/_/g, " "),
-          value: v,
-        });
-      }
-    });
-  }
+	const flash = (key: string) => {
+		setCopiedKey(key);
+		window.setTimeout(() => setCopiedKey((current) => (current === key ? null : current)), 2000);
+	};
 
-  if (fields.length === 0) {
-    return (
-      <div className="bank-info glass payment-method-bank-card" key={methodKey}>
-        <h4>{t("payment.detailsTitle")}</h4>
-        <p className="bank-empty-msg">
-          {t("payment.followInstructions")} {resolvePaymentMethodLabel(methodKey, t)}.
-        </p>
-      </div>
-    );
-  }
-
-  // Calculate and format the total (display vs copy may differ in Venezuela)
-  const displayTotalValue = resolvePaymentAmountDisplay({
-    cartTotal,
-    currency,
-    exchangeRate,
-    country,
-  });
-  const copyTotalValue = resolvePaymentAmountCopyValue({
-    methodKey,
-    cartTotal,
-    currency,
-    exchangeRate,
-    country,
-  });
-
-  const totalLabel = isVenezuelaCountry(country) || currency === "VES"
-    ? "Monto"
-    : (t("summary.total") || "Total");
-
-  fields.push({
-    key: "total",
-    label: totalLabel,
-    value: displayTotalValue,
-  });
-
-  const resolveCopyValue = (field: PaymentDetailField) =>
-    field.key === "total" ? copyTotalValue : field.value;
-
-  const handleCopy = (field: PaymentDetailField) => {
-    const text = resolveCopyValue(field);
-    navigator.clipboard.writeText(text);
-    setCopiedKey(field.key);
-    setTimeout(() => {
-      setCopiedKey(null);
-    }, 2000);
-  };
-
-  const handleCopyAll = () => {
-    const textToCopy = fields
-      .map((f) => `${f.label}: ${resolveCopyValue(f)}`)
-      .join("\n");
-    navigator.clipboard.writeText(textToCopy);
-    setCopiedAll(true);
-    setTimeout(() => {
-      setCopiedAll(false);
-    }, 2000);
-  };
-
-  return (
-    <div className="bank-info glass payment-method-bank-card" key={methodKey}>
-      <h4>{t("payment.detailsTitle")}</h4>
-      <ul className="bank-details-list">
-        {fields.map((field) => {
-          const isCopied = copiedKey === field.key;
-          return (
-            <li
-              key={field.key}
-              className="copy-row"
-              onClick={() => handleCopy(field)}
-            >
-              <div className="copy-row-info">
-                <span className="copy-row-label">{field.label}</span>
-                <span className="copy-row-value-text">{field.value}</span>
-              </div>
-              <button
-                type="button"
-                className={`copy-row-btn ${isCopied ? "copied" : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCopy(field);
-                }}
-              >
-                {isCopied ? "¡Copiado!" : "Copiar"}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      <div className="copy-all-container">
-        <button
-          type="button"
-          className="copy-all-btn"
-          onClick={handleCopyAll}
-        >
-          {copiedAll ? "¡Copiados!" : "Copiar todos"}
-        </button>
-      </div>
-    </div>
-  );
+	return (
+		<section className="cart-step cart-bank" key={methodKey}>
+			<h3 className="cart-step__title">{t("payment.detailsTitle")}</h3>
+			<ul className="cart-copy-list">
+				{fields.map((field) => {
+					const copied = copiedKey === field.key;
+					return (
+						<li key={field.key}>
+							<button
+								type="button"
+								className={clsx("cart-copy-row", copied && "is-copied")}
+								onClick={() => {
+									copyToClipboard(copyValue(field));
+									flash(field.key);
+								}}
+							>
+								<span className="cart-copy-row__text">
+									<span className="cart-copy-row__label">{field.label}</span>
+									<span className="cart-copy-row__value">{field.value}</span>
+								</span>
+								<span className="cart-copy-row__action">
+									{copied ? t("payment.copied") : t("payment.copy")}
+								</span>
+							</button>
+						</li>
+					);
+				})}
+			</ul>
+			<button
+				type="button"
+				className={clsx("cart-secondary-btn", copiedKey === "__all" && "is-copied")}
+				onClick={() => {
+					copyToClipboard(fields.map((field) => `${field.label}: ${copyValue(field)}`).join("\n"));
+					flash("__all");
+				}}
+			>
+				{copiedKey === "__all" ? t("payment.copiedAll") : t("payment.copyAll")}
+			</button>
+		</section>
+	);
 }
