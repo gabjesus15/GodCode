@@ -10,8 +10,8 @@ import type { StoreThemeConfig } from "../shared/customer-account-types";
 
 /* Mismos valores que el cromo del menú (Menu.css, `--menu-chrome*`). */
 const CHROME = {
-	dark: { base: "#0a0a0a", glass: "rgba(12, 12, 14, 0.82)", ink: "#f5f5f7", line: "rgba(255, 255, 255, 0.08)" },
-	light: { base: "#fffdfa", glass: "rgba(255, 253, 250, 0.86)", ink: "#1d1d1f", line: "rgba(0, 0, 0, 0.08)" },
+	dark: { base: "#0c0c0e", glass: "rgba(21, 21, 24, 0.84)", ink: "#f7f6f4", line: "rgba(255, 255, 255, 0.1)" },
+	light: { base: "#f0f0f0", glass: "rgba(250, 250, 250, 0.9)", ink: "#1b1b1b", line: "rgba(0, 0, 0, 0.12)" },
 } as const;
 
 /** Con qué color se pinta el nombre según lo elegido: primario, hover o uno propio. */

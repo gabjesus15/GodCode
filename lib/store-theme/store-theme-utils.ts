@@ -169,7 +169,7 @@ export function buildStoreThemeChecklist(draft: StoreThemeConfig | null): ThemeC
   const discountContrast = contrastRatio(draft.discountColor, draft.backgroundColor);
   // El nombre va sobre el cromo del header, que sigue al modo elegido (o al fondo).
   const chromeBg =
-    draft.surfaceScheme === "light" ? "#fffdfa" : draft.surfaceScheme === "dark" ? "#0c0c0e" : draft.backgroundColor;
+    draft.surfaceScheme === "light" ? "#fafafa" : draft.surfaceScheme === "dark" ? "#151518" : draft.backgroundColor;
   const brandNameHex = draft.brandNameColor === "hover" ? draft.hoverColor : draft.brandNameColor;
   const brandNameContrast = brandNameHex ? contrastRatio(brandNameHex, chromeBg) : null;
   return [

@@ -127,7 +127,7 @@
 .tenant-theme-vars[data-scheme="light"][data-scheme-mode="manual"] .tenant-shell-root {
   background:
     linear-gradient(var(--bg-primary, transparent), var(--bg-primary, transparent)),
-    var(--menu-canvas, #fffdfa);
+    var(--menu-canvas, #f0f0f0);
 }
 
 /* Espejo del oscuro: allí la imagen se hunde hacia el negro (brillo 0.46) y

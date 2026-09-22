@@ -74,46 +74,43 @@
 
 .tenant-theme-vars[data-scheme="light"] {
     color-scheme: light;
-    --menu-canvas: #fffdfa;
-    /* Cromo en gris cálido muy claro, no blanco: así se distingue de las
-       tarjetas (blanco puro) y no se funde con una página clara. */
-    --menu-chrome: #f3f0eb;
-    --menu-chrome-glass: rgba(243, 240, 235, 0.9);
-    /* Tarjeta blanca pura para separarse del cromo y de la página; el
-       interior, gris neutro cálido. */
+    /* Paleta clara neutra (el cliente eligió el gris #f0f0f0 de página):
+       página gris claro < cromo casi blanco < tarjeta blanco puro. */
+    --menu-canvas: #f0f0f0;
+    --menu-chrome: #fafafa;
+    --menu-chrome-glass: rgba(250, 250, 250, 0.9);
     --menu-surface: #ffffff;
-    --menu-surface-2: #f1eee9;
-    /* Marfil muy suave, no blanco: un producto claro sobre blanco puro
+    --menu-surface-2: #f0f0f0;
+    /* Gris muy suave, no blanco: un producto claro sobre blanco puro
        desaparece; abajo se funde con la tarjeta. */
-    --menu-media-top: #f1efea;
-    --menu-media-bottom: #faf9f7;
+    --menu-media-top: #ececec;
+    --menu-media-bottom: #f8f8f8;
     --menu-media-glow: rgba(255, 255, 255, 0.85);
     --menu-surface-glass: rgba(255, 255, 255, 0.9);
-    --menu-line: rgba(31, 27, 22, 0.16);
-    --menu-line-strong: rgba(31, 27, 22, 0.3);
-    --menu-fg: #1a1714;
+    --menu-line: rgba(0, 0, 0, 0.12);
+    --menu-line-strong: rgba(0, 0, 0, 0.26);
+    --menu-fg: #1b1b1b;
     /* Texto secundario más firme que en oscuro: sobre blanco, un 68% de tinta
        se quedaba en gris pálido (descripciones, categorías inactivas). */
-    --menu-fg-2: rgba(26, 23, 20, 0.8);
-    --menu-fg-3: rgba(26, 23, 20, 0.64);
+    --menu-fg-2: rgba(27, 27, 27, 0.8);
+    --menu-fg-3: rgba(27, 27, 27, 0.64);
     --menu-ok: #1e7f47;
     --menu-accent-ink: color-mix(in srgb, var(--menu-accent) 82%, var(--menu-fg));
     --menu-accent-soft: color-mix(in srgb, var(--menu-accent) 10%, transparent);
-    /* En claro la sombra es tinta cálida muy diluida: define el canto sin
-       ensuciar. Una sombra negra fuerte sobre marfil se ve "sucia". */
+    /* En claro la sombra es negro muy diluido: define el canto sin ensuciar. */
     --menu-shadow-chip:
-        0 1px 2px rgba(31, 27, 22, 0.08),
-        0 4px 10px -4px rgba(31, 27, 22, 0.2);
+        0 1px 2px rgba(0, 0, 0, 0.07),
+        0 4px 10px -4px rgba(0, 0, 0, 0.18);
     --menu-shadow-card:
-        0 1px 2px rgba(31, 27, 22, 0.05),
-        0 8px 20px -10px rgba(31, 27, 22, 0.16);
+        0 1px 2px rgba(0, 0, 0, 0.05),
+        0 8px 20px -10px rgba(0, 0, 0, 0.16);
     --menu-shadow-card-hover:
-        0 2px 4px rgba(31, 27, 22, 0.06),
-        0 18px 36px -14px rgba(31, 27, 22, 0.26);
-    --menu-shadow-header: 0 10px 24px -16px rgba(31, 27, 22, 0.24);
+        0 2px 4px rgba(0, 0, 0, 0.06),
+        0 18px 36px -14px rgba(0, 0, 0, 0.24);
+    --menu-shadow-header: 0 10px 24px -16px rgba(0, 0, 0, 0.22);
     --menu-shadow-chrome:
-        0 1px 2px rgba(31, 27, 22, 0.06),
-        0 12px 28px -8px rgba(31, 27, 22, 0.22);
+        0 1px 2px rgba(0, 0, 0, 0.06),
+        0 12px 28px -8px rgba(0, 0, 0, 0.2);
 }
 :root {
     --menu-header-height: 130px;
@@ -995,7 +992,7 @@ html, body {
 }
 
 .tenant-theme-vars[data-scheme="light"] .icon-list-card-name {
-    color: rgba(26, 23, 20, 0.9);
+    color: rgba(27, 27, 27, 0.9);
 }
 
 .tenant-theme-vars[data-scheme="light"] .icon-list-card-initial {

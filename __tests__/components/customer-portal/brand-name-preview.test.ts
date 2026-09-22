@@ -36,8 +36,8 @@ describe("vista previa del nombre del local", () => {
 	});
 
 	it("el modo claro elegido a mano manda sobre un fondo oscuro", () => {
-		expect(render(base)).toContain("rgba(12, 12, 14, 0.82)");
-		expect(render({ ...base, surfaceScheme: "light" })).toContain("rgba(255, 253, 250, 0.86)");
+		expect(render(base)).toContain("rgba(21, 21, 24, 0.84)");
+		expect(render({ ...base, surfaceScheme: "light" })).toContain("rgba(250, 250, 250, 0.9)");
 	});
 
 	it("sin nombre ni logo enseña un marcador y la inicial", () => {

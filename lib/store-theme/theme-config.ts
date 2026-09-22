@@ -61,8 +61,8 @@ export function normalizeBackgroundMode(value: unknown): BackgroundMode {
 /** Paleta del fondo sólido: del blanco al negro, sin tinte. */
 export const SOLID_BACKGROUND_PRESETS = [
   { id: "blanco", label: "Blanco", hex: "#ffffff" },
-  { id: "marfil", label: "Marfil", hex: "#f6f4f0" },
-  { id: "niebla", label: "Niebla", hex: "#e9e7e3" },
+  { id: "claro", label: "Gris claro", hex: "#f0f0f0" },
+  { id: "niebla", label: "Niebla", hex: "#e2e2e2" },
   { id: "piedra", label: "Piedra", hex: "#77777b" },
   { id: "grafito", label: "Grafito", hex: "#2b2b30" },
   { id: "carbon", label: "Carbón", hex: "#161618" },
