@@ -255,20 +255,52 @@
 	background: var(--menu-surface-2);
 }
 
-/* Tarjeta estrecha (dos columnas en teléfono): el mismo control, más compacto. */
+/* Cuántos hay en el pedido, sobre la foto: solo se ve en tarjeta estrecha. */
+.gcard .gcard__qty.tenant-ui-badge {
+	display: none;
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	z-index: 2;
+	min-width: 24px;
+	height: 24px;
+	padding: 0 7px;
+	border: 0;
+	border-radius: 999px;
+	background: var(--menu-fg);
+	color: var(--menu-surface);
+	font-size: 0.75rem;
+	font-weight: 700;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Tarjeta estrecha (dos columnas en teléfono): el pie no tiene sitio para
+   "− 1 +" junto al precio, así que el control se reduce a "+" (solo agrega,
+   como antes) y la cantidad pasa a la esquina de la foto. Quitar se hace en el
+   carrito. Así precio y botón siempre comparten línea y la tarjeta no se parte. */
 @container (max-width: 240px) {
+	.gcard .gcard__qty.tenant-ui-badge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
 	.gcard__stepper {
-		height: 34px;
+		height: 40px;
+		padding: 0;
+		border: 0;
+		background: none;
 	}
 
-	.gcard__step {
-		width: 28px;
-		height: 28px;
-	}
-
+	.gcard__step:not(.gcard__step--plus),
 	.gcard__count {
-		min-width: 16px;
-		font-size: 0.875rem;
+		display: none;
+	}
+
+	.gcard__step--plus {
+		width: 40px;
+		height: 40px;
+		box-shadow: 0 4px 12px var(--accent-shadow, rgba(0, 0, 0, 0.3));
 	}
 }
 
@@ -334,7 +366,8 @@
 /* --- Menú sin pedidos online: solo carta ------------------------------------- */
 
 .online-ordering-disabled .gcard__add,
-.online-ordering-disabled .gcard__stepper {
+.online-ordering-disabled .gcard__stepper,
+.online-ordering-disabled .gcard__qty {
 	display: none;
 }
 

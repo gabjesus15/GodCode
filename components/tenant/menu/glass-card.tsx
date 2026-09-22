@@ -9,6 +9,7 @@ import {
 	PRODUCT_IMAGE_SIZES,
 	ProductCardImage,
 	ProductOfferBadges,
+	ProductQtyBadge,
 	useProductPricing,
 	type ProductCardLogic,
 	type ProductCardProduct,
@@ -87,6 +88,9 @@ export const GlassCard = memo(function GlassCard({
 					onError={logic.setImageError}
 				/>
 				<ProductOfferBadges product={product} />
+				{/* Solo en tarjeta estrecha (ver CSS): ahí el pie muestra solo el "+" y la
+				    cantidad va sobre la foto; quitar se hace desde el carrito. */}
+				<ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="gcard__qty animate-pop-in" />
 			</div>
 			<div className="gcard__body">
 				<h3 className="gcard__name">{name}</h3>
