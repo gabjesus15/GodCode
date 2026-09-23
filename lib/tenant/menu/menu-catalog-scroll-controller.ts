@@ -1,4 +1,8 @@
 export type MenuCatalogScrollController = {
 	isVirtualized: boolean;
-	scrollToSection: (sectionId: string, behavior?: ScrollBehavior) => void;
+	/**
+	 * Desplaza hasta la sección y llama a `onSettled` cuando el scroll terminó
+	 * de verdad (con correcciones incluidas). Devuelve cómo cancelarlo.
+	 */
+	scrollToSection: (sectionId: string, behavior?: ScrollBehavior, onSettled?: () => void) => () => void;
 };

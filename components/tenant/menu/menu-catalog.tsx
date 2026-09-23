@@ -11,8 +11,9 @@ import { useMenuPerfProfile } from "@/lib/tenant/menu/menu-perf-context";
 import { collectCatalogProductIdsInRenderOrder } from "@/lib/tenant/menu/collect-catalog-product-ids";
 import { countVisibleCatalogProducts, shouldVirtualizeMenuCatalog } from "@/lib/tenant/menu/menu-catalog-virtualization";
 import type { MenuCatalogScrollController } from "@/lib/tenant/menu/menu-catalog-scroll-controller";
-import { resolveCategoryScrollBehavior } from "@/lib/tenant/menu/menu-scroll";
+import { resolveCategoryScrollBehavior, scrollSectionIntoViewSettled } from "@/lib/tenant/menu/menu-scroll";
 import { ProductGrid } from "./product-grid";
+import { useCardIntrinsicHeight } from "./use-card-intrinsic-height";
 import { VirtualizedMenuCatalog } from "./virtualized-menu-catalog";
 import type { MenuCategory, MenuProduct } from "./menu-types";
 
@@ -65,6 +66,7 @@ export const MenuCatalog = memo(function MenuCatalog({
 }: MenuCatalogProps) {
 	const t = useTranslations("tenant.menu");
 	const { priorityImageMax } = useMenuPerfProfile();
+	useCardIntrinsicHeight(`${cardStyle}:${visibleCategories.length}:${query ? "q" : ""}`);
 
 	const priorityProductIds = useMemo(() => {
 		const orderedIds = collectCatalogProductIdsInRenderOrder({
@@ -117,12 +119,13 @@ export const MenuCatalog = memo(function MenuCatalog({
 
 		catalogScrollRef.current = {
 			isVirtualized: false,
-			scrollToSection(sectionId: string, behavior?: ScrollBehavior) {
+			scrollToSection(sectionId: string, behavior?: ScrollBehavior, onSettled?: () => void) {
 				const element = document.getElementById(`section-${sectionId}`);
-				element?.scrollIntoView({
-					behavior: behavior ?? resolveCategoryScrollBehavior(),
-					block: "start",
-				});
+				if (!element) {
+					onSettled?.();
+					return () => {};
+				}
+				return scrollSectionIntoViewSettled(element, behavior ?? resolveCategoryScrollBehavior(), onSettled);
 			},
 		};
 

@@ -83,8 +83,6 @@ export const GlassCard = memo(function GlassCard({
 					alt={name}
 					priority={priority}
 					sizes={PRODUCT_IMAGE_SIZES.grid}
-					loaded={logic.imageLoaded}
-					onLoaded={logic.setImageLoaded}
 					onError={logic.setImageError}
 				/>
 				<ProductOfferBadges product={product} />

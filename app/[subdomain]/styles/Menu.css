@@ -194,8 +194,10 @@
     margin-bottom: 8px;
     position: relative;
     scroll-margin-top: calc(var(--menu-header-measured, var(--menu-header-height)) + 12px + env(safe-area-inset-top));
-    content-visibility: auto;
-    contain-intrinsic-size: auto 520px;
+    /* Sin content-visibility aquí: en la sección entera, al entrar en pantalla
+       el navegador estilaba y maquetaba todas sus tarjetas en un solo frame
+       (40-90 ms en un móvil medio) y la altura estimada movía el scroll. Ya lo
+       llevan las tarjetas, que reparten ese trabajo de una en una. */
 }
 
 /* Título de sección con una marca vertical en el color del local. La marca

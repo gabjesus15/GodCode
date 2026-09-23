@@ -65,13 +65,29 @@ export function useMenuCategoryScroll({
 		if (navigationMode === "pagination") return;
 
 		const behavior = resolveCategoryScrollBehavior();
-		blockScrollSpy(behavior);
 
 		const controller = catalogScrollRef.current;
 		if (controller) {
-			controller.scrollToSection(id, behavior);
+			// El scroll-spy queda quieto hasta que el desplazamiento termina de verdad
+			// (correcciones incluidas): si se soltaba antes, la tira pasaba por las
+			// categorías intermedias mientras la página volaba hacia la elegida.
+			releaseSpyRef.current?.();
+			observerBlockRef.current = true;
+			const safety = window.setTimeout(() => {
+				observerBlockRef.current = false;
+			}, 6000);
+			const cancelScroll = controller.scrollToSection(id, behavior, () => {
+				window.clearTimeout(safety);
+				observerBlockRef.current = false;
+			});
+			releaseSpyRef.current = () => {
+				window.clearTimeout(safety);
+				cancelScroll();
+			};
 			return;
 		}
+
+		blockScrollSpy(behavior);
 
 		const element = document.getElementById(`section-${id}`);
 		if (element) {
@@ -89,10 +105,19 @@ export function useMenuCategoryScroll({
 		if (query || navigationMode === "pagination" || useVirtualizedCatalog) return;
 
 		let rafId = 0;
+		// Secciones y línea del navbar se leen una vez (y al redimensionar), no en
+		// cada frame: querySelectorAll + getComputedStyle por frame costaban.
+		let sections: HTMLElement[] = [];
+		let anchorPx = 0;
+		const measure = () => {
+			sections = Array.from(document.querySelectorAll<HTMLElement>(".category-section"));
+			anchorPx = getMenuScrollAnchorPx();
+		};
 
 		const resolveActiveSection = () => {
 			if (observerBlockRef.current) return;
-			const id = resolveActiveSectionIdFromDom(getMenuScrollAnchorPx());
+			if (sections.length === 0 || !sections[0].isConnected) measure();
+			const id = resolveActiveSectionIdFromDom(anchorPx, sections);
 			if (id && id !== activeCategoryRef.current) {
 				setActiveCategory(id);
 			}
@@ -103,12 +128,15 @@ export function useMenuCategoryScroll({
 			rafId = requestAnimationFrame(resolveActiveSection);
 		};
 
+		measure();
 		window.addEventListener("scroll", onScroll, { passive: true });
+		window.addEventListener("resize", measure);
 		resolveActiveSection();
 
 		return () => {
 			cancelAnimationFrame(rafId);
 			window.removeEventListener("scroll", onScroll);
+			window.removeEventListener("resize", measure);
 		};
 	}, [navigationMode, query, setActiveCategory, useVirtualizedCatalog, visibleCategoryIds]);
 

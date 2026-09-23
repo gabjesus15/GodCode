@@ -585,7 +585,9 @@
 .product-card,
 [class*="product-layout-"] {
   content-visibility: auto;
-  contain-intrinsic-size: auto 280px;
+  /* La variable la fija useCardIntrinsicHeight con el alto real de una tarjeta
+     pintada: así las omitidas miden lo mismo y los saltos aterrizan justos. */
+  contain-intrinsic-size: auto var(--menu-card-intrinsic-h, 280px);
 }
 
 /* Móvil: sin desenfoque en los layouts que lo llevan. La Cristal lo resuelve en GlassCard.css. */

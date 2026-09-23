@@ -20,6 +20,47 @@ function currentCategoryProps(isActive: boolean) {
 	return isActive ? ({ "aria-current": "true" } as const) : null;
 }
 
+/**
+ * Una categoría de la tira. memo(): al cambiar la activa solo se re-renderizan
+ * la que se apaga y la que se enciende, no la tira entera con sus imágenes.
+ */
+const IconListCard = memo(function IconListCard({
+	category: cat,
+	isActive,
+	onCategoryClick,
+}: {
+	category: CategoryListItem;
+	isActive: boolean;
+	onCategoryClick: (id: string) => void;
+}) {
+	return (
+		<button
+			type="button"
+			onClick={() => onCategoryClick(cat.id)}
+			{...currentCategoryProps(isActive)}
+			className={`icon-list-card ${isActive ? "active" : ""}`}
+		>
+			<div className="icon-list-card-image-wrapper">
+				{cat.icon ? (
+					<Image
+						src={cat.icon}
+						className="icon-list-card-image"
+						alt=""
+						width={108}
+						height={108}
+						quality={85}
+						sizes="(max-width: 600px) 88px, 108px"
+						unoptimized={shouldUnoptimizeImageSrc(cat.icon)}
+					/>
+				) : (
+					<span className="icon-list-card-initial">{cat.name.charAt(0).toUpperCase()}</span>
+				)}
+			</div>
+			<span className="icon-list-card-name" title={cat.name}>{cat.name}</span>
+		</button>
+	);
+});
+
 export const IconListCategories = memo(function IconListCategories({
 	categories,
 	activeCategory,
@@ -71,31 +112,12 @@ export const IconListCategories = memo(function IconListCategories({
 		<nav ref={navRef} className={`icon-list-categories ${fadeClass}`} aria-label={t("nav.categories")}>
 			<div className="icon-list-container">
 				{categories.map((cat) => (
-					<button
+					<IconListCard
 						key={cat.id}
-						type="button"
-						onClick={() => onCategoryClick(cat.id)}
-						{...currentCategoryProps(activeCategory === cat.id)}
-						className={`icon-list-card ${activeCategory === cat.id ? "active" : ""}`}
-					>
-						<div className="icon-list-card-image-wrapper">
-							{cat.icon ? (
-								<Image
-									src={cat.icon}
-									className="icon-list-card-image"
-									alt=""
-									width={108}
-									height={108}
-									quality={85}
-									sizes="(max-width: 600px) 88px, 108px"
-									unoptimized={shouldUnoptimizeImageSrc(cat.icon)}
-								/>
-							) : (
-								<span className="icon-list-card-initial">{cat.name.charAt(0).toUpperCase()}</span>
-							)}
-						</div>
-						<span className="icon-list-card-name" title={cat.name}>{cat.name}</span>
-					</button>
+						category={cat}
+						isActive={activeCategory === cat.id}
+						onCategoryClick={onCategoryClick}
+					/>
 				))}
 			</div>
 		</nav>

@@ -54,6 +54,10 @@
 .product-card-media__img.is-loaded {
   opacity: 1;
 }
+/* Modo libre de ProductCardImage: la carga se marca en el contenedor, sin render. */
+.product-card-media[data-loaded] > .product-card-media__skeleton {
+  display: none;
+}
 
 /* Image zoom on hover — applied globally to all layouts */
 [class*="product-layout-"] .detailed-image-container,
@@ -66,7 +70,8 @@
   overflow: hidden;
 }
 
-[class*="product-layout-"]:hover .product-card-media__img.is-loaded {
+[class*="product-layout-"]:hover .product-card-media__img.is-loaded,
+[class*="product-layout-"]:hover .product-card-media[data-loaded] > .product-card-media__img {
   transform: scale(1.05);
 }
 .product-layout-clean.card:hover .clean-img {
@@ -1390,7 +1395,8 @@
   .product-card-media__img {
     transition: opacity 0.15s ease !important;
   }
-  [class*="product-layout-"]:hover .product-card-media__img.is-loaded {
+  [class*="product-layout-"]:hover .product-card-media__img.is-loaded,
+  [class*="product-layout-"]:hover .product-card-media[data-loaded] > .product-card-media__img {
     transform: none !important;
   }
 }

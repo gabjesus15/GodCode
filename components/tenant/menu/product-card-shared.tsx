@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import { ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -134,21 +134,40 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
   const showUSD = country === "VE" || country === "Venezuela";
   const currencyCode = showUSD ? "USD" : undefined;
 
-  return {
-    quantity,
-    hydrated,
-    imageLoaded,
-    setImageLoaded,
-    imageError,
-    setImageError,
-    imageSrc,
-    imageIdentity,
-    handleAdd,
-    handleDecrease,
-    showUSD,
-    getPrice,
-    currencyCode,
-  };
+  // Mismo objeto mientras nada cambie: las tarjetas son memo() y reciben `logic`
+  // como prop; un objeto nuevo en cada render las re-renderizaba todas a la vez.
+  return useMemo(
+    () => ({
+      quantity,
+      hydrated,
+      imageLoaded,
+      setImageLoaded,
+      imageError,
+      setImageError,
+      imageSrc,
+      imageIdentity,
+      handleAdd,
+      handleDecrease,
+      showUSD,
+      getPrice,
+      currencyCode,
+    }),
+    [
+      quantity,
+      hydrated,
+      imageLoaded,
+      setImageLoaded,
+      imageError,
+      setImageError,
+      imageSrc,
+      imageIdentity,
+      handleAdd,
+      handleDecrease,
+      showUSD,
+      getPrice,
+      currencyCode,
+    ],
+  );
 }
 
 export type ProductCardLogic = ReturnType<typeof useProductCardLogic>;
@@ -199,8 +218,13 @@ type ProductCardImageProps = {
   sizes?: string;
   className?: string;
   imageClassName?: string;
-  loaded: boolean;
-  onLoaded: () => void;
+  /**
+   * Opcional: sin él la imagen lleva su propio estado de carga y, al llegar la
+   * foto, solo se re-renderiza ella (no la tarjeta entera). Con scroll rápido
+   * llegan decenas juntas y re-renderizar cada tarjeta daba tirones.
+   */
+  loaded?: boolean;
+  onLoaded?: () => void;
   onError: () => void;
   objectFit?: "cover" | "contain";
   objectPosition?: string;
@@ -219,26 +243,35 @@ export const ProductCardImage = React.memo(function ProductCardImage({
   objectFit = "cover",
   objectPosition = "center",
 }: ProductCardImageProps) {
+  const mediaRef = useRef<HTMLDivElement>(null);
+  const controlled = loaded !== undefined;
+
   // `onLoaded`/`onError` ya vienen memoizados por identidad de imagen desde
-  // useProductCardLogic: no hace falta esconderlos en refs.
+  // useProductCardLogic: no hace falta esconderlos en refs. Sin `loaded` (modo
+  // libre) no hay estado de React: marcar el contenedor basta para que el CSS
+  // quite el esqueleto, y llegar la foto no cuesta ningún render.
   const markLoaded = useCallback(() => {
-    onLoaded();
+    mediaRef.current?.setAttribute("data-loaded", "");
+    onLoaded?.();
   }, [onLoaded]);
 
   // Timeout de seguridad: si el evento no llega (Safari + lazy), quitar skeleton.
   useEffect(() => {
     if (loaded) return;
     const timer = window.setTimeout(() => {
+      if (!controlled && mediaRef.current?.hasAttribute("data-loaded")) return;
       markLoaded();
     }, 12_000);
     return () => window.clearTimeout(timer);
-  }, [src, loaded, markLoaded]);
+  }, [src, loaded, controlled, markLoaded]);
+
+  const stateClass = controlled ? (loaded ? "is-loaded" : "is-loading") : "";
 
   return (
-    <div className={`product-card-media ${className}`.trim()}>
+    // key por src: otra foto es otro contenedor, sin el data-loaded de la anterior.
+    <div key={src} ref={mediaRef} className={`product-card-media ${className}`.trim()}>
       {!loaded ? <div className="skeleton-loader product-card-media__skeleton" aria-hidden /> : null}
       <Image
-        key={src}
         src={src}
         alt={alt}
         fill
@@ -249,7 +282,7 @@ export const ProductCardImage = React.memo(function ProductCardImage({
         unoptimized={shouldUnoptimizeImageSrc(src)}
         onLoad={markLoaded}
         onError={onError}
-        className={`product-card-media__img product-card-media__img--fill ${imageClassName} ${loaded ? "is-loaded" : "is-loading"}`.trim()}
+        className={`product-card-media__img product-card-media__img--fill ${imageClassName} ${stateClass}`.replace(/\s+/g, " ").trim()}
         style={{ objectFit, objectPosition }}
       />
     </div>

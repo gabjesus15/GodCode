@@ -11,7 +11,7 @@ import type { MenuCatalogScrollController } from "@/lib/tenant/menu/menu-catalog
 import {
 	resolveActiveSectionIdFromDom,
 } from "@/lib/tenant/menu/menu-scroll-spy";
-import { getMenuScrollAnchorPx } from "@/lib/tenant/menu/menu-scroll";
+import { getMenuScrollAnchorPx, scheduleScrollSpyRelease } from "@/lib/tenant/menu/menu-scroll";
 import { ProductGrid, type ProductGridProps } from "./product-grid";
 import type { MenuCategory, MenuProduct } from "./menu-types";
 
@@ -122,13 +122,17 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 	useEffect(() => {
 		catalogScrollRef.current = {
 			isVirtualized: true,
-			scrollToSection(sectionId: string, behavior: ScrollBehavior = "auto") {
+			scrollToSection(sectionId: string, behavior: ScrollBehavior = "auto", onSettled?: () => void) {
 				const index = sectionIndexById.get(sectionId);
-				if (index == null) return;
+				if (index == null) {
+					onSettled?.();
+					return () => {};
+				}
 				virtualizer.scrollToIndex(index, {
 					align: "start",
 					behavior,
 				});
+				return scheduleScrollSpyRelease(() => onSettled?.(), behavior);
 			},
 		};
 		return () => {
