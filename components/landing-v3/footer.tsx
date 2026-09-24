@@ -11,6 +11,7 @@ import type { LandingSocialLink } from "@/lib/landing/contact";
 import { LandingBrandMark } from "./landing-brand-mark";
 import {
 	LandingInstagramIcon,
+	LandingLinkedInIcon,
 	LandingMailIcon,
 	LandingWhatsAppIcon,
 } from "./social-icons";
@@ -27,6 +28,7 @@ const footerLinks = [
 
 function SocialIcon({ link }: { link: LandingSocialLink }) {
 	if (link.kind === "instagram") return <LandingInstagramIcon size={18} />;
+	if (link.kind === "linkedin") return <LandingLinkedInIcon size={18} />;
 	if (link.kind === "whatsapp") return <LandingWhatsAppIcon size={18} />;
 	return <LandingMailIcon size={18} />;
 }
@@ -35,6 +37,7 @@ function contactLinkClassName(kind: LandingSocialLink["kind"]) {
 	const base =
 		"inline-flex items-center gap-3 text-lg font-medium transition-colors";
 	if (kind === "instagram") return `${base} text-[#0d0d0d] hover:text-[#c13584]`;
+	if (kind === "linkedin") return `${base} text-[#0d0d0d] hover:text-[#0a66c2]`;
 	if (kind === "whatsapp") return `${base} text-[#0d0d0d] hover:text-[#25D366]`;
 	return `${base} text-[#0d0d0d] hover:text-[#4f5bff]`;
 }

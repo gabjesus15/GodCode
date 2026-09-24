@@ -12,8 +12,15 @@ import {
 	LANDING_PRODUCT_NAME,
 	LANDING_SUPPORT_EMAIL,
 } from "./brand";
+import { getLandingOrganizationSameAs } from "./contact";
 import { LANDING_FAQ } from "./faq";
 import { formatLlmsTxtLink } from "@/lib/seo/llms-txt-format";
+
+function profileNetworkName(url: string): string {
+	if (/linkedin\.com/i.test(url)) return "LinkedIn";
+	if (/instagram\.com/i.test(url)) return "Instagram";
+	return "Perfil";
+}
 
 function formatPlanPrice(price: number, currency: string): string {
 	try {
@@ -58,6 +65,16 @@ export async function getMainDomainLlmsTxt(isFullVersion = false): Promise<strin
 		markdown += `${formatLlmsTxtLink("Catálogo completo para IA (llms-full.txt)", `${base}/llms-full.txt`, "Versión extendida para LLMs")}\n`;
 	}
 	markdown += `\n`;
+
+	const officialProfiles = getLandingOrganizationSameAs();
+	if (officialProfiles.length > 0) {
+		markdown += `## Perfiles oficiales de ${LANDING_COMPANY_NAME}\n`;
+		for (const url of officialProfiles) {
+			const network = profileNetworkName(url);
+			markdown += `${formatLlmsTxtLink(network, url, `Perfil oficial de ${LANDING_COMPANY_NAME} en ${network}`)}\n`;
+		}
+		markdown += `\n`;
+	}
 
 	markdown += `## Qué es ${LANDING_PRODUCT_NAME}\n`;
 	markdown += `${LANDING_PRODUCT_NAME} ayuda a restaurantes y negocios con sucursales a vender online con:\n`;

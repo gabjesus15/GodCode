@@ -4,11 +4,13 @@ import { LANDING_SUPPORT_EMAIL } from "./brand";
 import {
 	getLandingSocialLinksFromEnv,
 	LANDING_INSTAGRAM_URL_DEFAULT,
+	LANDING_LINKEDIN_URL_DEFAULT,
 	LANDING_WHATSAPP_URL_DEFAULT,
 	type LandingSocialLink,
 	type LandingSocialLinkKind,
 	instagramDisplay,
 	normalizeInstagramUrl,
+	normalizeLinkedInUrl,
 	normalizeWhatsAppUrl,
 	whatsappDisplay,
 } from "./contact";
@@ -25,7 +27,9 @@ function pushSocialLink(
 	const normalized =
 		kind === "instagram"
 			? normalizeInstagramUrl(raw || fallback)
-			: normalizeWhatsAppUrl(raw || fallback);
+			: kind === "linkedin"
+				? normalizeLinkedInUrl(raw || fallback)
+				: normalizeWhatsAppUrl(raw || fallback);
 	if (!normalized) return;
 	links.push({
 		kind,
@@ -47,6 +51,14 @@ export async function getLandingSocialLinks(): Promise<LandingSocialLink[]> {
 			LANDING_INSTAGRAM_URL_DEFAULT,
 			"Instagram de Gcode",
 			instagramDisplay,
+		);
+		pushSocialLink(
+			links,
+			"linkedin",
+			process.env.NEXT_PUBLIC_LANDING_LINKEDIN_URL?.trim() || undefined,
+			LANDING_LINKEDIN_URL_DEFAULT,
+			"LinkedIn de Gcode Labs",
+			() => "LinkedIn",
 		);
 		pushSocialLink(
 			links,

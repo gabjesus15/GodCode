@@ -3,8 +3,9 @@ import { LANDING_SUPPORT_EMAIL } from "./brand";
 /** Contacto público de la landing (sobrescribible con env en Vercel). */
 export const LANDING_INSTAGRAM_URL_DEFAULT = "https://www.instagram.com/gcode.labs/";
 export const LANDING_WHATSAPP_URL_DEFAULT = "56943848080";
+export const LANDING_LINKEDIN_URL_DEFAULT = "https://www.linkedin.com/company/gcode-labs/";
 
-export type LandingSocialLinkKind = "email" | "instagram" | "whatsapp";
+export type LandingSocialLinkKind = "email" | "instagram" | "linkedin" | "whatsapp";
 
 export type LandingSocialLink = {
 	kind: LandingSocialLinkKind;
@@ -20,6 +21,18 @@ function normalizeInstagramUrl(raw: string | undefined): string | null {
 	const handle = value.replace(/^@/, "").replace(/^instagram\.com\//i, "").replace(/\/$/, "");
 	if (!handle || !/^[a-z0-9._]+$/i.test(handle)) return null;
 	return `https://instagram.com/${handle}`;
+}
+
+function normalizeLinkedInUrl(raw: string | undefined): string | null {
+	const value = raw?.trim();
+	if (!value) return null;
+	if (/^https?:\/\//i.test(value)) return value;
+	const slug = value
+		.replace(/^(www\.)?linkedin\.com\//i, "")
+		.replace(/^company\//i, "")
+		.replace(/\/$/, "");
+	if (!slug || !/^[a-z0-9-]+$/i.test(slug)) return null;
+	return `https://www.linkedin.com/company/${slug}/`;
 }
 
 function normalizeWhatsAppUrl(raw: string | undefined): string | null {
@@ -68,6 +81,18 @@ export function getLandingSocialLinksFromEnv(): LandingSocialLink[] {
 		});
 	}
 
+	const linkedinUrl = normalizeLinkedInUrl(
+		process.env.NEXT_PUBLIC_LANDING_LINKEDIN_URL?.trim() || LANDING_LINKEDIN_URL_DEFAULT,
+	);
+	if (linkedinUrl) {
+		links.push({
+			kind: "linkedin",
+			href: linkedinUrl,
+			label: "LinkedIn de Gcode Labs",
+			display: "LinkedIn",
+		});
+	}
+
 	const whatsappUrl = normalizeWhatsAppUrl(
 		process.env.NEXT_PUBLIC_LANDING_WHATSAPP_URL?.trim() || LANDING_WHATSAPP_URL_DEFAULT,
 	);
@@ -99,11 +124,16 @@ export function getLandingOrganizationSameAs(): string[] {
 		process.env.NEXT_PUBLIC_LANDING_INSTAGRAM_URL?.trim() || LANDING_INSTAGRAM_URL_DEFAULT,
 	);
 	if (instagramUrl) urls.push(instagramUrl);
+	const linkedinUrl = normalizeLinkedInUrl(
+		process.env.NEXT_PUBLIC_LANDING_LINKEDIN_URL?.trim() || LANDING_LINKEDIN_URL_DEFAULT,
+	);
+	if (linkedinUrl) urls.push(linkedinUrl);
 	return urls;
 }
 
 export {
 	normalizeInstagramUrl,
+	normalizeLinkedInUrl,
 	normalizeWhatsAppUrl,
 	instagramDisplay,
 	whatsappDisplay,
