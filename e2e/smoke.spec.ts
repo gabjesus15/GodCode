@@ -19,12 +19,12 @@ test.describe("smoke", () => {
 	});
 
 	test("saas admin protegido redirige a login", async ({ page }) => {
-		await page.goto("/companies");
+		await page.goto("/dashboard");
 		await expect(page).toHaveURL(/\/login/i, { timeout: 15_000 });
 		await expect(page.getByRole("textbox", { name: /email/i })).toBeVisible({ timeout: 15_000 });
 	});
 
-	test("saas admin autenticado carga empresas", async ({ page }) => {
+	test("saas admin autenticado carga el Inicio con las empresas", async ({ page }) => {
 		const adminEmail = process.env.PLAYWRIGHT_ADMIN_EMAIL?.trim();
 		const adminPassword = process.env.PLAYWRIGHT_ADMIN_PASSWORD?.trim();
 		if (!adminEmail || !adminPassword) {
@@ -37,8 +37,8 @@ test.describe("smoke", () => {
 		await page.getByRole("textbox", { name: /password/i }).fill(adminPassword);
 		await page.keyboard.press("Enter");
 		await expect(page.getByText(/acceso concedido|redirigiendo/i)).toBeVisible({ timeout: 20_000 });
-		await page.goto("/companies");
-		await expect(page.getByRole("heading", { name: /empresas/i })).toBeVisible({ timeout: 20_000 });
+		await page.goto("/dashboard");
+		await expect(page.getByRole("heading", { name: /todas las empresas/i })).toBeVisible({ timeout: 20_000 });
 	});
 
 	test("ruta menú tenant responde (slug inexistente → tienda no disponible)", async ({ page }) => {

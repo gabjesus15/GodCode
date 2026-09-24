@@ -18,9 +18,9 @@ const STATUS: Record<string, { label: string; tone: StatusTone }> = {
 /** Últimos correos al negocio: para contestar «¿le llegó el aviso?» sin abrir Resend. */
 export function CompanyEmailsSection({ deliveries }: { deliveries: DeliveryRow[] | null }) {
 	return (
-		<section className="rounded-3xl border border-zinc-200/60 bg-white p-5 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-6">
+		<section className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
 			<div className="flex flex-wrap items-baseline justify-between gap-2">
-				<h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Correos enviados</h2>
+				<h2 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">Correos enviados</h2>
 				<Link href="/herramientas/correos" className="text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:underline dark:text-zinc-400 dark:hover:text-zinc-100">
 					Ver plantillas y envíos
 				</Link>

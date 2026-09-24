@@ -3,8 +3,17 @@ import "server-only";
 const PRIVATE_IP =
 	/^(?:127\.|10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[0-1])\.|::1|fc|fd|fe80)/i;
 
-const countryCache = new Map<string, { code: string | null; expiresAt: number }>();
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+type GeoIpModule = typeof import("geoip-country").default;
+let geoipPromise: Promise<GeoIpModule | null> | null = null;
+
+/** Base de países local (GeoLite2, ~8 MB): se carga una vez, en el primer evento. */
+function loadGeoIp(): Promise<GeoIpModule | null> {
+	geoipPromise ??= import("geoip-country").then(
+		(m) => m.default,
+		() => null,
+	);
+	return geoipPromise;
+}
 
 function normalizeCountryCode(raw: string | null | undefined): string | null {
 	const code = String(raw ?? "")
@@ -27,35 +36,15 @@ function countryFromHeaders(headers: Headers): string | null {
 
 async function lookupCountryByIp(ip: string): Promise<string | null> {
 	if (!ip || PRIVATE_IP.test(ip)) return null;
-
-	const cached = countryCache.get(ip);
-	if (cached && cached.expiresAt > Date.now()) return cached.code;
-
-	const controller = new AbortController();
-	const timer = setTimeout(() => controller.abort(), 800);
+	const geoip = await loadGeoIp();
 	try {
-		const res = await fetch(`https://ipapi.co/${encodeURIComponent(ip)}/country/`, {
-			signal: controller.signal,
-			headers: { Accept: "text/plain" },
-			cache: "no-store",
-		});
-		if (!res.ok) {
-			countryCache.set(ip, { code: null, expiresAt: Date.now() + 60_000 });
-			return null;
-		}
-		const text = (await res.text()).trim();
-		const code = normalizeCountryCode(text === "Undefined" ? null : text);
-		countryCache.set(ip, { code, expiresAt: Date.now() + CACHE_TTL_MS });
-		return code;
+		return normalizeCountryCode(geoip?.lookup(ip)?.country);
 	} catch {
-		countryCache.set(ip, { code: null, expiresAt: Date.now() + 60_000 });
 		return null;
-	} finally {
-		clearTimeout(timer);
 	}
 }
 
-/** Resuelve ISO-2 para analytics: headers de CDN primero, luego lookup por IP (VPS self-hosted). */
+/** Resuelve ISO-2 para analytics: headers de CDN primero, luego la base local por IP (el VPS no trae cabecera de país). */
 export async function resolveAnalyticsCountryCode(
 	headers: Headers,
 	ip: string | null,

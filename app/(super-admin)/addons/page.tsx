@@ -183,10 +183,10 @@ export default function AddonsPage() {
 	if (loading) {
 		return (
 			<div className="flex min-h-[200px] flex-col gap-4">
-				<div className="h-24 animate-pulse rounded-3xl bg-zinc-100 dark:bg-zinc-800" />
+				<div className="h-24 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-800" />
 				<div className="grid gap-4">
 					{Array.from({ length: 3 }).map((_, i) => (
-						<div key={i} className="h-28 animate-pulse rounded-3xl bg-zinc-100 dark:bg-zinc-800" />
+						<div key={i} className="h-28 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-800" />
 					))}
 				</div>
 			</div>
@@ -198,7 +198,6 @@ export default function AddonsPage() {
 			<SaasPageHeader
 				title="Servicios extra"
 				description="Servicios que los negocios pueden sumar a su plan, al registrarse o desde /cuenta."
-				icon={Puzzle}
 				action={
 					<Button type="button" onClick={startNew} disabled={showNew}>
 						Nuevo add-on
@@ -354,7 +353,7 @@ export default function AddonsPage() {
 			) : (
 				<div ref={listRef} className="grid gap-4">
 					{filteredAddons.map((a) => (
-					<Card key={a.id} className="rounded-3xl border-zinc-200/60 bg-white p-4 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-5">
+					<Card key={a.id} className="shadow-none rounded-2xl border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
 						<div className="flex flex-wrap items-start justify-between gap-4">
 							<div className="min-w-0 flex-1">
 								<div className="flex flex-wrap items-center gap-2">

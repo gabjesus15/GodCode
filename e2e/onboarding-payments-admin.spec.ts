@@ -338,9 +338,9 @@ test.describe.serial("onboarding + pagos + saas admin antifraude", () => {
   expect(payment?.status).toBe("paid");
     expect((payment?.payment_method_slug ?? "").toLowerCase()).toBe("transferencia");
 
-    await page.goto("/companies");
-    await expect(page.getByRole("heading", { name: /empresas/i })).toBeVisible({ timeout: 20_000 });
-    await page.getByPlaceholder("Buscar empresa...").fill(businessName);
+    await page.goto("/dashboard");
+    await expect(page.getByRole("heading", { name: /todas las empresas/i })).toBeVisible({ timeout: 20_000 });
+    await page.getByPlaceholder("Buscar por nombre o dirección…").fill(businessName);
     await expect(page.getByText(businessName)).toBeVisible({ timeout: 20_000 });
 
     await sb

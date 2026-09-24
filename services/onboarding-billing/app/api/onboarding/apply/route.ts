@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
 				kind: "team_new_application",
 				to: team,
 				applicationId,
-				data: { businessName, name: responsibleName, email: emailRaw, adminUrl: `${baseUrl}/onboarding/solicitudes` },
+				data: { businessName, name: responsibleName, email: emailRaw, adminUrl: `${baseUrl}/dashboard` },
 			});
 			if (notice.status === "failed" || notice.status === "skipped") console.error("onboarding apply: team notice", notice);
 		}

@@ -68,6 +68,9 @@ export const TICKET_STATUSES: StatusMap = {
 /** Tickets que todavía piden trabajo: lo que el Inicio cuenta y la bandeja muestra por defecto. */
 export const OPEN_TICKET_STATUSES = ["open", "in_progress", "waiting_customer"] as const;
 
+/** Solicitudes de alta que esperan algo del equipo: el contador del menú y el Inicio. */
+export const PENDING_APPLICATION_STATUSES = ["pending_verification", "email_verified", "form_completed", "payment_pending"] as const;
+
 export const TICKET_PRIORITIES: StatusMap = {
 	low: { label: "Baja", tone: "neutral" },
 	medium: { label: "Media", tone: "info" },

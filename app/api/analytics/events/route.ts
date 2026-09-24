@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
-import { resolveAnalyticsPageContext } from "@/lib/analytics/page-context";
+import { isInternalAnalyticsPath, isLocalAnalyticsHost, resolveAnalyticsPageContext } from "@/lib/analytics/page-context";
 import { resolveAnalyticsCountryCode } from "@/lib/analytics/resolve-country-code";
 import { enforceRateLimit } from "@/lib/infra/api-guard";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
@@ -61,6 +61,9 @@ export async function POST(req: NextRequest) {
     }
 
     const host = normalizeHost(req.headers.get("x-forwarded-host") || req.headers.get("host"));
+    if (isLocalAnalyticsHost(host) || isInternalAnalyticsPath(path)) {
+      return NextResponse.json({ ok: true, dropped: true });
+    }
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || null;
     const countryCode = await resolveAnalyticsCountryCode(req.headers, ip);
 

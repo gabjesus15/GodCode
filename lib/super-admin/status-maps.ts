@@ -41,9 +41,4 @@ export function paymentStatus(status: string | null | undefined): StatusBadgeCon
 	return toBadge(describeStatus(PAYMENT_STATUSES, status, "Sin pago"));
 }
 
-export function healthAlertType(type: string | null | undefined): StatusBadgeConfig {
-	const t = String(type ?? "").toLowerCase();
-	if (t === "active_without_paid_payment") return { label: "Activa sin pagos", variant: "danger" };
-	if (t === "suspended_with_recent_paid") return { label: "Suspendida con pago reciente", variant: "warning" };
-	return { label: type || "Desconocido", variant: "neutral" };
-}
+

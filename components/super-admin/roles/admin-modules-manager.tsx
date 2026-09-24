@@ -199,7 +199,7 @@ export default function AdminModulesManager() {
   };
 
   return (
-    <Card className="rounded-3xl border-zinc-200/60 bg-white p-5 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-6">
+    <Card className="shadow-none rounded-2xl border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 sm:p-6">
       <div className="space-y-5">
         <div className="flex items-start gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
@@ -212,7 +212,7 @@ export default function AdminModulesManager() {
         </div>
 
         {!readOnly ? (
-          <div className="rounded-2xl border border-zinc-200/60 bg-zinc-50/60 p-4 dark:border-zinc-700/60 dark:bg-zinc-900/50">
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-700/60 dark:bg-zinc-900/50">
             <div className="grid gap-3 sm:grid-cols-2">
               <Input
                 placeholder="Clave (ej: module:helpdesk)"
@@ -313,7 +313,7 @@ export default function AdminModulesManager() {
           ) : sortedModules.length === 0 ? (
             <SaasEmptyState icon={Blocks} title="Sin módulos" description="Aún no hay módulos dinámicos." />
           ) : (
-            <div ref={listRef} className="divide-y divide-zinc-100 rounded-2xl border border-zinc-200/60 dark:divide-zinc-800 dark:border-zinc-800/60">
+            <div ref={listRef} className="divide-y divide-zinc-100 rounded-2xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
               {sortedModules.map((module) => (
                 <div key={module.id} className="flex items-start justify-between gap-4 p-4 transition hover:bg-zinc-50/60 dark:hover:bg-zinc-900/40">
                   <div className="min-w-0 flex-1">

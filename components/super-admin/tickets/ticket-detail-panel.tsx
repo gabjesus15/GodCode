@@ -134,7 +134,7 @@ export function TicketDetailPanel({
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-5">
         {/* Description */}
-        <Card className="rounded-2xl border border-zinc-100 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
+        <Card className="shadow-none rounded-2xl border border-zinc-100 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
             {ticket.description}
           </p>

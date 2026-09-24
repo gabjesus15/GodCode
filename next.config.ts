@@ -48,6 +48,8 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: resolve(__dirname),
   },
+  // Lee su base de países con fs desde su propia carpeta: no se puede empaquetar.
+  serverExternalPackages: ["geoip-country"],
   experimental: {
     optimizePackageImports: [
       "lucide-react",

@@ -127,7 +127,7 @@ export function AppleDonutChart({
           <span className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-2xl">
             {displayValue}
           </span>
-          <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+          <span className="text-[11px] text-zinc-400">
             {displayLabel}
           </span>
         </div>

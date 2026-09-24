@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-import { resolveAnalyticsPageContext } from "@/lib/analytics/page-context";
+import { isInternalAnalyticsPath, resolveAnalyticsPageContext } from "@/lib/analytics/page-context";
 import { trackGaPageView } from "@/lib/analytics/gtag";
 import { sanitizeAnalyticsPath } from "@/lib/analytics/sanitize-path";
 
@@ -68,7 +68,7 @@ export function PageAnalyticsTracker() {
 	const searchParams = useSearchParams();
 
 	useEffect(() => {
-		if (!pathname) return;
+		if (!pathname || isInternalAnalyticsPath(pathname)) return;
 
 		const runTracking = () => {
 			// Sin tokens ni referencias: la ruta va a Google Analytics y a analytics_events.

@@ -203,7 +203,7 @@ export function OnboardingFunnelInteractive({
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-5">
+      <Card className="shadow-none rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Embudo de altas</h3>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           {PERIOD_LABELS[period] ?? `Periodo: ${period}`} · conversión por etapa y quién quedó a medio camino.
@@ -230,7 +230,7 @@ export function OnboardingFunnelInteractive({
       )}
 
       {/* 2. Funnel Visualizer */}
-      <Card className="rounded-3xl border border-zinc-200/60 bg-white p-5 dark:border-zinc-800/60 dark:bg-zinc-900/80">
+      <Card className="shadow-none rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Visualización de Conversión</h3>
@@ -263,20 +263,22 @@ export function OnboardingFunnelInteractive({
         {viewMode === "cumulative" ? (
           <>
             <div className="mb-6">
-              <div className="flex h-48 items-end gap-2 sm:gap-4">
+              <div className="flex h-48 gap-2 sm:gap-4">
                 {funnelSteps.map((step) => {
                   const maxValue = Math.max(...funnelSteps.map((s) => s.value), 1);
                   const heightPct = Math.max((step.value / maxValue) * 100, 4);
                   return (
-                    <div key={step.key} className="flex flex-1 flex-col items-center gap-2">
-                      <div className="relative w-full">
+                    <div key={step.key} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                      {/* La columna ocupa el alto del gráfico; sin eso el % de la barra se resolvía a 0 y no se veía. */}
+                      <div className="flex w-full flex-1 items-end pt-5">
                         <div
-                          className="w-full rounded-t-lg bg-indigo-500 transition-all dark:bg-indigo-400"
+                          className="relative w-full rounded-t-lg bg-indigo-500 transition-all dark:bg-indigo-400"
                           style={{ height: `${heightPct}%` }}
-                        />
-                        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-zinc-700 dark:text-zinc-300">
-                          {step.value}
-                        </span>
+                        >
+                          <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold tabular-nums text-zinc-700 dark:text-zinc-300">
+                            {step.value}
+                          </span>
+                        </div>
                       </div>
                       <span className="text-center text-[10px] font-medium text-zinc-500 dark:text-zinc-400 line-clamp-2">
                         {step.label}
@@ -299,7 +301,7 @@ export function OnboardingFunnelInteractive({
                       : "border-zinc-200 bg-white/50 hover:bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-900/40 dark:hover:bg-zinc-800/40"
                   }`}
                 >
-                  <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold dark:text-zinc-500">
+                  <p className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
                     Paso {idx}
                   </p>
                   <h4 className="mt-1 text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
@@ -366,7 +368,7 @@ export function OnboardingFunnelInteractive({
       </Card>
 
       {/* 3. stuck applications table */}
-      <Card className="overflow-hidden rounded-3xl border border-zinc-200/60 bg-white dark:border-zinc-800/60 dark:bg-zinc-900/80">
+      <Card className="shadow-none overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <div className="border-b border-zinc-200 px-5 py-4 dark:border-zinc-700 flex flex-wrap justify-between items-center gap-3 bg-zinc-50/30 dark:bg-zinc-900/30">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -400,14 +402,14 @@ export function OnboardingFunnelInteractive({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-zinc-50 text-zinc-500 uppercase tracking-wider text-[10px] font-bold dark:bg-zinc-800/60 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
+              <thead className="border-b border-zinc-100 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
                 <tr>
-                  <th className="px-4 py-3">Negocio</th>
-                  <th className="px-4 py-3">Responsable</th>
-                  <th className="px-4 py-3">Correo</th>
-                  <th className="px-4 py-3">Fecha Inicio</th>
-                  <th className="px-4 py-3">Días Inactivo</th>
-                  <th className="px-4 py-3 text-right">Acciones</th>
+                  <th scope="col" className="px-4 py-3 font-medium">Negocio</th>
+                  <th scope="col" className="px-4 py-3 font-medium">Responsable</th>
+                  <th scope="col" className="px-4 py-3 font-medium">Correo</th>
+                  <th scope="col" className="px-4 py-3 font-medium">Fecha de inicio</th>
+                  <th scope="col" className="px-4 py-3 font-medium">Días inactivo</th>
+                  <th scope="col" className="px-4 py-3 text-right font-medium">Acciones</th>
                 </tr>
               </thead>
               <tbody ref={stuckListRef} className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -451,10 +453,9 @@ export function OnboardingFunnelInteractive({
                             </>
                           )}
                           <Link
-                            href={`/onboarding/solicitudes?search=${encodeURIComponent(app.email || "")}`}
+                            href={`/dashboard/solicitud/${app.id}`}
                             className="inline-flex h-7 w-7 items-center justify-center rounded bg-zinc-100 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-200 transition"
-                            title="Abrir en listado operativo"
-                            target="_blank"
+                            title="Revisar solicitud"
                           >
                             <ExternalLink className="h-3 w-3" />
                           </Link>

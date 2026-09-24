@@ -135,7 +135,7 @@ export function PaymentsReviewClient({
       </div>
 
       {visible.length === 0 ? (
-        <Card className="flex flex-col items-center gap-2 rounded-3xl border border-zinc-200/60 bg-white px-6 py-12 text-center dark:border-zinc-800/60 dark:bg-zinc-900/80">
+        <Card className="shadow-none flex flex-col items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-6 py-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
           <Inbox className="h-8 w-8 text-zinc-300 dark:text-zinc-600" aria-hidden />
           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">No hay pagos por validar</p>
           <p className="max-w-sm text-sm text-zinc-500 dark:text-zinc-400">Cuando un cliente envíe un comprobante aparecerá aquí.</p>
@@ -144,7 +144,7 @@ export function PaymentsReviewClient({
         <ul className="space-y-3">
           {visible.map((item) => (
             <li key={item.key}>
-              <Card className="rounded-2xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-5">
+              <Card className="shadow-none rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
@@ -158,7 +158,7 @@ export function PaymentsReviewClient({
                         {item.source === "portal" ? "Cliente" : "Alta"}
                       </span>
                       {item.companyId ? (
-                        <Link href={`/companies/${item.companyId}`} className="truncate text-sm font-semibold text-zinc-900 hover:underline dark:text-zinc-100">
+                        <Link href={`/dashboard/empresa/${item.companyId}`} className="truncate text-sm font-semibold text-zinc-900 hover:underline dark:text-zinc-100">
                           {item.businessName}
                         </Link>
                       ) : (

@@ -40,7 +40,7 @@ export function TopCountriesSection({ countriesTop }: Props) {
         </div>
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Top países</h3>
       </div>
-      <div className="rounded-3xl border border-zinc-200/60 bg-white p-1 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-1 dark:border-zinc-800 dark:bg-zinc-900">
         <SaasDataTable
           data={countriesTop}
           rowKey={(r) => r.countryCode}

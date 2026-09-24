@@ -77,13 +77,13 @@ function KpiCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay, ease: "easeOut" }}
-      className="flex items-center gap-3 rounded-2xl border border-zinc-200/60 bg-white p-3 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80"
+      className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
     >
       <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl", bg)}>
         <Icon className="h-4 w-4" style={{ color }} />
       </div>
       <div>
-        <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">{label}</p>
+        <p className="text-[13px] text-zinc-500 dark:text-zinc-400">{label}</p>
         <p className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
           {value}
         </p>
@@ -147,7 +147,7 @@ export function AnalyticsStatsSection({
       <div className="grid gap-6 xl:grid-cols-2">
         <div ref={businessRef}>
           <SectionTitle icon={Store} title="Top negocios" />
-          <div className="rounded-3xl border border-zinc-200/60 bg-white p-1 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-1 dark:border-zinc-800 dark:bg-zinc-900">
             <SaasDataTable
               data={businessesTop}
               rowKey={(r) => `${r.companyId ?? r.slug}`}
@@ -169,7 +169,7 @@ export function AnalyticsStatsSection({
                         {r.companyName.charAt(0).toUpperCase()}
                       </div>
                       <Link
-                        href={r.companyId ? `/companies/${r.companyId}` : `#`}
+                        href={r.companyId ? `/dashboard/empresa/${r.companyId}` : `#`}
                         className={cn(
                           "truncate text-sm font-medium",
                           r.companyId
@@ -210,7 +210,7 @@ export function AnalyticsStatsSection({
 
         <div ref={eventsRef}>
           <SectionTitle icon={LayoutDashboard} title="Eventos" />
-          <div className="rounded-3xl border border-zinc-200/60 bg-white p-1 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-1 dark:border-zinc-800 dark:bg-zinc-900">
             <SaasDataTable
               data={eventsTop}
               rowKey={(r) => r.eventName}

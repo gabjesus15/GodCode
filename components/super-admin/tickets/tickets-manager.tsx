@@ -347,32 +347,32 @@ export default function TicketsManager() {
   );
 
   return (
-    <div className="min-w-0 space-y-4 sm:space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <Card className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-none dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="text-[13px] text-zinc-500 dark:text-zinc-400">
             En la lista
           </p>
-          <p className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{tickets.length}</p>
+          <p className="text-xl font-semibold tabular-nums leading-none tracking-tight text-zinc-900 dark:text-zinc-100">{tickets.length}</p>
         </Card>
-        <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <Card className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-none dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="text-[13px] text-zinc-500 dark:text-zinc-400">
             SLA incumplidos
           </p>
-          <p className="mt-1 text-2xl font-semibold text-red-600 dark:text-red-400">{slaMetrics.breached}</p>
+          <p className="text-xl font-semibold tabular-nums leading-none tracking-tight text-red-600 dark:text-red-400">{slaMetrics.breached}</p>
         </Card>
-        <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <Card className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-none dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="text-[13px] text-zinc-500 dark:text-zinc-400">
             Críticos abiertos
           </p>
-          <p className="mt-1 text-2xl font-semibold text-amber-600 dark:text-amber-400">{slaMetrics.criticalOpen}</p>
+          <p className="text-xl font-semibold tabular-nums leading-none tracking-tight text-amber-600 dark:text-amber-400">{slaMetrics.criticalOpen}</p>
         </Card>
-        <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <Card className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-none dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="text-[13px] text-zinc-500 dark:text-zinc-400">
             Sin asignar
           </p>
-          <p className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+          <p className="text-xl font-semibold tabular-nums leading-none tracking-tight text-zinc-900 dark:text-zinc-100">
             {tickets.filter((t) => !t.assignedTo && t.status !== "resolved" && t.status !== "closed").length}
           </p>
         </Card>
@@ -414,7 +414,7 @@ export default function TicketsManager() {
 
       {/* Master-detail */}
       {loading && tickets.length === 0 ? (
-        <Card className="rounded-3xl border border-zinc-200/60 bg-white p-8 text-center dark:border-zinc-800/60 dark:bg-zinc-900/80">
+        <Card className="shadow-none rounded-2xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Cargando tickets...</p>
         </Card>
       ) : (

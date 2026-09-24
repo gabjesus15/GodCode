@@ -5,20 +5,19 @@
 import type { LucideIcon } from "lucide-react";
 import {
 	Activity,
-	BarChart3,
-	Building2,
-	ClipboardList,
 	CreditCard,
+	Layers,
 	LayoutDashboard,
 	LifeBuoy,
 	Mail,
 	MonitorSmartphone,
 	Package,
+	PieChart,
 	Receipt,
 	ScrollText,
 	Settings,
-	ShieldAlert,
 	ShieldCheck,
+	SlidersHorizontal,
 	Wallet,
 } from "lucide-react";
 
@@ -31,6 +30,8 @@ export type SuperAdminNavItem = {
 
 export type SuperAdminNavGroup = {
 	label: string;
+	/** Con icono el grupo se pliega en la barra lateral; sin icono sus secciones van sueltas. */
+	icon?: LucideIcon;
 	items: SuperAdminNavItem[];
 };
 
@@ -39,15 +40,14 @@ export const SUPER_ADMIN_NAV_GROUPS: SuperAdminNavGroup[] = [
 	{
 		label: "Día a día",
 		items: [
-			{ href: "/dashboard", label: "Inicio", icon: LayoutDashboard, keywords: "dashboard resumen" },
+			{ href: "/dashboard", label: "Inicio", icon: LayoutDashboard, keywords: "dashboard resumen empresas solicitudes altas bajas" },
 			{ href: "/dashboard/pagos", label: "Pagos por validar", icon: Receipt, keywords: "comprobantes transferencias validar cobros" },
-			{ href: "/onboarding/solicitudes", label: "Solicitudes de alta", icon: ClipboardList, keywords: "onboarding registros" },
-			{ href: "/companies", label: "Empresas", icon: Building2, keywords: "tenant negocios clientes" },
 			{ href: "/tickets", label: "Tickets", icon: LifeBuoy, keywords: "soporte mensajes" },
 		],
 	},
 	{
 		label: "Catálogo",
+		icon: Layers,
 		items: [
 			{ href: "/plans", label: "Planes", icon: CreditCard, keywords: "precios" },
 			{ href: "/addons", label: "Servicios extra", icon: Package, keywords: "addons extras" },
@@ -56,17 +56,17 @@ export const SUPER_ADMIN_NAV_GROUPS: SuperAdminNavGroup[] = [
 	},
 	{
 		label: "Métricas",
+		icon: PieChart,
 		items: [
-			{ href: "/dashboard/salud-pagos", label: "Salud de pagos", icon: ShieldAlert, keywords: "pagos cobros alertas" },
+			{ href: "/landing", label: "Landing y tráfico", icon: MonitorSmartphone, keywords: "landing trafico analytics visitas paises imagenes contacto instagram whatsapp" },
 			{ href: "/dashboard/onboarding-embudo", label: "Embudo de altas", icon: Activity, keywords: "funnel onboarding conversion" },
-			{ href: "/dashboard/analytics-global", label: "Tráfico", icon: BarChart3, keywords: "analytics visitas paises" },
 			{ href: "/dashboard/auditoria", label: "Auditoría", icon: ScrollText, keywords: "logs cambios registro" },
 		],
 	},
 	{
 		label: "Sitio y ajustes",
+		icon: SlidersHorizontal,
 		items: [
-			{ href: "/landing", label: "Landing", icon: MonitorSmartphone, keywords: "landing leads contactos webhooks" },
 			{ href: "/herramientas/correos", label: "Correos", icon: Mail, keywords: "emails recordatorios avisos plantillas resend vencimientos" },
 			{ href: "/herramientas", label: "Configuración", icon: Settings, keywords: "herramientas roles modulos broadcast" },
 			{ href: "/herramientas/autenticador", label: "Doble factor", icon: ShieldCheck, keywords: "mfa totp authenticator 2fa seguridad" },

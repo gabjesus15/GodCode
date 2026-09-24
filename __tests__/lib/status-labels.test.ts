@@ -26,7 +26,7 @@ describe("resolveActiveNav", () => {
 	it("marca la entrada más específica", () => {
 		expect(resolveActiveNav("/dashboard/pagos")?.item.label).toBe("Pagos por validar");
 		expect(resolveActiveNav("/dashboard")?.item.label).toBe("Inicio");
-		expect(resolveActiveNav("/companies/123")?.item.label).toBe("Empresas");
+		expect(resolveActiveNav("/dashboard/empresa/123")?.item.label).toBe("Inicio");
 		expect(resolveActiveNav("/herramientas/autenticador")?.item.label).toBe("Doble factor");
 		expect(resolveActiveNav("/herramientas")?.group.label).toBe("Sitio y ajustes");
 	});

@@ -1,4 +1,3 @@
-import { Mail } from "lucide-react";
 
 import { EmailCenter, type EmailCenterData } from "@/components/super-admin/emails/email-center";
 import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
@@ -103,7 +102,6 @@ export default async function CorreosPage() {
 			<SaasPageHeader
 				title="Correos"
 				description="Todo lo que Gcode les escribe a los negocios: cuándo sale cada correo, cómo se ve y qué se envió."
-				icon={Mail}
 			/>
 			<EmailCenter data={data} />
 		</div>

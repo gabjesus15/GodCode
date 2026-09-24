@@ -1,4 +1,3 @@
-import { Receipt } from "lucide-react";
 
 import { PaymentsReviewClient } from "@/components/super-admin/payments/payments-review-client";
 import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
@@ -18,7 +17,6 @@ export default async function PagosPorValidarPage() {
       <SaasPageHeader
         title="Pagos por validar"
         description="Transferencias y otros pagos manuales de altas y de clientes activos. Al validar, se aplica lo comprado y avisamos al cliente."
-        icon={Receipt}
       />
       <PaymentsReviewClient
         items={items}

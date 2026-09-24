@@ -1,4 +1,3 @@
-import { Building2 } from "lucide-react";
 import { CompanyForm } from "../../../../components/super-admin/companies/company-form";
 import { createSupabaseServerClient } from "../../../../utils/supabase/server";
 import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
@@ -27,8 +26,7 @@ export default async function CompanyCreatePage() {
         <SaasPageHeader
           title="Nueva empresa"
           description="Crea un negocio con su subdominio, su plan y sus colores."
-          icon={Building2}
-          backHref="/companies"
+          backHref="/dashboard"
           backLabel="Volver a empresas"
         />
         <CompanyForm plans={data ?? []} />

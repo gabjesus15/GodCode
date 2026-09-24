@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ShieldCheck, Settings } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
 import { Card } from "@/components/ui/card";
@@ -19,7 +19,6 @@ export function HerramientasClient() {
 			<SaasPageHeader
 				title="Configuración global"
 				description="Gestiona roles, módulos, difusiones y seguridad del panel de administración."
-				icon={Settings}
 			/>
 
 			{readOnly ? (
@@ -29,7 +28,7 @@ export function HerramientasClient() {
 			) : null}
 
 			<Link href="/herramientas/autenticador" className="block">
-				<Card className="group relative overflow-hidden rounded-3xl border-zinc-200/60 bg-white p-5 shadow-sm transition hover:border-zinc-300 dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:hover:border-zinc-700">
+				<Card className="shadow-none group relative overflow-hidden rounded-2xl border-zinc-200 bg-white p-5 transition hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700">
 					<div className="flex items-center gap-4">
 						<div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
 							<ShieldCheck className="h-5 w-5 text-zinc-600 dark:text-zinc-300" />

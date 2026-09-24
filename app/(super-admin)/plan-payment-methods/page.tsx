@@ -161,10 +161,10 @@ export default function PlanPaymentMethodsPage() {
 	if (loading) {
 		return (
 			<div className="flex min-h-[200px] flex-col gap-4">
-				<div className="h-24 animate-pulse rounded-3xl bg-zinc-100 dark:bg-zinc-800" />
+				<div className="h-24 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-800" />
 				<div className="grid gap-4">
 					{Array.from({ length: 3 }).map((_, i) => (
-						<div key={i} className="h-40 animate-pulse rounded-3xl bg-zinc-100 dark:bg-zinc-800" />
+						<div key={i} className="h-40 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-800" />
 					))}
 				</div>
 			</div>
@@ -176,7 +176,6 @@ export default function PlanPaymentMethodsPage() {
 			<SaasPageHeader
 				title="Métodos de cobro"
 				description="Configura los datos que verá el cliente al pagar: teléfono Pago Móvil, email Zelle, banco, etc."
-				icon={CreditCard}
 			/>
 
 			{error && (
@@ -201,7 +200,7 @@ export default function PlanPaymentMethodsPage() {
 						return (
 							<Card
 								key={m.id}
-								className="rounded-3xl border-zinc-200/60 bg-white p-4 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-5"
+								className="rounded-2xl border-zinc-200 bg-white p-4 shadow-none dark:border-zinc-800 dark:bg-zinc-900 sm:p-5"
 							>
 								<div className="flex flex-wrap items-start justify-between gap-4">
 									<div className="min-w-0 flex-1">

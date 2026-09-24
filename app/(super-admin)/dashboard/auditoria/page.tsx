@@ -1,4 +1,4 @@
-import { Download, ShieldCheck } from "lucide-react";
+import { Download } from "lucide-react";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { AuditoriaClient } from "@/components/super-admin/dashboard/auditoria-client";
 import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
@@ -36,7 +36,6 @@ export default async function AuditoriaPage() {
       <SaasPageHeader
         title="Auditoría"
         description="Cada cambio hecho desde este panel: quién lo hizo, cuándo y sobre qué."
-        icon={ShieldCheck}
         backHref="/dashboard"
         backLabel="Volver al inicio"
         action={

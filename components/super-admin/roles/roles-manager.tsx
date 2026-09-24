@@ -186,7 +186,7 @@ export default function RolesManager() {
   };
 
   return (
-    <Card className="rounded-3xl border-zinc-200/60 bg-white p-5 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-6">
+    <Card className="shadow-none rounded-2xl border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 sm:p-6">
       <div className="space-y-5">
         <div className="flex items-start gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
@@ -199,7 +199,7 @@ export default function RolesManager() {
         </div>
 
         {!readOnly && (
-          <div className="rounded-2xl border border-zinc-200/60 bg-zinc-50/60 p-4 dark:border-zinc-700/60 dark:bg-zinc-900/50">
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-700/60 dark:bg-zinc-900/50">
             <h4 className="mb-3 text-sm font-medium text-zinc-900 dark:text-zinc-100">Agregar nuevo rol</h4>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Input
@@ -236,7 +236,7 @@ export default function RolesManager() {
           ) : roles.length === 0 ? (
             <SaasEmptyState icon={Users} title="Sin roles" description="Aún no hay roles configurados." />
           ) : (
-            <div ref={listRef} className="divide-y divide-zinc-100 rounded-2xl border border-zinc-200/60 dark:divide-zinc-800 dark:border-zinc-800/60">
+            <div ref={listRef} className="divide-y divide-zinc-100 rounded-2xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
               {roles.map((role) => (
                 <div
                   key={role.id}

@@ -141,7 +141,7 @@ export function CompanyUberCredentialsForm({
 	};
 
 	return (
-		<div className="min-w-0 rounded-2xl border border-zinc-200 bg-white/80 p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80 sm:p-5">
+		<div className="min-w-0 rounded-2xl border border-zinc-200 bg-white/80 p-4 dark:border-zinc-700 dark:bg-zinc-900 sm:p-5">
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div className="min-w-0 flex gap-3">
 					<span

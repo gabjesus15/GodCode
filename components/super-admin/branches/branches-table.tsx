@@ -46,7 +46,7 @@ export function BranchesTable({ branches }: BranchesTableProps) {
   const [listRef] = useSaasListAnimate<HTMLDivElement>();
 
   return (
-    <Card className="flex flex-col gap-4">
+    <Card className="flex flex-col gap-4 rounded-2xl shadow-none dark:bg-zinc-900">
       <div>
         <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Sucursales</h3>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Gestiona ubicaciones y disponibilidad.</p>

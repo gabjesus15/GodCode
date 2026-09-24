@@ -35,27 +35,26 @@ export function SaasDataTable<T>({
       className={cn(
         "overflow-x-auto",
         isApple
-          ? "rounded-3xl"
-          : "rounded-2xl border border-zinc-200 bg-white/90 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80",
+          ? "rounded-2xl"
+          : "rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900",
         className,
       )}
     >
-      <table className={cn("w-full", compact ? "text-xs" : "text-sm")}>
+      <table className={cn("w-full text-left", compact ? "text-[13px]" : "text-sm")}>
         <thead>
           <tr
             className={cn(
               "border-b dark:border-zinc-800",
               isApple
                 ? "border-zinc-100 bg-transparent"
-                : "border-zinc-200 bg-zinc-50/80 dark:border-zinc-700 dark:bg-zinc-800/50",
+                : "border-zinc-100",
             )}
           >
             {columns.map((col) => (
               <th
                 key={col.key}
                 className={cn(
-                  "px-4 py-3 text-left font-medium text-zinc-400 dark:text-zinc-500",
-                  !isApple && "font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400",
+                  "px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400",
                   col.className,
                 )}
               >
@@ -79,7 +78,7 @@ export function SaasDataTable<T>({
                   "border-b transition last:border-b-0",
                   isApple
                     ? "border-zinc-50 hover:bg-zinc-50/50 dark:border-zinc-900 dark:hover:bg-zinc-800/30"
-                    : "border-zinc-100 text-zinc-800 dark:border-zinc-800 dark:text-zinc-200",
+                    : "border-zinc-100 text-zinc-700 hover:bg-zinc-50/70 dark:border-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-800/40",
                 )}
               >
                 {columns.map((col) => (

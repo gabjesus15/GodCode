@@ -202,7 +202,7 @@ export function CompanyForm({ plans }: CompanyFormProps) {
       });
 
       // A la ficha: ahí se fija el vencimiento (Suscripción → Extender) y se crean las sucursales.
-      router.push(created?.id ? `/companies/${created.id}` : "/companies");
+      router.push(created?.id ? `/dashboard/empresa/${created.id}` : "/dashboard");
       router.refresh();
     } catch (err) {
       const message =

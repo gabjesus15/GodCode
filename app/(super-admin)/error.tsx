@@ -17,7 +17,7 @@ export default function SuperAdminError({ error, reset }: { error: Error & { dig
 
   return (
     <div className="flex min-h-[50vh] items-center justify-center">
-      <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-6 text-center shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 text-center dark:border-zinc-700 dark:bg-zinc-900">
         <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/40">
           <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden />
         </div>

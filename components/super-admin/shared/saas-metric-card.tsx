@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/utils/cn";
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 
@@ -24,18 +23,22 @@ function DeltaBadge({ delta, deltaType }: { delta: string; deltaType: SaasMetric
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-        isPositive && "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
-        isNegative && "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300",
-        !isPositive && !isNegative && "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+        "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
+        isPositive && "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+        isNegative && "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300",
+        !isPositive && !isNegative && "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300",
       )}
     >
-      <Icon className="h-3 w-3" />
+      <Icon className="h-3 w-3" aria-hidden />
       {delta}
     </span>
   );
 }
 
+const CARD_CLASS =
+  "flex h-full min-w-0 flex-col gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900";
+
+/** Misma tarjeta que los KPI del Inicio: etiqueta con icono, cifra y una línea de ayuda. */
 export function SaasMetricCard({
   label,
   value,
@@ -44,41 +47,34 @@ export function SaasMetricCard({
   delta,
   deltaType = "unchanged",
   icon: Icon,
-  iconColor = "text-zinc-500 dark:text-zinc-400",
+  iconColor = "text-zinc-400",
 }: SaasMetricCardProps) {
   const inner = (
-    <Card
-      className={cn(
-        "flex h-full min-h-0 min-w-0 flex-col gap-2 rounded-3xl border-zinc-200/60 bg-white p-4 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:gap-3 sm:p-5",
-        href && "transition hover:border-zinc-300 hover:shadow-md dark:hover:border-zinc-700",
-      )}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{label}</span>
-        {Icon ? (
-          <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800">
-            <Icon className={cn("h-3.5 w-3.5", iconColor)} />
-          </div>
-        ) : null}
+    <>
+      <div className="flex min-w-0 items-center gap-2">
+        {Icon ? <Icon className={cn("h-4 w-4 shrink-0", iconColor)} strokeWidth={1.75} aria-hidden /> : null}
+        <p className="truncate text-[13px] text-zinc-500 dark:text-zinc-400">{label}</p>
       </div>
-      <div className="flex items-baseline gap-2">
-        <span className="truncate text-2xl font-semibold text-zinc-900 dark:text-zinc-100 sm:text-3xl">{value}</span>
+      <div className="flex min-w-0 items-center gap-2">
+        <p className="truncate text-xl font-semibold tabular-nums leading-none tracking-tight text-zinc-950 dark:text-zinc-50">
+          {value}
+        </p>
         {delta ? <DeltaBadge delta={delta} deltaType={deltaType} /> : null}
       </div>
-      {helper ? <p className="mt-auto min-w-0 text-sm leading-snug text-zinc-500 dark:text-zinc-400">{helper}</p> : null}
-    </Card>
+      {helper ? <p className="mt-auto min-w-0 text-[11px] leading-snug text-zinc-400 dark:text-zinc-500">{helper}</p> : null}
+    </>
   );
 
   if (href) {
     return (
       <Link
         href={href}
-        className="block h-full min-w-0 rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-950"
+        className={`${CARD_CLASS} transition hover:border-zinc-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:hover:border-zinc-700`}
       >
         {inner}
       </Link>
     );
   }
 
-  return inner;
+  return <div className={CARD_CLASS}>{inner}</div>;
 }

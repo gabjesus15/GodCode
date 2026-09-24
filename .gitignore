@@ -15,6 +15,8 @@
 /coverage
 /playwright-report/
 /test-results/
+/blob-report/
+/playwright/.cache/
 
 # next.js
 /.next/
@@ -60,6 +62,14 @@ next-env.d.ts
 # editor / IDE (optional: remove if you want to commit shared settings)
 .cursor/
 .turbo
+.idea/
+*.swp
+*~
+.eslintcache
+
+# Claude Code: ajustes personales y worktrees locales (launch.json sí se comparte)
+.claude/settings.local.json
+.claude/worktrees/
 
 # MCP local (apunta a una IP privada)
 .mcp.json

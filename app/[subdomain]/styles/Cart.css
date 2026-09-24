@@ -718,6 +718,11 @@
 	color: var(--cart-on-accent);
 }
 
+.cart-stepper__btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
 .cart-stepper__btn--remove {
 	color: var(--cart-fg-2);
 }
@@ -891,6 +896,11 @@
 .cart-pick__body:hover {
 	background: var(--cart-raised-2);
 	border-color: var(--cart-line-strong);
+}
+
+.cart-pick__body--static,
+.cart-pick__body--static:hover {
+	cursor: default;
 }
 
 .cart-pick.is-selected .cart-pick__body {

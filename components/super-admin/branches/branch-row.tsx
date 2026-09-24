@@ -231,7 +231,7 @@ function BranchView({ branch, onEdit }: { branch: Branch, onEdit: () => void }) 
 
     return (
         <>
-            <div className="grid min-w-0 grid-cols-1 gap-4 rounded-2xl border border-zinc-200 bg-white/80 p-4 shadow-sm backdrop-blur transition-colors hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900/80 dark:hover:border-zinc-600 sm:grid-cols-2 md:grid-cols-6 md:items-start sm:p-5">
+            <div className="grid min-w-0 grid-cols-1 gap-4 rounded-2xl border border-zinc-200 bg-white/80 p-4 backdrop-blur transition-colors hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-600 sm:grid-cols-2 md:grid-cols-6 md:items-start sm:p-5">
                 <div className="min-w-0 md:col-span-2">
                     <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                         {branch.name}
@@ -280,7 +280,7 @@ function BranchView({ branch, onEdit }: { branch: Branch, onEdit: () => void }) 
                     )}
                 </div>
                 <div className="min-w-0 rounded-xl border border-zinc-100 bg-zinc-50/80 py-3 px-3 dark:border-zinc-700 dark:bg-zinc-800/50 md:col-span-6 md:px-4">
-                    <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    <p className="mb-2 text-[13px] font-medium text-zinc-500 dark:text-zinc-400">
                         Métodos de pago activos
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -458,7 +458,7 @@ function BranchEditForm({ branch, onCancel }: { branch: Branch, onCancel: () => 
     return (
         <form
             onSubmit={handleSubmit(onSubmit)}
-            className="min-w-0 rounded-2xl border border-zinc-200 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/80 sm:p-5"
+            className="min-w-0 rounded-2xl border border-zinc-200 bg-white/80 p-4 backdrop-blur dark:border-zinc-700 dark:bg-zinc-900 sm:p-5"
         >
             <div className="space-y-5 sm:space-y-6">
                 <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">

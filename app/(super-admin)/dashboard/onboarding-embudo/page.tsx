@@ -1,5 +1,4 @@
-import { Funnel } from "lucide-react";
-import { DashboardPeriodTabs } from "../../../../components/super-admin/analytics/dashboard-period-tabs";
+import { HomePeriodSelect } from "@/components/super-admin/home/home-period-select";
 import { OnboardingFunnelInteractive } from "@/components/super-admin/analytics/onboarding-funnel-interactive";
 import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
 import {
@@ -66,23 +65,17 @@ export default async function OnboardingEmbudoPage({
       <SaasPageHeader
         title="Embudo de altas"
         description="Cuántos interesados pasan cada paso, desde la visita al landing hasta el pago de activación, y dónde se quedan."
-        icon={Funnel}
         backHref="/dashboard"
         backLabel="Volver al inicio"
+        action={<HomePeriodSelect current={period} />}
       />
 
-      {/* Filter panel */}
-      <div className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <DashboardPeriodTabs current={period} />
-          <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-            Filtrando solicitudes desde:{" "}
-            <span className="tabular-nums text-zinc-800 dark:text-zinc-200">
-              {fromIso ? new Date(fromIso).toLocaleDateString("es-CL") : "Todo el historial"}
-            </span>
-          </div>
-        </div>
-      </div>
+      <p className="-mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+        Solicitudes desde{" "}
+        <span className="tabular-nums text-zinc-700 dark:text-zinc-200">
+          {fromIso ? new Date(fromIso).toLocaleDateString("es-CL") : "todo el historial"}
+        </span>
+      </p>
 
       {loadError && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">

@@ -44,13 +44,13 @@ export default async function SuperAdminLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	const { role } = await requireSuperAdminSession();
+	const { role, email } = await requireSuperAdminSession();
 
 	return (
 		<QueryProvider>
 			<SaasThemeEnforcer />
 			<SaasAdminPwaRegister />
-			<AdminRoleProvider role={role}>
+			<AdminRoleProvider role={role} email={email}>
 				<AdminShell>{children}</AdminShell>
 			</AdminRoleProvider>
 		</QueryProvider>

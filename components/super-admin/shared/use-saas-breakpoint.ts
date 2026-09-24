@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 const LG_BREAKPOINT = 1024;
 
-/** `true` cuando viewport >= lg (1024px). Patrón drawer-vs-panel en tickets, onboarding, salud-pagos. */
+/** `true` cuando viewport >= lg (1024px). Patrón drawer-vs-panel en tickets y onboarding. */
 export function useSaasBreakpoint(breakpoint = LG_BREAKPOINT) {
   const [isDesktop, setIsDesktop] = useState(false);
 

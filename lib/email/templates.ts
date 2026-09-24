@@ -853,7 +853,7 @@ export const EMAIL_CATALOG: EmailCatalogEntry[] = [
 		label: "Nueva solicitud de alta",
 		trigger: "Al recibir una solicitud en el paso 1. Va al correo del equipo (ONBOARDING_TEAM_EMAIL).",
 		automatic: false,
-		sample: { businessName: SAMPLE_BUSINESS, name: SAMPLE_NAME, email: "camila@laparada.cl", adminUrl: "https://example.com/onboarding/solicitudes" },
+		sample: { businessName: SAMPLE_BUSINESS, name: SAMPLE_NAME, email: "camila@laparada.cl", adminUrl: "https://example.com/dashboard" },
 	}),
 	entry({
 		kind: "team_payment_review",

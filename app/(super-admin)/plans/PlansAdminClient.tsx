@@ -1,19 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Tag } from "lucide-react";
-import { Button } from "../../../components/ui/button";
+import {
+	Ban,
+	Check,
+	CheckCircle2,
+	ChevronDown,
+	ListChecks,
+	Pencil,
+	Plus,
+	Store,
+	Tag,
+	Trash2,
+	Users,
+	type LucideIcon,
+} from "lucide-react";
 import { Input } from "../../../components/ui/input";
 import { Textarea } from "../../../components/ui/textarea";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Drawer } from "@/components/ui/drawer";
-import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
 import { SaasSwitch } from "@/components/super-admin/shared/saas-switch";
 import { SaasCheckbox } from "@/components/super-admin/shared/saas-checkbox";
 import { SaasStatusBadge } from "@/components/super-admin/shared/saas-status-badge";
+import { SaasEmptyState } from "@/components/super-admin/shared/saas-empty-state";
+import { cn } from "@/utils/cn";
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type AppLocale } from "../../../lib/i18n/config";
 import {
 	buildPlanMarketingLinesI18nPayload,
@@ -74,21 +87,40 @@ type AddonCatalogItem = {
 	name: string;
 };
 
-function planCardLines(plan: Plan): string[] {
-	const base: string[] = [];
+/** Resumen automático de la tarjeta (sucursales y usuarios); con 0 usuarios no se muestra, igual que en la landing. */
+function planSummary(plan: Plan): { branches: string; users: string | null } {
 	const mb = plan.max_branches ?? 0;
-	base.push(mb === 1 ? "1 sucursal incluida." : `Hasta ${mb} sucursales.`);
 	const mu = plan.max_users ?? 0;
-	if (mu > 0) {
-		base.push(mu === 1 ? "Hasta 1 usuario." : `Hasta ${mu} usuarios.`);
-	}
-	const custom = resolvePlanMarketingLines({
+	return {
+		branches: mb === 1 ? "1 sucursal incluida" : `Hasta ${mb} sucursales`,
+		users: mu > 0 ? (mu === 1 ? "Hasta 1 usuario" : `Hasta ${mu} usuarios`) : null,
+	};
+}
+
+/** Descripciones extra del plan en el idioma por defecto (van debajo del resumen). */
+function planFeatureLines(plan: Plan): string[] {
+	return resolvePlanMarketingLines({
 		locale: DEFAULT_LOCALE,
 		marketingLines: plan.marketing_lines,
 		marketingLinesI18n: plan.marketing_lines_i18n,
 	});
-	return [...base, ...custom];
 }
+
+/* Botones, campos y textos con el mismo formato que el Inicio. */
+const PRIMARY_BUTTON =
+	"inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-zinc-900 px-3 text-xs font-medium text-white transition hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white";
+const SECONDARY_BUTTON =
+	"inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-700 transition hover:border-zinc-300 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:text-zinc-50";
+const ICON_BUTTON =
+	"inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-zinc-100 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:hover:bg-zinc-800 dark:hover:text-red-400";
+const FIELD_CLASS =
+	"h-9 rounded-lg border-zinc-200 text-sm placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700";
+const NATIVE_FIELD_CLASS =
+	"h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+const TEXTAREA_CLASS =
+	"min-h-16 flex-1 rounded-lg border-zinc-200 text-sm placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700";
+const LABEL_CLASS = "text-[13px] font-medium text-zinc-700 dark:text-zinc-300";
+const HELPER_CLASS = "text-[11px] text-zinc-400 dark:text-zinc-500";
 
 type DescriptionLine = { id: string; text: string };
 type LocalizedDescriptionLines = Record<AppLocale, DescriptionLine[]>;
@@ -455,15 +487,15 @@ export function PlansAdminClient({
 	};
 
 	return (
-		<div className="flex min-w-0 flex-col gap-4 sm:gap-6">
+		<div className="flex min-w-0 flex-col gap-6">
 			<SaasPageHeader
 				title="Planes"
 				description="Precio, sucursales, usuarios, descripciones extra y visibilidad. Las descripciones van debajo del resumen de sucursales y usuarios en la tarjeta y en la landing."
-				icon={Tag}
 				action={
-					<Button type="button" onClick={startNew} disabled={showNew}>
+					<button type="button" onClick={startNew} disabled={showNew} className={PRIMARY_BUTTON}>
+						<Plus className="h-3.5 w-3.5" aria-hidden />
 						Nuevo plan
-					</Button>
+					</button>
 				}
 			/>
 
@@ -474,416 +506,411 @@ export function PlansAdminClient({
 				title={editingId ? "Editar plan" : "Nuevo plan"}
 				description="Configura precios, límites, visibilidad y accesos del plan."
 			>
-				<div className="space-y-4 py-2">
+				<div className="space-y-4 pt-2">
 					{error && (
-						<div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/60 dark:text-red-300">
+						<div
+							role="alert"
+							className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+						>
 							{error}
 						</div>
 					)}
-					<div className="mt-4 grid gap-3 sm:grid-cols-2">
-						<label className="flex flex-col gap-1 text-sm">
-							<span className="font-medium text-zinc-700 dark:text-zinc-300">Nombre</span>
-							<Input
-								value={form.name}
-								onChange={(e) =>
-									setForm((p) => ({
-										...p,
-										name: e.target.value,
-										nameByLocale: {
-											...p.nameByLocale,
-											[DEFAULT_LOCALE]: e.target.value,
-										},
-									}))
-								}
-								placeholder="Básico"
-								className="h-10"
-							/>
-						</label>
 
-						<div className="sm:col-span-2">
-							<p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-								Descripciones del plan
-							</p>
-							<p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-								Se añaden después del resumen automático (sucursales y usuarios). Escribe el texto y usa
-								quitar o añadir otra.
-							</p>
-							<div className="mt-3 flex flex-col gap-4">
-								{form.descriptionLines.map((line, i) => (
-									<label key={line.id} className="flex flex-col gap-1 text-sm">
-										<span className="font-medium text-zinc-700 dark:text-zinc-300">
-											Descripción {i + 1}
-										</span>
-										<div className="flex gap-2">
-											<Textarea
-												value={line.text}
-												onChange={(e) => {
-													const v = e.target.value;
-													setForm((prev) => ({
-														...prev,
-														descriptionLines: prev.descriptionLines.map((row) =>
-															row.id === line.id ? { ...row, text: v } : row
-															),
-															descriptionLinesByLocale: {
-																...prev.descriptionLinesByLocale,
-																[DEFAULT_LOCALE]: prev.descriptionLinesByLocale[DEFAULT_LOCALE].map((row) =>
-																	row.id === line.id ? { ...row, text: v } : row
-																),
-															},
-													}));
-												}}
-												placeholder="Ej. Incluye menú digital, caja y soporte por chat."
-												rows={2}
-												className="flex-1"
-											/>
-											<Button
-												type="button"
-												variant="outline"
-												size="sm"
-												className="h-10 w-10 shrink-0 self-start p-0"
-												onClick={() =>
-													setForm((prev) => ({
-														...prev,
-														descriptionLines: prev.descriptionLines.filter((row) => row.id !== line.id),
-															descriptionLinesByLocale: {
-																...prev.descriptionLinesByLocale,
-																[DEFAULT_LOCALE]: prev.descriptionLinesByLocale[DEFAULT_LOCALE].filter((row) => row.id !== line.id),
-															},
-													}))
-												}
-												aria-label={`Quitar descripción ${i + 1}`}
-											>
-												<Trash2 className="h-4 w-4" aria-hidden />
-											</Button>
-										</div>
-									</label>
-								))}
-								<Button
-									type="button"
-									variant="outline"
-									size="sm"
-									className="w-fit gap-1.5"
-									onClick={() =>
-										setForm((prev) => ({
-											...(() => {
-												const newLine = { id: newDescriptionLineId(), text: "" };
-												return {
-													...prev,
-													descriptionLinesByLocale: {
-														...prev.descriptionLinesByLocale,
-														[DEFAULT_LOCALE]: [
-															...prev.descriptionLinesByLocale[DEFAULT_LOCALE],
-															{ ...newLine },
-														],
-													},
-													descriptionLines: [...prev.descriptionLines, newLine],
-												};
-											})(),
+					{/* Datos generales: nombre, límites y visibilidad */}
+					<FormSection title="General">
+						<div className="grid gap-3 sm:grid-cols-2">
+							<label className="flex flex-col gap-1.5 sm:col-span-2">
+								<span className={LABEL_CLASS}>Nombre</span>
+								<Input
+									value={form.name}
+									onChange={(e) =>
+										setForm((p) => ({
+											...p,
+											name: e.target.value,
+											nameByLocale: {
+												...p.nameByLocale,
+												[DEFAULT_LOCALE]: e.target.value,
+											},
 										}))
 									}
-								>
-									<Plus className="h-4 w-4" aria-hidden />
-									Añadir descripción
-								</Button>
+									placeholder="Básico"
+									className={FIELD_CLASS}
+								/>
+							</label>
+							<label className="flex flex-col gap-1.5">
+								<span className={LABEL_CLASS}>Máx. sucursales</span>
+								<Input
+									type="number"
+									min="0"
+									value={form.max_branches === "" ? "" : form.max_branches}
+									onChange={(e) =>
+										setForm((p) => ({
+											...p,
+											max_branches: e.target.value === "" ? "" : Number(e.target.value),
+										}))
+									}
+									placeholder="1"
+									className={cn(FIELD_CLASS, "tabular-nums")}
+								/>
+							</label>
+							<label className="flex flex-col gap-1.5">
+								<span className={LABEL_CLASS}>Máx. usuarios</span>
+								<Input
+									type="number"
+									min="0"
+									value={form.max_users === "" ? "" : form.max_users}
+									onChange={(e) =>
+										setForm((p) => ({
+											...p,
+											max_users: e.target.value === "" ? "" : Number(e.target.value),
+										}))
+									}
+									placeholder="0 = no mostrar en copy"
+									className={cn(FIELD_CLASS, "tabular-nums")}
+								/>
+								<span className={HELPER_CLASS}>
+									En landing: si es 0 no se añade línea de usuarios; si es mayor, muestra el tope.
+								</span>
+							</label>
+							<div className="grid gap-2 sm:col-span-2 sm:grid-cols-2">
+								<div className="rounded-lg bg-zinc-50 px-3 py-2.5 dark:bg-zinc-900">
+									<SaasSwitch
+										checked={form.is_public}
+										onChange={(checked) => setForm((p) => ({ ...p, is_public: checked }))}
+										label="Visible en registro y landing"
+									/>
+								</div>
+								<div className="rounded-lg bg-zinc-50 px-3 py-2.5 dark:bg-zinc-900">
+									<SaasSwitch
+										checked={form.is_active}
+										onChange={(checked) => setForm((p) => ({ ...p, is_active: checked }))}
+										label="Plan activo"
+									/>
+								</div>
 							</div>
 						</div>
+					</FormSection>
 
-						<details className="sm:col-span-2 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3 dark:border-zinc-700 dark:bg-zinc-900/40">
-							<summary className="cursor-pointer list-none text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-								Traducciones por idioma
-							</summary>
-							<p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-								Edita cada idioma en este bloque plegable. Si dejas algo vacío, se usa fallback automático.
-							</p>
-							<div className="mt-4 grid gap-4">
-								{SUPPORTED_LOCALES.map((locale) => (
-									<div key={locale} className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-950/40">
-										<p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-											{LOCALE_LABELS[locale]} ({locale})
-										</p>
-										<label className="mt-2 flex flex-col gap-1 text-sm">
-											<span className="font-medium text-zinc-700 dark:text-zinc-300">Nombre</span>
-											<Input
-												value={form.nameByLocale[locale] ?? ""}
-												onChange={(e) =>
-													setForm((prev) => ({
-														...prev,
-														...(locale === DEFAULT_LOCALE ? { name: e.target.value } : {}),
-														nameByLocale: {
-															...prev.nameByLocale,
-															[locale]: e.target.value,
+					<FormSection
+						title="Descripciones del plan"
+						description="Se añaden después del resumen automático (sucursales y usuarios). Escribe el texto y usa quitar o añadir otra."
+					>
+						<div className="flex flex-col gap-3">
+							{form.descriptionLines.map((line, i) => (
+								<label key={line.id} className="flex flex-col gap-1.5">
+									<span className={LABEL_CLASS}>Descripción {i + 1}</span>
+									<div className="flex gap-2">
+										<Textarea
+											value={line.text}
+											onChange={(e) => {
+												const v = e.target.value;
+												setForm((prev) => ({
+													...prev,
+													descriptionLines: prev.descriptionLines.map((row) =>
+														row.id === line.id ? { ...row, text: v } : row
+														),
+														descriptionLinesByLocale: {
+															...prev.descriptionLinesByLocale,
+															[DEFAULT_LOCALE]: prev.descriptionLinesByLocale[DEFAULT_LOCALE].map((row) =>
+																row.id === line.id ? { ...row, text: v } : row
+															),
 														},
-													}))
-												}
-												placeholder={`Nombre en ${LOCALE_LABELS[locale]}`}
-												className="h-10"
-											/>
-										</label>
+												}));
+											}}
+											placeholder="Ej. Incluye menú digital, caja y soporte por chat."
+											rows={2}
+											className={TEXTAREA_CLASS}
+										/>
+										<button
+											type="button"
+											className={cn(ICON_BUTTON, "self-start")}
+											onClick={() =>
+												setForm((prev) => ({
+													...prev,
+													descriptionLines: prev.descriptionLines.filter((row) => row.id !== line.id),
+														descriptionLinesByLocale: {
+															...prev.descriptionLinesByLocale,
+															[DEFAULT_LOCALE]: prev.descriptionLinesByLocale[DEFAULT_LOCALE].filter((row) => row.id !== line.id),
+														},
+												}))
+											}
+											aria-label={`Quitar descripción ${i + 1}`}
+										>
+											<Trash2 className="h-4 w-4" aria-hidden />
+										</button>
+									</div>
+								</label>
+							))}
+							<button
+								type="button"
+								className={cn(SECONDARY_BUTTON, "w-fit")}
+								onClick={() =>
+									setForm((prev) => ({
+										...(() => {
+											const newLine = { id: newDescriptionLineId(), text: "" };
+											return {
+												...prev,
+												descriptionLinesByLocale: {
+													...prev.descriptionLinesByLocale,
+													[DEFAULT_LOCALE]: [
+														...prev.descriptionLinesByLocale[DEFAULT_LOCALE],
+														{ ...newLine },
+													],
+												},
+												descriptionLines: [...prev.descriptionLines, newLine],
+											};
+										})(),
+									}))
+								}
+							>
+								<Plus className="h-3.5 w-3.5" aria-hidden />
+								Añadir descripción
+							</button>
+						</div>
+					</FormSection>
 
-										<div className="mt-2 flex flex-col gap-3">
-											<p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Descripciones</p>
-											{form.descriptionLinesByLocale[locale].map((line, i) => (
-												<div key={line.id} className="flex gap-2">
-													<Textarea
-														value={line.text}
-														onChange={(e) => {
-															const value = e.target.value;
-															setForm((prev) => ({
-																...prev,
-																...(locale === DEFAULT_LOCALE
-																	? {
-																		descriptionLines: prev.descriptionLines.map((row) =>
-																			row.id === line.id ? { ...row, text: value } : row
-																		),
-																	}
-																	: {}),
-																descriptionLinesByLocale: {
-																	...prev.descriptionLinesByLocale,
-																	[locale]: prev.descriptionLinesByLocale[locale].map((row) =>
+					<details className="group rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+						<summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 [&::-webkit-details-marker]:hidden">
+							<span className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">Traducciones por idioma</span>
+							<ChevronDown className="h-4 w-4 shrink-0 text-zinc-400 transition group-open:rotate-180" aria-hidden />
+						</summary>
+						<p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+							Edita cada idioma en este bloque plegable. Si dejas algo vacío, se usa fallback automático.
+						</p>
+						<div className="mt-4 grid gap-3">
+							{SUPPORTED_LOCALES.map((locale) => (
+								<div key={locale} className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-900">
+									<p className="text-[13px] font-medium text-zinc-900 dark:text-zinc-100">
+										{LOCALE_LABELS[locale]} <span className="font-normal text-zinc-400">({locale})</span>
+									</p>
+									<label className="mt-3 flex flex-col gap-1.5">
+										<span className={LABEL_CLASS}>Nombre</span>
+										<Input
+											value={form.nameByLocale[locale] ?? ""}
+											onChange={(e) =>
+												setForm((prev) => ({
+													...prev,
+													...(locale === DEFAULT_LOCALE ? { name: e.target.value } : {}),
+													nameByLocale: {
+														...prev.nameByLocale,
+														[locale]: e.target.value,
+													},
+												}))
+											}
+											placeholder={`Nombre en ${LOCALE_LABELS[locale]}`}
+											className={FIELD_CLASS}
+										/>
+									</label>
+
+									<div className="mt-3 flex flex-col gap-2">
+										<p className={LABEL_CLASS}>Descripciones</p>
+										{form.descriptionLinesByLocale[locale].map((line, i) => (
+											<div key={line.id} className="flex gap-2">
+												<Textarea
+													value={line.text}
+													onChange={(e) => {
+														const value = e.target.value;
+														setForm((prev) => ({
+															...prev,
+															...(locale === DEFAULT_LOCALE
+																? {
+																	descriptionLines: prev.descriptionLines.map((row) =>
 																		row.id === line.id ? { ...row, text: value } : row
 																	),
-																},
-															}));
-														}}
-														rows={2}
-														placeholder={`Descripción ${i + 1} en ${LOCALE_LABELS[locale]}`}
-														className="flex-1"
-													/>
-													<Button
-														type="button"
-														variant="outline"
-														size="sm"
-														className="h-10 w-10 shrink-0 p-0"
-														onClick={() =>
-															setForm((prev) => ({
-																...prev,
-																...(locale === DEFAULT_LOCALE
-																	? {
-																		descriptionLines: prev.descriptionLines.filter((row) => row.id !== line.id),
-																	}
-																	: {}),
-																descriptionLinesByLocale: {
-																	...prev.descriptionLinesByLocale,
-																	[locale]: prev.descriptionLinesByLocale[locale].filter((row) => row.id !== line.id),
-																},
-															}))
-														}
-														aria-label={`Quitar descripción ${i + 1} de ${locale}`}
-													>
-														<Trash2 className="h-4 w-4" aria-hidden />
-													</Button>
-												</div>
-											))}
-											<Button
-												type="button"
-												variant="outline"
-												size="sm"
-												className="w-fit gap-1.5"
-												onClick={() =>
-													setForm((prev) => ({
-														...(() => {
-															const newLine = { id: newDescriptionLineId(), text: "" };
-															return {
-																...prev,
-																...(locale === DEFAULT_LOCALE
-																	? {
-																		descriptionLines: [...prev.descriptionLines, newLine],
-																	}
-																	: {}),
-																descriptionLinesByLocale: {
-																	...prev.descriptionLinesByLocale,
-																	[locale]: [...prev.descriptionLinesByLocale[locale], newLine],
-																},
-															};
-														})(),
-													}))
-												}
-											>
-												<Plus className="h-4 w-4" aria-hidden />
-												Añadir descripción en {LOCALE_LABELS[locale]}
-											</Button>
-										</div>
+																}
+																: {}),
+															descriptionLinesByLocale: {
+																...prev.descriptionLinesByLocale,
+																[locale]: prev.descriptionLinesByLocale[locale].map((row) =>
+																	row.id === line.id ? { ...row, text: value } : row
+																),
+															},
+														}));
+													}}
+													rows={2}
+													placeholder={`Descripción ${i + 1} en ${LOCALE_LABELS[locale]}`}
+													className={TEXTAREA_CLASS}
+												/>
+												<button
+													type="button"
+													className={ICON_BUTTON}
+													onClick={() =>
+														setForm((prev) => ({
+															...prev,
+															...(locale === DEFAULT_LOCALE
+																? {
+																	descriptionLines: prev.descriptionLines.filter((row) => row.id !== line.id),
+																}
+																: {}),
+															descriptionLinesByLocale: {
+																...prev.descriptionLinesByLocale,
+																[locale]: prev.descriptionLinesByLocale[locale].filter((row) => row.id !== line.id),
+															},
+														}))
+													}
+													aria-label={`Quitar descripción ${i + 1} de ${locale}`}
+												>
+													<Trash2 className="h-4 w-4" aria-hidden />
+												</button>
+											</div>
+										))}
+										<button
+											type="button"
+											className={cn(SECONDARY_BUTTON, "w-fit")}
+											onClick={() =>
+												setForm((prev) => ({
+													...(() => {
+														const newLine = { id: newDescriptionLineId(), text: "" };
+														return {
+															...prev,
+															...(locale === DEFAULT_LOCALE
+																? {
+																	descriptionLines: [...prev.descriptionLines, newLine],
+																}
+																: {}),
+															descriptionLinesByLocale: {
+																...prev.descriptionLinesByLocale,
+																[locale]: [...prev.descriptionLinesByLocale[locale], newLine],
+															},
+														};
+													})(),
+												}))
+											}
+										>
+											<Plus className="h-3.5 w-3.5" aria-hidden />
+											Añadir descripción en {LOCALE_LABELS[locale]}
+										</button>
 									</div>
-								))}
-							</div>
-						</details>
-
-						<label className="flex flex-col gap-1 text-sm">
-							<span className="font-medium text-zinc-700 dark:text-zinc-300">Max sucursales</span>
-							<Input
-								type="number"
-								min="0"
-								value={form.max_branches === "" ? "" : form.max_branches}
-								onChange={(e) =>
-									setForm((p) => ({
-										...p,
-										max_branches: e.target.value === "" ? "" : Number(e.target.value),
-									}))
-								}
-								placeholder="1"
-								className="h-10"
-							/>
-						</label>
-						<label className="flex flex-col gap-1 text-sm">
-							<span className="font-medium text-zinc-700 dark:text-zinc-300">Max usuarios</span>
-							<Input
-								type="number"
-								min="0"
-								value={form.max_users === "" ? "" : form.max_users}
-								onChange={(e) =>
-									setForm((p) => ({
-										...p,
-										max_users: e.target.value === "" ? "" : Number(e.target.value),
-									}))
-								}
-								placeholder="0 = no mostrar en copy"
-								className="h-10"
-							/>
-							<span className="text-xs font-normal text-zinc-500">
-								En landing: si es 0 no se añade línea de usuarios; si es mayor, muestra el tope.
-							</span>
-						</label>
-						<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-							<SaasSwitch
-								checked={form.is_public}
-								onChange={(checked) => setForm((p) => ({ ...p, is_public: checked }))}
-								label="Visible en registro y landing"
-							/>
-							<SaasSwitch
-								checked={form.is_active}
-								onChange={(checked) => setForm((p) => ({ ...p, is_active: checked }))}
-								label="Plan activo"
-							/>
+								</div>
+							))}
 						</div>
+					</details>
 
-						<div className="sm:col-span-2 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3 dark:border-zinc-700 dark:bg-zinc-900/40">
-							<p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Política de extras del plan</p>
-							<p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-								Configura que extras aparecen como incluidos, bloqueados o permitidos para este plan.
-							</p>
+					<FormSection
+						title="Política de extras del plan"
+						description="Configura qué extras aparecen como incluidos, bloqueados o permitidos para este plan."
+					>
+						<div className="grid gap-3 lg:grid-cols-3">
+							<PolicyBox
+								title="Incluidos"
+								icon={CheckCircle2}
+								iconClassName="text-emerald-600 dark:text-emerald-400"
+								count={form.includedAddonTokens.length}
+							>
+								{addons.map((addon) => {
+									const token = normalizePolicyToken(addon.slug || addon.name);
+									const checked = form.includedAddonTokens.includes(token);
+									return (
+										<SaasCheckbox
+											key={`inc-${addon.id}`}
+											checked={checked}
+											onChange={(checked) =>
+												setForm((prev) => ({
+													...prev,
+													includedAddonTokens: checked
+														? [...new Set([...prev.includedAddonTokens, token])]
+														: prev.includedAddonTokens.filter((t) => t !== token),
+												}))
+											}
+											label={addon.name}
+										/>
+									);
+								})}
+							</PolicyBox>
 
-							<div className="mt-3 grid gap-3 lg:grid-cols-3">
-								<div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/70">
-									<p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">Incluidos</p>
-									<div className="mt-2 space-y-2">
-									{addons.map((addon) => {
-										const token = normalizePolicyToken(addon.slug || addon.name);
-										const checked = form.includedAddonTokens.includes(token);
-										return (
-											<SaasCheckbox
-												key={`inc-${addon.id}`}
-												checked={checked}
-												onChange={(checked) =>
-													setForm((prev) => ({
-														...prev,
-														includedAddonTokens: checked
-															? [...new Set([...prev.includedAddonTokens, token])]
-															: prev.includedAddonTokens.filter((t) => t !== token),
-													}))
-												}
-												label={addon.name}
-											/>
-										);
-									})}
-									</div>
-								</div>
+							<PolicyBox
+								title="Bloqueados"
+								icon={Ban}
+								iconClassName="text-red-500 dark:text-red-400"
+								count={form.blockedAddonTokens.length}
+							>
+								{addons.map((addon) => {
+									const token = normalizePolicyToken(addon.slug || addon.name);
+									const checked = form.blockedAddonTokens.includes(token);
+									return (
+										<SaasCheckbox
+											key={`blk-${addon.id}`}
+											checked={checked}
+											onChange={(checked) =>
+												setForm((prev) => ({
+													...prev,
+													blockedAddonTokens: checked
+														? [...new Set([...prev.blockedAddonTokens, token])]
+														: prev.blockedAddonTokens.filter((t) => t !== token),
+												}))
+											}
+											label={addon.name}
+										/>
+									);
+								})}
+							</PolicyBox>
 
-								<div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/70">
-									<p className="text-xs font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">Bloqueados</p>
-									<div className="mt-2 space-y-2">
-									{addons.map((addon) => {
-										const token = normalizePolicyToken(addon.slug || addon.name);
-										const checked = form.blockedAddonTokens.includes(token);
-										return (
-											<SaasCheckbox
-												key={`blk-${addon.id}`}
-												checked={checked}
-												onChange={(checked) =>
-													setForm((prev) => ({
-														...prev,
-														blockedAddonTokens: checked
-															? [...new Set([...prev.blockedAddonTokens, token])]
-															: prev.blockedAddonTokens.filter((t) => t !== token),
-													}))
-												}
-												label={addon.name}
-											/>
-										);
-									})}
-									</div>
-								</div>
-
-								<div className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/70">
-									<p className="text-xs font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">Permitidos</p>
-									<p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-										Si dejas esta lista vacia, el plan permite todos excepto los bloqueados.
-									</p>
-									<div className="mt-2 space-y-2">
-									{addons.map((addon) => {
-										const token = normalizePolicyToken(addon.slug || addon.name);
-										const checked = form.allowedAddonTokens.includes(token);
-										return (
-											<SaasCheckbox
-												key={`allow-${addon.id}`}
-												checked={checked}
-												onChange={(checked) =>
-													setForm((prev) => ({
-														...prev,
-														allowedAddonTokens: checked
-															? [...new Set([...prev.allowedAddonTokens, token])]
-															: prev.allowedAddonTokens.filter((t) => t !== token),
-													}))
-												}
-												label={addon.name}
-											/>
-										);
-									})}
-									</div>
-								</div>
-							</div>
-
-							<div className="mt-4 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/70">
-								<p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-									Accesos del panel de la empresa por membresía
-								</p>
-								<p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-									Selecciona las pestañas que tendrá activa la empresa cuando use este plan.
-								</p>
-								<div className="mt-3 grid gap-2 sm:grid-cols-2">
-									{TENANT_ADMIN_TAB_OPTIONS.map((tab) => {
-										const checked = form.ceoTabs.includes(tab.id);
-										return (
-											<SaasCheckbox
-												key={tab.id}
-												checked={checked}
-												onChange={(checked) =>
-													setForm((prev) => ({
-														...prev,
-														ceoTabs: checked
-															? [...prev.ceoTabs, tab.id]
-															: prev.ceoTabs.filter((id) => id !== tab.id),
-													}))
-												}
-												label={tab.label}
-											/>
-										);
-									})}
-								</div>
-							</div>
+							<PolicyBox
+								title="Permitidos"
+								icon={ListChecks}
+								iconClassName="text-zinc-400"
+								count={form.allowedAddonTokens.length}
+								hint="Si dejas esta lista vacía, el plan permite todos excepto los bloqueados."
+							>
+								{addons.map((addon) => {
+									const token = normalizePolicyToken(addon.slug || addon.name);
+									const checked = form.allowedAddonTokens.includes(token);
+									return (
+										<SaasCheckbox
+											key={`allow-${addon.id}`}
+											checked={checked}
+											onChange={(checked) =>
+												setForm((prev) => ({
+													...prev,
+													allowedAddonTokens: checked
+														? [...new Set([...prev.allowedAddonTokens, token])]
+														: prev.allowedAddonTokens.filter((t) => t !== token),
+												}))
+											}
+											label={addon.name}
+										/>
+									);
+								})}
+							</PolicyBox>
 						</div>
+					</FormSection>
+
+					<FormSection
+						title="Accesos del panel de la empresa por membresía"
+						description="Selecciona las pestañas que tendrá activa la empresa cuando use este plan."
+					>
+						<div className="grid gap-2.5 sm:grid-cols-2">
+							{TENANT_ADMIN_TAB_OPTIONS.map((tab) => {
+								const checked = form.ceoTabs.includes(tab.id);
+								return (
+									<SaasCheckbox
+										key={tab.id}
+										checked={checked}
+										onChange={(checked) =>
+											setForm((prev) => ({
+												...prev,
+												ceoTabs: checked
+													? [...prev.ceoTabs, tab.id]
+													: prev.ceoTabs.filter((id) => id !== tab.id),
+											}))
+										}
+										label={tab.label}
+									/>
+								);
+							})}
 						</div>
+					</FormSection>
+
 					{/* Precios por región */}
-					<div className="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-						<p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Precios por región</p>
-						<p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-							Ingresa el precio, selecciona las regiones y aplica a todas de una vez.
-						</p>
-
+					<FormSection
+						title="Precios por región"
+						description="Ingresa el precio, selecciona las regiones y aplica a todas de una vez."
+					>
 						{/* Formulario para agregar múltiples precios */}
-						<div className="mt-4 space-y-3 rounded-lg bg-slate-50 p-4 dark:bg-zinc-900/50">
+						<div className="space-y-4 rounded-lg bg-zinc-50 p-3 dark:bg-zinc-900">
 							<div className="grid gap-3 sm:grid-cols-2">
-								<label className="flex flex-col gap-1 text-sm">
-									<span className="font-medium text-zinc-700 dark:text-zinc-300">Precio</span>
+								<label className="flex flex-col gap-1.5">
+									<span className={LABEL_CLASS}>Precio</span>
 									<input
 										type="number"
 										min="0"
@@ -895,11 +922,11 @@ export function PlansAdminClient({
 												tempPrice: e.target.value === "" ? "" : Number(e.target.value),
 											}))
 										}
-										className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+										className={cn(NATIVE_FIELD_CLASS, "tabular-nums")}
 									/>
 								</label>
-								<label className="flex flex-col gap-1 text-sm">
-									<span className="font-medium text-zinc-700 dark:text-zinc-300">Moneda</span>
+								<label className="flex flex-col gap-1.5">
+									<span className={LABEL_CLASS}>Moneda</span>
 									<input
 										type="text"
 										placeholder="USD"
@@ -911,14 +938,14 @@ export function PlansAdminClient({
 												tempCurrency: e.target.value.toUpperCase(),
 											}))
 										}
-										className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-center text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+										className={NATIVE_FIELD_CLASS}
 									/>
 								</label>
 							</div>
 
-							<div className="sm:col-span-2">
-								<p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-2">Aplicar a estas regiones:</p>
-								<div className="grid gap-2 sm:grid-cols-2">
+							<div>
+								<p className={cn(LABEL_CLASS, "mb-2")}>Aplicar a estas regiones</p>
+								<div className="grid gap-2.5 sm:grid-cols-2">
 									{["USA/Canada", "Latinoamérica", "Europe", "Asia", "Africa", "Oceania"].map((region) => (
 										<SaasCheckbox
 											key={region}
@@ -938,11 +965,9 @@ export function PlansAdminClient({
 								</div>
 							</div>
 
-							<Button
+							<button
 								type="button"
-								variant="outline"
-								size="sm"
-								className="w-full gap-1.5"
+								className={cn(SECONDARY_BUTTON, "w-full")}
 								onClick={() => {
 									const price = Number(form.tempPrice);
 									if (Number.isNaN(price) || price < 0 || form.tempSelectedRegions.length === 0) {
@@ -967,101 +992,220 @@ export function PlansAdminClient({
 									}));
 								}}
 							>
-								<Plus className="h-4 w-4" aria-hidden />
+								<Plus className="h-3.5 w-3.5" aria-hidden />
 								Aplicar precio a {form.tempSelectedRegions.length} región{form.tempSelectedRegions.length !== 1 ? "es" : ""}
-							</Button>
+							</button>
 						</div>
 
 						{/* Tabla de precios ya agregados */}
 						{form.pricesByContinent.length > 0 && (
-							<div className="mt-4 space-y-2">
-								<p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Precios configurados:</p>
-								{form.pricesByContinent.map((pc: PriceByContinent, idx: number) => (
-									<div key={pc.id} className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
-										<div className="flex gap-4 items-center">
-											<span className="font-medium text-zinc-900 dark:text-zinc-100">{REGION_LABELS[pc.continent] ?? pc.continent}</span>
-											<span className="text-sm text-zinc-600 dark:text-zinc-400">{pc.currency} {pc.price}</span>
-										</div>
-										<Button
-											type="button"
-											variant="outline"
-											size="sm"
-											className="h-8 w-8 p-0"
-											onClick={() => {
-												setForm((prev) => ({
-													...prev,
-													pricesByContinent: prev.pricesByContinent.filter((_: PriceByContinent, i: number) => i !== idx),
-												}));
-											}}
-										>
-											<Trash2 className="h-4 w-4" />
-										</Button>
-									</div>
-								))}
-							</div>
-						)}
-					</div>
-
-					<div className="mt-6 flex gap-2 pb-6">
-						<Button type="button" onClick={save} disabled={saving}>
-							{saving ? "Guardando…" : editingId ? "Guardar" : "Crear"}
-						</Button>
-						<Button type="button" variant="outline" onClick={resetForm} disabled={saving}>
-							Cancelar
-						</Button>
-					</div>
-				</div>
-			</Drawer>
-
-			<div ref={listRef} className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-				{plans.map((plan) => {
-					const latinPrice = plan.prices_by_continent?.["Latinoamérica"];
-					const priceData = latinPrice || Object.values(plan.prices_by_continent || {}).find(Boolean);
-
-					return (
-						<Card
-							key={plan.id}
-							className={`flex min-w-0 flex-col gap-4 rounded-3xl border bg-white p-4 dark:bg-zinc-900/80 sm:p-5 ${
-								plan.is_public
-									? "border-indigo-200/60 dark:border-indigo-800/40"
-									: "border-zinc-200/60 dark:border-zinc-800/60"
-							}`}
-						>
-							<div className="flex flex-col gap-2">
-								<div className="flex items-center justify-between">
-									<p className="text-xs uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
-										{plan.name ?? "Sin nombre"}
-									</p>
-									<Button type="button" variant="outline" size="sm" onClick={() => startEdit(plan)}>
-										Editar
-									</Button>
-								</div>
-								<div className="mt-2 flex flex-wrap items-center gap-2">
-									<h3 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-										{priceData ? currency.format(priceData.price) : "Precio no configurado"} / mes
-									</h3>
-									{plan.is_public === false && <SaasStatusBadge label="Solo interno" variant="neutral" />}
-									{plan.is_active === false && <SaasStatusBadge label="Inactivo" variant="warning" />}
-									{rate && priceData && (
-										<span className="text-xs text-zinc-500 dark:text-zinc-400">
-											{clpCurrency.format(priceData.price * rate)} aprox
-										</span>
-									)}
-								</div>
-							</div>
-							<div className="flex flex-col gap-3">
-								<ul className="grid gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-									{planCardLines(plan).map((line, i) => (
-										<li key={`${plan.id}-${i}`} className="whitespace-pre-wrap">
-											{line}
+							<div className="mt-4">
+								<p className={cn(LABEL_CLASS, "mb-2")}>Precios configurados</p>
+								<ul className="divide-y divide-zinc-100 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+									{form.pricesByContinent.map((pc: PriceByContinent, idx: number) => (
+										<li key={pc.id} className="flex items-center justify-between gap-3 py-1.5 pl-3 pr-1.5">
+											<div className="flex min-w-0 items-center gap-3">
+												<span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{REGION_LABELS[pc.continent] ?? pc.continent}</span>
+												<span className="text-[13px] tabular-nums text-zinc-500 dark:text-zinc-400">{pc.currency} {pc.price}</span>
+											</div>
+											<button
+												type="button"
+												className={cn(ICON_BUTTON, "h-8 w-8")}
+												onClick={() => {
+													setForm((prev) => ({
+														...prev,
+														pricesByContinent: prev.pricesByContinent.filter((_: PriceByContinent, i: number) => i !== idx),
+													}));
+												}}
+												aria-label={`Quitar precio de ${REGION_LABELS[pc.continent] ?? pc.continent}`}
+											>
+												<Trash2 className="h-4 w-4" aria-hidden />
+											</button>
 										</li>
 									))}
 								</ul>
 							</div>
-						</Card>
-					);
-				})}
+						)}
+					</FormSection>
+
+					{/* Acciones fijas al pie del panel para no tener que bajar hasta el final */}
+					<div className="sticky bottom-0 flex gap-2 border-t border-zinc-100 bg-white py-3 dark:border-zinc-800 dark:bg-zinc-950">
+						<button type="button" onClick={save} disabled={saving} className={PRIMARY_BUTTON}>
+							{saving ? "Guardando…" : editingId ? "Guardar" : "Crear"}
+						</button>
+						<button type="button" onClick={resetForm} disabled={saving} className={SECONDARY_BUTTON}>
+							Cancelar
+						</button>
+					</div>
+				</div>
+			</Drawer>
+
+			{plans.length === 0 ? (
+				<SaasEmptyState
+					icon={Tag}
+					title="Aún no hay planes"
+					description="Crea el primero con «Nuevo plan»."
+				/>
+			) : null}
+
+			<div ref={listRef} className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+				{plans.map((plan) => (
+					<PlanCard key={plan.id} plan={plan} rate={rate} onEdit={startEdit} />
+				))}
 			</div>
 		</div>
+	);
+}
+
+/** Bloque del formulario del plan: mismo borde y títulos que las tarjetas del Inicio. */
+function FormSection({
+	title,
+	description,
+	children,
+}: {
+	title: string;
+	description?: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<section className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+			<h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">{title}</h3>
+			{description ? <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{description}</p> : null}
+			<div className="mt-4">{children}</div>
+		</section>
+	);
+}
+
+/** Columna de la política de extras. El color queda solo en el icono. */
+function PolicyBox({
+	title,
+	icon: Icon,
+	iconClassName,
+	count,
+	hint,
+	children,
+}: {
+	title: string;
+	icon: LucideIcon;
+	iconClassName: string;
+	count: number;
+	hint?: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<div className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-900">
+			<div className="flex items-center justify-between gap-2">
+				<p className="inline-flex items-center gap-1.5 text-[13px] font-medium text-zinc-900 dark:text-zinc-100">
+					<Icon className={cn("h-3.5 w-3.5 shrink-0", iconClassName)} aria-hidden />
+					{title}
+				</p>
+				<span className="text-[11px] tabular-nums text-zinc-400" aria-label={`${count} seleccionados`}>
+					{count}
+				</span>
+			</div>
+			{hint ? <p className={cn(HELPER_CLASS, "mt-1")}>{hint}</p> : null}
+			<div className="mt-3 space-y-2">{children}</div>
+		</div>
+	);
+}
+
+/** Descripciones visibles antes de "Ver más": así las tarjetas quedan parejas en la grilla. */
+const VISIBLE_FEATURES = 4;
+
+/** Una línea larga (o con saltos) se corta a dos líneas en la vista compacta. */
+function isLongFeatureLine(line: string): boolean {
+	return line.length > 90 || line.includes("\n");
+}
+
+function PlanCard({ plan, rate, onEdit }: { plan: Plan; rate: number | null; onEdit: (plan: Plan) => void }) {
+	const [expanded, setExpanded] = useState(false);
+	const listId = useId();
+	const latinPrice = plan.prices_by_continent?.["Latinoamérica"];
+	const priceData = latinPrice || Object.values(plan.prices_by_continent || {}).find(Boolean);
+	const name = plan.name ?? "Sin nombre";
+	const summary = planSummary(plan);
+	const features = planFeatureLines(plan);
+	const hiddenCount = Math.max(0, features.length - VISIBLE_FEATURES);
+	const canExpand = hiddenCount > 0 || features.slice(0, VISIBLE_FEATURES).some(isLongFeatureLine);
+	const shown = expanded ? features : features.slice(0, VISIBLE_FEATURES);
+
+	return (
+		<article className="flex min-w-0 flex-col rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
+			<div className="flex items-start justify-between gap-3">
+				<div className="min-w-0">
+					<h3 className="truncate text-sm font-semibold text-zinc-950 dark:text-zinc-50" title={name}>
+						{name}
+					</h3>
+					{plan.is_public === false || plan.is_active === false ? (
+						<div className="mt-1.5 flex flex-wrap gap-1.5">
+							{plan.is_public === false && <SaasStatusBadge label="Solo interno" variant="neutral" />}
+							{plan.is_active === false && <SaasStatusBadge label="Inactivo" variant="warning" />}
+						</div>
+					) : null}
+				</div>
+				<button type="button" onClick={() => onEdit(plan)} className={SECONDARY_BUTTON} aria-label={`Editar ${name}`}>
+					<Pencil className="h-3.5 w-3.5" aria-hidden />
+					Editar
+				</button>
+			</div>
+
+			<div className="mt-4">
+				{priceData ? (
+					<p className="flex items-baseline gap-1">
+						<span className="text-xl font-semibold tabular-nums leading-none tracking-tight text-zinc-950 dark:text-zinc-50">
+							{currency.format(priceData.price)}
+						</span>
+						<span className="text-xs text-zinc-500 dark:text-zinc-400">/ mes</span>
+					</p>
+				) : (
+					<p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Precio no configurado</p>
+				)}
+				{rate && priceData ? (
+					<p className="mt-1 text-[11px] tabular-nums text-zinc-400 dark:text-zinc-500">
+						≈ {clpCurrency.format(priceData.price * rate)} CLP
+					</p>
+				) : null}
+			</div>
+
+			<p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+				<span className="inline-flex items-center gap-1">
+					<Store className="h-3.5 w-3.5 text-zinc-400" strokeWidth={1.75} aria-hidden />
+					{summary.branches}
+				</span>
+				{summary.users ? (
+					<span className="inline-flex items-center gap-1">
+						<Users className="h-3.5 w-3.5 text-zinc-400" strokeWidth={1.75} aria-hidden />
+						{summary.users}
+					</span>
+				) : null}
+			</p>
+
+			{features.length > 0 ? (
+				<div className="mt-4 flex flex-1 flex-col border-t border-zinc-100 pt-4 dark:border-zinc-800">
+					<ul id={listId} className="space-y-2">
+						{shown.map((line, i) => (
+							<li key={`${plan.id}-${i}`} className="flex gap-2 text-[13px] leading-snug text-zinc-600 dark:text-zinc-300">
+								<Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-400" aria-hidden />
+								<span className={cn("min-w-0 whitespace-pre-wrap break-words", !expanded && "line-clamp-2")}>{line}</span>
+							</li>
+						))}
+					</ul>
+					{canExpand ? (
+						<div className="mt-auto pt-3">
+							<button
+								type="button"
+								onClick={() => setExpanded((v) => !v)}
+								aria-expanded={expanded}
+								aria-controls={listId}
+								className="inline-flex items-center gap-1 rounded text-xs font-medium text-zinc-500 transition hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:text-zinc-400 dark:hover:text-zinc-100"
+							>
+								{expanded ? "Ver menos" : hiddenCount > 0 ? `Ver ${hiddenCount} más` : "Ver completo"}
+								<ChevronDown className={cn("h-3.5 w-3.5 transition", expanded && "rotate-180")} aria-hidden />
+							</button>
+						</div>
+					) : null}
+				</div>
+			) : null}
+		</article>
 	);
 }

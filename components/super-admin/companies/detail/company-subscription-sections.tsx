@@ -211,7 +211,7 @@ export function CompanyPaymentsSection({ payments, plans }: { payments: CompanyP
         <div className="-mx-5 overflow-x-auto sm:-mx-6">
           <table className="w-full min-w-[36rem] text-sm">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wide text-zinc-400">
+              <tr className="text-left text-xs text-zinc-500 dark:text-zinc-400">
                 <th className="px-5 pb-2 font-semibold sm:px-6">Fecha</th>
                 <th className="px-3 pb-2 font-semibold">Concepto</th>
                 <th className="px-3 pb-2 font-semibold">Monto</th>

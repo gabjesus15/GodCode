@@ -176,7 +176,7 @@ export function AdminCommandPalette() {
 									<li key={c.id}>
 										<button
 											type="button"
-											onClick={() => go(`/companies/${c.id}`)}
+											onClick={() => go(`/dashboard/empresa/${c.id}`)}
 											className="flex w-full min-w-0 items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800"
 										>
 											<Building2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />

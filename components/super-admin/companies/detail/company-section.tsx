@@ -123,15 +123,10 @@ export function SectionCard({
   className?: string;
 }) {
   return (
-    <section
-      className={cn(
-        "min-w-0 rounded-3xl border border-zinc-200/60 bg-white shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80",
-        className,
-      )}
-    >
-      <div className="p-5 sm:p-6">
-        <div className="mb-5">
-          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 sm:text-lg">{title}</h2>
+    <section className={cn("min-w-0 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900", className)}>
+      <div className="p-4 sm:p-5">
+        <div className="mb-4">
+          <h2 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">{title}</h2>
           {description ? <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{description}</p> : null}
         </div>
         {children}

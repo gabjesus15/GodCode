@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { Menu, Search, X } from "lucide-react";
 
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 import { Drawer } from "@/components/ui/drawer";
-import { resolveActiveNav } from "@/lib/super-admin/super-admin-nav";
 import { AdminCommandPalette, openAdminCommandPalette } from "./admin-command-palette";
 import { AdminHeaderClock } from "./admin-header-clock";
 import { AdminShortcutsHelp } from "./admin-shortcuts-help";
+import { SaasLogo } from "./SaasLogo";
 import { Sidebar } from "./sidebar";
 import { Toaster } from "sileo";
 import "sileo/styles.css";
@@ -22,56 +22,62 @@ interface AdminShellProps {
   children: React.ReactNode;
 }
 
+/**
+ * Marco del panel: barra superior a todo el ancho, barra lateral plana sobre el fondo gris
+ * y el contenido de cada página en un panel blanco.
+ */
 export function AdminShell({ children }: AdminShellProps) {
   const [open, setOpen] = useState(false);
   const { readOnly } = useAdminRole();
-  const active = resolveActiveNav(usePathname());
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#f8fafc_0%,_#ffffff_45%,_#eef2ff_100%)] dark:bg-[radial-gradient(circle_at_top,_#0f172a_0%,_#09090b_50%,_#111827_100%)]">
-      <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-4 px-3 py-4 sm:gap-6 sm:px-4 sm:py-6 md:flex-row lg:px-8">
+    <div className="min-h-screen bg-zinc-100/70 dark:bg-zinc-950">
+      <header className="sticky top-0 z-40 flex h-14 items-center gap-2 bg-zinc-100/90 px-3 backdrop-blur supports-[backdrop-filter]:bg-zinc-100/75 dark:bg-zinc-950/90 sm:gap-3 sm:px-4">
+        <button
+          type="button"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-700 transition hover:bg-zinc-200/60 dark:text-zinc-200 dark:hover:bg-zinc-800 md:hidden"
+          onClick={() => setOpen(true)}
+          aria-label="Abrir menú"
+        >
+          <Menu className="h-5 w-5 shrink-0" />
+        </button>
+        <Link
+          href="/dashboard"
+          className="flex shrink-0 items-center rounded-lg px-1 md:w-60 md:px-2"
+          aria-label="Ir al inicio del panel"
+        >
+          <SaasLogo size="sm" />
+        </Link>
+
+        <div className="flex min-w-0 flex-1 justify-center">
+          <button
+            type="button"
+            onClick={openAdminCommandPalette}
+            className="inline-flex h-9 w-full max-w-xl items-center gap-2.5 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-500 shadow-[0_1px_0_rgba(0,0,0,0.02)] transition hover:border-zinc-300 hover:text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/20 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700"
+            aria-label="Buscar páginas o empresas"
+          >
+            <Search className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="truncate">Buscar empresa o página</span>
+            <kbd className="ml-auto hidden rounded border border-zinc-200 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400 dark:border-zinc-700 sm:inline">
+              Ctrl K
+            </kbd>
+          </button>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <AdminHeaderClock />
+          <AdminShortcutsHelp />
+        </div>
+      </header>
+
+      <div className="flex min-w-0">
         {/* Con muchas secciones la barra puede ser más alta que la ventana: se desplaza sola. */}
-        <aside className="hidden w-64 shrink-0 self-start overflow-y-auto overscroll-contain [scrollbar-width:thin] rounded-2xl border border-zinc-200 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/80 md:sticky md:top-6 md:block md:max-h-[calc(100dvh-3rem)] md:rounded-3xl md:p-5">
+        <aside className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] w-64 shrink-0 overflow-y-auto overscroll-contain px-3 pb-3 pt-2 [scrollbar-width:thin] md:block">
           <Sidebar />
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-4 sm:gap-6">
-          <header className="flex min-w-0 items-center justify-between gap-2 rounded-2xl border border-zinc-200 bg-white/80 px-3 py-2.5 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/80 sm:rounded-3xl sm:px-5 sm:py-3">
-            <nav aria-label="Ubicación" className="min-w-0 flex-1">
-              <p className="truncate text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-400 dark:text-zinc-500">
-                {active?.group.label ?? "Gcode Admin"}
-              </p>
-              <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100 sm:text-base">
-                {active?.item.label ?? "Panel de administración"}
-              </p>
-            </nav>
-            <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2">
-              <button
-                type="button"
-                onClick={openAdminCommandPalette}
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-200 bg-white px-2.5 text-sm text-zinc-500 shadow-sm transition hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 sm:px-3"
-                aria-label="Buscar páginas o empresas"
-              >
-                <Search className="h-4 w-4 shrink-0" aria-hidden />
-                <span className="hidden lg:inline">Buscar empresa o página</span>
-                <kbd className="hidden rounded-md border border-zinc-200 px-1.5 py-0.5 font-mono text-[10px] text-zinc-400 dark:border-zinc-700 lg:inline">
-                  Ctrl K
-                </kbd>
-              </button>
-              <AdminHeaderClock />
-              <AdminShortcutsHelp />
-              <button
-                type="button"
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 md:hidden"
-                onClick={() => setOpen(true)}
-                aria-label="Abrir menú"
-              >
-                <Menu className="h-5 w-5 shrink-0" />
-              </button>
-            </div>
-          </header>
-
-          <main className="min-w-0 flex-1 overflow-x-hidden">
+        <main className="mb-3 min-h-[calc(100dvh-4.25rem)] min-w-0 flex-1 overflow-x-hidden rounded-none border-zinc-200 bg-white px-4 py-5 dark:border-zinc-800 dark:bg-zinc-900 sm:px-6 sm:py-6 md:mr-3 md:rounded-2xl md:border md:px-8 md:py-8">
+          <div className="mx-auto w-full max-w-[1400px]">
             {maintenanceBanner ? (
               <div
                 className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100"
@@ -89,22 +95,23 @@ export function AdminShell({ children }: AdminShellProps) {
               </div>
             ) : null}
             {children}
-          </main>
-        </div>
+          </div>
+        </main>
       </div>
 
       <Drawer
         open={open}
         onOpenChange={setOpen}
         direction="left"
-        contentClassName="max-w-none"
-        containerClassName="p-0 sm:p-0"
+        contentClassName="flex min-h-0 max-w-none flex-1 flex-col"
+        containerClassName="bg-zinc-50 p-0 dark:bg-zinc-950 sm:p-0"
       >
-        <div className="flex h-full flex-col overflow-y-auto p-4 sm:p-6">
-          <div className="mb-2 flex items-center justify-end sm:mb-4">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-3 sm:p-4">
+          <div className="mb-3 flex items-center justify-between px-2">
+            <SaasLogo size="sm" />
             <button
               type="button"
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 dark:text-zinc-200"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-200/60 dark:text-zinc-300 dark:hover:bg-zinc-800"
               onClick={() => setOpen(false)}
               aria-label="Cerrar menú"
             >
