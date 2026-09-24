@@ -77,6 +77,7 @@ describe("landing SEO artifacts", () => {
 		});
 		expect(Array.isArray(org.sameAs)).toBe(true);
 		expect((org.sameAs as string[]).some((u) => u.includes("instagram"))).toBe(true);
+		expect((org.sameAs as string[]).some((u) => u.includes("linkedin.com/company/"))).toBe(true);
 
 		const faqPage = ld[3] as { mainEntity: { name: string }[] };
 		expect(faqPage.mainEntity).toHaveLength(LANDING_FAQ.length);
