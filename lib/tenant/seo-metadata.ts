@@ -1,6 +1,38 @@
 import { getCountryConfig } from "@/lib/geo/country-registry";
+import { readThemeConfigObject } from "@/lib/store-theme/merge-theme-config";
 
 const MAX_ADDRESS_CHARS = 56;
+
+/** "rica-pizza" → "Rica Pizza": último recurso cuando el negocio no tiene nombre. */
+export function formatBusinessNameFromSlug(slug: string): string {
+	return slug
+		.split("-")
+		.map((part) => part.trim())
+		.filter(Boolean)
+		.map((part) => part[0].toUpperCase() + part.slice(1))
+		.join(" ");
+}
+
+/**
+ * Nombre visible del negocio: el `displayName` del tema, si no el nombre de la
+ * empresa, si no el slug formateado y al final `fallback`. Un nombre vacío o
+ * con solo espacios cuenta como ausente (antes varios sitios usaban `??` y
+ * publicaban un título vacío).
+ */
+export function resolveTenantDisplayName(
+	company: { name?: string | null; theme_config?: unknown } | null | undefined,
+	options: { slug?: string | null; fallback?: string } = {},
+): string {
+	const theme = readThemeConfigObject(company?.theme_config);
+	const displayName = typeof theme.displayName === "string" ? theme.displayName.trim() : "";
+	return (
+		displayName ||
+		company?.name?.trim() ||
+		(options.slug ? formatBusinessNameFromSlug(options.slug) : "") ||
+		options.fallback ||
+		"Gcode"
+	);
+}
 
 function cleanLocationPart(value: string | null | undefined): string | null {
 	const trimmed = value?.trim();

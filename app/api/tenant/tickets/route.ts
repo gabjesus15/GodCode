@@ -5,6 +5,7 @@ import { getTicketAuthContext } from "@/lib/api/ticket-auth";
 import { tenantTicketCreateSchema } from "@/lib/api/schemas/tenant/tickets";
 import { enforceScopedRateLimit } from "@/lib/infra/api-guard";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { addHours, TICKET_SLA_HOURS } from "@/lib/tickets/ticket-sla";
 
 /** @service-role tenant-session */
 
@@ -29,19 +30,6 @@ type TicketRow = {  id: string;
   last_message_at: string;
   created_at: string;
   updated_at: string;
-};
-
-const SLA_HOURS: Record<TicketPriority, { firstResponse: number; resolution: number }> = {
-  low: { firstResponse: 24, resolution: 120 },
-  medium: { firstResponse: 12, resolution: 48 },
-  high: { firstResponse: 4, resolution: 24 },
-  critical: { firstResponse: 2, resolution: 8 },
-};
-
-const addHours = (iso: string, hours: number) => {
-  const base = new Date(iso);
-  if (Number.isNaN(base.getTime())) return iso;
-  return new Date(base.getTime() + hours * 60 * 60 * 1000).toISOString();
 };
 
 const toDto = (row: TicketRow) => ({
@@ -106,7 +94,7 @@ export async function POST(req: NextRequest) {
 
     const { subject, description, category, priority } = parsed.data;
     const nowIso = new Date().toISOString();
-    const { firstResponse, resolution } = SLA_HOURS[priority];
+    const { firstResponse, resolution } = TICKET_SLA_HOURS[priority];
 
     const { data, error } = await supabaseAdmin
       .from("saas_tickets")

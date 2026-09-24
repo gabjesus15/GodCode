@@ -4,6 +4,13 @@ import { revalidateTag } from "next/cache";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { parseBranchContactUrlInput } from "@/lib/tenant/home-page/home-page-config";
+
+const CONTACT_URL_FIELDS = [
+	["whatsapp_url", "WhatsApp"],
+	["instagram_url", "Instagram"],
+	["map_url", "Google Maps"],
+] as const;
 
 /** @service-role customer-account
  *
@@ -56,16 +63,22 @@ export async function PATCH(req: NextRequest) {
 	const phone = trimOrNull(payload.phone);
 	const address = trimOrNull(payload.address);
 	const schedule = trimOrNull(payload.schedule);
-	const whatsappUrl = trimOrNull(payload.whatsapp_url);
-	const instagramUrl = trimOrNull(payload.instagram_url);
-	const mapUrl = trimOrNull(payload.map_url);
 
 	if (phone !== undefined) updates.phone = phone;
 	if (address !== undefined) updates.address = address;
 	if (schedule !== undefined) updates.schedule = schedule;
-	if (whatsappUrl !== undefined) updates.whatsapp_url = whatsappUrl;
-	if (instagramUrl !== undefined) updates.instagram_url = instagramUrl;
-	if (mapUrl !== undefined) updates.map_url = mapUrl;
+
+	// Los enlaces acaban en un `href` de la página pública: solo direcciones web válidas.
+	for (const [field, label] of CONTACT_URL_FIELDS) {
+		const parsed = parseBranchContactUrlInput(payload[field]);
+		if (!parsed.ok) {
+			return NextResponse.json(
+				{ error: `El enlace de ${label} no es válido. Pega la dirección completa (https://…).`, field },
+				{ status: 400 },
+			);
+		}
+		if (parsed.value !== undefined) updates[field] = parsed.value;
+	}
 
 	if (Object.keys(updates).length === 0) {
 		return NextResponse.json({ error: "No hay campos para actualizar" }, { status: 400 });

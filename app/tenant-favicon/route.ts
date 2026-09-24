@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 
 import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
+import { buildInitialsIconSvg, fetchTenantLogo, TENANT_ICON_SECURITY_HEADERS } from "@/lib/tenant/favicon-icon";
+import { resolveTenantDisplayName } from "@/lib/tenant/seo-metadata";
 import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 import { resolveTenantSlugFromCustomDomainHost } from "@/lib/tenant/custom-domain-resolve";
 import { getCachedCompany } from "@/utils/tenant-cache";
@@ -27,7 +29,7 @@ function parseIconSize(raw: string | null): number {
   return ALLOWED_ICON_SIZES.has(parsed) ? parsed : DEFAULT_ICON_SIZE;
 }
 
-/** Redimensiona a PNG cuadrado; si sharp falla, sirve el original (comportamiento anterior). */
+/** Redimensiona a PNG cuadrado; si sharp falla, sirve el original (ya validado como imagen). */
 async function toIconResponse(
   buf: Buffer,
   size: number,
@@ -40,6 +42,7 @@ async function toIconResponse(
       .toBuffer();
     return new NextResponse(new Uint8Array(resized), {
       headers: {
+        ...TENANT_ICON_SECURITY_HEADERS,
         "Content-Type": "image/png",
         "Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400",
       },
@@ -47,25 +50,13 @@ async function toIconResponse(
   } catch {
     return new NextResponse(new Uint8Array(buf), {
       headers: {
+        ...TENANT_ICON_SECURITY_HEADERS,
         "Content-Type": originalContentType,
         "Cache-Control": "public, max-age=300, s-maxage=120",
       },
     });
   }
 }
-
-const getInitials = (name: string) => {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const initials = parts.slice(0, 2).map((part) => part[0]?.toUpperCase());
-  return initials.join("") || "GC";
-};
-
-const buildFallbackSvg = (name: string, color: string, size: number = DEFAULT_ICON_SIZE) => {
-  const initials = getInitials(name);
-  const fontSize = Math.round(size * 0.375);
-  const radius = Math.round(size * 0.23);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" rx="${radius}" fill="${color}"/><text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="700">${initials}</text></svg>`;
-};
 
 function resolveSlugFromHost(hostHeader: string | null): string | null {
   if (!hostHeader) return null;
@@ -106,8 +97,9 @@ export async function GET(req: NextRequest) {
       const buf = await readFile(path.join(process.cwd(), "public", "logo.png"));
       return await toIconResponse(buf, size, "image/png");
     } catch {
-      return new NextResponse(buildFallbackSvg("Gcode", "#111827", size), {
+      return new NextResponse(buildInitialsIconSvg("Gcode", "#111827", size), {
         headers: {
+          ...TENANT_ICON_SECURITY_HEADERS,
           "Content-Type": "image/svg+xml; charset=utf-8",
           "Cache-Control": "public, max-age=300",
         },
@@ -117,42 +109,22 @@ export async function GET(req: NextRequest) {
 
   const company = await getCachedCompany(tenantSlug);
   const theme = company?.theme_config as Record<string, unknown> | null | undefined;
-  const displayName = typeof theme?.displayName === "string" ? theme.displayName.trim() : "";
-  const name = displayName || company?.name || "Gcode";
-  const primaryColor = (typeof theme?.primaryColor === "string" && theme.primaryColor.trim()) || "#111827";
+  const name = resolveTenantDisplayName(company, { slug: tenantSlug });
   const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
   const logoUrl = company?.id
     ? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id))
     : storedLogoUrl;
   if (logoUrl && isTenantSubscriptionAccessible(company)) {
-    try {
-      const upstream = await fetch(String(logoUrl), {
-        cache: "no-store",
-        redirect: "follow",
-        headers: {
-          Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/png,image/jpeg,image/*,*/*;q=0.8",
-          "User-Agent": "Gcode-TenantFavicon/1.0",
-        },
-      });
-      if (upstream.ok) {
-        const buf = Buffer.from(await upstream.arrayBuffer());
-        if (buf.byteLength > 0) {
-          const rawType = upstream.headers.get("content-type") || "";
-          const contentType = rawType.split(";")[0]?.trim() || "image/png";
-
-          return await toIconResponse(buf, size, contentType);
-        }
-      }
-    } catch {
-      // Fallback handled below.
-    }
+    const logo = await fetchTenantLogo(String(logoUrl));
+    if (logo) return await toIconResponse(logo.buf, size, logo.contentType);
   }
 
-  const svg = buildFallbackSvg(name, primaryColor, size);
+  const svg = buildInitialsIconSvg(name, theme?.primaryColor, size);
   const versionSeed = company ? tenantBrandingIconVersionSeed(company) : tenantSlug;
 
   return new NextResponse(svg, {
     headers: {
+      ...TENANT_ICON_SECURITY_HEADERS,
       "Content-Type": "image/svg+xml; charset=utf-8",
       "Cache-Control": `public, max-age=300, s-maxage=120, ${versionSeed ? `stale-while-revalidate=600` : ""}`.replace(/,\s*$/, ""),
     },

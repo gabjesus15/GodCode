@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Crosshair, MapPin, Pencil } from "lucide-react";
+import { Loader2, MapPin, Navigation, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { parseUnifiedAddressSearch } from "@/lib/delivery/address-search-query";
 import type { DeliverySettingsNormalized } from "@/lib/delivery/delivery-settings";
+import { namedAreaDisplayName } from "@/lib/delivery/named-area-options";
 import type { CountryFormStrategy } from "@/lib/geo/country-forms";
 import { cleanSavedAddressLine, savedAddressLabel } from "@/lib/menu-account/delivery-options";
 import type { MenuAccountAddress } from "../../account/menu-account-types";
@@ -187,7 +188,7 @@ export function CartDeliveryFields({
 
 			{showConfirmCard ? (
 				<section className="cart-address-card">
-					<LazyDeliveryPreviewMap lat={deliveryLat} lng={deliveryLng} />
+					<LazyDeliveryPreviewMap lat={deliveryLat} lng={deliveryLng} onAdjust={address.pinCoords} />
 					<div className="cart-address-card__body">
 						<span className="cart-address-card__icon" aria-hidden>
 							<MapPin size={16} />
@@ -213,9 +214,15 @@ export function CartDeliveryFields({
 
 			{evaluation.mapAddressMode && !showConfirmCard ? (
 				<div className="cart-locate">
-					<button type="button" className="cart-locate__btn" onClick={locate}>
+					<button
+						type="button"
+						className="cart-locate__btn"
+						onClick={locate}
+						disabled={address.locating}
+						data-loading={address.locating ? "" : undefined}
+					>
 						<span className="cart-locate__icon" aria-hidden>
-							<Crosshair size={20} strokeWidth={1.9} />
+							{address.locating ? <Loader2 size={19} /> : <Navigation size={18} fill="currentColor" strokeWidth={1.6} />}
 						</span>
 						<span className="cart-locate__text">
 							<span className="cart-locate__title">{t("delivery.useCurrentLocation")}</span>
@@ -293,7 +300,10 @@ export function CartDeliveryFields({
 						</p>
 					) : null}
 					{evaluation.mapAddressMode && evaluation.hasCoords ? (
-						<LazyDeliveryPreviewMap lat={deliveryLat} lng={deliveryLng} />
+						<>
+							<LazyDeliveryPreviewMap lat={deliveryLat} lng={deliveryLng} onAdjust={address.pinCoords} />
+							{address.precision === "approx" ? <p className="cart-warn">{t("delivery.approxHint")}</p> : null}
+						</>
 					) : null}
 				</div>
 			) : null}
@@ -330,8 +340,8 @@ export function CartDeliveryFields({
 				<span className="cart-ship__label">
 					<span>
 						{t("delivery.shippingCost")}
-						{deliveryNamedAreaLabel ? (
-							<small>{t("delivery.detectedZone", { zone: deliveryNamedAreaLabel })}</small>
+						{manualZone ? null : deliveryNamedAreaLabel ? (
+							<small>{t("delivery.detectedZone", { zone: namedAreaDisplayName(deliveryNamedAreaLabel) })}</small>
 						) : distanceKm != null ? (
 							<small>{`~${distanceKm} km`}</small>
 						) : null}

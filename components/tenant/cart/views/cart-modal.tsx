@@ -391,6 +391,7 @@ export function CartModal({
 					reference: cart.deliveryReference,
 					lat: cart.deliveryLat,
 					lng: cart.deliveryLng,
+					locationSource: cart.deliveryLocationSource,
 					namedAreaId: cart.deliveryNamedAreaId,
 					namedAreaLabel: cart.deliveryNamedAreaLabel,
 					quotedRouteKm: cart.quotedRouteKm,

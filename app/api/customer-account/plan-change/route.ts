@@ -11,7 +11,7 @@ import {
 import { isSubscriptionOrderKind } from "@/lib/billing/portal-orders";
 import { formatUsd, quotePlanChange, type PlanChangeQuote } from "@/lib/billing/portal-pricing";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { formatEmailDate, timeZoneForCountry } from "@/lib/email/format";
+import { formatEmailDate, formatUtcLongDate, timeZoneForCountry } from "@/lib/email/format";
 import { sendEmail } from "@/lib/email/send";
 import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 import { syncCompanyPanelAccessFromPlanId } from "@/lib/super-admin/sync-company-panel-access";
@@ -47,13 +47,6 @@ const BLOCK_REASON_COPY: Record<Extract<PlanChangeQuote, { mode: "blocked" }>["r
 		detail: "Los cambios de plan de esta cuenta los hace nuestro equipo. Escríbenos por Soporte.",
 	},
 };
-
-function formatDate(iso: string): string {
-	const date = new Date(iso);
-	return Number.isFinite(date.getTime())
-		? new Intl.DateTimeFormat("es", { dateStyle: "long", timeZone: "UTC" }).format(date)
-		: iso;
-}
 
 async function buildPreview(companyId: string, targetPlanId: string) {
 	const billing = await loadPortalBillingContext(companyId);
@@ -119,7 +112,7 @@ async function buildPreview(companyId: string, targetPlanId: string) {
 		impacts.push({
 			id: "downgrade-at-cycle-end",
 			level: "info",
-			title: `Se aplica el ${formatDate(quote.effectiveAt)}`,
+			title: `Se aplica el ${formatUtcLongDate(quote.effectiveAt)}`,
 			detail: `Hasta entonces sigues con ${billing.currentPlan?.name ?? "tu plan actual"}. Lo ya pagado no se reembolsa.`,
 		});
 	}
@@ -267,14 +260,14 @@ export async function POST(req: NextRequest) {
 					businessName: contact.businessName,
 					currentPlan: billing.currentPlan?.name ?? "tu plan actual",
 					targetPlan: target.name,
-					effectiveAt: formatEmailDate(quote.effectiveAt, timeZoneForCountry(contact.country)) || formatDate(quote.effectiveAt),
+					effectiveAt: formatEmailDate(quote.effectiveAt, timeZoneForCountry(contact.country)) || formatUtcLongDate(quote.effectiveAt),
 				},
 			});
 		}
 		return NextResponse.json({
 			ok: true,
 			scheduled: { targetPlanId: target.id, targetPlanName: target.name, effectiveAt: quote.effectiveAt },
-			message: `Programado: pasarás al plan ${target.name} el ${formatDate(quote.effectiveAt)}.`,
+			message: `Programado: pasarás al plan ${target.name} el ${formatUtcLongDate(quote.effectiveAt)}.`,
 		});
 	}
 

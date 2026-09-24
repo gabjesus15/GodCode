@@ -88,12 +88,3 @@ export const BRANCH_ENTITLEMENT_STATUS_LABELS: Record<string, string> = {
   canceled: "Cancelada",
   cancelled: "Cancelada",
 };
-
-export const ADDON_STATUS_LABELS: Record<string, string> = {
-  active: "Activo",
-  pending: "Pendiente",
-  inactive: "Inactivo",
-  expired: "Vencido",
-  cancelled: "Cancelado",
-  canceled: "Cancelado",
-};

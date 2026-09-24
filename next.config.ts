@@ -62,7 +62,8 @@ const nextConfig: NextConfig = {
   images: {
     // next/image: WebP/AVIF + resize según sizes (menú, hero, logos, landing).
     formats: ["image/avif", "image/webp"],
-    qualities: [70, 75, 80, 92, 95],
+    // 85: fotos de categoría y detalle de producto del menú (antes pedían 85 sin estar permitido).
+    qualities: [70, 75, 80, 85, 92, 95],
     minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
@@ -131,6 +132,19 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // Tarjeta de vista previa al compartir (WhatsApp, Facebook…): la URL lleva
+      // la versión de la marca, así que puede quedar en caché; sin esto la regla
+      // general la obligaba a dibujarse de nuevo en cada visita del rastreador.
+      // Va después de "/(.*)" para ganarle (la última coincidencia manda).
+      ...["/og-image", "/:slug/og-image"].map((source) => ({
+        source,
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000",
+          },
+        ],
+      })),
       {
         source: "/:path*.map",
         headers: [

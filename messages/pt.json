@@ -327,8 +327,14 @@
           "empty": "Nao ha filiais configuradas."
         },
         "previewMap": {
-          "locationLabel": "Localizacao no mapa",
-          "openMap": "Abrir mapa"
+          "locationLabel": "Localização no mapa",
+          "openInGoogleMaps": "Google Maps",
+          "adjust": "Ajustar ponto",
+          "adjustHint": "Mova o mapa até a sua porta",
+          "confirm": "Confirmar ponto",
+          "cancel": "Cancelar",
+          "zoomIn": "Aproximar",
+          "zoomOut": "Afastar"
         },
         "notes": {
           "addTab": "Adicionar nota",
@@ -392,6 +398,10 @@
         "delivery": {
           "pickNamedArea": "Escolha uma area",
           "selectAreaAria": "Selecionar area de entrega",
+          "zoneSearch": "Buscar zona",
+          "zoneSearchClear": "Limpar busca",
+          "zoneNoResults": "Nenhuma zona corresponde a “{query}”.",
+          "zoneClose": "Fechar",
           "geoNotAvailable": "Seu navegador nao permite localizacao. Digite o endereco.",
           "geoNeedsHttps": "A localizacao so funciona em HTTPS (ou localhost).",
           "searchingLocation": "Buscando localizacao...",
@@ -429,7 +439,7 @@
           "calculatingWithLocation": "Calculando frete com sua localizacao...",
           "completeDataToContinue": "Complete os dados de entrega para continuar.",
           "writeStreetNumberArea": "Escreva rua, número e {area}; calculamos a taxa pelas zonas da loja.",
-          "approxHint": "Esta localização é aproximada: o mapa pode ficar longe da sua porta. Ajuste a rua ou use sua localização atual.",
+          "approxHint": "Localização aproximada: toque em «Ajustar ponto» e mova o mapa até a sua porta para o entregador não se perder.",
           "areaLabel": {
             "commune": "Comuna",
             "municipality": "Município ou cidade",
@@ -696,6 +706,63 @@
       "poweredBy": {
         "madeWith": "Feito com",
         "aria": "Feito com {brand}: cardápio digital e pedidos online"
+      }
+    },
+    "home": {
+      "links": {
+        "menu": "Ver o cardápio",
+        "whatsapp": "WhatsApp",
+        "instagram": "Instagram",
+        "location": "Como chegar",
+        "phone": "Ligar"
+      },
+      "linksAria": "Links de {name}",
+      "logoAlt": "Logo de {name}",
+      "admin": "Acesso da equipe",
+      "share": {
+        "label": "Compartilhar",
+        "copied": "Link copiado"
+      },
+      "status": {
+        "open": "Aberto agora",
+        "closed": "Fechado agora",
+        "partial": "{open} de {total} unidades abertas"
+      },
+      "socials": {
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "facebook": "Facebook",
+        "youtube": "YouTube",
+        "x": "X",
+        "whatsapp": "WhatsApp",
+        "email": "E-mail",
+        "website": "Site"
+      },
+      "branches": {
+        "title": {
+          "whatsapp": "Para qual unidade você quer escrever?",
+          "instagram": "Qual unidade você quer ver?",
+          "location": "Para qual unidade você vai?",
+          "phone": "Para qual unidade você quer ligar?"
+        },
+        "count": "{count, plural, one {# unidade} other {# unidades}} para escolher",
+        "open": "Aberto",
+        "closed": "Fechado",
+        "close": "Fechar",
+        "unnamed": "Unidade"
+      },
+      "schedule": {
+        "title": "Horário"
+      },
+      "gcode": {
+        "label": "Crie seu cardápio",
+        "aria": "Crie seu cardápio digital com {brand}"
+      },
+      "qr": {
+        "title": "Abra o cardápio no celular",
+        "hint": "Aponte a câmera para o código",
+        "copy": "Copiar link",
+        "alt": "QR code do cardápio"
       }
     }
   }

@@ -4,8 +4,6 @@ import {
   describeStatus,
   PAYMENT_STATUSES,
   SUBSCRIPTION_STATUSES,
-  TICKET_PRIORITIES,
-  TICKET_STATUSES,
 } from "@/lib/status/status-labels";
 import type { ColorVariant } from "./tokens";
 
@@ -54,12 +52,4 @@ export function subscriptionStatusVariant(status: string | null | undefined): Co
 
 export function paymentStatusVariant(status: string | null | undefined): ColorVariant {
   return describeStatus(PAYMENT_STATUSES, status).tone;
-}
-
-export function ticketPriorityVariant(priority: string | null | undefined): ColorVariant {
-  return describeStatus(TICKET_PRIORITIES, priority).tone;
-}
-
-export function ticketStatusVariant(status: string | null | undefined): ColorVariant {
-  return describeStatus(TICKET_STATUSES, status).tone;
 }

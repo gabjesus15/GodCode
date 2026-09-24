@@ -58,6 +58,25 @@ export const DEFAULT_ROLE_NAV_PERMISSIONS: Record<string, string[]> = {
 	cashier: ["orders", "caja", "local_expenses"],
 };
 
-export function getDefaultRoleNavPermissions(): Record<string, string[]> {
-	return { ...DEFAULT_ROLE_NAV_PERMISSIONS };
+const TAB_ID_SET = new Set<string>(TENANT_ADMIN_TAB_IDS);
+
+/** Normaliza un id de pestaña guardado (minúsculas, alias `drinks` → `beverages`); `null` si no es una pestaña conocida. */
+export function sanitizeTabId(value: string): TenantAdminTabId | null {
+	const normalized = value.trim().toLowerCase();
+	const mapped = normalized === "drinks" ? "beverages" : normalized;
+	if (!TAB_ID_SET.has(mapped)) return null;
+	return mapped as TenantAdminTabId;
+}
+
+/** Ids de pestaña válidos (vía `sanitizeTabId`) y sin repetir, en el orden en que llegan. */
+export function uniqueTabs(values: string[]): TenantAdminTabId[] {
+	const out: TenantAdminTabId[] = [];
+	const seen = new Set<string>();
+	for (const value of values) {
+		const clean = sanitizeTabId(value);
+		if (!clean || seen.has(clean)) continue;
+		seen.add(clean);
+		out.push(clean);
+	}
+	return out;
 }

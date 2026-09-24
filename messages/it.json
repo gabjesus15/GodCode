@@ -328,7 +328,13 @@
         },
         "previewMap": {
           "locationLabel": "Posizione sulla mappa",
-          "openMap": "Apri mappa"
+          "openInGoogleMaps": "Google Maps",
+          "adjust": "Regola il punto",
+          "adjustHint": "Sposta la mappa fino alla tua porta",
+          "confirm": "Conferma il punto",
+          "cancel": "Annulla",
+          "zoomIn": "Ingrandisci",
+          "zoomOut": "Riduci"
         },
         "notes": {
           "addTab": "Aggiungi nota",
@@ -392,6 +398,10 @@
         "delivery": {
           "pickNamedArea": "Scegli una zona",
           "selectAreaAria": "Seleziona zona di consegna",
+          "zoneSearch": "Cerca zona",
+          "zoneSearchClear": "Cancella ricerca",
+          "zoneNoResults": "Nessuna zona corrisponde a “{query}”.",
+          "zoneClose": "Chiudi",
           "geoNotAvailable": "Il browser non consente la posizione.",
           "geoNeedsHttps": "La posizione funziona solo in HTTPS.",
           "searchingLocation": "Ricerca posizione...",
@@ -429,7 +439,7 @@
           "calculatingWithLocation": "Calcolo consegna con la tua posizione...",
           "completeDataToContinue": "Completa i dati di consegna per continuare.",
           "writeStreetNumberArea": "Scrivi via, numero e {area}; calcoliamo la tariffa in base alle zone del locale.",
-          "approxHint": "Questa posizione è approssimativa: la mappa potrebbe essere lontana dalla tua porta. Correggi la via o usa la tua posizione attuale.",
+          "approxHint": "Posizione approssimativa: tocca «Regola il punto» e sposta la mappa fino alla tua porta così il rider ti trova.",
           "areaLabel": {
             "commune": "Comune",
             "municipality": "Municipio o città",
@@ -696,6 +706,63 @@
       "poweredBy": {
         "madeWith": "Creato con",
         "aria": "Creato con {brand}: menù digitale e ordini online"
+      }
+    },
+    "home": {
+      "links": {
+        "menu": "Vedi il menù",
+        "whatsapp": "WhatsApp",
+        "instagram": "Instagram",
+        "location": "Come arrivare",
+        "phone": "Chiama"
+      },
+      "linksAria": "Link di {name}",
+      "logoAlt": "Logo di {name}",
+      "admin": "Accesso staff",
+      "share": {
+        "label": "Condividi",
+        "copied": "Link copiato"
+      },
+      "status": {
+        "open": "Aperto ora",
+        "closed": "Chiuso ora",
+        "partial": "{open} locali aperti su {total}"
+      },
+      "socials": {
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "facebook": "Facebook",
+        "youtube": "YouTube",
+        "x": "X",
+        "whatsapp": "WhatsApp",
+        "email": "E-mail",
+        "website": "Sito web"
+      },
+      "branches": {
+        "title": {
+          "whatsapp": "A quale locale vuoi scrivere?",
+          "instagram": "Quale locale vuoi vedere?",
+          "location": "In quale locale vai?",
+          "phone": "Quale locale vuoi chiamare?"
+        },
+        "count": "{count, plural, one {# locale} other {# locali}} tra cui scegliere",
+        "open": "Aperto",
+        "closed": "Chiuso",
+        "close": "Chiudi",
+        "unnamed": "Locale"
+      },
+      "schedule": {
+        "title": "Orari"
+      },
+      "gcode": {
+        "label": "Crea il tuo menù",
+        "aria": "Crea il tuo menù digitale con {brand}"
+      },
+      "qr": {
+        "title": "Apri il menù sul telefono",
+        "hint": "Inquadra il codice con la fotocamera",
+        "copy": "Copia link",
+        "alt": "Codice QR del menù"
       }
     }
   }

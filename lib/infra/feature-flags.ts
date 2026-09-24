@@ -12,6 +12,12 @@ export const flags = {
 	ONBOARDING_BILLING_MODE: resolveProxyMode(),
 } as const;
 
+/** `localhost`, `127.0.0.1` o `::1`: en producción el microservicio no puede apuntar ahí. */
+export function isLoopbackHostname(hostname: string): boolean {
+	const value = hostname.trim().toLowerCase();
+	return value === "localhost" || value === "127.0.0.1" || value === "::1";
+}
+
 export function getOnboardingBillingBaseUrl(): string {
 	const raw = process.env.ONBOARDING_BILLING_SERVICE_URL?.trim() ?? "";
 	if (!raw) return "";

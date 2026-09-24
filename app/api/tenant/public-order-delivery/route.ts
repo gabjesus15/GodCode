@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import currency from "currency.js";
 
-import { jsonWithPublicCors, publicApiCorsHeaders } from "@/lib/infra/api-cors";
+import { jsonWithPublicCors, publicApiPreflightResponse } from "@/lib/infra/api-cors";
 import { assertPublicRateLimit, assertPublicScopedRateLimit } from "@/lib/infra/public-rate-limit";
 import { resolveNamedAreaFromAddress } from "@/lib/delivery/delivery-area-resolve";
 import { pickClientAddressFields } from "@/lib/delivery/client-address-fields";
@@ -12,11 +12,9 @@ import {
 	normalizeDeliverySettings,
 	orderItemsSubtotalFromPayload,
 } from "@/lib/delivery/delivery-settings";
-import {
-	buildGoogleMapsDirectionsUrl,
-	haversineKm,
-	isValidLatLng,
-} from "@/lib/geo/geo";
+import { haversineKm, isValidLatLng } from "@/lib/geo/geo";
+import { getCountryConfig } from "@/lib/geo/country-registry";
+import { normalizeDeliveryLocationSource, resolveDeliveryMapsUrl } from "@/lib/delivery/delivery-location";
 import { resolveUberOAuthCredentials } from "@/lib/integrations/company-integration-settings";
 import {
 	canAutoCancelOrphanOrder,
@@ -115,6 +113,7 @@ export async function POST(req: NextRequest) {
 			deliveryLat?: unknown;
 			deliveryLng?: unknown;
 			deliveryAddress?: unknown;
+			deliveryLocationSource?: unknown;
 			deliveryFee?: unknown;
 			namedAreaId?: unknown;
 			uberQuoteId?: unknown;
@@ -125,6 +124,7 @@ export async function POST(req: NextRequest) {
 		const deliveryFeeClient = Number(body.deliveryFee);
 		const deliveryLat = Number(body.deliveryLat);
 		const deliveryLng = Number(body.deliveryLng);
+		const deliveryLocationSource = normalizeDeliveryLocationSource(body.deliveryLocationSource);
 		const namedAreaIdRaw =
 			typeof body.namedAreaId === "string" ? body.namedAreaId.trim() : "";
 		const uberQuoteIdClient =
@@ -187,7 +187,7 @@ export async function POST(req: NextRequest) {
 
 		const { data: branch, error: brErr } = await supabaseAdmin
 			.from("branches")
-			.select("id, company_id, delivery_settings, origin_lat, origin_lng, order_intake_paused, order_intake_pause_message")
+			.select("id, company_id, country, delivery_settings, origin_lat, origin_lng, order_intake_paused, order_intake_pause_message")
 			.eq("id", order.branch_id)
 			.maybeSingle();
 
@@ -419,16 +419,25 @@ export async function POST(req: NextRequest) {
 				? pickClientAddressFields(draftAddr)
 				: null;
 
-		if (
-			deliveryAddress &&
-			isValidLatLng(deliveryLat, deliveryLng)
-		) {
-			deliveryAddress.lat = deliveryLat;
-			deliveryAddress.lng = deliveryLng;
-			deliveryAddress.maps_url = buildGoogleMapsDirectionsUrl(
-				deliveryLat,
-				deliveryLng,
-			);
+		if (deliveryAddress) {
+			const hasPoint = isValidLatLng(deliveryLat, deliveryLng);
+			if (hasPoint) {
+				deliveryAddress.lat = deliveryLat;
+				deliveryAddress.lng = deliveryLng;
+				// Cómo se obtuvo el punto: el panel avisa al cajero si es aproximado.
+				if (deliveryLocationSource) deliveryAddress.location_source = deliveryLocationSource;
+			}
+			/* El enlace lo arma el servidor (nunca el cliente). Con un punto aproximado
+			   por la dirección escrita, o sin coordenadas (zonas por nombre), busca la
+			   dirección en Google Maps en vez de mandar al repartidor al centro de la calle. */
+			const mapsUrl = resolveDeliveryMapsUrl({
+				lat: hasPoint ? deliveryLat : null,
+				lng: hasPoint ? deliveryLng : null,
+				source: deliveryLocationSource,
+				address: deliveryAddress,
+				countryName: getCountryConfig(branch.country)?.name ?? null,
+			});
+			if (mapsUrl) deliveryAddress.maps_url = mapsUrl;
 		}
 
 		if (deliveryAddress && effectiveDeliveryPricingMode(settings) === "external") {
@@ -477,9 +486,5 @@ export async function POST(req: NextRequest) {
 }
 
 export async function OPTIONS(req: NextRequest) {
-	const cors = publicApiCorsHeaders(req);
-	if ([...cors.keys()].length === 0) {
-		return new NextResponse(null, { status: 204 });
-	}
-	return new NextResponse(null, { status: 204, headers: cors });
+	return publicApiPreflightResponse(req);
 }

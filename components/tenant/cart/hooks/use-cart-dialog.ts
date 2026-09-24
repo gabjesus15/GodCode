@@ -21,6 +21,8 @@ export function useCartDialog(panelRef: RefObject<HTMLElement | null>, isOpen: b
 
 		const trapTab = (event: KeyboardEvent) => {
 			if (event.key !== "Tab" || !panel) return;
+			// Un <dialog> modal abierto dentro del carrito (p. ej. la hoja de zonas) atrapa su propio foco.
+			if ((event.target as Element | null)?.closest?.("dialog[open]")) return;
 			const focusable = panel.querySelectorAll<HTMLElement>(FOCUSABLE);
 			if (focusable.length === 0) return;
 			const first = focusable[0];

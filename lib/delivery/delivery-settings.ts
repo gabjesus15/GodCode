@@ -79,8 +79,6 @@ export type DeliverySettingsNormalized = {
 	taxIncluded?: boolean | null;
 };
 
-export type DeliverySettingsPublic = DeliverySettingsNormalized;
-
 const DEFAULTS: DeliverySettingsNormalized = {
 	enabled: true,
 	deliveryPricingStrategy: "distance",
@@ -456,12 +454,6 @@ export function normalizeDeliverySettings(raw: unknown): DeliverySettingsNormali
 			return inc === true || inc === "true" || inc === 1 || inc === "1";
 		})(),
 	};
-}
-
-export function deliverySettingsToPublic(
-	s: DeliverySettingsNormalized,
-): DeliverySettingsPublic {
-	return { ...s };
 }
 
 /** Merge parcial guardando solo claves conocidas; preserva el resto del JSON previo. */

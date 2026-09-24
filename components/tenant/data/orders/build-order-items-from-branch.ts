@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isUuidLike } from "../../cart/utils/safe-ids";
 
 /** Línea de carrito enviada al servicio (producto catálogo por UUID). */
 export interface OrderCatalogLine {
@@ -32,10 +33,6 @@ interface ProductBranchRow {
 interface ProductRow {
 	id: string;
 	name: string | null;
-}
-
-function isUuidLike(v: string): boolean {
-	return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 }
 
 /** Línea de catálogo (UUID) enviada al checkout, excluye extras sintéticos del carrito. */

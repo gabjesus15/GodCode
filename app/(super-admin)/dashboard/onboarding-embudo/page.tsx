@@ -2,11 +2,10 @@ import { HomePeriodSelect } from "@/components/super-admin/home/home-period-sele
 import { OnboardingFunnelInteractive } from "@/components/super-admin/analytics/onboarding-funnel-interactive";
 import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
 import {
-  DASHBOARD_PERIODS,
-  type DashboardPeriod,
   fetchOnboardingFunnelCounts,
   periodStartIso,
 } from "@/lib/super-admin/super-admin-metrics";
+import { parseDashboardPeriod } from "@/lib/super-admin/super-admin-dashboard-shared";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { requireSuperAdminSession } from "@/lib/super-admin/require-super-admin-session";
 
@@ -15,12 +14,6 @@ export const metadata = { title: "Embudo de altas" };
 /** @service-role layout-guard */
 
 export const dynamic = "force-dynamic";
-
-function parsePeriod(raw: string | undefined): DashboardPeriod {
-  const allowed = new Set(DASHBOARD_PERIODS.map((p) => p.value));
-  if (raw && allowed.has(raw as DashboardPeriod)) return raw as DashboardPeriod;
-  return "30";
-}
 
 type OnboardingApp = {
   id: string;
@@ -40,7 +33,7 @@ export default async function OnboardingEmbudoPage({
   await requireSuperAdminSession();
   const sp = await searchParams;
   const periodRaw = Array.isArray(sp.period) ? sp.period[0] : sp.period;
-  const period = parsePeriod(periodRaw);
+  const period = parseDashboardPeriod(periodRaw);
   const fromIso = periodStartIso(period);
 
   const funnel = await fetchOnboardingFunnelCounts(fromIso);

@@ -41,6 +41,8 @@ interface BranchInfo {
   whatsapp_url?: string | null;
   instagram_url?: string | null;
   map_url?: string | null;
+  /** Estado de caja cuando se conoce; sin él no se muestra insignia. */
+  isOpen?: boolean | null;
 }
 
 interface ContactBranchModalProps {
@@ -61,6 +63,8 @@ export function ContactBranchModal({
   action,
 }: ContactBranchModalProps) {
   const t = useTranslations("tenant.cart.modal");
+  // Las preguntas por canal son las mismas que las del selector de la portada.
+  const tHome = useTranslations("tenant.home.branches.title");
   if (!isOpen) return null;
 
   const handleBranchSelect = (branch: BranchInfo) => {
@@ -68,48 +72,14 @@ export function ContactBranchModal({
     onClose();
   };
 
-  const parseBranchStatus = (rawName: string | null) => {
-    if (!rawName) {
-      return { name: "", status: null as "open" | "closed" | null };
-    }
+  /* El estado llega como dato (`isOpen`). Antes se adivinaba buscando
+     "ABIERTO"/"OPEN" dentro del nombre, y un local llamado "Open Kitchen"
+     salía como "Kitchen" y marcado abierto. */
+  const branchStatus = (branch: BranchInfo): "open" | "closed" | null =>
+    branch.isOpen === true ? "open" : branch.isOpen === false ? "closed" : null;
 
-    if (rawName.includes("ABIERTO") || rawName.includes("OPEN")) {
-      return { name: rawName.replace(/ABIERTO|OPEN/g, "").trim(), status: "open" as const };
-    }
-
-    if (rawName.includes("CERRADO") || rawName.includes("CLOSED")) {
-      return { name: rawName.replace(/CERRADO|CLOSED/g, "").trim(), status: "closed" as const };
-    }
-
-    return { name: rawName, status: null as "open" | "closed" | null };
-  };
-
-  const getModalText = () => {
-    switch (action) {
-      case "instagram":
-        return {
-          title: "Instagram de nuestras sucursales",
-          subtitle: "¿De qué local quieres ver su perfil de Instagram?",
-        };
-      case "whatsapp":
-        return {
-          title: "WhatsApp de nuestras sucursales",
-          subtitle: "¿Con qué local te quieres comunicar por WhatsApp?",
-        };
-      case "location":
-        return {
-          title: "Dirección de nuestras sucursales",
-          subtitle: "¿De qué local quieres ver su ubicación?",
-        };
-      default:
-        return {
-          title: t("contactBranch.title"),
-          subtitle: t("contactBranch.subtitle"),
-        };
-    }
-  };
-
-  const { title: modalTitle, subtitle: modalSubtitle } = getModalText();
+  const modalTitle = action ? tHome(action) : t("contactBranch.title");
+  const modalSubtitle = t("contactBranch.subtitle");
 
   const modalContent = (
     <div className="branch-modal-overlay" onClick={onClose}>
@@ -139,7 +109,8 @@ export function ContactBranchModal({
               </div>
             ) : (
               branches.map((branch) => {
-                const { name, status } = parseBranchStatus(branch.name ?? "");
+                const name = (branch.name ?? "").trim();
+                const status = branchStatus(branch);
                 return (
                   <button
                     key={branch.id}

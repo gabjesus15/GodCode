@@ -1,4 +1,7 @@
 import { headers } from "next/headers";
+import { sanitizeHexColor } from "@/lib/store-theme/apply-theme-css-vars";
+import { readThemeConfigObject } from "@/lib/store-theme/merge-theme-config";
+import { resolveTenantDisplayName } from "@/lib/tenant/seo-metadata";
 import { NextResponse } from "next/server";
 
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
@@ -26,12 +29,9 @@ export async function GET(_req: Request, context: RouteContext) {
 
 	const isUnavailable = !isTenantSubscriptionAccessible(company);
 
-	const name =
-		isUnavailable
-			? "Gcode Menu"
-			: (company?.theme_config?.displayName as string) ??
-				company?.name ??
-				"Gcode Menu";
+	const theme = readThemeConfigObject(company?.theme_config);
+	// `??` no cubría el nombre vacío: el manifest salía con name y short_name "".
+	const name = isUnavailable ? "Gcode Menu" : resolveTenantDisplayName(company, { slug: subdomain, fallback: "Gcode Menu" });
 
 	const iconVersion = encodeURIComponent(
 		company ? tenantBrandingIconVersionSeed(company) : String(name),
@@ -46,9 +46,8 @@ export async function GET(_req: Request, context: RouteContext) {
 		start_url: startUrl,
 		scope,
 		display: "standalone",
-		background_color:
-			(company?.theme_config?.backgroundColor as string) ?? "#0a0a0a",
-		theme_color: (company?.theme_config?.primaryColor as string) ?? "#111827",
+		background_color: sanitizeHexColor(typeof theme.backgroundColor === "string" ? theme.backgroundColor : "", "#0a0a0a"),
+		theme_color: sanitizeHexColor(typeof theme.primaryColor === "string" ? theme.primaryColor : "", "#111827"),
 		icons: [
 			{
 				src: tenantIcon,

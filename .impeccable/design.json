@@ -1,0 +1,577 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-24T15:43:01.496Z",
+  "title": "Design System: Gcode · Página de inicio del negocio",
+  "extensions": {
+    "colorMeta": {
+      "accent-fallback": {
+        "role": "primary",
+        "displayName": "Acento del local (respaldo)",
+        "tonalRamp": [
+          "oklch(15% 0.2 22)",
+          "oklch(26% 0.2 22)",
+          "oklch(37% 0.2 22)",
+          "oklch(48% 0.2 22)",
+          "oklch(59% 0.2 22)",
+          "oklch(70% 0.2 22)",
+          "oklch(82% 0.2 22)",
+          "oklch(95% 0.2 22)"
+        ]
+      },
+      "ink-on-light-accent": {
+        "role": "primary",
+        "displayName": "Tinta sobre acento claro",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "dark-canvas": {
+        "role": "neutral",
+        "displayName": "Lienzo nocturno",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "dark-backdrop": {
+        "role": "neutral",
+        "displayName": "Telón nocturno",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Superficie nocturna",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "dark-surface-hover": {
+        "role": "neutral",
+        "displayName": "Superficie nocturna (hover)",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "dark-line": {
+        "role": "neutral",
+        "displayName": "Filete nocturno",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "dark-line-strong": {
+        "role": "neutral",
+        "displayName": "Filete nocturno fuerte",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "dark-fg": {
+        "role": "neutral",
+        "displayName": "Tinta hueso",
+        "tonalRamp": [
+          "oklch(15% 0.003 90)",
+          "oklch(26% 0.003 90)",
+          "oklch(37% 0.003 90)",
+          "oklch(48% 0.003 90)",
+          "oklch(59% 0.003 90)",
+          "oklch(70% 0.003 90)",
+          "oklch(82% 0.003 90)",
+          "oklch(95% 0.003 90)"
+        ]
+      },
+      "dark-fg-2": {
+        "role": "neutral",
+        "displayName": "Tinta hueso 2",
+        "tonalRamp": [
+          "oklch(15% 0.003 90)",
+          "oklch(26% 0.003 90)",
+          "oklch(37% 0.003 90)",
+          "oklch(48% 0.003 90)",
+          "oklch(59% 0.003 90)",
+          "oklch(70% 0.003 90)",
+          "oklch(82% 0.003 90)",
+          "oklch(95% 0.003 90)"
+        ]
+      },
+      "dark-fg-3": {
+        "role": "neutral",
+        "displayName": "Tinta hueso 3",
+        "tonalRamp": [
+          "oklch(15% 0.003 90)",
+          "oklch(26% 0.003 90)",
+          "oklch(37% 0.003 90)",
+          "oklch(48% 0.003 90)",
+          "oklch(59% 0.003 90)",
+          "oklch(70% 0.003 90)",
+          "oklch(82% 0.003 90)",
+          "oklch(95% 0.003 90)"
+        ]
+      },
+      "dark-ok": {
+        "role": "secondary",
+        "displayName": "Verde abierto (oscuro)",
+        "tonalRamp": [
+          "oklch(15% 0.15 152)",
+          "oklch(26% 0.15 152)",
+          "oklch(37% 0.15 152)",
+          "oklch(48% 0.15 152)",
+          "oklch(59% 0.15 152)",
+          "oklch(70% 0.15 152)",
+          "oklch(82% 0.15 152)",
+          "oklch(95% 0.15 152)"
+        ]
+      },
+      "light-canvas": {
+        "role": "neutral",
+        "displayName": "Lienzo gris papel",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "light-backdrop": {
+        "role": "neutral",
+        "displayName": "Telón gris",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "light-surface": {
+        "role": "neutral",
+        "displayName": "Superficie blanca",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "light-surface-hover": {
+        "role": "neutral",
+        "displayName": "Superficie blanca (hover)",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "light-line": {
+        "role": "neutral",
+        "displayName": "Filete claro",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "light-line-strong": {
+        "role": "neutral",
+        "displayName": "Filete claro fuerte",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "light-fg": {
+        "role": "neutral",
+        "displayName": "Tinta carbón",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "light-fg-2": {
+        "role": "neutral",
+        "displayName": "Tinta carbón 2",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "light-fg-3": {
+        "role": "neutral",
+        "displayName": "Tinta carbón 3",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "light-ok": {
+        "role": "secondary",
+        "displayName": "Verde abierto (claro)",
+        "tonalRamp": [
+          "oklch(15% 0.13 152)",
+          "oklch(26% 0.13 152)",
+          "oklch(37% 0.13 152)",
+          "oklch(48% 0.13 152)",
+          "oklch(59% 0.13 152)",
+          "oklch(70% 0.13 152)",
+          "oklch(82% 0.13 152)",
+          "oklch(95% 0.13 152)"
+        ]
+      },
+      "qr-paper": {
+        "role": "neutral",
+        "displayName": "Papel del QR",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(82% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Nombre del local",
+        "purpose": "Solo el nombre del negocio, en su tipografía y peso (runtime)."
+      },
+      "title": {
+        "displayName": "Título",
+        "purpose": "Títulos del selector, del QR y del horario (0.9–1.1rem, 700)."
+      },
+      "door": {
+        "displayName": "Puerta",
+        "purpose": "Etiqueta de las puertas; 700 en la destacada; máximo 2 líneas."
+      },
+      "body": {
+        "displayName": "Frase",
+        "purpose": "Bio del negocio, máximo 34ch."
+      },
+      "small": {
+        "displayName": "Horario",
+        "purpose": "Líneas del horario, cifras tabulares."
+      },
+      "label": {
+        "displayName": "Etiqueta",
+        "purpose": "Chip de estado, estado del selector, URL del QR, contador."
+      }
+    },
+    "shadows": [
+      {
+        "name": "door-dark",
+        "value": "0 1px 2px rgba(0,0,0,0.35), 0 10px 22px -14px rgba(0,0,0,0.75)",
+        "purpose": "Puerta solid y botón redondo sin portada (esquema oscuro)."
+      },
+      {
+        "name": "door-light",
+        "value": "0 1px 2px rgba(0,0,0,0.05), 0 8px 20px -12px rgba(0,0,0,0.2)",
+        "purpose": "Puerta solid (esquema claro)."
+      },
+      {
+        "name": "door-hover-dark",
+        "value": "0 2px 4px rgba(0,0,0,0.35), 0 18px 32px -16px rgba(0,0,0,0.85)",
+        "purpose": "Puerta en hover con puntero fino (oscuro)."
+      },
+      {
+        "name": "door-hover-light",
+        "value": "0 2px 4px rgba(0,0,0,0.06), 0 16px 30px -14px rgba(0,0,0,0.26)",
+        "purpose": "Puerta en hover (claro)."
+      },
+      {
+        "name": "door-featured",
+        "value": "0 1px 2px rgba(0,0,0,0.2), 0 14px 28px -16px color-mix(in srgb, var(--gh-accent) 75%, #000000)",
+        "purpose": "La única sombra teñida: la puerta destacada."
+      },
+      {
+        "name": "sheet-dark",
+        "value": "0 2px 6px rgba(0,0,0,0.4), 0 40px 90px -30px rgba(0,0,0,0.85)",
+        "purpose": "Hoja de escritorio, tarjeta QR, panel del selector (oscuro)."
+      },
+      {
+        "name": "sheet-light",
+        "value": "0 1px 3px rgba(0,0,0,0.06), 0 40px 90px -36px rgba(0,0,0,0.35)",
+        "purpose": "Lo mismo en claro."
+      },
+      {
+        "name": "logo-ring",
+        "value": "0 0 0 4px var(--gh-canvas), 0 12px 28px -12px rgba(0,0,0,0.55)",
+        "purpose": "Recorta el logo contra la portada."
+      }
+    ],
+    "motion": [
+      {
+        "name": "gh-ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Curva única del mundo gh-."
+      },
+      {
+        "name": "gh-rise",
+        "value": "0.75s; from opacity .3 + translateY(14px); delay 80ms + 45ms × índice",
+        "purpose": "Entrada escalonada del perfil y las puertas; solo sin movimiento reducido y fuera de la vista previa."
+      },
+      {
+        "name": "gh-cover",
+        "value": "1.4s; from scale(1.06)",
+        "purpose": "Acercamiento de la foto de portada."
+      },
+      {
+        "name": "gh-panel",
+        "value": "0.42s; from opacity .4 + translateY(24px)",
+        "purpose": "Apertura del selector de sucursal."
+      },
+      {
+        "name": "door-press",
+        "value": "scale(0.985); 0.08s",
+        "purpose": "Respuesta táctil de la puerta."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sheet (@container gh)",
+        "value": "700px"
+      },
+      {
+        "name": "qr (@container gh)",
+        "value": "1180px"
+      },
+      {
+        "name": "picker centrado (@media)",
+        "value": "700px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Puerta destacada",
+      "kind": "button",
+      "refersTo": "door-featured",
+      "description": "La puerta principal (normalmente la carta), llena con el acento del local; la única voz de color.",
+      "html": "<a class=\"ds-door-feat\" href=\"#\"><span class=\"ds-door-feat__icon\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 7v14\"/><path d=\"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z\"/></svg></span><span>Ver el menú</span><span class=\"ds-door-feat__end\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9 18 6-6-6-6\"/></svg></span></a>",
+      "css": ".ds-door-feat{--gh-canvas:#111113;--gh-surface:#1c1c1f;--gh-surface-hover:#232327;--gh-line:rgba(255,255,255,.09);--gh-line-strong:rgba(255,255,255,.2);--gh-fg:#f5f4f2;--gh-fg-2:rgba(245,244,242,.76);--gh-fg-3:rgba(245,244,242,.58);--gh-ok:#5fd38d;--gh-accent:#e63946;--gh-on-accent:#fff;--gh-ease:cubic-bezier(.16,1,.3,1);--gh-shadow-door:0 1px 2px rgba(0,0,0,.35),0 10px 22px -14px rgba(0,0,0,.75);--gh-shadow-door-hover:0 2px 4px rgba(0,0,0,.35),0 18px 32px -16px rgba(0,0,0,.85);font-family:Montserrat,system-ui,sans-serif;position:relative;display:flex;align-items:center;justify-content:center;width:100%;min-height:60px;padding:10px 58px;border-radius:999px;border:1px solid transparent;background:var(--gh-accent);color:var(--gh-on-accent);font-size:1rem;font-weight:700;line-height:1.25;text-decoration:none;box-shadow:0 1px 2px rgba(0,0,0,.2),0 14px 28px -16px color-mix(in srgb,var(--gh-accent) 75%,#000);transition:transform .3s var(--gh-ease),box-shadow .3s var(--gh-ease),background-color .2s ease}.ds-door-feat__icon{position:absolute;top:50%;left:20px;display:grid;width:24px;height:24px;place-items:center;transform:translateY(-50%)}.ds-door-feat__end{position:absolute;top:50%;right:20px;display:grid;transform:translateY(-50%);color:color-mix(in srgb,var(--gh-on-accent) 72%,transparent)}.ds-door-feat:hover{transform:translateY(-2px);background:color-mix(in srgb,var(--gh-accent) 90%,var(--gh-on-accent));box-shadow:0 2px 4px rgba(0,0,0,.2),0 20px 34px -16px color-mix(in srgb,var(--gh-accent) 80%,#000)}.ds-door-feat:focus-visible{outline:2px solid var(--gh-fg);outline-offset:3px}.ds-door-feat:active{transform:scale(.985)}"
+    },
+    {
+      "name": "Puerta (solid)",
+      "kind": "button",
+      "refersTo": "door",
+      "description": "Puerta de enlace neutra: ícono a la izquierda, etiqueta centrada, flecha externa a la derecha.",
+      "html": "<a class=\"ds-door\" href=\"#\"><span class=\"ds-door__icon\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/></svg></span><span>Cómo llegar</span><span class=\"ds-door__end\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 7h10v10\"/><path d=\"M7 17 17 7\"/></svg></span></a>",
+      "css": ".ds-door{--gh-canvas:#111113;--gh-surface:#1c1c1f;--gh-surface-hover:#232327;--gh-line:rgba(255,255,255,.09);--gh-line-strong:rgba(255,255,255,.2);--gh-fg:#f5f4f2;--gh-fg-2:rgba(245,244,242,.76);--gh-fg-3:rgba(245,244,242,.58);--gh-ok:#5fd38d;--gh-accent:#e63946;--gh-on-accent:#fff;--gh-ease:cubic-bezier(.16,1,.3,1);--gh-shadow-door:0 1px 2px rgba(0,0,0,.35),0 10px 22px -14px rgba(0,0,0,.75);--gh-shadow-door-hover:0 2px 4px rgba(0,0,0,.35),0 18px 32px -16px rgba(0,0,0,.85);font-family:Montserrat,system-ui,sans-serif;position:relative;display:flex;align-items:center;justify-content:center;width:100%;min-height:60px;padding:10px 58px;border-radius:999px;border:1px solid var(--gh-line);background:var(--gh-surface);box-shadow:var(--gh-shadow-door);color:var(--gh-fg);font-size:1rem;font-weight:600;line-height:1.25;letter-spacing:-.005em;text-decoration:none;cursor:pointer;transition:transform .3s var(--gh-ease),box-shadow .3s var(--gh-ease),background-color .2s ease,border-color .2s ease}.ds-door__icon{position:absolute;top:50%;left:20px;display:grid;place-items:center;width:24px;height:24px;transform:translateY(-50%)}.ds-door__end{position:absolute;top:50%;right:20px;display:grid;place-items:center;transform:translateY(-50%);color:var(--gh-fg-3)}.ds-door:hover{transform:translateY(-2px);box-shadow:var(--gh-shadow-door-hover);background:var(--gh-surface-hover);border-color:var(--gh-line-strong)}.ds-door:focus-visible{outline:2px solid var(--gh-fg);outline-offset:3px}.ds-door:active{transform:scale(.985);transition-duration:.08s}"
+    },
+    {
+      "name": "Puerta con contador de sucursales",
+      "kind": "button",
+      "refersTo": "door",
+      "description": "Abre el selector de sucursal; el final muestra el número de locales en pastilla.",
+      "html": "<button class=\"ds-door\" type=\"button\"><span class=\"ds-door__icon\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/></svg></span><span>WhatsApp</span><span class=\"ds-door__end ds-count\">2</span></button>",
+      "css": ".ds-door{--gh-canvas:#111113;--gh-surface:#1c1c1f;--gh-surface-hover:#232327;--gh-line:rgba(255,255,255,.09);--gh-line-strong:rgba(255,255,255,.2);--gh-fg:#f5f4f2;--gh-fg-2:rgba(245,244,242,.76);--gh-fg-3:rgba(245,244,242,.58);--gh-ok:#5fd38d;--gh-accent:#e63946;--gh-on-accent:#fff;--gh-ease:cubic-bezier(.16,1,.3,1);--gh-shadow-door:0 1px 2px rgba(0,0,0,.35),0 10px 22px -14px rgba(0,0,0,.75);--gh-shadow-door-hover:0 2px 4px rgba(0,0,0,.35),0 18px 32px -16px rgba(0,0,0,.85);font-family:Montserrat,system-ui,sans-serif;position:relative;display:flex;align-items:center;justify-content:center;width:100%;min-height:60px;padding:10px 58px;border-radius:999px;border:1px solid var(--gh-line);background:var(--gh-surface);box-shadow:var(--gh-shadow-door);color:var(--gh-fg);font-size:1rem;font-weight:600;line-height:1.25;letter-spacing:-.005em;text-decoration:none;cursor:pointer;transition:transform .3s var(--gh-ease),box-shadow .3s var(--gh-ease),background-color .2s ease,border-color .2s ease}.ds-door__icon{position:absolute;top:50%;left:20px;display:grid;place-items:center;width:24px;height:24px;transform:translateY(-50%)}.ds-door__end{position:absolute;top:50%;right:20px;display:grid;place-items:center;transform:translateY(-50%);color:var(--gh-fg-3)}.ds-door:hover{transform:translateY(-2px);box-shadow:var(--gh-shadow-door-hover);background:var(--gh-surface-hover);border-color:var(--gh-line-strong)}.ds-door:focus-visible{outline:2px solid var(--gh-fg);outline-offset:3px}.ds-door:active{transform:scale(.985);transition-duration:.08s}.ds-count{min-width:24px;height:24px;padding:0 7px;border-radius:999px;border:1px solid var(--gh-line);background:var(--gh-canvas);font-size:.75rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--gh-fg-2)}"
+    },
+    {
+      "name": "Chip de estado",
+      "kind": "chip",
+      "refersTo": "status-chip",
+      "description": "Abierto/cerrado en vivo desde las cajas; punto verde con halo cuando está abierto.",
+      "html": "<p class=\"ds-status\" data-open><span class=\"ds-status__dot\"></span>Abierto ahora</p>",
+      "css": ".ds-status{--gh-canvas:#111113;--gh-surface:#1c1c1f;--gh-surface-hover:#232327;--gh-line:rgba(255,255,255,.09);--gh-line-strong:rgba(255,255,255,.2);--gh-fg:#f5f4f2;--gh-fg-2:rgba(245,244,242,.76);--gh-fg-3:rgba(245,244,242,.58);--gh-ok:#5fd38d;--gh-accent:#e63946;--gh-on-accent:#fff;--gh-ease:cubic-bezier(.16,1,.3,1);--gh-shadow-door:0 1px 2px rgba(0,0,0,.35),0 10px 22px -14px rgba(0,0,0,.75);--gh-shadow-door-hover:0 2px 4px rgba(0,0,0,.35),0 18px 32px -16px rgba(0,0,0,.85);font-family:Montserrat,system-ui,sans-serif;display:inline-flex;align-items:center;gap:8px;height:30px;margin:0;padding:0 13px 0 11px;border-radius:999px;border:1px solid var(--gh-line);background:var(--gh-surface);font-size:.8rem;font-weight:600;color:var(--gh-fg-2)}.ds-status__dot{width:8px;height:8px;border-radius:50%;background:var(--gh-fg-3)}.ds-status[data-open]{color:var(--gh-fg)}.ds-status[data-open] .ds-status__dot{background:var(--gh-ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--gh-ok) 24%,transparent)}"
+    },
+    {
+      "name": "Botón redondo sobre foto",
+      "kind": "button",
+      "refersTo": "round-button",
+      "description": "Compartir / administrar, en cristal oscuro sobre la portada.",
+      "html": "<div class=\"ds-photo\"><button class=\"ds-round\" type=\"button\" aria-label=\"Compartir\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 2v13\"/><path d=\"m16 6-4-4-4 4\"/><path d=\"M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8\"/></svg></button></div>",
+      "css": ".ds-photo{padding:16px;background:linear-gradient(135deg,#c9a27a,#6b4a33);border-radius:12px}.ds-round{display:grid;place-items:center;width:40px;height:40px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.16);background:rgba(14,14,16,.42);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);color:#fff;cursor:pointer;transition:background-color .2s ease}.ds-round:hover{background:rgba(14,14,16,.6)}.ds-round:focus-visible{outline:2px solid #fff;outline-offset:2px}"
+    },
+    {
+      "name": "Ítem del selector de sucursal",
+      "kind": "custom",
+      "refersTo": "picker-item",
+      "description": "Fila de sucursal en la hoja inferior: ícono neutro, nombre, estado y flecha.",
+      "html": "<a class=\"ds-pick\" href=\"#\"><span class=\"ds-pick__icon\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/></svg></span><span class=\"ds-pick__name\">Sucursal Centro</span><span class=\"ds-pick__state\" data-open>Abierto</span><span class=\"ds-pick__go\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 7h10v10\"/><path d=\"M7 17 17 7\"/></svg></span></a>",
+      "css": ".ds-pick{--gh-canvas:#111113;--gh-surface:#1c1c1f;--gh-surface-hover:#232327;--gh-line:rgba(255,255,255,.09);--gh-line-strong:rgba(255,255,255,.2);--gh-fg:#f5f4f2;--gh-fg-2:rgba(245,244,242,.76);--gh-fg-3:rgba(245,244,242,.58);--gh-ok:#5fd38d;--gh-accent:#e63946;--gh-on-accent:#fff;--gh-ease:cubic-bezier(.16,1,.3,1);--gh-shadow-door:0 1px 2px rgba(0,0,0,.35),0 10px 22px -14px rgba(0,0,0,.75);--gh-shadow-door-hover:0 2px 4px rgba(0,0,0,.35),0 18px 32px -16px rgba(0,0,0,.85);font-family:Montserrat,system-ui,sans-serif;display:flex;align-items:center;gap:12px;min-height:60px;padding:12px 14px;border-radius:16px;border:1px solid var(--gh-line);background:var(--gh-surface);color:var(--gh-fg);text-decoration:none;transition:background-color .2s ease,border-color .2s ease}.ds-pick:hover{background:var(--gh-surface-hover);border-color:var(--gh-line-strong)}.ds-pick:focus-visible{outline:2px solid var(--gh-fg);outline-offset:2px}.ds-pick__icon{display:grid;place-items:center;flex-shrink:0;width:36px;height:36px;border-radius:50%;background:var(--gh-canvas)}.ds-pick__name{flex:1;font-size:.97rem;font-weight:600}.ds-pick__state{padding:3px 9px;border-radius:999px;background:var(--gh-canvas);font-size:.72rem;font-weight:700;color:var(--gh-fg-3)}.ds-pick__state[data-open]{background:color-mix(in srgb,var(--gh-ok) 15%,transparent);color:var(--gh-ok)}.ds-pick__go{color:var(--gh-fg-3);display:grid}"
+    },
+    {
+      "name": "Perfil (logo + nombre)",
+      "kind": "custom",
+      "refersTo": "logo",
+      "description": "Logo de 108px con anillo del lienzo y nombre en la tipografía del local (aquí, Playfair Display como ejemplo).",
+      "html": "<div class=\"ds-prof\"><div class=\"ds-logo\">RP</div><h1 class=\"ds-name\">Rica Pizza</h1><p class=\"ds-bio\">Pizzas a la leña · Caracas</p></div>",
+      "css": ".ds-prof{--gh-canvas:#111113;--gh-surface:#1c1c1f;--gh-surface-hover:#232327;--gh-line:rgba(255,255,255,.09);--gh-line-strong:rgba(255,255,255,.2);--gh-fg:#f5f4f2;--gh-fg-2:rgba(245,244,242,.76);--gh-fg-3:rgba(245,244,242,.58);--gh-ok:#5fd38d;--gh-accent:#e63946;--gh-on-accent:#fff;--gh-ease:cubic-bezier(.16,1,.3,1);--gh-shadow-door:0 1px 2px rgba(0,0,0,.35),0 10px 22px -14px rgba(0,0,0,.75);--gh-shadow-door-hover:0 2px 4px rgba(0,0,0,.35),0 18px 32px -16px rgba(0,0,0,.85);font-family:Montserrat,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px;background:var(--gh-canvas);color:var(--gh-fg)}.ds-logo{display:grid;place-items:center;width:108px;height:108px;border-radius:50%;background:color-mix(in srgb,var(--gh-accent) 16%,var(--gh-surface));box-shadow:0 0 0 4px var(--gh-canvas),0 12px 28px -12px rgba(0,0,0,.55);font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:2.1rem;letter-spacing:.02em}.ds-name{margin:16px 0 0;font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:2rem;line-height:1.1;letter-spacing:-.012em;text-wrap:balance}.ds-bio{margin:8px 0 0;max-width:34ch;font-size:.97rem;line-height:1.5;color:var(--gh-fg-2)}"
+    },
+    {
+      "name": "Aviso",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Confirmación invertida (enlace copiado).",
+      "html": "<p class=\"ds-toast\" role=\"status\">Enlace copiado</p>",
+      "css": ".ds-toast{--gh-canvas:#111113;--gh-surface:#1c1c1f;--gh-surface-hover:#232327;--gh-line:rgba(255,255,255,.09);--gh-line-strong:rgba(255,255,255,.2);--gh-fg:#f5f4f2;--gh-fg-2:rgba(245,244,242,.76);--gh-fg-3:rgba(245,244,242,.58);--gh-ok:#5fd38d;--gh-accent:#e63946;--gh-on-accent:#fff;--gh-ease:cubic-bezier(.16,1,.3,1);--gh-shadow-door:0 1px 2px rgba(0,0,0,.35),0 10px 22px -14px rgba(0,0,0,.75);--gh-shadow-door-hover:0 2px 4px rgba(0,0,0,.35),0 18px 32px -16px rgba(0,0,0,.85);font-family:Montserrat,system-ui,sans-serif;display:inline-flex;align-items:center;gap:8px;margin:0;padding:10px 16px;border-radius:999px;background:var(--gh-fg);color:var(--gh-canvas);font-size:.85rem;font-weight:600}"
+    }
+  ],
+  "narrative": {
+    "northStar": "La puerta del local",
+    "overview": "La página es la entrada del negocio: arriba su foto y su color, en el centro su logo y su nombre, y debajo una lista corta y exacta de puertas (carta, WhatsApp, cómo llegar, sucursales). La plataforma se queda en segundo plano: todo lo que no es marca del local es neutro y sin tinte, en el claro o el oscuro que eligió el dueño, y el único color con voz es el primario del negocio, en la puerta destacada.\n\nEs una columna única, pensada para el móvil y para un toque con prisa. En pantallas anchas la misma hoja flota sobre la portada desenfocada y aparece un QR hacia la carta a la derecha. El diseño responde al ancho de su contenedor (`container: gh`) y no al de la ventana, así que la página pública y la vista previa del editor se ven iguales.\n\nEl movimiento se limita a una entrada: el perfil y cada puerta suben 14px en escalera, y la foto de portada se acerca un poco. Nada más se mueve si el usuario no lo toca.",
+    "keyCharacteristics": [
+      "Neutros sin tinte, en dos esquemas completos (oscuro por defecto, claro).",
+      "Un solo acento, el del negocio, lleno solo en la puerta destacada.",
+      "Puertas de ancho completo y 60px: ícono a la izquierda, etiqueta centrada y al final flecha o número de sucursales.",
+      "El nombre va en la tipografía del negocio y toda la interfaz en Montserrat.",
+      "Foto a sangre arriba, con el logo de 108px montado sobre el borde.",
+      "Adaptación por contenedor: columna en el móvil, hoja flotante con QR en escritorio."
+    ],
+    "rules": [
+      {
+        "name": "The One Voice Rule",
+        "body": "El acento del local solo va lleno en la puerta destacada. Todo lo demás (íconos del selector, contador, chips, redes) es neutro. En el código, el ícono del selector lleva a propósito el lienzo y no el acento.",
+        "section": "colors"
+      },
+      {
+        "name": "The Live Green Rule",
+        "body": "El verde se usa únicamente para decir «abierto» y sale de datos reales (cajas abiertas). No se usa como éxito genérico ni como decoración.",
+        "section": "colors"
+      },
+      {
+        "name": "The Legible Name Rule",
+        "body": "El nombre toma el color de marca que eligió el dueño solo si contrasta al menos 3:1 con el lienzo. Si no llega, usa la tinta. Esto se aplica con código y no queda a criterio de nadie.",
+        "section": "colors"
+      },
+      {
+        "name": "The Borrowed Voice Rule",
+        "body": "La tipografía del negocio se usa solo en el nombre y en las iniciales de respaldo del logo. Nunca llega a puertas, chips ni textos de interfaz.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Numbers Rule",
+        "body": "Horarios y contadores usan `font-variant-numeric: tabular-nums`.",
+        "section": "typography"
+      },
+      {
+        "name": "The Container, Not Viewport Rule",
+        "body": "Los cambios de disposición de la página se escriben con `@container gh`, nunca con `@media` de ancho. La vista previa del editor depende de eso. El selector de sucursal es la excepción porque es un `<dialog>` a pantalla completa.",
+        "section": "layout"
+      },
+      {
+        "name": "The Last Door Rule",
+        "body": "«Crea tu menú» de Gcode es una puerta más, con la misma forma y estilo que las del local, 24px después del contenido. Nunca queda pegada al fondo de la pantalla ni se trata como anuncio.",
+        "section": "layout"
+      },
+      {
+        "name": "The Glass-Only-On-Photo Rule",
+        "body": "El cristal (blur 14px, saturación 1.4 y fondo `rgba(14,14,16,.42)`) solo se usa en los botones redondos que flotan sobre una foto. Sin portada, esos botones pasan a superficie opaca con sombra de puerta.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do usar solo los `--gh-*` para color. Cualquier color nuevo sale de lienzo, superficie, filete, tinta 1–3, verde o acento, y existe en los dos esquemas.",
+      "Do reservar el acento lleno para la puerta destacada. Si hace falta un tinte de marca, que sea una mezcla baja (13–26%) sobre superficie o telón, como en soft, iniciales y telón.",
+      "Do mantener las puertas a 60px de alto mínimo, ancho completo y con la etiqueta centrada entre ícono y final fijos.",
+      "Do mantener el lienzo del CSS y `SCHEME_CANVAS` del resolvedor sincronizados. De ellos dependen el contraste del nombre y la tinta sobre acento.",
+      "Do escribir los cambios de disposición con `@container gh` para que la vista previa del editor siga siendo fiel.",
+      "Do dar foco visible de 2px en la tinta (o blanco sobre foto) a todo lo interactivo, y apagar transformaciones con movimiento reducido."
+    ],
+    "donts": [
+      "Don't teñir los neutros con el acento ni con ningún otro color. El lienzo y la superficie no llevan tinte.",
+      "Don't pintar con el acento los íconos, contadores, chips o redes. El selector usa el lienzo a propósito.",
+      "Don't usar la tipografía del negocio fuera del nombre y las iniciales.",
+      "Don't dar a cada red un fondo de su color de marca. Las redes son glifos en la tinta.",
+      "Don't usar degradados en texto, manchas de luz ni bordes de «ticket». La única forma decorativa es la foto del local o, si no hay foto, el campo de su color.",
+      "Don't fijar «Crea tu menú» al fondo del viewport ni darle un estilo distinto del de las puertas del local.",
+      "Don't inventar estados: «abierto», número de sucursales y enlaces salen de datos reales, nunca de texto fijo."
+    ]
+  }
+}

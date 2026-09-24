@@ -1,26 +1,5 @@
-import { TENANT_ADMIN_TAB_IDS, type TenantAdminTabId } from "./tenant-admin-tabs";
+import { uniqueTabs, type TenantAdminTabId } from "./tenant-admin-tabs";
 import { extractCeoTabsFromPlanFeatures } from "../plans/tenant-plan-features";
-
-const TAB_ID_SET = new Set<string>(TENANT_ADMIN_TAB_IDS);
-
-function normalizeTabId(value: string): TenantAdminTabId | null {
-	const normalized = value.trim().toLowerCase();
-	const mapped = normalized === "drinks" ? "beverages" : normalized;
-	if (!TAB_ID_SET.has(mapped)) return null;
-	return mapped as TenantAdminTabId;
-}
-
-function uniqueTabs(values: string[]): TenantAdminTabId[] {
-	const out: TenantAdminTabId[] = [];
-	const seen = new Set<string>();
-	for (const value of values) {
-		const clean = normalizeTabId(value);
-		if (!clean || seen.has(clean)) continue;
-		seen.add(clean);
-		out.push(clean);
-	}
-	return out;
-}
 
 function toArrayFromUnknown(raw: unknown): string[] {
 	if (!Array.isArray(raw)) return [];

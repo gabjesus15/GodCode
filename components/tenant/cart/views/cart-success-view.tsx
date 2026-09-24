@@ -4,12 +4,7 @@ import { Check, Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import type { BusinessInfo, LastOrderSuccess } from "../cart-modal-types";
-
-function copyText(text: string): void {
-	if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-		navigator.clipboard.writeText(text).catch(() => {});
-	}
-}
+import { copyToClipboard } from "../utils/clipboard";
 
 export function CartSuccessView({
 	onNewOrder,
@@ -62,7 +57,7 @@ export function CartSuccessView({
 									<button
 										type="button"
 										className="cart-success__copy"
-										onClick={() => copyText(orderLabel.replace("#", ""))}
+										onClick={() => copyToClipboard(orderLabel.replace("#", ""))}
 										aria-label={t("success.copyOrderNumber")}
 									>
 										<b>{orderLabel}</b>
@@ -77,7 +72,7 @@ export function CartSuccessView({
 								<button
 									type="button"
 									className="cart-success__copy cart-success__copy--code"
-									onClick={() => copyText(lastOrder?.handoff_code ?? "")}
+									onClick={() => copyToClipboard(lastOrder?.handoff_code ?? "")}
 									aria-label={t("success.copyDeliveryCode")}
 								>
 									<b>{lastOrder?.handoff_code}</b>

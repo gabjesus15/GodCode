@@ -1,4 +1,5 @@
 import { sanitizeUserText } from "@/utils/sanitize-user-text";
+import type { DeliveryLocationSource } from "@/lib/delivery/delivery-location";
 import type { OrderCatalogLine } from "../../data/orders/build-order-items-from-branch";
 import {
 	isUpsellBeverageLineId,
@@ -136,6 +137,8 @@ export type DeliverySnapshotInput = {
 	reference: string;
 	lat: number | null;
 	lng: number | null;
+	/** Cómo se obtuvo el punto; el servidor lo guarda y decide el enlace de mapa. */
+	locationSource?: DeliveryLocationSource | null;
 	namedAreaId: string | null;
 	namedAreaLabel: string | null;
 	quotedRouteKm: number | null;
@@ -234,6 +237,7 @@ export function buildOrderPayload(input: BuildOrderPayloadInput): SubmitOrderPar
 		delivery_km: resolveDeliveryKmForOrder(delivery),
 		delivery_lat: input.delivery.lat,
 		delivery_lng: input.delivery.lng,
+		delivery_location_source: isDelivery ? (input.delivery.locationSource ?? null) : null,
 		delivery_named_area_id: input.delivery.namedAreaId?.trim() || null,
 		uber_quote_id: input.uberQuoteId || null,
 		coupon_code: couponCode,

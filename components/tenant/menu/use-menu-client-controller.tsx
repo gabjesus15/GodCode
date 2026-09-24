@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { useCartStore } from "../cart/cart-store";
 import { getTenantScopedPath, getTenantPrefixFromPathname } from "../utils/tenant-route";
@@ -412,9 +413,14 @@ export function useMenuClientController(props: MenuClientProps) {
 		setIsContactBranchModalOpen(true);
 	}, [branches, closeContactUi, selectedBranchId]);
 
+	const tBranch = useTranslations("tenant.cart.modal.branchSelector");
+	const branchBadgeLabels = useMemo(
+		() => ({ open: tBranch("openBadge"), closed: tBranch("closedBadge") }),
+		[tBranch],
+	);
 	const modalBranches = useMemo(
-		() => buildModalBranchItems(branches, openBranchIds, hasOpenBranches),
-		[branches, openBranchIds, hasOpenBranches],
+		() => buildModalBranchItems(branches, openBranchIds, hasOpenBranches, branchBadgeLabels),
+		[branches, openBranchIds, hasOpenBranches, branchBadgeLabels],
 	);
 
 	const handleBranchSelect = useCallback((branch: BranchModalItem) => {

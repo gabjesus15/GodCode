@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server";
+
 import { sessionNeedsMfa } from "@/lib/auth/mfa-server";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
@@ -66,5 +68,26 @@ export async function validateAdminRolesOnServer(
 	} catch {
 		return { ok: false, status: 500, error: "Error al validar la sesión" };
 	}
+}
+
+export type SuperAdminAccessResult =
+	| { ok: true; email: string | null }
+	| { ok: false; response: NextResponse };
+
+/** Guard de los route handlers super-admin: valida los roles y, si falla, trae la respuesta JSON de error lista. */
+export async function validateSuperAdminAccess(
+	allowedRoles: readonly string[]
+): Promise<SuperAdminAccessResult> {
+	const result = await validateAdminRolesOnServer([...allowedRoles]);
+	if (!result.ok) {
+		return {
+			ok: false,
+			response: NextResponse.json(
+				{ error: result.error ?? "No autorizado" },
+				{ status: result.status }
+			),
+		};
+	}
+	return { ok: true, email: result.email ?? null };
 }
 

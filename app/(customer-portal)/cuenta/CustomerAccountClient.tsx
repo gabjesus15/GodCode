@@ -144,7 +144,12 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
 
   const billing = useBillingFilters(snapshot.paymentRows);
 
-  const unsavedGuard = useUnsavedGuard(tab, storeTheme.storeThemeHasLocalUnsavedChanges, confirmDialog);
+  const [homePageDirty, setHomePageDirty] = useState(false);
+  const unsavedGuard = useUnsavedGuard(
+    tab,
+    { tienda: storeTheme.storeThemeHasLocalUnsavedChanges, perfil: homePageDirty },
+    confirmDialog,
+  );
 
   useEffect(() => {
     if ((tab === "plan" || tab === "sucursales") && !billingOptions && !billingLoading) {
@@ -276,8 +281,8 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             company={company}
             branches={branches}
             initialBusinessInfo={businessInfo}
-            storeThemePublished={storeTheme.storeThemePublished}
             onNavigate={handleTabChange}
+            onDirtyChange={setHomePageDirty}
           />
         )}
 

@@ -39,7 +39,3 @@ export function isValidLatLng(lat: unknown, lng: unknown): lat is number {
 	);
 }
 
-/** Enlace para abrir navegación hacia el punto de entrega. */
-export function buildGoogleMapsDirectionsUrl(lat: number, lng: number): string {
-	return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${lat},${lng}`)}`;
-}

@@ -289,9 +289,6 @@ export async function proxy(req: NextRequest) {
 
   const result = await _proxy(req);
   applySecurityHeaders(result);
-  if (req.nextUrl.pathname.startsWith("/api/")) {
-    result.headers.set("Cache-Control", "no-store");
-  }
   return result;
 }
 
@@ -303,12 +300,8 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
     return canonicalRedirect;
   }
 
-  if (PUBLIC_DELIVERY_API_PATHS.has(pathname) && req.method === "OPTIONS") {
-    const cors = publicApiCorsHeaders(req);
-    if ([...cors.keys()].length > 0) {
-      return new NextResponse(null, { status: 204, headers: cors });
-    }
-  }
+  // Las rutas /api (incluidas las públicas de delivery y su CORS) ya las atendió
+  // `handleApiRequest`: aquí solo llegan páginas, y el CORS de delivery no aplica.
   const hostHeader = req.headers.get("host");
   let subdomain = extractSubdomain(hostHeader);
   if (!subdomain) {
@@ -355,10 +348,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
           headers: requestHeaders,
         },
       });
-      return attachPublicDeliveryApiCors(
-        req,
-        await applyTenantHostRefresh(req, response),
-      );
+      return await applyTenantHostRefresh(req, response);
     }
 
     const response = NextResponse.next({
@@ -366,17 +356,14 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
         headers: requestHeaders,
       },
     });
-    return attachPublicDeliveryApiCors(
-      req,
-      await applySessionRefresh(req, response, "super-admin"),
-    );
+    return await applySessionRefresh(req, response, "super-admin");
   }
 
   if (subdomain) {
     // Onboarding es del dominio principal: redirigir a godcode.me/onboarding (o APP_URL)
     if (pathname.startsWith("/onboarding")) {
       const target = new URL(buildAppUrl(pathname, req.nextUrl.search));
-      return attachPublicDeliveryApiCors(req, NextResponse.redirect(target, 302));
+      return NextResponse.redirect(target, 302);
     }
     if (
       tenantBypassPaths.some((path) => pathname.startsWith(path)) ||
@@ -390,10 +377,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
           headers: requestHeaders,
         },
       });
-      return attachPublicDeliveryApiCors(
-        req,
-        await applyTenantHostRefresh(req, response),
-      );
+      return await applyTenantHostRefresh(req, response);
     }
 
     // Si la ruta es '/', reescribe a '/[subdomain]'
@@ -405,10 +389,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
           headers: requestHeaders,
         },
       });
-      return attachPublicDeliveryApiCors(
-        req,
-        await applyTenantHostRefresh(req, response),
-      );
+      return await applyTenantHostRefresh(req, response);
     }
 
     // If the pathname already starts with the resolved subdomain, don't rewrite again.
@@ -418,10 +399,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
           headers: requestHeaders,
         },
       });
-      return attachPublicDeliveryApiCors(
-        req,
-        await applyTenantHostRefresh(req, response),
-      );
+      return await applyTenantHostRefresh(req, response);
     }
 
     const prefixedPath = `/${subdomain}${pathname}`;
@@ -432,10 +410,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
         headers: requestHeaders,
       },
     });
-    return attachPublicDeliveryApiCors(
-      req,
-      await applyTenantHostRefresh(req, response),
-    );
+    return await applyTenantHostRefresh(req, response);
   }
 
   if (adminPaths.some((path) => pathname.startsWith(path))) {
@@ -444,10 +419,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
         headers: requestHeaders,
       },
     });
-    return attachPublicDeliveryApiCors(
-      req,
-      await applySessionRefresh(req, response, "super-admin"),
-    );
+    return await applySessionRefresh(req, response, "super-admin");
   }
 
   const response = NextResponse.next({
@@ -460,10 +432,7 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
   if (resolvedTenantSlug) {
     await applySessionRefresh(req, response, "menu-client");
   }
-  return attachPublicDeliveryApiCors(
-    req,
-    await applySessionRefresh(req, response, "super-admin"),
-  );
+  return await applySessionRefresh(req, response, "super-admin");
 }
 
 export const config = {

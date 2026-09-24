@@ -10,6 +10,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { AppleChartTooltip } from "./apple-chart-tooltip";
+
 interface ChartRow {
   date: string;
   landing: number;
@@ -27,34 +29,6 @@ const COLORS = {
   tenant: "#34C759",
   saas: "#FF9500",
 };
-
-function CustomTooltip({ active, payload, label }: {
-  active?: boolean;
-  payload?: Array<{ color: string; name: string; value: number }>;
-  label?: string;
-}) {
-  if (!active || !payload?.length) return null;
-
-  return (
-    <div className="rounded-xl border border-zinc-200/80 bg-white/95 px-3 py-2 shadow-lg backdrop-blur-sm dark:border-zinc-700 dark:bg-zinc-900/95">
-      <p className="mb-1 text-xs font-medium text-zinc-500">{label}</p>
-      <div className="space-y-1">
-        {payload.map((entry, idx) => (
-          <div key={idx} className="flex items-center gap-2">
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-xs text-zinc-600 dark:text-zinc-300">{entry.name}</span>
-            <span className="ml-auto text-xs font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
-              {entry.value.toLocaleString("es-CL")}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export function AppleBarChart({ data, className }: AppleBarChartProps) {
   const hasData = data.some((d) => d.landing > 0 || d.tenant > 0 || d.saas > 0);
@@ -89,7 +63,7 @@ export function AppleBarChart({ data, className }: AppleBarChartProps) {
             tick={{ fill: "#a1a1aa", fontSize: 11, fontWeight: 500 }}
             tickFormatter={(value) => Number(value).toLocaleString("es-CL")}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f4f4f5" }} />
+          <Tooltip content={<AppleChartTooltip />} cursor={{ fill: "#f4f4f5" }} />
           <Bar
             dataKey="landing"
             name="Landing"

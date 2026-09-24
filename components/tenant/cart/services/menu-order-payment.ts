@@ -5,20 +5,6 @@ export const RECEIPT_REQUIRED_METHODS = new Set([
   "paypal",
 ]);
 
-export type MenuPaymentMethodPolicy = {
-  id: string;
-  requiresReceipt: boolean;
-  rail: "cash" | "card" | "online";
-  settlementTrigger:
-    | "cash_confirmation"
-    | "pos_confirmation"
-    | "evidence_uploaded"
-    | "manual_verification"
-    | "gateway_webhook";
-  settlementCurrency?: string | null;
-  allowMixedPayment?: boolean;
-};
-
 export function paymentMethodRequiresReceipt(
   method: string | null | undefined,
   configuredMethods?: ReadonlySet<string> | null,

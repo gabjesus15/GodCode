@@ -1,29 +1,9 @@
 /**
- * Rate limit y caché en memoria para endpoints públicos de delivery (proceso Node).
+ * Caché en memoria para endpoints públicos de delivery (proceso Node).
  * No apto para múltiples instancias sin sticky session; suficiente para MVP.
  */
 
-const rateBuckets = new Map<string, { n: number; reset: number }>();
 const responseCache = new Map<string, { expires: number; payload: unknown }>();
-
-const DEFAULT_WINDOW_MS = 60_000;
-const DEFAULT_MAX = 45;
-
-export function deliveryPublicRateOk(
-	compositeKey: string,
-	maxPerWindow = DEFAULT_MAX,
-	windowMs = DEFAULT_WINDOW_MS,
-): boolean {
-	const now = Date.now();
-	const b = rateBuckets.get(compositeKey);
-	if (!b || now > b.reset) {
-		rateBuckets.set(compositeKey, { n: 1, reset: now + windowMs });
-		return true;
-	}
-	if (b.n >= maxPerWindow) return false;
-	b.n += 1;
-	return true;
-}
 
 export function deliveryGeocodeCacheGet<T>(key: string): T | null {
 	const e = responseCache.get(key);

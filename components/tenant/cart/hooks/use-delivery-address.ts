@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { gpsLocationSource, type DeliveryLocationSource } from "@/lib/delivery/delivery-location";
 import { TENANT_UI_CONFIG } from "@/lib/tenant/config/tenant-ui-config";
 import {
 	joinAddressLine,
@@ -27,7 +28,7 @@ export type UseDeliveryAddressParams = {
 	area: string;
 	setLine1: (value: string) => void;
 	setArea: (value: string) => void;
-	setCoords: (lat: number | null, lng: number | null) => void;
+	setCoords: (lat: number | null, lng: number | null, source?: DeliveryLocationSource | null) => void;
 	t: (key: string) => string;
 };
 
@@ -41,6 +42,10 @@ export type DeliveryAddressController = {
 	onNumberChange: (value: string) => void;
 	onAreaChange: (value: string) => void;
 	requestGeolocation: () => void;
+	/** Buscando el GPS (para el estado del botón). */
+	locating: boolean;
+	/** El cliente movió el mapa hasta su puerta: ese punto manda. */
+	pinCoords: (lat: number, lng: number) => void;
 };
 
 function buildSearchParams(
@@ -80,6 +85,7 @@ export function useDeliveryAddress(params: UseDeliveryAddressParams): DeliveryAd
 
 	const [precision, setPrecision] = useState<AddressPrecision>(null);
 	const [geoHint, setGeoHint] = useState<string | null>(null);
+	const [locating, setLocating] = useState(false);
 	const [debounced, setDebounced] = useState({ line1: "", area: "" });
 	/** Última dirección geocodificada (o descartada), para saber si hay una búsqueda pendiente. */
 	const [settledKey, setSettledKey] = useState("");
@@ -112,8 +118,10 @@ export function useDeliveryAddress(params: UseDeliveryAddressParams): DeliveryAd
 			.then((payload: { results?: GeocodeHit[] }) => {
 				const first = Array.isArray(payload.results) ? payload.results[0] : undefined;
 				if (first) {
-					setCoords(first.lat, first.lng);
-					setPrecision(first.precision === "exact" ? "exact" : "approx");
+					// Sin número de casa encontrado, el punto cae en el centro de la calle.
+					const exact = first.precision === "exact";
+					setCoords(first.lat, first.lng, exact ? "address" : "address_approx");
+					setPrecision(exact ? "exact" : "approx");
 				}
 				setSettledKey(geocodeKey);
 			})
@@ -161,11 +169,16 @@ export function useDeliveryAddress(params: UseDeliveryAddressParams): DeliveryAd
 			return;
 		}
 		setGeoHint(t("delivery.searchingLocation"));
+		setLocating(true);
 		navigator.geolocation.getCurrentPosition(
 			(position) => {
-				const { latitude, longitude } = position.coords;
-				setCoords(latitude, longitude);
-				setPrecision("exact");
+				setLocating(false);
+				const { latitude, longitude, accuracy } = position.coords;
+				/* En un computador el "GPS" suele salir de la IP o del wifi y puede errar
+				   por kilómetros: se marca aproximado para pedir que ajuste el punto. */
+				const source = gpsLocationSource(accuracy);
+				setCoords(latitude, longitude, source);
+				setPrecision(source === "gps" ? "exact" : "approx");
 				setGeoHint(t("delivery.searchingAddress"));
 				fetch(
 					`/api/geo/reverse-geocode?lat=${encodeURIComponent(String(latitude))}&lng=${encodeURIComponent(String(longitude))}`,
@@ -184,6 +197,7 @@ export function useDeliveryAddress(params: UseDeliveryAddressParams): DeliveryAd
 					});
 			},
 			(error) => {
+				setLocating(false);
 				if (error.code === error.PERMISSION_DENIED) {
 					setGeoHint(t("delivery.permissionDenied"));
 				} else if (error.code === error.POSITION_UNAVAILABLE) {
@@ -198,6 +212,16 @@ export function useDeliveryAddress(params: UseDeliveryAddressParams): DeliveryAd
 		);
 	}, [setArea, setCoords, setLine1, t]);
 
+	const pinCoords = useCallback(
+		(lat: number, lng: number) => {
+			setCoords(lat, lng, "pin");
+			setPrecision("exact");
+			// La dirección escrita no cambió: que no se vuelva a geocodificar y pise el punto.
+			setSkipKey(geocodeKey || joinAddressLine(line1.trim(), area.trim()));
+		},
+		[area, geocodeKey, line1, setCoords],
+	);
+
 	return {
 		street: fields.street,
 		number: fields.number,
@@ -208,5 +232,7 @@ export function useDeliveryAddress(params: UseDeliveryAddressParams): DeliveryAd
 		onNumberChange,
 		onAreaChange,
 		requestGeolocation,
+		locating,
+		pinCoords,
 	};
 }

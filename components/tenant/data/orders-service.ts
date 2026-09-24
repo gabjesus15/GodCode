@@ -1,4 +1,5 @@
 import { createSupabaseBrowserClient } from "../../../utils/supabase/client";
+import type { DeliveryLocationSource } from "@/lib/delivery/delivery-location";
 import { uploadImage } from "@/lib/storage/upload-image-client";
 import {
 	computeDeliveryFee,
@@ -40,6 +41,8 @@ interface CreateOrderPayload {
   delivery_km?: number;
   delivery_lat?: number | null;
   delivery_lng?: number | null;
+  /** GPS, punto ajustado o dirección escrita: solo viaja al cierre del pedido, no al RPC. */
+  delivery_location_source?: DeliveryLocationSource | null;
   delivery_named_area_id?: string | null;
   namedAreaId?: string | null;
   /** Cotización Uber Direct (opcional; se revalida en servidor). */
@@ -636,6 +639,7 @@ export const ordersService = {
           deliveryAddress: deliveryMode ? (orderData.delivery_address ?? null) : null,
           deliveryLat: deliveryMode ? orderData.delivery_lat : null,
           deliveryLng: deliveryMode ? orderData.delivery_lng : null,
+          deliveryLocationSource: deliveryMode ? (orderData.delivery_location_source ?? null) : null,
           namedAreaId:
             deliveryMode && typeof namedId === "string" && namedId.trim()
               ? namedId.trim()

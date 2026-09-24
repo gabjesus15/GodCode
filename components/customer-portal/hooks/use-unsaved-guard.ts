@@ -4,35 +4,41 @@ import { useEffect } from "react";
 import type { PortalTab } from "../shared/customer-account-types";
 import type { UseConfirmDialogReturn } from "../ui/ConfirmDialog";
 
+/** Pestañas con editor propio y lo que se pierde al salir sin guardar. */
+const UNSAVED_COPY: Partial<Record<PortalTab, string>> = {
+  tienda: "Tienes cambios sin guardar en el editor de tienda. Si sales ahora los perderás.",
+  perfil: "Tienes cambios sin guardar en tu página de inicio. Si sales ahora los perderás.",
+};
+
 /**
- * Bloquea la navegación del browser si hay cambios sin guardar en la tab de Tienda.
- * Reemplaza los dos `window.confirm` que existían en CustomerAccountClient.tsx.
+ * Pide confirmación al salir (cambio de pestaña o cierre del navegador) si la
+ * pestaña activa tiene cambios sin guardar.
  */
 export function useUnsavedGuard(
-  activeTab:    PortalTab,
-  hasUnsaved:   boolean,
+  activeTab: PortalTab,
+  dirtyTabs: Partial<Record<PortalTab, boolean>>,
   confirmDialog: UseConfirmDialogReturn,
 ): {
   guardedTabChange: (nextTab: PortalTab, onNavigate: (t: PortalTab) => void) => Promise<void>;
 } {
   const { confirm } = confirmDialog;
+  const activeDirty = Boolean(dirtyTabs[activeTab]);
 
-  // Browser unload guard
   useEffect(() => {
+    if (!activeDirty) return;
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (activeTab !== "tienda" || !hasUnsaved) return;
       event.preventDefault();
       event.returnValue = "";
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [activeTab, hasUnsaved]);
+  }, [activeDirty]);
 
   const guardedTabChange = async (nextTab: PortalTab, onNavigate: (t: PortalTab) => void) => {
-    if (activeTab === "tienda" && nextTab !== "tienda" && hasUnsaved) {
+    if (nextTab !== activeTab && activeDirty) {
       const ok = await confirm({
         title:        "Cambios sin guardar",
-        description:  "Tienes cambios sin guardar en el editor de tienda. Si sales ahora los perderaas.",
+        description:  UNSAVED_COPY[activeTab] ?? "Tienes cambios sin guardar. Si sales ahora los perderás.",
         confirmLabel: "Salir de todos modos",
         cancelLabel:  "Quedarme",
         tone:         "danger",

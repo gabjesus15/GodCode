@@ -1,3 +1,5 @@
+import { sanitizeHomeUrl } from "@/lib/tenant/home-page/home-page-config";
+
 /** Emoji de fuego animado (Noto) de Google: la llama que se mueve en "Promociones" y "Solo hoy". */
 export const FIRE_ICON = "https://fonts.gstatic.com/s/e/notoemoji/latest/1f525/512.gif";
 
@@ -105,13 +107,17 @@ export type BranchContactSource = {
 	map_url?: string | null;
 };
 
+function branchContactUrl(branch: BranchContactSource, channel: BranchContactChannel): string {
+	const raw = channel === "whatsapp" ? branch.whatsapp_url : channel === "instagram" ? branch.instagram_url : branch.map_url;
+	// Solo http(s)/mailto/tel: un `javascript:` guardado en la sucursal nunca llega a abrirse.
+	return sanitizeHomeUrl(raw);
+}
+
 export function branchHasContactChannel(
 	branch: BranchContactSource,
 	channel: BranchContactChannel,
 ): boolean {
-	if (channel === "whatsapp") return Boolean(String(branch.whatsapp_url ?? "").trim());
-	if (channel === "instagram") return Boolean(String(branch.instagram_url ?? "").trim());
-	return Boolean(String(branch.map_url ?? "").trim());
+	return Boolean(branchContactUrl(branch, channel));
 }
 
 export function getBranchesForContact(
@@ -148,15 +154,9 @@ export function openBranchContactUrl(
 	branch: BranchContactSource,
 	channel: BranchContactChannel,
 ): void {
-	const url =
-		channel === "whatsapp"
-			? branch.whatsapp_url
-			: channel === "instagram"
-				? branch.instagram_url
-				: branch.map_url;
-	const normalized = String(url ?? "").trim();
-	if (!normalized) return;
-	window.open(normalized, "_blank", "noopener,noreferrer");
+	const url = branchContactUrl(branch, channel);
+	if (!url) return;
+	window.open(url, "_blank", "noopener,noreferrer");
 }
 
 export function getBranchesWithContactChannel(

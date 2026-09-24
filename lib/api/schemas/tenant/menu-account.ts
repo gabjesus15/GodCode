@@ -94,8 +94,3 @@ export const menuAccountAddressDeleteSchema = z.object({
 	companySlug,
 	id: z.string().uuid(),
 });
-
-export type MenuAccountRegisterInput = z.infer<typeof menuAccountRegisterSchema>;
-export type MenuAccountLoginInput = z.infer<typeof menuAccountLoginSchema>;
-export type MenuAccountProfileInput = z.infer<typeof menuAccountProfileSchema>;
-export type MenuAccountPasswordInput = z.infer<typeof menuAccountPasswordSchema>;

@@ -12,47 +12,6 @@ function cx(...parts: Array<string | false | undefined | null>) {
 	return parts.filter(Boolean).join(" ");
 }
 
-export type TenantCardProps = React.HTMLAttributes<HTMLElement> & {
-	as?: "article" | "div";
-};
-
-export const TenantCard = React.forwardRef<HTMLElement, TenantCardProps>(
-	function TenantCard({ as = "article", className, ...props }, ref) {
-		const Tag = as;
-		return <Tag ref={ref as never} className={cx("tenant-ui-card", className)} {...props} />;
-	},
-);
-
-export const TenantCardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-	function TenantCardHeader({ className, ...props }, ref) {
-		return <div ref={ref} className={cx("tenant-ui-card__header", className)} {...props} />;
-	},
-);
-
-export const TenantCardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
-	function TenantCardTitle({ className, ...props }, ref) {
-		return <h3 ref={ref} className={cx("tenant-ui-card__title", className)} {...props} />;
-	},
-);
-
-export const TenantCardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
-	function TenantCardDescription({ className, ...props }, ref) {
-		return <p ref={ref} className={cx("tenant-ui-card__description", className)} {...props} />;
-	},
-);
-
-export const TenantCardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-	function TenantCardContent({ className, ...props }, ref) {
-		return <div ref={ref} className={cx("tenant-ui-card__content", className)} {...props} />;
-	},
-);
-
-export const TenantCardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-	function TenantCardFooter({ className, ...props }, ref) {
-		return <div ref={ref} className={cx("tenant-ui-card__footer", className)} {...props} />;
-	},
-);
-
 export type TenantBadgeVariant = "default" | "secondary" | "destructive" | "outline" | "success" | "special" | "promo";
 
 export type TenantBadgeProps = React.HTMLAttributes<HTMLSpanElement> & {

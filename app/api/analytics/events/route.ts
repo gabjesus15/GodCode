@@ -1,7 +1,12 @@
 import { createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
-import { isInternalAnalyticsPath, isLocalAnalyticsHost, resolveAnalyticsPageContext } from "@/lib/analytics/page-context";
+import {
+  isInternalAnalyticsPath,
+  isLocalAnalyticsHost,
+  normalizeAnalyticsHost,
+  resolveAnalyticsPageContext,
+} from "@/lib/analytics/page-context";
 import { resolveAnalyticsCountryCode } from "@/lib/analytics/resolve-country-code";
 import { enforceRateLimit } from "@/lib/infra/api-guard";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
@@ -24,12 +29,6 @@ type EventBody = {
 
 function sanitize(value: unknown, maxLen: number): string {
   return String(value ?? "").trim().slice(0, maxLen);
-}
-
-function normalizeHost(rawHost: string | null): string {
-  const host = (rawHost || "").split(":")[0].trim().toLowerCase();
-  if (host.startsWith("www.")) return host.slice(4);
-  return host;
 }
 
 function looksLikeBot(ua: string): boolean {
@@ -60,7 +59,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, dropped: true });
     }
 
-    const host = normalizeHost(req.headers.get("x-forwarded-host") || req.headers.get("host"));
+    const host = normalizeAnalyticsHost(req.headers.get("x-forwarded-host") || req.headers.get("host"));
     if (isLocalAnalyticsHost(host) || isInternalAnalyticsPath(path)) {
       return NextResponse.json({ ok: true, dropped: true });
     }

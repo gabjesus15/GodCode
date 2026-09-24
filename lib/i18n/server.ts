@@ -1,7 +1,6 @@
 import { cookies, headers } from "next/headers";
 
 import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME, normalizeLocale, type AppLocale } from "./config";
-import { getMessagesForLocale, type I18nMessages } from "./messages";
 import { resolveTenantPreferredLocale } from "./tenant-locale";
 
 export async function getCurrentLocale(): Promise<AppLocale> {
@@ -18,9 +17,4 @@ export async function getCurrentLocale(): Promise<AppLocale> {
 
   if (!firstPreferred) return DEFAULT_LOCALE;
   return normalizeLocale(firstPreferred);
-}
-
-export async function getCurrentMessages(): Promise<I18nMessages> {
-  const locale = await getCurrentLocale();
-  return getMessagesForLocale(locale);
 }

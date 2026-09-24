@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext } from "react";
+import type { DeliveryLocationSource } from "@/lib/delivery/delivery-location";
 import type { BranchProductPriceRow } from "./utils/cart-pricing";
 
 /** Producto tal como llega del catálogo al carrito. */
@@ -77,7 +78,9 @@ export interface CartContextType {
 	setDeliveryReference: (value: string) => void;
 	deliveryLat: number | null;
 	deliveryLng: number | null;
-	setDeliveryCoords: (lat: number | null, lng: number | null) => void;
+	/** Cómo se obtuvo el punto: viaja al pedido para avisar si es aproximado. */
+	deliveryLocationSource: DeliveryLocationSource | null;
+	setDeliveryCoords: (lat: number | null, lng: number | null, source?: DeliveryLocationSource | null) => void;
 	/** Zona por nombre (modo manual). */
 	deliveryNamedAreaId: string | null;
 	setDeliveryNamedAreaId: (id: string | null) => void;
