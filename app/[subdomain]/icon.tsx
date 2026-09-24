@@ -1,5 +1,6 @@
 import { getCachedCompany } from "../../utils/tenant-cache";
 import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
+import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 
 function getInitials(name: string) {
 	const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -33,8 +34,7 @@ export default async function Icon(props: { params: Promise<{ subdomain: string 
 	const company = await getCachedCompany(subdomain);
 
 	const theme_config: IconThemeConfig = (company?.theme_config as unknown as IconThemeConfig) || {};
-	const status = String(company?.subscription_status ?? "").toLowerCase();
-	const isUnavailable = status === "suspended" || status === "cancelled";
+	const isUnavailable = !isTenantSubscriptionAccessible(company);
 
 	// Búsqueda del logo en la configuración del tema
 	const storedLogoUrl = (theme_config?.logoUrl || theme_config?.imageUrl) as string | undefined;
@@ -61,10 +61,10 @@ export default async function Icon(props: { params: Promise<{ subdomain: string 
 	}
 
 	const displayName = isUnavailable
-		? "GodCode"
+		? "Gcode"
 		: typeof theme_config.displayName === "string" && theme_config.displayName.trim()
 		? theme_config.displayName.trim()
-		: company?.name ?? "GodCode";
+		: company?.name ?? "Gcode";
 
 	const primaryColor = normalizeColor(theme_config.primaryColor, "#111827");
 	const secondaryColor = normalizeColor(theme_config.secondaryColor, primaryColor);

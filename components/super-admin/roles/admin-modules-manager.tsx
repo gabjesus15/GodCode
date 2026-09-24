@@ -206,8 +206,8 @@ export default function AdminModulesManager() {
             <Blocks className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 sm:text-lg">Módulos dinámicos tenant admin</h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Crea módulos nuevos y define dónde aparecen en la navbar del panel admin de todos los negocios.</p>
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 sm:text-lg">Módulos del panel de los negocios</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Crea módulos nuevos y define dónde aparecen en el menú del panel de todos los negocios.</p>
           </div>
         </div>
 

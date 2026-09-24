@@ -1,6 +1,7 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
+import { sanitizeBranchPaymentConfig } from "@/lib/payments/branch-payment-config";
 
 // ==========================================
 // CACHED MENU DATA FETCHING
@@ -121,7 +122,8 @@ export const getCachedMenuStaticData = async (
       ]);
 
       return {
-        branches: (branchesRaw ?? []) as CachedBranch[],
+        // Las filas llegan tal cual a componentes cliente: solo datos de cobro públicos.
+        branches: ((branchesRaw ?? []) as CachedBranch[]).map(sanitizeBranchPaymentConfig),
         businessInfo: (businessInfoRaw ?? null) as CachedBusinessInfo | null,
       };
     },

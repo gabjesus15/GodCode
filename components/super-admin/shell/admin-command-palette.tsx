@@ -6,6 +6,13 @@ import { Building2 } from "lucide-react";
 
 import { SUPER_ADMIN_NAV } from "@/lib/super-admin/super-admin-nav";
 
+const OPEN_PALETTE_EVENT = "gcode-admin:open-palette";
+
+/** Abre la búsqueda del panel (páginas y empresas). */
+export function openAdminCommandPalette(): void {
+	window.dispatchEvent(new Event(OPEN_PALETTE_EVENT));
+}
+
 type CompanyHit = {
 	id: string;
 	name: string | null;
@@ -43,8 +50,14 @@ export function AdminCommandPalette() {
 				setOpen((o) => !o);
 			}
 		};
+		// El botón «Buscar» de la cabecera la abre sin atajo de teclado.
+		const onOpenRequest = () => setOpen(true);
 		document.addEventListener("keydown", onKey);
-		return () => document.removeEventListener("keydown", onKey);
+		window.addEventListener(OPEN_PALETTE_EVENT, onOpenRequest);
+		return () => {
+			document.removeEventListener("keydown", onKey);
+			window.removeEventListener(OPEN_PALETTE_EVENT, onOpenRequest);
+		};
 	}, []);
 
 	useEffect(() => {

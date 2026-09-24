@@ -9,6 +9,9 @@ import {
   periodStartIso,
 } from "@/lib/super-admin/super-admin-metrics";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { requireSuperAdminSession } from "@/lib/super-admin/require-super-admin-session";
+
+export const metadata = { title: "Embudo de altas" };
 
 /** @service-role layout-guard */
 
@@ -35,6 +38,7 @@ export default async function OnboardingEmbudoPage({
 }: {
   searchParams: Promise<{ period?: string | string[] }>;
 }) {
+  await requireSuperAdminSession();
   const sp = await searchParams;
   const periodRaw = Array.isArray(sp.period) ? sp.period[0] : sp.period;
   const period = parsePeriod(periodRaw);
@@ -60,11 +64,11 @@ export default async function OnboardingEmbudoPage({
   return (
     <div className="min-w-0 space-y-6">
       <SaasPageHeader
-        title="Embudo de onboarding"
-        description="Analiza el porcentaje de conversión y fuga de tus prospectos desde que visitan la página de inicio hasta que completan su pago de activación."
+        title="Embudo de altas"
+        description="Cuántos interesados pasan cada paso, desde la visita al landing hasta el pago de activación, y dónde se quedan."
         icon={Funnel}
         backHref="/dashboard"
-        backLabel="Volver al dashboard"
+        backLabel="Volver al inicio"
       />
 
       {/* Filter panel */}

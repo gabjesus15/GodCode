@@ -9,6 +9,14 @@ import {
   Store,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+
+import {
+  PAYMENT_STATUSES,
+  statusLabels,
+  SUBSCRIPTION_STATUSES,
+  TICKET_PRIORITIES,
+  TICKET_STATUSES,
+} from "@/lib/status/status-labels";
 import type { PortalTab } from "./customer-account-types";
 
 export const PORTAL_TAB_ORDER: PortalTab[] = [
@@ -56,52 +64,14 @@ export const PORTAL_TAB_ICONS: Record<PortalTab, LucideIcon> = {
   seguridad: Shield,
 };
 
-/** Alineado con super-admin / companies (mismas claves que `subscription_status` en BD). */
-export const SUBSCRIPTION_STATUS_LABELS: Record<string, string> = {
-  active: "Activa",
-  suspended: "Suspendida",
-  payment_pending: "Pago pendiente",
-  trial: "Prueba",
-  trialing: "Prueba",
-  pending: "Pendiente",
-  past_due: "Pago atrasado",
-  cancelled: "Cancelada",
-  canceled: "Cancelada",
-  unpaid: "Sin pago",
-  incomplete: "Incompleto",
-  paused: "Pausada",
-  expired: "Vencida",
-};
+/** Mismos nombres que el super admin: salen del mapa común `lib/status/status-labels`. */
+export const SUBSCRIPTION_STATUS_LABELS: Record<string, string> = statusLabels(SUBSCRIPTION_STATUSES);
 
-export const PAYMENT_STATUS_LABELS: Record<string, string> = {
-  pending: "Pendiente",
-  pending_validation: "Pendiente de validación",
-  payment_pending: "Pago pendiente",
-  payment_validated: "Pago validado",
-  paid: "Pagado",
-  validacion: "En validación",
-  completed: "Completado",
-  failed: "Fallido",
-  cancelled: "Cancelado",
-  canceled: "Cancelado",
-  refunded: "Reembolsado",
-  rejected: "Rechazado",
-};
+export const PAYMENT_STATUS_LABELS: Record<string, string> = statusLabels(PAYMENT_STATUSES);
 
-export const TICKET_STATUS_LABELS: Record<string, string> = {
-  open: "Abierto",
-  in_progress: "En progreso",
-  waiting_customer: "Esperando respuesta",
-  resolved: "Resuelto",
-  closed: "Cerrado",
-};
+export const TICKET_STATUS_LABELS: Record<string, string> = statusLabels(TICKET_STATUSES);
 
-export const TICKET_PRIORITY_LABELS: Record<string, string> = {
-  low: "Baja",
-  medium: "Media",
-  high: "Alta",
-  critical: "Crítica",
-};
+export const TICKET_PRIORITY_LABELS: Record<string, string> = statusLabels(TICKET_PRIORITIES);
 
 export const TICKET_CATEGORY_LABELS: Record<string, string> = {
   general: "General",

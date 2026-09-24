@@ -6,15 +6,15 @@
  * - El cron `GET/POST /api/cron/subscription-status` (Vercel cron + CRON_SECRET) llama
  *   `suspendExpiredSubscriptions`: pasa a `subscription_status = suspended` si sigue `active` y
  *   `subscription_ends_at < ahora`.
- * - Las páginas públicas del tenant (`/[subdomain]`, menú) devuelven HTTP 404 (notFound) si el estado
- *   es `suspended` o `cancelled`.
- * - El dominio personalizado en el proxy usa la misma regla en SQL (`resolve_public_slug_by_custom_domain`):
- *   no enruta si está suspendido/cancelado o si `subscription_ends_at` ya pasó (aunque el cron aún no corra).
+ * - Las páginas públicas del tenant siguen `isTenantSubscriptionAccessible`: 404 si está suspendida
+ *   o vencida; una cancelación sigue online hasta el vencimiento.
+ * - El dominio personalizado en el proxy usa la misma regla en SQL (`resolve_public_slug_by_custom_domain`).
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { getAppUrl } from "../tenant/app-url";
-import { sendOnboardingEmail } from "./emails";
+import { extendSubscriptionEnd } from "@/lib/billing/portal-pricing";
+import { notifyPlanChanged } from "@/lib/email/account-notices";
+import { syncCompanyPanelAccessFromPlanId } from "@/lib/super-admin/sync-company-panel-access";
 
 type PaymentStatusRow = {
 	status?: string | null;
@@ -36,10 +36,12 @@ export function getMonthsPaidFromPayment(payment: PaymentStatusRow, fallback = 1
 	return Math.max(1, Number(payment.months_paid ?? fallback) || fallback);
 }
 
-export function getSubscriptionEndsAt(monthsPaid: number, now = new Date()): string {
-	const endsAt = new Date(now);
-	endsAt.setDate(endsAt.getDate() + Math.max(1, Number(monthsPaid) || 1) * 30);
-	return endsAt.toISOString();
+/**
+ * Nuevo vencimiento tras pagar `monthsPaid` meses (de 30 días). Si el vencimiento
+ * vigente todavía no pasó, se suma desde ahí: renovar antes de tiempo no resta días.
+ */
+export function getSubscriptionEndsAt(monthsPaid: number, now = new Date(), currentEndsAt?: string | null): string {
+	return extendSubscriptionEnd(monthsPaid, now, currentEndsAt);
 }
 
 export async function activateCompanySubscription(params: {
@@ -51,16 +53,17 @@ export async function activateCompanySubscription(params: {
 	const now = params.now ?? new Date();
 	const { data: companyBefore } = await params.supabaseAdmin
 		.from("companies")
-		.select("subscription_status,name,email")
+		.select("subscription_ends_at,custom_domain")
 		.eq("id", params.companyId)
 		.maybeSingle();
-	const previousStatus = companyBefore?.subscription_status?.trim().toLowerCase() ?? null;
-	const endsAtIso = getSubscriptionEndsAt(params.monthsPaid, now);
+	const endsAtIso = getSubscriptionEndsAt(params.monthsPaid, now, companyBefore?.subscription_ends_at ?? null);
 	await params.supabaseAdmin
 		.from("companies")
 		.update({
 			subscription_status: "active",
 			subscription_ends_at: endsAtIso,
+			// El dominio propio vence con la suscripción (el super admin lo fija igual).
+			...(String(companyBefore?.custom_domain ?? "").trim() ? { custom_domain_expires_at: endsAtIso } : {}),
 			updated_at: now.toISOString(),
 		})
 		.eq("id", params.companyId);
@@ -78,52 +81,7 @@ export async function activateCompanySubscription(params: {
 			.eq("company_id", params.companyId)
 			.eq("status", "active"),
 	]);
-
-	const { data: application } = await params.supabaseAdmin
-		.from("onboarding_applications")
-		.select("business_name,responsible_name,email")
-		.eq("company_id", params.companyId)
-		.order("created_at", { ascending: false })
-		.limit(1)
-		.maybeSingle();
-
-	if (!application) {
-		return;
-	}
-
-	const recipientEmail = application.email || companyBefore?.email || "";
-	if (!recipientEmail) {
-		return;
-	}
-
-	const businessName = application.business_name || companyBefore?.name || "Tu negocio";
-	const responsibleName = application.responsible_name || "";
-	const panelUrl = getAppUrl();
-
-	if (previousStatus === "suspended") {
-		await sendOnboardingEmail({
-			type: "status_reactivated",
-			to: recipientEmail,
-			from: process.env.RESEND_FROM ?? "noreply@example.com",
-			apiKey: process.env.RESEND_API_KEY ?? "",
-			responsibleName,
-			businessName,
-			panelUrl,
-		});
-		return;
-	}
-
-	if (previousStatus && previousStatus !== "active") {
-		await sendOnboardingEmail({
-			type: "site_ready",
-			to: recipientEmail,
-			from: process.env.RESEND_FROM ?? "noreply@example.com",
-			apiKey: process.env.RESEND_API_KEY ?? "",
-			responsibleName,
-			businessName,
-			siteUrl: panelUrl,
-		});
-	}
+	// Los avisos los manda quien activa: el pago (`payment_received`) o el alta (`welcome`).
 }
 
 export type SuspendExpiredResult = {
@@ -157,17 +115,6 @@ export async function suspendExpiredSubscriptions(params: {
 		return { suspended: 0 };
 	}
 
-	const { data: applications } = await params.supabaseAdmin
-		.from("onboarding_applications")
-		.select("company_id,business_name,responsible_name,email")
-		.in("company_id", companies.map((company) => company.id));
-
-	const applicationByCompanyId = new Map(
-		((applications ?? []) as { company_id: string | null; business_name: string; responsible_name: string; email: string }[])
-			.filter((application) => Boolean(application.company_id))
-			.map((application) => [application.company_id as string, application])
-	);
-
 	const { error: updateError } = await params.supabaseAdmin
 		.from("companies")
 		.update({ subscription_status: "suspended", updated_at: now })
@@ -178,27 +125,7 @@ export async function suspendExpiredSubscriptions(params: {
 		return { suspended: 0, error: updateError.message };
 	}
 
-	const resendApiKey = process.env.RESEND_API_KEY ?? "";
-	const resendFrom = process.env.RESEND_FROM ?? "noreply@example.com";
-	const panelUrl = getAppUrl();
-
-	await Promise.all(
-		companies.map(async (company) => {
-			const application = applicationByCompanyId.get(company.id);
-			if (!application?.email) return;
-
-			await sendOnboardingEmail({
-				type: "status_suspended",
-				to: application.email,
-				from: resendFrom,
-				apiKey: resendApiKey,
-				responsibleName: application.responsible_name || "",
-				businessName: application.business_name || company.id,
-				panelUrl,
-			});
-		})
-	);
-
+	// El aviso de «tu plan venció» lo manda `runLifecycleEmails` (una vez por vencimiento).
 	return { suspended: companies.length };
 }
 
@@ -210,7 +137,7 @@ export async function applyScheduledPlanChangesDue(params: {
 
 	const { data: schedules, error } = await params.supabaseAdmin
 		.from("company_plan_change_schedules")
-		.select("id,company_id,current_plan_id,target_plan_id,effective_at")
+		.select("id,company_id,target_plan_id,effective_at")
 		.eq("status", "scheduled")
 		.lte("effective_at", nowIso)
 		.order("effective_at", { ascending: true })
@@ -231,7 +158,6 @@ export async function applyScheduledPlanChangesDue(params: {
 		const scheduleId = String((schedule as { id?: string | null }).id ?? "");
 		const companyId = String((schedule as { company_id?: string | null }).company_id ?? "");
 		const targetPlanId = String((schedule as { target_plan_id?: string | null }).target_plan_id ?? "");
-		const currentPlanId = (schedule as { current_plan_id?: string | null }).current_plan_id ?? null;
 
 		if (!scheduleId || !companyId || !targetPlanId) {
 			failed += 1;
@@ -239,6 +165,14 @@ export async function applyScheduledPlanChangesDue(params: {
 		}
 
 		try {
+			const { data: before } = await params.supabaseAdmin
+				.from("companies")
+				.select("plan:plans(name)")
+				.eq("id", companyId)
+				.maybeSingle();
+			const previousPlan = (before as { plan?: { name?: string } | Array<{ name?: string }> | null } | null)?.plan;
+			const previousPlanName = (Array.isArray(previousPlan) ? previousPlan[0]?.name : previousPlan?.name) ?? null;
+
 			const { error: companyError } = await params.supabaseAdmin
 				.from("companies")
 				.update({
@@ -250,17 +184,11 @@ export async function applyScheduledPlanChangesDue(params: {
 			if (companyError) {
 				throw new Error(companyError.message);
 			}
+			// Sin esto el panel seguía mostrando los módulos del plan anterior.
+			await syncCompanyPanelAccessFromPlanId(companyId, targetPlanId);
 
-			const { data: plans } = await params.supabaseAdmin
-				.from("plans")
-				.select("id,name")
-				.in("id", [targetPlanId, currentPlanId].filter(Boolean) as string[]);
-
-			const targetPlanName =
-				(plans ?? []).find((plan) => String(plan.id) === targetPlanId)?.name ?? "Plan objetivo";
-			const currentPlanName =
-				(plans ?? []).find((plan) => String(plan.id) === String(currentPlanId))?.name ?? "Plan anterior";
-
+			// El registro del cambio queda en la propia programación (applied_at); antes además
+			// se abría un ticket "resuelto" que el dueño veía en Soporte como si lo hubiera escrito.
 			await params.supabaseAdmin
 				.from("company_plan_change_schedules")
 				.update({
@@ -271,25 +199,8 @@ export async function applyScheduledPlanChangesDue(params: {
 				})
 				.eq("id", scheduleId);
 
-			await params.supabaseAdmin.from("saas_tickets").insert({
-				company_id: companyId,
-				source: "system",
-				created_by_email: "system@internal",
-				subject: `Downgrade aplicado automaticamente · ${currentPlanName} -> ${targetPlanName}`,
-				description: [
-					`Schedule: ${scheduleId}`,
-					`Plan anterior: ${currentPlanName}`,
-					`Plan nuevo: ${targetPlanName}`,
-					`Aplicado en: ${nowIso}`,
-				].join("\n"),
-				category: "billing",
-				priority: "medium",
-				status: "resolved",
-				last_message_at: nowIso,
-				resolved_at: nowIso,
-			});
-
 			applied += 1;
+			await notifyPlanChanged({ client: params.supabaseAdmin, companyId, scheduleId, previousPlanName, now: params.now });
 		} catch (e) {
 			failed += 1;
 			const message = e instanceof Error ? e.message : "unknown error";

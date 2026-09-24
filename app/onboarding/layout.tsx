@@ -1,59 +1,68 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { Lock } from "lucide-react";
 
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
-import { getCurrentMessages } from "@/lib/i18n/server";
-import { LandingLogo } from "@/components/ui/logo/landing-logo";
 import { OnboardingRecaptchaProvider } from "@/components/onboarding/recaptcha-provider";
+import { LandingLogo } from "@/components/ui/logo/landing-logo";
+import { getCurrentLocale } from "@/lib/i18n/server";
+import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
+import { getOnboardingUiCopy } from "@/lib/onboarding/onboarding-ui-copy";
 import "../super-admin.tailwind.css";
 import "./onboarding.css";
 
 export const viewport = {
 	width: "device-width",
 	initialScale: 1,
-	maximumScale: 1,
-	userScalable: false,
 };
 
-export default async function OnboardingLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const messages = await getCurrentMessages();
-  const t = messages.onboarding.layout;
+export default async function OnboardingLayout({ children }: { children: React.ReactNode }) {
+	const t = getOnboardingUiCopy(await getCurrentLocale());
 
-  return (
-    <div className="onboarding-page flex min-h-screen flex-col">
-      <header className="onboarding-header sticky top-0 z-10 px-4 py-3 sm:px-6">
-        <div className="mx-auto flex h-10 max-w-4xl items-center justify-between gap-3">
-          <a
-            href="/"
-            className="shrink-0 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-          >
-            <LandingLogo forceLightText />
-          </a>
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher />
-            <Link
-              href="/onboarding/negocios"
-              className="onboarding-header-cta flex shrink-0 items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium sm:gap-2 sm:px-4 sm:text-sm"
-            >
-              <span className="hidden sm:inline">{t.viewBusinesses}</span>
-              <span className="sm:hidden">{t.businesses}</span>
-              <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            </Link>
-          </div>
-        </div>
-      </header>
+	return (
+		<div className="onboarding-page flex min-h-screen flex-col">
+			<header className="onboarding-header sticky top-0 z-20 px-5 sm:px-8">
+				<div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4">
+					<Link href="/" className="shrink-0 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4F5BFF]/40">
+						<LandingLogo forceLightText />
+					</Link>
+					<div className="flex items-center gap-3 sm:gap-5">
+						<LanguageSwitcher />
+						<p className="hidden text-sm text-slate-500 md:block">
+							{t.header.haveAccount}{" "}
+							<Link href="/login" className="onboarding-link font-semibold">
+								{t.header.signIn}
+							</Link>
+						</p>
+						<Link href="/login" className="onboarding-link text-sm font-semibold md:hidden">
+							{t.header.signIn}
+						</Link>
+					</div>
+				</div>
+			</header>
 
-      <OnboardingRecaptchaProvider>
-        <div className="flex-1">{children}</div>
-      </OnboardingRecaptchaProvider>
+			<OnboardingRecaptchaProvider>
+				<div className="flex-1">{children}</div>
+			</OnboardingRecaptchaProvider>
 
-      <footer className="border-t border-slate-100 px-5 py-4 text-center text-xs text-slate-400 sm:py-5 sm:text-sm">
-        {t.securityFooter}
-      </footer>
-    </div>
-  );
+			<footer className="border-t border-slate-200/80 px-5 py-6 sm:px-8">
+				<div className="mx-auto flex max-w-6xl flex-col gap-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+					<p className="flex items-center gap-2">
+						<Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+						{t.footer.secure}
+					</p>
+					<nav className="flex flex-wrap gap-x-5 gap-y-2" aria-label={t.footer.help}>
+						<Link href="/onboarding/terminos" className="onboarding-link">
+							{t.footer.terms}
+						</Link>
+						<Link href="/onboarding/privacidad" className="onboarding-link">
+							{t.footer.privacy}
+						</Link>
+						<a href={`mailto:${LANDING_SUPPORT_EMAIL}`} className="onboarding-link">
+							{t.footer.help}
+						</a>
+					</nav>
+				</div>
+			</footer>
+		</div>
+	);
 }

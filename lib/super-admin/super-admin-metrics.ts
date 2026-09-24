@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../infra/supabase-admin";
+import { OPEN_TICKET_STATUSES } from "../status/status-labels";
 
 export type { DashboardPeriod } from "./super-admin-dashboard-shared";
 export { DASHBOARD_PERIODS, periodStartIso } from "./super-admin-dashboard-shared";
@@ -201,7 +202,11 @@ export type PaymentHealthRow = {
 	last_payment_date: string | null;
 };
 
-/** Alertas: activa sin último pago pagado; suspendida con pago reciente (referencia). */
+/**
+ * Alertas: activa sin ningún pago confirmado; suspendida con un pago confirmado reciente.
+ * Se mira el último pago *pagado*: los pedidos del portal sin pagar (o en revisión) son más
+ * nuevos y antes daban falsas alertas de "activa sin pago".
+ */
 export async function fetchPaymentHealthRows(limit = 40): Promise<{
 	rows: PaymentHealthRow[];
 	error: string | null;
@@ -215,24 +220,22 @@ export async function fetchPaymentHealthRows(limit = 40): Promise<{
 		supabaseAdmin
 			.from("payments_history")
 			.select("company_id, status, payment_date, amount_paid")
-			.order("payment_date", { ascending: false })
+			.order("payment_date", { ascending: false, nullsFirst: false })
 			.limit(2000),
 	]);
 
 	if (cErr) return { rows: [], error: cErr.message };
 	if (pErr) return { rows: [], error: pErr.message };
 
-	const latestByCompany = new Map<
-		string,
-		{ status: string | null; payment_date: string | null }
-	>();
+	type PaymentSnapshot = { status: string | null; payment_date: string | null };
+	const latestByCompany = new Map<string, PaymentSnapshot>();
+	const latestPaidByCompany = new Map<string, PaymentSnapshot>();
 	for (const pay of payments ?? []) {
 		const cid = pay.company_id;
-		if (!cid || latestByCompany.has(cid)) continue;
-		latestByCompany.set(cid, {
-			status: pay.status ?? null,
-			payment_date: pay.payment_date ?? null,
-		});
+		if (!cid) continue;
+		const snapshot = { status: pay.status ?? null, payment_date: pay.payment_date ?? null };
+		if (!latestByCompany.has(cid)) latestByCompany.set(cid, snapshot);
+		if (isPaidStatus(pay.status) && !latestPaidByCompany.has(cid)) latestPaidByCompany.set(cid, snapshot);
 	}
 
 	const rows: PaymentHealthRow[] = [];
@@ -242,8 +245,9 @@ export async function fetchPaymentHealthRows(limit = 40): Promise<{
 	for (const c of companies ?? []) {
 		const st = String(c.subscription_status ?? "");
 		const last = latestByCompany.get(c.id);
+		const lastPaid = latestPaidByCompany.get(c.id);
 		if (st === "active") {
-			if (!last || !isPaidStatus(last.status)) {
+			if (!lastPaid) {
 				rows.push({
 					type: "active_without_paid_payment",
 					company_id: c.id,
@@ -253,16 +257,16 @@ export async function fetchPaymentHealthRows(limit = 40): Promise<{
 					last_payment_date: last?.payment_date ?? null,
 				});
 			}
-		} else if (st === "suspended" && last && isPaidStatus(last.status) && last.payment_date) {
-			const t = new Date(last.payment_date).getTime();
+		} else if (st === "suspended" && lastPaid?.payment_date) {
+			const t = new Date(lastPaid.payment_date).getTime();
 			if (Number.isFinite(t) && now - t < recentMs) {
 				rows.push({
 					type: "suspended_with_recent_paid",
 					company_id: c.id,
 					company_name: c.name ?? "—",
 					subscription_status: c.subscription_status,
-					last_payment_status: last.status,
-					last_payment_date: last.payment_date,
+					last_payment_status: lastPaid.status,
+					last_payment_date: lastPaid.payment_date,
 				});
 			}
 		}
@@ -302,7 +306,7 @@ export async function fetchOpenTicketsCount(): Promise<{ count: number; error: s
 	const { count, error } = await supabaseAdmin
 		.from("saas_tickets")
 		.select("id", { count: "exact", head: true })
-		.is("resolved_at", null);
+		.in("status", [...OPEN_TICKET_STATUSES]);
 
 	if (error) {
 		return { count: 0, error: error.message };

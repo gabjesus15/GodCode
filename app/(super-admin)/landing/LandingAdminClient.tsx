@@ -51,7 +51,8 @@ type WebhookItem = {
   url: string;
   events: string[];
   isActive: boolean;
-  secret: string | null;
+  /** El servidor nunca devuelve el secreto, solo si existe. */
+  hasSecret: boolean;
 };
 
 type Overview = {
@@ -84,6 +85,8 @@ type Overview = {
 type TabKey = "overview" | "inbox" | "media" | "webhooks";
 
 const STATUS_VALUES = ["new", "contacted", "closed"] as const;
+const STATUS_LABELS: Record<string, string> = { new: "Nuevo", contacted: "Contactado", closed: "Cerrado" };
+const STATUS_OPTIONS = STATUS_VALUES.map((s) => ({ value: s, label: STATUS_LABELS[s] ?? s }));
 
 const emptyWebhook = {
   id: "",
@@ -165,8 +168,8 @@ export function LandingAdminClient() {
       ]);
 
       if (!overviewRes.ok) throw new Error(overviewData.error ?? "No se pudo cargar métricas");
-      if (!leadsRes.ok) throw new Error(leadsData.error ?? "No se pudo cargar leads");
-      if (!contactsRes.ok) throw new Error(contactsData.error ?? "No se pudo cargar contactos");
+      if (!leadsRes.ok) throw new Error(leadsData.error ?? "No se pudo cargar la lista de interesados");
+      if (!contactsRes.ok) throw new Error(contactsData.error ?? "No se pudo cargar la lista de contactos");
       if (!mediaRes.ok) throw new Error(mediaData.error ?? "No se pudo cargar assets");
       if (!webhooksRes.ok) throw new Error(webhooksData.error ?? "No se pudo cargar webhooks");
 
@@ -398,7 +401,7 @@ export function LandingAdminClient() {
 
   const tabs = [
     { id: "overview", label: "Métricas" },
-    { id: "inbox", label: "Leads & Contactos" },
+    { id: "inbox", label: "Interesados y contactos" },
     { id: "media", label: "Landing v3" },
     { id: "webhooks", label: "Webhooks" },
   ];
@@ -431,42 +434,42 @@ export function LandingAdminClient() {
         <div className="space-y-4">
           <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-5">
             <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Resumen landing (30 días)</p>
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Inbox, tráfico y conversiones del landing público.</p>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Mensajes, tráfico y conversiones del landing público.</p>
           </Card>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <SaasMetricCard label="Inbox total" value={`${overview.metrics.inboxTotal}`} />
-            <SaasMetricCard label="Leads" value={`${overview.metrics.leadsTotal}`} />
+            <SaasMetricCard label="Mensajes recibidos" value={`${overview.metrics.inboxTotal}`} />
+            <SaasMetricCard label="Interesados" value={`${overview.metrics.leadsTotal}`} />
             <SaasMetricCard label="Contactos" value={`${overview.metrics.contactsTotal}`} />
             <SaasMetricCard
-              label="Actividad inbox (30d)"
+              label="Mensajes (30 días)"
               value={`${overview.series.reduce((acc, d) => acc + d.leads + d.contacts, 0)}`}
             />
-            <SaasMetricCard label="Visitas landing (30d)" value={`${overview.metrics.landingViews30d ?? 0}`} />
-            <SaasMetricCard label="Visitantes únicos landing (30d)" value={`${overview.metrics.landingUniqueVisitors30d ?? 0}`} />
-            <SaasMetricCard label="Visitas negocios (30d)" value={`${overview.metrics.tenantViews30d ?? 0}`} />
-            <SaasMetricCard label="Visitantes únicos negocios (30d)" value={`${overview.metrics.tenantUniqueVisitors30d ?? 0}`} />
+            <SaasMetricCard label="Visitas al landing (30 días)" value={`${overview.metrics.landingViews30d ?? 0}`} />
+            <SaasMetricCard label="Visitantes únicos del landing (30 días)" value={`${overview.metrics.landingUniqueVisitors30d ?? 0}`} />
+            <SaasMetricCard label="Visitas a los menús (30 días)" value={`${overview.metrics.tenantViews30d ?? 0}`} />
+            <SaasMetricCard label="Visitantes únicos de los menús (30 días)" value={`${overview.metrics.tenantUniqueVisitors30d ?? 0}`} />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Card className="p-4 sm:col-span-1">
-              <p className="text-sm font-semibold">Estado de leads</p>
-              <p className="mt-2 text-xs text-zinc-500">new: {overview.metrics.leadsByStatus.new ?? 0} · contacted: {overview.metrics.leadsByStatus.contacted ?? 0} · closed: {overview.metrics.leadsByStatus.closed ?? 0}</p>
+              <p className="text-sm font-semibold">Interesados por estado</p>
+              <p className="mt-2 text-xs text-zinc-500">Nuevos: {overview.metrics.leadsByStatus.new ?? 0} · Contactados: {overview.metrics.leadsByStatus.contacted ?? 0} · Cerrados: {overview.metrics.leadsByStatus.closed ?? 0}</p>
             </Card>
             <Card className="p-4 sm:col-span-1">
-              <p className="text-sm font-semibold">Estado de contactos</p>
-              <p className="mt-2 text-xs text-zinc-500">new: {overview.metrics.contactsByStatus.new ?? 0} · contacted: {overview.metrics.contactsByStatus.contacted ?? 0} · closed: {overview.metrics.contactsByStatus.closed ?? 0}</p>
+              <p className="text-sm font-semibold">Contactos por estado</p>
+              <p className="mt-2 text-xs text-zinc-500">Nuevos: {overview.metrics.contactsByStatus.new ?? 0} · Contactados: {overview.metrics.contactsByStatus.contacted ?? 0} · Cerrados: {overview.metrics.contactsByStatus.closed ?? 0}</p>
             </Card>
           </div>
 
-          <SaasChartCard title="Actividad diaria (30 días)" description="Inbox + tráfico landing y negocios">
+          <SaasChartCard title="Actividad diaria (30 días)" description="Mensajes y visitas al landing y a los menús">
             <AppleMultiAreaChart
               data={tremorSeries}
               indexKey="date"
               series={[
-                { key: "Leads", label: "Leads", color: "#6366f1" },
+                { key: "Leads", label: "Interesados", color: "#6366f1" },
                 { key: "Contactos", label: "Contactos", color: "#06b6d4" },
-                { key: "Visitas landing", label: "Visitas landing", color: "#10b981" },
-                { key: "Visitas negocios", label: "Visitas negocios", color: "#f59e0b" },
+                { key: "Visitas landing", label: "Visitas al landing", color: "#10b981" },
+                { key: "Visitas negocios", label: "Visitas a los menús", color: "#f59e0b" },
               ]}
             />
           </SaasChartCard>
@@ -539,14 +542,14 @@ export function LandingAdminClient() {
         <div className="grid gap-4 lg:grid-cols-2">
           <Card className="p-4">
             <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm font-semibold">Leads</p>
+              <p className="text-sm font-semibold">Interesados</p>
               <div className="flex flex-wrap items-center gap-2">
                 <SaasSelect
                   value={leadFilter}
                   onChange={setLeadFilter}
                   options={[
                     { value: "all", label: "Todos" },
-                    ...STATUS_VALUES.map((s) => ({ value: s, label: s })),
+                    ...STATUS_OPTIONS,
                   ]}
                 />
                 <Button type="button" size="sm" variant="outline" onClick={() => exportCsv("leads", leadFilter)}>
@@ -572,7 +575,7 @@ export function LandingAdminClient() {
                           value={item.status}
                           onChange={(value) => void onLeadStatus(item.id, value)}
                           disabled={readOnly}
-                          options={STATUS_VALUES.map((s) => ({ value: s, label: s }))}
+                          options={STATUS_OPTIONS}
                         />
                       </td>
                       <td className="px-2 py-2">{prettyDate(item.createdAt)}</td>
@@ -592,7 +595,7 @@ export function LandingAdminClient() {
                   onChange={setContactFilter}
                   options={[
                     { value: "all", label: "Todos" },
-                    ...STATUS_VALUES.map((s) => ({ value: s, label: s })),
+                    ...STATUS_OPTIONS,
                   ]}
                 />
                 <Button type="button" size="sm" variant="outline" onClick={() => exportCsv("contacts", contactFilter)}>
@@ -623,7 +626,7 @@ export function LandingAdminClient() {
                           value={item.status}
                           onChange={(value) => void onContactStatus(item.id, value)}
                           disabled={readOnly}
-                          options={STATUS_VALUES.map((s) => ({ value: s, label: s }))}
+                          options={STATUS_OPTIONS}
                         />
                       </td>
                     </tr>
@@ -823,7 +826,7 @@ export function LandingAdminClient() {
                 </>
               ) : (
                 <div className="rounded-xl border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700">
-                  Selecciona un asset para abrir el editor visual.
+                  Selecciona una imagen para abrir el editor visual.
                 </div>
               )}
             </div>
@@ -847,7 +850,18 @@ export function LandingAdminClient() {
                 disabled={readOnly}
               />
               <Input value={webhookForm.url} onChange={(e) => setWebhookForm((p) => ({ ...p, url: e.target.value }))} placeholder="https://..." disabled={readOnly} />
-              <Input value={webhookForm.secret} onChange={(e) => setWebhookForm((p) => ({ ...p, secret: e.target.value }))} placeholder="Secret opcional" disabled={readOnly} />
+              <Input
+                value={webhookForm.secret}
+                onChange={(e) => setWebhookForm((p) => ({ ...p, secret: e.target.value }))}
+                placeholder={
+                  webhookForm.id && webhooks.find((w) => w.id === webhookForm.id)?.hasSecret
+                    ? "Secreto guardado (déjalo vacío para mantenerlo)"
+                    : "Secreto de firma (opcional)"
+                }
+                type="password"
+                autoComplete="new-password"
+                disabled={readOnly}
+              />
               <SaasSwitch
                 checked={webhookForm.isActive}
                 onChange={(checked) => setWebhookForm((p) => ({ ...p, isActive: checked }))}
@@ -892,7 +906,7 @@ export function LandingAdminClient() {
                             url: item.url,
                             events: item.events,
                             isActive: item.isActive,
-                            secret: item.secret ?? "",
+                            secret: "",
                           })
                         }
                         disabled={readOnly}

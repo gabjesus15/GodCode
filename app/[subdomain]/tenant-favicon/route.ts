@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
 import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
+import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 
 export const dynamic = "force-dynamic";
 
@@ -25,30 +26,28 @@ export async function GET(
   const supabase = createSupabasePublicServerClient();
   const { data: company } = await supabase
     .from("companies")
-    .select("id,name,subscription_status,theme_config")
+    .select("id,name,subscription_status,subscription_ends_at,theme_config")
     .eq("public_slug", subdomain)
     .maybeSingle();
 
   const theme = company?.theme_config as Record<string, unknown> | null | undefined;
   const displayName =
     typeof theme?.displayName === "string" ? theme.displayName.trim() : "";
-  const name = displayName || company?.name || "GodCode";
+  const name = displayName || company?.name || "Gcode";
   const primaryColor =
     (typeof theme?.primaryColor === "string" && theme.primaryColor.trim()) || "#111827";
   const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
   const logoUrl = company?.id
     ? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id))
     : storedLogoUrl;
-  const status = company?.subscription_status?.toLowerCase();
-
-  if (logoUrl && status !== "suspended" && status !== "cancelled") {
+  if (logoUrl && isTenantSubscriptionAccessible(company)) {
     try {
       const upstream = await fetch(String(logoUrl), {
         cache: "no-store",
         redirect: "follow",
         headers: {
           Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/png,image/jpeg,image/*,*/*;q=0.8",
-          "User-Agent": "GodCode-TenantFavicon/1.0",
+          "User-Agent": "Gcode-TenantFavicon/1.0",
         },
       });
       if (upstream.ok) {

@@ -8,6 +8,7 @@ import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/t
 import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 import { resolveTenantSlugFromCustomDomainHost } from "@/lib/tenant/custom-domain-resolve";
 import { getCachedCompany } from "@/utils/tenant-cache";
+import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -105,7 +106,7 @@ export async function GET(req: NextRequest) {
       const buf = await readFile(path.join(process.cwd(), "public", "logo.png"));
       return await toIconResponse(buf, size, "image/png");
     } catch {
-      return new NextResponse(buildFallbackSvg("GodCode", "#111827", size), {
+      return new NextResponse(buildFallbackSvg("Gcode", "#111827", size), {
         headers: {
           "Content-Type": "image/svg+xml; charset=utf-8",
           "Cache-Control": "public, max-age=300",
@@ -117,22 +118,20 @@ export async function GET(req: NextRequest) {
   const company = await getCachedCompany(tenantSlug);
   const theme = company?.theme_config as Record<string, unknown> | null | undefined;
   const displayName = typeof theme?.displayName === "string" ? theme.displayName.trim() : "";
-  const name = displayName || company?.name || "GodCode";
+  const name = displayName || company?.name || "Gcode";
   const primaryColor = (typeof theme?.primaryColor === "string" && theme.primaryColor.trim()) || "#111827";
   const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
   const logoUrl = company?.id
     ? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id))
     : storedLogoUrl;
-  const status = company?.subscription_status?.toLowerCase();
-
-  if (logoUrl && status !== "suspended" && status !== "cancelled") {
+  if (logoUrl && isTenantSubscriptionAccessible(company)) {
     try {
       const upstream = await fetch(String(logoUrl), {
         cache: "no-store",
         redirect: "follow",
         headers: {
           Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/png,image/jpeg,image/*,*/*;q=0.8",
-          "User-Agent": "GodCode-TenantFavicon/1.0",
+          "User-Agent": "Gcode-TenantFavicon/1.0",
         },
       });
       if (upstream.ok) {

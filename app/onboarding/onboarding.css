@@ -1,48 +1,61 @@
-/* Onboarding — alineado con el landing (slate/indigo, limpio) */
+/*
+ * Alta de negocios: blanco, pizarra y el azul de la marca (#4F5BFF) solo para foco,
+ * selección y enlaces. Los colores de texto van en cada componente con utilidades.
+ */
 
 .onboarding-page {
   min-height: 100vh;
   background: #ffffff;
-  position: relative;
+  color: #0f172a;
   overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  touch-action: manipulation;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;
+}
+
+.onboarding-page ::selection {
+  background: #dfe2ff;
+  color: #0f172a;
 }
 
 .onboarding-header {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: saturate(160%) blur(12px);
+  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.07);
 }
 
-.onboarding-card {
-  position: relative;
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.04),
-    0 8px 24px rgba(0, 0, 0, 0.03);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+.onboarding-link {
+  color: #334155;
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
 }
 
-.onboarding-card:hover {
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.04),
-    0 12px 32px rgba(0, 0, 0, 0.06);
+.onboarding-link:hover {
+  color: #0f172a;
+  text-decoration-color: currentColor;
 }
 
-/* Inputs: fondo blanco, borde slate, focus indigo */
-.onboarding-page input:not([type="checkbox"]):not([type="radio"]),
+.onboarding-link-brand {
+  color: #3640c9;
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+.onboarding-link-brand:hover {
+  text-decoration-line: underline;
+}
+
+/* Campos: el componente Input trae variantes de modo oscuro que aquí no aplican. */
+.onboarding-page input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
 .onboarding-page textarea,
-.onboarding-page select,
-.onboarding-page .onboarding-input {
+.onboarding-page select {
   background: #ffffff !important;
   color: #0f172a !important;
-  border-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .onboarding-page input::placeholder,
@@ -50,183 +63,85 @@
   color: #94a3b8 !important;
 }
 
-.onboarding-page input:focus,
+.onboarding-page input:not([type="checkbox"]):not([type="radio"]):focus,
 .onboarding-page textarea:focus,
-.onboarding-page select:focus,
-.onboarding-page .onboarding-input:focus {
-  border-color: #818cf8 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
-  outline: 2px solid transparent !important;
-  outline-offset: 2px !important;
+.onboarding-page select:focus {
+  border-color: #4f5bff !important;
+  box-shadow: 0 0 0 3px rgba(79, 91, 255, 0.16) !important;
+  outline: none !important;
 }
 
-.onboarding-page input:focus-visible,
-.onboarding-page textarea:focus-visible,
-.onboarding-page select:focus-visible,
-.onboarding-page .onboarding-input:focus-visible {
-  outline: 2px solid #818cf8 !important;
-  outline-offset: 2px !important;
+.onboarding-page input[type="checkbox"],
+.onboarding-page input[type="radio"] {
+  accent-color: #0f172a;
 }
 
-.onboarding-page .onboarding-card label {
-  color: #334155 !important;
+.onboarding-page :focus-visible {
+  outline: 2px solid rgba(79, 91, 255, 0.55);
+  outline-offset: 2px;
 }
 
-.onboarding-page .onboarding-card h2 {
-  color: #0f172a !important;
+.onboarding-page input[aria-invalid="true"] {
+  border-color: #f87171 !important;
 }
 
-.onboarding-page p,
-.onboarding-page .onboarding-card p,
-.onboarding-page .onboarding-success-card p {
-  color: #475569 !important;
-  font-size: clamp(0.875rem, 2.2vw, 1rem);
-  line-height: 1.6;
-}
-
-.onboarding-page .onboarding-card .text-sm,
-.onboarding-page .onboarding-card [class*="text-zinc-5"] {
-  color: #475569 !important;
-}
-
-.onboarding-page footer,
-.onboarding-page .onboarding-trust-line {
-  font-size: clamp(0.8125rem, 2vw, 0.875rem) !important;
-  color: #64748b !important;
-}
-
-.onboarding-page a:not(.onboarding-btn-primary):not(.onboarding-header-cta) {
-  color: #334155 !important;
-}
-
-.onboarding-page a:not(.onboarding-btn-primary):not(.onboarding-header-cta):hover {
-  color: #0f172a !important;
-}
-
-/* Botón CTA del header */
-.onboarding-header-cta {
-  color: #ffffff !important;
-  background: #0f172a !important;
-  border: none !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-  transition: background 0.15s ease, box-shadow 0.15s ease !important;
-}
-
-.onboarding-header-cta:hover {
-  color: #ffffff !important;
-  background: #1e293b !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
-}
-
-.onboarding-input {
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
+/* Botón principal: pizarra oscura, como el CTA del landing. */
 .onboarding-btn-primary {
   background: #0f172a !important;
-  color: white !important;
+  color: #ffffff !important;
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: background 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.16), 0 6px 16px -8px rgba(15, 23, 42, 0.35);
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .onboarding-btn-primary:hover:not(:disabled) {
   background: #1e293b !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.16), 0 10px 22px -10px rgba(15, 23, 42, 0.45);
 }
 
-.onboarding-btn-outline {
+.onboarding-btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.onboarding-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Contenedor para avisos y estados (errores, pago en revisión, etc.). */
+.onboarding-card {
+  background: #ffffff;
   border: 1px solid #e2e8f0;
-  color: #334155;
-  transition: all 0.15s ease;
-}
-
-.onboarding-btn-outline:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
-  color: #0f172a;
-}
-
-.onboarding-success-card {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
   border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -16px rgba(15, 23, 42, 0.12);
 }
 
-.onboarding-plan-option {
-  transition: all 0.15s ease;
-  border-radius: 12px;
-}
-
-.onboarding-plan-option:hover {
-  border-color: #6366f1 !important;
-  background: #f8fafc !important;
-}
-
-.onboarding-plan-option.selected {
-  border-color: #6366f1 !important;
-  background: #fff !important;
-  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.2);
-}
-
-/* Validación y errores */
-.onboarding-field-error,
-.onboarding .error {
-  display: block;
-  margin-top: 0.375rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #dc2626;
-}
-
-.onboarding-input.is-invalid {
-  border-color: #fca5a5;
-  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.08);
-}
-
-/* Secciones del formulario */
-.onboarding-section-title {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #334155;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.onboarding-section {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #f1f5f9;
-}
-
-/* Entrada suave */
-@keyframes onboarding-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.onboarding-main {
-  animation: onboarding-fade-in 0.4s ease-out forwards;
-}
-
-/* Step pill */
-.onboarding-step-pill {
-  background: #f8fafc;
-  color: #0f172a;
+/* Opciones seleccionables (plan, método, meses). */
+.onboarding-option {
   border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  background: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
-/* Footer */
-.onboarding-page footer {
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
+.onboarding-option:hover {
+  border-color: #cbd5e1;
+}
+
+.onboarding-option[data-selected="true"] {
+  border-color: #0f172a;
+  box-shadow: 0 0 0 1px #0f172a;
+}
+
+.onboarding-option[data-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-page *,
+  .onboarding-page *::before,
+  .onboarding-page *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

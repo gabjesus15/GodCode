@@ -13,6 +13,7 @@ import { loadLandingV3Config } from "@/lib/landing/v3-config";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { getSubdomainFromHost, isMainDomain } from "@/lib/tenant/main-domain-host";
 import { DEFAULT_LOCALE } from "@/lib/i18n/config";
+import { serializeJsonLd } from "@/lib/seo/serialize-json-ld";
 
 export async function generateMetadata(): Promise<Metadata> {
 	const hdrs = await headers();
@@ -43,7 +44,7 @@ function JsonLd({
 			id="gcode-jsonld-landing"
 			type="application/ld+json"
 			// biome-ignore lint/security/noDangerouslySetInnerHtml: structured data JSON-LD must be inline for Googlebot
-			dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
+			dangerouslySetInnerHTML={{ __html: serializeJsonLd(ld) }}
 		/>
 	);
 }

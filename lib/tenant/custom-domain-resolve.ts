@@ -90,11 +90,18 @@ async function fetchSlugFromSupabaseRpc(hostname: string): Promise<string | null
 	if (!res.ok) {
 		return null;
 	}
-	const data: unknown = await res.json();
-	if (typeof data === "string" && data.trim()) {
-		return data.trim();
-	}
-	return null;
+	return slugFromRpcResult(await res.json().catch(() => null));
+}
+
+/**
+ * La función devuelve `text` desde la migración 20260923; la versión anterior de la base
+ * devolvía una tabla (`[{ public_slug }]`). Se aceptan las dos para no depender del orden
+ * entre el despliegue y la migración.
+ */
+export function slugFromRpcResult(data: unknown): string | null {
+	const row = Array.isArray(data) ? data[0] : data;
+	const value = typeof row === "string" ? row : (row as { public_slug?: unknown } | null)?.public_slug;
+	return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 async function fetchSlugFromSupabaseRest(hostname: string): Promise<string | null> {

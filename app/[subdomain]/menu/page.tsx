@@ -17,10 +17,12 @@ import {
 	resolveOnlineOrderingEnabled,
 } from "@/lib/tenant/menu-settings";
 import { resolveSelectedMenuBranch } from "@/lib/tenant/menu/menu-helpers";
+import { serializeJsonLd } from "@/lib/seo/serialize-json-ld";
 import {
 	buildTenantMenuDescription,
 	buildTenantMenuTitle,
 } from "@/lib/tenant/seo-metadata";
+import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 
 // ISR: re-generate at most every 60 s. Menu updates (product edits, theme publish)
 // are pushed instantly via revalidateTag(`menu:${companyId}`) from:
@@ -212,7 +214,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
         title="Tienda no disponible"
         subtitle="Esta tienda no existe… o se mudó sin avisar."
         primaryCta={{ label: "Crear mi propia tienda", href: "/onboarding" }}
-        secondaryCta={{ label: "Conocer GodCode", href: "/" }}
+        secondaryCta={{ label: "Conocer Gcode POS", href: "/" }}
       />
     );
   }
@@ -222,8 +224,9 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
   const onlineOrderingEnabled = resolveOnlineOrderingEnabled(planFeatures, menuSettings);
   const orderChannel = menuSettings.orderChannel;
 
-  const status = company.subscription_status?.toLowerCase();
-  if (status === "suspended" || status === "cancelled") {
+  // Misma regla en todo lo público: una cancelación sigue online hasta el vencimiento y
+  // un plan vencido se corta aunque el cron todavía no lo haya suspendido.
+  if (!isTenantSubscriptionAccessible(company)) {
     notFound();
   }
 
@@ -392,9 +395,9 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
       .filter((row): row is { id: string; image_url: string } => Boolean(row));
 
     // --- G. Casteo seguro de JSONB (Evita warnings silenciosos) ---
-    const storedTheme = normalizeStoreThemeConfig(company.theme_config, company.name ?? "GodCode");
+    const storedTheme = normalizeStoreThemeConfig(company.theme_config, company.name ?? "Gcode");
     const theme = await resolveStorefrontThemeAssets(storedTheme, String(company.id));
-    const name = theme.displayName || company.name || "GodCode";
+    const name = theme.displayName || company.name || "Gcode";
     const logoUrl = theme.logoUrl?.trim() || parseThemeLogoUrl(company?.theme_config) || null;
     const navbarType = theme.navbarType;
     const navigationMode = theme.navigationMode;
@@ -446,7 +449,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
               {
                 "@type": "ListItem",
                 "position": 1,
-                "name": "GodCode",
+                "name": "Gcode POS",
                 "item": "https://www.godcode.me"
               },
               {
@@ -493,7 +496,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
         <script
           type="application/ld+json"
           // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data JSON-LD must be inline for Googlebot
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(menuJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(menuJsonLd) }}
         />
         <MenuClient
           name={name}

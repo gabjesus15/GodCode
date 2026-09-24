@@ -56,6 +56,16 @@ describe("getSubscriptionEndsAt", () => {
 		const result = getSubscriptionEndsAt(1, baseDate);
 		expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/);
 	});
+
+	it("renovar antes de tiempo suma desde el vencimiento vigente (no resta días)", () => {
+		const result = getSubscriptionEndsAt(1, baseDate, "2025-01-20T00:00:00.000Z");
+		expect(result).toBe("2025-02-19T00:00:00.000Z");
+	});
+
+	it("si el vencimiento ya pasó, suma desde hoy", () => {
+		const result = getSubscriptionEndsAt(1, baseDate, "2024-12-01T00:00:00.000Z");
+		expect(result).toBe("2025-01-31T00:00:00.000Z");
+	});
 });
 
 describe("isTenantSubscriptionAccessible", () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -58,6 +58,27 @@ function LoginPageContent() {
 		router.refresh();
 	};
 
+	// El servidor manda aquí con `?mfa=1` cuando la sesión ya pasó la contraseña pero no
+	// el segundo factor: se retoma esa sesión en el paso del código, sin volver a pedirla.
+	const resumeMfa = searchParams?.get("mfa") === "1";
+	useEffect(() => {
+		if (!resumeMfa) return;
+		let cancelled = false;
+		void (async () => {
+			const supabase = createSupabaseBrowserClient("super-admin");
+			const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+			if (cancelled || !needsMfaChallenge(aal as AalPayload)) return;
+			const factorId = await firstVerifiedTotpFactorId(supabase);
+			if (cancelled || !factorId) return;
+			setMfaFactorId(factorId);
+			setMfaCode("");
+			setPhase("mfa");
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, [resumeMfa]);
+
 	const handleSubmitCredentials = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		setLoading(true);
@@ -67,7 +88,9 @@ function LoginPageContent() {
 			const supabase = createSupabaseBrowserClient("super-admin");
 			const normalizedEmail = email.trim().toLowerCase();
 
-			await supabase.auth.signOut();
+			// Solo la sesión de este navegador: el alcance global cerraba también las del
+			// mismo usuario en otros dispositivos.
+			await supabase.auth.signOut({ scope: "local" });
 
 			const { error: signInError } = await supabase.auth.signInWithPassword({
 				email: normalizedEmail,
@@ -86,7 +109,7 @@ function LoginPageContent() {
 			if (needsMfaChallenge(aal as AalPayload)) {
 				const factorId = await firstVerifiedTotpFactorId(supabase);
 				if (!factorId) {
-					await supabase.auth.signOut();
+					await supabase.auth.signOut({ scope: "local" });
 					throw new Error(
 						"Tu cuenta requiere doble factor pero no hay un autenticador TOTP verificado. Actívalo desde el portal de cuenta o contacta a soporte.",
 					);
@@ -110,7 +133,7 @@ function LoginPageContent() {
 		setError(null);
 		try {
 			const supabase = createSupabaseBrowserClient("super-admin");
-			await supabase.auth.signOut();
+			await supabase.auth.signOut({ scope: "local" });
 			setPhase("credentials");
 			setMfaFactorId(null);
 			setMfaCode("");
@@ -151,10 +174,16 @@ function LoginPageContent() {
 		}
 	};
 
+	const errorParam = searchParams?.get("error");
+	const noticeByParam: Record<string, string> = {
+		"no-access": "Tu usuario no tiene acceso a un panel activo. Escribe a soporte para habilitar tu cuenta.",
+		enlace: "El enlace no es válido. Pide uno nuevo con «¿Olvidaste tu contraseña?».",
+		"enlace-vencido": "El enlace venció o ya se usó. Pide uno nuevo con «¿Olvidaste tu contraseña?».",
+	};
 	const noAccessBanner =
-		phase === "credentials" && !error && searchParams?.get("error") === "no-access" ? (
-			<div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-				Tu usuario no tiene acceso a un panel activo. Escribe a soporte para habilitar tu cuenta.
+		phase === "credentials" && !error && errorParam && noticeByParam[errorParam] ? (
+			<div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+				{noticeByParam[errorParam]}
 			</div>
 		) : null;
 
@@ -311,13 +340,9 @@ function LoginPageContent() {
 												<label htmlFor="login-password" className="text-sm font-medium text-zinc-700">
 													Contraseña
 												</label>
-												<button
-													type="button"
-													className="text-xs font-medium text-[#4F5BFF] hover:underline"
-													onClick={() => alert("Recuperación de contraseña próximamente.")}
-												>
+												<Link href="/login/recuperar" className="text-xs font-medium text-[#4F5BFF] hover:underline">
 													¿Olvidaste tu contraseña?
-												</button>
+												</Link>
 											</div>
 											<div className="relative">
 												<Lock className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />

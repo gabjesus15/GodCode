@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { sendEmail } from "@/lib/email/send";
+import { OPEN_TICKET_STATUSES } from "@/lib/status/status-labels";
 import { getAppUrl } from "../tenant/app-url";
-import { sendOnboardingEmail } from "./emails";
 
-const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";
 const ONBOARDING_TEAM_EMAIL = process.env.ONBOARDING_TEAM_EMAIL?.trim() ?? "";
 const CONTACT_DELAY_DAYS = Math.max(1, Number(process.env.ONBOARDING_CONTACT_DAYS ?? 3) || 3);
 const MAX_DELIVERIES_PER_DAY = Math.max(1, Number(process.env.ONBOARDING_MAX_DELIVERIES_PER_DAY ?? 4) || 4);
@@ -29,7 +29,7 @@ type DeliveryBookingInfo = {
 	assignedAdminId: string | null;
 };
 
-function formatContactDate(date: Date): string {
+export function formatContactDate(date: Date): string {
 	return new Intl.DateTimeFormat("es-CL", {
 		dateStyle: "full",
 	}).format(date);
@@ -57,7 +57,7 @@ async function getActiveDeliveryByCompany(params: {
 		.select("resolution_due_at,assigned_to,assigned_admin_id,status")
 		.eq("company_id", params.companyId)
 		.eq("category", "onboarding_delivery")
-		.not("status", "in", "(resolved,cancelled)")
+		.in("status", [...OPEN_TICKET_STATUSES])
 		.order("created_at", { ascending: false })
 		.limit(1)
 		.maybeSingle();
@@ -80,7 +80,7 @@ async function getDailyLoad(params: {
 		.from("saas_tickets")
 		.select("assigned_admin_id,assigned_to")
 		.eq("category", "onboarding_delivery")
-		.not("status", "in", "(resolved,cancelled)")
+		.in("status", [...OPEN_TICKET_STATUSES])
 		.gte("resolution_due_at", params.dayStartIso)
 		.lt("resolution_due_at", params.dayEndIso);
 
@@ -183,7 +183,7 @@ async function ensureDeliveryTicket(params: {
 			})
 			.eq("company_id", params.companyId)
 			.eq("category", "onboarding_delivery")
-			.not("status", "in", "(resolved,cancelled)");
+			.in("status", [...OPEN_TICKET_STATUSES]);
 		return;
 	}
 
@@ -231,27 +231,6 @@ async function getCompanyContext(supabaseAdmin: SupabaseClient, companyId: strin
 	}
 
 	return company as CompanyContext;
-}
-
-export async function sendPaymentValidatedNotice(params: {
-	supabaseAdmin: SupabaseClient;
-	companyId: string;
-	businessName: string;
-	responsibleName: string;
-	recipientEmail: string;
-	contactDate?: Date;
-}): Promise<{ ok: boolean; error?: string }> {
-	const contactDate = params.contactDate ?? getBookingContactDate();
-	return sendOnboardingEmail({
-		type: "payment_validated",
-		to: params.recipientEmail,
-		from: RESEND_FROM,
-		apiKey: process.env.RESEND_API_KEY ?? "",
-		businessName: params.businessName,
-		responsibleName: params.responsibleName,
-		contactDate: formatContactDate(contactDate),
-		panelUrl: PANEL_URL,
-	});
 }
 
 export async function queueBookingReminder(params: {
@@ -341,22 +320,33 @@ export async function processDueBookingReminders(params: {
 			continue;
 		}
 
-		const sent = await sendOnboardingEmail({
-			type: "booking_reminder",
-			to: recipientEmail,
-			from: RESEND_FROM,
-			apiKey: process.env.RESEND_API_KEY ?? "",
-			businessName: application.business_name || company.name,
-			responsibleName: application.responsible_name,
-			contactDate: formatContactDate(new Date(reminder.scheduled_for)),
-			panelUrl: PANEL_URL,
-		});
+		const businessName = application.business_name || company.name;
+		const contactDate = formatContactDate(new Date(reminder.scheduled_for));
+		// Con correo de equipo configurado, el recordatorio es para el equipo; si no, para el cliente.
+		const result = ONBOARDING_TEAM_EMAIL
+			? await sendEmail({
+					kind: "team_onboarding_followup",
+					to: ONBOARDING_TEAM_EMAIL,
+					companyId: company.id,
+					dedupeKey: `followup:${reminder.id}`,
+					client: params.supabaseAdmin,
+					data: { businessName, name: application.responsible_name, email: application.email, contactDate, adminUrl: `${PANEL_URL}/tickets` },
+				})
+			: await sendEmail({
+					kind: "onboarding_followup",
+					to: recipientEmail,
+					companyId: company.id,
+					dedupeKey: `followup:${reminder.id}`,
+					client: params.supabaseAdmin,
+					data: { name: application.responsible_name, businessName, contactDate },
+				});
 
-		if (!sent.ok) {
+		if (result.status !== "sent" && result.status !== "duplicate") {
 			errors += 1;
+			const reason = result.status === "failed" ? result.error : result.reason;
 			await params.supabaseAdmin
 				.from("subscription_notifications")
-				.update({ status: "failed", error: sent.error ?? "Error al enviar correo", sent_at: nowIso })
+				.update({ status: "failed", error: reason || "Error al enviar correo", sent_at: nowIso })
 				.eq("id", reminder.id);
 			continue;
 		}

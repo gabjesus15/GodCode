@@ -27,12 +27,29 @@ type Props = {
 };
 
 const FUNNEL_LABELS: Record<string, { label: string; desc: string }> = {
-  onboarding_visit: { label: "Visita de Onboarding", desc: "Visitas a la página inicial /onboarding" },
-  pending_verification: { label: "Registro Iniciado", desc: "Creó cuenta, esperando verificar correo" },
-  email_verified: { label: "Correo Verificado", desc: "Verificó correo, esperando datos del negocio" },
-  form_completed: { label: "Formulario Completo", desc: "Completó datos del negocio, esperando pago" },
-  payment_pending: { label: "Pago Pendiente", desc: "En pasarela de pago o esperando transferencia" },
-  active: { label: "Activo / Completado", desc: "Onboarding finalizado con éxito" },
+  onboarding_visit: { label: "Visitas al registro", desc: "Personas que abrieron /onboarding" },
+  pending_verification: { label: "Registro iniciado", desc: "Dejó su correo; falta verificarlo" },
+  email_verified: { label: "Correo verificado", desc: "Falta completar los datos del negocio" },
+  form_completed: { label: "Formulario completo", desc: "Datos listos; falta pagar" },
+  payment_pending: { label: "Pago pendiente", desc: "Eligió método; falta pagar o validar el pago" },
+  active: { label: "Activas", desc: "Pagaron y la tienda quedó creada" },
+};
+
+/** Cómo leer el periodo del filtro (la página pasa "7", "30", "all"…). */
+const PERIOD_LABELS: Record<string, string> = {
+  "7": "Últimos 7 días",
+  "30": "Últimos 30 días",
+  "90": "Últimos 90 días",
+  "365": "Últimos 12 meses",
+  all: "Todo el historial",
+};
+
+/** Qué hacer según la etapa donde más se pierde gente. */
+const BOTTLENECK_TIPS: Record<string, string> = {
+  email_verified: "Revisa que lleguen los correos de verificación (SPF/DKIM/DMARC) y reenvía el código a quienes no verificaron.",
+  form_completed: "Muchos verifican y no completan el formulario: acórtalo o explica mejor qué pide cada campo.",
+  payment_pending: "Completan el formulario y no eligen cómo pagar: revisa precios y que los métodos del país estén activos.",
+  active: "Hay pagos que no se completan: escribe a quienes quedaron en «Pago pendiente» y revisa «Pagos por validar».",
 };
 
 const STAGES = [
@@ -59,7 +76,7 @@ export function OnboardingFunnelInteractive({
 
   // 1. Calculate cumulative funnel steps
   const funnelSteps = useMemo(() => {
-    const active = counts.active ?? 0;
+    const active = (counts.active ?? 0) + (counts.payment_validated ?? 0);
     const payment_pending = counts.payment_pending ?? 0;
     const form_completed = counts.form_completed ?? 0;
     const email_verified = counts.email_verified ?? 0;
@@ -110,12 +127,12 @@ export function OnboardingFunnelInteractive({
   const snapshotSteps = useMemo(() => {
     const totalCount = Math.max(1, total + onboardingVisitors);
     return [
-      { key: "onboarding_visit", label: "Visita de Onboarding", value: onboardingVisitors, pct: Math.round((onboardingVisitors / totalCount) * 100) },
-      { key: "pending_verification", label: "Pendiente Verificación", value: counts.pending_verification ?? 0, pct: Math.round(((counts.pending_verification ?? 0) / totalCount) * 100) },
-      { key: "email_verified", label: "Email Verificado", value: counts.email_verified ?? 0, pct: Math.round(((counts.email_verified ?? 0) / totalCount) * 100) },
-      { key: "form_completed", label: "Formulario Listo", value: counts.form_completed ?? 0, pct: Math.round(((counts.form_completed ?? 0) / totalCount) * 100) },
-      { key: "payment_pending", label: "Pago Pendiente", value: counts.payment_pending ?? 0, pct: Math.round(((counts.payment_pending ?? 0) / totalCount) * 100) },
-      { key: "active", label: "Activos / Completados", value: counts.active ?? 0, pct: Math.round(((counts.active ?? 0) / totalCount) * 100) },
+      { key: "onboarding_visit", label: "Visitas al registro", value: onboardingVisitors, pct: Math.round((onboardingVisitors / totalCount) * 100) },
+      { key: "pending_verification", label: "Correo sin verificar", value: counts.pending_verification ?? 0, pct: Math.round(((counts.pending_verification ?? 0) / totalCount) * 100) },
+      { key: "email_verified", label: "Correo verificado", value: counts.email_verified ?? 0, pct: Math.round(((counts.email_verified ?? 0) / totalCount) * 100) },
+      { key: "form_completed", label: "Formulario completo", value: counts.form_completed ?? 0, pct: Math.round(((counts.form_completed ?? 0) / totalCount) * 100) },
+      { key: "payment_pending", label: "Pago pendiente", value: counts.payment_pending ?? 0, pct: Math.round(((counts.payment_pending ?? 0) / totalCount) * 100) },
+      { key: "active", label: "Activas", value: (counts.active ?? 0) + (counts.payment_validated ?? 0), pct: Math.round((((counts.active ?? 0) + (counts.payment_validated ?? 0)) / totalCount) * 100) },
       { key: "rejected", label: "Rechazados", value: counts.rejected ?? 0, pct: Math.round(((counts.rejected ?? 0) / totalCount) * 100) },
       { key: "other", label: "Otros", value: counts.other ?? 0, pct: Math.round(((counts.other ?? 0) / totalCount) * 100) },
     ];
@@ -128,7 +145,7 @@ export function OnboardingFunnelInteractive({
     let maxDropoff = -1;
     let worstStep: typeof funnelSteps[number] | null = null;
 
-    for (let i = 1; i < funnelSteps.length - 1; i++) {
+    for (let i = 2; i < funnelSteps.length; i++) {
       const step = funnelSteps[i];
       if (step.dropoff > maxDropoff) {
         maxDropoff = step.dropoff;
@@ -161,24 +178,24 @@ export function OnboardingFunnelInteractive({
 
     switch (app.status) {
       case "pending_verification":
-        subject = "Verifica tu cuenta en GodCode";
-        body = `Hola ${name},\n\nNotamos que iniciaste tu registro para ${biz} en GodCode, pero aún no has verificado tu correo electrónico.\n\nPor favor, revisa tu bandeja de entrada (e incluso la carpeta de spam) para encontrar tu código de verificación de 6 dígitos.\n\nSi tienes algún problema, responde directamente a este correo.\n\nSaludos,\nEl equipo de GodCode`;
+        subject = "Confirma tu correo para seguir con tu alta en Gcode POS";
+        body = `Hola ${name},\n\nVimos que empezaste el alta de ${biz} en Gcode POS, pero todavía no confirmaste tu correo.\n\nBusca en tu bandeja (y en spam) el correo «Confirma tu correo» y pulsa el botón. Si el enlace venció, vuelve a registrarte con el mismo correo y te mandamos uno nuevo.\n\nSi tienes algún problema, responde a este correo.\n\nSaludos,\nEl equipo de Gcode`;
         break;
       case "email_verified":
-        subject = "Completa la configuración de tu negocio en GodCode";
-        body = `Hola ${name},\n\n¡Felicidades por verificar tu cuenta de GodCode!\n\nEl siguiente paso es completar los detalles de tu negocio (nombre, dirección y logo) en el panel de onboarding para que podamos crear tu menú digital.\n\nSolo te tomará 2 minutos completar este paso.\n\nSaludos,\nEl equipo de GodCode`;
+        subject = "Elige tu plan para terminar el alta en Gcode POS";
+        body = `Hola ${name},\n\nYa confirmaste tu correo. El siguiente paso es elegir el plan de ${biz} y el método de pago, desde el enlace del correo de confirmación.\n\nToma menos de 2 minutos. Si tienes dudas sobre qué plan te conviene, responde este correo y te ayudamos.\n\nSaludos,\nEl equipo de Gcode`;
         break;
       case "form_completed":
-        subject = "Activa tu menú digital en GodCode";
-        body = `Hola ${name},\n\nYa configuraste la información de ${biz}. ¡Excelente trabajo!\n\nSolo queda activar tu suscripción en la pasarela de pagos para publicar tu menú y empezar a recibir pedidos directo a tu WhatsApp y cocina.\n\nSi tienes dudas sobre los métodos de pago, háznoslo saber respondiendo aquí.\n\nSaludos,\nEl equipo de GodCode`;
+        subject = `Solo falta el pago para activar ${biz} en Gcode POS`;
+        body = `Hola ${name},\n\nYa elegiste el plan de ${biz}. Solo falta el pago para activar tu cuenta y publicar tu menú.\n\nPuedes pagar con PayPal o por transferencia (subiendo el comprobante). Si tienes dudas sobre los métodos de pago, responde este correo.\n\nSaludos,\nEl equipo de Gcode`;
         break;
       case "payment_pending":
-        subject = "Pendiente activación de suscripción - GodCode";
-        body = `Hola ${name},\n\nTu menú digital de ${biz} está listo para ser publicado.\n\nActualmente estamos esperando la confirmación de tu pago. Si realizaste una transferencia bancaria, por favor envíanos el comprobante por este medio o súbelo en la plataforma para activar tu tienda de inmediato.\n\n¡Estamos listos para ayudarte a vender!\n\nSaludos,\nEl equipo de GodCode`;
+        subject = "Estamos esperando tu pago - Gcode POS";
+        body = `Hola ${name},\n\nEl alta de ${biz} está lista: solo falta confirmar el pago.\n\nSi pagaste por transferencia, sube el comprobante desde el enlace del alta o respóndenos este correo con él, y activamos tu cuenta apenas lo validemos.\n\nSaludos,\nEl equipo de Gcode`;
         break;
       default:
-        subject = "Soporte de registro - GodCode";
-        body = `Hola ${name},\n\nTe escribimos del soporte de GodCode. Vimos que estás en el proceso de onboarding para ${biz}.\n\n¿Tienes alguna duda o hay algo en lo que podamos ayudarte para completar tu activación?\n\nSaludos,\nEl equipo de GodCode`;
+        subject = `¿Te ayudamos con el alta de ${biz}? - Gcode POS`;
+        body = `Hola ${name},\n\nTe escribimos del equipo de Gcode. Vimos que estás en el alta de ${biz}.\n\n¿Tienes alguna duda o hay algo en lo que podamos ayudarte para terminarla?\n\nSaludos,\nEl equipo de Gcode`;
     }
 
     return `mailto:${app.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -187,8 +204,10 @@ export function OnboardingFunnelInteractive({
   return (
     <div className="space-y-6">
       <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80 sm:p-5">
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Embudo de onboarding</h3>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Periodo: {period} — analiza conversión y leads atascados.</p>
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Embudo de altas</h3>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          {PERIOD_LABELS[period] ?? `Periodo: ${period}`} · conversión por etapa y quién quedó a medio camino.
+        </p>
       </Card>
       {/* 1. Automated Insight Box */}
       {bottleneck && bottleneck.dropoff > 20 && (
@@ -196,21 +215,15 @@ export function OnboardingFunnelInteractive({
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div className="space-y-1">
             <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-              Alerta de Conversión: Fuga de Leads detectada
+              Aquí se pierde más gente
             </h4>
             <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-              El paso con mayor tasa de abandono en este periodo es **{bottleneck.label}** con una pérdida del{" "}
-              <span className="font-bold">{bottleneck.dropoff}%</span> de los usuarios que llegaron a la etapa anterior.
+              La etapa con más abandono es <strong>{bottleneck.label}</strong>: no llega el{" "}
+              <span className="font-bold">{bottleneck.dropoff}%</span> de quienes estaban en la etapa anterior.
             </p>
             <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400">
               <Lightbulb className="h-3.5 w-3.5" />
-              <span>
-                {bottleneck.key === "payment_pending"
-                  ? "Sugerencia: Envía un recordatorio de transferencia o valida si los métodos de pago están funcionando correctamente."
-                  : bottleneck.key === "form_completed"
-                  ? "Sugerencia: Simplifica el formulario de negocio o añade explicaciones claras sobre el formato de los campos."
-                  : "Sugerencia: Revisa la entregabilidad de los correos de verificación (SPF/DKIM/DMARC)."}
-              </span>
+              <span>{BOTTLENECK_TIPS[bottleneck.key] ?? "Revisa esa etapa del registro y escribe a quienes quedaron ahí."}</span>
             </div>
           </div>
         </div>
@@ -221,7 +234,7 @@ export function OnboardingFunnelInteractive({
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Visualización de Conversión</h3>
-            <p className="text-xs text-zinc-500">Analiza el comportamiento paso a paso del flujo de onboarding.</p>
+            <p className="text-xs text-zinc-500">Cuántas personas avanzan en cada paso del registro.</p>
           </div>
           <div className="flex rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-800">
             <button
@@ -360,7 +373,7 @@ export function OnboardingFunnelInteractive({
               Solicitudes en estado: <span className="text-indigo-600 dark:text-indigo-400 font-bold">{selectedStage ? (FUNNEL_LABELS[selectedStage]?.label || selectedStage) : "Ninguno seleccionado"}</span>
             </h3>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Muestra los leads que están inactivos actualmente en esta etapa para contactarles.
+              Quienes siguen en esta etapa, para escribirles.
             </p>
           </div>
           <div className="rounded-lg bg-zinc-100 px-2.5 py-1 text-xs font-semibold tabular-nums dark:bg-zinc-800">
@@ -373,13 +386,13 @@ export function OnboardingFunnelInteractive({
             <CheckCircle className="mx-auto h-8 w-8 text-zinc-400 mb-2" />
             <p className="font-semibold text-zinc-700 dark:text-zinc-300">Las visitas iniciales son anónimas</p>
             <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto">
-              Estas visitas corresponden a usuarios que accedieron a la landing de onboarding pero aún no han ingresado su correo (Paso 1). No hay registros de contacto individuales.
+              Son personas que abrieron el registro sin dejar su correo: no hay datos de contacto.
             </p>
           </div>
         ) : filteredApps.length === 0 ? (
           <div className="p-8 text-center text-zinc-500 text-sm">
             <CheckCircle className="mx-auto h-8 w-8 text-zinc-400 mb-2" />
-            <p className="font-semibold text-zinc-700 dark:text-zinc-300">¡No hay leads estancados en esta etapa!</p>
+            <p className="font-semibold text-zinc-700 dark:text-zinc-300">Nadie quedó en esta etapa.</p>
             <p className="text-xs text-zinc-400 mt-1">
               Todos los usuarios de este periodo han avanzado o no hay solicitudes registradas con este estado.
             </p>
@@ -391,7 +404,7 @@ export function OnboardingFunnelInteractive({
                 <tr>
                   <th className="px-4 py-3">Negocio</th>
                   <th className="px-4 py-3">Responsable</th>
-                  <th className="px-4 py-3">Email</th>
+                  <th className="px-4 py-3">Correo</th>
                   <th className="px-4 py-3">Fecha Inicio</th>
                   <th className="px-4 py-3">Días Inactivo</th>
                   <th className="px-4 py-3 text-right">Acciones</th>

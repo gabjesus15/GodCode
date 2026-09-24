@@ -1,7 +1,9 @@
+import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+
 /**
- * Dominio personalizado efectivo para enlaces y UI.
- * Sigue la misma regla que el proxy y el menú público: activo, no suspendido/cancelado,
- * y si hay fecha de fin de suscripción, aún no vencida.
+ * Dominio personalizado efectivo para enlaces y UI. Misma regla que el menú público
+ * (`isTenantSubscriptionAccessible`): no suspendido, no vencido, y una cancelación
+ * programada lo mantiene hasta el vencimiento.
  */
 export function getEffectiveCustomDomain(
 	customDomain: string | null | undefined,
@@ -11,15 +13,13 @@ export function getEffectiveCustomDomain(
 	if (!customDomain?.trim()) {
 		return null;
 	}
-	const st = subscriptionStatus?.toLowerCase() ?? "";
-	if (st === "suspended" || st === "cancelled") {
+	if (
+		!isTenantSubscriptionAccessible({
+			subscription_status: subscriptionStatus ?? null,
+			subscription_ends_at: subscriptionEndsAt ?? null,
+		})
+	) {
 		return null;
-	}
-	if (subscriptionEndsAt) {
-		const end = new Date(subscriptionEndsAt);
-		if (!Number.isNaN(end.getTime()) && end.getTime() <= Date.now()) {
-			return null;
-		}
 	}
 	return customDomain.trim();
 }

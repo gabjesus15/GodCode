@@ -1,3 +1,4 @@
+import { sessionNeedsMfa } from "@/lib/auth/mfa-server";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 const FALLBACK_ALLOWED_ROLES = new Set(["super_admin"]);
@@ -33,6 +34,10 @@ export async function validateAdminRolesOnServer(
 			return { ok: false, status: 401, error: "No autenticado" };
 		}
 
+		if (await sessionNeedsMfa(supabase)) {
+			return { ok: false, status: 401, error: "Falta verificar tu código de doble factor." };
+		}
+
 		const email = user.email.trim().toLowerCase();
 		const normalizedAllowedRoles = allowedRoles.map((role) => String(role).toLowerCase());
 
@@ -54,12 +59,12 @@ export async function validateAdminRolesOnServer(
 		}
 
 		if (!normalizedAllowedRoles.includes(role)) {
-			return { ok: false, status: 403, error: "No tienes permisos para esta accion." };
+			return { ok: false, status: 403, error: "No tienes permisos para esta acción." };
 		}
 
 		return { ok: true, status: 200, email, role };
 	} catch {
-		return { ok: false, status: 500, error: "Error al validar sesion" };
+		return { ok: false, status: 500, error: "Error al validar la sesión" };
 	}
 }
 

@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  describeStatus,
+  PAYMENT_STATUSES,
+  SUBSCRIPTION_STATUSES,
+  TICKET_PRIORITIES,
+  TICKET_STATUSES,
+} from "@/lib/status/status-labels";
 import type { ColorVariant } from "./tokens";
 
 const badgeClasses: Record<ColorVariant, string> = {
@@ -40,41 +47,19 @@ export function Badge({ variant = "neutral", dot = false, children, className = 
   );
 }
 
-/** Determina la variante del badge según un estado de suscripción. */
+/** Tonos del mapa común de estados (`lib/status/status-labels`), igual que en el super admin. */
 export function subscriptionStatusVariant(status: string | null | undefined): ColorVariant {
-  const s = (status ?? "").toLowerCase();
-  if (["active"].includes(s)) return "success";
-  if (["trial", "trialing"].includes(s)) return "info";
-  if (["payment_pending", "past_due", "pending"].includes(s)) return "warning";
-  if (["cancelled", "canceled", "expired", "suspended", "unpaid"].includes(s)) return "danger";
-  return "neutral";
+  return describeStatus(SUBSCRIPTION_STATUSES, status).tone;
 }
 
-/** Determina la variante del badge según un estado de pago. */
 export function paymentStatusVariant(status: string | null | undefined): ColorVariant {
-  const s = (status ?? "").toLowerCase();
-  if (["paid", "payment_validated", "completed"].includes(s)) return "success";
-  if (["pending", "pending_validation", "payment_pending", "validacion"].includes(s)) return "warning";
-  if (["failed", "rejected"].includes(s)) return "danger";
-  if (["cancelled", "canceled", "refunded"].includes(s)) return "neutral";
-  return "neutral";
+  return describeStatus(PAYMENT_STATUSES, status).tone;
 }
 
-/** Determina la variante del badge según prioridad de ticket. */
 export function ticketPriorityVariant(priority: string | null | undefined): ColorVariant {
-  const p = (priority ?? "").toLowerCase();
-  if (p === "critical") return "danger";
-  if (p === "high") return "warning";
-  if (p === "medium") return "info";
-  return "neutral";
+  return describeStatus(TICKET_PRIORITIES, priority).tone;
 }
 
-/** Determina la variante según estado de ticket. */
 export function ticketStatusVariant(status: string | null | undefined): ColorVariant {
-  const s = (status ?? "").toLowerCase();
-  if (s === "resolved" || s === "closed") return "success";
-  if (s === "in_progress") return "info";
-  if (s === "waiting_customer") return "warning";
-  if (s === "open") return "accent";
-  return "neutral";
+  return describeStatus(TICKET_STATUSES, status).tone;
 }

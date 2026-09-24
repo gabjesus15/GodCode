@@ -152,7 +152,7 @@ export function AccountSeguridadTab() {
 							{
 								step: "2",
 								title: "Pulsa «Conectar Google Authenticator» más abajo",
-								body: "Te mostraremos un código QR propio de tu cuenta GodCode. Escánalo desde la app con «añadir cuenta» o «escanear código».",
+								body: "Te mostraremos un código QR propio de tu cuenta Gcode. Escánalo desde la app con «añadir cuenta» o «escanear código».",
 							},
 							{
 								step: "3",
@@ -201,7 +201,7 @@ export function AccountSeguridadTab() {
 
 				<TotpMfaEnrollPanel
 					authScope="super-admin"
-					friendlyNameDefault="Portal de cuenta GodCode"
+					friendlyNameDefault="Portal de cuenta Gcode"
 					appearance="portal"
 					omitHeader
 					showSupabaseEnrollHint={false}

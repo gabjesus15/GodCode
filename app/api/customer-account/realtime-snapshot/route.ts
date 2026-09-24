@@ -32,20 +32,28 @@ export async function GET(req: NextRequest) {
 	const includeEntitlements = scope === "full" || scope === "entitlements";
 	const includeAddons = scope === "full" || scope === "addons";
 
-	const [companyRes, paymentsRes, ticketsRes, entitlementsRes, addonsRes] = await Promise.all([
+	const [companyRes, scheduleRes, paymentsRes, ticketsRes, entitlementsRes, addonsRes] = await Promise.all([
 		includeCompany
 			? supabaseAdmin
 					.from("companies")
-					.select("id,subscription_status,subscription_ends_at")
+					.select("id,plan_id,subscription_status,subscription_ends_at")
 					.eq("id", ctx.companyId)
+					.maybeSingle()
+			: Promise.resolve({ data: null, error: null }),
+		includeCompany
+			? supabaseAdmin
+					.from("company_plan_change_schedules")
+					.select("target_plan_id,effective_at,plan:plans!company_plan_change_schedules_target_plan_id_fkey(name)")
+					.eq("company_id", ctx.companyId)
+					.eq("status", "scheduled")
 					.maybeSingle()
 			: Promise.resolve({ data: null, error: null }),
 		includePayments
 			? supabaseAdmin
 					.from("payments_history")
-					.select("id,amount_paid,status,payment_date,payment_method,months_paid,payment_reference,reference_file_url")
+					.select("id,amount_paid,status,payment_date,payment_method,payment_method_slug,plan_id,months_paid,payment_reference,reference_file_url")
 					.eq("company_id", ctx.companyId)
-					.order("payment_date", { ascending: false })
+					.order("payment_date", { ascending: false, nullsFirst: false })
 					.limit(50)
 			: Promise.resolve({ data: null, error: null }),
 		includeTickets
@@ -53,6 +61,8 @@ export async function GET(req: NextRequest) {
 					.from("saas_tickets")
 					.select("id,subject,description,category,priority,status,created_at,updated_at,last_message_at")
 					.eq("company_id", ctx.companyId)
+					// Los tickets "system" son registros para el equipo (bajas, cobros a revisar).
+					.or("source.is.null,source.neq.system")
 					.order("last_message_at", { ascending: false })
 					.limit(50)
 			: Promise.resolve({ data: null, error: null }),
@@ -87,11 +97,18 @@ export async function GET(req: NextRequest) {
 				status: row.status,
 				payment_date: row.payment_date,
 				payment_method: row.payment_method,
+				payment_method_slug: row.payment_method_slug,
+				plan_id: row.plan_id,
 				months_paid: row.months_paid,
 				payment_reference: row.payment_reference,
 				reference_file_url: row.reference_file_url,
 			}))
 		: undefined;
+
+	const schedule = scheduleRes.data as
+		| { target_plan_id: string; effective_at: string; plan?: { name?: string | null } | Array<{ name?: string | null }> | null }
+		| null;
+	const schedulePlan = Array.isArray(schedule?.plan) ? schedule?.plan[0] : schedule?.plan;
 
 	const tickets = includeTickets
 		? (ticketsRes.data ?? []).map((row) => ({
@@ -161,8 +178,16 @@ export async function GET(req: NextRequest) {
 			includeCompany && companyRes.data
 				? {
 						id: String(companyRes.data.id),
+						plan_id: companyRes.data.plan_id,
 						subscription_status: companyRes.data.subscription_status,
 						subscription_ends_at: companyRes.data.subscription_ends_at,
+						scheduled_plan_change: schedule
+							? {
+									targetPlanId: schedule.target_plan_id,
+									targetPlanName: schedulePlan?.name ?? null,
+									effectiveAt: schedule.effective_at,
+								}
+							: null,
 					}
 				: undefined,
 		payments,

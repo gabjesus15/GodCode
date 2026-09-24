@@ -4,6 +4,8 @@ import { useState } from "react";
 import clsx from "clsx";
 import { useTranslations } from "next-intl";
 
+import { BRANCH_PAYMENT_PUBLIC_FIELDS } from "@/lib/payments/branch-payment-config";
+
 import type { ActiveSessionInfo, BranchInfo } from "../cart-modal-types";
 import { resolvePaymentMethodLabel } from "../constants";
 import { useCart } from "../use-cart";
@@ -88,7 +90,8 @@ export function CartOnlinePaymentDetails({
 		phone: t("payment.configLabels.phone"),
 		idCard: t("payment.configLabels.idCard"),
 		zelleEmail: t("payment.configLabels.zelleEmail"),
-		connected: t("payment.configLabels.connected"),
+		link: t("payment.configLabels.link"),
+		alias: t("payment.configLabels.alias"),
 	};
 
 	const fields: PaymentDetailField[] = [];
@@ -113,21 +116,18 @@ export function CartOnlinePaymentDetails({
 		const data = methodData as ZelleConfig;
 		push("zelleEmail", labels.zelleEmail, data.email);
 		push("holder", labels.holder, data.name);
-	} else {
-		const genericLabels: Record<string, string> = {
+	} else if (methodKey === "mercadopago" || methodKey === "paypal") {
+		// Solo la lista cerrada de campos públicos: nunca se pinta una clave arbitraria
+		// (formularios antiguos guardaban aquí credenciales de API).
+		const data = methodData as Record<string, unknown>;
+		const publicLabels: Record<string, string> = {
 			email: labels.email,
-			name: labels.holder,
-			banco: labels.bank,
-			telefono: labels.phone,
-			identificacion: labels.document,
-			tipo_cuenta: labels.accountType,
-			nro_cuenta: labels.accountNumber,
-			titular: labels.holder,
-			connected: labels.connected,
+			link: labels.link,
+			alias: labels.alias,
 		};
-		Object.entries(methodData as Record<string, unknown>).forEach(([key, value]) => {
-			push(key, genericLabels[key] ?? key.replace(/_/g, " "), value);
-		});
+		for (const key of BRANCH_PAYMENT_PUBLIC_FIELDS[methodKey]) {
+			push(key, publicLabels[key] ?? key, data[key]);
+		}
 	}
 
 	if (fields.length === 0) {

@@ -12,7 +12,7 @@
   },
   "landing": {
     "meta": {
-      "title": "GodCode - Erstelle deinen Online-Shop in wenigen Minuten",
+      "title": "Gcode POS - Erstelle deinen Online-Shop in wenigen Minuten",
       "description": "Digitales Menu, Warenkorb, Lieferung, Kasse, Kuchenauftrage und Inventar fur dein Unternehmen. Ohne Programmierung und ohne Verkaufsprovisionen. Starte mit +1 Monat kostenlos."
     },
     "nav": {
@@ -514,7 +514,8 @@
             "phone": "Telefon",
             "idCard": "Ausweis",
             "zelleEmail": "Zelle-E-Mail",
-            "connected": "Verbunden"
+            "link": "Zahlungslink",
+            "alias": "Alias"
           },
           "fields": {
             "name": "Name",

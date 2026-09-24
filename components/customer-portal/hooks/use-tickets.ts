@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CompanySnapshot, PaymentSummary, TicketMessage, TicketSummary } from "../shared/customer-account-types";
-import { displayStatus, fmtMoney } from "../shared/customer-account-format";
+import { displayStatus, fmtUsd } from "../shared/customer-account-format";
 import { PAYMENT_STATUS_LABELS } from "../shared/customer-account-constants";
 
 async function postTicket(payload: {
@@ -138,7 +138,7 @@ export function useTickets(
   const handleOpenBillingSupport = (payment: PaymentSummary) => {
     setSupportCategory("billing"); setSupportPriority("medium");
     setSupportSubject(`Consulta sobre pago ${payment.payment_reference ?? payment.id}`);
-    setSupportDescription(["Hola, necesito ayuda con este cobro.", `Referencia: ${payment.payment_reference ?? "-"}`, `Monto: ${fmtMoney(payment.amount_paid, company.currency, company.locale)}`, `Estado actual: ${displayStatus(payment.status, PAYMENT_STATUS_LABELS)}`, "Detalle adicional:"].join("\n"));
+    setSupportDescription(["Hola, necesito ayuda con este cobro.", `Referencia: ${payment.payment_reference ?? "-"}`, `Monto: ${fmtUsd(payment.amount_paid, company.locale)}`, `Estado actual: ${displayStatus(payment.status, PAYMENT_STATUS_LABELS)}`, "Detalle adicional:"].join("\n"));
     navigateToSupport();
   };
 

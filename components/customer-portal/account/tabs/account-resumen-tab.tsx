@@ -9,7 +9,7 @@ import type {
   PortalTab,
   TicketSummary,
 } from "../../shared/customer-account-types";
-import { displayStatus, fmtDate, fmtMoney } from "../../shared/customer-account-format";
+import { displayStatus, fmtDate, fmtDay, fmtUsd } from "../../shared/customer-account-format";
 import { SUBSCRIPTION_STATUS_LABELS } from "../../shared/customer-account-constants";
 import { Alert } from "../../ui/Alert";
 import { Badge, subscriptionStatusVariant } from "../../ui/Badge";
@@ -37,7 +37,10 @@ export type AccountResumenTabProps = {
   openTicketsCount: number;
   branches: BranchSummary[];
   tickets: TicketSummary[];
+  /** Último pago confirmado (los pendientes no cuentan). */
   latestPayment: PaymentSummary | null;
+  /** Cupo de sucursales (con extras); `null` = ilimitado o aún sin cargar. */
+  branchCapacity: number | null;
   accountAlerts: AccountAlert[];
   expiryDays: number | null;
   cancellationScheduled: boolean;
@@ -65,10 +68,10 @@ const typeIcon: Record<AccountActivityItem["type"], React.ReactNode> = {
 
 const quickActions: Array<{ tab: PortalTab; label: string; sub: string; icon: React.ElementType }> = [
   { tab: "perfil",       label: "Página de inicio",        sub: "WhatsApp, Instagram, horarios", icon: Home         },
-  { tab: "plan",       label: "Plan y extras",           sub: "Cambiar plan, addons",          icon: CreditCard    },
-  { tab: "facturacion",label: "Facturacion",             sub: "Ver pagos y comprobantes",       icon: FileText      },
-  { tab: "sucursales", label: "Sucursales",              sub: "Solicitar nueva sucursal",       icon: Store         },
-  { tab: "soporte",    label: "Soporte",                 sub: "Abrir o responder ticket",       icon: LifeBuoy      },
+  { tab: "plan",       label: "Plan y extras",           sub: "Renovar, cambiar de plan, extras", icon: CreditCard    },
+  { tab: "facturacion",label: "Facturación",             sub: "Pagos y comprobantes",           icon: FileText      },
+  { tab: "sucursales", label: "Sucursales",              sub: "Agregar o editar sucursales",    icon: Store         },
+  { tab: "soporte",    label: "Soporte",                 sub: "Escríbenos o responde un ticket", icon: LifeBuoy      },
 ];
 
 export function AccountResumenTab({
@@ -81,6 +84,7 @@ export function AccountResumenTab({
   branches,
   tickets,
   latestPayment,
+  branchCapacity,
   accountAlerts,
   expiryDays,
   cancellationScheduled,
@@ -90,7 +94,8 @@ export function AccountResumenTab({
   onNavigate,
 }: AccountResumenTabProps) {
   const menuUrl = company.publicSlug ? getTenantMenuUrl(company.publicSlug, company.customDomain) : "";
-  const checkoutUrl = "https://godcode-panel-v2-0.vercel.app/";
+  // Panel de ventas (caja): el mismo destino que el botón de la página de inicio del negocio.
+  const salesPanelUrl = (process.env.NEXT_PUBLIC_TENANT_PANEL_URL ?? "").trim().replace(/\/$/, "") || company.tenantAdminUrl;
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -105,7 +110,7 @@ export function AccountResumenTab({
         <StatCard
           label="Plan actual"
           value={company.planName ?? "Sin plan"}
-          sub={`${fmtMoney(company.planPrice, company.currency, company.locale)} / mes`}
+          sub={company.planPrice ? `${fmtUsd(company.planPrice, company.locale)} al mes` : undefined}
           icon={CreditCard}
           accent="indigo"
           onClick={() => onNavigate("plan")}
@@ -113,7 +118,11 @@ export function AccountResumenTab({
         <StatCard
           label="Sucursales"
           value={activeBranchesCount}
-          sub={`${branches.length} registradas · ${activeEntitlementsCount} extras activos`}
+          sub={
+            branchCapacity != null && branchCapacity < 999
+              ? `de ${branchCapacity} en tu plan${activeEntitlementsCount > 0 ? " (con extras)" : ""}`
+              : `${branches.length} ${branches.length === 1 ? "registrada" : "registradas"}`
+          }
           icon={Store}
           accent="emerald"
           onClick={() => onNavigate("sucursales")}
@@ -121,15 +130,15 @@ export function AccountResumenTab({
         <StatCard
           label="Tickets abiertos"
           value={openTicketsCount}
-          sub={`${tickets.length} total`}
+          sub={openTicketsCount > 0 ? "Te respondemos aquí y por correo" : tickets.length > 0 ? "Todo respondido" : "Sin conversaciones"}
           icon={LifeBuoy}
           accent={openTicketsCount > 0 ? "amber" : "sky"}
           onClick={() => onNavigate("soporte")}
         />
         <StatCard
-          label="Ultimo pago"
-          value={latestPayment ? fmtMoney(latestPayment.amount_paid, company.currency, company.locale) : "-"}
-          sub={latestPayment ? fmtDate(latestPayment.payment_date, company.timezone) : "Sin pagos"}
+          label="Último pago"
+          value={latestPayment ? fmtUsd(latestPayment.amount_paid, company.locale) : "-"}
+          sub={latestPayment ? fmtDay(latestPayment.payment_date, company.timezone) : "Sin pagos"}
           icon={FileText}
           accent="sky"
           onClick={() => onNavigate("facturacion")}
@@ -153,23 +162,29 @@ export function AccountResumenTab({
           <Card compact>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Suscripcion</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Suscripción</p>
                 <Badge variant={subscriptionStatusVariant(subscriptionStatus)} dot className="mt-2">
                   {displayStatus(subscriptionStatus, SUBSCRIPTION_STATUS_LABELS)}
                 </Badge>
               </div>
               <div className="text-right">
-                <p className="text-xs text-[#a1a1a6]">Vence</p>
-                <p className="mt-0.5 text-sm font-semibold text-[#1d1d1f]">{fmtDate(subscriptionEndsAt, company.timezone)}</p>
+                {subscriptionEndsAt ? (
+                  <>
+                    <p className="text-xs text-[#a1a1a6]">{expiryDays != null && expiryDays < 0 ? "Venció" : "Vence"}</p>
+                    <p className="mt-0.5 text-sm font-semibold text-[#1d1d1f]">{fmtDay(subscriptionEndsAt, company.timezone)}</p>
+                  </>
+                ) : (
+                  <p className="text-sm font-medium text-[#6e6e73]">Sin vencimiento</p>
+                )}
                 {expiryDays != null && (
                   <p className={`mt-0.5 text-xs font-medium ${expiryDays <= 7 ? "text-red-600" : "text-[#6e6e73]"}`}>
                     {expiryDays >= 0
-                      ? `${expiryDays} dia${expiryDays === 1 ? "" : "s"} restante${expiryDays === 1 ? "" : "s"}`
-                      : `Vencido hace ${Math.abs(expiryDays)} dia${Math.abs(expiryDays) === 1 ? "" : "s"}`}
+                      ? `${expiryDays === 1 ? "Queda 1 día" : `Quedan ${expiryDays} días`}`
+                      : `Venció hace ${Math.abs(expiryDays)} ${Math.abs(expiryDays) === 1 ? "día" : "días"}`}
                   </p>
                 )}
                 {cancellationScheduled && (
-                  <p className="mt-1 text-xs text-amber-600">Cancelacion programada</p>
+                  <p className="mt-1 text-xs text-amber-600">Cancelación programada</p>
                 )}
               </div>
             </div>
@@ -177,7 +192,7 @@ export function AccountResumenTab({
 
           {/* Quick actions & External Links */}
           <Card compact noPadding>
-            <p className="px-4 pt-4 text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Accesos rapidos</p>
+            <p className="px-4 pt-4 text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Accesos rápidos</p>
             <nav className="mt-2 divide-y divide-[#f5f5f7]">
               {quickActions.map(({ tab, label, sub, icon: Icon }) => (
                 <button
@@ -217,20 +232,22 @@ export function AccountResumenTab({
                     <ExternalLink className="h-4 w-4 shrink-0 text-[#d2d2d7]" aria-hidden />
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => window.open(checkoutUrl, "_blank", "noopener,noreferrer")}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-[#f5f5f7]"
-                >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-50">
-                    <CreditCard className="h-4 w-4 text-sky-600" aria-hidden />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-[#1d1d1f]">Ir a caja</p>
-                    <p className="text-xs text-[#a1a1a6]">Punto de venta y facturación</p>
-                  </div>
-                  <ExternalLink className="h-4 w-4 shrink-0 text-[#d2d2d7]" aria-hidden />
-                </button>
+                {salesPanelUrl && (
+                  <button
+                    type="button"
+                    onClick={() => window.open(salesPanelUrl, "_blank", "noopener,noreferrer")}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-[#f5f5f7]"
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-50">
+                      <CreditCard className="h-4 w-4 text-sky-600" aria-hidden />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-[#1d1d1f]">Ir a caja</p>
+                      <p className="text-xs text-[#a1a1a6]">Pedidos, ventas y menú de tu negocio</p>
+                    </div>
+                    <ExternalLink className="h-4 w-4 shrink-0 text-[#d2d2d7]" aria-hidden />
+                  </button>
+                )}
               </nav>
             </div>
           </Card>

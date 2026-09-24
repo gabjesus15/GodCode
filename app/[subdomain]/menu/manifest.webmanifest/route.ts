@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedCompany } from "../../../../utils/tenant-cache";
+import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 
 type RouteContext = {
 	params: Promise<{ subdomain: string }>;
@@ -23,15 +24,14 @@ export async function GET(_req: Request, context: RouteContext) {
 	const startUrl = `${pathPrefix}/menu`;
 	const scope = pathPrefix ? `${pathPrefix}/` : "/";
 
-	const status = company?.subscription_status?.toLowerCase();
-	const isUnavailable = status === "suspended" || status === "cancelled";
+	const isUnavailable = !isTenantSubscriptionAccessible(company);
 
 	const name =
 		isUnavailable
-			? "GodCode Menu"
+			? "Gcode Menu"
 			: (company?.theme_config?.displayName as string) ??
 				company?.name ??
-				"GodCode Menu";
+				"Gcode Menu";
 
 	const iconVersion = encodeURIComponent(
 		company ? tenantBrandingIconVersionSeed(company) : String(name),

@@ -13,6 +13,9 @@ import {
 } from "@/lib/super-admin/super-admin-metrics";
 import { fetchAnalyticsEventsPaged } from "@/lib/analytics/fetch-analytics-events";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { requireSuperAdminSession } from "@/lib/super-admin/require-super-admin-session";
+
+export const metadata = { title: "Tráfico" };
 
 /** @service-role layout-guard */
 
@@ -52,6 +55,7 @@ export default async function AnalyticsGlobalPage({
 }: {
   searchParams: Promise<{ period?: string | string[]; company?: string | string[] }>;
 }) {
+  await requireSuperAdminSession();
   const sp = await searchParams;
   const periodRaw = Array.isArray(sp.period) ? sp.period[0] : sp.period;
   const companyRaw = Array.isArray(sp.company) ? sp.company[0] : sp.company;
@@ -156,13 +160,13 @@ export default async function AnalyticsGlobalPage({
             href="/dashboard"
             className="inline-flex items-center gap-1 text-xs font-medium text-zinc-500 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Volver al dashboard
+            <ArrowLeft className="h-3.5 w-3.5" /> Volver al inicio
           </Link>
           <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-3xl">
-            Analytics
+            Tráfico
           </h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Tráfico global, visitantes únicos y comportamiento por país y negocio.
+            Visitas y visitantes únicos del landing y de los menús, por país y por negocio.
           </p>
         </div>
         <div className="flex items-center gap-2 self-start rounded-full border border-zinc-200/60 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:text-zinc-300">

@@ -12,7 +12,7 @@
   },
   "landing": {
     "meta": {
-      "title": "GodCode - Crea il tuo negozio online in pochi minuti",
+      "title": "Gcode POS - Crea il tuo negozio online in pochi minuti",
       "description": "Menu digitale, carrello, delivery, cassa, ordini cucina e inventario per la tua attivita. Senza programmare e senza commissioni sulle vendite. Inizia con +1 mese gratis."
     },
     "nav": {
@@ -514,7 +514,8 @@
             "phone": "Telefono",
             "idCard": "Carta d'identita",
             "zelleEmail": "Email Zelle",
-            "connected": "Connesso"
+            "link": "Link di pagamento",
+            "alias": "Alias"
           },
           "fields": {
             "name": "Nome",

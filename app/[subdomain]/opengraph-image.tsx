@@ -19,7 +19,7 @@ export default async function Image({ params }: { params: Promise<{ subdomain: s
 	const company = await getCachedCompany(subdomain);
 	const theme: OGThemeConfig = (company?.theme_config as unknown as OGThemeConfig) || {};
 	const primaryColor = theme.primaryColor ?? '#111827';
-	const name = theme.displayName ?? company?.name ?? 'GodCode';
+	const name = theme.displayName ?? company?.name ?? 'Gcode';
 	const storedLogoUrl = theme.logoUrl ?? theme.imageUrl;
 	const logoUrl = company?.id
 		? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id))

@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { describePortalOrder } from "@/lib/billing/portal-orders";
+import { resolveSubscriptionPhase } from "@/lib/billing/portal-pricing";
 import { CustomerAccountShell } from "@/components/customer-portal/shell/CustomerAccountShell";
 import { CustomerAccountShellSkeleton } from "@/components/customer-portal/shell/CustomerAccountShellSkeleton";
 import { SUBSCRIPTION_STATUS_LABELS, PAYMENT_STATUS_LABELS, TICKET_CATEGORY_LABELS, TICKET_STATUS_LABELS } from "@/components/customer-portal/shared/customer-account-constants";
-import { displayStatus, fmtMoney, branchEntitlementStatusLabel } from "@/components/customer-portal/shared/customer-account-format";
+import { displayStatus, fmtDay, fmtUsd, branchEntitlementStatusLabel } from "@/components/customer-portal/shared/customer-account-format";
 
 import { useAccountSnapshot }  from "@/components/customer-portal/hooks/use-account-snapshot";
-import { usePlanManager }      from "@/components/customer-portal/hooks/use-plan-manager";
+import { useAddonPurchase, useSubscriptionBilling } from "@/components/customer-portal/hooks/use-subscription-billing";
 import { useStoreTheme }       from "@/components/customer-portal/hooks/use-store-theme";
 import { useMenuSettings }     from "@/components/customer-portal/hooks/use-menu-settings";
 import { useBranchFlow }       from "@/components/customer-portal/hooks/use-branch-flow";
@@ -16,6 +18,7 @@ import { useBillingFilters }   from "@/components/customer-portal/hooks/use-bill
 import { useTickets }          from "@/components/customer-portal/hooks/use-tickets";
 import { useUnsavedGuard }     from "@/components/customer-portal/hooks/use-unsaved-guard";
 import { useConfirmDialog }    from "@/components/customer-portal/ui/ConfirmDialog";
+import { OrderPaymentDialog }  from "@/components/customer-portal/payments/order-payment-dialog";
 
 import { AccountResumenTab }    from "@/components/customer-portal/account/tabs/account-resumen-tab";
 import { AccountPerfilPublicoTab } from "@/components/customer-portal/account/tabs/account-perfil-publico-tab";
@@ -28,7 +31,9 @@ import { AccountSeguridadTab }  from "@/components/customer-portal/account/tabs/
 
 import type {
   AccountActivityItem,
+  BillingOptionsResponse,
   CustomerAccountClientProps,
+  PaymentSummary,
   PortalTab,
 } from "@/components/customer-portal/shared/customer-account-types";
 
@@ -41,11 +46,12 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
   } = props;
 
   const [mounted,       setMounted]       = useState(false);
-  const [tab,           setTab]           = useState<PortalTab>("resumen");
+  const [tab,           setTab]           = useState<PortalTab>(props.initialTab ?? "resumen");
   const [activityFilter, setActivityFilter] = useState<"all" | "pago" | "ticket" | "extra">("all");
-  const [billingOptions, setBillingOptions] = useState<import("@/components/customer-portal/shared/customer-account-types").BillingOptionsResponse | null>(initialBillingOptions ?? null);
+  const [billingOptions, setBillingOptions] = useState<BillingOptionsResponse | null>(initialBillingOptions ?? null);
   const [billingLoading, setBillingLoading] = useState(false);
-  const [_billingLoadError, setBillingLoadError] = useState<string | null>(null);
+  /** Pedido que se está pagando en el diálogo de pago (se abre desde cualquier pestaña). */
+  const [payingOrder, setPayingOrder] = useState<PaymentSummary | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -56,23 +62,58 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
   const snapshot = useAccountSnapshot(
     payments, initialTickets, initialBranchEntitlements, activeAddons,
     company.subscriptionStatus, company.subscriptionEndsAt,
-    { enablePolling: tab !== "tienda" && tab !== "seguridad", companyId: company.id, initialSyncedAt },
+    {
+      enablePolling: tab !== "tienda" && tab !== "seguridad",
+      companyId: company.id,
+      initialSyncedAt,
+      initialScheduledPlanChange: company.scheduledPlanChange,
+    },
   );
+  const refreshAll = useCallback(() => snapshot.refresh("full"), [snapshot]);
 
-  const planManager = usePlanManager(
-    availablePlans, availableAddons, snapshot.activeAddonRows,
-    billingOptions?.activeBranchCount ?? branches.filter((b) => b.is_active !== false).length,
-    snapshot.subscriptionEndsAt,
-    snapshot.subscriptionStatus,
-    () => snapshot.refresh("full"),
-    (status, endsAt) => { snapshot.setSubscriptionStatus(status); snapshot.setSubscriptionEndsAt(endsAt); },
-    { previewEnabled: tab === "plan" },
-  );
+  const loadBillingOptions = useCallback(async () => {
+    setBillingLoading(true);
+    try {
+      const res  = await fetch("/api/customer-account/billing", { cache: "no-store" });
+      const data = (await res.json().catch(() => ({}))) as BillingOptionsResponse & { error?: string };
+      if (res.ok) setBillingOptions(data);
+    } catch {
+      // Sin opciones frescas se siguen usando las del servidor.
+    } finally {
+      setBillingLoading(false);
+    }
+  }, []);
+
+  const openOrderPayment = useCallback((order: PaymentSummary) => {
+    setPayingOrder(order);
+    if (!billingOptions && !billingLoading) void loadBillingOptions();
+  }, [billingOptions, billingLoading, loadBillingOptions]);
+
+  const openOrderById = useCallback((orderId: string) => {
+    const order = snapshot.paymentRows.find((row) => row.id === orderId);
+    if (order) openOrderPayment(order);
+    else void snapshot.refresh("payments");
+  }, [snapshot, openOrderPayment]);
+
+  const subscriptionBilling = useSubscriptionBilling({
+    subscriptionStatus: snapshot.subscriptionStatus,
+    subscriptionEndsAt: snapshot.subscriptionEndsAt,
+    onRefresh: refreshAll,
+    onSubscriptionChange: (status, endsAt) => { snapshot.setSubscriptionStatus(status); snapshot.setSubscriptionEndsAt(endsAt); },
+    onOrderCreated: openOrderPayment,
+    onOpenOrder: openOrderById,
+  });
+
+  const addonPurchase = useAddonPurchase({
+    onRefresh: refreshAll,
+    onOrderCreated: openOrderPayment,
+    onApplied: (message) => subscriptionBilling.setFeedback({ tone: "success", message }),
+  });
 
   const storeTheme = useStoreTheme(
     () => confirmDialog.confirm({
       title:        "Descartar cambios",
-      description:  "Se descartaran tus cambios y el borrador volvera al estado de produccion.",
+      description:  "Se descartarán tus cambios y el borrador volverá a lo que está publicado.",
       confirmLabel: "Descartar",
       tone:         "danger",
     })
@@ -90,61 +131,45 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
     tickets.setOnNavigateToSupport(() => setTab("soporte"));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const canRequestBranchWithoutPayment = billingOptions?.requiresPaymentForExpansion === false;
+  const activeBranchesCount = billingOptions?.activeBranchCount ?? branches.filter((b) => b.is_active !== false).length;
 
-  const branchFlow = useBranchFlow(
-    company, billingOptions,
-    billingOptions?.activeBranchCount ?? branches.filter((b) => b.is_active !== false).length,
-    snapshot.subscriptionEndsAt,
-    canRequestBranchWithoutPayment,
-    (ticket) => tickets.setTickets((prev) => ticket ? [ticket, ...prev.filter((t) => t.id !== ticket.id)] : prev),
-    (payment) => snapshot.setPaymentRows((prev) => [payment, ...prev]),
-    (entitlement) => snapshot.setBranchEntitlements((prev) => [entitlement, ...prev]),
-    async () => { await loadBillingOptions(); },
-  );
+  const branchFlow = useBranchFlow({
+    company,
+    billingOptions,
+    activeBranchesCount,
+    onTicketCreated: (ticket) => tickets.setTickets((prev) => ticket ? [ticket, ...prev.filter((t) => t.id !== ticket.id)] : prev),
+    onOrderCreated: openOrderPayment,
+    onReload: async () => { await Promise.all([loadBillingOptions(), refreshAll()]); },
+  });
 
-  const billing = useBillingFilters(snapshot.paymentRows, company.currency, company.locale);
+  const billing = useBillingFilters(snapshot.paymentRows);
 
   const unsavedGuard = useUnsavedGuard(tab, storeTheme.storeThemeHasLocalUnsavedChanges, confirmDialog);
-
-  // ── Billing options loader ──────────────────────────────────────────────────
-
-  const loadBillingOptions = async () => {
-    setBillingLoading(true);
-    setBillingLoadError(null);
-    try {
-      const res  = await fetch("/api/customer-account/billing", { cache: "no-store" });
-      const data = (await res.json().catch(() => ({}))) as import("@/components/customer-portal/shared/customer-account-types").BillingOptionsResponse & { error?: string };
-      if (!res.ok) {
-        setBillingLoadError(data.error || "No se pudo cargar opciones de facturacion.");
-        return;
-      }
-      setBillingOptions(data);
-      const cur = branchFlow.expansionMethodSlug;
-      const next = cur && data.paymentMethods.some((m) => m.slug === cur)
-        ? cur
-        : data.paymentMethods[0]?.slug ?? "";
-      branchFlow.setExpansionMethodSlug(next);
-    } catch {
-      setBillingLoadError("No se pudo cargar opciones de facturacion.");
-    } finally { setBillingLoading(false); }
-  };
 
   useEffect(() => {
     if ((tab === "plan" || tab === "sucursales") && !billingOptions && !billingLoading) {
       void loadBillingOptions();
     }
-  }, [tab, billingOptions, billingLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tab, billingOptions, billingLoading, loadBillingOptions]);
 
   // Track support tab for ticket polling
   useEffect(() => { tickets.setIsOnSupportTab(tab === "soporte"); }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Derived values shared across tabs ──────────────────────────────────────
 
-  const activeBranchesCount   = billingOptions?.activeBranchCount ?? branches.filter((b) => b.is_active !== false).length;
+  const describeOrder = useCallback((order: PaymentSummary) => describePortalOrder(order, {
+    plan: (id) => (id === company.planId ? company.planName : null) ?? availablePlans.find((plan) => plan.id === id)?.name ?? null,
+    addon: (id) =>
+      availableAddons.find((addon) => addon.id === id)?.name ??
+      snapshot.activeAddonRows.find((row) => row.addonId === id)?.addonName ??
+      null,
+  }), [company.planId, company.planName, availablePlans, availableAddons, snapshot.activeAddonRows]);
+
+  const openOrders = billing.openOrders;
   const openTicketsCount       = snapshot.tickets.filter((t) => ["open","in_progress","waiting_customer"].includes(t.status)).length;
-  const latestPayment          = snapshot.paymentRows[0] ?? null;
+  const latestPaidPayment      = snapshot.paymentRows.find((p) => String(p.status ?? "").toLowerCase() === "paid") ?? null;
   const activeEntitlementsCount = snapshot.branchEntitlements.filter((e) => String(e.status).toLowerCase() === "active").length;
+  const phase = subscriptionBilling.phase;
 
   const expiryDays = (() => {
     if (!snapshot.subscriptionEndsAt) return null;
@@ -153,31 +178,44 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
     return Math.ceil((end - Date.now()) / (1000 * 60 * 60 * 24));
   })();
 
-  const normalizedStatus     = String(snapshot.subscriptionStatus ?? "").trim().toLowerCase();
-  const cancellationScheduled = normalizedStatus === "cancelled" && expiryDays != null && expiryDays > 0;
+  const cancellationScheduled = resolveSubscriptionPhase(snapshot.subscriptionStatus, snapshot.subscriptionEndsAt) === "cancelling";
 
   const accountAlerts = useMemo(() => {
     const alerts: Array<{ id: string; tone: "warn" | "info" | "ok"; title: string; description: string }> = [];
-    if (expiryDays != null && expiryDays <= 7) {
-      alerts.push({ id: "subscription-expiry", tone: expiryDays <= 0 ? "warn" : "info", title: expiryDays <= 0 ? "Tu plan esta vencido" : "Tu plan vence pronto", description: expiryDays <= 0 ? "Regulariza tu suscripcion para evitar interrupciones en tus modulos activos." : `Te quedan ${expiryDays} dia${expiryDays === 1 ? "" : "s"}. Revisa facturacion para evitar cortes.` });
+    const endDate = fmtDay(snapshot.subscriptionEndsAt, company.timezone);
+    if (phase === "expired") {
+      alerts.push({ id: "expired", tone: "warn", title: "Tu suscripción venció", description: "Tu tienda está fuera de línea. Renueva desde «Plan y extras» para volver a estar en línea." });
+    } else if (phase === "cancelling") {
+      alerts.push({ id: "cancelling", tone: "info", title: "Cancelaste tu suscripción", description: `Tu tienda sigue online hasta el ${endDate}. Puedes reactivarla gratis antes de esa fecha.` });
+    } else if (phase === "payment_pending") {
+      alerts.push({ id: "payment-pending", tone: "info", title: "Estamos validando tu primer pago", description: "Te avisamos por correo en cuanto tu cuenta quede activa." });
+    } else if ((phase === "active" || phase === "trial") && expiryDays != null && expiryDays <= 7) {
+      alerts.push({
+        id: "expiring",
+        tone: "info",
+        title: phase === "trial" ? "Tu prueba termina pronto" : "Tu plan vence pronto",
+        description: `${expiryDays === 1 ? "Queda 1 día" : `Quedan ${expiryDays} días`} (hasta el ${endDate}). ${phase === "trial" ? "Paga tu plan" : "Renueva"} para no cortar el servicio.`,
+      });
     }
-    if (billing.pendingPaymentsCount > 0) {
-      alerts.push({ id: "pending-payments", tone: "info", title: "Tienes pagos pendientes de validacion", description: `${billing.pendingPaymentsCount} pago${billing.pendingPaymentsCount === 1 ? "" : "s"} requiere${billing.pendingPaymentsCount === 1 ? "" : "n"} seguimiento.` });
+    const awaitingOrders = openOrders.filter((order) => String(order.status ?? "").toLowerCase() !== "pending_validation" || !order.reference_file_url);
+    if (awaitingOrders.length > 0) {
+      alerts.push({ id: "orders", tone: "info", title: awaitingOrders.length === 1 ? "Tienes un pago por completar" : `Tienes ${awaitingOrders.length} pagos por completar`, description: "Págalos con PayPal o envía el comprobante desde «Plan y extras» o «Facturación»." });
+    } else if (openOrders.length > 0) {
+      alerts.push({ id: "orders-review", tone: "ok", title: "Estamos revisando tu comprobante", description: "Te avisamos por correo en cuanto lo validemos." });
     }
-    if (billingOptions?.effectiveMaxBranches != null) {
-      const remaining = billingOptions.effectiveMaxBranches - activeBranchesCount;
-      if (remaining <= 1) alerts.push({ id: "branch-capacity", tone: remaining <= 0 ? "warn" : "info", title: remaining <= 0 ? "Llegaste al limite de sucursales" : "Te queda poco cupo de sucursales", description: remaining <= 0 ? "Para agregar una nueva sucursal debes comprar expansion desde esta misma cuenta." : `Te queda ${remaining} cupo disponible antes de requerir expansion.` });
+    if (billingOptions?.requiresPaymentForExpansion && (billingOptions.effectiveMaxBranches ?? 0) > 1) {
+      alerts.push({ id: "branch-capacity", tone: "ok", title: "Usaste todo el cupo de sucursales", description: "Si abres otra, puedes sumar un cupo extra desde «Sucursales»." });
     }
-    if (alerts.length === 0) alerts.push({ id: "all-good", tone: "ok", title: "Tu cuenta esta al dia", description: "No hay alertas criticas por ahora." });
+    if (alerts.length === 0) alerts.push({ id: "all-good", tone: "ok", title: "Tu cuenta está al día", description: "No hay nada pendiente por ahora." });
     return alerts;
-  }, [expiryDays, billing.pendingPaymentsCount, billingOptions?.effectiveMaxBranches, activeBranchesCount]);
+  }, [phase, expiryDays, snapshot.subscriptionEndsAt, company.timezone, openOrders, billingOptions?.requiresPaymentForExpansion, billingOptions?.effectiveMaxBranches]);
 
   const activityTimeline = useMemo(() => {
-    const paymentItems: AccountActivityItem[] = snapshot.paymentRows.map((p) => ({ id: `p-${p.id}`, type: "pago", title: `Pago ${p.payment_reference ?? "sin referencia"}`, detail: `${fmtMoney(p.amount_paid, company.currency, company.locale)} · ${displayStatus(p.status, PAYMENT_STATUS_LABELS)}`, status: String(p.status ?? ""), occurredAt: p.payment_date ?? "", amount: p.amount_paid }));
+    const paymentItems: AccountActivityItem[] = snapshot.paymentRows.map((p) => ({ id: `p-${p.id}`, type: "pago", title: describeOrder(p), detail: `${fmtUsd(p.amount_paid, company.locale)} · ${displayStatus(p.status, PAYMENT_STATUS_LABELS)}`, status: String(p.status ?? ""), occurredAt: p.payment_date ?? "", amount: p.amount_paid }));
     const ticketItems: AccountActivityItem[]  = snapshot.tickets.map((t) => ({ id: `t-${t.id}`, type: "ticket", title: t.subject, detail: `${displayStatus(t.status, TICKET_STATUS_LABELS)} · ${TICKET_CATEGORY_LABELS[t.category] ?? t.category}`, status: t.status, occurredAt: t.lastMessageAt || t.createdAt }));
-    const entitlementItems: AccountActivityItem[] = snapshot.branchEntitlements.map((e) => ({ id: `e-${e.id}`, type: "extra", title: `Compra de ${e.quantity} sucursal(es) extra`, detail: `${fmtMoney(e.amountPaid, company.currency, company.locale)} · ${branchEntitlementStatusLabel(e.status)}`, status: e.status, occurredAt: e.createdAt, amount: e.amountPaid }));
+    const entitlementItems: AccountActivityItem[] = snapshot.branchEntitlements.map((e) => ({ id: `e-${e.id}`, type: "extra", title: e.quantity === 1 ? "Cupo extra de sucursal" : `${e.quantity} cupos extra de sucursal`, detail: `${fmtUsd(e.amountPaid, company.locale)} · ${branchEntitlementStatusLabel(e.status)}`, status: e.status, occurredAt: e.createdAt, amount: e.amountPaid }));
     return [...paymentItems, ...ticketItems, ...entitlementItems].filter((i) => i.occurredAt).sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()).slice(0, 20);
-  }, [snapshot.paymentRows, snapshot.tickets, snapshot.branchEntitlements, company]);
+  }, [snapshot.paymentRows, snapshot.tickets, snapshot.branchEntitlements, company.locale, describeOrder]);
 
   const filteredActivityTimeline = useMemo(
     () =>
@@ -186,6 +224,11 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
         : activityTimeline.filter((item: AccountActivityItem) => item.type === activityFilter),
     [activityTimeline, activityFilter],
   );
+
+  // El pedido del diálogo, con el estado más reciente del servidor.
+  const currentPayingOrder = payingOrder
+    ? snapshot.paymentRows.find((row) => row.id === payingOrder.id) ?? payingOrder
+    : null;
 
   const handleTabChange = async (nextTab: PortalTab) => {
     await unsavedGuard.guardedTabChange(nextTab, setTab);
@@ -216,7 +259,8 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             openTicketsCount={openTicketsCount}
             branches={branches}
             tickets={snapshot.tickets}
-            latestPayment={latestPayment}
+            latestPayment={latestPaidPayment}
+            branchCapacity={billingOptions?.effectiveMaxBranches ?? billingOptions?.maxBranches ?? company.planMaxBranches}
             accountAlerts={accountAlerts}
             expiryDays={expiryDays}
             cancellationScheduled={cancellationScheduled}
@@ -302,73 +346,16 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
         {tab === "plan" && (
           <AccountPlanTab
             company={company}
-            recommendedPlanOption={planManager.recommendedPlanOption}
-            targetPlanId={planManager.targetPlanId}
-            setTargetPlanId={planManager.setTargetPlanId}
-            planMonthlyDelta={planManager.planMonthlyDelta}
-            planAnnualDelta={planManager.planAnnualDelta}
-            setPlanMonths={planManager.setPlanMonths}
-            activeAddonRows={snapshot.activeAddonRows}
             subscriptionEndsAt={snapshot.subscriptionEndsAt}
-            subscriptionCancelReason={planManager.subscriptionCancelReason}
-            setSubscriptionCancelReason={planManager.setSubscriptionCancelReason}
-            subscriptionCancelError={planManager.subscriptionCancelError}
-            subscriptionCancelOk={planManager.subscriptionCancelOk}
-            subscriptionCancelBusy={planManager.subscriptionCancelBusy}
-            cancellationScheduled={planManager.cancellationScheduled}
-            subscriptionReactivateBusy={planManager.subscriptionReactivateBusy}
-            setSubscriptionCancelAcknowledge={planManager.setSubscriptionCancelAcknowledge}
-            setSubscriptionCancelFinalConfirm={planManager.setSubscriptionCancelFinalConfirm}
-            setSubscriptionCancelModalOpen={planManager.setSubscriptionCancelModalOpen}
-            canReactivateCancellation={planManager.canReactivateCancellation}
-            handleReactivateSubscription={planManager.handleReactivateSubscription}
-            addonOfferMatrix={planManager.addonOfferMatrix}
+            scheduledPlanChange={snapshot.scheduledPlanChange}
             availablePlans={availablePlans}
-            planPreview={planManager.planPreview}
-            planPreviewLoading={planManager.planPreviewLoading}
-            selectedPlanOption={planManager.selectedPlanOption}
-            planMonths={planManager.planMonths}
-            planMethodSlug={planManager.planMethodSlug}
-            setPlanMethodSlug={planManager.setPlanMethodSlug}
-            selectedPlanMethodOption={planManager.selectedPlanMethodOption}
-            planReason={planManager.planReason}
-            setPlanReason={planManager.setPlanReason}
-            handlePlanRequest={planManager.handlePlanRequest}
-            planChangeBusy={planManager.planChangeBusy}
-            acknowledgedImpactIds={planManager.acknowledgedImpactIds}
-            setAcknowledgedImpactIds={planManager.setAcknowledgedImpactIds}
             availableAddons={availableAddons}
-            targetAddonId={planManager.targetAddonId}
-            setTargetAddonId={planManager.setTargetAddonId}
-            ownedAddonKeys={planManager.ownedAddonKeys}
-            selectedAddonOption={planManager.selectedAddonOption}
-            selectedAddonModeLabel={planManager.selectedAddonModeLabel}
-            selectedAddonSingleInstance={planManager.selectedAddonSingleInstance}
-            selectedAddonOwned={planManager.selectedAddonOwned}
-            addonPreview={planManager.addonPreview}
-            addonPreviewLoading={planManager.addonPreviewLoading}
-            addonQty={planManager.addonQty}
-            setAddonQty={planManager.setAddonQty}
-            selectedAddonEffectiveQty={planManager.selectedAddonEffectiveQty}
-            addonMonthsNumber={planManager.addonMonthsNumber}
-            addonMonths={planManager.addonMonths}
-            setAddonMonths={planManager.setAddonMonths}
-            selectedAddonIsMonthly={planManager.selectedAddonIsMonthly}
-            addonMethodSlug={planManager.addonMethodSlug}
-            setAddonMethodSlug={planManager.setAddonMethodSlug}
-            selectedAddonMethodOption={planManager.selectedAddonMethodOption}
-            addonEstimatedUnit={planManager.addonEstimatedUnit}
-            addonEstimatedTotal={planManager.addonEstimatedTotal}
-            addonNotes={planManager.addonNotes}
-            setAddonNotes={planManager.setAddonNotes}
-            handleAddonRequest={planManager.handleAddonRequest}
-            addonPurchaseBusy={planManager.addonPurchaseBusy}
-            acknowledgedAddonImpactIds={planManager.acknowledgedAddonImpactIds}
-            setAcknowledgedAddonImpactIds={planManager.setAcknowledgedAddonImpactIds}
-            branchEntitlements={snapshot.branchEntitlements}
-            planFeedbackError={planManager.planFeedbackError}
-            planFeedbackOk={planManager.planFeedbackOk}
-            clearPlanFeedback={planManager.clearPlanFeedback}
+            activeAddonRows={snapshot.activeAddonRows}
+            openOrders={openOrders}
+            describeOrder={describeOrder}
+            billing={subscriptionBilling}
+            addonPurchase={addonPurchase}
+            onPayOrder={openOrderPayment}
           />
         )}
 
@@ -376,71 +363,20 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
           <AccountSucursalesTab
             company={company}
             branches={branches}
-            billingLoading={billingLoading}
-            canRequestBranchWithoutPayment={canRequestBranchWithoutPayment}
-            branchUnitPrice={billingOptions?.branchExpansionPriceMonthly ?? 0}
-            branchFlowStep={branchFlow.branchFlowStep}
-            setBranchFlowStep={branchFlow.setBranchFlowStep}
-            isProjectedCapacityInvalid={branchFlow.isProjectedCapacityInvalid}
-            setBillingError={branchFlow.setBillingError}
             billingOptions={billingOptions}
+            billingLoading={billingLoading}
             activeBranchesCount={activeBranchesCount}
-            billingError={branchFlow.billingError}
-            billingOk={branchFlow.billingOk}
-            branchRequestName={branchFlow.branchRequestName}
-            setBranchRequestName={branchFlow.setBranchRequestName}
-            expansionBranchName={branchFlow.expansionBranchName}
-            setExpansionBranchName={branchFlow.setExpansionBranchName}
-            branchRequestAddress={branchFlow.branchRequestAddress}
-            setBranchRequestAddress={branchFlow.setBranchRequestAddress}
-            expansionBranchAddress={branchFlow.expansionBranchAddress}
-            setExpansionBranchAddress={branchFlow.setExpansionBranchAddress}
-            expansionQty={branchFlow.expansionQty}
-            setExpansionQty={branchFlow.setExpansionQty}
-            expansionMonths={branchFlow.expansionMonths}
-            setExpansionMonths={branchFlow.setExpansionMonths}
-            expansionMethodSlug={branchFlow.expansionMethodSlug}
-            setExpansionMethodSlug={branchFlow.setExpansionMethodSlug}
-            projectedActiveBranches={branchFlow.projectedActiveBranches}
-            projectedEffectiveMaxBranches={branchFlow.projectedEffectiveMaxBranches}
-            projectedRemainingBranches={branchFlow.projectedRemainingBranches}
-            expansionQtyNumber={branchFlow.expansionQtyNumber}
-            expansionMonthsNumber={branchFlow.expansionMonthsNumber}
-            expansionAmount={branchFlow.expansionAmount}
-            branchRequestNotes={branchFlow.branchRequestNotes}
-            setBranchRequestNotes={branchFlow.setBranchRequestNotes}
-            expansionNotes={branchFlow.expansionNotes}
-            setExpansionNotes={branchFlow.setExpansionNotes}
-            busy={branchFlow.busy}
-            onBranchRequest={branchFlow.handleBranchRequest}
-            onCreateExpansionPayment={branchFlow.handleCreateExpansionPayment}
-            createdExpansionPayment={branchFlow.createdExpansionPayment}
-            proofUploading={branchFlow.proofUploading}
-            proofFileUrl={branchFlow.proofFileUrl}
-            onUploadPaymentProof={branchFlow.handleUploadPaymentProof}
-            onBranchWizardBack={branchFlow.handleBranchWizardBack}
-            onBranchWizardNext={branchFlow.handleBranchWizardNext}
+            branchEntitlements={snapshot.branchEntitlements}
+            branchFlow={branchFlow}
           />
         )}
 
         {tab === "facturacion" && (
           <AccountFacturacionTab
             company={company}
-            billingPaidTotal={billing.billingPaidTotal}
-            billingPendingTotal={billing.billingPendingTotal}
-            pendingPaymentsCount={billing.pendingPaymentsCount}
-            latestPaidPaymentDate={billing.latestPaidPaymentDate}
-            paymentStatusFilter={billing.paymentStatusFilter}
-            setPaymentStatusFilter={billing.setPaymentStatusFilter}
-            paymentReferenceQuery={billing.paymentReferenceQuery}
-            setPaymentReferenceQuery={billing.setPaymentReferenceQuery}
-            paymentDateFrom={billing.paymentDateFrom}
-            setPaymentDateFrom={billing.setPaymentDateFrom}
-            paymentDateTo={billing.paymentDateTo}
-            setPaymentDateTo={billing.setPaymentDateTo}
-            filteredPayments={billing.filteredPayments}
-            createdExpansionPayment={branchFlow.createdExpansionPayment}
-            onExportPaymentsCsv={billing.handleExportPaymentsCsv}
+            billing={billing}
+            describeOrder={describeOrder}
+            onPayOrder={openOrderPayment}
             onOpenBillingSupport={tickets.handleOpenBillingSupport}
           />
         )}
@@ -476,37 +412,20 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
 
         {tab === "seguridad" && <AccountSeguridadTab />}
 
-        {/* Cancelación de suscripción — modal legacy (se migrará a ConfirmDialog en Fase 3) */}
-        {planManager.subscriptionCancelModalOpen && (
-          <div className="fixed inset-0 z-[70] grid place-items-center bg-zinc-950/55 px-4 py-6 backdrop-blur-[1px]">
-            <div className="w-full max-w-2xl rounded-2xl border border-[#e5e5ea] bg-white p-5 shadow-2xl sm:p-6">
-              <h3 className="text-lg font-semibold text-[#1d1d1f]">Confirmar cancelacion al cierre del ciclo</h3>
-              <p className="mt-2 text-sm text-[#6e6e73]">Tu tienda y panel seguiran operativos hasta la fecha de vencimiento actual. Al llegar esa fecha, el acceso se suspende.</p>
-              <div className="mt-4 rounded-xl border border-[#e5e5ea] bg-[#fbfbfd] px-4 py-3 text-sm text-[#1d1d1f]">
-                <p><strong>Estado actual:</strong> {displayStatus(snapshot.subscriptionStatus, SUBSCRIPTION_STATUS_LABELS)}</p>
-              </div>
-              <div className="mt-4 space-y-2">
-                <label className="flex items-start gap-2 text-sm text-[#6e6e73]">
-                  <input type="checkbox" checked={planManager.subscriptionCancelAcknowledge} onChange={(e) => planManager.setSubscriptionCancelAcknowledge(e.target.checked)} className="mt-1" />
-                  Entiendo que no hay reembolso automatico del periodo ya pagado.
-                </label>
-                <label className="flex items-start gap-2 text-sm text-[#6e6e73]">
-                  <input type="checkbox" checked={planManager.subscriptionCancelFinalConfirm} onChange={(e) => planManager.setSubscriptionCancelFinalConfirm(e.target.checked)} className="mt-1" />
-                  Confirmo que quiero programar la cancelacion al cierre del ciclo.
-                </label>
-              </div>
-              <div className="mt-5 flex flex-wrap justify-end gap-2">
-                <button type="button" onClick={() => planManager.setSubscriptionCancelModalOpen(false)} disabled={planManager.subscriptionCancelBusy} className="h-9 rounded-xl border border-[#d2d2d7] px-4 text-sm font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] disabled:opacity-50">Volver</button>
-                <button type="button" onClick={planManager.handleCancelSubscription} disabled={planManager.subscriptionCancelBusy || !planManager.subscriptionCancelAcknowledge || !planManager.subscriptionCancelFinalConfirm} className="h-9 rounded-xl bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700 disabled:pointer-events-none disabled:opacity-50">
-                  {planManager.subscriptionCancelBusy ? "Programando..." : "Confirmar cancelacion"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <OrderPaymentDialog
+          key={currentPayingOrder?.id ?? "none"}
+          order={currentPayingOrder}
+          concept={currentPayingOrder ? describeOrder(currentPayingOrder) : ""}
+          open={currentPayingOrder != null}
+          onOpenChange={(open) => { if (!open) setPayingOrder(null); }}
+          company={company}
+          billingOptions={billingOptions}
+          billingLoading={billingLoading}
+          onChanged={async () => { await Promise.all([refreshAll(), loadBillingOptions()]); }}
+        />
 
         <div className="rounded-xl border border-[#e5e5ea] bg-[#fbfbfd] px-3.5 py-2.5 text-[13px] leading-relaxed text-[#6e6e73] sm:px-4 sm:text-sm">
-          Soporte directo:{" "}
+          ¿Dudas con tu cuenta? Escríbenos a{" "}
           <a className="font-medium text-indigo-600 hover:underline" href={`mailto:${company.supportEmail}`}>
             {company.supportEmail}
           </a>

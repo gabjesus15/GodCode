@@ -120,6 +120,16 @@ function localeLinesFromUnknown(fallbackLines: string[], raw: unknown): Localize
 	return out;
 }
 
+/** Las claves son las de `plans.prices_by_continent` (no se traducen); esto es solo lo que se muestra. */
+const REGION_LABELS: Record<string, string> = {
+	"USA/Canada": "EE. UU. y Canadá",
+	"Latinoamérica": "Latinoamérica",
+	Europe: "Europa",
+	Asia: "Asia",
+	Africa: "África",
+	Oceania: "Oceanía",
+};
+
 type PriceByContinent = {
 	id: string;
 	continent: "USA/Canada" | "Latinoamérica" | "Europe" | "Asia" | "Africa" | "Oceania";
@@ -636,7 +646,7 @@ export function PlansAdminClient({
 															}));
 														}}
 														rows={2}
-														placeholder={`Descripcion ${i + 1} en ${LOCALE_LABELS[locale]}`}
+														placeholder={`Descripción ${i + 1} en ${LOCALE_LABELS[locale]}`}
 														className="flex-1"
 													/>
 													<Button
@@ -658,7 +668,7 @@ export function PlansAdminClient({
 																},
 															}))
 														}
-														aria-label={`Quitar descripcion ${i + 1} de ${locale}`}
+														aria-label={`Quitar descripción ${i + 1} de ${locale}`}
 													>
 														<Trash2 className="h-4 w-4" aria-hidden />
 													</Button>
@@ -690,7 +700,7 @@ export function PlansAdminClient({
 												}
 											>
 												<Plus className="h-4 w-4" aria-hidden />
-												Añadir descripcion en {LOCALE_LABELS[locale]}
+												Añadir descripción en {LOCALE_LABELS[locale]}
 											</Button>
 										</div>
 									</div>
@@ -747,7 +757,7 @@ export function PlansAdminClient({
 						</div>
 
 						<div className="sm:col-span-2 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3 dark:border-zinc-700 dark:bg-zinc-900/40">
-							<p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Politica de extras del plan</p>
+							<p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Política de extras del plan</p>
 							<p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
 								Configura que extras aparecen como incluidos, bloqueados o permitidos para este plan.
 							</p>
@@ -922,7 +932,7 @@ export function PlansAdminClient({
 														: p.tempSelectedRegions.filter((c: PriceByContinent["continent"]) => c !== continent),
 												}));
 											}}
-											label={region}
+											label={REGION_LABELS[region] ?? region}
 										/>
 									))}
 								</div>
@@ -969,7 +979,7 @@ export function PlansAdminClient({
 								{form.pricesByContinent.map((pc: PriceByContinent, idx: number) => (
 									<div key={pc.id} className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
 										<div className="flex gap-4 items-center">
-											<span className="font-medium text-zinc-900 dark:text-zinc-100">{pc.continent}</span>
+											<span className="font-medium text-zinc-900 dark:text-zinc-100">{REGION_LABELS[pc.continent] ?? pc.continent}</span>
 											<span className="text-sm text-zinc-600 dark:text-zinc-400">{pc.currency} {pc.price}</span>
 										</div>
 										<Button

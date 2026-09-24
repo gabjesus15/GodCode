@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
 import { slugify as slugifyBase } from "../../utils/slugify";
+import { isSingleInstanceAddon, resolveAddonUnitPrice } from "../plans/addon-pricing";
+import { resolveAddonOfferForPlan, type PlanOfferSnapshot } from "../plans/plan-offer-rules";
 import { resolveRegionalPlanPrice } from "../plans/plan-regional-pricing";
 
 function slugifyCompanyPublicSlug(value: string): string {
@@ -35,42 +37,49 @@ export type CheckoutPlan = {
 	id: string;
 	name: string;
 	price: number;
+	max_branches: number | null;
+	max_users: number | null;
 	prices_by_continent?: Record<string, { price: number; currency: string }> | null;
 	features?: unknown;
 };
 
-const MANUAL_METHOD_SLUGS = new Set(["pago_movil", "zelle", "transferencia"]);
+/** Métodos que cobran en línea. Todo lo demás (transferencia, Pago Móvil, Zelle…) es manual. */
+const ONLINE_METHOD_SLUGS = new Set(["paypal"]);
+/** Ya no se cobra con ellos: si alguien los reactiva en el panel, el checkout los rechaza. */
+const RETIRED_METHOD_SLUGS = new Set(["stripe"]);
+
+export function isOnlineMethod(method: string): boolean {
+	return ONLINE_METHOD_SLUGS.has(method);
+}
+
+export function isRetiredMethod(method: string): boolean {
+	return RETIRED_METHOD_SLUGS.has(method);
+}
 
 export function isManualMethod(method: string): boolean {
-	return MANUAL_METHOD_SLUGS.has(method);
+	return Boolean(method) && !isOnlineMethod(method) && !isRetiredMethod(method);
 }
 
 export async function resolveCheckoutPlan(
 	supabaseAdmin: SupabaseClient,
 	app: OnboardingApplication,
 ): Promise<{ plan: CheckoutPlan | null; error?: string; status?: number }> {
-	if (app.plan_id === "custom") {
-		return {
-			plan: {
-				id: "custom",
-				name: app.custom_plan_name ?? "Plan personalizado",
-				price: Number(app.custom_plan_price ?? 0),
-			},
-		};
-	}
-
 	if (!app.plan_id) {
 		return { plan: null, error: "Debes seleccionar un plan antes de pagar", status: 400 };
 	}
 
 	const { data: planData, error: planError } = await supabaseAdmin
 		.from("plans")
-		.select("id,name,price,prices_by_continent,features")
+		.select("id,name,price,prices_by_continent,features,max_branches,max_users,is_active,is_public")
 		.eq("id", app.plan_id)
 		.maybeSingle();
 
 	if (planError || !planData) {
 		return { plan: null, error: "Plan no encontrado", status: 404 };
+	}
+	// Solo planes a la venta: los internos (dev, promos) no se contratan por el onboarding.
+	if (planData.is_active === false || planData.is_public !== true) {
+		return { plan: null, error: "Ese plan ya no está disponible. Elige otro.", status: 409 };
 	}
 
 	return { plan: planData as CheckoutPlan };
@@ -85,38 +94,89 @@ export function resolveCheckoutPlanPrice(plan: CheckoutPlan, country: string | n
 	return resolveRegionalPlanPrice(plan, country);
 }
 
+type AddonCatalogRow = {
+	id: string;
+	slug: string | null;
+	name: string;
+	type: string | null;
+	description?: string | null;
+	price_monthly: number | null;
+	price_one_time: number | null;
+	is_active: boolean | null;
+};
+
+export type PricedApplicationAddon = {
+	addon_id: string;
+	quantity: number;
+	/** Precio unitario vigente (0 si el plan lo incluye). */
+	unit_price: number;
+	is_monthly: boolean;
+};
+
+/**
+ * Extras elegidos, con el precio de la tabla `addons` y la política del plan. Nunca se usa
+ * un precio que venga del navegador: antes el formulario mandaba `price_snapshot` y con
+ * un 0 o un negativo el extra salía gratis o abarataba el total.
+ * - inactivo o bloqueado por el plan: se descarta;
+ * - incluido en el plan: precio 0;
+ * - de instancia única (dominio): cantidad 1.
+ */
+export async function priceApplicationAddons(
+	supabaseAdmin: SupabaseClient,
+	choices: Array<{ addon_id: string; quantity?: number | null }>,
+	plan: PlanOfferSnapshot | null,
+): Promise<PricedApplicationAddon[]> {
+	const ids = [...new Set(choices.map((choice) => String(choice.addon_id ?? "").trim()).filter(Boolean))];
+	if (ids.length === 0) return [];
+
+	const { data } = await supabaseAdmin
+		.from("addons")
+		.select("id,slug,name,type,description,price_monthly,price_one_time,is_active")
+		.in("id", ids);
+	const catalog = new Map(((data ?? []) as AddonCatalogRow[]).map((row) => [row.id, row]));
+
+	const priced: PricedApplicationAddon[] = [];
+	for (const id of ids) {
+		const addon = catalog.get(id);
+		if (!addon || addon.is_active === false) continue;
+		const offer = resolveAddonOfferForPlan(plan, addon);
+		if (offer.status === "blocked") continue;
+		const choice = choices.find((item) => String(item.addon_id).trim() === id);
+		const quantity = isSingleInstanceAddon(addon) ? 1 : Math.max(1, Math.min(99, Number(choice?.quantity) || 1));
+		const { isMonthly, unitPrice } = resolveAddonUnitPrice(addon);
+		priced.push({
+			addon_id: id,
+			quantity,
+			unit_price: offer.status === "included" ? 0 : unitPrice,
+			is_monthly: isMonthly,
+		});
+	}
+	return priced;
+}
+
+/** Total de los extras de la solicitud en USD, recalculado con los precios de la base. */
 export async function calculateAddonsTotalUsd(
 	supabaseAdmin: SupabaseClient,
 	applicationId: string,
 	months: number,
+	plan: PlanOfferSnapshot | null,
 ): Promise<number> {
 	const { data: applicationAddonsRows } = await supabaseAdmin
 		.from("onboarding_application_addons")
-		.select("addon_id,quantity,price_snapshot")
+		.select("addon_id,quantity")
 		.eq("application_id", applicationId);
 
-	const applicationAddons = applicationAddonsRows ?? [];
-	if (applicationAddons.length === 0) return 0;
-
-	const addonIds = [...new Set(applicationAddons.map((a: { addon_id: string }) => a.addon_id))];
-	const { data: addonsMeta } = await supabaseAdmin
-		.from("addons")
-		.select("id,type")
-		.in("id", addonIds);
-	const typeById = new Map(
-		((addonsMeta ?? []) as { id: string; type?: string }[]).map((a) => [a.id, a.type]),
+	const priced = await priceApplicationAddons(
+		supabaseAdmin,
+		(applicationAddonsRows ?? []) as Array<{ addon_id: string; quantity?: number | null }>,
+		plan,
 	);
 
 	let total = 0;
-	for (const row of applicationAddons as { addon_id: string; quantity?: number; price_snapshot?: number }[]) {
-		const price = Number(row.price_snapshot ?? 0);
-		const qty = Math.max(1, Number(row.quantity) || 1);
-		const type = typeById.get(row.addon_id) ?? "one_time";
-		if (type === "monthly") total += price * qty * months;
-		else total += price * qty;
+	for (const addon of priced) {
+		total += addon.unit_price * addon.quantity * (addon.is_monthly ? months : 1);
 	}
-
-	return total;
+	return Number(total.toFixed(2));
 }
 
 export type ProvisionCompanyResult =

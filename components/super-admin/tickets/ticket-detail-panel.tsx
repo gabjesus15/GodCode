@@ -68,7 +68,8 @@ interface TicketDetailPanelProps {
   saving: boolean;
   readOnly: boolean;
   onSave: (updates: { status: TicketStatus; assignedTo: string | null }) => Promise<void>;
-  onSendMessage: (message: string, isInternal: boolean) => Promise<void>;
+  /** Devuelve `true` si se envió: entonces se limpia la respuesta. */
+  onSendMessage: (message: string, isInternal: boolean) => Promise<boolean>;
 }
 
 export function TicketDetailPanel({
@@ -230,12 +231,18 @@ export function TicketDetailPanel({
               checked={internalNote}
               onChange={setInternalNote}
               label="Nota interna"
-              description="No visible para el tenant"
+              description="El cliente no la ve"
             />
             <Button
               onClick={() => {
                 if (!responseMessage.trim()) return;
-                void onSendMessage(responseMessage.trim(), internalNote);
+                void onSendMessage(responseMessage.trim(), internalNote).then((sent) => {
+                  // Antes el texto quedaba en el cuadro y era fácil enviarlo dos veces.
+                  if (sent) {
+                    setResponseMessage("");
+                    setInternalNote(false);
+                  }
+                });
               }}
               disabled={saving || readOnly || !responseMessage.trim()}
               className="w-full bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 sm:w-auto"

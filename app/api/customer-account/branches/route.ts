@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { mergePaymentJsonField } from "@/lib/payments/merge-payment-json-field";
+import { mergePublicPaymentConfig, sanitizeBranchPaymentMethods } from "@/lib/payments/branch-payment-config";
 
 /** @service-role customer-account */
 
@@ -73,7 +73,6 @@ export async function PUT(req: NextRequest) {
     pago_movil,
     zelle,
     transferencia_bancaria,
-    stripe,
     mercadopago,
     paypal,
     order_intake_paused,
@@ -92,7 +91,7 @@ export async function PUT(req: NextRequest) {
   const { data: branch, error: fetchError } = await supabaseAdmin
     .from("branches")
     .select(
-      "company_id, order_intake_paused, pago_movil, zelle, transferencia_bancaria, stripe, mercadopago, paypal",
+      "company_id, order_intake_paused, pago_movil, zelle, transferencia_bancaria, mercadopago, paypal",
     )
     .eq("id", id)
     .maybeSingle();
@@ -137,16 +136,18 @@ export async function PUT(req: NextRequest) {
       map_url: map_url ? map_url.trim() : null,
       origin_lat: origin_lat != null ? Number(origin_lat) : null,
       origin_lng: origin_lng != null ? Number(origin_lng) : null,
-      payment_methods: Array.isArray(payment_methods) ? payment_methods : [],
-      pago_movil: mergePaymentJsonField(pago_movil, branch.pago_movil),
-      zelle: mergePaymentJsonField(zelle, branch.zelle),
-      transferencia_bancaria: mergePaymentJsonField(
+      payment_methods: sanitizeBranchPaymentMethods(payment_methods) ?? [],
+      // Solo datos públicos: el menú los lee con la clave anónima y los enseña al cliente.
+      pago_movil: mergePublicPaymentConfig("pago_movil", pago_movil, branch.pago_movil),
+      zelle: mergePublicPaymentConfig("zelle", zelle, branch.zelle),
+      transferencia_bancaria: mergePublicPaymentConfig(
+        "transferencia_bancaria",
         transferencia_bancaria,
         branch.transferencia_bancaria,
       ),
-      stripe: mergePaymentJsonField(stripe, branch.stripe),
-      mercadopago: mergePaymentJsonField(mercadopago, branch.mercadopago),
-      paypal: mergePaymentJsonField(paypal, branch.paypal),
+      stripe: null,
+      mercadopago: mergePublicPaymentConfig("mercadopago", mercadopago, branch.mercadopago),
+      paypal: mergePublicPaymentConfig("paypal", paypal, branch.paypal),
       order_intake_paused: parsedPaused,
       order_intake_pause_message: parsedPaused ? (order_intake_pause_message ? order_intake_pause_message.trim() : null) : null,
       ...(finalPausedAt !== undefined ? { order_intake_paused_at: finalPausedAt } : {}),

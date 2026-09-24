@@ -220,7 +220,7 @@ export function CompanyUberCredentialsForm({
 							</label>
 							<p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
 								Si lo desactivas, en el panel CEO no podrán elegir Uber Direct ni la modalidad
-								externa por sucursal (útil para cuentas donde solo GodCode configura envío).
+								externa por sucursal (útil para cuentas donde solo Gcode configura envío).
 							</p>
 						</div>
 					</div>

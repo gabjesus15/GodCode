@@ -158,89 +158,71 @@ export default async function NegociosPage() {
 	const companies = await fetchPublicCompanies();
 
 	return (
-		<div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-6 sm:py-12 md:py-16">
-			<div className="mb-8 text-center sm:mb-10">
-				<div className="mb-3 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-slate-600">
-					<Store className="h-3.5 w-3.5 shrink-0" />
-					{t.directory}
+		<main className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
+			<div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+				<div className="max-w-2xl">
+					<h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{t.title}</h1>
+					<p className="mt-3 text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">{t.desc}</p>
 				</div>
-				<h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-					{t.title}
-				</h1>
-				<p className="mx-auto mt-3 max-w-xl text-sm text-slate-500 sm:text-base">
-					{t.desc}
-				</p>
-				<p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-[15px]">
-					{t.seoBody}{" "}
-					<Link href="/sobre-godcode" className="font-medium text-indigo-600 hover:underline">
-						{t.aboutLink}
-					</Link>
-					{" · "}
-					<Link href="/" className="font-medium text-indigo-600 hover:underline">
-						{t.homeLink}
-					</Link>
-				</p>
+				<Link
+					href="/onboarding"
+					className="onboarding-btn-primary inline-flex h-11 shrink-0 items-center justify-center rounded-xl px-5 text-sm"
+				>
+					{t.register}
+				</Link>
 			</div>
 
 			{companies.length === 0 ? (
-				<div className="onboarding-card mx-auto max-w-md p-8 text-center sm:p-10">
-					<Store className="mx-auto h-10 w-10 text-slate-300" />
-					<p className="mt-4 text-sm text-slate-600">{t.emptyTitle}</p>
-					<p className="mt-1 text-xs text-slate-400">{t.emptySub}</p>
-					<Link
-						href="/onboarding"
-						className="mt-5 inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
-					>
-						{t.register}
-					</Link>
+				<div className="mt-10 rounded-2xl border border-dashed border-slate-300 p-8 text-center sm:p-10">
+					<Store className="mx-auto h-8 w-8 text-slate-400" aria-hidden />
+					<p className="mt-4 text-[15px] font-medium text-slate-800">{t.emptyTitle}</p>
+					<p className="mt-1 text-sm text-slate-500">{t.emptySub}</p>
 				</div>
 			) : (
-				<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+				<ul className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 					{companies.map((c) => (
-						<a
-							key={c.id}
-							href={getTenantUrl(c.slug, c.customDomain)}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="onboarding-card flex items-center gap-4 p-4 transition hover:border-indigo-200 hover:shadow-lg"
-						>
-							<div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
-								{c.logoUrl ? (
-									// eslint-disable-next-line @next/next/no-img-element
-									<img src={c.logoUrl} alt="" className="h-full w-full object-contain" />
-								) : (
-									<Store className="h-6 w-6 text-slate-400" />
-								)}
-							</div>
-							<div className="min-w-0 flex-1">
-								<p className="truncate text-sm font-medium text-slate-900">{c.name}</p>
-								<p className="flex items-center gap-1 text-xs text-slate-400">
-									<ExternalLink className="h-3 w-3" />
-									{t.visit}
-								</p>
-							</div>
-						</a>
+						<li key={c.id}>
+							<a
+								href={getTenantUrl(c.slug, c.customDomain)}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="onboarding-option flex items-center gap-4 rounded-2xl p-4"
+							>
+								<span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+									{c.logoUrl ? (
+										// eslint-disable-next-line @next/next/no-img-element
+										<img src={c.logoUrl} alt="" className="h-full w-full object-contain" />
+									) : (
+										<Store className="h-5 w-5 text-slate-400" aria-hidden />
+									)}
+								</span>
+								<span className="min-w-0 flex-1">
+									<span className="block truncate text-sm font-semibold text-slate-900">{c.name}</span>
+									<span className="mt-0.5 flex items-center gap-1 text-xs text-slate-500">
+										{t.visit}
+										<ExternalLink className="h-3 w-3" aria-hidden />
+									</span>
+								</span>
+							</a>
+						</li>
 					))}
-				</div>
+				</ul>
 			)}
 
-			<div className="mt-10 flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-center sm:gap-5">
-				<Link href="/" className="text-sm font-medium text-indigo-600 hover:underline">
-					{t.homeLink}
-				</Link>
-				<span className="hidden text-slate-300 sm:inline" aria-hidden>
-					·
-				</span>
-				<Link href="/sobre-godcode" className="text-sm font-medium text-indigo-600 hover:underline">
-					{t.aboutLink}
-				</Link>
-				<span className="hidden text-slate-300 sm:inline" aria-hidden>
-					·
-				</span>
-				<Link href="/onboarding" className="text-sm font-medium text-slate-500 hover:text-slate-900">
-					← {t.backRegister}
-				</Link>
+			<div className="mt-14 border-t border-slate-200 pt-8">
+				<p className="max-w-3xl text-sm leading-relaxed text-slate-600">{t.seoBody}</p>
+				<nav className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm" aria-label={t.directory}>
+					<Link href="/onboarding" className="onboarding-link font-medium">
+						{t.backRegister}
+					</Link>
+					<Link href="/sobre-godcode" className="onboarding-link font-medium">
+						{t.aboutLink}
+					</Link>
+					<Link href="/" className="onboarding-link font-medium">
+						{t.homeLink}
+					</Link>
+				</nav>
 			</div>
-		</div>
+		</main>
 	);
 }

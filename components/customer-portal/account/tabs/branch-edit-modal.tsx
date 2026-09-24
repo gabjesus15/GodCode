@@ -34,9 +34,8 @@ const ALL_PAYMENT_METHODS = [
   { id: "pago_movil", label: "Pago Móvil", description: "Transferencia rápida móvil (VE)" },
   { id: "zelle", label: "Zelle", description: "Transferencias Zelle (US)" },
   { id: "transferencia_bancaria", label: "Transferencia Bancaria", description: "Depósito o transferencia local" },
-  { id: "stripe", label: "Stripe", description: "Pasarela de pago internacional" },
-  { id: "mercadopago", label: "Mercado Pago", description: "Pasarela de pago en Latam" },
-  { id: "paypal", label: "PayPal", description: "Pagos globales por PayPal" },
+  { id: "mercadopago", label: "Mercado Pago", description: "Enlace de pago o alias" },
+  { id: "paypal", label: "PayPal", description: "Correo o enlace PayPal.me" },
 ];
 
 const parseJsonField = (field: unknown): Record<string, string> => {
@@ -90,17 +89,12 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
   const [tbTitular, setTbTitular] = useState("");
   const [tbEmail, setTbEmail] = useState("");
 
-  // Stripe details
-  const [stripePk, setStripePk] = useState("");
-  const [stripeSk, setStripeSk] = useState("");
-
-  // Mercado Pago details
-  const [mpPublicKey, setMpPublicKey] = useState("");
-  const [mpAccessToken, setMpAccessToken] = useState("");
-
-  // PayPal details
-  const [paypalClientId, setPaypalClientId] = useState("");
-  const [paypalSecretKey, setPaypalSecretKey] = useState("");
+  // Mercado Pago y PayPal: solo lo que el cliente ve en el carrito (el menú es público,
+  // así que aquí nunca van claves de API).
+  const [mpLink, setMpLink] = useState("");
+  const [mpAlias, setMpAlias] = useState("");
+  const [paypalEmail, setPaypalEmail] = useState("");
+  const [paypalLink, setPaypalLink] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,20 +138,15 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
       setTbTitular(tb.titular || "");
       setTbEmail(tb.email || "");
 
-      // Stripe
-      const st = parseJsonField(branch.stripe);
-      setStripePk(st.publishable_key || "");
-      setStripeSk(st.secret_key || "");
-
       // Mercado Pago
       const mp = parseJsonField(branch.mercadopago);
-      setMpPublicKey(mp.public_key || "");
-      setMpAccessToken(mp.access_token || "");
+      setMpLink(mp.link || "");
+      setMpAlias(mp.alias || "");
 
       // PayPal
       const pp = parseJsonField(branch.paypal);
-      setPaypalClientId(pp.client_id || "");
-      setPaypalSecretKey(pp.client_secret || "");
+      setPaypalEmail(pp.email || "");
+      setPaypalLink(pp.link || "");
 
       setError(null);
     }
@@ -228,22 +217,16 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
               email: tbEmail.trim() || null,
             }
           : null,
-        stripe: activeMethods.includes("stripe")
-          ? {
-              publishable_key: stripePk.trim() || null,
-              secret_key: stripeSk.trim() || null,
-            }
-          : null,
         mercadopago: activeMethods.includes("mercadopago")
           ? {
-              public_key: mpPublicKey.trim() || null,
-              access_token: mpAccessToken.trim() || null,
+              link: mpLink.trim() || null,
+              alias: mpAlias.trim() || null,
             }
           : null,
         paypal: activeMethods.includes("paypal")
           ? {
-              client_id: paypalClientId.trim() || null,
-              client_secret: paypalSecretKey.trim() || null,
+              email: paypalEmail.trim() || null,
+              link: paypalLink.trim() || null,
             }
           : null,
       };
@@ -559,7 +542,7 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
             </div>
 
             {/* Payment Details forms */}
-            {activeMethods.some((m) => ["pago_movil", "zelle", "transferencia_bancaria", "stripe", "mercadopago", "paypal"].includes(m)) && (
+            {activeMethods.some((m) => ["pago_movil", "zelle", "transferencia_bancaria", "mercadopago", "paypal"].includes(m)) && (
               <div className="space-y-3">
                 <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-[#8e8e93] border-b border-[#f5f5f7] pb-1 flex items-center gap-1.5">
                   <Settings className="w-3.5 h-3.5" /> Detalles de Métodos Digitales
@@ -676,36 +659,6 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
                     </div>
                   )}
 
-                  {/* Stripe */}
-                  {activeMethods.includes("stripe") && (
-                    <div className="overflow-hidden rounded-xl border border-[#e5e5ea] bg-[#fbfbfd]">
-                      <button
-                        type="button"
-                        onClick={() => toggleDetail("stripe")}
-                        className="flex w-full items-center justify-between px-4.5 py-3 text-left transition hover:bg-[#f5f5f7]"
-                      >
-                        <span className="text-sm font-semibold text-[#1d1d1f]">Configuración Stripe</span>
-                        {expandedDetails.has("stripe") ? (
-                          <ChevronDown className="h-4 w-4 text-[#8e8e93]" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-[#8e8e93]" />
-                        )}
-                      </button>
-                      {expandedDetails.has("stripe") && (
-                        <div className="border-t border-[#e5e5ea] bg-white p-4.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-                          <div>
-                            <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Publishable Key (pk_...)</label>
-                            <input value={stripePk} onChange={(e) => setStripePk(e.target.value)} placeholder="pk_live_..." className={inputClass} type="password" />
-                          </div>
-                          <div>
-                            <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Secret Key (sk_...)</label>
-                            <input value={stripeSk} onChange={(e) => setStripeSk(e.target.value)} placeholder="sk_live_..." className={inputClass} type="password" />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                   {/* Mercado Pago */}
                   {activeMethods.includes("mercadopago") && (
                     <div className="overflow-hidden rounded-xl border border-[#e5e5ea] bg-[#fbfbfd]">
@@ -714,7 +667,7 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
                         onClick={() => toggleDetail("mercadopago")}
                         className="flex w-full items-center justify-between px-4.5 py-3 text-left transition hover:bg-[#f5f5f7]"
                       >
-                        <span className="text-sm font-semibold text-[#1d1d1f]">Configuración Mercado Pago</span>
+                        <span className="text-sm font-semibold text-[#1d1d1f]">Datos para Mercado Pago</span>
                         {expandedDetails.has("mercadopago") ? (
                           <ChevronDown className="h-4 w-4 text-[#8e8e93]" />
                         ) : (
@@ -724,13 +677,16 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
                       {expandedDetails.has("mercadopago") && (
                         <div className="border-t border-[#e5e5ea] bg-white p-4.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
                           <div>
-                            <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Public Key (APP_USR-...)</label>
-                            <input value={mpPublicKey} onChange={(e) => setMpPublicKey(e.target.value)} placeholder="APP_USR-..." className={inputClass} type="password" />
+                            <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Enlace de pago</label>
+                            <input value={mpLink} onChange={(e) => setMpLink(e.target.value)} placeholder="Ej. https://mpago.la/…" className={inputClass} type="url" inputMode="url" />
                           </div>
                           <div>
-                            <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Access Token (APP_USR-...)</label>
-                            <input value={mpAccessToken} onChange={(e) => setMpAccessToken(e.target.value)} placeholder="APP_USR-..." className={inputClass} type="password" />
+                            <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Alias o CVU</label>
+                            <input value={mpAlias} onChange={(e) => setMpAlias(e.target.value)} placeholder="Ej. mitienda.mp" className={inputClass} />
                           </div>
+                          <p className="text-[11px] leading-snug text-[#8e8e93] sm:col-span-2">
+                            Tus clientes ven estos datos al pagar. No pegues aquí claves de API ni tokens.
+                          </p>
                         </div>
                       )}
                     </div>
@@ -744,7 +700,7 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
                         onClick={() => toggleDetail("paypal")}
                         className="flex w-full items-center justify-between px-4.5 py-3 text-left transition hover:bg-[#f5f5f7]"
                       >
-                        <span className="text-sm font-semibold text-[#1d1d1f]">Configuración PayPal</span>
+                        <span className="text-sm font-semibold text-[#1d1d1f]">Datos para PayPal</span>
                         {expandedDetails.has("paypal") ? (
                           <ChevronDown className="h-4 w-4 text-[#8e8e93]" />
                         ) : (
@@ -754,13 +710,16 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
                       {expandedDetails.has("paypal") && (
                         <div className="border-t border-[#e5e5ea] bg-white p-4.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
                           <div>
-                            <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Client ID</label>
-                            <input value={paypalClientId} onChange={(e) => setPaypalClientId(e.target.value)} placeholder="Client ID de PayPal" className={inputClass} type="password" />
+                            <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Correo de PayPal</label>
+                            <input value={paypalEmail} onChange={(e) => setPaypalEmail(e.target.value)} placeholder="Ej. pagos@mitienda.com" className={inputClass} type="email" inputMode="email" />
                           </div>
                           <div>
-                            <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Client Secret</label>
-                            <input value={paypalSecretKey} onChange={(e) => setPaypalSecretKey(e.target.value)} placeholder="Client Secret de PayPal" className={inputClass} type="password" />
+                            <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Enlace PayPal.me</label>
+                            <input value={paypalLink} onChange={(e) => setPaypalLink(e.target.value)} placeholder="Ej. https://paypal.me/mitienda" className={inputClass} type="url" inputMode="url" />
                           </div>
+                          <p className="text-[11px] leading-snug text-[#8e8e93] sm:col-span-2">
+                            Tus clientes ven estos datos al pagar. No pegues aquí claves de API ni tokens.
+                          </p>
                         </div>
                       )}
                     </div>

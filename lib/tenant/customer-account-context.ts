@@ -1,5 +1,6 @@
 import "server-only";
 
+import { sessionNeedsMfa } from "@/lib/auth/mfa-server";
 import { createSupabaseServerClient } from "../../utils/supabase/server";
 import { getCustomerMembership, getSuperAdminRoleByEmail } from "../super-admin/account-access";
 
@@ -19,6 +20,7 @@ export async function getCustomerAccountContext(): Promise<CustomerAccountContex
   } = await supabase.auth.getUser();
 
   if (error || !user?.email) return null;
+  if (await sessionNeedsMfa(supabase)) return null;
 
   const email = user.email.trim().toLowerCase();
   const superAdminRole = await getSuperAdminRoleByEmail(email);

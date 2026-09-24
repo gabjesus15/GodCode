@@ -12,7 +12,7 @@
   },
   "landing": {
     "meta": {
-      "title": "GodCode - Crea tu tienda online en minutos",
+      "title": "Gcode POS - Crea tu tienda online en minutos",
       "description": "Menu digital, carrito, delivery, caja, comandas e inventario para tu negocio. Sin programar, sin comisiones por venta. Empieza con +1 mes gratis."
     },
     "nav": {
@@ -63,13 +63,13 @@
     "layout": {
       "viewBusinesses": "Ver negocios",
       "businesses": "Negocios",
-      "securityFooter": "Protegido con verificacion de correo y encriptacion SSL."
+      "securityFooter": "Protegido con verificación de correo y cifrado SSL."
     },
     "start": {
       "title": "Registra tu negocio",
-      "subtitle": "Completa tus datos y te enviaremos un correo de verificacion.",
+      "subtitle": "Completa tus datos y te enviaremos un correo de verificación.",
       "trust": {
-        "email": "Verificacion por correo",
+        "email": "Verificación por correo",
         "encrypted": "Datos encriptados",
         "time": "Menos de 5 minutos"
       }
@@ -514,7 +514,8 @@
             "phone": "Teléfono",
             "idCard": "Cédula",
             "zelleEmail": "Correo Zelle",
-            "connected": "Conectado"
+            "link": "Enlace de pago",
+            "alias": "Alias"
           },
           "fields": {
             "name": "Nombre",

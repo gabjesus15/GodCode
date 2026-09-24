@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { orIlikeValue } from "@/lib/db/like-pattern";
 import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
 /** @service-role super-admin */
@@ -25,7 +26,10 @@ export async function GET(req: NextRequest) {
     .limit(limit);
 
   if (STATUS_VALUES.has(status)) query = query.eq("status", status);
-  if (q) query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%,message.ilike.%${q}%`);
+  if (q) {
+    const pattern = orIlikeValue(q);
+    query = query.or(`name.ilike.${pattern},email.ilike.${pattern},message.ilike.${pattern}`);
+  }
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

@@ -1,3 +1,5 @@
+import { SUBSCRIPTION_STATUSES } from "@/lib/status/status-labels";
+
 export const COUNTRY_OPTIONS = [
   { value: "CL", label: "Chile" },
   { value: "VE", label: "Venezuela" },
@@ -26,9 +28,8 @@ export const CURRENCY_OPTIONS = [
   { value: "OTRO", label: "Otro" },
 ];
 
-export const SUBSCRIPTION_STATUS_OPTIONS = [
-  { value: "active", label: "Activo" },
-  { value: "suspended", label: "Suspendido" },
-  { value: "payment_pending", label: "Pago pendiente" },
-  { value: "trial", label: "Prueba" },
-];
+/** Los estados que admite la base (CHECK de companies), con los nombres del mapa común. */
+export const SUBSCRIPTION_STATUS_OPTIONS = (["active", "trial", "payment_pending", "cancelled", "suspended"] as const).map((value) => ({
+  value,
+  label: SUBSCRIPTION_STATUSES[value].label,
+}));

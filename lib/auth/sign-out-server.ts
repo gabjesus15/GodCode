@@ -40,7 +40,9 @@ export async function signOutScopesOnResponse(
 		});
 
 		try {
-			await supabase.auth.signOut();
+			// Solo esta sesión: el alcance global también cerraba las del mismo usuario en
+			// otros dispositivos (cerrar en el móvil sacaba del computador).
+			await supabase.auth.signOut({ scope: "local" });
 		} catch {
 			// No bloquear logout por fallos transitorios de red o sesión ya expirada.
 		}

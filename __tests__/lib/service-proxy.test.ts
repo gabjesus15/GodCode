@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest } from "next/server";
 
+import { ONBOARDING_SERVICE_UNAVAILABLE } from "@/lib/onboarding/service-proxy";
+
 describe("proxyToOnboardingBilling", () => {
 	beforeEach(() => {
 		vi.resetModules();
@@ -110,7 +112,7 @@ describe("proxyToOnboardingBilling", () => {
 		expect(result).not.toBeNull();
 		expect(result!.status).toBe(502);
 		const body = await result!.json();
-		expect(body.error).toBe("Microservicio no disponible");
+		expect(body.error).toBe(ONBOARDING_SERVICE_UNAVAILABLE);
 	});
 
 	it("no envia el header host original al upstream", async () => {
@@ -152,7 +154,7 @@ describe("proxyToOnboardingBilling", () => {
 		expect(result).not.toBeNull();
 		expect(result!.status).toBe(502);
 		const body = await result!.json();
-		expect(body.error).toBe("Microservicio no disponible");
+		expect(body.error).toBe(ONBOARDING_SERVICE_UNAVAILABLE);
 	});
 
 	it("proxy_only: incluye x-proxy-mode header", async () => {

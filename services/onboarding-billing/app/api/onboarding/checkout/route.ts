@@ -1,66 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-	Client,
-	Environment,
-	OrdersController,
-	CheckoutPaymentIntent,
-} from "@paypal/paypal-server-sdk";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import {
-	isManualMethod,
-	resolveCheckoutPlan,
-	resolveCheckoutPlanPrice,
 	calculateAddonsTotalUsd,
 	getManualMethodConfig,
+	isManualMethod,
+	isOnlineMethod,
+	resolveCheckoutPlan,
+	resolveCheckoutPlanPrice,
 	updateApplicationPaymentState,
 } from "@/lib/onboarding/checkout-service";
-import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 import { resolveFirstPaymentPromo } from "@/lib/onboarding/first-payment-promo";
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
+import { isPaymentMethodAvailableForCountry } from "@/lib/payments/payment-method-countries";
+import { createPayPalOrder, isPayPalConfigured } from "@/lib/payments/paypal";
+import { getAppUrl } from "@/lib/tenant/app-url";
 
 /** @service-role capability-token */
 
-const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY ?? "";
-const PAYPAL_CLIENT_ID = (process.env.PAYPAL_CLIENT_ID ?? "").trim();
-const PAYPAL_CLIENT_SECRET = (process.env.PAYPAL_CLIENT_SECRET ?? "").trim();
-const STRIPE_SUCCESS_URL =
-	process.env.STRIPE_SUCCESS_URL ??
-	(process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN
-		? `${process.env.NEXT_PUBLIC_TENANT_PROTOCOL || "https"}://${process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN}/checkout/success`
-		: "http://localhost:3001/checkout/success");
-const STRIPE_CANCEL_URL =
-	process.env.STRIPE_CANCEL_URL ??
-	(process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN
-		? `${process.env.NEXT_PUBLIC_TENANT_PROTOCOL || "https"}://${process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN}/onboarding/pago`
-		: "http://localhost:3001/onboarding/pago");
-
-const COUNTRY_NORMALIZE: Record<string, string> = {
-	Chile: "CL",
-	Venezuela: "VE",
-	CL: "CL",
-	VE: "VE",
+type CheckoutApplication = {
+	id: string;
+	email: string;
+	plan_id: string;
+	country: string | null;
+	currency: string | null;
+	company_id: string | null;
+	subscription_payment_method: string | null;
+	payment_status: string | null;
+	business_name: string;
 };
-
-const ALWAYS_AVAILABLE_METHODS = new Set(["stripe", "paypal"]);
-
-function getMethodCountries(method: { countries?: string[] | null }): string[] {
-	return Array.isArray(method.countries)
-		? method.countries.map((value) => String(value).trim()).filter(Boolean)
-		: [];
-}
-
-function isMethodAvailableForCountry(method: { slug?: string | null; countries?: string[] | null }, country: string | null | undefined): boolean {
-	const rawCountry = country?.trim() ?? null;
-	const normalizedCountry = rawCountry ? COUNTRY_NORMALIZE[rawCountry] ?? rawCountry : null;
-	const slug = String(method.slug ?? "").trim().toLowerCase();
-	if (ALWAYS_AVAILABLE_METHODS.has(slug)) return true;
-	if (!normalizedCountry && !rawCountry) return true;
-
-	const countries = getMethodCountries(method);
-	if (countries.length === 0) return false;
-	return countries.includes(normalizedCountry ?? "") || countries.includes(rawCountry ?? "");
-}
 
 export async function POST(req: NextRequest) {
 	try {
@@ -69,54 +37,47 @@ export async function POST(req: NextRequest) {
 		const months = Math.min(12, Math.max(1, Number(body.months) || 1));
 
 		if (!token) {
-			return NextResponse.json({ error: "Token faltante" }, { status: 400 });
+			return NextResponse.json({ error: "Falta el enlace de tu solicitud. Vuelve a abrirlo desde el correo." }, { status: 400 });
 		}
 
-		const { data: app, error: appError } = await supabaseAdmin
+		const { data, error: appError } = await supabaseAdmin
 			.from("onboarding_applications")
-			.select(
-				"id,business_name,responsible_name,email,legal_name,logo_url,fiscal_address,billing_address,billing_rut,social_instagram,social_facebook,social_twitter,description,plan_id,country,payment_methods,currency,custom_plan_name,custom_plan_price,custom_domain,company_id,subscription_payment_method,payment_reference,payment_status,payment_reference_url"
-			)
+			.select("id,email,plan_id,country,currency,company_id,subscription_payment_method,payment_status,business_name")
 			.eq("verification_token", token)
 			.in("status", ["form_completed", "payment_pending"])
 			.maybeSingle();
+		const app = data as CheckoutApplication | null;
 
 		if (appError || !app) {
 			return NextResponse.json({ error: "Solicitud no encontrada o incompleta" }, { status: 404 });
 		}
-
-		const isPromoEligible = await isFirstPaymentPromoEligible(supabaseAdmin, {
-			email: app.email,
-			excludeCompanyId: app.company_id,
-		});
-		const promo = resolveFirstPaymentPromo(months, isPromoEligible);
+		// Un pago ya cobrado no se vuelve a iniciar (evita cobrar dos veces).
+		if (app.payment_status === "paid") {
+			return NextResponse.json({ error: "Tu pago ya está registrado." }, { status: 409 });
+		}
 
 		const subscriptionMethod = (app.subscription_payment_method ?? "").trim().toLowerCase();
 		if (!subscriptionMethod) {
-			return NextResponse.json({ error: "Selecciona un metodo de pago" }, { status: 400 });
+			return NextResponse.json({ error: "Selecciona un método de pago" }, { status: 400 });
 		}
 
 		const { data: methodRow } = await supabaseAdmin
 			.from("plan_payment_methods")
-			.select("slug,is_active,countries")
+			.select("slug,name,is_active,countries")
 			.eq("slug", subscriptionMethod)
 			.maybeSingle();
 
-		if (!methodRow?.is_active || !isMethodAvailableForCountry(methodRow, app.country ?? null)) {
-			return NextResponse.json(
-				{ error: "El metodo de pago seleccionado no esta disponible" },
-				{ status: 400 }
-			);
-		}
-
-		const isPayPal = subscriptionMethod === "paypal";
+		const isPayPal = isOnlineMethod(subscriptionMethod);
 		const isManualPayment = isManualMethod(subscriptionMethod);
-
-		if (!isManualPayment && !STRIPE_SECRET && !isPayPal) {
-			return NextResponse.json({ error: "Integración de pago no configurada" }, { status: 503 });
+		if (
+			!methodRow?.is_active ||
+			(!isPayPal && !isManualPayment) ||
+			!isPaymentMethodAvailableForCountry(methodRow.countries, app.country)
+		) {
+			return NextResponse.json({ error: "El método de pago elegido no está disponible. Elige otro." }, { status: 400 });
 		}
-		if (isPayPal && (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET)) {
-			return NextResponse.json({ error: "PayPal no configurado (PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET)" }, { status: 503 });
+		if (isPayPal && !isPayPalConfigured()) {
+			return NextResponse.json({ error: "PayPal no está disponible en este momento. Elige otro método." }, { status: 503 });
 		}
 
 		const planResult = await resolveCheckoutPlan(supabaseAdmin, app);
@@ -125,258 +86,88 @@ export async function POST(req: NextRequest) {
 		}
 		const plan = planResult.plan;
 		const planPricing = resolveCheckoutPlanPrice(plan, app.country);
-		const chargedPlan = { ...plan, price: planPricing.price };
 
-		const addonsTotalUsd = await calculateAddonsTotalUsd(supabaseAdmin, app.id, promo.chargedMonths);
+		const isPromoEligible = await isFirstPaymentPromoEligible(supabaseAdmin, {
+			email: app.email,
+			excludeCompanyId: app.company_id,
+		});
+		const promo = resolveFirstPaymentPromo(months, isPromoEligible);
 
-		const amountUsd = Number(chargedPlan.price ?? 0) * promo.chargedMonths + addonsTotalUsd;
+		const addonsTotalUsd = await calculateAddonsTotalUsd(supabaseAdmin, app.id, promo.chargedMonths, plan);
+		const amountUsd = Number((Number(planPricing.price ?? 0) * promo.chargedMonths + addonsTotalUsd).toFixed(2));
+		if (!(amountUsd > 0)) {
+			return NextResponse.json({ error: "No pudimos calcular el total. Escríbenos a soporte." }, { status: 409 });
+		}
+
+		const summary = {
+			country: app.country,
+			plan_name: plan.name,
+			plan_price: planPricing.price,
+			plan_region: planPricing.continent,
+			plan_currency: planPricing.currency,
+			addons_total_usd: addonsTotalUsd,
+			amount_usd: amountUsd,
+			months: promo.chargedMonths,
+			granted_months: promo.grantedMonths,
+			promo_applied: promo.promoApplied,
+			currency: app.currency || "USD",
+		};
 
 		if (isPayPal) {
-			return handlePayPalCheckout({
-				app, plan: chargedPlan, planPricing, amountUsd, months: promo.chargedMonths, grantedMonths: promo.grantedMonths, promoApplied: promo.promoApplied, token,
-				paypalClientId: PAYPAL_CLIENT_ID,
-				paypalClientSecret: PAYPAL_CLIENT_SECRET,
+			const appUrl = getAppUrl();
+			const order = await createPayPalOrder({
+				amountUsd,
+				description: `${plan.name} · ${app.business_name}`,
+				meta: {
+					kind: "onboarding",
+					applicationId: app.id,
+					chargedMonths: promo.chargedMonths,
+					grantedMonths: promo.grantedMonths,
+				},
+				returnUrl: `${appUrl}/api/onboarding/paypal-capture`,
+				cancelUrl: `${appUrl}/onboarding/pago?token=${encodeURIComponent(token)}`,
 			});
+			if (!order.ok) {
+				return NextResponse.json({ error: order.error }, { status: 502 });
+			}
+
+			// La orden vigente queda en la solicitud: la captura solo acepta esta.
+			await updateApplicationPaymentState(supabaseAdmin, app.id, {
+				applicationStatus: "payment_pending",
+				paymentReference: order.orderId,
+				paymentStatus: "pending",
+				paymentReferenceUrl: null,
+				paymentMonths: promo.chargedMonths,
+				paymentAmount: amountUsd,
+			});
+
+			return NextResponse.json({ ok: true, sessionId: order.orderId, url: order.approveUrl, ...summary });
 		}
 
-		if (isManualPayment) {
-			return handleManualCheckout({
-				app, amountUsd, months: promo.chargedMonths, grantedMonths: promo.grantedMonths, promoApplied: promo.promoApplied, subscriptionMethod, plan: chargedPlan, planPricing,
-			});
-		}
+		const paymentRef = `manual-${app.id}-${Date.now()}`;
+		await updateApplicationPaymentState(supabaseAdmin, app.id, {
+			applicationStatus: "payment_pending",
+			paymentReference: paymentRef,
+			paymentStatus: "pending_validation",
+			// Un comprobante subido para otro importe no vale para este.
+			paymentReferenceUrl: null,
+			paymentMonths: promo.chargedMonths,
+			paymentAmount: amountUsd,
+		});
 
-		return handleStripeCheckout({
-			app, plan: chargedPlan, planPricing, amountUsd, addonsTotalUsd, months: promo.chargedMonths, grantedMonths: promo.grantedMonths, promoApplied: promo.promoApplied, token,
+		const methodConfig = await getManualMethodConfig(supabaseAdmin, subscriptionMethod);
+
+		return NextResponse.json({
+			ok: true,
+			manual: true,
+			payment_reference: paymentRef,
+			method_slug: subscriptionMethod,
+			method_name: methodRow.name ?? subscriptionMethod,
+			method_config: methodConfig,
+			...summary,
 		});
 	} catch (err) {
 		console.error("onboarding checkout error:", err);
 		return NextResponse.json({ error: "Error interno. Intenta más tarde." }, { status: 500 });
 	}
-}
-
-async function handlePayPalCheckout(params: {
-	app: { id: string; country?: string | null; payment_methods?: string[] | null; currency?: string | null; plan_id: string };
-	plan: { name: string };
-	planPricing: { continent: string; price: number; currency: string };
-	amountUsd: number;
-	months: number;
-	grantedMonths: number;
-	promoApplied: boolean;
-	token: string;
-	paypalClientId: string;
-	paypalClientSecret: string;
-}) {
-	const baseUrl =
-		process.env.NEXT_PUBLIC_APP_URL ||
-		(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-		(process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN
-			? `${process.env.NEXT_PUBLIC_TENANT_PROTOCOL || "https"}://${process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN}`
-			: "http://localhost:3001");
-	const returnUrl = `${baseUrl}/api/onboarding/paypal-capture`;
-	const cancelUrl = `${baseUrl}/onboarding/pago?token=${encodeURIComponent(params.token)}`;
-
-	const paypalClient = new Client({
-		clientCredentialsAuthCredentials: {
-			oAuthClientId: params.paypalClientId,
-			oAuthClientSecret: params.paypalClientSecret,
-		},
-		environment:
-			process.env.PAYPAL_ENVIRONMENT === "production"
-				? Environment.Production
-				: Environment.Sandbox,
-	});
-	const ordersController = new OrdersController(paypalClient);
-
-	let createRes: Awaited<ReturnType<OrdersController["createOrder"]>>;
-	try {
-		createRes = await ordersController.createOrder({
-			body: {
-				intent: CheckoutPaymentIntent.Capture,
-				purchaseUnits: [
-					{
-						customId: `${params.app.id}|${params.months}`,
-						amount: { currencyCode: "USD", value: params.amountUsd.toFixed(2) },
-						description: params.plan.name ?? "Plan",
-					},
-				],
-				applicationContext: { returnUrl, cancelUrl },
-			},
-		});
-	} catch (error) {
-		console.error("paypal create order exception:", error);
-		return NextResponse.json({ error: "Error al crear la orden de PayPal" }, { status: 502 });
-	}
-
-	const order = createRes.result;
-	const orderId = order?.id;
-	const approveLink = order?.links?.find((l) => l.rel === "approve" || l.rel === "payer-action")?.href;
-
-	if (!orderId || !approveLink) {
-		console.error("paypal create order:", createRes);
-		return NextResponse.json({ error: "Error al crear la orden de PayPal" }, { status: 502 });
-	}
-
-	await updateApplicationPaymentState(supabaseAdmin, params.app.id, {
-		applicationStatus: "payment_pending",
-		paymentReference: orderId,
-		paymentStatus: "pending",
-		paymentMonths: params.months,
-		paymentAmount: params.amountUsd,
-		updatedAt: new Date().toISOString(),
-	});
-
-	return NextResponse.json({
-		ok: true,
-		url: approveLink,
-		sessionId: orderId,
-		country: params.app.country,
-		plan_name: params.plan.name,
-		plan_price: params.planPricing.price,
-		plan_region: params.planPricing.continent,
-		plan_currency: params.planPricing.currency,
-		paymentOptions:
-			Array.isArray(params.app.payment_methods) && params.app.payment_methods.length > 0
-				? params.app.payment_methods
-				: ["PayPal"],
-		currency: params.app.currency || "USD",
-		months: params.months,
-		granted_months: params.grantedMonths,
-		promo_applied: params.promoApplied,
-	});
-}
-
-async function handleManualCheckout(params: {
-	app: { id: string; country?: string | null; currency?: string | null; plan_id: string; subscription_payment_method?: string | null };
-	plan: { name: string; price: number };
-	planPricing: { continent: string; price: number; currency: string };
-	amountUsd: number;
-	months: number;
-	grantedMonths: number;
-	promoApplied: boolean;
-	subscriptionMethod: string;
-}) {
-	const paymentRef = `manual-${params.app.id}-${Date.now()}`;
-
-	await updateApplicationPaymentState(supabaseAdmin, params.app.id, {
-		applicationStatus: "payment_pending",
-		paymentReference: paymentRef,
-		paymentStatus: "pending_validation",
-		paymentMonths: params.months,
-		paymentAmount: params.amountUsd,
-		updatedAt: new Date().toISOString(),
-	});
-
-	const methodConfig = await getManualMethodConfig(supabaseAdmin, params.subscriptionMethod);
-
-	return NextResponse.json({
-		ok: true,
-		manual: true,
-		payment_reference: paymentRef,
-		amount_usd: params.amountUsd,
-		months: params.months,
-		granted_months: params.grantedMonths,
-		promo_applied: params.promoApplied,
-		currency: params.app.currency || "USD",
-		country: params.app.country ?? null,
-		plan_name: params.plan.name,
-		plan_price: params.planPricing.price,
-		plan_region: params.planPricing.continent,
-		plan_currency: params.planPricing.currency,
-		method_slug: params.subscriptionMethod,
-		method_config: methodConfig,
-	});
-}
-
-async function handleStripeCheckout(params: {
-	app: {
-		id: string;
-		email?: string | null;
-		country?: string | null;
-		payment_methods?: string[] | null;
-		currency?: string | null;
-		plan_id: string;
-	};
-	plan: { name: string; price: number };
-	planPricing: { continent: string; price: number; currency: string };
-	amountUsd: number;
-	addonsTotalUsd: number;
-	months: number;
-	grantedMonths: number;
-	promoApplied: boolean;
-	token: string;
-}) {
-	if (!STRIPE_SECRET) {
-		return NextResponse.json({ error: "Integración de pago con tarjeta no configurada" }, { status: 503 });
-	}
-
-	const planAmountCents = Math.round(Number(params.plan.price ?? 0) * params.months * 100);
-	const cancelUrl = new URL(STRIPE_CANCEL_URL);
-	cancelUrl.searchParams.set("token", params.token);
-	const stripeParams = new URLSearchParams();
-	stripeParams.append("mode", "payment");
-	stripeParams.append("success_url", `${STRIPE_SUCCESS_URL}?ref={CHECKOUT_SESSION_ID}`);
-	stripeParams.append("cancel_url", cancelUrl.toString());
-	stripeParams.append("line_items[0][price_data][currency]", "usd");
-	stripeParams.append("line_items[0][price_data][product_data][name]", params.plan.name ?? "Plan");
-	stripeParams.append("line_items[0][price_data][unit_amount]", planAmountCents.toString());
-	stripeParams.append("line_items[0][quantity]", "1");
-	if (params.addonsTotalUsd > 0) {
-		stripeParams.append("line_items[1][price_data][currency]", "usd");
-		stripeParams.append("line_items[1][price_data][product_data][name]", "Servicios extra");
-		stripeParams.append("line_items[1][price_data][unit_amount]", Math.round(params.addonsTotalUsd * 100).toString());
-		stripeParams.append("line_items[1][quantity]", "1");
-	}
-	stripeParams.append("metadata[plan_id]", params.app.plan_id);
-	stripeParams.append("metadata[months]", params.months.toString());
-	stripeParams.append("metadata[onboarding_application_id]", params.app.id);
-	stripeParams.append("metadata[payer_email_normalized]", normalizeEmail(params.app.email));
-	if (params.app.email) {
-		stripeParams.append("customer_email", params.app.email);
-	}
-
-	const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${STRIPE_SECRET}`,
-			"Content-Type": "application/x-www-form-urlencoded",
-		},
-		body: stripeParams.toString(),
-	});
-
-	if (!stripeRes.ok) {
-		const text = await stripeRes.text();
-		console.error("stripe checkout:", text);
-		return NextResponse.json({ error: "Error al crear sesión de pago" }, { status: 502 });
-	}
-
-	const session = (await stripeRes.json()) as { id?: string; url?: string };
-
-	if (session.id) {
-		await updateApplicationPaymentState(supabaseAdmin, params.app.id, {
-			applicationStatus: "payment_pending",
-			paymentReference: session.id,
-			paymentStatus: "pending",
-			paymentMonths: params.months,
-			paymentAmount: params.amountUsd,
-			updatedAt: new Date().toISOString(),
-		});
-	}
-
-	return NextResponse.json({
-		ok: true,
-		url: session.url,
-		sessionId: session.id,
-		country: params.app.country,
-		plan_name: params.plan.name,
-		plan_price: params.planPricing.price,
-		plan_region: params.planPricing.continent,
-		plan_currency: params.planPricing.currency,
-		paymentOptions: Array.isArray(params.app.payment_methods) && params.app.payment_methods.length > 0
-			? params.app.payment_methods
-			: (params.app.country === "Venezuela" ? ["Pago Móvil", "Zelle", "Transferencia"] : []),
-		currency: params.app.currency || "USD",
-		months: params.months,
-		granted_months: params.grantedMonths,
-		promo_applied: params.promoApplied,
-	});
 }

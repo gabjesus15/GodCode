@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getAppUrl } from "@/lib/tenant/app-url";
-import { sendOnboardingEmail } from "@/lib/onboarding/emails";
+import { sendEmail, teamInbox } from "@/lib/email/send";
 import { verifyRecaptcha } from "@/lib/onboarding/recaptcha";
 import { isRateLimited } from "@/lib/onboarding/rate-limit";
 import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
@@ -13,10 +13,7 @@ import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
  * Formulario de alta: reCAPTCHA y rate limit por IP y correo.
  */
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
-const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY ?? "";
-const TEAM_EMAIL = process.env.ONBOARDING_TEAM_EMAIL ?? process.env.RESEND_FROM ?? "";
 
 /**
  * Atajo de desarrollo: da el correo por verificado y no envia ningun email.
@@ -90,7 +87,7 @@ export async function POST(req: NextRequest) {
 		const ipToStore = ip || null;
 		const userAgent = req.headers.get("user-agent")?.slice(0, 500) || null;
 
-		const { error: insertError } = await supabaseAdmin
+		const { data: inserted, error: insertError } = await supabaseAdmin
 			.from("onboarding_applications")
 			.insert({
 				business_name: businessName,
@@ -136,47 +133,38 @@ export async function POST(req: NextRequest) {
 		const baseUrl = getAppUrl();
 		const verifyUrl = `${baseUrl}/onboarding/verify/${verificationToken}`;
 
-		const verificationEmail = await sendOnboardingEmail({
-			type: "verification",
+		const applicationId = (inserted as { id?: string } | null)?.id ?? null;
+		const verification = await sendEmail({
+			kind: "verify_email",
 			to: emailRaw,
-			from: RESEND_FROM,
-			apiKey: RESEND_API_KEY,
-			responsibleName,
-			businessName,
-			verifyUrl,
+			applicationId,
+			data: { name: responsibleName, businessName, verifyUrl },
 		});
-		if (!verificationEmail.ok) {
-			console.error("onboarding apply: verification email failed:", verificationEmail.error);
-			return NextResponse.json(
-				{
-					error:
-						"La solicitud se guardó pero no pudimos enviar el correo de verificación. Revisa RESEND_API_KEY y RESEND_FROM en el servicio de onboarding.",
-					detail: verificationEmail.error,
-				},
-				{ status: 502 }
-			);
+		const team = teamInbox();
+		if (team && team !== emailRaw) {
+			const notice = await sendEmail({
+				kind: "team_new_application",
+				to: team,
+				applicationId,
+				data: { businessName, name: responsibleName, email: emailRaw, adminUrl: `${baseUrl}/onboarding/solicitudes` },
+			});
+			if (notice.status === "failed" || notice.status === "skipped") console.error("onboarding apply: team notice", notice);
 		}
 
-		if (TEAM_EMAIL && TEAM_EMAIL !== emailRaw) {
-			const dashboardUrl = `${baseUrl}/onboarding/solicitudes`;
-			const teamEmail = await sendOnboardingEmail({
-				type: "team_notification",
-				to: TEAM_EMAIL,
-				from: RESEND_FROM,
-				apiKey: RESEND_API_KEY,
-				businessName,
-				responsibleName,
-				email: emailRaw,
-				sector,
-				dashboardUrl,
+		if (verification.status !== "sent") {
+			// La solicitud ya existe: se sigue a la pantalla de «revisa tu correo», desde donde se
+			// puede reenviar. Antes se devolvía un 502 con el nombre de las variables de entorno.
+			console.error("onboarding apply: verification email", verification);
+			return NextResponse.json({
+				ok: true,
+				emailSent: false,
+				message: "Guardamos tu solicitud, pero el correo no salió. Pulsa «Reenviar correo» en unos minutos.",
 			});
-			if (!teamEmail.ok) {
-				console.error("onboarding apply: team_notification email failed:", teamEmail.error);
-			}
 		}
 
 		return NextResponse.json({
 			ok: true,
+			emailSent: true,
 			message: "Solicitud enviada. Revisa tu correo para verificar tu email.",
 		});
 	} catch (err) {

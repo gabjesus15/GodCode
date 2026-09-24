@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
-import { sanitizeServerText } from "@/lib/infra/server-sanitize";
+import { cleanMultilineText, cleanPlainText } from "@/lib/infra/server-sanitize";
+import { orIlikeValue } from "@/lib/db/like-pattern";
+import { notifySiteReady } from "@/lib/email/account-notices";
+import { OPEN_TICKET_STATUSES } from "@/lib/status/status-labels";
 
 /** @service-role super-admin */
 
@@ -14,7 +17,7 @@ type TicketRow = {
   id: string;
   company_id: string;
   created_by_email: string;
-  source: "tenant" | "saas";
+  source: "tenant" | "saas" | "system";
   subject: string;
   description: string;
   category: TicketCategory;
@@ -141,6 +144,7 @@ export async function GET(req: NextRequest) {
   const priority = String(searchParams.get("priority") ?? "").trim().toLowerCase();
   const companyId = String(searchParams.get("companyId") ?? "").trim();
   const q = String(searchParams.get("q") ?? "").trim();
+  const assignedTo = String(searchParams.get("assignedTo") ?? "").trim();
 
   let query = supabaseAdmin
     .from("saas_tickets")
@@ -148,10 +152,17 @@ export async function GET(req: NextRequest) {
     .order("last_message_at", { ascending: false })
     .order("created_at", { ascending: false });
 
-  if (STATUS_VALUES.has(status)) query = query.eq("status", status);
+  if (status === "pending") query = query.in("status", [...OPEN_TICKET_STATUSES]);
+  else if (STATUS_VALUES.has(status)) query = query.eq("status", status);
   if (PRIORITY_VALUES.has(priority)) query = query.eq("priority", priority);
   if (companyId) query = query.eq("company_id", companyId);
-  if (q) query = query.or(`subject.ilike.%${q}%,description.ilike.%${q}%,created_by_email.ilike.%${q}%`);
+  if (assignedTo === "unassigned") query = query.is("assigned_to", null);
+  else if (assignedTo === "me") query = query.eq("assigned_to", access.email ?? "");
+  else if (assignedTo) query = query.eq("assigned_to", assignedTo);
+  if (q) {
+    const pattern = orIlikeValue(q);
+    query = query.or(`subject.ilike.${pattern},description.ilike.${pattern},created_by_email.ilike.${pattern}`);
+  }
 
   const { data, error } = await query;
   if (error) {
@@ -166,9 +177,9 @@ export async function POST(req: NextRequest) {
   if (!access.ok) return access.response;
 
   const body = await req.json();
-  const companyId = sanitizeServerText(String(body.companyId ?? ""));
-  const subject = sanitizeServerText(String(body.subject ?? ""));
-  const description = sanitizeServerText(String(body.description ?? ""));
+  const companyId = String(body.companyId ?? "").trim();
+  const subject = cleanPlainText(String(body.subject ?? "")).slice(0, 200);
+  const description = cleanMultilineText(String(body.description ?? ""));
   const category = String(body.category ?? "general").trim().toLowerCase();
   const priority = String(body.priority ?? "medium").trim().toLowerCase() as TicketPriority;
   const assignedTo = String(body.assignedTo ?? "").trim() || null;
@@ -220,10 +231,12 @@ export async function PUT(req: NextRequest) {
   if (!access.ok) return access.response;
 
   const body = await req.json();
-  const id = sanitizeServerText(String(body.id ?? ""));
-  const status = sanitizeServerText(String(body.status ?? "")).toLowerCase();
-  const assignedTo = sanitizeServerText(String(body.assignedTo ?? "")) || null;
-  const responseMessage = sanitizeServerText(String(body.responseMessage ?? ""));
+  const id = String(body.id ?? "").trim();
+  const status = String(body.status ?? "").trim().toLowerCase();
+  // Solo si llega: cambiar el estado ya no borra la asignación.
+  const hasAssignedTo = Object.prototype.hasOwnProperty.call(body ?? {}, "assignedTo");
+  const assignedTo = cleanPlainText(String(body.assignedTo ?? "")) || null;
+  const responseMessage = cleanMultilineText(String(body.responseMessage ?? ""));
   const internalNote = Boolean(body.internalNote ?? false);
 
   if (!id) return NextResponse.json({ error: "Falta id" }, { status: 400 });
@@ -245,17 +258,18 @@ export async function PUT(req: NextRequest) {
   const nextStatus = (status || existing.status) as TicketStatus;
 
   const patch: Record<string, unknown> = {
-    assigned_to: assignedTo,
+    ...(hasAssignedTo ? { assigned_to: assignedTo } : {}),
     updated_at: nowIso,
   };
+  const wasClosed = existing.status === "resolved" || existing.status === "closed";
 
   if (status) patch.status = nextStatus;
 
-  if (!existing.first_response_at && (responseMessage || nextStatus === "in_progress" || nextStatus === "waiting_customer" || nextStatus === "resolved" || nextStatus === "closed")) {
+  if (!existing.first_response_at && ((responseMessage && !internalNote) || nextStatus === "in_progress" || nextStatus === "waiting_customer" || nextStatus === "resolved" || nextStatus === "closed")) {
     patch.first_response_at = nowIso;
   }
 
-  if ((nextStatus === "resolved" || nextStatus === "closed") && !patch.resolved_at) {
+  if ((nextStatus === "resolved" || nextStatus === "closed") && !wasClosed) {
     patch.resolved_at = nowIso;
   }
 
@@ -286,5 +300,11 @@ export async function PUT(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ success: true, ticket: toDto(data as TicketRow) });
+  // Resolver la entrega de un alta es terminar su página: se le avisa al dueño (una vez).
+  const updated = data as TicketRow;
+  if (nextStatus === "resolved" && !wasClosed && String(updated.category) === "onboarding_delivery" && updated.company_id) {
+    await notifySiteReady(supabaseAdmin, String(updated.company_id), id);
+  }
+
+  return NextResponse.json({ success: true, ticket: toDto(updated) });
 }

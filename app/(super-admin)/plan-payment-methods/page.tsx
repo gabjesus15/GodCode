@@ -12,6 +12,7 @@ import { SaasStatusBadge } from "@/components/super-admin/shared/saas-status-bad
 import { SaasSwitch } from "@/components/super-admin/shared/saas-switch";
 import { SaasEmptyState } from "@/components/super-admin/shared/saas-empty-state";
 import { CreditCard } from "lucide-react";
+import { normalizeCountryCode } from "@/lib/geo/country-registry";
 
 type Method = {
 	id: string;
@@ -24,7 +25,9 @@ type Method = {
 	config: Record<string, string>;
 };
 
-const ONLINE_METHOD_SLUGS = ["paypal", "stripe"];
+const ONLINE_METHOD_SLUGS = ["paypal"];
+/** Métodos que el alta y /cuenta ya ignoran (ver `lib/onboarding/checkout-service`); solo queda apagarlos. */
+const RETIRED_METHOD_SLUGS = ["stripe"];
 
 const METHOD_FIELDS: Record<string, { key: string; label: string; placeholder?: string }[]> = {
 	pago_movil: [
@@ -64,6 +67,23 @@ const FALLBACK_KEYS = [
 
 function getFieldsForMethod(slug: string) {
 	return METHOD_FIELDS[slug] ?? FALLBACK_KEYS;
+}
+
+function fieldLabel(slug: string, key: string): string {
+	const known = getFieldsForMethod(slug).find((field) => field.key === key)?.label;
+	if (known) return known;
+	const words = key.replace(/_/g, " ");
+	return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** La lista guardada mezcla códigos y nombres ("CL", "Chile"): cada país se muestra una vez. */
+function formatCountries(countries: string[] | null | undefined): string {
+	const codes = new Set<string>();
+	for (const value of countries ?? []) {
+		const code = normalizeCountryCode(value) ?? String(value).trim();
+		if (code) codes.add(code);
+	}
+	return codes.size > 0 ? [...codes].join(", ") : "Todos los países";
 }
 
 export default function PlanPaymentMethodsPage() {
@@ -154,7 +174,7 @@ export default function PlanPaymentMethodsPage() {
 	return (
 		<div className="flex min-w-0 flex-col gap-5 sm:gap-6">
 			<SaasPageHeader
-				title="Métodos de pago del plan"
+				title="Métodos de cobro"
 				description="Configura los datos que verá el cliente al pagar: teléfono Pago Móvil, email Zelle, banco, etc."
 				icon={CreditCard}
 			/>
@@ -174,7 +194,8 @@ export default function PlanPaymentMethodsPage() {
 			) : (
 				<div ref={listRef} className="grid gap-4">
 					{methods.map((m) => {
-						const isOnline = ONLINE_METHOD_SLUGS.includes(m.slug);
+						const isRetired = RETIRED_METHOD_SLUGS.includes(m.slug);
+						const isOnline = isRetired || ONLINE_METHOD_SLUGS.includes(m.slug);
 						const isToggling = togglingId === m.id;
 						const isEditing = editingId === m.id;
 						return (
@@ -187,12 +208,14 @@ export default function PlanPaymentMethodsPage() {
 										<div className="flex flex-wrap items-center gap-2">
 											<p className="font-medium text-zinc-900 dark:text-zinc-100">{m.name ?? m.slug}</p>
 											<SaasStatusBadge label={m.is_active ? "Activo" : "Inactivo"} variant={m.is_active ? "success" : "neutral"} />
-											{isOnline && (
+											{isRetired ? (
+												<SaasStatusBadge label="Retirado" variant="warning" />
+											) : isOnline ? (
 												<SaasStatusBadge label="Online" variant="info" />
-											)}
+											) : null}
 										</div>
 										<p className="mt-0.5 text-xs text-zinc-500">
-											{m.countries?.join(", ") || "—"} · {m.auto_verify ? "Auto-verificación" : "Validación manual"}
+											{formatCountries(m.countries)} · {m.auto_verify ? "Auto-verificación" : "Validación manual"}
 										</p>
 									</div>
 									<div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -220,10 +243,15 @@ export default function PlanPaymentMethodsPage() {
 									</div>
 								</div>
 
-								{isOnline ? (
+								{isRetired ? (
 									<p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-										Se configura con las variables de entorno (.env):{" "}
-										{m.slug === "paypal" ? "PAYPAL_CLIENT_ID y PAYPAL_CLIENT_SECRET" : "STRIPE_SECRET_KEY"}. No hace falta cargar datos aquí; el cliente paga en la página de {m.name ?? m.slug}.
+										{m.is_active
+											? "Ya no se ofrece en el alta ni en /cuenta, aunque esté activo. Puedes desactivarlo."
+											: "Ya no se ofrece en el alta ni en /cuenta."}
+									</p>
+								) : isOnline ? (
+									<p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+										Se configura con las variables de entorno (.env): PAYPAL_CLIENT_ID y PAYPAL_CLIENT_SECRET. No hace falta cargar datos aquí; el cliente paga en la página de {m.name ?? m.slug}.
 									</p>
 								) : isEditing ? (
 									<div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -246,7 +274,7 @@ export default function PlanPaymentMethodsPage() {
 										{Object.entries(m.config).map(([k, v]) =>
 											v ? (
 												<div key={k}>
-													<dt className="text-zinc-500 capitalize">{k.replace(/_/g, " ")}</dt>
+													<dt className="text-zinc-500">{fieldLabel(m.slug, k)}</dt>
 													<dd className="font-medium text-zinc-900 dark:text-zinc-100">{v}</dd>
 												</div>
 											) : null,

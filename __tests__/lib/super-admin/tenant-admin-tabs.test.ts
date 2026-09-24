@@ -8,7 +8,7 @@ import {
 } from "@/lib/plans/tenant-plan-features";
 
 /**
- * Cada pestaña del panel del local (GodCode Caja) tiene que poder concederse desde
+ * Cada pestaña del panel del local (Gcode Caja) tiene que poder concederse desde
  * aquí. Lo que no esté en TENANT_ADMIN_TAB_OPTIONS lo descarta `sanitizeTabId`
  * antes de guardarse en `features.ceo_tabs`, así que al local nunca le llega y la
  * sección le aparece como "no habilitada".

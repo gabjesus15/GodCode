@@ -22,29 +22,37 @@ export const COUNTRY_REGISTRY: Record<string, CountryConfig> = {
   CA: { code: "CA", name: "Canada", continent: "USA/Canada", currency: "CAD", locale: "en-CA", timezone: "America/Toronto", phonePrefix: "+1" },
   ES: { code: "ES", name: "España", continent: "Europe", currency: "EUR", locale: "es-ES", timezone: "Europe/Madrid", phonePrefix: "+34" },
   BR: { code: "BR", name: "Brasil", continent: "Latinoamérica", currency: "BRL", locale: "pt-BR", timezone: "America/Sao_Paulo", phonePrefix: "+55" },
+  PA: { code: "PA", name: "Panamá", continent: "Latinoamérica", currency: "USD", locale: "es-PA", timezone: "America/Panama", phonePrefix: "+507" },
 };
 
+/**
+ * Claves ya normalizadas como las deja `normalizeCountryCode`: minúsculas, sin tildes ni
+ * eñes y sin espacios. Antes había claves como "españa" o "united states" que nunca podían
+ * coincidir (España se cobraba como Latinoamérica).
+ */
 const COUNTRY_ALIASES: Record<string, string> = {
   chile: "CL",
   venezuela: "VE",
   colombia: "CO",
   argentina: "AR",
   mexico: "MX",
-  méxico: "MX",
   peru: "PE",
-  perú: "PE",
   ecuador: "EC",
   usa: "US",
   "u.s.a": "US",
-  "united states": "US",
+  "u.s.a.": "US",
+  eeuu: "US",
+  "ee.uu.": "US",
+  unitedstates: "US",
+  unitedstatesofamerica: "US",
   estadosunidos: "US",
   estadosunidosdeamerica: "US",
   canada: "CA",
-  canadá: "CA",
-  españa: "ES",
+  espana: "ES",
   spain: "ES",
   brasil: "BR",
   brazil: "BR",
+  panama: "PA",
 };
 
 export function normalizeCountryCode(value: string | null | undefined): string | null {

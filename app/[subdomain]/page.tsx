@@ -58,7 +58,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
   });
 
   const theme = (company?.theme_config as unknown as TenantPageThemeConfig) ?? {};
-  const name = theme.displayName || company.name || resolvedParams.subdomain || "GodCode";
+  const name = theme.displayName || company.name || resolvedParams.subdomain || "Gcode";
   const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
   const logoUrl = await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id)) || null;
 

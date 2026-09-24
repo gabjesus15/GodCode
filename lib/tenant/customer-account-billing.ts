@@ -1,7 +1,11 @@
+import { quoteCoTermCharge, resolveSubscriptionPhase, type SubscriptionPhase } from "@/lib/billing/portal-pricing";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { normalizeCountryCode } from "@/lib/geo/country-registry";
 import { resolveContinentFromCountryInput } from "@/lib/plans/plan-regional-pricing";
-import { computeExpansionAmount } from "@/lib/tenant/customer-account-expansion-pricing";
+import {
+	getPortalPayPalClientId,
+	listPortalPaymentMethods,
+	type PortalPaymentMethod,
+} from "@/lib/tenant/customer-account-payment-methods";
 
 export type CompanyBillingSnapshot = {
 	id: string;
@@ -24,14 +28,6 @@ type AddonSnapshot = {
 	type: string;
 	price_monthly: number | null;
 	price_one_time: number | null;
-};
-
-type MethodSnapshot = {
-	id: string;
-	slug: string;
-	name: string;
-	countries: string[] | null;
-	auto_verify: boolean;
 };
 
 type BranchEntitlementSnapshot = {
@@ -58,8 +54,22 @@ function resolveBranchAddonPrice(addon: AddonSnapshot | null, country: string | 
 	return DEFAULT_BRANCH_EXPANSION_MONTHLY_USD;
 }
 
-export async function getCustomerAccountBillingContext(companyId: string) {
-	const [{ data: company }, { count: branchCount }, { data: addons }, { data: methods }, { data: entitlements }] =
+export type CustomerAccountBillingContext = {
+	company: CompanyBillingSnapshot;
+	phase: SubscriptionPhase;
+	activeBranchCount: number;
+	maxBranches: number | null;
+	extraBranchEntitlements: number;
+	effectiveMaxBranches: number | null;
+	branchAddon: AddonSnapshot | null;
+	branchPriceMonthly: number;
+	requiresPaymentForExpansion: boolean;
+	paymentMethods: PortalPaymentMethod[];
+	paypalClientId: string | null;
+};
+
+export async function getCustomerAccountBillingContext(companyId: string): Promise<CustomerAccountBillingContext | null> {
+	const [{ data: company }, { count: branchCount }, { data: addons }, { data: entitlements }] =
 		await Promise.all([
 			supabaseAdmin
 				.from("companies")
@@ -77,11 +87,6 @@ export async function getCustomerAccountBillingContext(companyId: string) {
 				.eq("is_active", true)
 				.order("sort_order", { ascending: true }),
 			supabaseAdmin
-				.from("plan_payment_methods")
-				.select("id,slug,name,countries,auto_verify")
-				.eq("is_active", true)
-				.order("sort_order", { ascending: true }),
-			supabaseAdmin
 				.from("company_branch_extra_entitlements")
 				.select("quantity,status,expires_at")
 				.eq("company_id", companyId),
@@ -90,28 +95,10 @@ export async function getCustomerAccountBillingContext(companyId: string) {
 	const snapshot = company as CompanyBillingSnapshot | null;
 	if (!snapshot?.id) return null;
 
-	const normalizedCountry = normalizeCountryCode(snapshot.country);
-	const methodsRows = ((methods ?? []) as MethodSnapshot[]).filter((method) => {
-		if (!normalizedCountry) return true;
-		if (!Array.isArray(method.countries) || method.countries.length === 0) return true;
-		return method.countries.includes(normalizedCountry) || method.countries.includes(snapshot.country ?? "");
-	});
-
-	const methodsWithConfig = await Promise.all(
-		methodsRows.map(async (method) => {
-			const { data: configRows } = await supabaseAdmin
-				.from("plan_payment_method_config")
-				.select("key,value")
-				.eq("method_id", method.id);
-
-			const config: Record<string, string> = {};
-			for (const row of configRows ?? []) {
-				if (row.key) config[row.key] = row.value ?? "";
-			}
-
-			return { ...method, config };
-		}),
-	);
+	const [paymentMethods, paypalClientId] = await Promise.all([
+		listPortalPaymentMethods(snapshot.country),
+		getPortalPayPalClientId(snapshot.country),
+	]);
 
 	const branchAddon = ((addons ?? []) as AddonSnapshot[]).find(isBranchExpansionAddon) ?? null;
 	const branchPriceMonthly = resolveBranchAddonPrice(branchAddon, snapshot.country);
@@ -127,6 +114,7 @@ export async function getCustomerAccountBillingContext(companyId: string) {
 
 	return {
 		company: snapshot,
+		phase: resolveSubscriptionPhase(snapshot.subscription_status, snapshot.subscription_ends_at),
 		activeBranchCount,
 		maxBranches,
 		extraBranchEntitlements,
@@ -134,45 +122,32 @@ export async function getCustomerAccountBillingContext(companyId: string) {
 		branchAddon,
 		branchPriceMonthly,
 		requiresPaymentForExpansion,
-		paymentMethods: methodsWithConfig,
+		paymentMethods,
+		paypalClientId,
 	};
 }
 
-export function buildBillingOptionsResponse(
-	companyId: string,
-	billingCtx: NonNullable<Awaited<ReturnType<typeof getCustomerAccountBillingContext>>>,
-) {
-	const pricing = computeExpansionAmount({
-		unitPrice: billingCtx.branchPriceMonthly,
+export function buildBillingOptionsResponse(companyId: string, billingCtx: CustomerAccountBillingContext) {
+	// Una sucursal extra vence con la suscripción: hoy se paga hasta el vencimiento.
+	const coTerm = quoteCoTermCharge({
+		unitMonthly: billingCtx.branchPriceMonthly,
 		quantity: 1,
-		months: 1,
-		subscriptionEndsAt: billingCtx.company.subscription_ends_at,
+		endsAt: billingCtx.company.subscription_ends_at,
 	});
 
 	return {
 		companyId,
+		phase: billingCtx.phase,
 		activeBranchCount: billingCtx.activeBranchCount,
 		maxBranches: billingCtx.maxBranches,
 		extraBranchEntitlements: billingCtx.extraBranchEntitlements,
 		effectiveMaxBranches: billingCtx.effectiveMaxBranches,
 		requiresPaymentForExpansion: billingCtx.requiresPaymentForExpansion,
 		branchExpansionPriceMonthly: billingCtx.branchPriceMonthly,
-		coTermWithSubscription: true,
-		daysUntilPlanEnd: pricing.daysUntilPlanEnd,
-		expansionPreview: {
-			unitPrice: billingCtx.branchPriceMonthly,
-			firstCycleFactor: pricing.firstCycleFactor,
-			sampleAmountQty1Months1: pricing.amount,
-		},
-		branchAddon: billingCtx.branchAddon
-			? {
-					id: billingCtx.branchAddon.id,
-					slug: billingCtx.branchAddon.slug,
-					name: billingCtx.branchAddon.name,
-				}
+		expansionQuote: coTerm
+			? { remainingDays: coTerm.remainingDays, amountPerBranch: coTerm.amount, coversUntil: coTerm.coversUntil }
 			: null,
 		paymentMethods: billingCtx.paymentMethods,
+		paypalClientId: billingCtx.paypalClientId,
 	};
 }
-
-export { computeExpansionAmount };

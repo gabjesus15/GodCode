@@ -40,6 +40,7 @@ const adminPaths = [
   "/plan-payment-methods",
   "/tickets",
   "/herramientas",
+  "/landing",
 ];
 // /onboarding debe servirse en el dominio principal; no reescribir a /[subdomain]/onboarding
 const tenantBypassPaths = ["/api", "/_next", "/favicon.ico", "/onboarding", "/saas-admin"];
@@ -214,7 +215,6 @@ function attachPublicDeliveryApiCors(req: NextRequest, res: NextResponse): NextR
  * compartido, así que exigirles Origin las rompería sin aportar seguridad.
  */
 const CSRF_EXEMPT_API_PATHS = new Set([
-  "/api/onboarding/stripe-webhook",       // firma de Stripe
   "/api/revalidate-menu",                 // REVALIDATION_SECRET (webhook de Supabase)
   "/api/system/cron/subscription-status", // CRON_SECRET
   "/api/system/health",                   // HEALTH_CHECK_SECRET

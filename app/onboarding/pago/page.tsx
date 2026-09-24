@@ -4,6 +4,7 @@ import { Suspense, useCallback, useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLocale } from "next-intl";
+import { AlertCircle, Check, Clock, Copy, MailCheck, Upload } from "lucide-react";
 
 import { Button } from "../../../components/ui/button";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
@@ -114,27 +115,79 @@ function trackAnalyticsEvent(event: string, metadata?: Record<string, unknown>) 
 	}).catch(() => {});
 }
 
-function getChangeMethodLabel(locale: string): string {
-	switch (locale) {
-		case "en":
-			return "Change payment method";
-		case "pt":
-			return "Alterar método de pagamento";
-		case "fr":
-			return "Changer le mode de paiement";
-		case "de":
-			return "Zahlungsmethode ändern";
-		case "it":
-			return "Cambia metodo di pagamento";
-		default:
-			return "Cambiar metodo de pago";
-	}
+
+type Quote = {
+	plan: { name: string; monthly: number };
+	addons: Array<{ name: string; unit: number; quantity: number; monthly: boolean }>;
+	method: { slug: string; name: string } | null;
+};
+
+const usdFormatter = new Intl.NumberFormat("es-CL", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const usd = (value: number) => usdFormatter.format(value);
+
+function capitalize(value: string): string {
+	return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+}
+
+function CopyValue({ value, copyLabel, copiedLabel }: { value: string; copyLabel: string; copiedLabel: string }) {
+	const [copied, setCopied] = useState(false);
+	return (
+		<button
+			type="button"
+			onClick={() => {
+				void navigator.clipboard?.writeText(value).then(() => {
+					setCopied(true);
+					window.setTimeout(() => setCopied(false), 1500);
+				});
+			}}
+			className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 font-sans text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+			aria-label={`${copyLabel}: ${value}`}
+		>
+			{copied ? <Check className="h-3.5 w-3.5 text-emerald-600" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
+			{copied ? copiedLabel : copyLabel}
+		</button>
+	);
+}
+
+function StatusCard({
+	tone,
+	title,
+	body,
+	actionLabel,
+	actionHref,
+	step = false,
+}: {
+	tone: "error" | "done" | "review";
+	title: string;
+	body: string;
+	actionLabel?: string;
+	actionHref?: string;
+	step?: boolean;
+}) {
+	const Icon = tone === "error" ? AlertCircle : tone === "review" ? Clock : MailCheck;
+	const iconClass = tone === "error" ? "bg-red-50 text-red-600" : tone === "review" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700";
+	return (
+		<main className="mx-auto w-full max-w-xl px-5 py-10 sm:px-8 sm:py-16">
+			{step ? <OnboardingStepBar current={3} compact /> : null}
+			<div className="rounded-2xl border border-slate-200 p-6 sm:p-8" role={tone === "error" ? "alert" : "status"}>
+				<span className={`flex h-11 w-11 items-center justify-center rounded-full ${iconClass}`}>
+					<Icon className="h-5 w-5" aria-hidden />
+				</span>
+				<h1 className="mt-5 text-xl font-semibold text-slate-900">{title}</h1>
+				<p className="mt-2 text-[15px] leading-relaxed text-slate-600">{body}</p>
+				{actionLabel && actionHref ? (
+					<Link href={actionHref} className="onboarding-btn-primary mt-6 inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm">
+						{actionLabel}
+					</Link>
+				) : null}
+			</div>
+		</main>
+	);
 }
 
 function PagoContent() {
   const locale = useLocale();
   const copy = getOnboardingPaymentCopy(locale);
-	const changeMethodLabel = getChangeMethodLabel(locale);
 	const searchParams = useSearchParams();
 	const token = searchParams ? searchParams.get("token") : null;
 	const changeMethodHref = token
@@ -151,8 +204,14 @@ function PagoContent() {
 	const [planSummary, setPlanSummary] = useState<{ name: string; price: number; addons: Array<{ name: string; price: number }> } | null>(null);
 	const [promoAvailable, setPromoAvailable] = useState(false);
 	const [subscriptionMethod, setSubscriptionMethod] = useState<string>("");
+	// Estado de la solicitud: evita ofrecer "Ir a pagar" antes de saber el método o si ya pagó.
+	const [appLoaded, setAppLoaded] = useState(false);
+	const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+	const [receiptUploaded, setReceiptUploaded] = useState(false);
 	const [paypalClientId, setPaypalClientId] = useState<string>("");
 	const [paypalSdkReady, setPaypalSdkReady] = useState(false);
+	const [quote, setQuote] = useState<Quote | null>(null);
+	const [businessName, setBusinessName] = useState("");
 	const paypalContainerId = "onboarding-paypal-buttons";
 
 	const isVenezuela = manualData?.country === "Venezuela" || manualData?.country === "VE";
@@ -182,16 +241,30 @@ function PagoContent() {
 		let cancelled = false;
 		fetch(`/api/onboarding/application?token=${encodeURIComponent(token)}`)
 			.then((r) => r.json())
-			.then((data: { subscription_payment_method?: string | null; promo_available?: boolean }) => {
+			.then((data: {
+				subscription_payment_method?: string | null;
+				promo_available?: boolean;
+				payment_status?: string | null;
+				receipt_uploaded?: boolean;
+				business_name?: string | null;
+				quote?: Quote | null;
+			}) => {
 				if (cancelled) return;
 				setSubscriptionMethod((data.subscription_payment_method ?? "").trim().toLowerCase());
 				setPromoAvailable(data.promo_available === true);
+				setPaymentStatus(data.payment_status ?? null);
+				setReceiptUploaded(data.receipt_uploaded === true);
+				setBusinessName(String(data.business_name ?? "").trim());
+				setQuote(data.quote ?? null);
 			})
 			.catch(() => {
 				if (!cancelled) {
 					setSubscriptionMethod("");
 					setPromoAvailable(false);
 				}
+			})
+			.finally(() => {
+				if (!cancelled) setAppLoaded(true);
 			});
 		return () => {
 			cancelled = true;
@@ -458,227 +531,302 @@ function PagoContent() {
 		}
 	}, [token, manualData, referenceFile, copy]);
 
+	const ui = copy.ui;
+	const monthsText = (n: number) => `${n} ${n === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural}`;
+	/** Mismo cálculo que el checkout: plan × meses + extras mensuales × meses + extras únicos. */
+	const totalFor = (m: number): number | null => {
+		if (!quote) return null;
+		let total = quote.plan.monthly * m;
+		for (const addon of quote.addons) total += addon.unit * addon.quantity * (addon.monthly ? m : 1);
+		return Math.round(total * 100) / 100;
+	};
+
 	if (!token) {
+		// Sin enlace no sabemos en qué paso va: no se muestra la barra de pasos (antes
+		// marcaba registro y plan como hechos).
+		return <StatusCard tone="error" title={copy.noTokenTitle} body={copy.noTokenBody} actionLabel={copy.backHome} actionHref="/onboarding" />;
+	}
+
+	const alreadyPaid = paymentStatus === "paid";
+	const inReview = !manualData && paymentStatus === "pending_validation" && receiptUploaded;
+	if (alreadyPaid || inReview) {
 		return (
-			<main className="onboarding-main relative mx-auto w-full max-w-lg px-5 py-8 sm:px-6 sm:py-12 md:py-16">
-				<OnboardingStepBar current={3} />
-				<div className="onboarding-card max-w-md p-6 text-center sm:p-8">
-					<p className="text-sm text-red-600">{copy.noTokenTitle}. {copy.noTokenBody}</p>
-					<Link href="/onboarding" className="mt-4 inline-block text-sm font-medium text-indigo-600 hover:underline">
-						{copy.backHome}
-					</Link>
-				</div>
-			</main>
+			<StatusCard
+				step
+				tone={alreadyPaid ? "done" : "review"}
+				title={alreadyPaid ? copy.alreadyPaidTitle : copy.manualSuccessTitle}
+				body={alreadyPaid ? copy.alreadyPaidBody : copy.manualSuccessBody}
+				actionLabel={alreadyPaid ? copy.loginLabel : undefined}
+				actionHref={alreadyPaid ? "/login" : undefined}
+			/>
 		);
 	}
 
-	/* ── Manual payment ── */
-	if (manualData) {
-		return (
-			<main className="onboarding-main relative mx-auto max-w-lg px-5 py-8 sm:px-6 sm:py-12 md:py-16">
-				<OnboardingStepBar current={3} />
-				<div className="mb-5 text-center">
-					<Link
-						href={changeMethodHref}
-						className="inline-block rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-					>
-						{changeMethodLabel}
-					</Link>
-				</div>
-				<div className="onboarding-card space-y-5 p-5 sm:p-7">
-					{referenceSubmitted ? (
-						<div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm">
-							<p className="font-medium text-emerald-800">{copy.manualSuccessTitle}</p>
-							<p className="mt-2 text-emerald-700">{copy.manualSuccessBody}</p>
-						</div>
-					) : (
+	const methodName = quote?.method?.name ?? (isPaypalSelected ? "PayPal" : "");
+	const chargedMonths = manualData ? manualData.months : months;
+	const coveredMonths = manualData ? manualData.granted_months ?? manualData.months : grantedMonths;
+	const total = manualData ? manualData.amount_usd : totalFor(months);
+
+	const summary = (
+		<aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+			<div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-20px_rgba(15,23,42,0.25)] sm:p-6">
+				<h2 className="text-base font-semibold text-slate-900">{ui.summaryTitle}</h2>
+				{businessName ? <p className="mt-0.5 text-sm text-slate-500">{businessName}</p> : null}
+				<ul className="mt-4 space-y-3 text-sm">
+					{quote ? (
 						<>
-						{manualData.promo_applied && (
-							<div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
-								<div className="flex items-center gap-2">
-									<span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-										{copy.promoBadge}
-									</span>
-									<p className="font-semibold text-indigo-900">{copy.promoTitle}</p>
-								</div>
-								<p className="mt-1 text-sm text-indigo-700">
-									{formatPromoDescription(manualData.months, manualData.granted_months ?? manualData.months + 1)}
-								</p>
-							</div>
-						)}
-
-						<div>
-							<p className="text-sm font-medium text-slate-500">{copy.amountLabel}</p>
-							<p className="mt-1 text-2xl font-bold text-slate-900">
-								${manualData.amount_usd.toFixed(2)} USD
-								<span className="ml-2 text-base font-normal text-slate-400">
-									({manualData.months} {manualData.months === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural} pagados
-									{manualData.promo_applied && (
-										<>, {manualData.granted_months ?? manualData.months + 1} {manualData.granted_months === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural} activos</>
-									)})
+							<li className="flex items-start justify-between gap-4">
+								<span className="text-slate-600">{ui.planLine.replace("{name}", quote.plan.name)}</span>
+								<span className="whitespace-nowrap font-medium text-slate-900">
+									{usd(quote.plan.monthly)}
+									{ui.perMonth}
 								</span>
-							</p>
-						</div>
-							{isVenezuela && bcvRate != null && (
-								<div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
-									<p className="text-slate-500">{copy.approxLabel}:</p>
-									<p className="font-semibold text-slate-900">{(manualData.amount_usd * bcvRate).toFixed(2)} VES</p>
-									<p className="mt-1 text-xs text-slate-400">{copy.referenceNote}</p>
-								</div>
-							)}
-							<div className="rounded-xl border border-indigo-100 bg-indigo-50/50 px-4 py-4 text-sm">
-								<p className="font-medium text-slate-800">{copy.instructionsTitle}</p>
-								<p className="mt-2 text-slate-600">
-									{copy.paymentInstructionsFallback[manualData.method_slug] ?? copy.supportHint}
-								</p>
-								{Object.keys(manualData.method_config).length > 0 && (
-									<dl className="mt-3 space-y-1.5 text-sm">
-										{Object.entries(manualData.method_config).map(([key, value]) => (
-											value ? (
-												<div key={key}>
-													<dt className="font-medium text-slate-700">{getConfigLabel(key, copy.configLabels)}</dt>
-													<dd className="mt-0.5 font-mono text-slate-600">{value}</dd>
-												</div>
-											) : null
-										))}
-									</dl>
-								)}
-							</div>
-							<div>
-								<label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-									{copy.uploadLabel}
-									<input
-										type="file"
-										accept="image/*,.pdf"
-										className="text-sm text-slate-500 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700"
-										onChange={(e) => setReferenceFile(e.target.files?.[0] ?? null)}
-									/>
-								</label>
-								{error && <p className="mt-2 text-sm text-red-600" role="alert">{error}</p>}
-								<Button
-									onClick={handleSubmitReference}
-									loading={referenceUploading}
-									disabled={!referenceFile}
-									size="lg"
-									className="onboarding-btn-primary mt-4 w-full rounded-xl py-5"
-								>
-									{copy.uploadButton}
-								</Button>
-							</div>
+							</li>
+							{quote.addons
+								.filter((addon) => addon.unit > 0)
+								.map((addon) => (
+									<li key={addon.name} className="flex items-start justify-between gap-4">
+										<span className="text-slate-600">
+											{addon.name}
+											{addon.quantity > 1 ? ` × ${addon.quantity}` : ""}
+										</span>
+										<span className="whitespace-nowrap font-medium text-slate-900">
+											{usd(addon.unit * addon.quantity)}
+											{addon.monthly ? ui.perMonth : ""}
+										</span>
+									</li>
+								))}
 						</>
+					) : planSummary ? (
+						<li className="flex items-start justify-between gap-4">
+							<span className="text-slate-600">{ui.planLine.replace("{name}", planSummary.name)}</span>
+							<span className="whitespace-nowrap font-medium text-slate-900">
+								{usd(planSummary.price)}
+								{ui.perMonth}
+							</span>
+						</li>
+					) : (
+						<li className="h-5 animate-pulse rounded bg-slate-100" aria-hidden />
 					)}
+					<li className="flex items-start justify-between gap-4">
+						<span className="text-slate-600">{capitalize(copy.monthSummaryLabel)}</span>
+						<span className="whitespace-nowrap font-medium text-slate-900">{monthsText(chargedMonths)}</span>
+					</li>
+				</ul>
+				<div className="mt-4 border-t border-slate-100 pt-4">
+					<div className="flex items-baseline justify-between gap-4">
+						<span className="text-sm font-semibold text-slate-900">{ui.totalLabel}</span>
+						<span className="text-2xl font-semibold tracking-tight text-slate-900">{total != null ? usd(total) : "—"}</span>
+					</div>
+					{coveredMonths > chargedMonths ? (
+						<p className="mt-2 text-sm font-medium text-[#3640C9]">{ui.coverage.replace("{months}", monthsText(coveredMonths))}</p>
+					) : null}
 				</div>
-			</main>
-		);
-	}
-
-	/* ── Default checkout ── */
-	return (
-		<main className="onboarding-main relative mx-auto max-w-lg px-5 py-8 sm:px-6 sm:py-12 md:py-16">
-			<OnboardingStepBar current={3} />
-
-			<div className="mb-8 text-center sm:mb-10">
-					<h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{copy.title}</h1>
-				<p className="mx-auto mt-3 max-w-md text-sm text-slate-500 sm:text-base">
-						{copy.subtitle}
-				</p>
-				<div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-					<Link
-						href={changeMethodHref}
-						className="text-sm font-medium text-indigo-600 hover:underline"
-					>
-						{copy.backToStep2}
-					</Link>
-					<Link
-						href={changeMethodHref}
-						className="inline-block rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-					>
-						{changeMethodLabel}
-					</Link>
-				</div>
+				{methodName ? (
+					<div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm">
+						<p className="font-medium text-slate-900">{ui.payWith.replace("{method}", methodName)}</p>
+						<p className="mt-0.5 text-slate-500">{isPaypalSelected ? ui.paypalActivation : ui.manualActivation}</p>
+					</div>
+				) : null}
+				<Link href={changeMethodHref} className="onboarding-link mt-4 inline-block text-sm font-medium">
+					{ui.changeLink}
+				</Link>
 			</div>
 
-			<div className="onboarding-card space-y-5 p-5 sm:p-7">
-				{planSummary && (
-					<div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
-						<div className="font-medium text-slate-900">{copy.planLabel}: {planSummary.name}</div>
-						<div className="mt-1 text-slate-600">
-							{copy.priceLabel}: <span className="font-semibold text-slate-900">${planSummary.price.toFixed(2)} USD</span>
-						</div>
-						{planSummary.addons.length > 0 && (
-							<div className="mt-2">
-								<div className="font-medium text-slate-900">{copy.extrasLabel}:</div>
-								<ul className="ml-4 mt-1 list-disc text-slate-600">
-									{planSummary.addons.map((addon, idx) => (
-										<li key={idx}>{addon.name} <span className="font-semibold">${addon.price.toFixed(2)} USD</span></li>
-									))}
-								</ul>
-							</div>
-						)}
-					</div>
-				)}
-
-				{promoAvailable && (
-					<div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
-						<div className="flex items-center gap-2">
-							<span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-								{copy.promoBadge}
+			<div className="mt-6 px-1">
+				<h2 className="text-sm font-semibold text-slate-900">{ui.nextTitle}</h2>
+				<ol className="mt-3 space-y-2.5">
+					{ui.nextSteps.map((stepText, index) => (
+						<li key={stepText} className="flex gap-3 text-sm text-slate-600">
+							<span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-300 text-[11px] font-semibold text-slate-600">
+								{index + 1}
 							</span>
-							<p className="font-semibold text-indigo-900">{copy.promoTitle}</p>
-						</div>
-						<p className="mt-1 text-sm text-indigo-700">
-							{formatPromoDescription(months, grantedMonths)}
-						</p>
-					</div>
-				)}
+							{stepText}
+						</li>
+					))}
+				</ol>
+			</div>
+		</aside>
+	);
 
-				<label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
-					{copy.monthsPrompt}
-					<select
-						value={months}
-						onChange={(e) => setMonths(Number(e.target.value))}
-						className="onboarding-input h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none"
-					>
-						{[1, 3, 6, 12].map((m) => (
-							<option key={m} value={m}>
-								{m} {m === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural}
-							</option>
-						))}
-					</select>
-				</label>
-
-				{error && (
-					<div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
-						{error}
-					</div>
-				)}
-
-				{!isPaypalSelected && (
-					<Button
-						onClick={handlePay}
-						loading={loading}
-						size="lg"
-						className="onboarding-btn-primary w-full rounded-xl py-5 text-sm font-semibold sm:text-base"
-					>
-						{copy.continueButton}
-					</Button>
-				)}
-
-				{isPaypalSelected && (
-					<div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
-						<p className="text-center text-sm font-medium text-slate-800">{copy.paypalInlineTitle}</p>
-						<p className="text-center text-xs text-slate-500">{copy.paypalInlineHint}</p>
-						{paypalSdkReady ? (
-							<div id={paypalContainerId} className="min-h-[44px]" />
+	/* ── Pago manual: datos para transferir y comprobante ── */
+	if (manualData) {
+		const configEntries = Object.entries(manualData.method_config).filter(([, value]) => Boolean(value));
+		return (
+			<main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-12 lg:py-14">
+				<OnboardingStepBar current={3} />
+				<div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
+					<section className="min-w-0 max-w-2xl">
+						{referenceSubmitted ? (
+							<div className="rounded-2xl border border-slate-200 p-6 sm:p-8" role="status">
+								<span className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+									<MailCheck className="h-5 w-5" aria-hidden />
+								</span>
+								<h1 className="mt-5 text-xl font-semibold text-slate-900">{ui.submittedTitle}</h1>
+								<p className="mt-2 text-[15px] leading-relaxed text-slate-600">{ui.submittedBody}</p>
+							</div>
 						) : (
-							<p className="text-center text-xs text-slate-500">{copy.paypalInlineLoading}</p>
-						)}
-					</div>
-				)}
+							<>
+								<h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{methodName || copy.manualTitle}</h1>
+								<p className="mt-3 text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">
+									{copy.paymentInstructionsFallback[manualData.method_slug] ?? copy.supportHint}
+								</p>
 
-				<p className="text-center text-xs text-slate-400">
-					{copy.footerNote}
-				</p>
+								<ol className="mt-10 space-y-10">
+									<li>
+										<h2 className="flex items-center gap-3 text-base font-semibold text-slate-900">
+											<span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">1</span>
+											{ui.transferStep}
+										</h2>
+										<div className="mt-4 rounded-2xl border border-slate-200 p-5 sm:p-6">
+											<p className="text-sm text-slate-500">{copy.amountLabel}</p>
+											<p className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">{usd(manualData.amount_usd)}</p>
+											{isVenezuela && bcvRate != null ? (
+												<p className="mt-2 text-sm text-slate-600">
+													{copy.approxLabel}: <strong className="font-semibold text-slate-900">{(manualData.amount_usd * bcvRate).toFixed(2)} VES</strong>
+													<span className="mt-0.5 block text-xs text-slate-500">{copy.referenceNote}</span>
+												</p>
+											) : null}
+											<dl className="mt-5 divide-y divide-slate-100 border-t border-slate-100">
+												{configEntries.map(([key, value]) => (
+													<div key={key} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3">
+														<dt className="text-sm text-slate-500">{getConfigLabel(key, copy.configLabels)}</dt>
+														<dd className="flex min-w-0 items-center gap-2 text-sm font-medium text-slate-900">
+															<span className="break-all">{value}</span>
+															<CopyValue value={value} copyLabel={ui.copy} copiedLabel={ui.copied} />
+														</dd>
+													</div>
+												))}
+												<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3">
+													<dt className="text-sm text-slate-500">{ui.referenceLabel}</dt>
+													<dd className="flex min-w-0 items-center gap-2 font-mono text-sm text-slate-900">
+														<span className="break-all">{manualData.payment_reference}</span>
+														<CopyValue value={manualData.payment_reference} copyLabel={ui.copy} copiedLabel={ui.copied} />
+													</dd>
+												</div>
+											</dl>
+										</div>
+									</li>
+									<li>
+										<h2 className="flex items-center gap-3 text-base font-semibold text-slate-900">
+											<span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">2</span>
+											{ui.uploadStep}
+										</h2>
+										<label className="mt-4 flex cursor-pointer flex-wrap items-center gap-3 rounded-2xl border border-dashed border-slate-300 p-5 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[#4F5BFF]/60">
+											<span className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-800">
+												<Upload className="h-4 w-4" aria-hidden />
+												{ui.chooseFile}
+											</span>
+											<span className="min-w-0 break-all text-sm text-slate-500">{referenceFile?.name ?? ui.noFile}</span>
+											<input
+												type="file"
+												accept="image/jpeg,image/png,image/webp"
+												aria-describedby="receipt-hint"
+												className="sr-only"
+												onChange={(e) => setReferenceFile(e.target.files?.[0] ?? null)}
+											/>
+										</label>
+										<p id="receipt-hint" className="mt-2 text-xs text-slate-500">
+											{copy.uploadHint}
+										</p>
+										{error ? (
+											<p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+												{error}
+											</p>
+										) : null}
+										<Button
+											onClick={handleSubmitReference}
+											loading={referenceUploading}
+											disabled={!referenceFile}
+											size="lg"
+											className="onboarding-btn-primary mt-5 h-12 w-full rounded-xl text-[15px] sm:w-auto sm:px-8"
+										>
+											{copy.uploadButton}
+										</Button>
+									</li>
+								</ol>
+							</>
+						)}
+					</section>
+					{summary}
+				</div>
+			</main>
+		);
+	}
+
+	/* ── Elegir meses y pagar ── */
+	return (
+		<main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-12 lg:py-14">
+			<OnboardingStepBar current={3} />
+			<div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
+				<section className="min-w-0 max-w-2xl">
+					<h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{copy.title}</h1>
+					<p className="mt-3 text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">{copy.subtitle}</p>
+
+					{promoAvailable ? (
+						<div className="mt-8 rounded-2xl border border-[#D5D9FF] bg-[#F1F2FF] px-5 py-4">
+							<p className="text-sm font-semibold text-[#3640C9]">{copy.promoTitle}</p>
+							<p className="mt-0.5 text-sm text-slate-700">{formatPromoDescription(months, grantedMonths)}</p>
+						</div>
+					) : null}
+
+					<fieldset className="mt-8">
+						<legend className="text-base font-semibold text-slate-900">{copy.monthsPrompt}</legend>
+						<div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+							{[1, 3, 6, 12].map((m) => {
+								const optionTotal = totalFor(m);
+								const selected = months === m;
+								return (
+									<label
+										key={m}
+										data-selected={selected}
+										className="onboarding-option flex cursor-pointer flex-col rounded-2xl p-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[#4F5BFF]/60"
+									>
+										<input type="radio" name="months" value={m} checked={selected} onChange={() => setMonths(m)} className="sr-only" />
+										<span className="text-sm font-semibold text-slate-900">{monthsText(m)}</span>
+										<span className="mt-1 text-sm text-slate-600">{optionTotal != null ? usd(optionTotal) : "—"}</span>
+										{promoAvailable ? <span className="mt-2 text-xs font-medium text-[#3640C9]">{ui.freeMonth}</span> : null}
+									</label>
+								);
+							})}
+						</div>
+					</fieldset>
+
+					{paymentStatus === "rejected" && !error ? (
+						<div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800" role="status">
+							{copy.rejectedNotice}
+						</div>
+					) : null}
+
+					{error ? (
+						<div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+							{error}
+						</div>
+					) : null}
+
+					<div className="mt-8">
+						{!appLoaded ? <div className="h-12 w-full animate-pulse rounded-xl bg-slate-100 sm:w-72" aria-hidden /> : null}
+						{appLoaded && !isPaypalSelected ? (
+							<Button onClick={handlePay} loading={loading} size="lg" className="onboarding-btn-primary h-12 w-full rounded-xl text-[15px] sm:w-auto sm:px-8">
+								{ui.showBankDetails}
+							</Button>
+						) : null}
+						{isPaypalSelected ? (
+							<div className="rounded-2xl border border-slate-200 p-5 sm:p-6">
+								<p className="text-sm font-semibold text-slate-900">{copy.paypalInlineTitle}</p>
+								<p className="mt-1 text-sm text-slate-500">{copy.paypalInlineHint}</p>
+								{paypalSdkReady ? (
+									<div id={paypalContainerId} className="mt-4 min-h-[44px] max-w-md" />
+								) : (
+									<p className="mt-4 text-sm text-slate-500">{copy.paypalInlineLoading}</p>
+								)}
+							</div>
+						) : null}
+					</div>
+
+					<p className="mt-5 text-xs leading-relaxed text-slate-500">{copy.footerNote}</p>
+				</section>
+				{summary}
 			</div>
 		</main>
 	);

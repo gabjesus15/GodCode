@@ -1,6 +1,6 @@
 /**
  * Tokens de diseño del portal de cuenta.
- * Paleta minimalista alineada con la identidad GodCode ("Sobre GodCode").
+ * Paleta minimalista alineada con la identidad Gcode ("Sobre Gcode Labs").
  */
 export const tokens = {
   bg: {

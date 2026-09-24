@@ -4,6 +4,11 @@ import { revalidateTag } from "next/cache";
 import { logAdminAudit } from "@/lib/super-admin/admin-audit";
 import { mergeDeliverySettingsJson } from "@/lib/delivery/delivery-settings";
 import { mergePaymentJsonField } from "@/lib/payments/merge-payment-json-field";
+import {
+  BRANCH_PAYMENT_PUBLIC_FIELDS,
+  mergePublicPaymentConfig,
+  sanitizeBranchPaymentMethods,
+} from "@/lib/payments/branch-payment-config";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
 
@@ -13,7 +18,6 @@ const PAYMENT_JSON_FIELDS = [
   "pago_movil",
   "zelle",
   "transferencia_bancaria",
-  "stripe",
   "mercadopago",
   "paypal",
   "efectivo",
@@ -75,14 +79,21 @@ export async function PUT(
   }
 
   if (Object.prototype.hasOwnProperty.call(body, "payment_methods")) {
-    update.payment_methods = Array.isArray(body.payment_methods) ? body.payment_methods : [];
+    update.payment_methods = sanitizeBranchPaymentMethods(body.payment_methods) ?? [];
   }
 
   for (const field of PAYMENT_JSON_FIELDS) {
     if (Object.prototype.hasOwnProperty.call(body, field)) {
-      update[field] = mergePaymentJsonField(body[field], existing[field as PaymentJsonField]);
+      // Los métodos con datos para el cliente solo guardan campos públicos (el menú los
+      // lee con la clave anónima); efectivo/tarjeta conservan su configuración interna.
+      update[field] =
+        field in BRANCH_PAYMENT_PUBLIC_FIELDS
+          ? mergePublicPaymentConfig(field, body[field], existing[field as PaymentJsonField])
+          : mergePaymentJsonField(body[field], existing[field as PaymentJsonField]);
     }
   }
+  // Stripe ya no es método de sucursal: cualquier guardado limpia lo que quedara.
+  update.stripe = null;
 
   if (Object.prototype.hasOwnProperty.call(body, "delivery_settings_patch")) {
     update.delivery_settings = mergeDeliverySettingsJson(

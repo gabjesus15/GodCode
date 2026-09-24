@@ -1,629 +1,317 @@
-import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
-import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
-import { sendOnboardingEmail } from "../../../../lib/onboarding/emails";
-import { activateCompanySubscription } from "@/lib/onboarding/billing-activation";
-import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
-import { normalizeCountryCode } from "@/lib/geo/country-registry";
+import { resolveCompanyContact } from "@/lib/billing/company-contact";
+import {
+	createPortalOrder,
+	findOpenOrder,
+	findPublicPlan,
+	loadPortalBillingContext,
+	planMonthlyUsd,
+} from "@/lib/billing/portal-billing";
+import { isSubscriptionOrderKind } from "@/lib/billing/portal-orders";
+import { formatUsd, quotePlanChange, type PlanChangeQuote } from "@/lib/billing/portal-pricing";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { checkRateLimit } from "@/lib/infra/rate-limiter";
+import { formatEmailDate, timeZoneForCountry } from "@/lib/email/format";
+import { sendEmail } from "@/lib/email/send";
+import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 import { syncCompanyPanelAccessFromPlanId } from "@/lib/super-admin/sync-company-panel-access";
+import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
+import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 
-/** @service-role customer-account */
+/** @service-role customer-account
+ *
+ * Cambiar de plan desde /cuenta:
+ * - subir: se paga la diferencia por los días que quedan y el plan cambia al pagarse;
+ * - bajar: se programa para el vencimiento (sin reembolso) y se puede anular (DELETE);
+ * - mismo precio o en prueba: cambio inmediato sin cobro.
+ * Con la suscripción vencida no se cambia de plan aquí: se renueva eligiendo el plan.
+ */
 
-type PlanRow = {
-  id: string;
-  name: string;
-  price: number | null;
-  max_branches: number | null;
-  max_users: number | null;
-  is_active: boolean | null;
-  features: unknown;
-  marketing_lines: unknown;
+type Impact = { id: string; level: "block" | "info"; title: string; detail: string };
+
+const BLOCK_REASON_COPY: Record<Extract<PlanChangeQuote, { mode: "blocked" }>["reason"], { title: string; detail: string }> = {
+	cancelling: {
+		title: "Tu suscripción está cancelada",
+		detail: "Reactívala (es gratis mientras no venza) para poder cambiar de plan.",
+	},
+	payment_pending: {
+		title: "Estamos validando tu primer pago",
+		detail: "Podrás cambiar de plan en cuanto quede activo.",
+	},
+	expired: {
+		title: "Tu suscripción venció",
+		detail: "Renueva eligiendo este plan: pagas los meses que quieras y vuelves a estar en línea.",
+	},
+	open_ended: {
+		title: "Tu cuenta no tiene fecha de vencimiento",
+		detail: "Los cambios de plan de esta cuenta los hace nuestro equipo. Escríbenos por Soporte.",
+	},
 };
 
-type ActiveAddonSnapshot = {
-  status: string | null;
-  addon:
-    | {
-        id: string;
-        slug: string | null;
-        name: string | null;
-        type: string | null;
-        description: string | null;
-      }
-    | Array<{
-        id: string;
-        slug: string | null;
-        name: string | null;
-        type: string | null;
-        description: string | null;
-      }>
-    | null;
-};
-
-type CompanyRow = {
-  id: string;
-  name: string;
-  country: string | null;
-  plan_id: string | null;
-  subscription_status: string | null;
-  subscription_ends_at: string | null;
-};
-
-type MethodSnapshot = {
-  id: string;
-  slug: string;
-  name: string;
-  countries: string[] | null;
-  auto_verify: boolean;
-};
-
-type PlanImpact = {
-  id: string;
-  level: "warn" | "block";
-  title: string;
-  detail: string;
-};
-
-type ScheduledPlanChangeRow = {
-  id: string;
-  target_plan_id: string;
-  effective_at: string;
-  status: string;
-};
-
-async function resolvePaymentMethodsForCountry(country: string | null) {
-  const normalizedCountry = normalizeCountryCode(country);
-  const { data: methods } = await supabaseAdmin
-    .from("plan_payment_methods")
-    .select("id,slug,name,countries,auto_verify")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
-
-  const rows = ((methods ?? []) as MethodSnapshot[]).filter((method) => {
-    if (!normalizedCountry) return true;
-    if (!Array.isArray(method.countries) || method.countries.length === 0) return true;
-    return method.countries.includes(normalizedCountry) || method.countries.includes(country ?? "");
-  });
-
-  const rowsWithConfig = await Promise.all(
-    rows.map(async (method) => {
-      const { data: configRows } = await supabaseAdmin
-        .from("plan_payment_method_config")
-        .select("key,value")
-        .eq("method_id", method.id);
-
-      const config: Record<string, string> = {};
-      for (const row of configRows ?? []) {
-        if (row.key) config[row.key] = row.value ?? "";
-      }
-
-      return {
-        ...method,
-        config,
-      };
-    })
-  );
-
-  return rowsWithConfig;
+function formatDate(iso: string): string {
+	const date = new Date(iso);
+	return Number.isFinite(date.getTime())
+		? new Intl.DateTimeFormat("es", { dateStyle: "long", timeZone: "UTC" }).format(date)
+		: iso;
 }
 
-async function buildPlanChangePreview(params: {
-  companyId: string;
-  targetPlanId: string;
-  months: number;
-}) {
-  const [{ data: company }, { data: plans }, { count: activeBranches }, { count: activeUsers }, { data: entitlements }, { data: scheduledChange }, { data: activeCompanyAddons }] = await Promise.all([
-    supabaseAdmin
-      .from("companies")
-      .select("id,name,country,plan_id,subscription_status,subscription_ends_at")
-      .eq("id", params.companyId)
-      .maybeSingle(),
-    supabaseAdmin
-      .from("plans")
-      .select("id,name,price,max_branches,max_users,is_active,features,marketing_lines")
-      .eq("is_active", true),
-    supabaseAdmin
-      .from("branches")
-      .select("id", { count: "exact", head: true })
-      .eq("company_id", params.companyId)
-      .eq("is_active", true),
-    supabaseAdmin
-      .from("users")
-      .select("id", { count: "exact", head: true })
-      .eq("company_id", params.companyId)
-      .eq("is_active", true),
-    supabaseAdmin
-      .from("company_branch_extra_entitlements")
-      .select("quantity,status,expires_at")
-      .eq("company_id", params.companyId),
-    supabaseAdmin
-      .from("company_plan_change_schedules")
-      .select("id,target_plan_id,effective_at,status")
-      .eq("company_id", params.companyId)
-      .eq("status", "scheduled")
-      .maybeSingle(),
-    supabaseAdmin
-      .from("company_addons")
-      .select("status,addon:addons(id,slug,name,type,description)")
-      .eq("company_id", params.companyId),
-  ]);
+async function buildPreview(companyId: string, targetPlanId: string) {
+	const billing = await loadPortalBillingContext(companyId);
+	if (!billing) return { error: "Empresa no encontrada", status: 404 } as const;
 
-  const companyRow = company as CompanyRow | null;
-  if (!companyRow?.id) return { error: "Empresa no encontrada" as const };
+	const target = findPublicPlan(billing, targetPlanId);
+	if (!target) return { error: "Ese plan no está disponible.", status: 400 } as const;
+	if (billing.currentPlan?.id === target.id) return { error: "Ya estás en ese plan.", status: 400 } as const;
 
-  const plansRows = (plans ?? []) as PlanRow[];
-  const currentPlan = plansRows.find((row) => row.id === companyRow.plan_id) ?? null;
-  const targetPlan = plansRows.find((row) => row.id === params.targetPlanId) ?? null;
+	const [{ count: activeBranches }, { count: activeUsers }] = await Promise.all([
+		supabaseAdmin.from("branches").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("is_active", true),
+		supabaseAdmin.from("users").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("is_active", true),
+	]);
 
-  if (!targetPlan) return { error: "Plan no disponible" as const };
-  if (currentPlan?.id === targetPlan.id) {
-    return { error: "Ya estas en ese plan" as const };
-  }
+	const country = billing.company.country;
+	const currentMonthly = planMonthlyUsd(billing.currentPlan, country);
+	const targetMonthly = planMonthlyUsd(target, country);
+	const quote = quotePlanChange({
+		phase: billing.phase,
+		currentMonthly,
+		targetMonthly,
+		endsAt: billing.company.subscription_ends_at,
+	});
 
-  const nowIso = new Date().toISOString();
-  const activeEntitlements = ((entitlements ?? []) as Array<{ quantity: number | null; status: string | null; expires_at: string | null }>)
-    .filter((row) => row.status === "active")
-    .filter((row) => !row.expires_at || row.expires_at > nowIso)
-    .reduce((acc, row) => acc + Math.max(0, Number(row.quantity ?? 0) || 0), 0);
+	const extraBranches = billing.branchExtras.reduce((sum, extra) => sum + extra.quantity, 0);
+	const branchesCount = Number(activeBranches ?? 0);
+	const usersCount = Number(activeUsers ?? 0);
+	const targetEffectiveBranches = target.max_branches == null ? null : target.max_branches + extraBranches;
+	const scheduledTarget = billing.scheduledChange
+		? billing.plans.find((plan) => plan.id === billing.scheduledChange?.target_plan_id) ?? null
+		: null;
+	const openOrder = findOpenOrder(billing, (kind) => isSubscriptionOrderKind(kind.kind));
 
-  const branchesCount = Number(activeBranches ?? 0);
-  const usersCount = Number(activeUsers ?? 0);
+	const impacts: Impact[] = [];
+	if (quote.mode === "blocked") {
+		impacts.push({ id: `phase-${quote.reason}`, level: "block", ...BLOCK_REASON_COPY[quote.reason] });
+	}
+	if (openOrder) {
+		impacts.push({
+			id: "open-order",
+			level: "block",
+			title: "Tienes un pago pendiente de tu plan",
+			detail: "Págalo o anúlalo en «Pagos pendientes» antes de cambiar de plan.",
+		});
+	}
+	if (targetEffectiveBranches != null && branchesCount > targetEffectiveBranches) {
+		impacts.push({
+			id: "branches-over-limit",
+			level: "block",
+			title: "Tienes más sucursales de las que permite ese plan",
+			detail: `Tienes ${branchesCount} sucursales activas y el plan ${target.name} permite ${targetEffectiveBranches}. Desactiva ${branchesCount - targetEffectiveBranches} antes de cambiar.`,
+		});
+	}
+	if (target.max_users != null && usersCount > target.max_users) {
+		impacts.push({
+			id: "users-over-limit",
+			level: "block",
+			title: "Tienes más usuarios de los que permite ese plan",
+			detail: `Tienes ${usersCount} usuarios activos y el plan ${target.name} permite ${target.max_users}. Desactiva ${usersCount - target.max_users} antes de cambiar.`,
+		});
+	}
+	if (quote.mode === "downgrade") {
+		impacts.push({
+			id: "downgrade-at-cycle-end",
+			level: "info",
+			title: `Se aplica el ${formatDate(quote.effectiveAt)}`,
+			detail: `Hasta entonces sigues con ${billing.currentPlan?.name ?? "tu plan actual"}. Lo ya pagado no se reembolsa.`,
+		});
+	}
+	if (scheduledTarget && scheduledTarget.id !== target.id && quote.mode !== "blocked") {
+		impacts.push({
+			id: "replaces-schedule",
+			level: "info",
+			title: `Reemplaza el cambio programado a ${scheduledTarget.name}`,
+			detail: quote.mode === "downgrade" ? "Solo puede haber un cambio programado." : "El cambio programado se anula.",
+		});
+	}
+	for (const addon of billing.activeAddons) {
+		const snapshot = { id: addon.addonId, slug: addon.slug, name: addon.name, type: addon.type, description: addon.description };
+		const current = resolveAddonOfferForPlan(billing.currentPlan, snapshot);
+		const next = resolveAddonOfferForPlan(target, snapshot);
+		if (next.status === "included" && current.status !== "included") {
+			impacts.push({
+				id: `addon-included-${addon.addonId}`,
+				level: "info",
+				title: `${addon.name} viene incluido en ${target.name}`,
+				detail: "Desde tu próxima renovación deja de cobrarse aparte.",
+			});
+		} else if (next.status === "blocked") {
+			impacts.push({
+				id: `addon-policy-${addon.addonId}`,
+				level: "info",
+				title: `${addon.name} no se ofrece en ${target.name}`,
+				detail: "Lo conservas, pero si tienes dudas escríbenos antes de cambiar.",
+			});
+		}
+	}
 
-  const targetBaseBranches = targetPlan.max_branches;
-  const targetEffectiveBranches = targetBaseBranches == null ? null : targetBaseBranches + activeEntitlements;
-
-  const impacts: PlanImpact[] = [];
-
-  if (targetEffectiveBranches != null && branchesCount > targetEffectiveBranches) {
-    impacts.push({
-      id: "branches-over-limit",
-      level: "block",
-      title: "Exceso de sucursales para el nuevo plan",
-      detail: `Tienes ${branchesCount} sucursales activas y el nuevo limite efectivo seria ${targetEffectiveBranches}. Debes reducir ${branchesCount - targetEffectiveBranches} sucursal(es) antes de cambiar.`,
-    });
-  }
-
-  if (targetPlan.max_users != null && usersCount > targetPlan.max_users) {
-    impacts.push({
-      id: "users-over-limit",
-      level: "block",
-      title: "Exceso de usuarios para el nuevo plan",
-      detail: `Tienes ${usersCount} usuario(s) activo(s) y el nuevo plan permite ${targetPlan.max_users}. Debes ajustar usuarios antes de cambiar.`,
-    });
-  }
-
-  const currentPrice = Number(currentPlan?.price ?? 0) || 0;
-  const targetPrice = Number(targetPlan.price ?? 0) || 0;
-  const monthlyDiff = Number((targetPrice - currentPrice).toFixed(2));
-  const amountDue = monthlyDiff > 0 ? Number((monthlyDiff * Math.max(1, params.months)).toFixed(2)) : 0;
-
-  if (monthlyDiff < 0) {
-    impacts.push({
-      id: "downgrade-no-refund",
-      level: "warn",
-      title: "Cambio a plan menor",
-      detail: "El cambio se aplica sin reembolso del periodo ya pagado. Se reflejara en tu siguiente ciclo.",
-    });
-
-    if (!companyRow.subscription_ends_at) {
-      impacts.push({
-        id: "downgrade-no-cycle-end",
-        level: "block",
-        title: "No hay vencimiento configurado",
-        detail: "No encontramos fecha de vencimiento para programar el downgrade. Contacta a soporte para regularizar el ciclo.",
-      });
-    }
-  }
-
-  if (monthlyDiff > 0) {
-    impacts.push({
-      id: "upgrade-payment-required",
-      level: "warn",
-      title: "Requiere pago para aplicar ahora",
-      detail: `Debes pagar ${amountDue} USD para aplicar el nuevo plan de inmediato.`,
-    });
-  }
-
-  impacts.push({
-    id: "feature-difference-check",
-    level: "warn",
-    title: "Revisa funciones incluidas",
-    detail: "Al cambiar de plan, algunas capacidades pueden variar segun los limites del nuevo plan.",
-  });
-
-  const activeAddonRows = ((activeCompanyAddons ?? []) as ActiveAddonSnapshot[]).filter(
-    (row) => String(row.status ?? "").toLowerCase() === "active"
-  );
-  for (const row of activeAddonRows) {
-    const addonRaw = Array.isArray(row.addon) ? row.addon[0] : row.addon;
-    if (!addonRaw?.id || !addonRaw.name) continue;
-
-    const currentOffer = resolveAddonOfferForPlan(currentPlan, {
-      id: addonRaw.id,
-      slug: addonRaw.slug,
-      name: addonRaw.name,
-      type: addonRaw.type,
-      description: addonRaw.description,
-    });
-    const targetOffer = resolveAddonOfferForPlan(targetPlan, {
-      id: addonRaw.id,
-      slug: addonRaw.slug,
-      name: addonRaw.name,
-      type: addonRaw.type,
-      description: addonRaw.description,
-    });
-
-    if (targetOffer.status === "included" && currentOffer.status !== "included") {
-      impacts.push({
-        id: `addon-included-after-change-${addonRaw.id}`,
-        level: "warn",
-        title: `${addonRaw.name} quedara incluido en el plan objetivo`,
-        detail: `Actualmente lo tienes como extra activo. ${targetOffer.reason} Revisa con soporte si deseas ajustar el cobro de este extra.`,
-      });
-    }
-
-    if (targetOffer.status === "blocked") {
-      impacts.push({
-        id: `addon-policy-change-${addonRaw.id}`,
-        level: "warn",
-        title: `${addonRaw.name} cambia de politica en el plan objetivo`,
-        detail: `${targetOffer.reason} Tu extra activo no se elimina automaticamente, pero puede requerir regularizacion operativa.`,
-      });
-    }
-  }
-
-  const paymentMethods = await resolvePaymentMethodsForCountry(companyRow.country);
-
-  return {
-    company: companyRow,
-    currentPlan,
-    targetPlan,
-    counts: {
-      activeBranches: branchesCount,
-      activeUsers: usersCount,
-      activeExtraBranchEntitlements: activeEntitlements,
-      targetEffectiveBranches,
-    },
-    pricing: {
-      currentPrice,
-      targetPrice,
-      monthlyDiff,
-      months: Math.max(1, params.months),
-      amountDue,
-      requiresPayment: amountDue > 0,
-    },
-    execution: {
-      mode: monthlyDiff < 0 ? "scheduled_cycle_end" : "immediate",
-      effectiveAt: monthlyDiff < 0 ? (companyRow.subscription_ends_at ?? null) : new Date().toISOString(),
-      existingSchedule:
-        (scheduledChange as ScheduledPlanChangeRow | null)?.status === "scheduled"
-          ? {
-              id: (scheduledChange as ScheduledPlanChangeRow).id,
-              targetPlanId: (scheduledChange as ScheduledPlanChangeRow).target_plan_id,
-              effectiveAt: (scheduledChange as ScheduledPlanChangeRow).effective_at,
-            }
-          : null,
-    },
-    impacts,
-    paymentMethods,
-  };
-}
-
-async function resolveCompanyPrimaryContact(companyId: string) {
-  const [{ data: app }, { data: company }] = await Promise.all([
-    supabaseAdmin
-      .from("onboarding_applications")
-      .select("email,responsible_name,business_name")
-      .eq("company_id", companyId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabaseAdmin
-      .from("companies")
-      .select("name,email")
-      .eq("id", companyId)
-      .maybeSingle(),
-  ]);
-
-  return {
-    email: String(app?.email ?? company?.email ?? "").trim(),
-    responsibleName: String(app?.responsible_name ?? "Cliente"),
-    businessName: String(app?.business_name ?? company?.name ?? "Tu negocio"),
-  };
+	return {
+		preview: {
+			phase: billing.phase,
+			currentPlan: billing.currentPlan
+				? { id: billing.currentPlan.id, name: billing.currentPlan.name, monthly: currentMonthly }
+				: null,
+			targetPlan: {
+				id: target.id,
+				name: target.name,
+				monthly: targetMonthly,
+				max_branches: target.max_branches,
+				max_users: target.max_users,
+			},
+			quote,
+			counts: {
+				activeBranches: branchesCount,
+				activeUsers: usersCount,
+				extraBranches,
+				targetEffectiveBranches,
+			},
+			impacts,
+			scheduledChange: billing.scheduledChange
+				? {
+						id: billing.scheduledChange.id,
+						targetPlanId: billing.scheduledChange.target_plan_id,
+						targetPlanName: scheduledTarget?.name ?? null,
+						effectiveAt: billing.scheduledChange.effective_at,
+					}
+				: null,
+			openOrderId: openOrder?.id ?? null,
+		},
+		billing,
+		target,
+	} as const;
 }
 
 export async function GET(req: NextRequest) {
-  const ctx = await getCustomerAccountContext();
-  if (!ctx) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+	const ctx = await getCustomerAccountContext();
+	if (!ctx) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  if (!(await checkRateLimit(`plan_change_get:${ctx.companyId}`, 30, 60000))) {
-    return NextResponse.json({ error: "Demasiadas peticiones" }, { status: 429 });
-  }
+	const limited = await assertCustomerAccountRateLimit(ctx.companyId, "plan_change_get", 40, 60_000);
+	if (limited) return limited;
 
-  const targetPlanId = String(req.nextUrl.searchParams.get("targetPlanId") ?? "").trim();
-  const months = Math.max(1, Math.min(24, Number(req.nextUrl.searchParams.get("months") ?? 1) || 1));
-  if (!targetPlanId) return NextResponse.json({ error: "Falta targetPlanId" }, { status: 400 });
+	const targetPlanId = String(req.nextUrl.searchParams.get("targetPlanId") ?? "").trim();
+	if (!targetPlanId) return NextResponse.json({ error: "Elige un plan." }, { status: 400 });
 
-  const preview = await buildPlanChangePreview({
-    companyId: ctx.companyId,
-    targetPlanId,
-    months,
-  });
-
-  if ("error" in preview) {
-    return NextResponse.json({ error: preview.error }, { status: 400 });
-  }
-
-  return NextResponse.json({ ok: true, preview });
+	const result = await buildPreview(ctx.companyId, targetPlanId);
+	if ("error" in result) return NextResponse.json({ error: result.error }, { status: result.status });
+	return NextResponse.json({ ok: true, preview: result.preview });
 }
 
 export async function POST(req: NextRequest) {
-  const ctx = await getCustomerAccountContext();
-  if (!ctx) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+	const ctx = await getCustomerAccountContext();
+	if (!ctx) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  if (!(await checkRateLimit(`plan_change_post:${ctx.companyId}`, 10, 60000))) {
-    return NextResponse.json({ error: "Demasiadas peticiones. Intenta en un minuto." }, { status: 429 });
-  }
+	const limited = await assertCustomerAccountRateLimit(ctx.companyId, "plan_change_post", 10, 60_000);
+	if (limited) return limited;
 
-  const body = (await req.json().catch(() => ({}))) as {
-    targetPlanId?: string;
-    months?: number;
-    methodSlug?: string;
-    acceptedImpactIds?: string[];
-    reason?: string;
-  };
+	const body = (await req.json().catch(() => ({}))) as { targetPlanId?: string };
+	const targetPlanId = String(body.targetPlanId ?? "").trim();
+	if (!targetPlanId) return NextResponse.json({ error: "Elige un plan." }, { status: 400 });
 
-  const targetPlanId = String(body.targetPlanId ?? "").trim();
-  const months = Math.max(1, Math.min(24, Number(body.months ?? 1) || 1));
-  const methodSlug = String(body.methodSlug ?? "").trim();
-  const clientReason = String(body.reason ?? "").trim().slice(0, 500);
-  const acceptedImpactIds = Array.isArray(body.acceptedImpactIds)
-    ? body.acceptedImpactIds.map((id) => String(id).trim()).filter(Boolean)
-    : [];
+	const result = await buildPreview(ctx.companyId, targetPlanId);
+	if ("error" in result) return NextResponse.json({ error: result.error }, { status: result.status });
+	const { preview, billing, target } = result;
 
-  if (!targetPlanId) {
-    return NextResponse.json({ error: "Falta targetPlanId" }, { status: 400 });
-  }
+	const block = preview.impacts.find((impact) => impact.level === "block");
+	if (block) return NextResponse.json({ error: block.detail, impacts: preview.impacts }, { status: 409 });
 
-  const preview = await buildPlanChangePreview({
-    companyId: ctx.companyId,
-    targetPlanId,
-    months,
-  });
+	const nowIso = new Date().toISOString();
+	const { quote } = preview;
 
-  if ("error" in preview) {
-    return NextResponse.json({ error: preview.error }, { status: 400 });
-  }
+	if (quote.mode === "switch") {
+		const { error } = await supabaseAdmin
+			.from("companies")
+			.update({ plan_id: target.id, updated_at: nowIso })
+			.eq("id", ctx.companyId);
+		if (error) return NextResponse.json({ error: "No se pudo cambiar el plan." }, { status: 500 });
+		await syncCompanyPanelAccessFromPlanId(ctx.companyId, target.id);
+		await supabaseAdmin
+			.from("company_plan_change_schedules")
+			.update({ status: "cancelled", updated_at: nowIso })
+			.eq("company_id", ctx.companyId)
+			.eq("status", "scheduled");
+		return NextResponse.json({ ok: true, applied: true, message: `Listo: ya estás en el plan ${target.name}.` });
+	}
 
-  const blockingImpacts = preview.impacts.filter((impact) => impact.level === "block");
-  if (blockingImpacts.length > 0) {
-    return NextResponse.json(
-      {
-        error: "No puedes aplicar este cambio todavia.",
-        impacts: preview.impacts,
-      },
-      { status: 400 }
-    );
-  }
+	if (quote.mode === "downgrade") {
+		const schedule = {
+			current_plan_id: billing.currentPlan?.id ?? null,
+			target_plan_id: target.id,
+			requested_by_email: ctx.email,
+			effective_at: quote.effectiveAt,
+			reason: "Cambio a un plan menor desde /cuenta",
+			metadata: { monthlyDiff: quote.monthlyDiff },
+			updated_at: nowIso,
+		};
+		const { error } = billing.scheduledChange
+			? await supabaseAdmin.from("company_plan_change_schedules").update(schedule).eq("id", billing.scheduledChange.id)
+			: await supabaseAdmin
+					.from("company_plan_change_schedules")
+					.insert({ ...schedule, company_id: ctx.companyId, status: "scheduled" });
+		if (error) return NextResponse.json({ error: "No se pudo programar el cambio." }, { status: 500 });
 
-  const warningIds = preview.impacts.filter((impact) => impact.level === "warn").map((impact) => impact.id);
-  const allWarningsAccepted = warningIds.every((id) => acceptedImpactIds.includes(id));
-  if (!allWarningsAccepted) {
-    return NextResponse.json(
-      {
-        error: "Debes confirmar los avisos antes de continuar.",
-        impacts: preview.impacts,
-      },
-      { status: 400 }
-    );
-  }
+		const contact = await resolveCompanyContact(supabaseAdmin, ctx.companyId);
+		if (contact.email) {
+			await sendEmail({
+				kind: "plan_change_scheduled",
+				to: contact.email,
+				companyId: ctx.companyId,
+				data: {
+					name: contact.responsibleName || undefined,
+					businessName: contact.businessName,
+					currentPlan: billing.currentPlan?.name ?? "tu plan actual",
+					targetPlan: target.name,
+					effectiveAt: formatEmailDate(quote.effectiveAt, timeZoneForCountry(contact.country)) || formatDate(quote.effectiveAt),
+				},
+			});
+		}
+		return NextResponse.json({
+			ok: true,
+			scheduled: { targetPlanId: target.id, targetPlanName: target.name, effectiveAt: quote.effectiveAt },
+			message: `Programado: pasarás al plan ${target.name} el ${formatDate(quote.effectiveAt)}.`,
+		});
+	}
 
-  if (preview.pricing.monthlyDiff < 0) {
-    const effectiveAt = preview.execution?.effectiveAt;
-    if (!effectiveAt) {
-      return NextResponse.json({ error: "No se pudo programar el downgrade por falta de vencimiento." }, { status: 400 });
-    }
+	if (quote.mode !== "upgrade") {
+		return NextResponse.json({ error: "Este cambio no se puede hacer desde aquí." }, { status: 409 });
+	}
 
-    const { data: existing } = await supabaseAdmin
-      .from("company_plan_change_schedules")
-      .select("id")
-      .eq("company_id", ctx.companyId)
-      .eq("status", "scheduled")
-      .maybeSingle();
+	const created = await createPortalOrder({
+		companyId: ctx.companyId,
+		planId: target.id,
+		kind: "plan_change",
+		amount: quote.amount,
+	});
+	if (!created.ok) return NextResponse.json({ error: created.error }, { status: 500 });
 
-    const nowIso = new Date().toISOString();
-    if (existing?.id) {
-      await supabaseAdmin
-        .from("company_plan_change_schedules")
-        .update({
-          target_plan_id: preview.targetPlan.id,
-          current_plan_id: preview.currentPlan?.id ?? null,
-          requested_by_email: ctx.email,
-          effective_at: effectiveAt,
-          reason: "Downgrade programado desde portal del cliente",
-          metadata: {
-            monthlyDiff: preview.pricing.monthlyDiff,
-            amountDue: preview.pricing.amountDue,
-          },
-          updated_at: nowIso,
-        })
-        .eq("id", existing.id);
-    } else {
-      await supabaseAdmin.from("company_plan_change_schedules").insert({
-        company_id: ctx.companyId,
-        current_plan_id: preview.currentPlan?.id ?? null,
-        target_plan_id: preview.targetPlan.id,
-        requested_by_email: ctx.email,
-        status: "scheduled",
-        effective_at: effectiveAt,
-        reason: "Downgrade programado desde portal del cliente",
-        metadata: {
-          monthlyDiff: preview.pricing.monthlyDiff,
-          amountDue: preview.pricing.amountDue,
-        },
-        updated_at: nowIso,
-      });
-    }
+	return NextResponse.json({
+		ok: true,
+		order: created.order,
+		message: `Paga ${formatUsd(quote.amount)} y el plan ${target.name} se activa al instante con PayPal, o cuando validemos tu comprobante.`,
+	});
+}
 
-    await supabaseAdmin.from("saas_tickets").insert({
-      company_id: ctx.companyId,
-      created_by_email: ctx.email,
-      source: "tenant",
-      subject: `Downgrade programado · ${preview.currentPlan?.name ?? "Plan actual"} -> ${preview.targetPlan.name}`,
-      description: [
-        `Plan actual: ${preview.currentPlan?.name ?? "Sin plan"}`,
-        `Nuevo plan: ${preview.targetPlan.name}`,
-        `Aplicacion programada para: ${effectiveAt}`,
-        "No se aplica de inmediato; se ejecuta al cierre del ciclo vigente.",
-      ].join("\n"),
-      category: "billing",
-      priority: "medium",
-      status: "resolved",
-      last_message_at: nowIso,
-      resolved_at: nowIso,
-    });
+/** Anula el cambio a un plan menor que estaba programado. */
+export async function DELETE() {
+	const ctx = await getCustomerAccountContext();
+	if (!ctx) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-    const contact = await resolveCompanyPrimaryContact(ctx.companyId);
-    if (contact.email) {
-      await sendOnboardingEmail({
-        type: "plan_downgrade_scheduled",
-        to: contact.email,
-        from: process.env.RESEND_FROM ?? "noreply@example.com",
-        apiKey: process.env.RESEND_API_KEY ?? "",
-        responsibleName: contact.responsibleName,
-        businessName: contact.businessName,
-        currentPlanName: preview.currentPlan?.name ?? "Plan actual",
-        targetPlanName: preview.targetPlan.name,
-        effectiveAt,
-        panelUrl: process.env.NEXT_PUBLIC_APP_URL ?? undefined,
-      });
-    }
+	const limited = await assertCustomerAccountRateLimit(ctx.companyId, "plan_change_delete", 10, 60_000);
+	if (limited) return limited;
 
-    return NextResponse.json({
-      ok: true,
-      appliedNow: false,
-      scheduled: true,
-      preview,
-      message: "Downgrade programado. Se aplicara automaticamente al cierre de tu ciclo actual.",
-    });
-  }
-
-  if (!preview.pricing.requiresPayment) {
-    await supabaseAdmin
-      .from("companies")
-      .update({
-        plan_id: preview.targetPlan.id,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", ctx.companyId);
-
-    await syncCompanyPanelAccessFromPlanId(ctx.companyId, preview.targetPlan.id);
-
-    await supabaseAdmin.from("saas_tickets").insert({
-      company_id: ctx.companyId,
-      created_by_email: ctx.email,
-      source: "tenant",
-      subject: `Cambio de plan aplicado · ${preview.currentPlan?.name ?? "Actual"} -> ${preview.targetPlan.name}`,
-      description: [
-        `Plan anterior: ${preview.currentPlan?.name ?? "Sin plan"}`,
-        `Plan nuevo: ${preview.targetPlan.name}`,
-        "Aplicacion inmediata sin cobro adicional.",
-      ].join("\n"),
-      category: "billing",
-      priority: "medium",
-      status: "resolved",
-      last_message_at: new Date().toISOString(),
-      resolved_at: new Date().toISOString(),
-    });
-
-    return NextResponse.json({
-      ok: true,
-      appliedNow: true,
-      message: "Plan actualizado correctamente.",
-      preview,
-    });
-  }
-
-  if (!methodSlug) {
-    return NextResponse.json({ error: "Selecciona un metodo de pago" }, { status: 400 });
-  }
-
-  const selectedMethod = preview.paymentMethods.find((method) => method.slug === methodSlug);
-  if (!selectedMethod) {
-    return NextResponse.json({ error: "Metodo de pago no disponible" }, { status: 400 });
-  }
-
-  const paymentReference = `PLANCHG-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
-  const nowIso = new Date().toISOString();
-
-  const { data: payment, error: paymentError } = await supabaseAdmin
-    .from("payments_history")
-    .insert({
-      company_id: ctx.companyId,
-      plan_id: preview.targetPlan.id,
-      amount_paid: preview.pricing.amountDue,
-      months_paid: preview.pricing.months,
-      payment_method: selectedMethod.name,
-      payment_method_slug: selectedMethod.slug,
-      payment_reference: paymentReference,
-      status: selectedMethod.auto_verify ? "paid" : "pending_validation",
-      payment_date: selectedMethod.auto_verify ? nowIso : null,
-    })
-    .select("id,amount_paid,months_paid,payment_reference,status,payment_method,payment_method_slug,payment_date,reference_file_url")
-    .single();
-
-  if (paymentError || !payment) {
-    return NextResponse.json({ error: paymentError?.message ?? "No se pudo crear el pago" }, { status: 500 });
-  }
-
-  if (selectedMethod.auto_verify) {
-    await supabaseAdmin
-      .from("companies")
-      .update({
-        plan_id: preview.targetPlan.id,
-        updated_at: nowIso,
-      })
-      .eq("id", ctx.companyId);
-    await syncCompanyPanelAccessFromPlanId(ctx.companyId, preview.targetPlan.id);
-    await activateCompanySubscription({
-      supabaseAdmin,
-      companyId: ctx.companyId,
-      monthsPaid: preview.pricing.months,
-      now: new Date(nowIso),
-    });
-  }
-
-  await supabaseAdmin.from("saas_tickets").insert({
-    company_id: ctx.companyId,
-    created_by_email: ctx.email,
-    source: "tenant",
-    subject: `Cambio de plan ${selectedMethod.auto_verify ? "aplicado" : "pendiente"} · ${paymentReference}`,
-    description: [
-      `Plan anterior: ${preview.currentPlan?.name ?? "Sin plan"}`,
-      `Plan nuevo: ${preview.targetPlan.name}`,
-      `Monto: ${preview.pricing.amountDue} USD`,
-      `Metodo: ${selectedMethod.name}`,
-      `Referencia: ${paymentReference}`,
-      clientReason ? `Motivo cliente: ${clientReason}` : null,
-      selectedMethod.auto_verify ? "Resultado: cambio aplicado automaticamente." : "Resultado: pendiente de validacion manual.",
-    ].filter(Boolean).join("\n"),
-    category: "billing",
-    priority: "high",
-    status: selectedMethod.auto_verify ? "resolved" : "open",
-    last_message_at: nowIso,
-    resolved_at: selectedMethod.auto_verify ? nowIso : null,
-  });
-
-  return NextResponse.json({
-    ok: true,
-    appliedNow: selectedMethod.auto_verify,
-    payment,
-    preview,
-    message: selectedMethod.auto_verify
-      ? "Pago procesado y plan actualizado."
-      : "Pago creado. El cambio de plan se aplicara cuando validemos tu pago.",
-  });
+	const { data, error } = await supabaseAdmin
+		.from("company_plan_change_schedules")
+		.update({ status: "cancelled", updated_at: new Date().toISOString() })
+		.eq("company_id", ctx.companyId)
+		.eq("status", "scheduled")
+		.select("id");
+	if (error) return NextResponse.json({ error: "No se pudo anular el cambio programado." }, { status: 500 });
+	if (!data?.length) return NextResponse.json({ error: "No hay ningún cambio programado." }, { status: 404 });
+	return NextResponse.json({ ok: true, message: "Anulamos el cambio programado: sigues con tu plan actual." });
 }

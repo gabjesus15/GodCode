@@ -54,7 +54,7 @@ const priorityVariant: Record<SupportPriority, ColorVariant> = {
 };
 
 const QUICK_TEMPLATES: { kind: "facturacion" | "tecnico" | "sucursales"; label: string }[] = [
-  { kind: "facturacion", label: "Facturacion y cobros" },
+  { kind: "facturacion", label: "Facturación y cobros" },
   { kind: "tecnico",     label: "Incidencia tecnica" },
   { kind: "sucursales",  label: "Sucursales y expansion" },
 ];
@@ -150,7 +150,7 @@ export function AccountSoporteTab({
         {!selectedTicket ? (
           <Card compact>
             <div className="flex h-64 items-center justify-center text-sm text-[#a1a1a6]">
-              Selecciona un ticket para ver la conversacion.
+              Selecciona un ticket para ver la conversación.
             </div>
           </Card>
         ) : (
@@ -232,7 +232,7 @@ export function AccountSoporteTab({
         <div className="space-y-4">
           {/* Quick templates */}
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Plantilla rapida</p>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Plantilla rápida</p>
             <div className="flex flex-wrap gap-2">
               {QUICK_TEMPLATES.map((t) => (
                 <button
@@ -259,7 +259,7 @@ export function AccountSoporteTab({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="block text-xs font-medium text-[#6e6e73]">
-              Categoria
+              Categoría
               <select
                 value={supportCategory}
                 onChange={(e) => setSupportCategory(e.target.value as SupportCategory)}
@@ -285,7 +285,7 @@ export function AccountSoporteTab({
           </div>
 
           <label className="block text-xs font-medium text-[#6e6e73]">
-            Descripcion
+            Descripción
             <textarea
               value={supportDescription}
               onChange={(e) => setSupportDescription(e.target.value)}

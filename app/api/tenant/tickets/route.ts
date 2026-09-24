@@ -76,6 +76,8 @@ export async function GET() {
       .from("saas_tickets")
       .select("id,company_id,created_by_email,source,subject,description,category,priority,status,assigned_to,first_response_at,resolved_at,first_response_due_at,resolution_due_at,last_message_at,created_at,updated_at")
       .eq("company_id", ctx.companyId)
+      // Los tickets "system" son registros para el equipo (bajas, cobros a revisar).
+      .or("source.is.null,source.neq.system")
       .order("last_message_at", { ascending: false })
       .order("created_at", { ascending: false });
 

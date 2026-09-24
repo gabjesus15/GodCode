@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
-import { sanitizeServerText } from "@/lib/infra/server-sanitize";
+import { cleanMultilineText } from "@/lib/infra/server-sanitize";
 
 /** @service-role super-admin */
 
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
   if (!ticketId) return NextResponse.json({ error: "Falta id" }, { status: 400 });
 
   const body = await req.json();
-  const message = sanitizeServerText(String(body.message ?? ""));
+  const message = cleanMultilineText(String(body.message ?? ""));
   const isInternal = Boolean(body.isInternal ?? false);
 
   if (!message) return NextResponse.json({ error: "El mensaje es obligatorio" }, { status: 400 });
@@ -95,12 +95,13 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
+  // Una nota interna no cuenta como respuesta ni reordena la conversación del cliente.
   const patch: Record<string, unknown> = {
-    last_message_at: nowIso,
     updated_at: nowIso,
+    ...(isInternal ? {} : { last_message_at: nowIso }),
   };
 
-  if (!ticket.first_response_at) {
+  if (!ticket.first_response_at && !isInternal) {
     patch.first_response_at = nowIso;
   }
 

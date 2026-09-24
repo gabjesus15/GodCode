@@ -18,6 +18,7 @@ import { slugify } from "@/utils/slugify";
 import { uploadImage } from "@/lib/storage/upload-image-client";
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
+import { COUNTRY_OPTIONS, CURRENCY_OPTIONS } from "@/lib/super-admin/form-options";
 
 const BrandingPreview = dynamic(
   () =>
@@ -70,6 +71,7 @@ export function CompanyForm({ plans }: CompanyFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [slugTouched, setSlugTouched] = useState(false);
+  const [displayNameTouched, setDisplayNameTouched] = useState(false);
   const [backgroundUploading, setBackgroundUploading] = useState(false);
   const [backgroundUploadError, setBackgroundUploadError] = useState<
     string | null
@@ -161,12 +163,16 @@ export function CompanyForm({ plans }: CompanyFormProps) {
       }
 
       // Comentario: empaquetamos el branding dentro de theme_config antes de insertar.
-      const { error: insertError } = await supabase.from("companies").insert({
-        name: form.name,
+      const { data: created, error: insertError } = await supabase.from("companies").insert({
+        name: form.name.trim(),
         public_slug: form.public_slug,
         plan_id: form.plan_id || null,
         subscription_status: "active",
         created_by: userRow.id,
+        // Antes el formulario los pedía pero no los guardaba.
+        country: form.country || null,
+        currency: form.currency || null,
+        legal_rut: form.document.trim() || null,
         theme_config: {
           displayName: form.display_name.trim() || form.name,
           primaryColor: form.primary_color,
@@ -179,7 +185,7 @@ export function CompanyForm({ plans }: CompanyFormProps) {
           backgroundImageUrl: form.background_image_url.trim() || null,
           panelAccess: panelAccessByPlan,
         },
-      });
+      }).select("id").single();
 
       if (insertError) {
         if (insertError.code === "23505") {
@@ -191,11 +197,12 @@ export function CompanyForm({ plans }: CompanyFormProps) {
       await logAdminAction({
         action: "company.create",
         targetType: "company",
-        targetId: form.public_slug,
-        metadata: { plan_id: form.plan_id },
+        targetId: created?.id ?? form.public_slug,
+        metadata: { plan_id: form.plan_id, public_slug: form.public_slug },
       });
 
-      router.push("/companies");
+      // A la ficha: ahí se fija el vencimiento (Suscripción → Extender) y se crean las sucursales.
+      router.push(created?.id ? `/companies/${created.id}` : "/companies");
       router.refresh();
     } catch (err) {
       const message =
@@ -206,30 +213,8 @@ export function CompanyForm({ plans }: CompanyFormProps) {
     }
   };
 
-  const countryOptions = [
-    { value: "", label: "Selecciona un país" },
-    { value: "Chile", label: "Chile" },
-    { value: "Venezuela", label: "Venezuela" },
-    { value: "Argentina", label: "Argentina" },
-    { value: "Colombia", label: "Colombia" },
-    { value: "México", label: "México" },
-    { value: "Perú", label: "Perú" },
-    { value: "España", label: "España" },
-    { value: "Estados Unidos", label: "Estados Unidos" },
-    { value: "Otro", label: "Otro" },
-  ];
-
-  const currencyOptions = [
-    { value: "", label: "Selecciona una moneda" },
-    { value: "VES", label: "Bolívar (VES)" },
-    { value: "USD", label: "Dólar (USD)" },
-    { value: "COP", label: "Peso Colombiano (COP)" },
-    { value: "ARS", label: "Peso Argentino (ARS)" },
-    { value: "CLP", label: "Peso Chileno (CLP)" },
-    { value: "MXN", label: "Peso Mexicano (MXN)" },
-    { value: "EUR", label: "Euro (EUR)" },
-    { value: "Otro", label: "Otro" },
-  ];
+  const countryOptions = [{ value: "", label: "Selecciona un país" }, ...COUNTRY_OPTIONS];
+  const currencyOptions = [{ value: "", label: "Según el país" }, ...CURRENCY_OPTIONS];
 
   const planOptions = [
     { value: "", label: "Selecciona un plan" },
@@ -243,7 +228,7 @@ export function CompanyForm({ plans }: CompanyFormProps) {
     <form className="flex flex-col gap-5 sm:gap-6" onSubmit={handleSubmit}>
       <CompanySectionCard
         title="Información general"
-        description="Datos básicos del tenant y su dominio."
+        description="Datos básicos del negocio y su dirección web."
       >
         <div className="grid gap-4 md:grid-cols-2">
           <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -253,10 +238,7 @@ export function CompanyForm({ plans }: CompanyFormProps) {
               onChange={(event) =>
                 setForm((prev) => {
                   const nextName = event.target.value;
-                  const nextDisplayName =
-                    prev.display_name.trim().length > 0
-                      ? prev.display_name
-                      : nextName;
+                  const nextDisplayName = displayNameTouched ? prev.display_name : nextName;
                   if (slugTouched) {
                     return {
                       ...prev,
@@ -307,9 +289,10 @@ export function CompanyForm({ plans }: CompanyFormProps) {
             Nombre visible
             <Input
               value={form.display_name}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, display_name: event.target.value }))
-              }
+              onChange={(event) => {
+                setDisplayNameTouched(true);
+                setForm((prev) => ({ ...prev, display_name: event.target.value }));
+              }}
               placeholder={form.name || "Nombre visible"}
               className="h-10 rounded-xl"
             />
@@ -344,20 +327,20 @@ export function CompanyForm({ plans }: CompanyFormProps) {
           />
 
           <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 md:col-span-2">
-            {form.country === 'Chile' ? 'RUT' : form.country === 'Venezuela' ? 'Cédula de Identidad (CI)' : 'Documento'}
+            {form.country === "CL" ? 'RUT' : form.country === "VE" ? 'Cédula de Identidad (CI)' : 'Documento'}
             <Input
               value={form.document}
               onChange={e => setForm(prev => ({ ...prev, document: e.target.value }))}
-              placeholder={form.country === 'Chile' ? '12.345.678-9' : form.country === 'Venezuela' ? 'Ej: 12345678' : 'Documento'}
-              type={form.country === 'Venezuela' ? 'number' : 'text'}
-              maxLength={form.country === 'Chile' ? 12 : 20}
+              placeholder={form.country === "CL" ? '12.345.678-9' : form.country === "VE" ? 'Ej: 12345678' : 'Documento'}
+              type={form.country === "VE" ? 'number' : 'text'}
+              maxLength={form.country === "CL" ? 12 : 20}
               className="h-10 rounded-xl"
               required
             />
             {form.document.length > 3 && !(
-              (form.country === 'Chile' && rut.validate(form.document)) ||
-              (form.country === 'Venezuela' && /^[0-9]+$/.test(form.document) && form.document.length >= 6 && form.document.length <= 9) ||
-              (form.country !== 'Chile' && form.country !== 'Venezuela' && form.document.length > 4)
+              (form.country === "CL" && rut.validate(form.document)) ||
+              (form.country === "VE" && /^[0-9]+$/.test(form.document) && form.document.length >= 6 && form.document.length <= 9) ||
+              (form.country !== "CL" && form.country !== "VE" && form.document.length > 4)
             ) && (
               <span className="text-xs text-red-600 dark:text-red-400">Documento inválido</span>
             )}
@@ -367,7 +350,7 @@ export function CompanyForm({ plans }: CompanyFormProps) {
 
       <CompanySectionCard
         title="Branding"
-        description="Colores, logo e imagen de fondo del tenant."
+        description="Colores, logo e imagen de fondo del negocio."
       >
         <div className="grid gap-4 md:grid-cols-2">
           <ColorField label="Color primario" value={form.primary_color} onChange={(v) => setForm((prev) => ({ ...prev, primary_color: v }))} />

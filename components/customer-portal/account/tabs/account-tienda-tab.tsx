@@ -854,7 +854,7 @@ export function AccountTiendaTab({
                     </div>
                   )}
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Comentario de publicacion</label>
+                    <label className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Comentario de publicación</label>
                     <textarea
                       value={storeThemePublishComment}
                       onChange={(e) => setStoreThemePublishComment(e.target.value)}
@@ -960,8 +960,8 @@ export function AccountTiendaTab({
             <Card compact>
               <div className="grid grid-cols-3 gap-2 text-xs">
                 <div><p className="text-[#a1a1a6]">Estado</p><p className="mt-0.5 font-medium text-[#1d1d1f]">{publicationStateLabel}</p></div>
-                <div><p className="text-[#a1a1a6]">Ultima edicion</p><p className="mt-0.5 font-medium text-[#1d1d1f]">{storeThemeUpdatedAt ? fmtDate(storeThemeUpdatedAt, company.timezone) : "-"}</p></div>
-                <div><p className="text-[#a1a1a6]">Ultima publicacion</p><p className="mt-0.5 font-medium text-[#1d1d1f]">{latestPublishedVersion ? fmtDate(latestPublishedVersion.createdAt, company.timezone) : "-"}</p></div>
+                <div><p className="text-[#a1a1a6]">Última edición</p><p className="mt-0.5 font-medium text-[#1d1d1f]">{storeThemeUpdatedAt ? fmtDate(storeThemeUpdatedAt, company.timezone) : "-"}</p></div>
+                <div><p className="text-[#a1a1a6]">Última publicación</p><p className="mt-0.5 font-medium text-[#1d1d1f]">{latestPublishedVersion ? fmtDate(latestPublishedVersion.createdAt, company.timezone) : "-"}</p></div>
               </div>
             </Card>
           </aside>

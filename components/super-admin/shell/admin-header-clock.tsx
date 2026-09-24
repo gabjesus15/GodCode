@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 function formatClockParts(d: Date) {
 	const time = d.toLocaleTimeString("es-CL", {
@@ -19,15 +19,20 @@ function formatClockParts(d: Date) {
 	return { time, dateShort, tz };
 }
 
+// El minuto actual como "tienda externa": el servidor no pinta hora (la suya no es la del
+// navegador y rompía la hidratación); el navegador la pinta y la actualiza cada 20 s.
+function subscribe(onChange: () => void) {
+	const id = window.setInterval(onChange, 20_000);
+	return () => window.clearInterval(id);
+}
+const currentMinute = () => Math.floor(Date.now() / 60_000);
+const noMinute = () => null;
+
 export function AdminHeaderClock() {
-	const [, setTick] = useState(0);
+	const minute = useSyncExternalStore(subscribe, currentMinute, noMinute);
+	if (minute == null) return <div className="mr-1 hidden w-20 sm:mr-2 sm:block" aria-hidden />;
 
-	useEffect(() => {
-		const id = setInterval(() => setTick((t) => t + 1), 60_000);
-		return () => clearInterval(id);
-	}, []);
-
-	const { time, dateShort, tz } = formatClockParts(new Date());
+	const { time, dateShort, tz } = formatClockParts(new Date(minute * 60_000));
 
 	return (
 		<div

@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeAdminMock, type TableQueues } from "../../lib/menu-account/test-supabase-mock";
 
-const { adminRef, getUserMock } = vi.hoisted(() => ({
+const { adminRef, getUserMock, aalMock } = vi.hoisted(() => ({
 	adminRef: { current: null as ReturnType<typeof makeAdminMock> | null },
 	getUserMock: vi.fn(),
+	aalMock: vi.fn(),
 }));
 
 vi.mock("@/lib/infra/supabase-admin", () => ({
@@ -13,13 +14,13 @@ vi.mock("@/lib/infra/supabase-admin", () => ({
 	},
 }));
 
-vi.mock("@/utils/supabase/server", () => ({
-	createSupabaseServerClient: async () => ({ auth: { getUser: getUserMock } }),
-}));
+const serverClient = async () => ({
+	auth: { getUser: getUserMock, mfa: { getAuthenticatorAssuranceLevel: aalMock } },
+});
 
-vi.mock("../../../utils/supabase/server", () => ({
-	createSupabaseServerClient: async () => ({ auth: { getUser: getUserMock } }),
-}));
+vi.mock("@/utils/supabase/server", () => ({ createSupabaseServerClient: serverClient }));
+
+vi.mock("../../../utils/supabase/server", () => ({ createSupabaseServerClient: serverClient }));
 
 function setupTables(tables: TableQueues) {
 	const admin = makeAdminMock({ tables });
@@ -32,6 +33,9 @@ describe("validateAdminRolesOnServer", () => {
 		vi.resetModules();
 		adminRef.current = null;
 		getUserMock.mockReset();
+		aalMock.mockReset();
+		// Por defecto, usuario sin segundo factor.
+		aalMock.mockResolvedValue({ data: { currentLevel: "aal1", nextLevel: "aal1" }, error: null });
 	});
 
 	it("busca en admin_users con igualdad exacta, nunca con ilike", async () => {
@@ -74,6 +78,23 @@ describe("validateAdminRolesOnServer", () => {
 		// El correo del JWT llega con mayúsculas y debe consultarse normalizado.
 		const eq = admin.chains[0].chain.eq as { mock: { calls: unknown[][] } };
 		expect(eq.mock.calls.find((call) => call[0] === "email")?.[1]).toBe("admin@empresa.com");
+	});
+
+	it("exige el segundo factor si el usuario lo tiene y la sesión sigue en aal1", async () => {
+		getUserMock.mockResolvedValue({
+			data: { user: { email: "admin@empresa.com" } },
+			error: null,
+		});
+		aalMock.mockResolvedValue({ data: { currentLevel: "aal1", nextLevel: "aal2" }, error: null });
+		const admin = setupTables({ admin_users: [{ data: { role: "super_admin" }, error: null }] });
+		const { validateAdminRolesOnServer } = await import("@/utils/admin/server-auth");
+
+		const result = await validateAdminRolesOnServer(["super_admin"]);
+
+		expect(result.ok).toBe(false);
+		expect(result.status).toBe(401);
+		// Ni siquiera llega a consultar el rol.
+		expect(admin.chains).toHaveLength(0);
 	});
 
 	it("rechaza un rol que no está en la lista permitida", async () => {

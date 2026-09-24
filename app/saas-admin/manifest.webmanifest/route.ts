@@ -14,9 +14,9 @@ export async function GET(req: Request) {
 
 	const manifest = {
 		id: "/dashboard",
-		name: "GodCode Admin",
-		short_name: "GodCode Admin",
-		description: "Panel super administración GodCode: empresas, planes, métricas y soporte.",
+		name: "Gcode Admin",
+		short_name: "Gcode Admin",
+		description: "Panel de super administración de Gcode: empresas, planes, métricas y soporte.",
 		start_url: "/dashboard",
 		scope: "/",
 		lang: "es",

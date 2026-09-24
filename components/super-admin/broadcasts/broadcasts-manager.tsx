@@ -268,7 +268,7 @@ export default function BroadcastsManager() {
               <Textarea
                 value={form.message}
                 onChange={(event) => setField("message", event.target.value)}
-                placeholder="Mensaje que se mostrará en los paneles admin tenant"
+                placeholder="Mensaje que verán los negocios en su panel"
                 rows={4}
               />
             </div>

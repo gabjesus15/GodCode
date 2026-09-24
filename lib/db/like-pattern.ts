@@ -30,3 +30,14 @@ export function escapeLikePattern(value: string): string {
 		.replace(/_/g, "\\_")
 		.replace(/\*/g, "");
 }
+
+/**
+ * Valor para un filtro `.or()` de PostgREST: patrón ILIKE `%…%` escapado y entre
+ * comillas dobles. Sin comillas, una búsqueda con coma o paréntesis ("pago, urgente")
+ * rompía el parser de filtros de PostgREST o añadía condiciones propias.
+ */
+export function orIlikeValue(value: string): string {
+	const pattern = `%${escapeLikePattern(value)}%`;
+	const quoted = pattern.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+	return `"${quoted}"`;
+}

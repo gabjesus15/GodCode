@@ -22,6 +22,8 @@ export const MAIN_DOMAIN_RESERVED_PATH_SEGMENTS = new Set([
 	"sobre-godcode",
 	"images",
 	"post-login",
+	// Panel super admin: sin esto "/landing" se trataba como el slug de un tenant.
+	"landing",
 ]);
 
 export function resolveTenantSlugFromPathname(pathname: string): string | null {

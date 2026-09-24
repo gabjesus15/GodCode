@@ -1,3 +1,4 @@
+import { formatUsd } from "@/lib/billing/portal-pricing";
 import {
   ADDON_STATUS_LABELS,
   BRANCH_ENTITLEMENT_STATUS_LABELS,
@@ -45,6 +46,24 @@ export function formatPaymentConfigKey(key: string): string {
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
+/** Montos del SaaS (plan, extras, pagos a Gcode): siempre en dólares. */
+export function fmtUsd(value: number | null | undefined, locale = "es-CL"): string {
+  return formatUsd(value, locale);
+}
+
+/** Solo fecha (sin hora), para vencimientos y fechas de cobro. */
+export function fmtDay(iso: string | null | undefined, timezone?: string | null): string {
+  if (!iso) return "-";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "-";
+  try {
+    return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "long", year: "numeric", timeZone: timezone || "UTC" }).format(date);
+  } catch {
+    return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(date);
+  }
+}
+
+/** Montos en la moneda del negocio (ventas de su tienda, no pagos al SaaS). */
 export function fmtMoney(value: number | null | undefined, currency = "USD", locale = "es-CL"): string {
   if (value == null || !Number.isFinite(Number(value))) return "-";
   const noDecimals = ["CLP", "COP", "ARS", "PYG", "CLF"].includes(currency.toUpperCase());

@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { readBearerSecret, secretsMatch } from "@/lib/infra/secret-compare";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { applyScheduledPlanChangesDue, suspendExpiredSubscriptions } from "@/lib/onboarding/billing-activation";
-import { processDueBookingReminders } from "@/lib/onboarding/booking-notifications";
+import { runDailySubscriptionJobs } from "@/lib/onboarding/daily-jobs";
 import { proxyToOnboardingBilling } from "@/lib/onboarding/service-proxy";
 
 /** @service-role cron-secret */
+
+// Suspende vencidas, aplica cambios de plan y manda los recordatorios del día (con pausas
+// entre correos por el límite de Resend).
+export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
 	const proxied = await proxyToOnboardingBilling(req, "/api/cron/subscription-status");
@@ -27,43 +30,8 @@ export async function GET(req: NextRequest) {
 		return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 	}
 
-	const result = await suspendExpiredSubscriptions({ supabaseAdmin });
-	const scheduledChanges = await applyScheduledPlanChangesDue({ supabaseAdmin });
-
-	if (result.error) {
-		return NextResponse.json({ error: result.error }, { status: 500 });
-	}
-
-	if (scheduledChanges.error) {
-		return NextResponse.json({ error: scheduledChanges.error }, { status: 500 });
-	}
-
-	const reminderResult = await processDueBookingReminders({ supabaseAdmin });
-	if (reminderResult.errors > 0 && result.suspended === 0) {
-		return NextResponse.json(
-			{ error: "No se pudieron procesar algunos recordatorios programados", processed_bookings: reminderResult.processed, errors: reminderResult.errors },
-			{ status: 500 }
-		);
-	}
-
-	if (result.suspended === 0) {
-		return NextResponse.json({
-			ok: true,
-			suspended: 0,
-			applied_plan_changes: scheduledChanges.applied,
-			failed_plan_changes: scheduledChanges.failed,
-			processed_bookings: reminderResult.processed,
-			message: reminderResult.processed > 0 ? "Recordatorios programados enviados" : "Nada que actualizar",
-		});
-	}
-
-	return NextResponse.json({
-		ok: true,
-		suspended: result.suspended,
-		applied_plan_changes: scheduledChanges.applied,
-		failed_plan_changes: scheduledChanges.failed,
-		processed_bookings: reminderResult.processed,
-	});
+	const summary = await runDailySubscriptionJobs({ supabaseAdmin });
+	return NextResponse.json(summary, { status: summary.ok ? 200 : 500 });
 }
 
 export async function POST(req: NextRequest) {

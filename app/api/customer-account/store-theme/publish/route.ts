@@ -73,11 +73,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: versionError.message }, { status: 500 });
   }
 
+  // Registro para el equipo (qué cambió y el comentario). Es "system": no aparece en el
+  // Soporte del dueño como si hubiera abierto un ticket.
   await supabaseAdmin.from("saas_tickets").insert({
     company_id: ctx.companyId,
     created_by_email: ctx.email,
-    source: "tenant",
-    subject: "Publicacion de cambios de tienda",
+    source: "system",
+    subject: "Publicación de cambios de tienda",
     description: [
       "Se publicaron cambios de branding desde el panel de cuenta.",
       `Fecha: ${nowIso}`,

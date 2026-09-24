@@ -2,10 +2,14 @@ import { Building2 } from "lucide-react";
 import { CompanyForm } from "../../../../components/super-admin/companies/company-form";
 import { createSupabaseServerClient } from "../../../../utils/supabase/server";
 import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
+import { requireSuperAdminSession } from "@/lib/super-admin/require-super-admin-session";
+
+export const metadata = { title: "Nueva empresa" };
 
 export const dynamic = "force-dynamic";
 
 export default async function CompanyCreatePage() {
+  await requireSuperAdminSession();
   try {
     const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase
@@ -22,7 +26,7 @@ export default async function CompanyCreatePage() {
       <div className="flex flex-col gap-5 sm:gap-6">
         <SaasPageHeader
           title="Nueva empresa"
-          description="Crea un tenant con dominio, plan y configuración visual."
+          description="Crea un negocio con su subdominio, su plan y sus colores."
           icon={Building2}
           backHref="/companies"
           backLabel="Volver a empresas"

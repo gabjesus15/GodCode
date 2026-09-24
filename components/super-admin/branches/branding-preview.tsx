@@ -61,7 +61,7 @@ export function BrandingPreview({
   return (
     <details className="rounded-2xl border border-dashed border-zinc-200 bg-white p-4">
       <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-zinc-500">
-        Vista previa del tenant
+        Vista previa del menú
       </summary>
 
       <div className="mt-4 grid gap-4">

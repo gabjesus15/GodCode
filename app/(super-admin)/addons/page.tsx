@@ -197,7 +197,7 @@ export default function AddonsPage() {
 		<div className="flex min-w-0 flex-col gap-5 sm:gap-6">
 			<SaasPageHeader
 				title="Servicios extra"
-				description="Add-ons opcionales que los clientes pueden contratar durante el registro."
+				description="Servicios que los negocios pueden sumar a su plan, al registrarse o desde /cuenta."
 				icon={Puzzle}
 				action={
 					<Button type="button" onClick={startNew} disabled={showNew}>
@@ -222,8 +222,8 @@ export default function AddonsPage() {
 					if (!open) resetForm();
 				}}
 				contentClassName="max-w-xl"
-				title={editingId ? "Editar add-on" : "Nuevo add-on"}
-				description="Configura slug, nombre, precio y visibilidad del add-on."
+				title={editingId ? "Editar servicio extra" : "Nuevo servicio extra"}
+				description="Identificador, nombre, precio y si se ofrece o no."
 			>
 				<div className="space-y-5 py-2">
 					{error && (
@@ -315,7 +315,7 @@ export default function AddonsPage() {
 					</div>
 					<SaasSwitch
 						label="Activo (visible en registro)"
-						description="Los add-ons inactivos no aparecen durante el onboarding."
+						description="Los servicios inactivos no se ofrecen en el registro ni en /cuenta."
 						checked={form.is_active}
 						onChange={(checked) => setForm((p) => ({ ...p, is_active: checked }))}
 					/>
@@ -337,11 +337,11 @@ export default function AddonsPage() {
 			{filteredAddons.length === 0 && !showNew ? (
 				<SaasEmptyState
 					icon={Puzzle}
-					title={query ? "Sin resultados" : "No hay add-ons"}
+					title={query ? "Sin resultados" : "No hay servicios extra"}
 					description={
 						query
-							? "Ningún add-on coincide con tu búsqueda."
-							: "Crea tu primer add-on, por ejemplo dominio propio o personalización de marca."
+							? "Ningún servicio extra coincide con tu búsqueda."
+							: "Crea el primero, por ejemplo dominio propio o personalización de marca."
 					}
 					action={
 						!query && (

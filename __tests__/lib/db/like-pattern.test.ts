@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { escapeLikePattern } from "@/lib/db/like-pattern";
+import { escapeLikePattern, orIlikeValue } from "@/lib/db/like-pattern";
 
 describe("escapeLikePattern", () => {
 	it("deja intacto un valor sin metacaracteres", () => {
@@ -38,5 +38,17 @@ describe("escapeLikePattern", () => {
 
 	it("no altera una cadena vacía", () => {
 		expect(escapeLikePattern("")).toBe("");
+	});
+});
+
+describe("orIlikeValue", () => {
+	it("pone el patrón entre comillas para que comas y paréntesis no rompan el filtro", () => {
+		expect(orIlikeValue("pago, urgente (hoy)")).toBe('"%pago, urgente (hoy)%"');
+	});
+
+	it("escapa comillas y metacaracteres", () => {
+		// PostgREST quita un nivel de barras dentro de las comillas: el patrón LIKE queda `%50\%%`.
+		expect(orIlikeValue('a"b')).toBe(String.raw`"%a\"b%"`);
+		expect(orIlikeValue("50%")).toBe(String.raw`"%50\\%%"`);
 	});
 });

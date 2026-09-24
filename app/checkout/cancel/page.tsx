@@ -1,3 +1,4 @@
+import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, AlertTriangle, Clock3, ExternalLink, ShieldAlert } from "lucide-react";
@@ -27,7 +28,7 @@ const statusBadge: Record<string, "success" | "warning" | "destructive" | "neutr
 };
 
 function getSupportEmail(): string {
-  return process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || process.env.RESEND_FROM?.trim() || "hola@godcode.me";
+  return LANDING_SUPPORT_EMAIL;
 }
 
 async function getPayment(ref?: string) {

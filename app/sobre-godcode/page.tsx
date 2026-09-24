@@ -14,6 +14,7 @@ import { buildOrganizationJsonLd, getOrganizationId } from "@/lib/landing/json-l
 import { normalizeLocale } from "@/lib/i18n/config";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { getCurrentLocale } from "@/lib/i18n/server";
+import { serializeJsonLd } from "@/lib/seo/serialize-json-ld";
 
 type AboutSearchParams = {
   hl?: string;
@@ -220,7 +221,7 @@ export default async function SobreGodCodePage({
         id="gcode-about-jsonld"
         type="application/ld+json"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data JSON-LD must be inline for Googlebot
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(ld) }}
       />
 
       <AboutNavbar

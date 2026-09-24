@@ -106,8 +106,8 @@ export default function PrivacidadPage() {
 							</li>
 							<li>
 								<strong>Analítica interna de {LANDING_COMPANY_NAME}</strong>, almacenada en nuestros sistemas para
-								medir el rendimiento de la landing, los menús digitales de cada negocio y el panel
-								super administrador (visitas, rutas, país aproximado, identificadores de sesión
+								medir el rendimiento de la landing, los menús digitales de cada negocio y nuestro panel
+								de administración (visitas, rutas, país aproximado, identificadores de sesión
 								seudonimizados).
 							</li>
 						</ul>

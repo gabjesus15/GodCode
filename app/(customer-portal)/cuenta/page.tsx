@@ -1,16 +1,17 @@
-import { redirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
 
 import { CustomerAccountClient } from "./CustomerAccountClient";
-import { getCustomerMembership } from "@/lib/super-admin/account-access";
+import { requireCustomerPortalSession } from "@/lib/tenant/customer-portal-session";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { resolvePlanName } from "@/lib/plans/plan-i18n";
 import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
-import { BranchSummary, BusinessInfoSummary } from "@/components/customer-portal/shared/customer-account-types";
+import { resolveRegionalPlanPrice } from "@/lib/plans/plan-regional-pricing";
+import { BranchSummary, BusinessInfoSummary, type PortalTab } from "@/components/customer-portal/shared/customer-account-types";
+import { PORTAL_TAB_ORDER } from "@/components/customer-portal/shared/customer-account-constants";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { sanitizeBranchPaymentConfig } from "@/lib/payments/branch-payment-config";
 import { resolveTenantPanelLoginUrl } from "@/lib/tenant/panel-url";
 import { buildBillingOptionsResponse, getCustomerAccountBillingContext } from "@/lib/tenant/customer-account-billing";
-import { createSupabaseServerClient } from "../../../utils/supabase/server";
 import { getCountryConfig } from "@/lib/geo/country-registry";
 import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
 
@@ -23,12 +24,15 @@ const getCachedActivePlans = unstable_cache(
   async () => {
     const { data } = await supabaseAdmin
       .from("plans")
-      .select("id,name,name_i18n,price,max_branches,max_users,features,marketing_lines")
+      .select("id,name,name_i18n,price,prices_by_continent,max_branches,max_users,features,marketing_lines")
       .eq("is_active", true)
+      // Los planes internos (dev, promos) no se ofrecen al dueño; su plan actual se
+      // muestra igual desde la ficha de la empresa.
+      .eq("is_public", true)
       .order("price", { ascending: true });
     return data ?? [];
   },
-  ["customer-account-plans-catalog"],
+  ["customer-account-plans-catalog-public"],
   { revalidate: 600 },
 );
 
@@ -84,23 +88,20 @@ function resolveTenantAdminUrl(publicSlug: string | null): string | null {
 
 export const dynamic = "force-dynamic";
 
-export default async function CustomerAccountPage() {
+/** `/cuenta?tab=plan`: los correos llevan directo a la sección que corresponde. */
+function parseInitialTab(raw: string | string[] | undefined): PortalTab | undefined {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return PORTAL_TAB_ORDER.find((tab) => tab === value);
+}
+
+export default async function CustomerAccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string | string[] }>;
+}) {
+  const initialTab = parseInitialTab((await searchParams)?.tab);
   const locale = await getCurrentLocale();
-  const supabase = await createSupabaseServerClient("super-admin");
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user?.email) {
-    redirect("/login");
-  }
-
-  const membership = await getCustomerMembership({ authUserId: user.id, email: user.email });
-  if (!membership || membership.role !== "ceo") {
-    redirect("/login?error=no-access");
-  }
-
+  const { membership } = await requireCustomerPortalSession();
   const companyId = membership.companyId;
   const initialSyncedAt = new Date().toISOString();
 
@@ -110,10 +111,10 @@ export default async function CustomerAccountPage() {
     getCustomerAccountBillingContext(companyId),
   ]);
 
-  const [{ data: company }, { data: branches }, { data: businessInfoRaw }, { data: payments }, { data: companyAddons }, { data: tickets }, { data: branchEntitlements }] = await Promise.all([
+  const [{ data: company }, { data: branches }, { data: businessInfoRaw }, { data: payments }, { data: companyAddons }, { data: tickets }, { data: branchEntitlements }, { data: schedule }] = await Promise.all([
     supabaseAdmin
       .from("companies")
-      .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,plan:plans(id,name,name_i18n,price,max_branches,max_users,features)")
+      .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,plan:plans(id,name,name_i18n,price,prices_by_continent,max_branches,max_users,features)")
       .eq("id", companyId)
       .maybeSingle(),
     supabaseAdmin
@@ -130,10 +131,10 @@ export default async function CustomerAccountPage() {
       .maybeSingle(),
     supabaseAdmin
       .from("payments_history")
-      .select("id,amount_paid,status,payment_date,payment_method,months_paid,payment_reference,reference_file_url")
+      .select("id,amount_paid,status,payment_date,payment_method,payment_method_slug,plan_id,months_paid,payment_reference,reference_file_url")
       .eq("company_id", companyId)
-      .order("payment_date", { ascending: false })
-      .limit(20),
+      .order("payment_date", { ascending: false, nullsFirst: false })
+      .limit(50),
     supabaseAdmin
       .from("company_addons")
       .select("id,addon_id,status,expires_at,addon:addons(id,name,slug,type)")
@@ -143,6 +144,8 @@ export default async function CustomerAccountPage() {
       .from("saas_tickets")
       .select("id,subject,description,category,priority,status,created_at,updated_at,last_message_at")
       .eq("company_id", companyId)
+      // Los tickets "system" son registros para el equipo (bajas, cobros a revisar).
+      .or("source.is.null,source.neq.system")
       .order("last_message_at", { ascending: false })
       .limit(50),
     supabaseAdmin
@@ -151,11 +154,33 @@ export default async function CustomerAccountPage() {
       .eq("company_id", companyId)
       .order("created_at", { ascending: false })
       .limit(50),
+    supabaseAdmin
+      .from("company_plan_change_schedules")
+      .select("target_plan_id,effective_at,plan:plans!company_plan_change_schedules_target_plan_id_fkey(name,name_i18n)")
+      .eq("company_id", companyId)
+      .eq("status", "scheduled")
+      .maybeSingle(),
   ]);
 
   const supportEmail = LANDING_SUPPORT_EMAIL;
   const rawCountry = (company as { country?: string | null } | null)?.country ?? null;
   const countryConfig = getCountryConfig(rawCountry);
+
+  // Los montos del SaaS son en USD y con el precio de la región del negocio (el del alta).
+  const regionalPrice = (plan: { price?: number | null; prices_by_continent?: unknown } | null | undefined) =>
+    plan
+      ? resolveRegionalPlanPrice(
+          {
+            price: plan.price ?? null,
+            prices_by_continent: (plan.prices_by_continent ?? null) as Record<string, { price: number; currency: string }> | null,
+          },
+          rawCountry,
+        ).price
+      : null;
+  const scheduleRow = schedule as
+    | { target_plan_id: string; effective_at: string; plan?: { name?: string | null; name_i18n?: unknown } | Array<{ name?: string | null; name_i18n?: unknown }> | null }
+    | null;
+  const schedulePlan = Array.isArray(scheduleRow?.plan) ? scheduleRow?.plan[0] : scheduleRow?.plan;
 
   const snapshot = {
     id: String(company?.id ?? companyId),
@@ -170,7 +195,7 @@ export default async function CustomerAccountPage() {
       name: ((company?.plan as { name?: string | null } | null)?.name ?? null) as string | null,
       nameI18n: (company?.plan as { name_i18n?: unknown } | null)?.name_i18n,
     }),
-    planPrice: ((company?.plan as { price?: number | null } | null)?.price ?? null) as number | null,
+    planPrice: regionalPrice(company?.plan as { price?: number | null; prices_by_continent?: unknown } | null),
     planMaxBranches: ((company?.plan as { max_branches?: number | null } | null)?.max_branches ?? null) as number | null,
     planMaxUsers: ((company?.plan as { max_users?: number | null } | null)?.max_users ?? null) as number | null,
     supportEmail,
@@ -179,6 +204,15 @@ export default async function CustomerAccountPage() {
     currency: countryConfig?.currency ?? "USD",
     locale: countryConfig?.locale ?? "es-CL",
     timezone: countryConfig?.timezone ?? "America/Santiago",
+    scheduledPlanChange: scheduleRow
+      ? {
+          targetPlanId: scheduleRow.target_plan_id,
+          targetPlanName: schedulePlan?.name
+            ? resolvePlanName({ locale, name: schedulePlan.name, nameI18n: schedulePlan.name_i18n })
+            : null,
+          effectiveAt: scheduleRow.effective_at,
+        }
+      : null,
   };
 
   const activeAddons = (companyAddons ?? []).map((row) => {
@@ -273,8 +307,9 @@ export default async function CustomerAccountPage() {
 
   return (
     <CustomerAccountClient
+        initialTab={initialTab}
         company={snapshot}
-        branches={(branches ?? []) as BranchSummary[]}
+        branches={((branches ?? []) as BranchSummary[]).map(sanitizeBranchPaymentConfig)}
         businessInfo={businessInfo}
         payments={
           ((payments ?? []) as Array<{
@@ -283,6 +318,8 @@ export default async function CustomerAccountPage() {
             status: string | null;
             payment_date: string | null;
             payment_method: string | null;
+            payment_method_slug: string | null;
+            plan_id: string | null;
             months_paid: number | null;
             payment_reference: string | null;
             reference_file_url: string | null;
@@ -290,10 +327,10 @@ export default async function CustomerAccountPage() {
         }
         activeAddons={activeAddons}
         availablePlans={
-          ((plans ?? []) as Array<{ id: string; name: string; name_i18n?: unknown; price: number | null; max_branches: number | null; max_users: number | null; features?: unknown; marketing_lines?: unknown }>).map((plan) => ({
+          ((plans ?? []) as Array<{ id: string; name: string; name_i18n?: unknown; price: number | null; prices_by_continent?: unknown; max_branches: number | null; max_users: number | null; features?: unknown; marketing_lines?: unknown }>).map((plan) => ({
             id: plan.id,
             name: resolvePlanName({ locale, name: plan.name, nameI18n: plan.name_i18n }),
-            price: plan.price,
+            price: regionalPrice(plan),
             max_branches: plan.max_branches,
             max_users: plan.max_users,
             features: plan.features,

@@ -3,6 +3,9 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { AuditoriaClient } from "@/components/super-admin/dashboard/auditoria-client";
 import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
 import type { Json } from "@/types/supabase-database";
+import { requireSuperAdminSession } from "@/lib/super-admin/require-super-admin-session";
+
+export const metadata = { title: "Auditoría" };
 
 /** @service-role layout-guard */
 
@@ -19,6 +22,7 @@ type Row = {
 };
 
 export default async function AuditoriaPage() {
+  await requireSuperAdminSession();
   const { data, error } = await supabaseAdmin
     .from("admin_audit_logs")
     .select("id,created_at,actor_email,action,target_type,target_id,metadata")
@@ -30,11 +34,11 @@ export default async function AuditoriaPage() {
   return (
     <div className="min-w-0 space-y-6">
       <SaasPageHeader
-        title="Auditoría de mutaciones"
-        description="Registro de mutaciones del API super-admin (tabla admin_audit_logs). El rol del actor se guarda dentro de metadata."
+        title="Auditoría"
+        description="Cada cambio hecho desde este panel: quién lo hizo, cuándo y sobre qué."
         icon={ShieldCheck}
         backHref="/dashboard"
-        backLabel="Volver al dashboard"
+        backLabel="Volver al inicio"
         action={
           <a
             href="/api/super-admin/audit-log?format=csv&limit=2000"

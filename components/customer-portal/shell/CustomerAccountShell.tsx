@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LogOut, RefreshCw } from "lucide-react";
+import { LogOut, MoreHorizontal, RefreshCw, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { SaasLogo } from "@/components/super-admin/shell/SaasLogo";
@@ -29,6 +29,10 @@ export type CustomerAccountShellProps = {
   children: React.ReactNode;
 };
 
+/** En móvil caben 4 secciones y «Más»; antes eran 8 en una barra que había que deslizar. */
+const MOBILE_PRIMARY_TABS: PortalTab[] = ["resumen", "plan", "facturacion", "soporte"];
+const MOBILE_MORE_TABS: PortalTab[] = PORTAL_TAB_ORDER.filter((tab) => !MOBILE_PRIMARY_TABS.includes(tab));
+
 export function CustomerAccountShell({
   companyName,
   activeTab,
@@ -42,6 +46,8 @@ export function CustomerAccountShell({
 }: CustomerAccountShellProps) {
   const badgeVariant = subscriptionStatusVariant(subscriptionStatus);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const activeInMore = MOBILE_MORE_TABS.includes(activeTab);
 
   const handleSignOut = async () => {
     if (loggingOut) return;
@@ -191,52 +197,125 @@ export function CustomerAccountShell({
       </div>
 
       {/* Navegación inferior — solo móvil */}
+      {moreOpen ? (
+        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Más secciones">
+          <button type="button" className="absolute inset-0 bg-black/25" aria-label="Cerrar" onClick={() => setMoreOpen(false)} />
+          <div className="absolute inset-x-2 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] rounded-2xl border border-[#e5e5ea] bg-white p-2 shadow-xl">
+            <div className="flex items-center justify-between px-2 py-1.5">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Más secciones</p>
+              <button type="button" onClick={() => setMoreOpen(false)} className="rounded-lg p-1.5 text-[#6e6e73] hover:bg-[#f5f5f7]" aria-label="Cerrar">
+                <X className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+            <ul>
+              {MOBILE_MORE_TABS.map((key) => {
+                const Icon = PORTAL_TAB_ICONS[key];
+                const active = activeTab === key;
+                return (
+                  <li key={key}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMoreOpen(false);
+                        onTabChange(key);
+                      }}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium transition",
+                        active ? "bg-indigo-50 text-indigo-700" : "text-[#1d1d1f] hover:bg-[#f5f5f7]",
+                      )}
+                    >
+                      <Icon className={cn("h-4 w-4 shrink-0", active ? "text-indigo-600" : "text-[#a1a1a6]")} aria-hidden />
+                      {PORTAL_TAB_LABELS[key]}
+                    </button>
+                  </li>
+                );
+              })}
+              <li className="mt-1 border-t border-[#f5f5f7] pt-1">
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  disabled={loggingOut}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
+                >
+                  <LogOut className="h-4 w-4 shrink-0" aria-hidden />
+                  {loggingOut ? "Cerrando…" : "Cerrar sesión"}
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      ) : null}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#ececf0] bg-white/[0.97] pb-[env(safe-area-inset-bottom,0px)] pt-0.5 shadow-[0_-1px_0_rgba(0,0,0,0.04),0_-16px_48px_rgba(15,23,42,0.06)] backdrop-blur-lg backdrop-saturate-150 md:hidden overflow-x-auto portal-scrollbar-none"
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#ececf0] bg-white/[0.97] pb-[env(safe-area-inset-bottom,0px)] pt-0.5 shadow-[0_-1px_0_rgba(0,0,0,0.04),0_-16px_48px_rgba(15,23,42,0.06)] backdrop-blur-lg backdrop-saturate-150 md:hidden"
         aria-label="Secciones del portal"
       >
-        <div className="flex min-w-full items-stretch justify-start gap-1 px-2 py-1 flex-nowrap">
-          {PORTAL_TAB_ORDER.map((key) => {
+        <div className="grid grid-cols-5 gap-1 px-2 py-1">
+          {MOBILE_PRIMARY_TABS.map((key) => {
             const Icon = PORTAL_TAB_ICONS[key];
             const active = activeTab === key;
             return (
-              <button
+              <MobileNavButton
                 key={key}
-                type="button"
-                onClick={() => onTabChange(key)}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "relative flex min-w-[4.25rem] flex-1 shrink-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 transition-colors active:bg-[#f5f5f7]/80",
-                  active ? "text-indigo-600" : "text-[#8e8e93]",
-                )}
-              >
-                {active ? (
-                  <span
-                    className="absolute inset-x-1.5 top-0 h-[2px] rounded-full bg-indigo-500"
-                    aria-hidden
-                  />
-                ) : null}
-                <span
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-[11px] transition-colors sm:h-10 sm:w-10",
-                    active ? "bg-indigo-50 text-indigo-600 shadow-sm shadow-indigo-500/10" : "text-[#8e8e93]",
-                  )}
-                >
-                  <Icon className="h-[1.125rem] w-[1.125rem] shrink-0" strokeWidth={active ? 2.25 : 2} aria-hidden />
-                </span>
-                <span
-                  className={cn(
-                    "max-w-full truncate px-0.5 text-center text-[9px] font-semibold leading-[1.2] tracking-tight sm:text-[10px]",
-                    active ? "text-indigo-700" : "text-[#6e6e73]",
-                  )}
-                >
-                  {PORTAL_TAB_MOBILE_LABELS[key]}
-                </span>
-              </button>
+                active={active}
+                label={PORTAL_TAB_MOBILE_LABELS[key]}
+                icon={<Icon className="h-[1.125rem] w-[1.125rem] shrink-0" strokeWidth={active ? 2.25 : 2} aria-hidden />}
+                onClick={() => {
+                  setMoreOpen(false);
+                  onTabChange(key);
+                }}
+              />
             );
           })}
+          <MobileNavButton
+            active={activeInMore || moreOpen}
+            label={activeInMore ? PORTAL_TAB_MOBILE_LABELS[activeTab] : "Más"}
+            icon={<MoreHorizontal className="h-[1.125rem] w-[1.125rem] shrink-0" aria-hidden />}
+            onClick={() => setMoreOpen((open) => !open)}
+            expanded={moreOpen}
+          />
         </div>
       </nav>
     </div>
+  );
+}
+
+function MobileNavButton({
+  active,
+  label,
+  icon,
+  onClick,
+  expanded,
+}: {
+  active: boolean;
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  expanded?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={active && expanded === undefined ? "page" : undefined}
+      aria-expanded={expanded}
+      className={cn(
+        "relative flex min-w-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 transition-colors active:bg-[#f5f5f7]/80",
+        active ? "text-indigo-600" : "text-[#8e8e93]",
+      )}
+    >
+      {active ? <span className="absolute inset-x-1.5 top-0 h-[2px] rounded-full bg-indigo-500" aria-hidden /> : null}
+      <span
+        className={cn(
+          "flex h-9 w-9 items-center justify-center rounded-[11px] transition-colors",
+          active ? "bg-indigo-50 text-indigo-600 shadow-sm shadow-indigo-500/10" : "text-[#8e8e93]",
+        )}
+      >
+        {icon}
+      </span>
+      <span className={cn("max-w-full truncate px-0.5 text-center text-[10px] font-semibold leading-[1.2] tracking-tight", active ? "text-indigo-700" : "text-[#6e6e73]")}>
+        {label}
+      </span>
+    </button>
   );
 }

@@ -58,10 +58,11 @@ interface TicketItem {
 }
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "pending", label: "Pendientes (sin resolver)" },
   { value: "all", label: "Todos los estados" },
   { value: "open", label: "Abierto" },
-  { value: "in_progress", label: "En progreso" },
-  { value: "waiting_customer", label: "Esperando cliente" },
+  { value: "in_progress", label: "En curso" },
+  { value: "waiting_customer", label: "Esperando respuesta" },
   { value: "resolved", label: "Resuelto" },
   { value: "closed", label: "Cerrado" },
 ];
@@ -105,7 +106,8 @@ export default function TicketsManager() {
   const [messages, setMessages] = useState<TicketMessage[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
 
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  // Por defecto solo lo pendiente: los registros automáticos ya resueltos no tapan la cola.
+  const [statusFilter, setStatusFilter] = useState<string>("pending");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [assignedFilter, setAssignedFilter] = useState<string>("");
   const [query, setQuery] = useState("");
@@ -226,7 +228,7 @@ export default function TicketsManager() {
     async (message: string, isInternal: boolean) => {
       if (!selectedTicket || !message.trim()) {
         showMessage("error", "Escribe un mensaje para enviar");
-        return;
+        return false;
       }
       setSaving(true);
       try {
@@ -237,10 +239,12 @@ export default function TicketsManager() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "No se pudo enviar el mensaje");
-        showMessage("success", "Mensaje enviado correctamente");
+        showMessage("success", isInternal ? "Nota interna guardada" : "Respuesta enviada");
         await Promise.all([loadTickets(), loadMessages(selectedTicket.id)]);
+        return true;
       } catch (err) {
         showMessage("error", err instanceof Error ? err.message : "No se pudo enviar el mensaje");
+        return false;
       } finally {
         setSaving(false);
       }
@@ -345,10 +349,10 @@ export default function TicketsManager() {
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
       {/* KPIs */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Card className="rounded-3xl border border-zinc-200/60 bg-white p-4 dark:border-zinc-800/60 dark:bg-zinc-900/80">
           <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Total tickets
+            En la lista
           </p>
           <p className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{tickets.length}</p>
         </Card>
@@ -390,12 +394,12 @@ export default function TicketsManager() {
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar asunto/email"
+            placeholder="Buscar asunto o correo"
           />
           <Input
             value={assignedFilter}
             onChange={(event) => setAssignedFilter(event.target.value)}
-            placeholder="Asignado a (email)"
+            placeholder="Asignado a (correo)"
           />
         </div>
         <Button
@@ -424,8 +428,12 @@ export default function TicketsManager() {
           emptyState={
             <SaasEmptyState
               icon={Inbox}
-              title="No hay tickets"
-              description="No se encontraron tickets con los filtros seleccionados."
+              title={statusFilter === "pending" ? "Nada pendiente" : "No hay tickets"}
+              description={
+                statusFilter === "pending"
+                  ? "Todos los tickets están resueltos. Elige «Todos los estados» para ver el historial."
+                  : "Ningún ticket coincide con los filtros."
+              }
             />
           }
           className="min-h-[600px] lg:grid-cols-[380px_1fr]"

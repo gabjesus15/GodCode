@@ -1,42 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { isManualMethod, isOnlineMethod } from "@/lib/onboarding/checkout-service";
+import { isPaymentMethodAvailableForCountry } from "@/lib/payments/payment-method-countries";
 
 /** @service-role public-read
  *
- * Metodos de pago activos por pais para el formulario de alta.
+ * Métodos de pago activos por país para el formulario de alta. Misma regla de países que
+ * el checkout y /cuenta (`isPaymentMethodAvailableForCountry`), así que no se ofrece nada
+ * que luego se rechace al pagar.
  */
 
-const STRIPE_SECRET = (process.env.STRIPE_SECRET_KEY ?? "").trim();
-
-const COUNTRY_NORMALIZE: Record<string, string> = {
-	Chile: "CL",
-	Venezuela: "VE",
-	CL: "CL",
-	VE: "VE",
+type MethodRow = {
+	id: string;
+	slug: string;
+	name: string;
+	countries: string[] | null;
+	auto_verify: boolean | null;
+	sort_order: number | null;
 };
 
-const ALWAYS_AVAILABLE_METHODS = new Set(["stripe", "paypal"]);
-
-function getMethodCountries(method: { countries?: string[] | null }): string[] {
-	return Array.isArray(method.countries)
-		? method.countries.map((value) => String(value).trim()).filter(Boolean)
-		: [];
-}
-
-function isAvailableForCountry(method: { slug?: string | null; countries?: string[] | null }, normalizedCountry: string | null, rawCountry: string | null): boolean {
-	const slug = String(method.slug ?? "").trim().toLowerCase();
-	if (ALWAYS_AVAILABLE_METHODS.has(slug)) return true;
-	if (!normalizedCountry && !rawCountry) return true;
-
-	const countries = getMethodCountries(method);
-	if (countries.length === 0) return false;
-	return countries.includes(normalizedCountry ?? "") || countries.includes(rawCountry ?? "");
-}
-
 export async function GET(req: NextRequest) {
-	const country = req.nextUrl.searchParams.get("country");
-	const normalized = country ? COUNTRY_NORMALIZE[country.trim()] ?? country.trim() : null;
+	const country = req.nextUrl.searchParams.get("country")?.trim() || null;
 
 	const { data: methods, error } = await supabaseAdmin
 		.from("plan_payment_methods")
@@ -45,33 +30,36 @@ export async function GET(req: NextRequest) {
 		.order("sort_order", { ascending: true });
 
 	if (error) {
-		return NextResponse.json({ error: error.message }, { status: 500 });
+		console.error("onboarding plan-payment-methods:", error.message);
+		return NextResponse.json({ error: "No pudimos cargar los métodos de pago." }, { status: 500 });
 	}
 
-	let list = methods ?? [];
-	if (normalized) {
-		list = list.filter((m) => isAvailableForCountry(m, normalized, country?.trim() ?? null));
-	} else {
-		list = list.filter((m) => isAvailableForCountry(m, null, null));
-	}
+	const list = ((methods ?? []) as MethodRow[]).filter((method) => {
+		const slug = String(method.slug ?? "").trim().toLowerCase();
+		// Solo lo que el checkout sabe cobrar: PayPal en línea y los métodos manuales.
+		if (!isOnlineMethod(slug) && !isManualMethod(slug)) return false;
+		return isPaymentMethodAvailableForCountry(method.countries, country);
+	});
 
-	if (!STRIPE_SECRET) {
-		list = list.filter((m) => String(m.slug ?? "").trim().toLowerCase() !== "stripe");
-	}
-
-	const withConfig = await Promise.all(
-		list.map(async (m) => {
-			const { data: configRows } = await supabaseAdmin
+	const { data: configRows } = list.length
+		? await supabaseAdmin
 				.from("plan_payment_method_config")
-				.select("key,value")
-				.eq("method_id", m.id);
-			const config: Record<string, string> = {};
-			for (const row of configRows ?? []) {
-				if (row.key) config[row.key] = row.value ?? "";
-			}
-			return { ...m, config };
-		})
-	);
+				.select("method_id,key,value")
+				.in(
+					"method_id",
+					list.map((method) => method.id),
+				)
+		: { data: [] };
 
-	return NextResponse.json({ data: withConfig });
+	const configByMethod = new Map<string, Record<string, string>>();
+	for (const row of (configRows ?? []) as Array<{ method_id: string; key: string | null; value: string | null }>) {
+		if (!row.key) continue;
+		const config = configByMethod.get(row.method_id) ?? {};
+		config[row.key] = row.value ?? "";
+		configByMethod.set(row.method_id, config);
+	}
+
+	return NextResponse.json({
+		data: list.map((method) => ({ ...method, config: configByMethod.get(method.id) ?? {} })),
+	});
 }

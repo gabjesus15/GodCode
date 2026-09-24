@@ -1,8 +1,13 @@
 /** Tipos compartidos del portal de cuenta cliente (`/cuenta`). */
 
+import type { PlanChangeQuote, RenewalQuote, SubscriptionPhase } from "@/lib/billing/portal-pricing";
+
+export type { SubscriptionPhase };
+
 export type PlanOption = {
   id: string;
   name: string;
+  /** Precio mensual en USD para el país del negocio (el mismo que cobra el alta). */
   price: number | null;
   max_branches: number | null;
   max_users: number | null;
@@ -53,12 +58,15 @@ export type BranchSummary = {
   order_intake_paused_by?: string | null;
 };
 
+/** Fila de `payments_history`: un pago hecho o un pedido del portal por pagar. */
 export type PaymentSummary = {
   id: string;
   amount_paid: number | null;
   status: string | null;
   payment_date: string | null;
   payment_method: string | null;
+  payment_method_slug?: string | null;
+  plan_id?: string | null;
   months_paid: number | null;
   payment_reference: string | null;
   reference_file_url: string | null;
@@ -128,6 +136,7 @@ export type CompanySnapshot = {
   subscriptionStatus: string | null;
   subscriptionEndsAt: string | null;
   planName: string | null;
+  /** Precio mensual del plan en USD para el país del negocio. */
   planPrice: number | null;
   planMaxBranches: number | null;
   planMaxUsers: number | null;
@@ -137,9 +146,19 @@ export type CompanySnapshot = {
   currency: string;
   locale: string;
   timezone: string;
+  /** Cambio a un plan menor programado para el vencimiento. */
+  scheduledPlanChange: ScheduledPlanChange | null;
+};
+
+export type ScheduledPlanChange = {
+  targetPlanId: string;
+  targetPlanName: string | null;
+  effectiveAt: string;
 };
 
 export type CustomerAccountClientProps = {
+  /** Sección con la que abre (`/cuenta?tab=plan`, desde los correos). */
+  initialTab?: PortalTab;
   company: CompanySnapshot;
   branches: BranchSummary[];
   businessInfo: BusinessInfoSummary | null;
@@ -163,158 +182,71 @@ export type BillingMethodOption = {
 
 export type BillingOptionsResponse = {
   companyId: string;
+  phase: SubscriptionPhase;
   activeBranchCount: number;
   maxBranches: number | null;
   extraBranchEntitlements?: number;
   effectiveMaxBranches?: number | null;
   requiresPaymentForExpansion: boolean;
   branchExpansionPriceMonthly: number;
-  coTermWithSubscription?: boolean;
-  daysUntilPlanEnd?: number | null;
-  expansionPreview?: {
-    unitPrice: number;
-    firstCycleFactor: number;
-    sampleAmountQty1Months1: number;
-  };
+  /** Lo que cuesta hoy una sucursal extra (hasta el vencimiento); `null` sin periodo vigente. */
+  expansionQuote: { remainingDays: number; amountPerBranch: number; coversUntil: string } | null;
+  /** Métodos manuales (transferencia y similares) con sus datos de cobro. */
   paymentMethods: BillingMethodOption[];
+  /** Client ID para los botones de PayPal; `null` si PayPal no está disponible. */
+  paypalClientId: string | null;
 };
 
-export type BillingPaymentResponse = {
-  ok: boolean;
-  payment: {
-    id: string;
-    amount_paid: number;
-    months_paid: number;
-    payment_reference: string;
-    status: string | null;
-    payment_method: string | null;
-    payment_method_slug: string | null;
-    payment_date: string | null;
-    reference_file_url: string | null;
-  };
-  instructions: {
-    method: {
-      slug: string;
-      name: string;
-      config: Record<string, string>;
-    };
-    summary: {
-      unitPrice: number;
-      quantity: number;
-      months: number;
-      firstCycleFactor?: number;
-      effectiveMonths?: number;
-      coTermWithSubscription?: boolean;
-      daysUntilPlanEnd?: number | null;
-      amount: number;
-      requiresManualProof: boolean;
-    };
-  };
+export type BranchExpansionResponse = {
+  ok: true;
+  order: PaymentSummary;
+  summary: { unitPrice: number; quantity: number; amount: number; remainingDays: number; coversUntil: string };
+};
+
+export type PortalImpact = {
+  id: string;
+  level: "block" | "info";
+  title: string;
+  detail: string;
 };
 
 export type PlanChangePreview = {
-  company: {
-    id: string;
-    name: string;
-    plan_id: string | null;
-  };
-  currentPlan: {
-    id: string;
-    name: string;
-    price: number | null;
-    max_branches: number | null;
-    max_users: number | null;
-  } | null;
-  targetPlan: {
-    id: string;
-    name: string;
-    price: number | null;
-    max_branches: number | null;
-    max_users: number | null;
-  };
+  phase: SubscriptionPhase;
+  currentPlan: { id: string; name: string; monthly: number } | null;
+  targetPlan: { id: string; name: string; monthly: number; max_branches: number | null; max_users: number | null };
+  quote: PlanChangeQuote;
   counts: {
     activeBranches: number;
     activeUsers: number;
-    activeExtraBranchEntitlements: number;
+    extraBranches: number;
     targetEffectiveBranches: number | null;
   };
-  pricing: {
-    currentPrice: number;
-    targetPrice: number;
-    monthlyDiff: number;
-    months: number;
-    amountDue: number;
-    requiresPayment: boolean;
-  };
-  execution?: {
-    mode: "immediate" | "scheduled_cycle_end";
-    effectiveAt: string | null;
-    existingSchedule?: {
-      id: string;
-      targetPlanId: string;
-      effectiveAt: string;
-    } | null;
-  };
-  impacts: Array<{
-    id: string;
-    level: "warn" | "block";
-    title: string;
-    detail: string;
-  }>;
-  paymentMethods: Array<{
-    id: string;
-    slug: string;
-    name: string;
-    auto_verify: boolean;
-    config: Record<string, string>;
-  }>;
+  impacts: PortalImpact[];
+  scheduledChange: { id: string; targetPlanId: string; targetPlanName: string | null; effectiveAt: string } | null;
+  openOrderId: string | null;
 };
 
 export type AddonPurchasePreview = {
-  company: {
-    id: string;
-    name: string;
-    country: string | null;
-    plan_id: string | null;
-    subscription_ends_at: string | null;
-  };
   addon: {
     id: string;
-    slug: string;
     name: string;
-    type: string | null;
     description: string | null;
-    price_one_time: number | null;
-    price_monthly: number | null;
-  };
-  existingActive: boolean;
-  planOffer?: {
-    status: "available" | "included" | "blocked";
-    reason: string;
-    matchedBy: "feature_policy" | "heuristic" | "default";
-  };
-  singleInstance: boolean;
-  pricing: {
     isMonthly: boolean;
     unitPrice: number;
-    quantity: number;
-    months: number;
-    amountDue: number;
-    requiresPayment: boolean;
+    singleInstance: boolean;
   };
-  impacts: Array<{
-    id: string;
-    level: "warn" | "block";
-    title: string;
-    detail: string;
-  }>;
-  paymentMethods: Array<{
-    id: string;
-    slug: string;
-    name: string;
-    auto_verify: boolean;
-    config: Record<string, string>;
-  }>;
+  owned: boolean;
+  quantity: number;
+  pricing: { amount: number; coversUntil: string | null; remainingDays: number | null };
+  impacts: PortalImpact[];
+};
+
+export type RenewalQuoteResponse = {
+  ok: true;
+  phase: SubscriptionPhase;
+  plan: { id: string; name: string; monthly: number };
+  quote: RenewalQuote;
+  openOrderId: string | null;
 };
 
 export type RealtimeSnapshotResponse = {
@@ -322,6 +254,8 @@ export type RealtimeSnapshotResponse = {
     id: string;
     subscription_status: string | null;
     subscription_ends_at: string | null;
+    plan_id?: string | null;
+    scheduled_plan_change?: ScheduledPlanChange | null;
   } | null;
   payments: PaymentSummary[];
   tickets: TicketSummary[];

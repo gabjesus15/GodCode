@@ -1,12 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, CheckCircle, ExternalLink, ShieldCheck, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle } from "lucide-react";
 
 import { Badge } from "../../../components/ui/badge";
 import { CheckoutSuccessFinalize } from "@/components/onboarding/payments/CheckoutSuccessFinalize";
+import { LandingLogo } from "@/components/ui/logo/landing-logo";
+import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
 import { getCheckoutCopy } from "@/lib/plans/checkout-copy";
 import { getCurrentLocale } from "../../../lib/i18n/server";
-import { createSupabaseServerClient } from "../../../utils/supabase/server";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+
+/** @service-role capability-token
+ *
+ * Solo lectura por `payment_reference` (id de orden de PayPal o referencia manual): la
+ * conoce quien pagó. Antes se leía con la sesión anónima y la RLS lo impedía, así que la
+ * página decía "no pudimos verificar" aunque el pago estuviera hecho.
+ */
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -23,20 +32,31 @@ const statusBadge: Record<string, "success" | "warning" | "destructive" | "neutr
   paid: "success",
   approved: "success",
   pending: "warning",
+  pending_validation: "warning",
   rejected: "destructive",
   cancelled: "destructive",
 };
 
-function getSupportEmail(): string {
-  return process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || process.env.RESEND_FROM?.trim() || "hola@godcode.me";
+const statusLabel: Record<string, string> = {
+  paid: "Pagado",
+  approved: "Pagado",
+  pending: "Pendiente",
+  pending_validation: "En revisión",
+  rejected: "Rechazado",
+  cancelled: "Cancelado",
+};
+
+function isSafeReference(ref: string | undefined): ref is string {
+  return Boolean(ref && ref.length <= 100 && /^[A-Za-z0-9_-]+$/.test(ref));
 }
 
+
 async function getPayment(ref?: string) {
-  if (!ref) {
+  if (!isSafeReference(ref)) {
     return null;
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = supabaseAdmin;
   const { data, error } = await supabase
     .from("payments_history")
     .select("id,company_id,plan_id,amount_paid,months_paid,status,payment_method")
@@ -105,69 +125,76 @@ export default async function CheckoutSuccessPage({
   const ref = Array.isArray(resolvedParams.ref)
     ? resolvedParams.ref[0]
     : resolvedParams.ref;
+  const captureErrorRaw = Array.isArray(resolvedParams.error) ? resolvedParams.error[0] : resolvedParams.error;
+  const captureError = captureErrorRaw ? captureErrorRaw.slice(0, 200) : undefined;
   const payment = await getPayment(ref);
-  const supportEmail = getSupportEmail();
+  const supportEmail = LANDING_SUPPORT_EMAIL;
   const accountHref = payment?.company_id ? "/cuenta" : "/login";
   const hasReference = Boolean(ref);
   const hasPayment = Boolean(payment);
 
+  const rows = payment
+    ? [
+        { label: copy.companyLabel, value: payment.companyName },
+        { label: copy.planLabel, value: payment.planName },
+        { label: copy.monthsLabel, value: String(payment.months_paid ?? 1) },
+        { label: copy.methodLabel, value: payment.payment_method ?? "—" },
+      ]
+    : [];
+
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_#eef2ff_0%,_#ffffff_45%,_#f8fafc_100%)]">
-      <CheckoutSuccessFinalize refParam={ref} />
-      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl" />
-      <div className="pointer-events-none absolute -right-32 top-24 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl" />
+    <div className="min-h-screen bg-white text-slate-900 antialiased">
+      <header className="border-b border-slate-200/80 px-5 sm:px-8">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4">
+          <Link href="/" className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4F5BFF]/40">
+            <LandingLogo forceLightText />
+          </Link>
+          <a href={`mailto:${supportEmail}`} className="text-sm font-medium text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline">
+            {copy.supportButton}
+          </a>
+        </div>
+      </header>
 
-      <div className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-10 sm:py-16">
-        <div className="grid w-full gap-8 lg:grid-cols-[1.12fr_0.88fr]">
-          <section className="flex flex-col gap-6">
-            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">
-              <Sparkles className="h-3.5 w-3.5" />
-              {hasReference ? copy.badgePaid : copy.badgeFallback}
+      <main className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-14">
+          <section className="min-w-0 max-w-2xl">
+            <span
+              className={`flex h-12 w-12 items-center justify-center rounded-full ${hasPayment ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
+            >
+              {hasPayment ? <CheckCircle className="h-6 w-6" aria-hidden /> : <AlertTriangle className="h-6 w-6" aria-hidden />}
+            </span>
+            <h1 className="mt-6 text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+              {hasPayment ? copy.titlePaid : copy.titleFallback}
+            </h1>
+            <p className="mt-3 text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">
+              {hasPayment ? copy.leadPaid : copy.leadFallback}
+            </p>
+
+            <div className="mt-6">
+              <CheckoutSuccessFinalize refParam={ref} captureError={captureError} />
             </div>
 
-            <div className="space-y-4">
-              <h1 className="max-w-xl text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl">
-                {hasPayment ? copy.titlePaid : copy.titleFallback}
-              </h1>
-              <p className="max-w-2xl text-base text-zinc-600 sm:text-lg">
-                {hasPayment ? copy.leadPaid : copy.leadFallback}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Link href={accountHref} className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800">
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href={accountHref}
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
                 {hasPayment ? copy.accountButtonPaid : copy.accountButtonFallback}
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
-              <Link href="/onboarding" className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50">
-                {copy.onboardingButton}
-              </Link>
-              <Link href={`mailto:${supportEmail}`} className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50">
-                {copy.supportButton}
-                <ExternalLink className="h-4 w-4" />
-              </Link>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-zinc-200 bg-white/75 p-4 shadow-sm backdrop-blur">
-                <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">{copy.statusLabel}</p>
-                <p className={`mt-2 text-sm font-semibold ${hasPayment ? "text-emerald-700" : "text-amber-700"}`}>
-                  {hasPayment ? copy.statusPaid : copy.statusPending}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white/75 p-4 shadow-sm backdrop-blur">
-                <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">{copy.stepLabel}</p>
-                <p className="mt-2 text-sm font-semibold text-zinc-900">{copy.stepText}</p>
-              </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white/75 p-4 shadow-sm backdrop-blur">
-                <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">{copy.supportLabel}</p>
-                <p className="mt-2 text-sm font-semibold text-zinc-900">{supportEmail}</p>
-              </div>
+              {!hasPayment ? (
+                <Link
+                  href="/onboarding"
+                  className="inline-flex h-11 items-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+                >
+                  {copy.onboardingButton}
+                </Link>
+              ) : null}
             </div>
 
             {!hasReference ? (
-              <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+              <div className="mt-8 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden />
                 <div>
                   <p className="font-semibold">{copy.noReferenceTitle}</p>
                   <p className="mt-1 text-amber-800">{copy.noReferenceText}</p>
@@ -175,75 +202,57 @@ export default async function CheckoutSuccessPage({
               </div>
             ) : null}
 
-            <div className="rounded-2xl border border-zinc-200 bg-white/70 p-5 text-sm text-zinc-600 shadow-sm backdrop-blur">
-              {copy.finalizeNote}
+            <div className="mt-12 border-t border-slate-200 pt-8">
+              <h2 className="text-base font-semibold text-slate-900">{copy.stepLabel}</h2>
+              <p className="mt-1 text-[15px] text-slate-600">{copy.stepText}</p>
+              <dl className="mt-6 grid gap-6 sm:grid-cols-2">
+                <div>
+                  <dt className="text-sm font-semibold text-slate-900">{copy.validationTitle}</dt>
+                  <dd className="mt-1 text-sm leading-relaxed text-slate-600">{copy.validationText}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-semibold text-slate-900">{copy.recoveryTitle}</dt>
+                  <dd className="mt-1 text-sm leading-relaxed text-slate-600">{copy.recoveryText}</dd>
+                </div>
+              </dl>
+              <p className="mt-6 text-sm leading-relaxed text-slate-500">{copy.finalizeNote}</p>
             </div>
           </section>
 
-          <aside className="relative rounded-3xl border border-zinc-200 bg-white/85 p-6 shadow-xl backdrop-blur sm:p-8">
-            <div className="absolute -top-8 right-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-              {hasPayment ? <CheckCircle className="h-8 w-8 text-emerald-600" /> : <ShieldCheck className="h-8 w-8 text-sky-600" />}
-            </div>
-
-            <div className="flex flex-col gap-6">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">{copy.detailTitle}</p>
-                <h2 className="mt-2 text-2xl font-semibold text-zinc-900">
-                  {hasPayment ? copy.detailTitle : copy.noPaymentTitle}
-                </h2>
+          <aside className="min-w-0 lg:pt-1">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-20px_rgba(15,23,42,0.25)] sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-base font-semibold text-slate-900">{hasPayment ? copy.detailTitle : copy.noPaymentTitle}</h2>
+                {payment ? (
+                  <Badge variant={statusBadge[payment.status ?? "neutral"] ?? "neutral"}>{statusLabel[payment.status ?? ""] ?? payment.status ?? "—"}</Badge>
+                ) : null}
               </div>
-
               {payment ? (
-                <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-zinc-700">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs uppercase tracking-[0.2em] text-zinc-500">{copy.detailTitle}</span>
-                    <Badge variant={statusBadge[payment.status ?? "neutral"] ?? "neutral"}>{payment.status ?? "--"}</Badge>
+                <dl className="mt-4 divide-y divide-slate-100 text-sm">
+                  {rows.map((row) => (
+                    <div key={row.label} className="flex items-start justify-between gap-4 py-3">
+                      <dt className="text-slate-500">{row.label}</dt>
+                      <dd className="text-right font-medium text-slate-900">{row.value}</dd>
+                    </div>
+                  ))}
+                  <div className="py-3">
+                    <dt className="text-slate-500">{copy.referenceLabel}</dt>
+                    <dd className="mt-1 break-all font-mono text-xs text-slate-700">{ref}</dd>
                   </div>
-                  <div className="mt-4 grid gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.companyLabel}</p>
-                      <p className="mt-1 font-semibold text-zinc-900">{payment.companyName}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.planLabel}</p>
-                      <p className="mt-1 font-semibold text-zinc-900">{payment.planName}</p>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.monthsLabel}</p>
-                        <p className="mt-1 font-semibold text-zinc-900">{payment.months_paid ?? 1}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.methodLabel}</p>
-                        <p className="mt-1 font-semibold text-zinc-900">{payment.payment_method ?? "--"}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.referenceLabel}</p>
-                      <p className="mt-1 break-all font-mono text-xs text-zinc-700">{ref}</p>
-                    </div>
-                  </div>
-                </div>
+                </dl>
               ) : (
-                <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 px-4 py-5 text-sm text-zinc-600">
-                  {copy.noPaymentText}
-                </div>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">{copy.noPaymentText}</p>
               )}
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4 text-sm text-zinc-600 shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.recoveryTitle}</p>
-                  <p className="mt-2 font-medium text-zinc-900">{copy.recoveryText}</p>
-                </div>
-                <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4 text-sm text-zinc-600 shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.validationTitle}</p>
-                  <p className="mt-2 font-medium text-zinc-900">{copy.validationText}</p>
-                </div>
-              </div>
             </div>
+            <p className="mt-4 px-1 text-sm text-slate-500">
+              {copy.supportLabel}:{" "}
+              <a href={`mailto:${supportEmail}`} className="font-medium text-slate-700 underline-offset-4 hover:underline">
+                {supportEmail}
+              </a>
+            </p>
           </aside>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

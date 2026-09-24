@@ -106,7 +106,6 @@ const ALL_PAYMENT_METHODS = [
   "pago_movil",
   "zelle",
   "transferencia_bancaria",
-  "stripe",
   "mercadopago",
   "paypal",
 ];
@@ -166,20 +165,16 @@ const getPaymentMethodFields = (method: string, country: string): { key: string;
                 { key: "email", label: "Correo Confirmación" }
             ];
             return fields;
-        case "stripe":
-            return [
-                { key: "publishable_key", label: "Publishable Key (PK)" },
-                { key: "secret_key", label: "Secret Key (SK)" }
-            ];
+        // Solo datos que el cliente ve en el carrito: nunca claves de API (el menú es público).
         case "mercadopago":
             return [
-                { key: "public_key", label: "Public Key" },
-                { key: "access_token", label: "Access Token" }
+                { key: "link", label: "Enlace de pago" },
+                { key: "alias", label: "Alias o CVU" }
             ];
         case "paypal":
             return [
-                { key: "client_id", label: "Client ID" },
-                { key: "client_secret", label: "Client Secret" }
+                { key: "email", label: "Correo de PayPal" },
+                { key: "link", label: "Enlace PayPal.me" }
             ];
         default:
             return [];

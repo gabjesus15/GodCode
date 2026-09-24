@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getAppUrl } from "@/lib/tenant/app-url";
-import { sendOnboardingEmail } from "@/lib/onboarding/emails";
+import { sendEmail } from "@/lib/email/send";
 import { isRateLimited } from "@/lib/onboarding/rate-limit";
 import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
@@ -10,9 +10,6 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
  *
  * Rate limit por IP y correo; no revela si la cuenta existe.
  */
-
-const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
-const RESEND_FROM = process.env.RESEND_FROM ?? "noreply@example.com";
 
 type Body = {
   email?: string;
@@ -64,17 +61,15 @@ export async function POST(req: NextRequest) {
     }
 
     const verifyUrl = `${getAppUrl()}/onboarding/verify/${app.verification_token}`;
-    const sent = await sendOnboardingEmail({
-      type: "verification",
+    const sent = await sendEmail({
+      kind: "verify_email",
       to: app.email,
-      from: RESEND_FROM,
-      apiKey: RESEND_API_KEY,
-      responsibleName: app.responsible_name,
-      businessName: app.business_name,
-      verifyUrl,
+      applicationId: app.id,
+      data: { name: app.responsible_name, businessName: app.business_name, verifyUrl },
     });
 
-    if (!sent.ok) {
+    if (sent.status !== "sent") {
+      console.error("resend verification email", sent);
       return NextResponse.json({ error: "No se pudo reenviar el correo de verificación" }, { status: 502 });
     }
 

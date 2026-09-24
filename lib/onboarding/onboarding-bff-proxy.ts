@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { enforceRateLimit } from "@/lib/infra/api-guard";
-import { proxyToOnboardingBilling } from "./service-proxy";
+import { ONBOARDING_SERVICE_UNAVAILABLE, proxyToOnboardingBilling } from "./service-proxy";
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -24,14 +24,11 @@ export async function forwardOnboardingBilling(
 	}
 
 	const res = await proxyToOnboardingBilling(req, path);
-	return (
-		res ??
-		NextResponse.json(
-			{
-				error:
-					"Onboarding no disponible: configura ONBOARDING_BILLING_SERVICE_URL y FF_ONBOARDING_BILLING_EXTERNAL (true o proxy_only).",
-			},
-			{ status: 503 },
-		)
+	if (res) return res;
+
+	// Falta configuración: se registra para el equipo y el cliente ve un mensaje normal.
+	console.error(
+		"Onboarding sin servicio: configura ONBOARDING_BILLING_SERVICE_URL y FF_ONBOARDING_BILLING_EXTERNAL (true o proxy_only).",
 	);
+	return NextResponse.json({ error: ONBOARDING_SERVICE_UNAVAILABLE }, { status: 503 });
 }

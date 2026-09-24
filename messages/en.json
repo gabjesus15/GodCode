@@ -12,7 +12,7 @@
   },
   "landing": {
     "meta": {
-      "title": "GodCode - Build your online store in minutes",
+      "title": "Gcode POS - Build your online store in minutes",
       "description": "Digital menu, cart, delivery, POS, kitchen orders and inventory for your business. No coding, no sales commissions. Start with +1 free month."
     },
     "nav": {
@@ -514,7 +514,8 @@
             "phone": "Phone",
             "idCard": "ID card",
             "zelleEmail": "Zelle email",
-            "connected": "Connected"
+            "link": "Payment link",
+            "alias": "Alias"
           },
           "fields": {
             "name": "Name",

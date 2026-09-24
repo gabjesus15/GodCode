@@ -97,7 +97,7 @@ export default function TerminosPage() {
 						</p>
 						<ul className="ml-5 mt-1 list-disc space-y-0.5">
 							<li>
-								Analítica interna del super administrador de {COMPANY_NAME}, para operar la plataforma,
+								Analítica interna de {COMPANY_NAME}, para operar la plataforma,
 								detectar incidencias y mostrarte métricas agregadas de uso.
 							</li>
 							<li>

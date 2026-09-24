@@ -36,8 +36,11 @@ export function Dialog({
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
         <RadixDialog.Overlay className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        {/* Alto máximo con scroll propio: en móvil los diálogos largos (pago, cambio de plan)
+            dejaban el botón de confirmar fuera de la pantalla. */}
         <RadixDialog.Content
-          className={`fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#e5e5ea] bg-white p-6 shadow-xl shadow-black/10 focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 ${sizeClasses[size]}`}
+          {...(description ? {} : { "aria-describedby": undefined })}
+          className={`fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto overscroll-contain rounded-2xl border border-[#e5e5ea] bg-white p-5 shadow-xl shadow-black/10 focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:p-6 ${sizeClasses[size]}`}
         >
           <div className="mb-5 flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -66,7 +69,11 @@ export function Dialog({
   );
 }
 
-/** Pie de diálogo con botones alineados a la derecha. */
+/** Pie de diálogo con botones alineados a la derecha; en móvil, a lo ancho. */
 export function DialogFooter({ children }: { children: ReactNode }) {
-  return <div className="mt-6 flex flex-wrap items-center justify-end gap-3">{children}</div>;
+  return (
+    <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-3 [&>button]:justify-center">
+      {children}
+    </div>
+  );
 }

@@ -15,6 +15,8 @@ import { TenantShell } from "../../components/tenant/shell/tenant-shell";
 import { QueryProvider } from "@/components/ui/query-provider";
 import { resolveStorefrontThemeAssets } from "@/lib/storage/storefront-branding";
 import { buildTenantStorefrontDescription } from "@/lib/tenant/seo-metadata";
+import { serializeJsonLd } from "@/lib/seo/serialize-json-ld";
+import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 
 export const revalidate = 60; // ISR: regenera cada 60 segundos → HTML pre-renderizado para Googlebot
 
@@ -106,8 +108,9 @@ export async function generateMetadata({
     return { title: { absolute: "Gcode POS | Menú Digital" } };
   }
 
-  const status = company.subscription_status?.toLowerCase();
-  if (status === "suspended" || status === "cancelled") {
+  // Misma regla en todo lo público: una cancelación sigue online hasta el vencimiento y
+  // un plan vencido se corta aunque el cron todavía no lo haya suspendido.
+  if (!isTenantSubscriptionAccessible(company)) {
     return { title: { absolute: "Gcode POS" } };
   }
 
@@ -127,7 +130,7 @@ export async function generateMetadata({
   const name =
     (typeof theme.displayName === "string" && theme.displayName.trim().length > 0
       ? theme.displayName.trim()
-      : company.name?.trim()) || slugFallback || "GodCode";
+      : company.name?.trim()) || slugFallback || "Gcode";
   const versionSeed = tenantBrandingIconVersionSeed(company);
   const icon = `/tenant-favicon?tenant=${encodeURIComponent(resolvedParams.subdomain)}&v=${encodeURIComponent(versionSeed)}`;
   const description = buildTenantStorefrontDescription({
@@ -222,7 +225,7 @@ export default async function TenantLayout({
   const tenantSurfaceSchemeMode = resolveTenantSurfaceSchemeMode(theme);
 
   const businessDescription = buildTenantStorefrontDescription({
-    displayName: theme.displayName ?? company?.name ?? "GodCode",
+    displayName: theme.displayName ?? company?.name ?? "Gcode",
     address: company?.address,
     country: company?.country,
   });
@@ -231,7 +234,7 @@ export default async function TenantLayout({
   const businessName =
     (typeof theme.displayName === "string" && theme.displayName.trim()) ||
     company?.name?.trim() ||
-    "GodCode";
+    "Gcode";
   // Logo con URL estable: la signed URL de Storage expira en 12 h y Google no podría descargarlo.
   const stableLogoUrl = company
     ? `${protocol}://${host}/tenant-favicon?tenant=${encodeURIComponent(resolvedParams.subdomain)}&v=${encodeURIComponent(tenantBrandingIconVersionSeed(company))}&size=192`
@@ -291,9 +294,9 @@ export default async function TenantLayout({
   return (
     <QueryProvider>
       {/* Datos estructurados Restaurant */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(businessJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(businessJsonLd) }} />
       {/* BreadcrumbList para rich results */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }} />
       <style>{tenantThemeCss}</style>
       <style>{tenantSurfaceCss}</style>
       <div className="tenant-theme-vars" data-scheme={tenantSurfaceScheme} data-scheme-mode={tenantSurfaceSchemeMode}>

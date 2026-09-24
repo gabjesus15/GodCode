@@ -4,20 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { createSupabaseBrowserClient } from "@/utils/supabase/client";
-import { logAdminAction } from "@/utils/audit";
-import { requireAdminRole, roleSets } from "@/utils/admin";
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
+import { companySubscriptionStatus } from "@/lib/super-admin/status-maps";
 
 interface CompanyStatusToggleProps {
   companyId: string;
-  currentStatus: "active" | "suspended" | string | null;
+  currentStatus: string | null;
 }
 
-export function CompanyStatusToggle({
-  companyId,
-  currentStatus,
-}: CompanyStatusToggleProps) {
+/** Suspender o reactivar desde la lista. Pasa por el servidor, que valida y deja auditoría. */
+export function CompanyStatusToggle({ companyId, currentStatus }: CompanyStatusToggleProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -26,50 +22,33 @@ export function CompanyStatusToggle({
   if (readOnly) {
     return (
       <div className="text-xs text-zinc-500 dark:text-zinc-400">
-        Estado:{" "}
-        <span className="font-medium text-zinc-700 dark:text-zinc-300">
-          {String(currentStatus ?? "—")}
-        </span>
+        Estado: <span className="font-medium text-zinc-700 dark:text-zinc-300">{companySubscriptionStatus(currentStatus).label}</span>
       </div>
     );
   }
 
-  const nextStatus = currentStatus === "active" ? "suspended" : "active";
+  const nextStatus = currentStatus === "suspended" ? "active" : "suspended";
 
   const handleToggle = async () => {
+    if (nextStatus === "suspended" && !window.confirm("¿Suspender esta empresa? Su tienda queda fuera de línea hasta que la reactives.")) {
+      return;
+    }
     setLoading(true);
     setError(null);
-
     try {
-      const permission = await requireAdminRole(roleSets.billing);
-      if (!permission.ok) {
-        throw new Error(permission.error);
-      }
-
-      const supabase = createSupabaseBrowserClient("super-admin");
-      const { error: updateError } = await supabase
-        .from("companies")
-        .update({ subscription_status: nextStatus })
-        .eq("id", companyId);
-
-      if (updateError) {
-        throw updateError;
-      }
-
-      await logAdminAction({
-        action: "company.status.update",
-        targetType: "company",
-        targetId: companyId,
-        metadata: { to: nextStatus },
+      const res = await fetch(`/api/super-admin/companies/${companyId}/subscription`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_status", status: nextStatus }),
       });
-
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setError(data.error ?? "No se pudo cambiar el estado.");
+        return;
+      }
       router.refresh();
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "No se pudo actualizar el estado.";
-      setError(message);
+    } catch {
+      setError("No pudimos conectar. Revisa tu conexión.");
     } finally {
       setLoading(false);
     }
@@ -84,7 +63,7 @@ export function CompanyStatusToggle({
         onClick={handleToggle}
         className="w-full shrink-0 sm:w-auto"
       >
-        {nextStatus === "active" ? "Activar" : "Suspender"}
+        {nextStatus === "active" ? "Reactivar" : "Suspender"}
       </Button>
       {error ? <span className="text-xs leading-snug text-red-600">{error}</span> : null}
     </div>

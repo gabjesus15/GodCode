@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 import { resolveAnalyticsPageContext } from "@/lib/analytics/page-context";
 import { trackGaPageView } from "@/lib/analytics/gtag";
+import { sanitizeAnalyticsPath } from "@/lib/analytics/sanitize-path";
 
 const VISITOR_KEY = "gc_visitor_id";
 const SESSION_KEY = "gc_session_id";
@@ -70,8 +71,8 @@ export function PageAnalyticsTracker() {
 		if (!pathname) return;
 
 		const runTracking = () => {
-			const qs = searchParams?.toString() || "";
-			const path = qs ? `${pathname}?${qs}` : pathname;
+			// Sin tokens ni referencias: la ruta va a Google Analytics y a analytics_events.
+			const path = sanitizeAnalyticsPath(pathname, searchParams?.toString() || "");
 			const dedupeKey = `page_view:${path}`;
 			if (wasAlreadySent(dedupeKey)) return;
 

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { sessionNeedsMfa } from "@/lib/auth/mfa-server";
 import { getCustomerMembership, getSuperAdminRoleByEmail } from "@/lib/super-admin/account-access";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { resolveTenantPanelLoginUrl } from "@/lib/tenant/panel-url";
@@ -21,6 +22,10 @@ export default async function PostLoginPage() {
 
   if (error || !user?.email) {
     redirect("/login");
+  }
+
+  if (await sessionNeedsMfa(supabase)) {
+    redirect("/login?mfa=1");
   }
 
   const email = user.email.trim().toLowerCase();

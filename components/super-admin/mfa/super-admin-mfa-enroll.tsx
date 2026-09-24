@@ -13,7 +13,7 @@ export function SuperAdminMfaEnroll() {
 	return (
 		<TotpMfaEnrollPanel
 			authScope="super-admin"
-			friendlyNameDefault="Panel GodCode"
+			friendlyNameDefault="Panel Gcode"
 			assertCanMutate={assertCanMutate}
 			readOnly={readOnly}
 			readOnlyMessage="Modo soporte: solo un super admin puede registrar el autenticador en su propia sesión."

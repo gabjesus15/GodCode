@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Plus, Store, Upload, Edit } from "lucide-react";
-import type { BillingOptionsResponse, BillingPaymentResponse, BranchSummary, CompanySnapshot } from "../../shared/customer-account-types";
-import { fmtMoney } from "../../shared/customer-account-format";
+import { Edit, MapPin, Minus, Plus, Store } from "lucide-react";
+
+import type { BranchFlow } from "../../hooks/use-branch-flow";
+import { branchEntitlementStatusLabel, fmtDay, fmtUsd } from "../../shared/customer-account-format";
+import type { BillingOptionsResponse, BranchEntitlementSummary, BranchSummary, CompanySnapshot } from "../../shared/customer-account-types";
 import { Alert } from "../../ui/Alert";
 import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
@@ -17,180 +19,216 @@ import { BranchEditModal } from "./branch-edit-modal";
 export type AccountSucursalesTabProps = {
   company: CompanySnapshot;
   branches: BranchSummary[];
-  billingLoading: boolean;
-  canRequestBranchWithoutPayment: boolean;
-  branchUnitPrice: number | null;
-  branchFlowStep: 1 | 2 | 3;
-  setBranchFlowStep: (step: 1 | 2 | 3) => void;
-  isProjectedCapacityInvalid: boolean;
-  setBillingError: (msg: string | null) => void;
   billingOptions: BillingOptionsResponse | null;
+  billingLoading: boolean;
   activeBranchesCount: number;
-  billingError: string | null;
-  billingOk: string | null;
-  branchRequestName: string;
-  setBranchRequestName: (v: string) => void;
-  expansionBranchName: string;
-  setExpansionBranchName: (v: string) => void;
-  branchRequestAddress: string;
-  setBranchRequestAddress: (v: string) => void;
-  expansionBranchAddress: string;
-  setExpansionBranchAddress: (v: string) => void;
-  expansionQty: string;
-  setExpansionQty: (v: string) => void;
-  expansionMonths: string;
-  setExpansionMonths: (v: string) => void;
-  expansionMethodSlug: string;
-  setExpansionMethodSlug: (v: string) => void;
-  projectedActiveBranches: number;
-  projectedEffectiveMaxBranches: number | null | undefined;
-  projectedRemainingBranches: number | null | undefined;
-  expansionQtyNumber: number;
-  expansionMonthsNumber: number;
-  expansionAmount: number | null;
-  branchRequestNotes: string;
-  setBranchRequestNotes: (v: string) => void;
-  expansionNotes: string;
-  setExpansionNotes: (v: string) => void;
-  busy: boolean;
-  onBranchRequest: () => void;
-  onCreateExpansionPayment: () => void;
-  createdExpansionPayment: BillingPaymentResponse | null;
-  proofUploading: boolean;
-  proofFileUrl: string | null;
-  onUploadPaymentProof: (file: File) => void;
-  onBranchWizardBack: () => void;
-  onBranchWizardNext: () => void;
+  branchEntitlements: BranchEntitlementSummary[];
+  branchFlow: BranchFlow;
 };
 
-type StepDotProps = { step: number; current: number; label: string };
-function StepDot({ step, current, label }: StepDotProps) {
-  const done   = step < current;
-  const active = step === current;
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition ${done ? "bg-emerald-500 text-white" : active ? "bg-indigo-600 text-white" : "bg-[#f5f5f7] text-[#a1a1a6]"}`}>
-        {done ? "✓" : step}
-      </div>
-      <span className={`text-[10px] font-medium ${active ? "text-[#1d1d1f]" : "text-[#a1a1a6]"}`}>{label}</span>
-    </div>
-  );
-}
+const inputClass =
+  "h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
 
-type StepperProps = { step: number; withPayment: boolean };
-function Stepper({ step, withPayment }: StepperProps) {
-  const steps = withPayment
-    ? [{ n: 1, label: "Datos" }, { n: 2, label: "Pago" }, { n: 3, label: "Listo" }]
-    : [{ n: 1, label: "Datos" }, { n: 2, label: "Confirmar" }];
+function BranchWizard({ company, branchFlow }: Pick<AccountSucursalesTabProps, "company" | "branchFlow">) {
+  const flow = branchFlow;
   return (
-    <div className="mb-6 flex items-center gap-0">
-      {steps.map((s, i) => (
-        <div key={s.n} className="flex items-center">
-          <StepDot step={s.n} current={step} label={s.label} />
-          {i < steps.length - 1 && <div className={`mx-2 h-px w-10 ${step > s.n ? "bg-emerald-400" : "bg-[#e5e5ea]"}`} />}
+    <Dialog
+      open={flow.open}
+      onOpenChange={flow.setOpen}
+      title={flow.withPayment ? "Agregar sucursal (cupo extra)" : "Solicitar nueva sucursal"}
+      description={
+        flow.withPayment
+          ? "Tu plan ya usa todas sus sucursales: suma un cupo extra y la creamos por ti."
+          : "Tu plan tiene cupo: envíanos los datos y la creamos por ti."
+      }
+      size="md"
+    >
+      <ol className="mb-5 flex items-center gap-2 text-xs font-medium" aria-label="Pasos">
+        {["Datos", flow.withPayment ? "Pago" : "Confirmar"].map((label, index) => {
+          const current = flow.step === index + 1;
+          const done = flow.step > index + 1;
+          return (
+            <li key={label} className="flex items-center gap-2">
+              <span
+                className={`flex h-6 w-6 items-center justify-center rounded-full ${
+                  done ? "bg-emerald-500 text-white" : current ? "bg-indigo-600 text-white" : "bg-[#f5f5f7] text-[#a1a1a6]"
+                }`}
+                aria-current={current ? "step" : undefined}
+              >
+                {index + 1}
+              </span>
+              <span className={current ? "text-[#1d1d1f]" : "text-[#a1a1a6]"}>{label}</span>
+              {index === 0 && <span className="h-px w-8 bg-[#e5e5ea]" aria-hidden />}
+            </li>
+          );
+        })}
+      </ol>
+
+      {flow.step === 1 ? (
+        <div className="space-y-3">
+          <div>
+            <label htmlFor="branch-name" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">
+              Nombre de la sucursal <span className="text-red-500">*</span>
+            </label>
+            <input id="branch-name" value={flow.name} onChange={(e) => flow.setName(e.target.value)} placeholder="Ej. Sucursal Norte" maxLength={120} className={inputClass} />
+          </div>
+          <div>
+            <label htmlFor="branch-address" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Dirección (opcional)</label>
+            <input id="branch-address" value={flow.address} onChange={(e) => flow.setAddress(e.target.value)} placeholder="Calle y número" maxLength={200} className={inputClass} />
+          </div>
+          <div>
+            <label htmlFor="branch-notes" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Notas para el equipo (opcional)</label>
+            <textarea
+              id="branch-notes"
+              value={flow.notes}
+              onChange={(e) => flow.setNotes(e.target.value)}
+              rows={3}
+              maxLength={500}
+              placeholder="Horario, teléfono, lo que necesitemos saber."
+              className="w-full resize-none rounded-xl border border-[#d2d2d7] bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            />
+          </div>
         </div>
-      ))}
-    </div>
+      ) : flow.withPayment ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm text-[#1d1d1f]">Cupos extra</span>
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" size="sm" aria-label="Menos" disabled={flow.quantity <= 1} onClick={() => flow.setQuantity(flow.quantity - 1)}>
+                <Minus className="h-3.5 w-3.5" />
+              </Button>
+              <span className="w-6 text-center text-sm font-semibold tabular-nums">{flow.quantity}</span>
+              <Button variant="secondary" size="sm" aria-label="Más" disabled={flow.quantity >= 10} onClick={() => flow.setQuantity(flow.quantity + 1)}>
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+          {flow.quote && flow.amount != null ? (
+            <div className="rounded-xl bg-[#fbfbfd] px-4 py-3 text-sm">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="font-medium text-[#1d1d1f]">Hoy pagas</span>
+                <span className="text-xl font-semibold tabular-nums text-[#1d1d1f]">{fmtUsd(flow.amount, company.locale)}</span>
+              </div>
+              <p className="mt-1 text-xs text-[#6e6e73]">
+                {flow.unitMonthly != null ? `Cada cupo cuesta ${fmtUsd(flow.unitMonthly, company.locale)}/mes. ` : ""}
+                Hoy pagas los {flow.quote.remainingDays} días hasta tu vencimiento ({fmtDay(flow.quote.coversUntil, company.timezone)}); después
+                se suma a cada renovación.
+              </p>
+              {flow.projectedMax != null && (
+                <p className="mt-2 text-xs text-[#6e6e73]">
+                  Quedarás con {flow.activeBranchesCount + 1} de {flow.projectedMax} sucursales.
+                </p>
+              )}
+            </div>
+          ) : (
+            <Alert variant="warning">Renueva tu plan para poder sumar sucursales extra.</Alert>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="rounded-xl bg-[#fbfbfd] px-4 py-3 text-sm">
+            <p className="font-medium text-[#1d1d1f]">{flow.name}</p>
+            {flow.address && <p className="mt-0.5 text-[#6e6e73]">{flow.address}</p>}
+          </div>
+          <p className="text-sm text-[#6e6e73]">Nuestro equipo crea la sucursal y te avisa por Soporte (normalmente en un día hábil).</p>
+        </div>
+      )}
+
+      {flow.error && <Alert variant="danger" className="mt-4">{flow.error}</Alert>}
+
+      <DialogFooter>
+        {flow.step === 2 ? (
+          <Button variant="secondary" onClick={flow.back} disabled={flow.busy}>Atrás</Button>
+        ) : (
+          <Button variant="secondary" onClick={() => flow.setOpen(false)}>Cancelar</Button>
+        )}
+        {flow.step === 1 ? (
+          <Button onClick={flow.next}>Continuar</Button>
+        ) : (
+          <Button loading={flow.busy} disabled={flow.withPayment && !flow.quote} onClick={() => void flow.submit()}>
+            {flow.withPayment ? "Continuar al pago" : "Enviar solicitud"}
+          </Button>
+        )}
+      </DialogFooter>
+    </Dialog>
   );
 }
 
 export function AccountSucursalesTab({
   company,
   branches,
-  billingLoading,
-  canRequestBranchWithoutPayment,
-  branchUnitPrice: _branchUnitPrice,
-  branchFlowStep,
-  setBranchFlowStep,
-  isProjectedCapacityInvalid,
   billingOptions,
+  billingLoading,
   activeBranchesCount,
-  billingError,
-  billingOk,
-  branchRequestName,
-  setBranchRequestName,
-  expansionBranchName,
-  setExpansionBranchName,
-  branchRequestAddress,
-  setBranchRequestAddress,
-  expansionBranchAddress,
-  setExpansionBranchAddress,
-  expansionQty,
-  setExpansionQty,
-  expansionMonths,
-  setExpansionMonths,
-  expansionMethodSlug,
-  setExpansionMethodSlug,
-  projectedActiveBranches,
-  projectedEffectiveMaxBranches,
-  projectedRemainingBranches: _projectedRemainingBranches,
-  expansionQtyNumber: _expansionQtyNumber,
-  expansionMonthsNumber: _expansionMonthsNumber,
-  expansionAmount,
-  branchRequestNotes,
-  setBranchRequestNotes,
-  expansionNotes: _expansionNotes,
-  setExpansionNotes: _setExpansionNotes,
-  busy,
-  onBranchRequest,
-  onCreateExpansionPayment,
-  createdExpansionPayment,
-  proofUploading,
-  proofFileUrl,
-  onUploadPaymentProof,
-  onBranchWizardBack,
-  onBranchWizardNext,
+  branchEntitlements,
+  branchFlow,
 }: AccountSucursalesTabProps) {
-  const [wizardOpen, setWizardOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedBranchForEdit, setSelectedBranchForEdit] = useState<BranchSummary | null>(null);
 
-  // Derived value: get the fresh branch data from the branches prop if it changes
+  // Con cada refresco del servidor la sucursal abierta se actualiza sola.
   const branchToEdit = selectedBranchForEdit
     ? (branches.find((b) => b.id === selectedBranchForEdit.id) ?? selectedBranchForEdit)
     : null;
 
   const maxBranches = billingOptions?.effectiveMaxBranches ?? billingOptions?.maxBranches ?? null;
-  const usedPct     = maxBranches != null ? Math.min(100, Math.round((activeBranchesCount / maxBranches) * 100)) : null;
-  const withPayment = !canRequestBranchWithoutPayment;
-
-  const openWizard = () => { setBranchFlowStep(1); setWizardOpen(true); };
-  const closeWizard = () => { setWizardOpen(false); setBranchFlowStep(1); };
+  const unlimited = maxBranches == null || maxBranches >= 999;
+  const usedPct = !unlimited && maxBranches ? Math.min(100, Math.round((activeBranchesCount / maxBranches) * 100)) : null;
+  const extras = billingOptions?.extraBranchEntitlements ?? 0;
+  const phase = billingOptions?.phase;
+  const canAdd = phase !== "expired" && phase !== "payment_pending";
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <PageHeader title="Sucursales" description="Administra tus puntos de venta y solicita expansion de capacidad." />
+      <PageHeader title="Sucursales" description="Tus puntos de venta y el cupo de tu plan." />
 
-      {billingError && <Alert variant="danger">{billingError}</Alert>}
-      {billingOk    && <Alert variant="success">{billingOk}</Alert>}
+      {branchFlow.ok && (
+        <Alert variant="success" onDismiss={() => branchFlow.setOk(null)}>{branchFlow.ok}</Alert>
+      )}
 
-      {/* KPI row */}
       <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-3">
-        <StatCard label="Sucursales activas" value={activeBranchesCount}   icon={Store}  accent="indigo" />
-        <StatCard label="Limite del plan"    value={maxBranches ?? "Ilimitado"} icon={Store} accent="emerald" />
-        {maxBranches != null && (
-          <StatCard label="Capacidad usada" value={`${usedPct ?? 0}%`} sub={`${activeBranchesCount} / ${maxBranches}`} icon={Store} accent={usedPct != null && usedPct >= 90 ? "amber" : "sky"} />
+        <StatCard label="Sucursales activas" value={activeBranchesCount} icon={Store} accent="indigo" />
+        <StatCard
+          label="Cupo del plan"
+          value={unlimited ? "Ilimitado" : maxBranches}
+          sub={extras > 0 ? `Incluye ${extras} ${extras === 1 ? "cupo extra" : "cupos extra"}` : undefined}
+          icon={Store}
+          accent="emerald"
+        />
+        {usedPct != null && (
+          <StatCard
+            label="Cupo usado"
+            value={`${usedPct}%`}
+            sub={`${activeBranchesCount} de ${maxBranches}`}
+            icon={Store}
+            accent={usedPct >= 100 ? "amber" : "sky"}
+          />
         )}
       </div>
 
-      {/* Branch list */}
       <Card>
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-semibold text-[#1d1d1f]">Tus sucursales</p>
+          <div>
+            <p className="text-sm font-semibold text-[#1d1d1f]">Tus sucursales</p>
+            {billingOptions?.requiresPaymentForExpansion && (
+              <p className="mt-0.5 text-xs text-[#6e6e73]">Usaste todo el cupo: una sucursal más necesita un cupo extra.</p>
+            )}
+          </div>
           <Button
-            variant="primary"
             size="sm"
             className="w-full justify-center sm:w-auto"
             icon={<Plus className="h-3.5 w-3.5" />}
-            onClick={openWizard}
-            loading={billingLoading}
+            onClick={branchFlow.openWizard}
+            loading={billingLoading && !billingOptions}
+            disabled={!canAdd}
+            title={canAdd ? undefined : "Renueva tu plan para agregar sucursales"}
           >
             Agregar sucursal
           </Button>
         </div>
 
         {branches.length === 0 ? (
-          <EmptyState icon={Store} title="Sin sucursales registradas" description="Aun no tienes sucursales en tu cuenta." />
+          <EmptyState icon={Store} title="Sin sucursales" description="Todavía no tienes sucursales en tu cuenta." />
         ) : (
           <div className="space-y-2">
             {branches.map((branch) => (
@@ -216,22 +254,18 @@ export function AccountSucursalesTab({
                     {branch.is_active !== false ? "Activa" : "Inactiva"}
                   </Badge>
                   <button
+                    type="button"
                     onClick={() => {
                       setSelectedBranchForEdit(branch);
                       setEditModalOpen(true);
                     }}
-                    className="text-xs font-medium text-indigo-600 hover:underline flex items-center gap-1"
+                    className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline"
                   >
-                    <Edit className="h-3 w-3" /> Editar
+                    <Edit className="h-3 w-3" aria-hidden /> Editar
                   </button>
                   {company.tenantAdminUrl ? (
-                    <a
-                      href={company.tenantAdminUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-medium text-indigo-600 hover:underline"
-                    >
-                      Admin
+                    <a href={company.tenantAdminUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-indigo-600 hover:underline">
+                      Abrir panel
                     </a>
                   ) : null}
                 </div>
@@ -241,163 +275,49 @@ export function AccountSucursalesTab({
         )}
       </Card>
 
-      {/* Wizard Dialog */}
-      <Dialog
-        open={wizardOpen}
-        onOpenChange={(v) => { if (!v) closeWizard(); }}
-        title={withPayment ? "Solicitar expansion de sucursal" : "Solicitar nueva sucursal"}
-        size="md"
-      >
-        <Stepper step={branchFlowStep} withPayment={withPayment} />
-
-        {/* Step 1: datos basicos */}
-        {branchFlowStep === 1 && (
-          <div className="space-y-3">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Nombre de la sucursal <span className="text-red-500">*</span></label>
-              <input
-                value={withPayment ? expansionBranchName : branchRequestName}
-                onChange={(e) => withPayment ? setExpansionBranchName(e.target.value) : setBranchRequestName(e.target.value)}
-                placeholder="Ej. Sucursal Norte"
-                className="h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Direccion (opcional)</label>
-              <input
-                value={withPayment ? expansionBranchAddress : branchRequestAddress}
-                onChange={(e) => withPayment ? setExpansionBranchAddress(e.target.value) : setBranchRequestAddress(e.target.value)}
-                placeholder="Calle y numero"
-                className="h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-              />
-            </div>
-            {!withPayment && (
-              <div>
-                <label htmlFor="branch-request-notes" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Notas adicionales (opcional)</label>
-                <textarea
-                  id="branch-request-notes"
-                  value={branchRequestNotes}
-                  onChange={(e) => setBranchRequestNotes(e.target.value)}
-                  rows={3}
-                  placeholder="Notas para el equipo"
-                  className="w-full resize-none rounded-xl border border-[#d2d2d7] bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                />
-              </div>
-            )}
+      {branchEntitlements.length > 0 && (
+        <Card noPadding>
+          <p className="px-4 pt-4 text-sm font-semibold text-[#1d1d1f] sm:px-5">Cupos extra</p>
+          <div className="mt-2 overflow-x-auto">
+            <table className="w-full min-w-[30rem] text-sm">
+              <thead className="bg-[#fbfbfd]">
+                <tr>
+                  {["Cupos", "Pagado", "Estado", "Vence"].map((header) => (
+                    <th key={header} className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.1em] text-[#a1a1a6] sm:px-5 sm:text-xs">
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f5f5f7]">
+                {branchEntitlements.map((entitlement) => (
+                  <tr key={entitlement.id}>
+                    <td className="px-4 py-3 font-medium text-[#1d1d1f] sm:px-5">{entitlement.quantity}</td>
+                    <td className="px-4 py-3 tabular-nums text-[#6e6e73] sm:px-5">{fmtUsd(entitlement.amountPaid, company.locale)}</td>
+                    <td className="px-4 py-3 sm:px-5">
+                      <Badge variant={String(entitlement.status).toLowerCase() === "active" ? "success" : "neutral"}>
+                        {branchEntitlementStatusLabel(entitlement.status)}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-[#6e6e73] sm:px-5">
+                      {String(entitlement.status).toLowerCase() === "active" ? fmtDay(entitlement.expiresAt, company.timezone) : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
+        </Card>
+      )}
 
-        {/* Step 2 con pago: configurar expansion */}
-        {branchFlowStep === 2 && withPayment && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="expansion-qty" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Cantidad de cupos</label>
-                <input
-                  id="expansion-qty"
-                  type="number"
-                  min={1}
-                  value={expansionQty}
-                  onChange={(e) => setExpansionQty(e.target.value)}
-                  placeholder="1"
-                  className="h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label htmlFor="expansion-months" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Meses</label>
-                <input
-                  id="expansion-months"
-                  type="number"
-                  min={1}
-                  value={expansionMonths}
-                  onChange={(e) => setExpansionMonths(e.target.value)}
-                  placeholder="1"
-                  className="h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {billingOptions?.paymentMethods && billingOptions.paymentMethods.length > 0 && (
-              <div>
-                <label htmlFor="expansion-method" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Metodo de pago</label>
-                <select
-                  id="expansion-method"
-                  value={expansionMethodSlug}
-                  onChange={(e) => setExpansionMethodSlug(e.target.value)}
-                  className="h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none"
-                >
-                  {billingOptions.paymentMethods.map((m) => <option key={m.id} value={m.slug}>{m.name}</option>)}
-                </select>
-              </div>
-            )}
-
-            <div className="rounded-xl bg-[#fbfbfd] p-3 text-sm">
-              <div className="flex justify-between"><span className="text-[#6e6e73]">Total estimado</span><span className="font-semibold text-[#1d1d1f]">{fmtMoney(expansionAmount, company.currency, company.locale)}</span></div>
-              <div className="flex justify-between mt-1"><span className="text-[#6e6e73]">Sucursales despues</span><span className="font-medium text-[#1d1d1f]">{projectedActiveBranches} / {projectedEffectiveMaxBranches ?? "∞"}</span></div>
-              {isProjectedCapacityInvalid && <p className="mt-1 text-xs text-red-600">La proyeccion supera tu capacidad. Ajusta la cantidad.</p>}
-            </div>
-          </div>
-        )}
-
-        {/* Step 2 sin pago: confirmar */}
-        {branchFlowStep === 2 && !withPayment && (
-          <div className="space-y-3">
-            <Alert variant="info">Un agente revisara tu solicitud y configurara la sucursal. Te notificaremos por correo.</Alert>
-            <div className="rounded-xl bg-[#fbfbfd] p-3 text-sm">
-              <p className="font-medium text-[#1d1d1f]">{branchRequestName}</p>
-              {branchRequestAddress && <p className="text-[#6e6e73]">{branchRequestAddress}</p>}
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: comprobante / completado */}
-        {branchFlowStep === 3 && (
-          <div className="space-y-4">
-            <Alert variant="success" title="Orden de pago creada">
-              {createdExpansionPayment?.instructions.summary.requiresManualProof
-                ? "Sube el comprobante de pago para que podamos validarlo."
-                : "El pago se aplicara automaticamente en breve."}
-            </Alert>
-            {createdExpansionPayment?.instructions.summary.requiresManualProof && (
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Comprobante de pago</label>
-                <label className={`flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-[#d2d2d7] bg-[#fbfbfd] px-4 py-6 text-center transition hover:border-indigo-400 hover:bg-indigo-50/20 ${proofUploading ? "pointer-events-none opacity-60" : ""}`}>
-                  <Upload className="h-5 w-5 text-[#a1a1a6]" aria-hidden />
-                  <span className="text-sm text-[#6e6e73]">{proofUploading ? "Subiendo…" : proofFileUrl ? "Cambiar comprobante" : "Seleccionar imagen"}</span>
-                  <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) onUploadPaymentProof(f); }} disabled={proofUploading} />
-                </label>
-                {proofFileUrl && <p className="mt-1 text-xs text-emerald-600">Comprobante cargado.</p>}
-              </div>
-            )}
-          </div>
-        )}
-
-        <DialogFooter>
-          {branchFlowStep > 1 && branchFlowStep < 3 && (
-            <Button variant="secondary" onClick={onBranchWizardBack} disabled={busy}>Atras</Button>
-          )}
-          {branchFlowStep < (withPayment ? 2 : 2) && (
-            <Button variant="primary" onClick={onBranchWizardNext}>Continuar</Button>
-          )}
-          {branchFlowStep === 2 && withPayment && (
-            <Button variant="primary" loading={busy} onClick={onCreateExpansionPayment} disabled={isProjectedCapacityInvalid}>Crear orden de pago</Button>
-          )}
-          {branchFlowStep === 2 && !withPayment && (
-            <Button variant="primary" loading={busy} onClick={onBranchRequest}>Enviar solicitud</Button>
-          )}
-          {branchFlowStep === 3 && (
-            <Button variant="secondary" onClick={closeWizard}>Cerrar</Button>
-          )}
-        </DialogFooter>
-      </Dialog>
+      <BranchWizard company={company} branchFlow={branchFlow} />
 
       <BranchEditModal
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
         branch={branchToEdit}
         onSaveSuccess={() => {
-          // router.refresh() inside the modal will update the branches prop via SSR;
-          // branchToEdit will then resolve to the updated branch automatically.
+          // router.refresh() dentro del modal actualiza `branches` desde el servidor.
         }}
       />
     </div>

@@ -7,6 +7,7 @@ import type {
 	BranchEntitlementSummary,
 	PaymentSummary,
 	RealtimeSnapshotResponse,
+	ScheduledPlanChange,
 	TicketSummary,
 } from "../shared/customer-account-types";
 
@@ -15,6 +16,7 @@ export type SnapshotScope = "company" | "payments" | "tickets" | "addons" | "ent
 export type AccountSnapshotState = {
 	subscriptionStatus: string | null;
 	subscriptionEndsAt: string | null;
+	scheduledPlanChange: ScheduledPlanChange | null;
 	paymentRows: PaymentSummary[];
 	tickets: TicketSummary[];
 	branchEntitlements: BranchEntitlementSummary[];
@@ -35,6 +37,7 @@ export type UseAccountSnapshotReturn = AccountSnapshotState & {
 
 const FRESH_SSR_MS = 30_000;
 const REALTIME_DEBOUNCE_MS = 650;
+/** Con Realtime conectado el sondeo es solo un respaldo. */
 const POLL_SUBSCRIBED_MS = 120_000;
 const POLL_FALLBACK_MS = 60_000;
 
@@ -49,11 +52,15 @@ export function useAccountSnapshot(
 		enablePolling?: boolean;
 		companyId?: string;
 		initialSyncedAt?: string | null;
+		initialScheduledPlanChange?: ScheduledPlanChange | null;
 	},
 ): UseAccountSnapshotReturn {
 	const enablePolling = options?.enablePolling !== false;
 	const [subscriptionStatus, setSubscriptionStatus] = useState(initialStatus);
 	const [subscriptionEndsAt, setSubscriptionEndsAt] = useState(initialEndsAt);
+	const [scheduledPlanChange, setScheduledPlanChange] = useState<ScheduledPlanChange | null>(
+		options?.initialScheduledPlanChange ?? null,
+	);
 	const [paymentRows, setPaymentRows] = useState(initialPayments);
 	const [tickets, setTickets] = useState(initialTickets);
 	const [branchEntitlements, setBranchEntitlements] = useState(initialEntitlements);
@@ -71,6 +78,9 @@ export function useAccountSnapshot(
 		if (data.company) {
 			setSubscriptionStatus(data.company.subscription_status ?? null);
 			setSubscriptionEndsAt(data.company.subscription_ends_at ?? null);
+			if (data.company.scheduled_plan_change !== undefined) {
+				setScheduledPlanChange(data.company.scheduled_plan_change ?? null);
+			}
 		}
 		if (Array.isArray(data.activeAddons)) {
 			setActiveAddonRows(
@@ -104,7 +114,7 @@ export function useAccountSnapshot(
 				if (!res.ok || ctrl.signal.aborted) return;
 				applySnapshot(data);
 			} catch {
-				// silent: polling failure should not surface as a UI error
+				// Un sondeo fallido no se muestra como error: el siguiente lo corrige.
 			} finally {
 				if (!ctrl.signal.aborted) setIsSyncing(false);
 			}
@@ -125,75 +135,69 @@ export function useAccountSnapshot(
 
 	const companyId = options?.companyId;
 	const initialSyncedAt = options?.initialSyncedAt;
-	const ssrIsFresh =
-		initialSyncedAt != null &&
-		Date.now() - new Date(initialSyncedAt).getTime() < FRESH_SSR_MS;
 
 	useEffect(() => {
 		if (!enablePolling) return undefined;
 
-		if (!ssrIsFresh) {
-			void refresh("full");
-		}
+		const ssrIsFresh = initialSyncedAt != null && Date.now() - new Date(initialSyncedAt).getTime() < FRESH_SSR_MS;
+		if (!ssrIsFresh) void refresh("full");
 
-		if (!companyId) {
-			const id = window.setInterval(() => void refresh("full"), POLL_FALLBACK_MS);
-			return () => {
-				window.clearInterval(id);
-				abortRef.current?.abort();
-				if (debounceRef.current) clearTimeout(debounceRef.current);
-			};
-		}
-
-		const supabase = createSupabaseBrowserClient("tenant");
+		let disposed = false;
 		let realtimeJoined = false;
+		let pollTimer: number | undefined;
 
-		const channel = supabase
-			.channel(`account-snapshot:${companyId}`)
-			.on(
-				"postgres_changes",
-				{
-					event: "*",
-					schema: "public",
-					table: "companies",
-					filter: `id=eq.${companyId}`,
+		// Un temporizador que se reprograma solo. Antes un setInterval se recreaba cada 5 s
+		// para ajustar el intervalo y nunca llegaba a dispararse.
+		const schedulePoll = () => {
+			pollTimer = window.setTimeout(
+				() => {
+					if (disposed) return;
+					if (document.visibilityState === "hidden") {
+						schedulePoll();
+						return;
+					}
+					void refresh("full").finally(() => {
+						if (!disposed) schedulePoll();
+					});
 				},
-				() => scheduleRefresh("company"),
-			)
-			.on(
-				"postgres_changes",
-				{
-					event: "*",
-					schema: "public",
-					table: "company_addons",
-					filter: `company_id=eq.${companyId}`,
-				},
-				() => scheduleRefresh("addons"),
-			)
-			.subscribe((status: string) => {
-				realtimeJoined = status === "SUBSCRIBED";
-			});
+				realtimeJoined ? POLL_SUBSCRIBED_MS : POLL_FALLBACK_MS,
+			);
+		};
 
-		const pollMs = () => (realtimeJoined ? POLL_SUBSCRIBED_MS : POLL_FALLBACK_MS);
-		let pollId = window.setInterval(() => void refresh("full"), pollMs());
+		const supabase = companyId ? createSupabaseBrowserClient("tenant") : null;
+		const channel = supabase && companyId
+			? supabase
+					.channel(`account-snapshot:${companyId}`)
+					.on(
+						"postgres_changes",
+						{ event: "*", schema: "public", table: "companies", filter: `id=eq.${companyId}` },
+						() => scheduleRefresh("company"),
+					)
+					.on(
+						"postgres_changes",
+						{ event: "*", schema: "public", table: "company_addons", filter: `company_id=eq.${companyId}` },
+						() => scheduleRefresh("addons"),
+					)
+					.subscribe((status: string) => {
+						realtimeJoined = status === "SUBSCRIBED";
+					})
+			: null;
 
-		const pollAdjustId = window.setInterval(() => {
-			window.clearInterval(pollId);
-			pollId = window.setInterval(() => void refresh("full"), pollMs());
-		}, 5_000);
+		schedulePoll();
 
 		return () => {
-			window.clearInterval(pollId);
-			window.clearInterval(pollAdjustId);
+			disposed = true;
+			window.clearTimeout(pollTimer);
 			abortRef.current?.abort();
 			if (debounceRef.current) clearTimeout(debounceRef.current);
-			void supabase.removeChannel(channel);
+			if (supabase && channel) void supabase.removeChannel(channel);
 		};
-	}, [refresh, scheduleRefresh, enablePolling, companyId, ssrIsFresh]);
+	}, [refresh, scheduleRefresh, enablePolling, companyId, initialSyncedAt]);
 
 	return {
 		subscriptionStatus,
 		subscriptionEndsAt,
+		scheduledPlanChange,
 		paymentRows,
 		tickets,
 		branchEntitlements,

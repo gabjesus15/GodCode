@@ -4,6 +4,7 @@ import { getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { formatLlmsTxtLink } from "@/lib/seo/llms-txt-format";
+import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 
 interface MenuCategory {
   id: string;
@@ -46,8 +47,7 @@ export async function getLlmsTxtData(subdomain: string, isFullVersion = false) {
     return null;
   }
 
-  const status = company.subscription_status?.toLowerCase();
-  if (status === "suspended" || status === "cancelled") {
+  if (!isTenantSubscriptionAccessible(company)) {
     return null;
   }
 
@@ -131,7 +131,7 @@ export async function getLlmsTxtData(subdomain: string, isFullVersion = false) {
   const baseUrl = `${protocol}://${host}${pathPrefix}`;
 
   const themeConfig = company.theme_config as Record<string, unknown> | null;
-  const displayName = (themeConfig?.displayName as string) ?? company.name ?? "GodCode";
+  const displayName = (themeConfig?.displayName as string) ?? company.name ?? "Gcode";
   const businessDescription = `Menú digital y pedidos online de ${displayName}. Pide online con delivery o retiro a domicilio.`;
   const currency = company.currency ?? "CLP";
 

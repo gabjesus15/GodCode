@@ -39,7 +39,8 @@ export function trackGaPageView(params: {
 		send_to: measurementId,
 		page_path: params.path,
 		page_title: params.title ?? document.title,
-		page_location: window.location.href,
+		// La ruta ya viene saneada; la URL completa del navegador podría llevar tokens.
+		page_location: `${window.location.origin}${params.path}`,
 		...(params.pageType ? { page_type: params.pageType } : {}),
 		...(params.tenantSlug ? { tenant_slug: params.tenantSlug } : {}),
 	});

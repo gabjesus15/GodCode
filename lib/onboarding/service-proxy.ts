@@ -3,6 +3,9 @@ import { flags, getOnboardingBillingBaseUrl } from "../infra/feature-flags";
 import { logger, createRequestContext, startTimer } from "../infra/logger";
 
 const SERVICE_API_KEY = process.env.SERVICE_API_KEY ?? "";
+const UPSTREAM_TIMEOUT_MS = 25_000;
+/** Lo que ve el cliente cuando el servicio no responde; el detalle queda en el log. */
+export const ONBOARDING_SERVICE_UNAVAILABLE = "El registro no está disponible en este momento. Intenta en unos minutos.";
 
 function isLoopbackHostname(hostname: string): boolean {
 	const value = hostname.trim().toLowerCase();
@@ -61,6 +64,10 @@ export async function proxyToOnboardingBilling(
 		const init: RequestInit = {
 			method: req.method,
 			headers,
+			// Las redirecciones del servicio (p. ej. el regreso de PayPal) son para el
+			// navegador: seguirlas aquí devolvía el HTML de destino bajo la URL de la API.
+			redirect: "manual",
+			signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
 		};
 
 		if (req.method !== "GET" && req.method !== "HEAD") {
@@ -83,15 +90,21 @@ export async function proxyToOnboardingBilling(
 			mode: flags.ONBOARDING_BILLING_MODE,
 		});
 
+		const responseHeaders: Record<string, string> = {
+			"content-type": upstream.headers.get("content-type") ?? "application/json",
+			"x-proxied-to": "onboarding-billing",
+			"x-proxy-duration-ms": String(durationMs),
+			"x-proxy-mode": flags.ONBOARDING_BILLING_MODE,
+		};
+		const location = upstream.headers.get("location");
+		if (location && upstream.status >= 300 && upstream.status < 400) {
+			responseHeaders.location = location;
+		}
+
 		return new NextResponse(responseBody, {
 			status: upstream.status,
 			statusText: upstream.statusText,
-			headers: {
-				"content-type": upstream.headers.get("content-type") ?? "application/json",
-				"x-proxied-to": "onboarding-billing",
-				"x-proxy-duration-ms": String(durationMs),
-				"x-proxy-mode": flags.ONBOARDING_BILLING_MODE,
-			},
+			headers: responseHeaders,
 		});
 	} catch (err) {
 		const durationMs = elapsed();
@@ -102,10 +115,7 @@ export async function proxyToOnboardingBilling(
 		});
 
 		if (flags.ONBOARDING_BILLING_EXTERNAL) {
-			return NextResponse.json(
-				{ error: "Microservicio no disponible", detail: err instanceof Error ? err.message : "unknown" },
-				{ status: 502 }
-			);
+			return NextResponse.json({ error: ONBOARDING_SERVICE_UNAVAILABLE }, { status: 502 });
 		}
 		return null;
 	}

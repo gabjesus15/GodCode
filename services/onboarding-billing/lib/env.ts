@@ -10,8 +10,6 @@ const ENV_RULES: EnvRule[] = [
 	{ key: "SUPABASE_SERVICE_ROLE_KEY", required: true },
 	{ key: "NEXT_PUBLIC_TENANT_BASE_DOMAIN", required: true },
 	{ key: "SERVICE_API_KEY", required: true },
-	{ key: "STRIPE_SECRET_KEY", required: false, warnOnly: true },
-	{ key: "STRIPE_WEBHOOK_SECRET", required: false, warnOnly: true },
 	{ key: "RESEND_API_KEY", required: false, warnOnly: true },
 	{ key: "RESEND_FROM", required: false, warnOnly: true },
 ];

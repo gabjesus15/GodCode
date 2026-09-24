@@ -3,7 +3,46 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
-/** @service-role super-admin */
+/** @service-role super-admin
+ *
+ * El secreto de firma nunca sale de aquí (solo `hasSecret`), y soporte, que es de solo
+ * lectura, ve las URLs recortadas: una URL de webhook de Slack ya es una credencial.
+ */
+
+type WebhookRow = {
+  id: string;
+  name: string;
+  destination_type: string;
+  url: string;
+  events: string[] | null;
+  is_active: boolean;
+  secret: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+function maskUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.origin}/…`;
+  } catch {
+    return "…";
+  }
+}
+
+function toClient(row: WebhookRow, options: { maskUrl?: boolean } = {}) {
+  return {
+    id: row.id,
+    name: row.name,
+    destinationType: row.destination_type,
+    url: options.maskUrl ? maskUrl(row.url) : row.url,
+    events: row.events,
+    isActive: row.is_active,
+    hasSecret: Boolean(row.secret),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
 
 const DESTINATIONS = new Set(["slack", "email"]);
 const EVENTS = new Set(["lead.created", "contact.created"]);
@@ -29,18 +68,9 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
+  const canEdit = access.role === "super_admin";
   return NextResponse.json({
-    data: (data ?? []).map((row) => ({
-      id: row.id,
-      name: row.name,
-      destinationType: row.destination_type,
-      url: row.url,
-      events: row.events,
-      isActive: row.is_active,
-      secret: row.secret,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    })),
+    data: ((data ?? []) as WebhookRow[]).map((row) => toClient(row, { maskUrl: !canEdit })),
   });
 }
 
@@ -80,20 +110,7 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
-  return NextResponse.json({
-    ok: true,
-    item: {
-      id: data.id,
-      name: data.name,
-      destinationType: data.destination_type,
-      url: data.url,
-      events: data.events,
-      isActive: data.is_active,
-      secret: data.secret,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-    },
-  });
+  return NextResponse.json({ ok: true, item: toClient(data as WebhookRow) });
 }
 
 export async function PUT(req: NextRequest) {
@@ -109,7 +126,9 @@ export async function PUT(req: NextRequest) {
   const url = String(body.url ?? "").trim();
   const events = normalizeEvents(body.events);
   const isActive = body.isActive !== false;
-  const secret = String(body.secret ?? "").trim() || null;
+  // Vacío = conservar el secreto actual; `clearSecret` lo borra.
+  const newSecret = String(body.secret ?? "").trim();
+  const secretPatch = body.clearSecret === true ? { secret: null } : newSecret ? { secret: newSecret } : {};
 
   if (!id) return NextResponse.json({ error: "Falta id" }, { status: 400 });
   if (!name) return NextResponse.json({ error: "Falta nombre" }, { status: 400 });
@@ -126,7 +145,7 @@ export async function PUT(req: NextRequest) {
       url,
       events,
       is_active: isActive,
-      secret,
+      ...secretPatch,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
@@ -135,20 +154,7 @@ export async function PUT(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
-  return NextResponse.json({
-    ok: true,
-    item: {
-      id: data.id,
-      name: data.name,
-      destinationType: data.destination_type,
-      url: data.url,
-      events: data.events,
-      isActive: data.is_active,
-      secret: data.secret,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-    },
-  });
+  return NextResponse.json({ ok: true, item: toClient(data as WebhookRow) });
 }
 
 export async function DELETE(req: NextRequest) {

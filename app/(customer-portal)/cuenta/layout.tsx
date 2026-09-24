@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
-import { getCustomerMembership, getSuperAdminRoleByEmail } from "@/lib/super-admin/account-access";
-import { createSupabaseServerClient } from "../../../utils/supabase/server";
+import { requireCustomerPortalSession } from "@/lib/tenant/customer-portal-session";
 import { QueryProvider } from "@/components/ui/query-provider";
 
 export const metadata: Metadata = {
@@ -19,27 +17,7 @@ export default async function CustomerPortalLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createSupabaseServerClient("super-admin");
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user?.email) {
-    redirect("/login");
-  }
-
-  const email = user.email.trim().toLowerCase();
-  const superAdminRole = await getSuperAdminRoleByEmail(email);
-
-  if (superAdminRole === "super_admin" || superAdminRole === "support") {
-    redirect("/dashboard");
-  }
-
-  const membership = await getCustomerMembership({ authUserId: user.id, email });
-  if (!membership) {
-    redirect("/login?error=no-access");
-  }
+  await requireCustomerPortalSession();
 
   return <QueryProvider>{children}</QueryProvider>;
 }

@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { Illustrated404 } from "../../components/brand/illustrated-404";
 
 export const metadata: Metadata = {
-  title: "Tienda no encontrada · GodCode",
+  title: "Tienda no encontrada · Gcode",
   description:
-    "Esta tienda no existe o ya no está disponible. Crea la tuya con GodCode en pocos minutos.",
+    "Esta tienda no existe o ya no está disponible. Crea la tuya con Gcode POS en pocos minutos.",
   robots: {
     index: false,
     follow: false,
@@ -21,7 +21,7 @@ export default function TenantNotFound() {
       title="Tienda no disponible"
       subtitle="Esta tienda no existe… o se mudó sin avisar."
       primaryCta={{ label: "Crear mi propia tienda", href: "/onboarding" }}
-      secondaryCta={{ label: "Conocer GodCode", href: "/" }}
+      secondaryCta={{ label: "Conocer Gcode POS", href: "/" }}
     />
   );
 }

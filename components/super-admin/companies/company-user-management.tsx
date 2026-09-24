@@ -9,15 +9,15 @@ import { useAdminRole } from "@/components/super-admin/shell/admin-role-context"
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 
 const USER_ROLE_OPTIONS = [
-  { value: "admin", label: "Admin" },
-  { value: "ceo", label: "CEO" },
-  { value: "cashier", label: "Cashier" },
+  { value: "ceo", label: "Dueño" },
+  { value: "admin", label: "Administrador" },
+  { value: "cashier", label: "Cajero" },
 ];
 
 const ROLE_LABELS: Record<string, string> = {
-  admin: "Admin",
-  ceo: "CEO",
-  cashier: "Cashier",
+  admin: "Administrador",
+  ceo: "Dueño",
+  cashier: "Cajero",
 };
 
 const RESERVED_NON_TENANT_ROLES = new Set(["super_admin", "owner"]);

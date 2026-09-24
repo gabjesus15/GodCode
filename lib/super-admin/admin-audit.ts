@@ -10,13 +10,15 @@ export async function logAdminAudit(params: {
 	action: string;
 	resourceType?: string | null;
 	resourceId?: string | null;
+	/** Empresa afectada, para poder filtrar la auditoría por cliente. */
+	companyId?: string | null;
 	metadata?: Record<string, unknown> | null;
 }): Promise<void> {
 	try {
 		const row = buildAdminAuditLogRow({
 			actorEmail: params.actorEmail,
 			actorId: null,
-			companyId: null,
+			companyId: params.companyId ?? null,
 			action: params.action,
 			targetType: params.resourceType ?? "super_admin_api",
 			targetId: params.resourceId ?? null,

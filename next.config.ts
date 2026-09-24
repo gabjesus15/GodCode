@@ -32,6 +32,10 @@ const supabaseStoragePattern = (() => {
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
+  // Solo `next dev`: sin esto, Next 16 bloquea los recursos de desarrollo pedidos desde
+  // otro host y la página no se hidrata. `127.0.0.1` permite tener abiertas a la vez dos
+  // sesiones (las cookies van por host); `*.localhost` es el storefront de un tenant.
+  allowedDevOrigins: ["127.0.0.1", "*.localhost"],
   compiler: isProduction
     ? {
         removeConsole: true,

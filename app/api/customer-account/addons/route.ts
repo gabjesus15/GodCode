@@ -1,403 +1,175 @@
-import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
+import { createPortalOrder, findOpenOrder, loadPortalBillingContext, type PortalBillingContext } from "@/lib/billing/portal-billing";
+import { quoteCoTermCharge, roundUsd } from "@/lib/billing/portal-pricing";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { isSingleInstanceAddon, resolveAddonUnitPrice } from "@/lib/plans/addon-pricing";
+import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
-import { normalizeCountryCode } from "@/lib/geo/country-registry";
-import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
-import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
-/** @service-role customer-account */
-
-type CompanyRow = {
-  id: string;
-  name: string;
-  country: string | null;
-  plan_id: string | null;
-  subscription_ends_at: string | null;
-};
+/** @service-role customer-account
+ *
+ * Contratar un extra desde /cuenta. Los mensuales vencen con la suscripción: hoy se paga
+ * hasta el vencimiento y después entran en cada renovación. Los de pago único se pagan una
+ * vez. Crea un pedido que se aplica al pagarse (`applyPortalPayment`).
+ */
 
 type AddonRow = {
-  id: string;
-  slug: string;
-  name: string;
-  type: string | null;
-  description: string | null;
-  price_one_time: number | null;
-  price_monthly: number | null;
-  is_active: boolean | null;
+	id: string;
+	slug: string | null;
+	name: string;
+	type: string | null;
+	description: string | null;
+	price_one_time: number | null;
+	price_monthly: number | null;
+	is_active: boolean | null;
 };
 
-type PlanRow = {
-  id: string;
-  name: string;
-  max_branches: number | null;
-  max_users: number | null;
-  features: unknown;
-  marketing_lines: unknown;
-};
+type Impact = { id: string; level: "block" | "info"; title: string; detail: string };
 
-type MethodSnapshot = {
-  id: string;
-  slug: string;
-  name: string;
-  countries: string[] | null;
-  auto_verify: boolean;
-};
+const MAX_ONE_TIME_QUANTITY = 10;
 
-type AddonImpact = {
-  id: string;
-  level: "warn" | "block";
-  title: string;
-  detail: string;
-};
+async function buildPreview(companyId: string, addonId: string, requestedQuantity: number) {
+	const [billing, { data: addon }] = await Promise.all([
+		loadPortalBillingContext(companyId),
+		supabaseAdmin
+			.from("addons")
+			.select("id,slug,name,type,description,price_one_time,price_monthly,is_active")
+			.eq("id", addonId)
+			.maybeSingle(),
+	]);
+	if (!billing) return { error: "Empresa no encontrada", status: 404 } as const;
+	const addonRow = addon as AddonRow | null;
+	if (!addonRow?.id || addonRow.is_active === false) return { error: "Ese extra no está disponible.", status: 400 } as const;
 
-function isSingleInstanceAddon(addon: AddonRow): boolean {
-  const haystack = `${addon.name} ${addon.slug} ${addon.type ?? ""}`.toLowerCase();
-  return haystack.includes("dominio") || haystack.includes("domain") || haystack.includes("custom_domain") || haystack.includes("custom-domain");
-}
+	const { isMonthly, unitPrice } = resolveAddonUnitPrice(addonRow);
+	const singleInstance = isSingleInstanceAddon(addonRow);
+	// Los mensuales son uno por empresa (se renuevan con el plan); los de pago único admiten cantidad.
+	const quantity = singleInstance || isMonthly ? 1 : Math.max(1, Math.min(MAX_ONE_TIME_QUANTITY, Math.floor(requestedQuantity) || 1));
+	const owned = billing.activeAddons.some((row) => row.addonId === addonRow.id);
+	const offer = resolveAddonOfferForPlan(billing.currentPlan, addonRow);
 
-async function resolvePaymentMethodsForCountry(country: string | null) {
-  const normalizedCountry = normalizeCountryCode(country);
-  const { data: methods } = await supabaseAdmin
-    .from("plan_payment_methods")
-    .select("id,slug,name,countries,auto_verify")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+	const impacts: Impact[] = [];
+	const block = (id: string, title: string, detail: string) => impacts.push({ id, level: "block", title, detail });
 
-  const rows = ((methods ?? []) as MethodSnapshot[]).filter((method) => {
-    if (!normalizedCountry) return true;
-    if (!Array.isArray(method.countries) || method.countries.length === 0) return true;
-    return method.countries.includes(normalizedCountry) || method.countries.includes(country ?? "");
-  });
+	if (billing.phase === "payment_pending") {
+		block("phase", "Estamos validando tu primer pago", "Podrás contratar extras en cuanto tu cuenta quede activa.");
+	} else if (billing.phase === "expired") {
+		block("phase", "Tu suscripción venció", "Renueva tu plan para volver a contratar extras.");
+	}
+	if (offer.status === "included") block("included", "Ya viene incluido en tu plan", offer.reason);
+	if (offer.status === "blocked") block("blocked", "No está disponible para tu plan", offer.reason);
+	if (owned && (isMonthly || singleInstance)) {
+		block(
+			"owned",
+			"Ya lo tienes activo",
+			isMonthly ? "Los extras mensuales se renuevan solos junto con tu plan." : "Este extra se contrata una sola vez.",
+		);
+	}
+	if (findOpenOrder(billing, (kind) => kind.kind === "addon" && kind.addonId === addonRow.id)) {
+		block("open-order", "Ya tienes un pago pendiente para este extra", "Págalo o anúlalo en «Pagos pendientes».");
+	}
 
-  const rowsWithConfig = await Promise.all(
-    rows.map(async (method) => {
-      const { data: configRows } = await supabaseAdmin
-        .from("plan_payment_method_config")
-        .select("key,value")
-        .eq("method_id", method.id);
+	let amount = roundUsd(unitPrice * quantity);
+	let coversUntil: string | null = null;
+	let remainingDays: number | null = null;
+	if (isMonthly) {
+		const coTerm = quoteCoTermCharge({ unitMonthly: unitPrice, quantity, endsAt: billing.company.subscription_ends_at });
+		if (coTerm) {
+			amount = coTerm.amount;
+			coversUntil = coTerm.coversUntil;
+			remainingDays = coTerm.remainingDays;
+		} else if (billing.phase === "open_ended") {
+			block("no-cycle", "Tu cuenta no tiene fecha de vencimiento", "Los extras mensuales de esta cuenta los activa nuestro equipo. Escríbenos por Soporte.");
+		}
+	}
 
-      const config: Record<string, string> = {};
-      for (const row of configRows ?? []) {
-        if (row.key) config[row.key] = row.value ?? "";
-      }
-
-      return { ...method, config };
-    })
-  );
-
-  return rowsWithConfig;
-}
-
-async function buildAddonPreview(params: {
-  companyId: string;
-  addonId: string;
-  quantity: number;
-  months: number;
-}) {
-  const [{ data: company }, { data: addon }, { data: existingAddonRows }] = await Promise.all([
-    supabaseAdmin
-      .from("companies")
-      .select("id,name,country,plan_id,subscription_ends_at")
-      .eq("id", params.companyId)
-      .maybeSingle(),
-    supabaseAdmin
-      .from("addons")
-      .select("id,slug,name,type,description,price_one_time,price_monthly,is_active")
-      .eq("id", params.addonId)
-      .maybeSingle(),
-    supabaseAdmin
-      .from("company_addons")
-      .select("id,status,addon_id")
-      .eq("company_id", params.companyId)
-      .eq("addon_id", params.addonId),
-  ]);
-
-  const companyRow = company as CompanyRow | null;
-  const addonRow = addon as AddonRow | null;
-  if (!companyRow?.id) return { error: "Empresa no encontrada" as const };
-  if (!addonRow?.id || addonRow.is_active === false) return { error: "Extra no disponible" as const };
-
-  const { data: currentPlan } = companyRow.plan_id
-    ? await supabaseAdmin
-        .from("plans")
-        .select("id,name,max_branches,max_users,features,marketing_lines")
-        .eq("id", companyRow.plan_id)
-        .maybeSingle()
-    : { data: null };
-
-  const currentPlanRow = (currentPlan as PlanRow | null) ?? null;
-
-  const existingActive = ((existingAddonRows ?? []) as Array<{ id: string; status: string | null }>).some(
-    (row) => String(row.status ?? "").toLowerCase() === "active"
-  );
-
-  const impacts: AddonImpact[] = [];
-  const planOffer = resolveAddonOfferForPlan(
-    currentPlanRow,
-    {
-      id: addonRow.id,
-      slug: addonRow.slug,
-      name: addonRow.name,
-      type: addonRow.type,
-      description: addonRow.description,
-    }
-  );
-
-  if (planOffer.status === "included") {
-    impacts.push({
-      id: "addon-included-in-plan",
-      level: "block",
-      title: "Este extra ya viene incluido en tu plan",
-      detail: `${planOffer.reason} No corresponde generar un cobro adicional.`,
-    });
-  }
-
-  if (planOffer.status === "blocked") {
-    impacts.push({
-      id: "addon-blocked-by-plan",
-      level: "block",
-      title: "Este extra no esta habilitado para tu plan",
-      detail: `${planOffer.reason} Si deseas contratarlo, primero debes cambiar de plan.`,
-    });
-  }
-
-  const singleInstance = isSingleInstanceAddon(addonRow);
-  const safeQuantity = singleInstance ? 1 : params.quantity;
-  const safeMonths = Math.max(1, params.months);
-
-  if (singleInstance && existingActive) {
-    impacts.push({
-      id: "single-instance-owned",
-      level: "block",
-      title: "Este extra ya esta activo",
-      detail: "Este servicio es de instancia unica y no se puede comprar nuevamente.",
-    });
-  }
-
-  if (singleInstance && params.quantity > 1) {
-    impacts.push({
-      id: "single-instance-qty",
-      level: "warn",
-      title: "Cantidad ajustada",
-      detail: "Este extra es de instancia unica. La cantidad se ajustara a 1.",
-    });
-  }
-
-  const isMonthly = Number(addonRow.price_monthly ?? 0) > 0;
-  const unitPrice = isMonthly ? Number(addonRow.price_monthly ?? 0) : Number(addonRow.price_one_time ?? 0);
-  const amountDue = isMonthly ? Number((unitPrice * safeQuantity * safeMonths).toFixed(2)) : Number((unitPrice * safeQuantity).toFixed(2));
-
-  if (isMonthly) {
-    impacts.push({
-      id: "monthly-addon-renewal",
-      level: "warn",
-      title: "Cargo recurrente",
-      detail: "Este extra tiene costo mensual y se renovara junto a tu suscripcion cuando corresponda.",
-    });
-  }
-
-  if (!isMonthly && safeQuantity > 1) {
-    impacts.push({
-      id: "multiple-provisioning-review",
-      level: "warn",
-      title: "Provision multiple sujeta a revision",
-      detail: "La activacion base se realiza automaticamente; cantidades multiples pueden requerir ajuste por soporte.",
-    });
-  }
-
-  const paymentMethods = await resolvePaymentMethodsForCountry(companyRow.country);
-
-  return {
-    company: companyRow,
-    addon: addonRow,
-    existingActive,
-    planOffer,
-    singleInstance,
-    pricing: {
-      isMonthly,
-      unitPrice,
-      quantity: safeQuantity,
-      months: safeMonths,
-      amountDue,
-      requiresPayment: amountDue > 0,
-    },
-    impacts,
-    paymentMethods,
-  };
+	return {
+		preview: {
+			addon: {
+				id: addonRow.id,
+				name: addonRow.name,
+				description: addonRow.description,
+				isMonthly,
+				unitPrice,
+				singleInstance,
+			},
+			owned,
+			quantity,
+			pricing: { amount, coversUntil, remainingDays },
+			impacts,
+		},
+		billing,
+	} as const;
 }
 
 export async function GET(req: NextRequest) {
-  const ctx = await getCustomerAccountContext();
-  if (!ctx) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+	const ctx = await getCustomerAccountContext();
+	if (!ctx) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const limited = await assertCustomerAccountRateLimit(ctx.companyId, "addons_get", 30, 60_000);
-  if (limited) return limited;
+	const limited = await assertCustomerAccountRateLimit(ctx.companyId, "addons_get", 40, 60_000);
+	if (limited) return limited;
 
-  const addonId = String(req.nextUrl.searchParams.get("addonId") ?? "").trim();
-  const quantity = Math.max(1, Math.min(50, Number(req.nextUrl.searchParams.get("quantity") ?? 1) || 1));
-  const months = Math.max(1, Math.min(24, Number(req.nextUrl.searchParams.get("months") ?? 1) || 1));
+	const addonId = String(req.nextUrl.searchParams.get("addonId") ?? "").trim();
+	if (!addonId) return NextResponse.json({ error: "Elige un extra." }, { status: 400 });
+	const quantity = Number(req.nextUrl.searchParams.get("quantity") ?? 1);
 
-  if (!addonId) return NextResponse.json({ error: "Falta addonId" }, { status: 400 });
+	const result = await buildPreview(ctx.companyId, addonId, quantity);
+	if ("error" in result) return NextResponse.json({ error: result.error }, { status: result.status });
+	return NextResponse.json({ ok: true, preview: result.preview });
+}
 
-  const preview = await buildAddonPreview({
-    companyId: ctx.companyId,
-    addonId,
-    quantity,
-    months,
-  });
-
-  if ("error" in preview) {
-    return NextResponse.json({ error: preview.error }, { status: 400 });
-  }
-
-  return NextResponse.json({ ok: true, preview });
+async function activateFreeAddon(billing: PortalBillingContext, addonId: string, isMonthly: boolean) {
+	return supabaseAdmin.from("company_addons").upsert(
+		{
+			company_id: billing.company.id,
+			addon_id: addonId,
+			status: "active",
+			price_paid: 0,
+			expires_at: isMonthly ? billing.company.subscription_ends_at : null,
+			updated_at: new Date().toISOString(),
+		},
+		{ onConflict: "company_id,addon_id" },
+	);
 }
 
 export async function POST(req: NextRequest) {
-  const ctx = await getCustomerAccountContext();
-  if (!ctx) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+	const ctx = await getCustomerAccountContext();
+	if (!ctx) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const limited = await assertCustomerAccountRateLimit(ctx.companyId, "addons_post", 10, 60_000);
-  if (limited) return limited;
+	const limited = await assertCustomerAccountRateLimit(ctx.companyId, "addons_post", 10, 60_000);
+	if (limited) return limited;
 
-  const body = (await req.json().catch(() => ({}))) as {
-    addonId?: string;
-    quantity?: number;
-    months?: number;
-    methodSlug?: string;
-    notes?: string;
-    acceptedImpactIds?: string[];
-  };
+	const body = (await req.json().catch(() => ({}))) as { addonId?: string; quantity?: number };
+	const addonId = String(body.addonId ?? "").trim();
+	if (!addonId) return NextResponse.json({ error: "Elige un extra." }, { status: 400 });
 
-  const addonId = String(body.addonId ?? "").trim();
-  const quantity = Math.max(1, Math.min(50, Number(body.quantity ?? 1) || 1));
-  const months = Math.max(1, Math.min(24, Number(body.months ?? 1) || 1));
-  const methodSlug = String(body.methodSlug ?? "").trim();
-  const notes = String(body.notes ?? "").trim();
-  const acceptedImpactIds = Array.isArray(body.acceptedImpactIds)
-    ? body.acceptedImpactIds.map((id) => String(id).trim()).filter(Boolean)
-    : [];
+	const result = await buildPreview(ctx.companyId, addonId, Number(body.quantity ?? 1));
+	if ("error" in result) return NextResponse.json({ error: result.error }, { status: result.status });
+	const { preview, billing } = result;
 
-  if (!addonId) return NextResponse.json({ error: "Falta addonId" }, { status: 400 });
+	const block = preview.impacts.find((impact) => impact.level === "block");
+	if (block) return NextResponse.json({ error: block.detail, impacts: preview.impacts }, { status: 409 });
 
-  const preview = await buildAddonPreview({
-    companyId: ctx.companyId,
-    addonId,
-    quantity,
-    months,
-  });
+	if (!(preview.pricing.amount > 0)) {
+		const { error } = await activateFreeAddon(billing, preview.addon.id, preview.addon.isMonthly);
+		if (error) return NextResponse.json({ error: "No se pudo activar el extra." }, { status: 500 });
+		return NextResponse.json({ ok: true, applied: true, message: `${preview.addon.name} quedó activo.` });
+	}
 
-  if ("error" in preview) {
-    return NextResponse.json({ error: preview.error }, { status: 400 });
-  }
+	if (!billing.company.plan_id) {
+		return NextResponse.json({ error: "Tu cuenta no tiene plan asignado. Escríbenos para regularizarla." }, { status: 409 });
+	}
 
-  const blockingImpacts = preview.impacts.filter((impact) => impact.level === "block");
-  if (blockingImpacts.length > 0) {
-    return NextResponse.json({ error: "No puedes comprar este extra en este momento.", impacts: preview.impacts }, { status: 400 });
-  }
+	const created = await createPortalOrder({
+		companyId: ctx.companyId,
+		planId: billing.company.plan_id,
+		kind: "addon",
+		addonId: preview.addon.id,
+		amount: preview.pricing.amount,
+	});
+	if (!created.ok) return NextResponse.json({ error: created.error }, { status: 500 });
 
-  const warningIds = preview.impacts.filter((impact) => impact.level === "warn").map((impact) => impact.id);
-  const allWarningsAccepted = warningIds.every((id) => acceptedImpactIds.includes(id));
-  if (!allWarningsAccepted) {
-    return NextResponse.json({ error: "Debes confirmar los avisos antes de continuar.", impacts: preview.impacts }, { status: 400 });
-  }
-
-  const nowIso = new Date().toISOString();
-
-  if (!preview.pricing.requiresPayment) {
-    await supabaseAdmin.from("company_addons").upsert(
-      {
-        company_id: ctx.companyId,
-        addon_id: preview.addon.id,
-        status: "active",
-        price_paid: 0,
-        expires_at: preview.pricing.isMonthly ? preview.company.subscription_ends_at : null,
-        updated_at: nowIso,
-      },
-      { onConflict: "company_id,addon_id" }
-    );
-
-    return NextResponse.json({ ok: true, appliedNow: true, preview, message: "Extra activado correctamente." });
-  }
-
-  if (!methodSlug) {
-    return NextResponse.json({ error: "Selecciona un metodo de pago" }, { status: 400 });
-  }
-
-  const selectedMethod = preview.paymentMethods.find((method) => method.slug === methodSlug);
-  if (!selectedMethod) {
-    return NextResponse.json({ error: "Metodo de pago no disponible" }, { status: 400 });
-  }
-
-  const paymentReference = `ADDON-${preview.addon.id}-M${preview.pricing.months}-${randomUUID().slice(0, 8).toUpperCase()}`;
-
-  const { data: payment, error: paymentError } = await supabaseAdmin
-    .from("payments_history")
-    .insert({
-      company_id: ctx.companyId,
-      plan_id: preview.company.plan_id,
-      amount_paid: preview.pricing.amountDue,
-      months_paid: preview.pricing.months,
-      payment_method: selectedMethod.name,
-      payment_method_slug: selectedMethod.slug,
-      payment_reference: paymentReference,
-      status: selectedMethod.auto_verify ? "paid" : "pending_validation",
-      payment_date: selectedMethod.auto_verify ? nowIso : null,
-    })
-    .select("id,amount_paid,months_paid,payment_reference,status,payment_method,payment_method_slug,payment_date,reference_file_url")
-    .single();
-
-  if (paymentError || !payment) {
-    return NextResponse.json({ error: paymentError?.message ?? "No se pudo crear el pago" }, { status: 500 });
-  }
-
-  if (selectedMethod.auto_verify) {
-    await supabaseAdmin.from("company_addons").upsert(
-      {
-        company_id: ctx.companyId,
-        addon_id: preview.addon.id,
-        status: "active",
-        price_paid: preview.pricing.amountDue,
-        expires_at: preview.pricing.isMonthly ? preview.company.subscription_ends_at : null,
-        updated_at: nowIso,
-      },
-      { onConflict: "company_id,addon_id" }
-    );
-  }
-
-  await supabaseAdmin.from("saas_tickets").insert({
-    company_id: ctx.companyId,
-    created_by_email: ctx.email,
-    source: "tenant",
-    subject: `Compra de extra ${selectedMethod.auto_verify ? "aplicada" : "pendiente"} · ${paymentReference}`,
-    description: [
-      `Extra: ${preview.addon.name}`,
-      `Cantidad: ${preview.pricing.quantity}`,
-      `Meses: ${preview.pricing.months}`,
-      `Monto: ${preview.pricing.amountDue} USD`,
-      `Metodo: ${selectedMethod.name}`,
-      `Referencia: ${paymentReference}`,
-      notes ? `Notas: ${notes}` : null,
-      selectedMethod.auto_verify ? "Resultado: activado automaticamente." : "Resultado: pendiente de validacion manual.",
-    ]
-      .filter(Boolean)
-      .join("\n"),
-    category: "billing",
-    priority: "high",
-    status: selectedMethod.auto_verify ? "resolved" : "open",
-    last_message_at: nowIso,
-    resolved_at: selectedMethod.auto_verify ? nowIso : null,
-  });
-
-  return NextResponse.json({
-    ok: true,
-    appliedNow: selectedMethod.auto_verify,
-    payment,
-    preview,
-    message: selectedMethod.auto_verify
-      ? "Pago procesado y extra activado."
-      : "Pago creado. El extra se activara al validar el pago.",
-  });
+	return NextResponse.json({ ok: true, order: created.order, message: `${preview.addon.name} se activa en cuanto se confirme el pago.` });
 }

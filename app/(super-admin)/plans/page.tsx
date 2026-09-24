@@ -2,6 +2,9 @@ import { PlansAdminClientLazy } from "./plans-admin-client-lazy";
 
 import { queryAdminPlansList } from "@/lib/plans/plans-db-query";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { requireSuperAdminSession } from "@/lib/super-admin/require-super-admin-session";
+
+export const metadata = { title: "Planes" };
 
 /** @service-role layout-guard */
 
@@ -20,6 +23,7 @@ const getUsdToClp = async () => {
 };
 
 export default async function PlansPage() {
+	await requireSuperAdminSession();
 	try {
 		const [rate, plansResult, addonsResult] = await Promise.all([
 			getUsdToClp(),

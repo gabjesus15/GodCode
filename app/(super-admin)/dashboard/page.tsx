@@ -19,8 +19,15 @@ import { ActivityRings } from "@/components/ui/activity-rings";
 import { DashboardFunnelSection } from "@/components/super-admin/dashboard/dashboard-funnel-section";
 import { SaasPageHeader } from "@/components/super-admin/shared/saas-page-header";
 import { MetricCardClient } from "./MetricCardClient";
+import { requireSuperAdminSession } from "@/lib/super-admin/require-super-admin-session";
+
+export const metadata = { title: "Inicio" };
 
 export const dynamic = "force-dynamic";
+
+function plural(count: number, singular: string, pluralForm: string): string {
+  return `${count} ${count === 1 ? singular : pluralForm}`;
+}
 
 function parsePeriod(raw: string | undefined): DashboardPeriod {
   const allowed = new Set(DASHBOARD_PERIODS.map((p) => p.value));
@@ -41,6 +48,7 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ period?: string | string[] }>;
 }) {
+  await requireSuperAdminSession();
   const sp = await searchParams;
   const periodRaw = Array.isArray(sp.period) ? sp.period[0] : sp.period;
   const period = parsePeriod(periodRaw);
@@ -70,14 +78,14 @@ export default async function DashboardPage({
 
   const totalRegistered = statusCo.total;
   const activeCompaniesPercentage =
-    totalRegistered > 0 ? Math.round((statusCo.active / totalRegistered) * 100) : 100;
+    totalRegistered > 0 ? Math.round((statusCo.active / totalRegistered) * 100) : 0;
   const newCompaniesPercentage = Math.min(100, Math.round((newCo.count / 15) * 100));
 
   return (
     <div className="min-w-0 space-y-8">
       <SaasPageHeader
         title="Resumen operativo"
-        description="MRR según planes de empresas activas. Ingresos y altas filtrados por periodo."
+        description="Ingreso mensual según el plan de cada empresa activa. Cobros y altas del periodo elegido."
         icon={LayoutDashboard}
         action={
           <Suspense
@@ -101,12 +109,12 @@ export default async function DashboardPage({
         <div className="space-y-6 lg:col-span-2">
           <div className="grid gap-4 sm:grid-cols-2 sm:gap-6">
             <MetricCardClient
-              label="MRR estimado (planes)"
+              label="Ingreso mensual estimado"
               value={mrrRes.error ? "—" : fmtUsd(mrrRes.mrr)}
               helper={
                 mrrRes.error
                   ? mrrRes.error
-                  : `${mrrRes.activeWithPlan} empresas activas con plan asignado. Sin add-ons recurrentes.`
+                  : `${plural(mrrRes.activeWithPlan, "empresa activa", "empresas activas")} con plan. Sin contar extras mensuales.`
               }
               href="/plans"
             />
@@ -116,29 +124,29 @@ export default async function DashboardPage({
               helper={
                 revRes.error
                   ? revRes.error
-                  : `${revRes.count} pagos con estado pagado/aprobado en el periodo.`
+                  : `${plural(revRes.count, "pago cobrado", "pagos cobrados")} en el periodo.`
               }
               href="/dashboard/salud-pagos"
             />
             <MetricCardClient
               label="Empresas nuevas (periodo)"
               value={newCo.error ? "—" : `${newCo.count}`}
-              helper={newCo.error ? newCo.error : "Altas registradas en companies.created_at."}
+              helper={newCo.error ? newCo.error : "Empresas creadas en el periodo."}
               href="/companies"
             />
             <MetricCardClient
-              label="Tickets sin resolver"
+              label="Tickets pendientes"
               value={tickets.error ? "—" : `${tickets.count}`}
-              helper={tickets.error ? tickets.error : "resolved_at vacío en saas_tickets."}
+              helper={tickets.error ? tickets.error : "Abiertos, en curso o esperando respuesta del cliente."}
               href="/tickets"
             />
             <MetricCardClient
-              label="Conversión a activo (embudo)"
+              label="Altas completadas"
               value={`${conversionActivePct}%`}
               helper={
                 funnel.total > 0
-                  ? `${convertedApplications} convertidas (activas + validadas) de ${funnel.total} solicitudes en el periodo.`
-                  : "Sin solicitudes en base."
+                  ? `${convertedApplications} de ${plural(funnel.total, "solicitud", "solicitudes")} terminaron el alta en el periodo.`
+                  : "Sin solicitudes de alta en el periodo."
               }
               href="/dashboard/onboarding-embudo"
             />
@@ -148,7 +156,7 @@ export default async function DashboardPage({
               helper={
                 statusCo.error
                   ? statusCo.error
-                  : `${statusCo.active} activas de ${statusCo.total} empresas registradas.`
+                  : `${statusCo.active} de ${plural(statusCo.total, "empresa", "empresas")} están activas.`
               }
               href="/companies"
             />
@@ -160,32 +168,32 @@ export default async function DashboardPage({
           <Card className="flex h-full min-w-0 flex-col justify-between overflow-visible rounded-3xl border border-zinc-200/60 bg-white p-5 dark:border-zinc-800/60 dark:bg-zinc-900/80">
             <div>
               <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                Objetivos del Negocio
+                Objetivos del negocio
               </h3>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                Progreso operativo y de salud general del SaaS en este periodo.
+                Cómo va el negocio frente a sus metas.
               </p>
             </div>
             <div className="my-6 min-w-0">
               <ActivityRings
                 rings={[
                   {
-                    label: "Altas nuevas",
-                    value: `${newCo.count} / 15`,
+                    label: "Altas nuevas del periodo",
+                    value: `${newCo.count} de 15`,
                     percentage: newCompaniesPercentage,
                     color: "#f43f5e",
                     backgroundColor: "rgba(244, 63, 94, 0.1)",
                   },
                   {
-                    label: "Salud de clientes",
-                    value: `${activeCompaniesPercentage}%`,
+                    label: "Empresas activas",
+                    value: `${statusCo.active} de ${statusCo.total}`,
                     percentage: activeCompaniesPercentage,
                     color: "#10b981",
                     backgroundColor: "rgba(16, 185, 129, 0.1)",
                   },
                   {
-                    label: "Conversión de embudo",
-                    value: `${conversionActivePct}%`,
+                    label: "Solicitudes que terminan el alta",
+                    value: `${convertedApplications} de ${funnel.total}`,
                     percentage: conversionActivePct,
                     color: "#6366f1",
                     backgroundColor: "rgba(99, 102, 241, 0.1)",
@@ -197,7 +205,7 @@ export default async function DashboardPage({
               />
             </div>
             <div className="border-t border-zinc-100 pt-4 text-[11px] text-zinc-400 dark:border-zinc-800">
-              Metas operacionales y de conversión calculadas dinámicamente.
+              Meta de altas: 15 por periodo. El centro es el promedio de los tres avances.
             </div>
           </Card>
         </div>
@@ -216,7 +224,7 @@ export default async function DashboardPage({
           <Card className="flex items-center gap-3 rounded-3xl border border-zinc-200/60 bg-white px-4 py-4 transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/60">
             <Activity className="h-5 w-5 shrink-0 text-emerald-500" />
             <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-              Embudo onboarding
+              Embudo de altas
             </span>
           </Card>
         </Link>
@@ -224,7 +232,7 @@ export default async function DashboardPage({
           <Card className="flex items-center gap-3 rounded-3xl border border-zinc-200/60 bg-white px-4 py-4 transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/60">
             <BarChart3 className="h-5 w-5 shrink-0 text-blue-500" />
             <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-              Analytics global
+              Tráfico
             </span>
           </Card>
         </Link>
@@ -232,7 +240,7 @@ export default async function DashboardPage({
           <Card className="flex items-center gap-3 rounded-3xl border border-zinc-200/60 bg-white px-4 py-4 transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800/60 dark:bg-zinc-900/80 dark:hover:border-zinc-700 dark:hover:bg-zinc-900/60">
             <ScrollText className="h-5 w-5 shrink-0 text-rose-500" />
             <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">
-              Auditoría admin
+              Auditoría
             </span>
           </Card>
         </Link>
