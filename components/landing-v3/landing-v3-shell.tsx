@@ -1,5 +1,5 @@
 import type { PublicPlanForLanding } from "@/lib/plans/public-plans";
-import { resolveRegionalPlanPrice } from "@/lib/plans/plan-regional-pricing";
+import { resolveLowestPlanPrice } from "@/lib/landing/price";
 import type { LandingSocialLink } from "@/lib/landing/contact";
 import type { LandingV3Config } from "@/lib/landing/v3-config";
 
@@ -11,6 +11,10 @@ import { BentoGrid } from "./bento-grid";
 import { Pricing } from "./pricing";
 import { Faq } from "./faq";
 import { Ticker } from "./ticker";
+import { HowItWorks } from "./how-it-works";
+import { DemoVideos } from "./demo-videos";
+import { Trust } from "./trust";
+import { LandingConversionTracker } from "./landing-conversion-tracker";
 import { Footer } from "./footer";
 import { FloatingSocialDock } from "./floating-social-dock";
 
@@ -21,16 +25,8 @@ type LandingV3ShellProps = {
   socialLinks: LandingSocialLink[];
 };
 
-function resolveFromPrice(plans: PublicPlanForLanding[], country: string) {
-  const prices = plans
-    .map((plan) => resolveRegionalPlanPrice(plan, country))
-    .filter((p) => p.price > 0);
-  if (prices.length === 0) return null;
-  return prices.reduce((min, current) => (current.price < min.price ? current : min));
-}
-
 export function LandingV3Shell({ plans, country, v3Config, socialLinks }: LandingV3ShellProps) {
-  const fromPrice = resolveFromPrice(plans, country);
+  const fromPrice = resolveLowestPlanPrice(plans, country);
   const floatingSocialLinks = socialLinks.filter(
     (link) => link.kind === "instagram" || link.kind === "whatsapp",
   );
@@ -41,14 +37,18 @@ export function LandingV3Shell({ plans, country, v3Config, socialLinks }: Landin
       <main>
         <Hero fromPrice={fromPrice} heroPhones={v3Config.heroPhones} />
         <Statement />
+        <HowItWorks />
+        <DemoVideos demoMenuUrl={process.env.NEXT_PUBLIC_DEMO_MENU_URL?.trim() || null} />
         <FeatureSplit featureImages={v3Config.featureImages} />
         <BentoGrid bentoMenuMobile={v3Config.bentoMenuMobile} />
+        <Trust socialLinks={socialLinks} />
         <Pricing plans={plans} country={country} />
         <Faq />
-        <Ticker />
+        <Ticker socialLinks={socialLinks} />
       </main>
       <Footer socialLinks={socialLinks} />
       <FloatingSocialDock links={floatingSocialLinks} />
+      <LandingConversionTracker />
     </div>
   );
 }

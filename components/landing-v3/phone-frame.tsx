@@ -86,7 +86,7 @@ export function PhoneFrame({
 							alt={alt}
 							fill
 							unoptimized
-							quality={100}
+							quality={92}
 							className={cn(
 								imageFit === "contain"
 									? "object-contain object-center"

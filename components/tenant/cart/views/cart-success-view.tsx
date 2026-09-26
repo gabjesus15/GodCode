@@ -12,12 +12,15 @@ export function CartSuccessView({
 	receiptUploadFailed,
 	activeInfo,
 	lastOrder,
+	demo = false,
 }: {
 	onNewOrder: () => void;
 	onGoHome: () => void;
 	receiptUploadFailed: boolean;
 	activeInfo: BusinessInfo;
 	lastOrder: LastOrderSuccess | null;
+	/** Menú de demostración: se avisa que el pedido no se envió. */
+	demo?: boolean;
 }) {
 	const t = useTranslations("tenant.cart.modal");
 	const showDeliveryCodes = lastOrder?.fulfillment === "delivery" && Boolean(lastOrder?.handoff_code);
@@ -34,7 +37,7 @@ export function CartSuccessView({
 				<Check size={32} strokeWidth={2.5} />
 			</span>
 			<h3 className="cart-success__title">{t("success.title")}</h3>
-			<p className="cart-success__text">{t("success.description")}</p>
+			<p className="cart-success__text">{demo ? t("success.demoNotice") : t("success.description")}</p>
 
 			{receiptUploadFailed ? (
 				<p className="cart-warn">{t("success.receiptUploadFailed")}</p>

@@ -6,8 +6,6 @@ export const LANDING_SHOWCASE_TENANT = {
 	quote:
 		"Dejamos de depender de las apps de delivery. Ahora el menú y los pedidos viven en nuestro canal, sin comisión por venta.",
 	metricLabel: "Visitas semanales al menú",
-	metricEnd: 450,
-	metricSuffix: "+",
 	metricValue: "450+",
 	role: "Restaurante en Gcode",
 } as const;

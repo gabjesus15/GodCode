@@ -550,6 +550,7 @@
         "success": {
           "sentAria": "Bestellung gesendet",
           "sentTitle": "Bestellung gesendet",
+          "demoNotice": "Das ist eine Demo: Die Bestellung wurde an kein Geschäft gesendet. So sieht es deine Kundschaft.",
           "title": "Bestellung erhalten",
           "description": "Wir kontaktieren dich per WhatsApp.",
           "receiptUploadFailed": "Beleg konnte nicht hochgeladen werden. Bitte per WhatsApp senden.",

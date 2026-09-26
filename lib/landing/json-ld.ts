@@ -12,6 +12,7 @@ import {
 	LANDING_SUPPORT_EMAIL,
 } from "./brand";
 import { getLandingOrganizationSameAs } from "./contact";
+import { buildDemoVideosJsonLd } from "./demo-videos";
 import type { LandingFaqItem } from "./faq";
 
 type BuildLandingJsonLdInput = {
@@ -142,5 +143,7 @@ export function buildLandingJsonLd({ base, faq, plans, country }: BuildLandingJs
 				},
 			})),
 		},
+		// Los videos de «Míralo funcionando»: pueden aparecer en resultados y en la pestaña Videos.
+		...buildDemoVideosJsonLd(base, getOrganizationId(base)),
 	];
 }

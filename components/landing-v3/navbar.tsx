@@ -9,21 +9,23 @@ import { cn } from "@/utils/cn";
 import { LandingBrandMark } from "./landing-brand-mark";
 
 const navLinks = [
-	{ label: "Funciones", href: "#funciones" },
+	{ label: "Cómo funciona", href: "#como-funciona" },
 	{ label: "Precios", href: "#precios" },
-	{ label: "FAQ", href: "#faq" },
-	{ label: "Sobre Gcode Labs", href: "/sobre-godcode" },
 	{ label: "Negocios", href: "/onboarding/negocios" },
-	{ label: "Contacto", href: "#contacto" },
+	{ label: "Preguntas", href: "#faq" },
 ] as const;
 
-/** Al superar este scroll la navbar pasa a modo sólido blanco. */
+/** Al superar este scroll la navbar pasa a vidrio oscuro con filete. */
 const SCROLL_THRESHOLD = 32;
 
 function scrollToHash(href: string) {
 	const id = href.slice(1);
 	const el = document.getElementById(id);
-	if (!el) return false;
+	if (!el) {
+		// Fuera de la home (p. ej. la calculadora) la sección no existe: se va a la home con el ancla.
+		window.location.assign(`/${href}`);
+		return false;
+	}
 	el.scrollIntoView({ behavior: "smooth", block: "start" });
 	window.history.pushState(null, "", href);
 	return true;
@@ -81,34 +83,26 @@ export function Navbar() {
 				className={cn(
 					"fixed left-0 right-0 top-0 z-[70] transition-[background-color,box-shadow,border-color,backdrop-filter] duration-500 ease-out",
 					solid
-						? "border-b border-black/[0.06] bg-white shadow-[0_4px_24px_-4px_rgba(0,0,0,0.08)]"
-						: "border-b border-white/[0.06] bg-[#080808]/40 backdrop-blur-md",
+						? "border-b border-white/[0.08] bg-[#0d0d0d]/85 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.6)] backdrop-blur-xl"
+						: "border-b border-transparent bg-transparent",
 					open && "border-b border-white/[0.06] bg-[#080808]",
 				)}
 			>
 				<nav className="v3-container relative flex h-20 items-center justify-between">
 					<Link href="/" className="relative z-50 flex items-center" aria-label="Gcode">
-						<LandingBrandMark
-							variant={solid ? "onLight" : "onDark"}
-							priority
-						/>
+						<LandingBrandMark variant="onDark" priority />
 					</Link>
 
 					{/* Centrado al viewport (no al hueco entre logo y CTA). */}
-					<div className="pointer-events-none absolute inset-y-0 left-1/2 hidden -translate-x-1/2 items-center md:flex">
-						<div className="pointer-events-auto flex items-center gap-5 lg:gap-8 xl:gap-10">
+					<div className="pointer-events-none absolute inset-y-0 left-1/2 hidden -translate-x-1/2 items-center lg:flex">
+						<div className="pointer-events-auto flex items-center gap-8 xl:gap-10">
 							{navLinks.map((link) =>
 								link.href.startsWith("#") ? (
 									<a
 										key={link.label}
 										href={link.href}
 										onClick={(event) => onHashClick(event, link.href)}
-										className={cn(
-											"whitespace-nowrap text-sm font-medium tracking-wide transition-colors duration-500",
-											solid
-												? "text-[#52525b] hover:text-[#0d0d0d]"
-												: "text-[#a1a1aa] hover:text-[#f4f4f5]",
-										)}
+										className="whitespace-nowrap text-sm font-medium text-[#a1a1aa] transition-colors duration-200 hover:text-[#f4f4f5]"
 									>
 										{link.label}
 									</a>
@@ -116,12 +110,7 @@ export function Navbar() {
 									<Link
 										key={link.label}
 										href={link.href}
-										className={cn(
-											"whitespace-nowrap text-sm font-medium tracking-wide transition-colors duration-500",
-											solid
-												? "text-[#52525b] hover:text-[#0d0d0d]"
-												: "text-[#a1a1aa] hover:text-[#f4f4f5]",
-										)}
+										className="whitespace-nowrap text-sm font-medium text-[#a1a1aa] transition-colors duration-200 hover:text-[#f4f4f5]"
 									>
 										{link.label}
 									</Link>
@@ -130,19 +119,24 @@ export function Navbar() {
 						</div>
 					</div>
 
-					<div className="relative z-50 flex items-center gap-4">
+					<div className="relative z-50 flex items-center gap-2 sm:gap-4">
 						<Link
 							href="/login"
-							className="hidden rounded-full bg-[#4f5bff] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#3d47e6] md:inline-flex"
+							className="hidden text-sm font-medium text-[#a1a1aa] transition-colors hover:text-[#f4f4f5] lg:inline-flex"
 						>
 							Iniciar sesión
+						</Link>
+						<Link
+							href="/onboarding"
+							className="hidden rounded-full bg-[#4f5bff] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#3d47e6] sm:inline-flex"
+						>
+							Crear mi tienda
 						</Link>
 						<button
 							type="button"
 							onClick={() => setOpen((prev) => !prev)}
 							className={cn(
-								"inline-flex h-10 w-10 items-center justify-center transition-colors duration-500 md:hidden",
-								solid ? "text-[#0d0d0d]" : "text-[#f4f4f5]",
+								"inline-flex h-11 w-11 items-center justify-center rounded-full text-[#f4f4f5] transition-colors hover:bg-white/[0.06] lg:hidden",
 							)}
 							aria-label={open ? "Cerrar menú" : "Abrir menú"}
 							aria-expanded={open}
@@ -158,7 +152,7 @@ export function Navbar() {
 			<div
 				id="landing-mobile-menu"
 				className={cn(
-					"fixed inset-0 z-[60] md:hidden",
+					"fixed inset-0 z-[60] lg:hidden",
 					open ? "pointer-events-auto" : "pointer-events-none",
 				)}
 				aria-hidden={!open}
@@ -206,13 +200,22 @@ export function Navbar() {
 								</Link>
 							),
 						)}
-						<Link
-							href="/login"
-							onClick={() => setOpen(false)}
-							className="mt-4 inline-flex w-fit rounded-full bg-[#4f5bff] px-8 py-4 text-sm font-semibold text-white transition-colors hover:bg-[#3d47e6]"
-						>
-							Iniciar sesión
-						</Link>
+						<div className="mt-4 flex flex-col gap-3 sm:flex-row">
+							<Link
+								href="/onboarding"
+								onClick={() => setOpen(false)}
+								className="inline-flex justify-center rounded-full bg-[#4f5bff] px-8 py-4 text-sm font-semibold text-white transition-colors hover:bg-[#3d47e6]"
+							>
+								Crear mi tienda
+							</Link>
+							<Link
+								href="/login"
+								onClick={() => setOpen(false)}
+								className="inline-flex justify-center rounded-full border border-white/15 px-8 py-4 text-sm font-semibold text-white transition-colors hover:border-white/40"
+							>
+								Iniciar sesión
+							</Link>
+						</div>
 					</nav>
 				</div>
 			</div>

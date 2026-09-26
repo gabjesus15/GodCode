@@ -59,6 +59,7 @@ export async function getMainDomainLlmsTxt(isFullVersion = false): Promise<strin
 	markdown += `${formatLlmsTxtLink("Sitio principal", `${base}/`, "Página de inicio")}\n`;
 	markdown += `${formatLlmsTxtLink("Registro y onboarding", `${base}/onboarding`, "Crear cuenta nueva")}\n`;
 	markdown += `${formatLlmsTxtLink(`Sobre ${LANDING_COMPANY_NAME}`, `${base}/sobre-godcode`, "Información institucional: estudio web y creadores de Gcode POS")}\n`;
+	markdown += `${formatLlmsTxtLink("Calculadora de comisiones", `${base}/calculadora-comisiones`, "Cuánto cobran las apps de delivery y cuánto se ahorra con tienda propia")}\n`;
 	if (isFullVersion) {
 		markdown += `${formatLlmsTxtLink("Resumen IA (llms.txt)", `${base}/llms.txt`, "Versión resumida para LLMs")}\n`;
 	} else {

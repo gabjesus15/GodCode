@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
 
 import { PhoneFrame } from "./phone-frame";
 import type { LandingV3PhoneSlide } from "@/lib/landing/v3-config";
@@ -202,19 +201,7 @@ export function HeroPhoneShowcase({ phones = DEFAULT_PHONES }: HeroPhoneShowcase
 							/>
 						))}
 					</div>
-					<p className="text-[10px] tracking-wide text-[#52525b]">Deslizá para cambiar</p>
 				</div>
-
-				<a
-					href="#funciones"
-					className="mt-5 flex flex-col items-center gap-0.5 text-[#71717a] transition-colors hover:text-[#a1a1aa]"
-					aria-label="Ver más abajo"
-				>
-					<span className="text-[10px] font-semibold uppercase tracking-[0.2em]">
-						Descubrir más
-					</span>
-					<ChevronDown className="h-4 w-4 motion-safe:animate-bounce" />
-				</a>
 			</div>
 
 			{/* Desktop: dos teléfonos con perspectiva */}

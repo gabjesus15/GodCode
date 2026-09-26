@@ -3,7 +3,7 @@ import { getAppUrl } from "@/lib/tenant/app-url";
 import { createSupabasePublicServerClient } from "../utils/supabase/server";
 
 /** Actualizar al desplegar cambios de marketing relevantes para incentivar recrawl. */
-const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-09-20T00:00:00.000Z";
+const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-09-26T00:00:00.000Z";
 
 function getMarketingLastModified(): Date {
 	const fromEnv = process.env.NEXT_PUBLIC_SITEMAP_LAST_MODIFIED?.trim();
@@ -66,6 +66,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		},
 		{
 			url: `${base}/sobre-godcode`,
+			lastModified: marketingLastModified,
+			changeFrequency: "monthly",
+			priority: 0.8,
+		},
+		{
+			url: `${base}/calculadora-comisiones`,
 			lastModified: marketingLastModified,
 			changeFrequency: "monthly",
 			priority: 0.8,

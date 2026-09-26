@@ -13,6 +13,15 @@ describe("resolveAnalyticsPageContext", () => {
 		).toEqual({ pageType: "landing", tenantSlug: null });
 	});
 
+	it("clasifica las páginas de marketing como landing", () => {
+		for (const pathname of ["/sobre-godcode", "/calculadora-comisiones"]) {
+			expect(resolveAnalyticsPageContext({ pathname, host: "godcode.me" })).toEqual({
+				pageType: "landing",
+				tenantSlug: null,
+			});
+		}
+	});
+
 	it("clasifica menús por path en el dominio principal", () => {
 		expect(
 			resolveAnalyticsPageContext({ pathname: "/la-parada/menu", host: "www.godcode.me" }),

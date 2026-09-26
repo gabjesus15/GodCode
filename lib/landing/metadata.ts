@@ -13,9 +13,11 @@ import {
  * El título termina en el nombre de la empresa a propósito: Google toma el
  * texto tras el último separador como candidato a "nombre del sitio".
  */
-export const LANDING_SHARE_TITLE = `${LANDING_PRODUCT_NAME}: menú digital y pedidos online | ${LANDING_COMPANY_NAME}`;
+// ~60 caracteres: lo que Google muestra sin cortar. Lleva las dos búsquedas principales.
+export const LANDING_SHARE_TITLE = `${LANDING_PRODUCT_NAME}: menú digital y POS para restaurantes | ${LANDING_COMPANY_NAME}`;
+// ~155 caracteres: menú QR, pedidos online, POS, delivery y "sin comisiones", que es el diferencial.
 export const LANDING_DESCRIPTION =
-	`${LANDING_PRODUCT_NAME}, de ${LANDING_COMPANY_NAME}, es la plataforma todo-en-uno para restaurantes: menú digital, pedidos online, punto de venta, delivery e inventario. Sin comisiones por venta.`;
+	`Menú digital con QR, pedidos online y sistema POS para restaurantes, sin comisiones por venta. Delivery, caja e inventario en un solo panel con ${LANDING_PRODUCT_NAME}.`;
 
 export function buildLandingMetadata(base: string): Metadata {
 	const canonical = `${base}/`;
@@ -34,21 +36,25 @@ export function buildLandingMetadata(base: string): Metadata {
 			absolute: LANDING_SHARE_TITLE,
 		},
 		description: LANDING_DESCRIPTION,
+		// Google ya no usa esta etiqueta para posicionar, pero otros buscadores y herramientas sí la leen.
 		keywords: [
 			"menú digital para restaurantes",
+			"menú digital QR",
+			"carta digital",
 			"pedidos online para restaurantes",
+			"sistema de pedidos para restaurantes",
+			"pedidos por WhatsApp",
 			"POS para restaurantes",
+			"sistema POS para restaurantes",
+			"punto de venta para restaurantes",
+			"software para restaurantes",
 			"POS sin comisiones",
+			"delivery sin comisiones",
+			"alternativa a apps de delivery",
 			"delivery para restaurantes",
-			"menú digital",
-			"pedidos online",
-			"sistema de pedidos",
-			"delivery",
-			"punto de venta",
-			"inventario",
-			"caja",
-			"sucursales",
-			"SaaS para restaurantes",
+			"caja para restaurantes",
+			"inventario para restaurantes",
+			"restaurantes con varias sucursales",
 			LANDING_COMPANY_NAME,
 			LANDING_PRODUCT_NAME,
 			LANDING_BRAND_NAME,
@@ -66,7 +72,7 @@ export function buildLandingMetadata(base: string): Metadata {
 			description: LANDING_DESCRIPTION,
 			url: canonical,
 			siteName: LANDING_COMPANY_NAME,
-			locale: "es_ES",
+			locale: "es_LA",
 			type: "website",
 			images: [ogImage],
 		},

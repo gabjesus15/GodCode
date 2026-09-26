@@ -18,7 +18,7 @@ describe("landing SEO artifacts", () => {
 			es: "https://godcode.me/",
 			"x-default": "https://godcode.me/",
 		});
-		expect(meta.openGraph?.locale).toBe("es_ES");
+		expect(meta.openGraph?.locale).toBe("es_LA");
 		expect(meta.applicationName).toBe(LANDING_PRODUCT_NAME);
 		expect(meta.openGraph?.siteName).toBe(LANDING_COMPANY_NAME);
 	});
@@ -111,5 +111,20 @@ describe("landing SEO artifacts", () => {
 			width: 1200,
 			height: 630,
 		});
+	});
+});
+
+describe("VideoObject de la demo", () => {
+	it("publica los dos videos con URL absoluta, portada, duración y fecha", () => {
+		const ld = buildLandingJsonLd({ base: "https://godcode.me", faq: LANDING_FAQ, plans: [], country: "CL" });
+		const videos = ld.filter((node) => (node as Record<string, unknown>)["@type"] === "VideoObject") as Record<string, unknown>[];
+		expect(videos).toHaveLength(2);
+		for (const video of videos) {
+			expect(String(video.contentUrl)).toMatch(/^https:\/\/godcode\.me\/landing\/demo\/[a-z0-9-]+\.mp4$/);
+			expect((video.thumbnailUrl as string[])[0]).toMatch(/\.jpg$/);
+			expect(String(video.duration)).toMatch(/^PT\d+S$/);
+			expect(String(video.uploadDate)).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+			expect(String(video.name)).toContain("Gcode POS");
+		}
 	});
 });

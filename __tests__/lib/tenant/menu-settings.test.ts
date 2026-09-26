@@ -60,4 +60,22 @@ describe("menu-settings", () => {
 		expect(requiresOpenShiftForCheckout("whatsapp_only")).toBe(false);
 		expect(requiresOpenShiftForCheckout("panel_only")).toBe(true);
 	});
+
+	it("demo: no guarda el pedido, no abre WhatsApp ni exige caja abierta", () => {
+		expect(parseCompanyMenuSettings({ orderChannel: "demo" })).toEqual({ cartEnabled: true, orderChannel: "demo" });
+		expect(shouldPersistOrderToPanel("demo")).toBe(false);
+		expect(shouldOpenWhatsAppOnCheckout("demo")).toBe(false);
+		expect(requiresOpenShiftForCheckout("demo")).toBe(false);
+	});
+
+	it("demo: el portal del dueño no puede activarlo, pero sí mantenerlo o quitarlo", () => {
+		const blocked = mergeMenuSettingsIntoIntegration({ menu: { cartEnabled: true, orderChannel: "both" } }, { orderChannel: "demo" });
+		expect(blocked.menu).toEqual({ cartEnabled: true, orderChannel: "both" });
+
+		const kept = mergeMenuSettingsIntoIntegration({ menu: { cartEnabled: true, orderChannel: "demo" } }, { cartEnabled: false });
+		expect(kept.menu).toEqual({ cartEnabled: false, orderChannel: "demo" });
+
+		const removed = mergeMenuSettingsIntoIntegration({ menu: { orderChannel: "demo" } }, { orderChannel: "panel_only" });
+		expect(removed.menu).toEqual({ cartEnabled: true, orderChannel: "panel_only" });
+	});
 });

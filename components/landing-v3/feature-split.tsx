@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/utils/cn";
 
 import { PhoneFrame } from "./phone-frame";
+import { SectionGlow } from "./section-light";
 import type { LandingV3Config } from "@/lib/landing/v3-config";
 
 const AUTOPLAY_MS = 7000;
@@ -17,8 +17,7 @@ const slides = [
 		chip: "Punto de venta",
 		accentWord: "POS",
 		rest: "para restaurantes",
-		description:
-			"Punto de venta pensado para servicio rápido: toma pedidos, divide cuentas, gestiona modificadores y envía comandas a cocina en segundos, sin salir de la vista de mesas.",
+		description: "Toma pedidos, divide cuentas y envía comandas a cocina en segundos.",
 		imageKey: "pos" as const,
 		aspectRatio: 473 / 1024,
 	},
@@ -27,8 +26,7 @@ const slides = [
 		chip: "Menú digital",
 		accentWord: "Menú digital",
 		rest: "que vende solo",
-		description:
-			"Menú digital para restaurantes con fotos, variantes, combos y acceso por QR. Tus clientes navegan, piden y pagan desde el celular. Pedidos online sin comisiones por venta.",
+		description: "Fotos, variantes y combos por QR. Tus clientes piden desde el celular.",
 		imageKey: "menu" as const,
 		aspectRatio: 473 / 1024,
 	},
@@ -37,8 +35,7 @@ const slides = [
 		chip: "Pedidos y caja",
 		accentWord: "Pedidos online",
 		rest: "y caja integrados",
-		description:
-			"Unifica sala, delivery, pickup y WhatsApp en un solo dashboard. Inventario en tiempo real, reportes y gestión multi-sucursal sin intermediarios que se queden con tu margen.",
+		description: "Sala, delivery, retiro y WhatsApp en un solo panel, con inventario y reportes.",
 		imageKey: "inventory" as const,
 		aspectRatio: 473 / 1024,
 	},
@@ -67,9 +64,15 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 	const pointerId = useRef<number | null>(null);
 	const resumeTimer = useRef<number | null>(null);
 
-	const [reducedMotion] = useState(
-		() => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-	);
+	// Se lee al montar: leerlo en el render inicial rompía la hidratación (el servidor no conoce la preferencia).
+	const [reducedMotion, setReducedMotion] = useState(false);
+	useEffect(() => {
+		const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+		const sync = () => setReducedMotion(query.matches);
+		sync();
+		query.addEventListener("change", sync);
+		return () => query.removeEventListener("change", sync);
+	}, []);
 
 	const slide = slides[index];
 
@@ -207,14 +210,17 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 			ref={sectionRef}
 			tabIndex={-1}
 			onKeyDown={handleSectionKeyDown}
-			className="v3-section-dark pt-8 pb-16 md:pt-10 md:pb-24 outline-none"
+			className="v3-section-dark py-24 outline-none md:py-32"
 			aria-roledescription="carrusel"
 			aria-label="Funciones de Gcode"
 		>
 			<div className="v3-container">
-				<p className="v3-label mb-8 text-center lg:mb-10 lg:text-left">
-					{"// "}FUNCIONES
-				</p>
+				<SectionGlow
+					className="left-1/2 top-[18%] h-[640px] w-[640px] -translate-x-1/2 lg:left-[28%]"
+					intensity={0.26}
+					drift={100}
+				/>
+				<h2 className="sr-only">Funciones de Gcode POS</h2>
 
 				{/* Chips */}
 				<div className="mb-10 flex w-full gap-1.5 sm:justify-center sm:gap-2 lg:mb-12 lg:w-auto lg:justify-start">
@@ -229,14 +235,22 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 								scheduleAutoplayResume();
 							}}
 							className={cn(
-								"min-w-0 flex-1 rounded-full px-2 py-2 text-center text-[11px] font-medium leading-tight transition-colors sm:flex-none sm:px-4 sm:text-sm sm:leading-normal",
+								"relative min-w-0 flex-1 overflow-hidden rounded-full border px-3 py-2.5 text-center text-xs font-medium leading-tight transition-colors duration-300 sm:flex-none sm:px-5 sm:text-sm",
 								i === index
-									? "bg-[#4f5bff] text-white"
-									: "border border-[rgba(244,244,245,0.2)] text-[#a1a1aa] hover:border-[#4f5bff] hover:text-[#f4f4f5]",
+									? "border-white/25 text-white"
+									: "border-white/[0.08] text-[#a1a1aa] hover:border-white/20 hover:text-[#f4f4f5]",
 							)}
 							aria-current={i === index ? "true" : undefined}
 						>
-							{item.chip}
+							{/* El avance del carrusel vive dentro de la pestaña activa. */}
+							{i === index ? (
+								<span
+									aria-hidden
+									className="absolute inset-0 origin-left bg-white/[0.08]"
+									style={{ transform: `scaleX(${barFillPercent(i, index, slideProgress, reducedMotion) / 100})` }}
+								/>
+							) : null}
+							<span className="relative">{item.chip}</span>
 						</button>
 					))}
 				</div>
@@ -305,9 +319,6 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 							))}
 							</div>
 						</div>
-						<p className="mt-4 text-center text-[10px] tracking-wide text-[#52525b] lg:hidden">
-							Deslizá para cambiar
-						</p>
 					</div>
 
 					{/* Copy */}
@@ -319,70 +330,16 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 						aria-live="polite"
 					>
 						<div key={slide.id} className="v3-fade-up">
-							<h2 className="font-display text-[clamp(2.5rem,8vw,4.5rem)] leading-[0.95] tracking-wide text-[#f4f4f5] lg:text-6xl xl:text-7xl">
-								<span className="text-[#4f5bff]">{slide.accentWord}</span>
+							<h3 className="font-display text-[clamp(2.75rem,9vw,4.5rem)] leading-[0.92] text-[#f4f4f5]">
+								{slide.accentWord}
 								<br />
 								{slide.rest}
-							</h2>
-							<p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-[#a1a1aa] sm:text-lg lg:mx-0 lg:mt-6">
+							</h3>
+							<p className="mx-auto mt-5 max-w-sm text-lg leading-relaxed text-[#a1a1aa] text-pretty lg:mx-0">
 								{slide.description}
 							</p>
 						</div>
 
-						<div className="mt-2 flex flex-col gap-5 border-t border-[rgba(244,244,245,0.12)] pt-6 lg:mt-4">
-							{/* Progress bars — una por slide */}
-							<div className="flex gap-2">
-								{slides.map((item, i) => (
-									<div
-										key={item.id}
-										className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#27272a]"
-										aria-hidden
-									>
-										<div
-											className="h-full w-full origin-left bg-[#4f5bff] will-change-transform"
-											style={{
-												transform: `scaleX(${barFillPercent(i, index, slideProgress, reducedMotion) / 100})`,
-											}}
-										/>
-									</div>
-								))}
-							</div>
-
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-3 sm:gap-4">
-									<button
-										type="button"
-										onClick={() => {
-											pauseAutoplay();
-											goPrev();
-											focusSection();
-											scheduleAutoplayResume();
-										}}
-										className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(244,244,245,0.2)] text-[#f4f4f5] transition-colors hover:border-[#4f5bff] hover:text-[#4f5bff] sm:h-12 sm:w-12"
-										aria-label="Función anterior"
-									>
-										<ChevronLeft className="h-5 w-5" />
-									</button>
-									<button
-										type="button"
-										onClick={() => {
-											pauseAutoplay();
-											goNext();
-											focusSection();
-											scheduleAutoplayResume();
-										}}
-										className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(244,244,245,0.2)] text-[#f4f4f5] transition-colors hover:border-[#4f5bff] hover:text-[#4f5bff] sm:h-12 sm:w-12"
-										aria-label="Siguiente función"
-									>
-										<ChevronRight className="h-5 w-5" />
-									</button>
-								</div>
-								<span className="font-display text-2xl text-[#f4f4f5] sm:text-3xl">
-									0{index + 1}
-									<span className="text-[#71717a]">/0{slides.length}</span>
-								</span>
-							</div>
-						</div>
 					</div>
 				</div>
 			</div>

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, Loader2, MailCheck } from "lucide-react";
 
+import { trackEvent } from "@/lib/analytics/track-event";
+
 type FinalizeState = "loading" | "paid" | "pending" | "error";
 
 type FinalizeResponse = {
@@ -11,6 +13,18 @@ type FinalizeResponse = {
   welcomeSent?: boolean;
   error?: string;
 };
+
+/** Un pago confirmado se cuenta una sola vez aunque recarguen la página de éxito. */
+function trackPaidOnce(ref: string) {
+  const key = `gc_paid_${ref}`;
+  try {
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+  } catch {
+    // Sin sessionStorage se registra igual.
+  }
+  trackEvent("subscription_paid", {});
+}
 
 const MAX_PENDING_RETRIES = 5;
 const RETRY_DELAY_MS = 4000;
@@ -48,6 +62,7 @@ export function CheckoutSuccessFinalize({
         setResult(payload);
         if (payload.status === "paid") {
           setState("paid");
+          trackPaidOnce(refParam);
           return;
         }
         if (attempt < MAX_PENDING_RETRIES) {

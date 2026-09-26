@@ -550,6 +550,7 @@
         "success": {
           "sentAria": "Ordine inviato",
           "sentTitle": "Ordine Inviato",
+          "demoNotice": "Questa è una demo: l'ordine non è stato inviato a nessun locale. Ecco cosa vedrà il tuo cliente.",
           "title": "Ordine Ricevuto",
           "description": "Perfetto. Ti contatteremo su WhatsApp.",
           "receiptUploadFailed": "Impossibile caricare la ricevuta. Invia via WhatsApp.",

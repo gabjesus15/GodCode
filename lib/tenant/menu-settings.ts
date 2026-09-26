@@ -1,6 +1,11 @@
 /** Ajustes del menú público en `companies.integration_settings.menu`. */
 
-export type OrderChannelMode = "both" | "whatsapp_only" | "panel_only";
+/**
+ * `demo`: menú de demostración de Gcode. El cliente recorre el pedido completo y ve la
+ * confirmación, pero no se guarda, no se abre WhatsApp ni se exige caja abierta.
+ * Solo se fija directo en la base (el portal del dueño no lo ofrece ni lo acepta).
+ */
+export type OrderChannelMode = "both" | "whatsapp_only" | "panel_only" | "demo";
 
 export type CompanyMenuSettings = {
 	cartEnabled: boolean;
@@ -12,7 +17,7 @@ export const DEFAULT_MENU_SETTINGS: CompanyMenuSettings = {
 	orderChannel: "both",
 };
 
-const ORDER_CHANNEL_VALUES: OrderChannelMode[] = ["both", "whatsapp_only", "panel_only"];
+const ORDER_CHANNEL_VALUES: OrderChannelMode[] = ["both", "whatsapp_only", "panel_only", "demo"];
 
 export function isOrderChannelMode(value: unknown): value is OrderChannelMode {
 	return typeof value === "string" && ORDER_CHANNEL_VALUES.includes(value as OrderChannelMode);
@@ -60,7 +65,12 @@ export function mergeMenuSettingsIntoIntegration(
 			? { ...(integrationSettings as Record<string, unknown>) }
 			: {};
 	const current = parseCompanyMenuSettings(base.menu);
-	const next = normalizeMenuSettingsPatch({ ...current, ...patch });
+	// El modo demo no se activa desde el portal: un patch que lo pida se ignora.
+	const safePatch =
+		patch.orderChannel === "demo" && current.orderChannel !== "demo"
+			? { ...patch, orderChannel: current.orderChannel }
+			: patch;
+	const next = normalizeMenuSettingsPatch({ ...current, ...safePatch });
 	return { ...base, menu: next };
 }
 

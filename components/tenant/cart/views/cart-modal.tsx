@@ -530,6 +530,7 @@ export function CartModal({
 					receiptUploadFailed={result.receiptUploadFailed}
 					activeInfo={activeInfo}
 					lastOrder={result.lastOrderSuccess}
+					demo={orderChannel === "demo"}
 				/>
 			</CartDialogShell>
 		);

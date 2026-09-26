@@ -20,7 +20,7 @@ export const LANDING_FAQ: LandingFaqItem[] = [
 	{
 		question: "¿No sé nada de tecnología, puedo usarlo?",
 		answer:
-			"Sí. No necesitás programar ni saber de servidores. Te registrás, subís tus productos y tu tienda está lista. Si tenés dudas, nuestro soporte te guía.",
+			"Sí. No necesitas programar ni saber de servidores. Te registras, subes tus productos y tu tienda queda lista. Si tienes dudas, nuestro equipo te acompaña por WhatsApp o correo.",
 	},
 	{
 		question: "¿Cuánto cuesta realmente?",
@@ -29,21 +29,21 @@ export const LANDING_FAQ: LandingFaqItem[] = [
 	},
 	{
 		question: "¿Puedo cancelar cuando quiera?",
-		answer: "Sí. Sin penalidad, sin permanencia mínima. Si no te sirve, cancelás y listo.",
+		answer: "Sí. Sin penalidad y sin permanencia mínima. Si no te sirve, cancelas y listo.",
 	},
 	{
 		question: "¿Mis datos están seguros?",
 		answer:
-			"Usamos encriptación SSL, servidores protegidos y cada negocio tiene sus datos completamente aislados. Nadie más puede ver tu información.",
+			"Tu tienda y tu panel funcionan siempre con conexión cifrada (SSL), en servidores protegidos, y cada negocio tiene sus datos completamente aislados. Nadie más puede ver tus ventas ni tus clientes.",
 	},
 	{
 		question: "¿Cuánto tardo en tener mi tienda lista?",
 		answer:
-			"Si ya tenés tus productos y fotos, menos de 1 hora. El proceso de registro toma 5 minutos.",
+			"Si ya tienes tus productos y fotos, menos de una hora. El registro toma unos 5 minutos.",
 	},
 	{
 		question: "¿Puedo tener más de una sucursal?",
 		answer:
-			"Sí. Dependiendo del plan, podés administrar varias sucursales desde un mismo panel centralizado, con inventario y reportes independientes o consolidados.",
+			"Sí. Según el plan, puedes administrar varias sucursales desde un mismo panel centralizado, con inventario y reportes independientes o consolidados.",
 	},
 ];

@@ -550,6 +550,7 @@
         "success": {
           "sentAria": "Commande envoyee",
           "sentTitle": "Commande envoyee",
+          "demoNotice": "Ceci est une démo : la commande n'a été envoyée à aucun établissement. Voici ce que verra votre client.",
           "title": "Commande recue",
           "description": "Parfait. Nous vous contacterons sur WhatsApp.",
           "receiptUploadFailed": "Impossible de televerser le recu. Envoyez-le via WhatsApp.",

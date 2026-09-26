@@ -550,6 +550,7 @@
         "success": {
           "sentAria": "Order sent",
           "sentTitle": "Order Sent",
+          "demoNotice": "This is a demo: the order was not sent to any store. This is what your customer will see.",
           "title": "Order Received",
           "description": "Done. We will contact you on WhatsApp to coordinate payment.",
           "receiptUploadFailed": "Could not upload the receipt. Please send it on WhatsApp.",

@@ -550,6 +550,7 @@
         "success": {
           "sentAria": "Pedido enviado",
           "sentTitle": "Pedido enviado",
+          "demoNotice": "Esto es una demostración: el pedido no se envió a ningún local. Así lo verá tu cliente.",
           "title": "¡Pedido recibido!",
           "description": "Listo. Te contactaremos por WhatsApp para coordinar el pago.",
           "receiptUploadFailed": "No se pudo subir el comprobante. Envíalo por WhatsApp cuando se abra el chat.",

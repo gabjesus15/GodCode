@@ -1,42 +1,24 @@
-import { StatementTypewriter } from "./statement-typewriter";
-import { StatementMetrics } from "./statement-metrics";
-import {
-	formatLandingMetricValue,
-	LANDING_METRICS,
-	LANDING_STATEMENT_ACCENT_START,
-	LANDING_STATEMENT_TEXT,
-} from "@/lib/landing/statement";
+import { LANDING_STATEMENT_ACCENT_START, LANDING_STATEMENT_TEXT } from "@/lib/landing/statement";
+import { SectionGlow } from "./section-light";
 
 export function Statement() {
-	const staticPlain = LANDING_STATEMENT_TEXT.slice(0, LANDING_STATEMENT_ACCENT_START);
-	const staticAccent = LANDING_STATEMENT_TEXT.slice(LANDING_STATEMENT_ACCENT_START);
+	const plain = LANDING_STATEMENT_TEXT.slice(0, LANDING_STATEMENT_ACCENT_START);
+	const accent = LANDING_STATEMENT_TEXT.slice(LANDING_STATEMENT_ACCENT_START);
 
 	return (
-		<section className="v3-section-dark pt-16 pb-8 md:pt-24 md:pb-10">
-			<div className="v3-container flex flex-col items-center gap-20">
-				<StatementTypewriter className="max-w-4xl text-center text-2xl font-medium leading-snug text-[#f4f4f5] md:text-4xl lg:text-5xl" />
-
-				<StatementMetrics />
+		<section className="v3-section-dark pt-20 pb-4 md:pt-28 md:pb-8">
+			<SectionGlow
+				className="left-1/2 top-1/2 h-[480px] w-[min(1000px,140vw)] -translate-x-1/2 -translate-y-1/2"
+				intensity={0.13}
+			/>
+			<div className="v3-container flex flex-col items-center">
+				<blockquote data-reveal className="max-w-4xl text-balance text-center text-2xl font-medium leading-snug text-[#f4f4f5] md:text-4xl lg:text-5xl">
+					<span className="text-[#4f5bff]">&ldquo;</span>
+					{plain}
+					<span className="text-[#4f5bff]">{accent}</span>
+					<span className="text-[#4f5bff]">&rdquo;</span>
+				</blockquote>
 			</div>
-
-			<noscript>
-				<div className="v3-container mt-10 max-w-4xl text-center text-[#a1a1aa]">
-					<p>
-						{staticPlain}
-						<span className="text-[#4f5bff]">{staticAccent}</span>
-					</p>
-					<ul className="mt-6 grid grid-cols-2 gap-4 text-left sm:grid-cols-4">
-						{LANDING_METRICS.map((metric) => (
-							<li key={metric.label}>
-								<strong className="text-[#4f5bff]">
-									{formatLandingMetricValue(metric.end, metric)}
-								</strong>{" "}
-								{metric.label}
-							</li>
-						))}
-					</ul>
-				</div>
-			</noscript>
 		</section>
 	);
 }

@@ -1,189 +1,138 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Layers, Smartphone, Zap, Quote } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Layers, Smartphone, Zap } from "lucide-react";
 
+import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
 import type { LandingV3Config } from "@/lib/landing/v3-config";
-import {
-	getLandingShowcaseMenuUrl,
-	LANDING_SHOWCASE_TENANT,
-} from "@/lib/landing/showcase";
-
-import { BentoShowcaseMetric } from "./bento-showcase-metric";
+import { getLandingShowcaseMenuUrl, LANDING_SHOWCASE_TENANT } from "@/lib/landing/showcase";
+import { SectionGlow } from "./section-light";
 
 type BentoGridProps = {
 	bentoMenuMobile: LandingV3Config["bentoMenuMobile"];
 };
 
-const FEATURE_PILLARS = [
+const CAPABILITIES = [
 	{
 		icon: Zap,
-		code: "01",
 		title: "Rápido",
-		text: "Pedidos al instante, sin fricción en mesa o delivery.",
+		text: "Pedidos al instante, sin fricción en la mesa ni en delivery.",
 	},
 	{
 		icon: Smartphone,
-		code: "02",
-		title: "Móvil",
-		text: "Menú pensado para el celular del cliente.",
+		title: "Pensado para el celular",
+		text: "Tu carta se ve y se usa bien en el teléfono de tu cliente.",
 	},
 	{
 		icon: Layers,
-		code: "03",
-		title: "Multi-tenant",
-		text: "Un local o varias sucursales, misma plataforma.",
+		title: "Multisucursal",
+		text: "Un local o varias sucursales en la misma plataforma.",
 	},
 ] as const;
 
+/** Por qué Gcode: la idea (tu canal), la prueba (Oishi Sushi), lo que trae y quién está detrás. */
 export function BentoGrid({ bentoMenuMobile }: BentoGridProps) {
 	const showcaseMenuUrl = getLandingShowcaseMenuUrl();
 
 	return (
-		<section id="nosotros" className="v3-section-dark py-16 md:py-24">
+		<section id="por-que-gcode" className="v3-section-dark py-24 md:py-32">
+			<SectionGlow
+				className="right-[-20%] top-[2%] h-[760px] w-[760px] lg:right-[-6%]"
+				intensity={0.18}
+				drift={110}
+			/>
 			<div className="v3-container">
-				<p className="v3-label mb-12">{"// "}POR QUÉ GCODE</p>
+				<div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-24">
+					<div
+						data-reveal
+						className="relative mx-auto aspect-[4/5] w-full max-w-[460px] overflow-hidden rounded-[1.75rem] border border-white/[0.08] bg-[#141414] lg:order-2"
+					>
+						<Image
+							src={bentoMenuMobile.src}
+							alt={bentoMenuMobile.alt}
+							fill
+							className="object-cover object-top"
+							sizes="(max-width: 1024px) 90vw, 460px"
+						/>
+						<div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#0d0d0d]/80 to-transparent" />
+					</div>
 
-				<div className="grid auto-rows-[minmax(220px,auto)] grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-					{/* 1. Wide stat card */}
-					<div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-[rgba(244,244,245,0.12)] bg-[#141414] p-7 transition-colors hover:border-[#4f5bff]/40 md:col-span-2 lg:col-span-2">
-						<div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#4f5bff]/10 transition-transform duration-500 group-hover:scale-150" />
-						<div className="relative flex items-start justify-between">
-							<div>
-								<p className="font-display text-6xl text-[#4f5bff] md:text-7xl">4.9/5</p>
-								<p className="mt-2 text-sm font-medium text-[#a1a1aa]">
-									Calificación promedio de dueños de restaurantes
-								</p>
-							</div>
-							<span className="v3-label">{"// "}RATING</span>
-						</div>
-						<p className="relative mt-8 max-w-xl text-lg leading-relaxed text-[#f4f4f5]">
-							Los equipos que migran a Gcode Pos reducen a la mitad los errores de
-							pedido en el primer mes.
+					<div data-reveal className="max-w-xl">
+						<h2 className="font-display text-5xl leading-[0.95] text-[#f4f4f5] text-balance md:text-6xl">
+							Tu canal de venta, no el de una app
+						</h2>
+						<p className="mt-6 text-lg leading-relaxed text-[#a1a1aa] text-pretty">
+							Las apps de delivery se quedan con una parte de cada pedido. Con tu propia tienda, el cliente y
+							la venta son tuyos.
+						</p>
+						<Link
+							href="/calculadora-comisiones"
+							className="group mt-5 inline-flex items-center gap-1.5 text-[15px] font-medium text-[#d4d4d8] underline decoration-white/20 underline-offset-[6px] transition-colors hover:text-white hover:decoration-white/60"
+						>
+							Calcula cuánto pagas en comisiones
+							<ArrowRight
+								className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+								aria-hidden
+							/>
+						</Link>
+
+						<figure className="mt-12 border-t border-white/[0.08] pt-10">
+							<blockquote className="text-xl leading-relaxed text-[#f4f4f5] text-pretty md:text-2xl md:leading-snug">
+								&ldquo;{LANDING_SHOWCASE_TENANT.quote}&rdquo;
+							</blockquote>
+							<figcaption className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+								<span className="font-semibold text-[#f4f4f5]">{LANDING_SHOWCASE_TENANT.name}</span>
+								<span className="text-[#71717a]">
+									{LANDING_SHOWCASE_TENANT.location} · {LANDING_SHOWCASE_TENANT.metricValue}{" "}
+									{LANDING_SHOWCASE_TENANT.metricLabel.toLowerCase()}
+								</span>
+								<Link
+									href={showcaseMenuUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="inline-flex items-center gap-1 font-medium text-[#d4d4d8] transition-colors hover:text-white"
+								>
+									Ver su menú
+									<ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+								</Link>
+							</figcaption>
+						</figure>
+					</div>
+				</div>
+
+				<ul data-reveal className="mt-24 grid gap-10 sm:grid-cols-3 md:mt-28">
+					{CAPABILITIES.map(({ icon: Icon, title, text }) => (
+						<li key={title} className="border-t border-white/[0.08] pt-6">
+							<Icon className="h-5 w-5 text-[#8b93ff]" strokeWidth={1.75} aria-hidden />
+							<h3 className="mt-5 font-semibold text-[#f4f4f5]">{title}</h3>
+							<p className="mt-1.5 text-sm leading-relaxed text-[#a1a1aa] text-pretty">{text}</p>
+						</li>
+					))}
+				</ul>
+
+				<div
+					data-reveal
+					className="mt-16 flex flex-col gap-6 rounded-[1.75rem] border border-white/[0.08] bg-[#111113] p-8 sm:flex-row sm:items-center sm:justify-between md:p-10"
+				>
+					<div className="max-w-xl">
+						<p className="text-2xl font-medium leading-snug text-[#f4f4f5] text-balance">
+							¿Necesitas algo que no está en un sistema estándar?
+						</p>
+						<p className="mt-3 leading-relaxed text-[#a1a1aa] text-pretty">
+							{LANDING_COMPANY_NAME} es un estudio de desarrollo web y sistemas a medida.{" "}
+							{LANDING_PRODUCT_NAME} es nuestro producto para restaurantes, y también creamos páginas y
+							sistemas hechos para tu negocio.
 						</p>
 					</div>
-
-					{/* 2. Tall UI preview card */}
-					<div className="group relative min-h-[560px] overflow-hidden rounded-2xl border border-[rgba(244,244,245,0.12)] bg-[#141414] p-0 md:row-span-3">
-						<div className="absolute inset-0 transition-transform duration-700 group-hover:scale-105">
-							<Image
-								src={bentoMenuMobile.src}
-								alt={bentoMenuMobile.alt}
-								fill
-								className="object-cover"
-								sizes="(max-width: 768px) 100vw, 33vw"
-							/>
-							<div className="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-[#0d0d0d]/60 to-[#0d0d0d]/20" />
-						</div>
-						<div className="relative z-10 flex h-full flex-col justify-end p-7">
-							<p className="v3-label mb-2 text-[#4f5bff]">{"// "}MOBILE FIRST</p>
-							<p className="font-display text-3xl leading-tight text-[#f4f4f5]">
-								MENÚS QUE FUNCIONAN EN CUALQUIER PANTALLA
-							</p>
-						</div>
-					</div>
-
-					{/* 3. Caso real — Oishi Sushi */}
-					<div className="group flex flex-col justify-between rounded-2xl border border-[rgba(244,244,245,0.12)] bg-[#141414] p-7 transition-colors hover:border-[rgba(244,244,245,0.2)]">
-						<div className="flex items-start justify-between gap-3">
-							<Quote className="h-8 w-8 shrink-0 text-[#4f5bff]/60" />
-							<span className="v3-label text-[#71717a]">{"// "}CASO REAL</span>
-						</div>
-						<blockquote className="mt-4 text-lg leading-relaxed text-[#f4f4f5]">
-							“{LANDING_SHOWCASE_TENANT.quote}”
-						</blockquote>
-						<BentoShowcaseMetric />
-						<div className="mt-5 flex items-end justify-between gap-3 border-t border-[rgba(244,244,245,0.08)] pt-4">
-							<div>
-								<p className="text-sm font-semibold text-[#f4f4f5]">
-									{LANDING_SHOWCASE_TENANT.name}
-								</p>
-								<p className="text-xs text-[#71717a]">
-									{LANDING_SHOWCASE_TENANT.role} · {LANDING_SHOWCASE_TENANT.location}
-								</p>
-							</div>
-							<Link
-								href={showcaseMenuUrl}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-[0.12em] text-[#4f5bff] transition-colors hover:text-[#8b93ff]"
-							>
-								Ver menú
-								<ArrowUpRight className="h-3.5 w-3.5" />
-							</Link>
-						</div>
-					</div>
-
-					{/* 4. Feature highlight card */}
-					<div className="flex flex-col justify-between rounded-2xl border border-[rgba(244,244,245,0.12)] bg-[#141414] p-7 transition-colors hover:border-[rgba(244,244,245,0.2)]">
-						<div>
-							<p className="v3-label mb-5 text-[#71717a]">{"// "}CAPACIDADES</p>
-							<ul className="flex flex-col gap-4">
-								{FEATURE_PILLARS.map(({ icon: Icon, code, title, text }) => (
-									<li key={code} className="flex items-start gap-3">
-										<div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1a1a1a] text-[#4f5bff]">
-											<Icon className="h-4 w-4" />
-										</div>
-										<div className="min-w-0 pt-0.5">
-											<p className="text-sm font-semibold text-[#f4f4f5]">
-												<span className="mr-2 font-display text-[#4f5bff]">{code}</span>
-												{title}
-											</p>
-											<p className="mt-0.5 text-sm leading-snug text-[#a1a1aa]">{text}</p>
-										</div>
-									</li>
-								))}
-							</ul>
-						</div>
-						<div className="mt-8 border-t border-[rgba(244,244,245,0.08)] pt-5">
-							<p className="font-display text-2xl leading-tight text-[#f4f4f5]">
-								RÁPIDO, MÓVIL Y MULTI-TENANT
-							</p>
-							<p className="mt-2 text-sm leading-relaxed text-[#a1a1aa]">
-								Pensado para locales únicos y cadenas por igual.
-							</p>
-						</div>
-					</div>
-
-					{/* 5. CTA card */}
-					<div className="flex flex-col justify-center rounded-2xl border border-[rgba(244,244,245,0.12)] bg-[#141414] p-7 md:col-span-2">
-						<div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
-							<div>
-								<p className="v3-label mb-3">{"// "}NOSOTROS</p>
-								<p className="max-w-md text-2xl font-medium leading-snug text-[#f4f4f5]">
-									¿Quieres ver cómo Gcode Pos se adapta a tu negocio?
-								</p>
-							</div>
-							<Link
-								href="/sobre-godcode"
-								className="group inline-flex shrink-0 items-center gap-2 rounded-full bg-[#4f5bff] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#3d47e6]"
-							>
-								Conocer más
-								<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-							</Link>
-						</div>
-					</div>
-
-					{/* 6. Full accent card */}
-					<div className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-[#4f5bff] p-7 md:col-span-2 lg:col-span-3">
-						<div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 transition-transform duration-700 group-hover:scale-125" />
-						<div className="relative flex flex-col justify-between gap-10 lg:flex-row lg:items-end">
-							<div>
-								<p className="font-display text-6xl leading-[0.9] text-white md:text-7xl lg:text-8xl">
-									0% COMISIONES
-								</p>
-								<p className="mt-4 max-w-xl text-lg leading-relaxed text-white/90">
-									Cada pedido es tuyo. Sin comisiones de marketplaces, sin cargos
-									ocultos, sin sorpresas.
-								</p>
-							</div>
-							<Link
-								href="/onboarding"
-								className="inline-flex w-fit shrink-0 rounded-full bg-[#0d0d0d] px-8 py-4 text-sm font-semibold text-white transition-colors hover:bg-[#141414]"
-							>
-								Empezar ahora
-							</Link>
-						</div>
-					</div>
+					<Link
+						href="/sobre-godcode"
+						className="group inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white transition-colors duration-200 hover:border-white/35 hover:bg-white/[0.04]"
+					>
+						Conocer {LANDING_COMPANY_NAME}
+						<ArrowRight
+							className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+							aria-hidden
+						/>
+					</Link>
 				</div>
 			</div>
 		</section>

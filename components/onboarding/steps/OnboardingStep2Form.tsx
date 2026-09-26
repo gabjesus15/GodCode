@@ -5,6 +5,7 @@ import { useLocale } from "next-intl";
 import { Building2, Check, CreditCard, Landmark } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { trackEvent } from "@/lib/analytics/track-event";
 import { resolveAddonUnitPrice } from "@/lib/plans/addon-pricing";
 import { resolveRegionalPlanPrice, resolveContinentFromCountryInput } from "@/lib/plans/plan-regional-pricing";
 import { cn } from "@/utils/cn";
@@ -494,6 +495,12 @@ export function OnboardingStep2Form({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? copy.saveError);
+      trackEvent("begin_checkout", {
+        plan_name: selectedPlan?.name ?? undefined,
+        currency: currency || undefined,
+        value: Number(selectedPlanRegionalPrice?.price ?? selectedPlan?.price ?? 0) || undefined,
+        payment_method: subMethod,
+      });
       window.location.href = `/onboarding/pago?token=${encodeURIComponent(token)}`;
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : copy.saveError);

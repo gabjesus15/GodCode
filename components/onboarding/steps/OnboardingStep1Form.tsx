@@ -8,6 +8,7 @@ import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { trackEvent } from "@/lib/analytics/track-event";
 import { fillCopy, getOnboardingUiCopy } from "@/lib/onboarding/onboarding-ui-copy";
 
 type SentState = { email: string; emailSent: boolean };
@@ -54,6 +55,7 @@ export function OnboardingStep1Form() {
 			});
 			const data = (await res.json().catch(() => ({}))) as { error?: string; skippedVerification?: boolean; token?: string; emailSent?: boolean };
 			if (!res.ok) throw new Error(data.error ?? t.errorSubmit);
+			trackEvent("sign_up", { method: "email" });
 			// El servicio dio el correo por verificado (ONBOARDING_SKIP_EMAIL_VERIFICATION):
 			// no hay enlace que esperar, se salta directo al paso 2.
 			if (data.skippedVerification && data.token) {

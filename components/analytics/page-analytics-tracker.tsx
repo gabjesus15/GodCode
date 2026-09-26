@@ -5,36 +5,14 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 import { isInternalAnalyticsPath, resolveAnalyticsPageContext } from "@/lib/analytics/page-context";
 import { trackGaPageView } from "@/lib/analytics/gtag";
-import { randomId } from "@/lib/analytics/random-id";
+import {
+	getOrCreateSessionId,
+	getOrCreateVisitorId,
+	sendInternalAnalyticsEvent,
+} from "@/lib/analytics/track-event";
 import { sanitizeAnalyticsPath } from "@/lib/analytics/sanitize-path";
 
-const VISITOR_KEY = "gc_visitor_id";
-const SESSION_KEY = "gc_session_id";
 const LAST_EVENT_KEY = "gc_last_page_view";
-
-function getOrCreateVisitorId(): string {
-	try {
-		const existing = localStorage.getItem(VISITOR_KEY);
-		if (existing && existing.trim()) return existing;
-		const created = randomId("v");
-		localStorage.setItem(VISITOR_KEY, created);
-		return created;
-	} catch {
-		return randomId("v");
-	}
-}
-
-function getOrCreateSessionId(): string {
-	try {
-		const existing = sessionStorage.getItem(SESSION_KEY);
-		if (existing && existing.trim()) return existing;
-		const created = randomId("s");
-		sessionStorage.setItem(SESSION_KEY, created);
-		return created;
-	} catch {
-		return randomId("s");
-	}
-}
 
 function wasAlreadySent(key: string): boolean {
 	try {
@@ -84,25 +62,7 @@ export function PageAnalyticsTracker() {
 				},
 			};
 
-			const body = JSON.stringify(payload);
-
-			try {
-				if (navigator.sendBeacon) {
-					const blob = new Blob([body], { type: "application/json" });
-					navigator.sendBeacon("/api/analytics/events", blob);
-					return;
-				}
-			} catch {
-				// Fallback to fetch below.
-			}
-
-			void fetch("/api/analytics/events", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body,
-				keepalive: true,
-				cache: "no-store",
-			}).catch(() => {});
+			sendInternalAnalyticsEvent(payload);
 		};
 
 		let idleId: ReturnType<typeof setTimeout> | number = 0;
