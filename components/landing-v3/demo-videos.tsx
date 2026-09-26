@@ -116,9 +116,9 @@ export function DemoVideos({ demoMenuUrl }: DemoVideosProps) {
 					"[grid-template-areas:'head'_'video'_'chapters'] lg:[grid-template-areas:'head_video'_'chapters_video']",
 				)}
 			>
-				<div data-reveal className="[grid-area:head] lg:self-end">
+				<div data-reveal className="text-center [grid-area:head] lg:self-end lg:text-left">
 					<h2 className="font-display text-5xl leading-[0.95] text-[#f4f4f5] md:text-6xl">Míralo funcionando</h2>
-					<div className="mt-8 flex gap-2" role="tablist" aria-label="Demostraciones">
+					<div className="mt-8 flex justify-center gap-2 lg:justify-start" role="tablist" aria-label="Demostraciones">
 						{DEMOS.map((item, i) => (
 							<button
 								key={item.id}
@@ -148,7 +148,7 @@ export function DemoVideos({ demoMenuUrl }: DemoVideosProps) {
 				</div>
 
 				{/* Capítulos: se iluminan con el video y llevan a ese momento al tocarlos. */}
-				<div data-reveal className="[grid-area:chapters] lg:self-start">
+				<div data-reveal className="mx-auto w-full max-w-md [grid-area:chapters] lg:mx-0 lg:max-w-none lg:self-start">
 					<ol key={demo.id} className="v3-fade-up relative border-l border-white/[0.08]">
 						{demo.chapters.map((chapter, i) => {
 							const next = demo.chapters[i + 1]?.start ?? demo.end;
@@ -186,7 +186,7 @@ export function DemoVideos({ demoMenuUrl }: DemoVideosProps) {
 											)}
 										>
 											<span className="overflow-hidden">
-												<span className="block pt-1.5 text-[15px] leading-relaxed text-[#a1a1aa]">{chapter.text}</span>
+												<span className="block pl-7 pt-1.5 text-[15px] leading-relaxed text-[#a1a1aa]">{chapter.text}</span>
 											</span>
 										</span>
 									</button>
@@ -201,7 +201,7 @@ export function DemoVideos({ demoMenuUrl }: DemoVideosProps) {
 							target="_blank"
 							rel="noopener noreferrer"
 							onClick={() => trackEvent("demo_menu_open", {})}
-							className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white transition-colors duration-200 hover:border-white/35 hover:bg-white/[0.04]"
+							className="mx-auto mt-8 flex w-fit items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white transition-colors duration-200 hover:border-white/35 hover:bg-white/[0.04] lg:mx-0"
 						>
 							Probar el menú de demostración
 							<ArrowUpRight className="h-4 w-4" aria-hidden />

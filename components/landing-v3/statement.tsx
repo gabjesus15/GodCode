@@ -6,7 +6,7 @@ export function Statement() {
 	const accent = LANDING_STATEMENT_TEXT.slice(LANDING_STATEMENT_ACCENT_START);
 
 	return (
-		<section className="v3-section-dark pt-20 pb-4 md:pt-28 md:pb-8">
+		<section className="v3-section-dark pt-20 pb-20 md:pt-28 md:pb-24">
 			<SectionGlow
 				className="left-1/2 top-1/2 h-[480px] w-[min(1000px,140vw)] -translate-x-1/2 -translate-y-1/2"
 				intensity={0.13}

@@ -30,7 +30,8 @@ export function Ticker({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 	const whatsapp = socialLinks.find((link) => link.kind === "whatsapp");
 
 	return (
-		<section id="empezar" className="v3-section-dark">
+		<section id="empezar" className="v3-section-dark pb-9">
+			{/* pb-9 = 2.25rem: el footer (ficha) se monta sobre esa franja oscura y no sobre la cinta. */}
 			{/* El amanecer: la luz sube desde la cinta hacia el titular. */}
 			<SectionGlow
 				className="bottom-[-38%] left-1/2 h-[820px] w-[min(1500px,220vw)] -translate-x-1/2"

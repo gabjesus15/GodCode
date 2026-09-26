@@ -6,7 +6,7 @@ const STEPS = [
 
 export function HowItWorks() {
 	return (
-		<section id="como-funciona" className="v3-section-dark pt-24 pb-10 md:pt-32 md:pb-12">
+		<section id="como-funciona" className="v3-section-dark pt-24 pb-20 md:pt-28 md:pb-24">
 			<div className="v3-container">
 				<h2 data-reveal className="font-display text-5xl leading-[0.95] text-[#f4f4f5] md:text-6xl">
 					Lista en una tarde

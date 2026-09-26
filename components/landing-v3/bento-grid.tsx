@@ -1,8 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Layers, Smartphone, Zap } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 
-import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
 import type { LandingV3Config } from "@/lib/landing/v3-config";
 import { getLandingShowcaseMenuUrl, LANDING_SHOWCASE_TENANT } from "@/lib/landing/showcase";
 import { SectionGlow } from "./section-light";
@@ -11,30 +10,12 @@ type BentoGridProps = {
 	bentoMenuMobile: LandingV3Config["bentoMenuMobile"];
 };
 
-const CAPABILITIES = [
-	{
-		icon: Zap,
-		title: "Rápido",
-		text: "Pedidos al instante, sin fricción en la mesa ni en delivery.",
-	},
-	{
-		icon: Smartphone,
-		title: "Pensado para el celular",
-		text: "Tu carta se ve y se usa bien en el teléfono de tu cliente.",
-	},
-	{
-		icon: Layers,
-		title: "Multisucursal",
-		text: "Un local o varias sucursales en la misma plataforma.",
-	},
-] as const;
-
-/** Por qué Gcode: la idea (tu canal), la prueba (Oishi Sushi), lo que trae y quién está detrás. */
+/** Por qué Gcode: la idea (tu canal) y la prueba real (Oishi Sushi). */
 export function BentoGrid({ bentoMenuMobile }: BentoGridProps) {
 	const showcaseMenuUrl = getLandingShowcaseMenuUrl();
 
 	return (
-		<section id="por-que-gcode" className="v3-section-dark py-24 md:py-32">
+		<section id="por-que-gcode" className="v3-section-dark py-24 md:py-28">
 			<SectionGlow
 				className="right-[-20%] top-[2%] h-[760px] w-[760px] lg:right-[-6%]"
 				intensity={0.18}
@@ -74,6 +55,10 @@ export function BentoGrid({ bentoMenuMobile }: BentoGridProps) {
 								aria-hidden
 							/>
 						</Link>
+						<p className="mt-8 text-sm leading-relaxed text-[#71717a]">
+							Rápido en la mesa y en delivery <span aria-hidden className="mx-1.5">·</span> Pensado para el
+							celular <span aria-hidden className="mx-1.5">·</span> Uno o varios locales
+						</p>
 
 						<figure className="mt-12 border-t border-white/[0.08] pt-10">
 							<blockquote className="text-xl leading-relaxed text-[#f4f4f5] text-pretty md:text-2xl md:leading-snug">
@@ -99,41 +84,6 @@ export function BentoGrid({ bentoMenuMobile }: BentoGridProps) {
 					</div>
 				</div>
 
-				<ul data-reveal className="mt-24 grid gap-10 sm:grid-cols-3 md:mt-28">
-					{CAPABILITIES.map(({ icon: Icon, title, text }) => (
-						<li key={title} className="border-t border-white/[0.08] pt-6">
-							<Icon className="h-5 w-5 text-[#8b93ff]" strokeWidth={1.75} aria-hidden />
-							<h3 className="mt-5 font-semibold text-[#f4f4f5]">{title}</h3>
-							<p className="mt-1.5 text-sm leading-relaxed text-[#a1a1aa] text-pretty">{text}</p>
-						</li>
-					))}
-				</ul>
-
-				<div
-					data-reveal
-					className="mt-16 flex flex-col gap-6 rounded-[1.75rem] border border-white/[0.08] bg-[#111113] p-8 sm:flex-row sm:items-center sm:justify-between md:p-10"
-				>
-					<div className="max-w-xl">
-						<p className="text-2xl font-medium leading-snug text-[#f4f4f5] text-balance">
-							¿Necesitas algo que no está en un sistema estándar?
-						</p>
-						<p className="mt-3 leading-relaxed text-[#a1a1aa] text-pretty">
-							{LANDING_COMPANY_NAME} es un estudio de desarrollo web y sistemas a medida.{" "}
-							{LANDING_PRODUCT_NAME} es nuestro producto para restaurantes, y también creamos páginas y
-							sistemas hechos para tu negocio.
-						</p>
-					</div>
-					<Link
-						href="/sobre-godcode"
-						className="group inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white transition-colors duration-200 hover:border-white/35 hover:bg-white/[0.04]"
-					>
-						Conocer {LANDING_COMPANY_NAME}
-						<ArrowRight
-							className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
-							aria-hidden
-						/>
-					</Link>
-				</div>
 			</div>
 		</section>
 	);
