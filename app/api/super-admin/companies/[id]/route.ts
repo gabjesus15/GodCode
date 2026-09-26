@@ -12,6 +12,7 @@ import {
   STOREFRONT_BRANDING_BUCKET,
 } from "@/lib/storage/storefront-branding";
 import { mergeThemeConfig } from "@/lib/store-theme/merge-theme-config";
+import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { MAIN_DOMAIN_RESERVED_PATH_SEGMENTS } from "@/lib/tenant/reserved-path-segments";
 import { slugify } from "@/utils/slugify";
 import { normalizeBaseDomain } from "@/utils/tenant-url";
@@ -241,6 +242,13 @@ export async function PUT(
   // La marca también va al borrador de /cuenta, pero sin pisar el resto del borrador del
   // dueño (antes cada guardado aquí le borraba los cambios que no había publicado).
   if (Object.keys(brandingPatch).length > 0) {
+    // Es una publicación: queda en el historial de /cuenta, así el dueño la ve y puede volver atrás.
+    await supabaseAdmin.from("company_theme_versions").insert({
+      company_id: companyId,
+      theme_config: normalizeStoreThemeConfig(companyUpdate.theme_config),
+      created_by_email: permission.email ?? "super-admin",
+    });
+
     const { data: draft } = await supabaseAdmin
       .from("company_theme_drafts")
       .select("theme_config")

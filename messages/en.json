@@ -146,7 +146,8 @@
         "sendCode": "Send me a code",
         "sendingCode": "Sending…",
         "passwordCodeHint": "To change your password we'll send a code to your email.",
-        "codeSentHint": "Check your email: the code expires in 1 hour."
+        "codeSentHint": "Check your email: the code expires in 1 hour.",
+        "legalTitle": "Legal"
       },
       "notices": {
         "passwordChanged": "Password updated. Please sign in again with the new one.",
@@ -280,11 +281,23 @@
         "name": "Enter your full name.",
         "phone": "Check the phone number.",
         "password": "At least 8 characters.",
-        "code": "Enter the 6-digit code."
+        "code": "Enter the 6-digit code.",
+        "terms": "Accept the terms and conditions to create your account."
       },
       "password": {
         "show": "Show password",
         "hide": "Hide password"
+      },
+      "terms": {
+        "title": "Terms and Conditions",
+        "updated": "Last updated: {date}",
+        "close": "Close",
+        "accept": "Accept terms",
+        "openPage": "Open full page",
+        "back": "Back to My account",
+        "view": "View terms",
+        "rowLabel": "Terms and conditions",
+        "acceptLabel": "I accept the <link>terms and conditions</link>"
       }
     },
     "cart": {

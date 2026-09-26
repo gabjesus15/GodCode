@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { LogOut, MapPin, Package, Settings, UserRound, UtensilsCrossed } from "lucide-react";
+import { FileText, LogOut, MapPin, Package, Settings, UserRound, UtensilsCrossed } from "lucide-react";
 
 import { getFormStrategy } from "@/lib/geo/country-forms";
 import type { MenuAccountDeliveryOptions } from "@/lib/menu-account/delivery-options";
@@ -13,6 +13,7 @@ import type { MenuAccountBranchOption, MenuAccountPublic } from "./menu-account-
 import { MenuAccountAddresses } from "./menu-account-addresses";
 import { errorMessage } from "./menu-account-auth-panel";
 import { MenuAccountOrders } from "./menu-account-orders";
+import { MenuAccountTermsDialog } from "./menu-account-terms-dialog";
 import { useMenuAccount } from "./use-menu-account";
 
 type MenuAccountDashboardProps = {
@@ -285,6 +286,7 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 	/** El formulario de la clave nueva solo aparece una vez enviado el código. */
 	const [codeSent, setCodeSent] = useState(false);
 	const [attempted, setAttempted] = useState(false);
+	const [termsOpen, setTermsOpen] = useState(false);
 	const codeError = code.length === 6 ? null : t("fields.code");
 	const passwordError = accountFieldRules.password(newPassword) ? null : t("fields.password");
 
@@ -392,6 +394,20 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 					) : null}
 				</SettingsRow>
 			</SettingsGroup>
+
+			<SettingsGroup title={t("dashboard.legalTitle")}>
+				<SettingsRow label={t("terms.rowLabel")}>
+					<button
+						type="button"
+						className="account-button account-button--ghost"
+						onClick={() => setTermsOpen(true)}
+					>
+						<FileText size={15} aria-hidden />
+						<span>{t("terms.view")}</span>
+					</button>
+				</SettingsRow>
+			</SettingsGroup>
+			<MenuAccountTermsDialog open={termsOpen} onClose={() => setTermsOpen(false)} />
 		</div>
 	);
 }

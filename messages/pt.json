@@ -146,7 +146,8 @@
         "sendCode": "Enviar um código",
         "sendingCode": "Enviando…",
         "passwordCodeHint": "Para alterar a senha, enviamos um código para seu e-mail.",
-        "codeSentHint": "Confira seu e-mail: o código expira em 1 hora."
+        "codeSentHint": "Confira seu e-mail: o código expira em 1 hora.",
+        "legalTitle": "Legal"
       },
       "notices": {
         "passwordChanged": "Senha atualizada. Entre novamente com a nova.",
@@ -280,11 +281,23 @@
         "name": "Digite seu nome completo.",
         "phone": "Confira o telefone.",
         "password": "Mínimo de 8 caracteres.",
-        "code": "Digite o código de 6 dígitos."
+        "code": "Digite o código de 6 dígitos.",
+        "terms": "Aceite os termos e condições para criar sua conta."
       },
       "password": {
         "show": "Mostrar senha",
         "hide": "Ocultar senha"
+      },
+      "terms": {
+        "title": "Termos e Condições",
+        "updated": "Última atualização: {date}",
+        "close": "Fechar",
+        "accept": "Aceitar termos",
+        "openPage": "Abrir em página inteira",
+        "back": "Voltar para Minha conta",
+        "view": "Ver termos",
+        "rowLabel": "Termos e condições",
+        "acceptLabel": "Aceito os <link>termos e condições</link>"
       }
     },
     "cart": {

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { isSameStoreTheme, normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
+import { applyStoreThemeDraftPatch, isSameStoreTheme, normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
 import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 
@@ -95,21 +95,37 @@ export async function PUT(req: NextRequest) {
   const limited = await assertCustomerAccountRateLimit(ctx.companyId, "store_theme_put", 30, 60_000);
   if (limited) return limited;
 
-  const payload = (await req.json().catch(() => ({}))) as { theme?: unknown };
-  const theme = toThemeConfig(payload.theme);
+  /**
+   * `patch`: solo los campos que el dueño cambió, mezclados sobre el borrador guardado.
+   * Así un cambio hecho mientras tanto por soporte (super admin) no se pierde cuando el
+   * editor, que cargó el tema antes, guarda. `discard`: el borrador vuelve a lo publicado
+   * en la base (no a la copia que tenía el navegador). `theme`: reemplazo completo.
+   */
+  const payload = (await req.json().catch(() => ({}))) as { theme?: unknown; patch?: unknown; discard?: boolean };
   const nowIso = new Date().toISOString();
 
-  const { data: company, error: companyError } = await supabaseAdmin
-    .from("companies")
-    .select("theme_config")
-    .eq("id", ctx.companyId)
-    .maybeSingle();
+  const [{ data: company, error: companyError }, { data: currentDraft, error: currentDraftError }] = await Promise.all([
+    supabaseAdmin.from("companies").select("theme_config").eq("id", ctx.companyId).maybeSingle(),
+    supabaseAdmin.from("company_theme_drafts").select("theme_config").eq("company_id", ctx.companyId).maybeSingle(),
+  ]);
 
   if (companyError) {
     return NextResponse.json({ error: companyError.message }, { status: 500 });
   }
+  if (currentDraftError) {
+    return NextResponse.json({ error: currentDraftError.message }, { status: 500 });
+  }
 
   const published = toThemeConfig(company?.theme_config ?? null);
+  let theme: StoreThemeConfig;
+  if (payload.discard === true) {
+    theme = published;
+  } else if (payload.patch && typeof payload.patch === "object" && !Array.isArray(payload.patch)) {
+    const base = currentDraft?.theme_config ? toThemeConfig(currentDraft.theme_config) : published;
+    theme = applyStoreThemeDraftPatch(base, payload.patch);
+  } else {
+    theme = toThemeConfig(payload.theme);
+  }
   const hasUnpublishedChanges = !isSameStoreTheme(theme, published);
 
   const { error } = await supabaseAdmin
@@ -131,6 +147,7 @@ export async function PUT(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     message: "Borrador guardado.",
+    published,
     draft: {
       theme,
       updatedAt: nowIso,

@@ -7,6 +7,7 @@ import { UserRound } from "lucide-react";
 import { getFormStrategy } from "@/lib/geo/country-forms";
 
 import { AccountBusyLabel, AccountField, AccountPasswordInput, accountFieldRules } from "./account-fields";
+import { MenuAccountTermsDialog } from "./menu-account-terms-dialog";
 import type { MenuAccountBranchOption, MenuAccountPublic, MenuAccountView } from "./menu-account-types";
 import { useMenuAccount } from "./use-menu-account";
 import { useResendCooldown } from "./use-resend-cooldown";
@@ -46,6 +47,8 @@ export function MenuAccountAuthPanel({
 	const [fullName, setFullName] = useState("");
 	const [phone, setPhone] = useState(strategy.phonePrefix);
 	const [branchId, setBranchId] = useState("");
+	const [acceptedTerms, setAcceptedTerms] = useState(false);
+	const [termsOpen, setTermsOpen] = useState(false);
 	const [code, setCode] = useState("");
 	/** Desde dónde se llegó a confirmar el correo: decide el aviso tras entrar. */
 	const [verifyOrigin, setVerifyOrigin] = useState<"login" | "created">("created");
@@ -67,7 +70,13 @@ export function MenuAccountAuthPanel({
 		password: accountFieldRules.password(password) ? null : t("fields.password"),
 	};
 	const loginReady = !fieldErrors.document && password.length > 0;
-	const registerReady = !fieldErrors.document && !fieldErrors.email && !fieldErrors.name && !fieldErrors.phone && !fieldErrors.password;
+	const registerReady =
+		!fieldErrors.document &&
+		!fieldErrors.email &&
+		!fieldErrors.name &&
+		!fieldErrors.phone &&
+		!fieldErrors.password &&
+		acceptedTerms;
 	const codeReady = code.length === CODE_LENGTH;
 
 	/** El formato del documento es por país: RUT, Cédula/RIF o Cédula. */
@@ -117,6 +126,7 @@ export function MenuAccountAuthPanel({
 				fullName,
 				phone,
 				preferredBranchId: branchId || null,
+				acceptedTerms,
 			},
 		});
 		if (!result.ok) return;
@@ -457,6 +467,47 @@ export function MenuAccountAuthPanel({
 								)}
 							</AccountField>
 						) : null}
+						<div className="account-field">
+							<label className="account-terms-check">
+								<input
+									type="checkbox"
+									checked={acceptedTerms}
+									onChange={(event) => setAcceptedTerms(event.target.checked)}
+									aria-invalid={showFieldErrors && !acceptedTerms ? true : undefined}
+									aria-describedby={showFieldErrors && !acceptedTerms ? "account-terms-error" : undefined}
+								/>
+								<span>
+									{t.rich("terms.acceptLabel", {
+										link: (chunks) => (
+											<button
+												type="button"
+												className="account-inline-link"
+												onClick={(event) => {
+													// Abrir los términos no debe marcar la casilla.
+													event.preventDefault();
+													setTermsOpen(true);
+												}}
+											>
+												{chunks}
+											</button>
+										),
+									})}
+								</span>
+							</label>
+							{showFieldErrors && !acceptedTerms ? (
+								<span id="account-terms-error" className="account-field-error" role="alert">
+									{t("fields.terms")}
+								</span>
+							) : null}
+						</div>
+						<MenuAccountTermsDialog
+							open={termsOpen}
+							onClose={() => setTermsOpen(false)}
+							onAccept={() => {
+								setAcceptedTerms(true);
+								setTermsOpen(false);
+							}}
+						/>
 						{shownError ? <p className="account-error" role="alert">{errorMessage(t, shownError)}</p> : null}
 						<button type="submit" className="account-submit" disabled={pending}>
 							<AccountBusyLabel busy={pending} idle={t("register.submit")} working={t("register.submitting")} />

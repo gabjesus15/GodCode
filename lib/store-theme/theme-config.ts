@@ -1,5 +1,6 @@
 import { DEFAULT_STORE_THEME } from "@/components/customer-portal/shared/customer-account-store-theme-constants";
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import { asThemeConfigObject, STORE_THEME_PATCH_KEYS } from "@/lib/store-theme/merge-theme-config";
 
 export const NAVBAR_TYPES = [
   "category-tabs",
@@ -199,4 +200,17 @@ export function normalizeStoreThemeConfig(
 
 export function isSameStoreTheme(a: StoreThemeConfig, b: StoreThemeConfig): boolean {
   return JSON.stringify(normalizeStoreThemeConfig(a)) === JSON.stringify(normalizeStoreThemeConfig(b));
+}
+
+/**
+ * Borrador de /cuenta = borrador guardado + solo los campos que el dueño cambió.
+ * Claves ajenas al tema de la tienda se ignoran.
+ */
+export function applyStoreThemeDraftPatch(base: StoreThemeConfig, rawPatch: unknown): StoreThemeConfig {
+  const source = asThemeConfigObject(rawPatch);
+  const patch: Record<string, unknown> = {};
+  for (const key of STORE_THEME_PATCH_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) patch[key] = source[key];
+  }
+  return normalizeStoreThemeConfig({ ...base, ...patch });
 }

@@ -146,7 +146,8 @@
         "sendCode": "Code senden",
         "sendingCode": "Wird gesendet…",
         "passwordCodeHint": "Um dein Passwort zu ändern, senden wir dir einen Code per E-Mail.",
-        "codeSentHint": "Sieh in deinen E-Mails nach: Der Code läuft in 1 Stunde ab."
+        "codeSentHint": "Sieh in deinen E-Mails nach: Der Code läuft in 1 Stunde ab.",
+        "legalTitle": "Rechtliches"
       },
       "notices": {
         "passwordChanged": "Passwort aktualisiert. Melde dich mit dem neuen an.",
@@ -280,11 +281,23 @@
         "name": "Gib deinen vollständigen Namen ein.",
         "phone": "Prüfe die Telefonnummer.",
         "password": "Mindestens 8 Zeichen.",
-        "code": "Gib den 6-stelligen Code ein."
+        "code": "Gib den 6-stelligen Code ein.",
+        "terms": "Akzeptiere die AGB, um dein Konto zu erstellen."
       },
       "password": {
         "show": "Passwort anzeigen",
         "hide": "Passwort ausblenden"
+      },
+      "terms": {
+        "title": "Allgemeine Geschäftsbedingungen",
+        "updated": "Zuletzt aktualisiert: {date}",
+        "close": "Schließen",
+        "accept": "AGB akzeptieren",
+        "openPage": "Als ganze Seite öffnen",
+        "back": "Zurück zu Mein Konto",
+        "view": "AGB ansehen",
+        "rowLabel": "AGB",
+        "acceptLabel": "Ich akzeptiere die <link>AGB</link>"
       }
     },
     "cart": {

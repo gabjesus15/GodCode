@@ -24,6 +24,8 @@ export const menuAccountRegisterSchema = z.object({
 	fullName: fullNameField,
 	phone: phoneField,
 	preferredBranchId: z.string().uuid().nullable().optional(),
+	/** Casilla de términos y condiciones: sin ella no hay alta, aunque se salten el formulario. */
+	acceptedTerms: z.literal(true),
 });
 
 export const menuAccountLoginSchema = z.object({

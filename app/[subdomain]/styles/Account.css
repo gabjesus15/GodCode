@@ -1128,6 +1128,198 @@ button.account-order:active {
     }
 }
 
+/* =========================================
+   TÉRMINOS Y CONDICIONES
+   ========================================= */
+
+/* Casilla del registro: el texto envuelve junto a la casilla, no debajo. */
+.account-terms-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--menu-fg-2);
+    cursor: pointer;
+}
+
+.account-terms-check input {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin: 1px 0 0;
+    accent-color: var(--menu-accent);
+    cursor: pointer;
+}
+
+.account-terms-check input[aria-invalid="true"] {
+    outline: 2px solid var(--menu-danger);
+    outline-offset: 2px;
+}
+
+.account-terms-check .account-inline-link {
+    color: var(--menu-fg);
+}
+
+.account-terms-updated {
+    margin: 0;
+    font-size: 0.74rem;
+    color: var(--menu-fg-3);
+}
+
+/* Texto legal: legible, sin el aire de tarjeta del resto de la cuenta. */
+.account-terms {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--menu-fg-2);
+    text-align: left;
+}
+
+.account-terms section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.account-terms h2 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--menu-fg);
+}
+
+.account-terms p,
+.account-terms ul {
+    margin: 0;
+}
+
+.account-terms ul {
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.account-terms strong {
+    color: var(--menu-fg);
+    font-weight: 700;
+}
+
+.account-terms-link {
+    color: var(--menu-accent-ink);
+    font-weight: 600;
+    text-decoration: underline;
+    overflow-wrap: anywhere;
+}
+
+/* Página propia: columna de lectura, anclada arriba. */
+.account-page-body--terms {
+    justify-content: flex-start;
+}
+
+.account-terms-page {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 28px 24px;
+    border-radius: 24px;
+    background: var(--menu-surface);
+    border: 1px solid var(--menu-line);
+}
+
+/* Modal: hoja desde abajo en teléfono, panel centrado en escritorio. */
+.account-terms-dialog {
+    width: 100%;
+    max-width: 640px;
+    max-height: min(86dvh, 820px);
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--menu-line);
+    border-radius: 24px;
+    background: var(--menu-surface);
+    color: var(--menu-fg);
+    overflow: hidden;
+}
+
+.account-terms-dialog[open] {
+    display: flex;
+    animation: account-rise 0.24s var(--menu-ease, ease) both;
+}
+
+.account-terms-dialog::backdrop {
+    background: rgb(0 0 0 / 0.5);
+}
+
+.account-terms-dialog__panel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+}
+
+.account-terms-dialog__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 20px 14px;
+    border-bottom: 1px solid var(--menu-line);
+}
+
+.account-terms-dialog__title {
+    margin: 0 0 2px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.account-terms-dialog__body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 18px 20px;
+}
+
+.account-terms-dialog__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--menu-line);
+}
+
+.account-terms-dialog__foot .account-link-button {
+    align-self: auto;
+}
+
+@media (max-width: 640px) {
+    .account-terms-dialog {
+        max-width: none;
+        max-height: 92dvh;
+        margin: auto 0 0;
+        border-radius: 22px 22px 0 0;
+        border-bottom: 0;
+    }
+
+    .account-terms-page {
+        padding: 22px 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .account-terms-dialog[open] {
+        animation: none;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .account-view,
     .account-panel,
