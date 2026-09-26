@@ -15,7 +15,7 @@ import { SaasStatusBadge } from "@/components/super-admin/shared/saas-status-bad
 import { SaasEmptyState } from "@/components/super-admin/shared/saas-empty-state";
 import { SaasFilterBar, SaasSearchInput } from "@/components/super-admin/shared/saas-filter-bar";
 
-import { formatUsd } from "@/lib/super-admin/format-utils";
+import { formatUsd } from "@/lib/billing/portal-pricing";
 
 type Addon = {
 	id: string;

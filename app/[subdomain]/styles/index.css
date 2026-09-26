@@ -86,8 +86,8 @@ html, #root {
  * En el menu el relleno superior lo pone `.menu-spacer`, que mide exactamente
  * el header fijo. Estos 20px se sumaban por encima y separaban el contenido del
  * header sin motivo — se notaba sobre todo en los negocios sin banner, donde no
- * hay nada que llene ese hueco. Se mantienen en las paginas que no llevan
- * spacer (la home del tenant), donde si hacen falta.
+ * hay nada que llene ese hueco. Se mantienen en las vistas que no llevan
+ * spacer, donde si hacen falta.
  */
 .page-wrapper:has(.menu-spacer) {
   padding-top: 0;
@@ -114,74 +114,6 @@ html, #root {
   backdrop-filter: blur(12px);
   border: 1px solid var(--card-border);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-
-.text-gradient {
-  background: linear-gradient(to right, var(--accent-secondary), var(--accent-primary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 800;
-}
-
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: var(--accent-secondary);
-  letter-spacing: -0.5px;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade {
-  animation: fadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-}
-
-/* Resto del archivo original restaurado y limpio */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition-normal);
-  border: none;
-  font-family: inherit;
-  font-size: 1rem;
-  text-decoration: none;
-  gap: 10px;
-}
-
-.btn-primary {
-  background-color: var(--accent-primary);
-  color: white;
-  box-shadow: 0 4px 15px var(--accent-shadow, rgba(255, 71, 87, 0.3));
-}
-
-.btn-secondary {
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--card-border);
-}
-
-.admin-layout {
-  display: flex;
-  min-height: 100vh;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
 }
 
 section {

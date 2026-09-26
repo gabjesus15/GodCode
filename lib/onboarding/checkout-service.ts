@@ -345,43 +345,6 @@ export async function provisionCompanyFromApplication(
 	return { ok: true, company: inserted };
 }
 
-export async function recordPayment(
-	supabaseAdmin: SupabaseClient,
-	params: {
-		companyId: string;
-		planId: string;
-		amountPaid: number;
-		paymentMethod: string;
-		paymentMethodSlug: string;
-		paymentReference: string;
-		status: string;
-		monthsPaid: number;
-	},
-): Promise<{ id?: string; error?: string }> {
-	const { data, error } = await supabaseAdmin
-		.from("payments_history")
-		.insert({
-			company_id: params.companyId,
-			plan_id: params.planId,
-			amount_paid: params.amountPaid,
-			payment_method: params.paymentMethod,
-			payment_method_slug: params.paymentMethodSlug,
-			payment_reference: params.paymentReference,
-			payment_date: new Date().toISOString(),
-			status: params.status,
-			months_paid: params.monthsPaid,
-		})
-		.select("id")
-		.maybeSingle();
-
-	if (error) {
-		console.error("onboarding checkout payment insert:", error);
-		return { error: error.message };
-	}
-
-	return { id: data?.id };
-}
-
 export async function updateApplicationPaymentState(
 	supabaseAdmin: SupabaseClient,
 	applicationId: string,
@@ -414,7 +377,10 @@ export async function updateApplicationPaymentState(
 	if (params.paymentMonths !== undefined) payload.payment_months = params.paymentMonths;
 	if (params.paymentAmount !== undefined) payload.payment_amount = params.paymentAmount;
 
-	await supabaseAdmin.from("onboarding_applications").update(payload).eq("id", applicationId);
+	const { error } = await supabaseAdmin.from("onboarding_applications").update(payload).eq("id", applicationId);
+	// La captura de PayPal solo acepta la orden guardada aquí: si no se guardó, cobrar
+	// después fallaría con el dinero ya pagado. Mejor cortar antes de mandar al cliente a pagar.
+	if (error) throw new Error(`No se pudo guardar el estado del pago: ${error.message}`);
 }
 
 export async function getManualMethodConfig(

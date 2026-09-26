@@ -1,24 +1,3 @@
-/**
- * Tokens de diseño del portal de cuenta.
- * Paleta minimalista alineada con la identidad Gcode ("Sobre Gcode Labs").
- */
-export const tokens = {
-  bg: {
-    canvas:  "#ffffff",
-    surface: "#fbfbfd",
-    subtle:  "#f5f5f7",
-  },
-  text: {
-    primary:   "#1d1d1f",
-    secondary: "#6e6e73",
-    muted:     "#a1a1a6",
-  },
-  border: {
-    default: "#e5e5ea",
-    strong:  "#d2d2d7",
-  },
-} as const;
-
 /** Clases Tailwind para cada variante semántica de color. */
 export const colorVariants = {
   accent:  { bg: "bg-indigo-600",  text: "text-indigo-600",  subtle: "bg-indigo-50",  border: "border-indigo-200"  },

@@ -13,6 +13,8 @@ import esLocale from "i18n-iso-countries/langs/es.json";
 import { countryFlagEmoji } from "@/utils/country-flag";
 import { cn } from "@/utils/cn";
 
+import { AnalyticsProgressBar } from "./analytics-progress-bar";
+
 registerLocale(esLocale);
 
 type CountryRow = {
@@ -42,18 +44,6 @@ function interpolateColor(value: number, max: number): string {
   return `rgb(${Math.round(start.r + (end.r - start.r) * t)}, ${Math.round(
     start.g + (end.g - start.g) * t,
   )}, ${Math.round(start.b + (end.b - start.b) * t)})`;
-}
-
-function ProgressBar({ value, max }: { value: number; max: number }) {
-  const pct = max > 0 ? Math.max(1, Math.round((value / max) * 100)) : 0;
-  return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-      <div
-        className="h-full rounded-full bg-blue-500 transition-all duration-500"
-        style={{ width: `${pct}%` }}
-      />
-    </div>
-  );
 }
 
 export function AnalyticsCountryMap({ countriesTop }: Props) {
@@ -212,7 +202,7 @@ export function AnalyticsCountryMap({ countriesTop }: Props) {
                   </span>
                   <span className="text-zinc-400">{row.uniqueVisitors.toLocaleString("es-CL")} únicos</span>
                 </div>
-                <ProgressBar value={row.views} max={maxViews} />
+                <AnalyticsProgressBar value={row.views} max={maxViews} />
               </div>
             </div>
           ))}

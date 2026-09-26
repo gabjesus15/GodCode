@@ -8,7 +8,8 @@ export type AnalyticsPageContext = {
 	tenantSlug: string | null;
 };
 
-function normalizeHost(rawHost: string | null | undefined): string {
+/** Host sin puerto ni `www.`, en minúsculas (cadena vacía si no llega). */
+export function normalizeAnalyticsHost(rawHost: string | null | undefined): string {
 	const host = (rawHost || "").split(":")[0].trim().toLowerCase();
 	if (host.startsWith("www.")) return host.slice(4);
 	return host;
@@ -42,7 +43,7 @@ export function isInternalAnalyticsPath(pathname: string): boolean {
 
 /** Pruebas locales o e2e contra la base de producción: no cuentan como visitas. */
 export function isLocalAnalyticsHost(rawHost: string | null | undefined): boolean {
-	const host = normalizeHost(rawHost);
+	const host = normalizeAnalyticsHost(rawHost);
 	return host === "localhost" || host === "127.0.0.1" || host.endsWith(".localhost");
 }
 
@@ -50,7 +51,7 @@ export function resolveAnalyticsPageContext(input: {
 	pathname: string;
 	host?: string | null;
 }): AnalyticsPageContext {
-	const host = normalizeHost(input.host ?? null);
+	const host = normalizeAnalyticsHost(input.host ?? null);
 	const pathOnly = (input.pathname.split("?")[0] || "/").trim() || "/";
 
 	if (host && isMainDomain(host)) {

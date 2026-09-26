@@ -36,6 +36,7 @@ import {
 	resolvePlanMarketingLines,
 } from "@/lib/plans/plan-i18n";
 import { normalizeMarketingLines } from "@/lib/plans/plan-marketing-lines";
+import { normalizePlanToken } from "@/lib/plans/plan-tokens";
 import {
 	DEFAULT_ROLE_NAV_PERMISSIONS,
 	TENANT_ADMIN_TAB_OPTIONS,
@@ -194,20 +195,11 @@ const POLICY_INCLUDED_KEYS = ["included_addons", "addons_included", "includes_ad
 const POLICY_BLOCKED_KEYS = ["blocked_addons", "addons_blocked", "excluded_addons", "plan_addons_blocked"];
 const POLICY_ALLOWED_KEYS = ["allowed_addons", "addons_allowed", "plan_addons_allowed"];
 
-function normalizePolicyToken(input: string): string {
-	return String(input ?? "")
-		.normalize("NFD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, "_")
-		.replace(/^_+|_+$/g, "");
-}
-
 function toPolicyTokens(raw: unknown): string[] {
 	if (Array.isArray(raw)) {
 		const set = new Set<string>();
 		for (const item of raw) {
-			const token = normalizePolicyToken(typeof item === "string" ? item : String(item ?? ""));
+			const token = normalizePlanToken(typeof item === "string" ? item : String(item ?? ""));
 			if (token) set.add(token);
 		}
 		return [...set];
@@ -215,7 +207,7 @@ function toPolicyTokens(raw: unknown): string[] {
 	if (typeof raw === "string") {
 		const tokens = raw
 			.split(/[\n,;|]/g)
-			.map((part) => normalizePolicyToken(part))
+			.map((part) => normalizePlanToken(part))
 			.filter(Boolean);
 		return [...new Set(tokens)];
 	}
@@ -798,7 +790,7 @@ export function PlansAdminClient({
 								count={form.includedAddonTokens.length}
 							>
 								{addons.map((addon) => {
-									const token = normalizePolicyToken(addon.slug || addon.name);
+									const token = normalizePlanToken(addon.slug || addon.name);
 									const checked = form.includedAddonTokens.includes(token);
 									return (
 										<SaasCheckbox
@@ -825,7 +817,7 @@ export function PlansAdminClient({
 								count={form.blockedAddonTokens.length}
 							>
 								{addons.map((addon) => {
-									const token = normalizePolicyToken(addon.slug || addon.name);
+									const token = normalizePlanToken(addon.slug || addon.name);
 									const checked = form.blockedAddonTokens.includes(token);
 									return (
 										<SaasCheckbox
@@ -853,7 +845,7 @@ export function PlansAdminClient({
 								hint="Si dejas esta lista vacía, el plan permite todos excepto los bloqueados."
 							>
 								{addons.map((addon) => {
-									const token = normalizePolicyToken(addon.slug || addon.name);
+									const token = normalizePlanToken(addon.slug || addon.name);
 									const checked = form.allowedAddonTokens.includes(token);
 									return (
 										<SaasCheckbox

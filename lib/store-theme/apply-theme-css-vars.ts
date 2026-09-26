@@ -72,14 +72,6 @@ export function formatThemeColor(hex: string, alpha: number): string {
 	return hexToRgba(solid, Math.round(a * 1000) / 1000, solid);
 }
 
-export function sanitizeThemeBackgroundColor(
-	value: string | undefined,
-	fallback = "#0a0a0a",
-): string {
-	const parsed = parseThemeColor(value, fallback);
-	return formatThemeColor(parsed.hex, parsed.alpha);
-}
-
 export function sanitizeThemeImageUrl(value: string | undefined): string {
 	const normalized = String(value ?? "").trim();
 	if (!normalized) return "";

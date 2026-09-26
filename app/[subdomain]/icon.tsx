@@ -1,25 +1,15 @@
 import { getCachedCompany } from "../../utils/tenant-cache";
 import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { sanitizeHexColor } from "@/lib/store-theme/apply-theme-css-vars";
+import { readThemeConfigObject } from "@/lib/store-theme/merge-theme-config";
+import { escapeXml, fetchTenantLogo, iconInitials, TENANT_ICON_SECURITY_HEADERS } from "@/lib/tenant/favicon-icon";
+import { resolveTenantDisplayName } from "@/lib/tenant/seo-metadata";
+import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
 
-function getInitials(name: string) {
-	const parts = name.trim().split(/\s+/).filter(Boolean);
-	const initials = parts.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "");
-	return (initials.join("") || "GC").slice(0, 2);
-}
-
-function normalizeColor(value: unknown, fallback: string) {
-	if (!value || typeof value !== "string") return fallback;
-	const t = value.trim();
-	return t.length > 0 ? t : fallback;
-}
-
-interface IconThemeConfig {
-	logoUrl?: string;
-	imageUrl?: string;
-	displayName?: string;
-	primaryColor?: string;
-	secondaryColor?: string;
+/** Color del tema validado: sin esto un `primaryColor` con `"/>` escapaba del SVG. */
+function themeColor(value: unknown, fallback: string) {
+	return sanitizeHexColor(typeof value === "string" ? value.trim() : "", fallback);
 }
 
 export default async function Icon(props: { params: Promise<{ subdomain: string }> }) {
@@ -33,42 +23,30 @@ export default async function Icon(props: { params: Promise<{ subdomain: string 
 
 	const company = await getCachedCompany(subdomain);
 
-	const theme_config: IconThemeConfig = (company?.theme_config as unknown as IconThemeConfig) || {};
+	const theme = readThemeConfigObject(company?.theme_config);
 	const isUnavailable = !isTenantSubscriptionAccessible(company);
 
-	// Búsqueda del logo en la configuración del tema
-	const storedLogoUrl = (theme_config?.logoUrl || theme_config?.imageUrl) as string | undefined;
-	const logoUrl = company?.id
-		? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id))
-		: storedLogoUrl;
+	// Logo del tema: solo imágenes de mapa de bits desde https público o nuestro Storage.
+	const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
+	const logoUrl = company?.id ? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id)) : "";
 
-	if (logoUrl && typeof logoUrl === "string" && logoUrl.trim() && !isUnavailable) {
-		try {
-			const res = await fetch(logoUrl.trim());
-			if (res.ok) {
-				const contentType = res.headers.get("content-type") || "image/png";
-				const buffer = await res.arrayBuffer();
-				return new Response(new Uint8Array(buffer), {
-					headers: {
-						"Content-Type": contentType,
-						"Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
-					},
-				});
-			}
-		} catch (error) {
-			console.error("[Icon] Error fetching logo:", error);
+	if (logoUrl && !isUnavailable) {
+		const logo = await fetchTenantLogo(logoUrl);
+		if (logo) {
+			return new Response(new Uint8Array(logo.buf), {
+				headers: {
+					...TENANT_ICON_SECURITY_HEADERS,
+					"Content-Type": logo.contentType,
+					"Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+				},
+			});
 		}
 	}
 
-	const displayName = isUnavailable
-		? "Gcode"
-		: typeof theme_config.displayName === "string" && theme_config.displayName.trim()
-		? theme_config.displayName.trim()
-		: company?.name ?? "Gcode";
-
-	const primaryColor = normalizeColor(theme_config.primaryColor, "#111827");
-	const secondaryColor = normalizeColor(theme_config.secondaryColor, primaryColor);
-	const initials = getInitials(displayName);
+	const displayName = isUnavailable ? "Gcode" : resolveTenantDisplayName(company, { slug: subdomain });
+	const primaryColor = themeColor(theme.primaryColor, "#111827");
+	const secondaryColor = themeColor(theme.secondaryColor, primaryColor);
+	const initials = escapeXml(iconInitials(displayName));
 
 	const svg = `<?xml version="1.0" encoding="UTF-8"?>\n` +
 		`<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">` +
@@ -79,6 +57,7 @@ export default async function Icon(props: { params: Promise<{ subdomain: string 
 
 	return new Response(svg, {
 		headers: {
+			...TENANT_ICON_SECURITY_HEADERS,
 			"Content-Type": "image/svg+xml; charset=utf-8",
 			"Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
 		},

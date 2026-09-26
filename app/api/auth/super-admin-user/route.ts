@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
+import { SAAS_MUTATE_ROLES, validateSuperAdminAccess } from "@/utils/admin/server-auth";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
@@ -29,22 +29,8 @@ async function isAllowedTenantRole(role: string) {
 	return Boolean(data?.name);
 }
 
-async function validateSuperAdminAccess() {
-	const result = await validateAdminRolesOnServer([...SAAS_MUTATE_ROLES]);
-	if (!result.ok) {
-		return {
-			ok: false as const,
-			response: NextResponse.json(
-				{ error: result.error ?? "No autorizado" },
-				{ status: result.status }
-			),
-		};
-	}
-	return { ok: true as const };
-}
-
 export async function GET(req: NextRequest) {
-	const access = await validateSuperAdminAccess();
+	const access = await validateSuperAdminAccess(SAAS_MUTATE_ROLES);
 	if (!access.ok) {
 		return access.response;
 	}
@@ -69,7 +55,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-	const access = await validateSuperAdminAccess();
+	const access = await validateSuperAdminAccess(SAAS_MUTATE_ROLES);
 	if (!access.ok) {
 		return access.response;
 	}
@@ -136,7 +122,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-	const access = await validateSuperAdminAccess();
+	const access = await validateSuperAdminAccess(SAAS_MUTATE_ROLES);
 	if (!access.ok) {
 		return access.response;
 	}
@@ -161,7 +147,7 @@ export async function DELETE(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-	const access = await validateSuperAdminAccess();
+	const access = await validateSuperAdminAccess(SAAS_MUTATE_ROLES);
 	if (!access.ok) {
 		return access.response;
 	}

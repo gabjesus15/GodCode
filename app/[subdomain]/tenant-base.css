@@ -1,18 +1,5 @@
 /* Base tenant: sin @import (evita cadenas de CSS bloqueantes). */
 
-.menu-info-bar {
-	margin-bottom: 12px;
-	padding: 8px 16px;
-	background: #f8fafc;
-	border-radius: 8px;
-	font-size: 0.95em;
-	color: #555;
-}
-
-.menu-info-bar-methods {
-	margin-left: 16px;
-}
-
 /*
  * La familia sale de `next/font`, que la autoaloja y ajusta las metricas del
  * respaldo para que no salte el layout mientras carga.

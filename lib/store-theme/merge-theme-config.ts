@@ -9,6 +9,22 @@ export function asThemeConfigObject(raw: unknown): Record<string, unknown> {
 	return { ...(raw as Record<string, unknown>) };
 }
 
+/**
+ * `theme_config` como objeto para leerlo: acepta el JSONB tal cual o guardado
+ * como texto JSON (hay filas viejas así). Sustituye los parseos a mano que
+ * estaban repetidos en layout, OG, manifest y favicon.
+ */
+export function readThemeConfigObject(raw: unknown): Record<string, unknown> {
+	if (typeof raw === "string") {
+		try {
+			return asThemeConfigObject(JSON.parse(raw));
+		} catch {
+			return {};
+		}
+	}
+	return asThemeConfigObject(raw);
+}
+
 export function mergeThemeConfig(
 	base: unknown,
 	patch: Record<string, unknown>,

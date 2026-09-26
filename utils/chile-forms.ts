@@ -46,30 +46,3 @@ export function validateRutChile(rut: string): boolean {
 
 	return dv === expectedDv;
 }
-
-const CHILE_PHONE_PREFIX = "+56 9 ";
-
-/**
- * Teléfono checkout cliente Chile: prefijo +56 9 y reglas de dígitos (misma lógica que el carrito web).
- */
-export function validateChileCustomerPhone(raw: string): boolean {
-	let phoneValue = raw.replace(/\D/g, "");
-	if (raw.trim() === CHILE_PHONE_PREFIX.trim() || phoneValue === "569") {
-		phoneValue = "";
-	}
-	return (
-		(phoneValue.length === 11 && phoneValue.startsWith("569")) ||
-		(phoneValue.length === 9 && phoneValue.startsWith("9")) ||
-		(phoneValue.length >= 8 && phoneValue.startsWith("9"))
-	);
-}
-
-/**
- * Mantiene el prefijo "+56 9 " si el valor es demasiado corto sin prefijo.
- */
-export function normalizeChilePhoneInput(value: string): string {
-	if (!value.startsWith(CHILE_PHONE_PREFIX)) {
-		if (value.length < 6) return CHILE_PHONE_PREFIX;
-	}
-	return value;
-}

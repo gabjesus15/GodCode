@@ -341,7 +341,13 @@
         },
         "previewMap": {
           "locationLabel": "Standort auf der Karte",
-          "openMap": "Karte oeffnen"
+          "openInGoogleMaps": "Google Maps",
+          "adjust": "Punkt anpassen",
+          "adjustHint": "Bewege die Karte bis zu deiner Tür",
+          "confirm": "Punkt bestätigen",
+          "cancel": "Abbrechen",
+          "zoomIn": "Vergrößern",
+          "zoomOut": "Verkleinern"
         },
         "notes": {
           "addTab": "Notiz hinzufuegen",
@@ -405,6 +411,10 @@
         "delivery": {
           "pickNamedArea": "Zone auswahlen",
           "selectAreaAria": "Lieferzone auswahlen",
+          "zoneSearch": "Gebiet suchen",
+          "zoneSearchClear": "Suche löschen",
+          "zoneNoResults": "Kein Gebiet passt zu „{query}“.",
+          "zoneClose": "Schließen",
           "geoNotAvailable": "Browser-Standort nicht verfugbar.",
           "geoNeedsHttps": "Standort nur uber HTTPS verfugbar.",
           "searchingLocation": "Suche Standort...",
@@ -442,7 +452,7 @@
           "calculatingWithLocation": "Lieferung wird mit deinem Standort berechnet...",
           "completeDataToContinue": "Vervollstandige die Lieferdaten, um fortzufahren.",
           "writeStreetNumberArea": "Gib Straße, Hausnummer und {area} ein; wir berechnen die Gebühr nach den Zonen des Geschäfts.",
-          "approxHint": "Dieser Standort ist ungefähr: Die Karte kann weit von deiner Tür entfernt sein. Passe die Straße an oder nutze deinen aktuellen Standort.",
+          "approxHint": "Ungefährer Standort: Tippe auf „Punkt anpassen“ und bewege die Karte bis zu deiner Tür, damit der Fahrer dich findet.",
           "areaLabel": {
             "commune": "Gemeinde",
             "municipality": "Gemeinde oder Stadt",
@@ -709,6 +719,63 @@
       "poweredBy": {
         "madeWith": "Erstellt mit",
         "aria": "Erstellt mit {brand}: digitale Speisekarte und Online-Bestellungen"
+      }
+    },
+    "home": {
+      "links": {
+        "menu": "Speisekarte ansehen",
+        "whatsapp": "WhatsApp",
+        "instagram": "Instagram",
+        "location": "Anfahrt",
+        "phone": "Anrufen"
+      },
+      "linksAria": "Links von {name}",
+      "logoAlt": "Logo von {name}",
+      "admin": "Zugang fürs Team",
+      "share": {
+        "label": "Teilen",
+        "copied": "Link kopiert"
+      },
+      "status": {
+        "open": "Jetzt geöffnet",
+        "closed": "Jetzt geschlossen",
+        "partial": "{open} von {total} Filialen geöffnet"
+      },
+      "socials": {
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "facebook": "Facebook",
+        "youtube": "YouTube",
+        "x": "X",
+        "whatsapp": "WhatsApp",
+        "email": "E-Mail",
+        "website": "Website"
+      },
+      "branches": {
+        "title": {
+          "whatsapp": "Welcher Filiale möchtest du schreiben?",
+          "instagram": "Welche Filiale möchtest du sehen?",
+          "location": "Zu welcher Filiale möchtest du?",
+          "phone": "Welche Filiale möchtest du anrufen?"
+        },
+        "count": "{count, plural, one {# Filiale} other {# Filialen}} zur Auswahl",
+        "open": "Geöffnet",
+        "closed": "Geschlossen",
+        "close": "Schließen",
+        "unnamed": "Filiale"
+      },
+      "schedule": {
+        "title": "Öffnungszeiten"
+      },
+      "gcode": {
+        "label": "Erstelle deine Speisekarte",
+        "aria": "Erstelle deine digitale Speisekarte mit {brand}"
+      },
+      "qr": {
+        "title": "Speisekarte am Handy öffnen",
+        "hint": "Richte die Kamera auf den Code",
+        "copy": "Link kopieren",
+        "alt": "QR-Code der Speisekarte"
       }
     }
   }

@@ -1,12 +1,7 @@
 import { formatUsd } from "@/lib/billing/portal-pricing";
 import {
-  ADDON_STATUS_LABELS,
   BRANCH_ENTITLEMENT_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
-  SUBSCRIPTION_STATUS_LABELS,
-  TICKET_CATEGORY_LABELS,
-  TICKET_PRIORITY_LABELS,
-  TICKET_STATUS_LABELS,
 } from "./customer-account-constants";
 
 /** Formato de fecha con soporte opcional de zona horaria. */
@@ -63,17 +58,6 @@ export function fmtDay(iso: string | null | undefined, timezone?: string | null)
   }
 }
 
-/** Montos en la moneda del negocio (ventas de su tienda, no pagos al SaaS). */
-export function fmtMoney(value: number | null | undefined, currency = "USD", locale = "es-CL"): string {
-  if (value == null || !Number.isFinite(Number(value))) return "-";
-  const noDecimals = ["CLP", "COP", "ARS", "PYG", "CLF"].includes(currency.toUpperCase());
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: currency,
-    maximumFractionDigits: noDecimals ? 0 : 2,
-  }).format(Number(value));
-}
-
 /**
  * Etiqueta legible para valores de estado (claves en minúsculas).
  * Misma semántica que el helper histórico del portal.
@@ -84,30 +68,10 @@ export function displayStatus(value: string | null | undefined, labels: Record<s
   return labels[normalized] ?? normalized.replace(/_/g, " ");
 }
 
-export function subscriptionLabel(status: string | null | undefined): string {
-  return displayStatus(status, SUBSCRIPTION_STATUS_LABELS);
-}
-
 export function paymentStatusLabel(status: string | null | undefined): string {
   return displayStatus(status, PAYMENT_STATUS_LABELS);
 }
 
-export function ticketStatusLabel(status: string | null | undefined): string {
-  return displayStatus(status, TICKET_STATUS_LABELS);
-}
-
-export function ticketPriorityLabel(priority: string | null | undefined): string {
-  return displayStatus(priority, TICKET_PRIORITY_LABELS);
-}
-
-export function ticketCategoryLabel(category: string | null | undefined): string {
-  return displayStatus(category, TICKET_CATEGORY_LABELS);
-}
-
 export function branchEntitlementStatusLabel(status: string | null | undefined): string {
   return displayStatus(status, BRANCH_ENTITLEMENT_STATUS_LABELS);
-}
-
-export function addonStatusLabel(status: string | null | undefined): string {
-  return displayStatus(status, ADDON_STATUS_LABELS);
 }

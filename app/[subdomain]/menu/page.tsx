@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { Illustrated404 } from "@/components/brand/illustrated-404";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
 import { MenuClient } from "../../../components/tenant/menu/menu-client";
-import type { HeroBanner } from "../../../components/tenant/home/hero-carousel";
-import { isMainDomain, getTenantSubdomainOrigin } from "@/lib/tenant/main-domain-host";
+import type { HeroBanner } from "../../../components/tenant/menu/hero-carousel";
+import { isMainDomain } from "@/lib/tenant/main-domain-host";
+import { buildTenantShareImage } from "@/lib/tenant/share-card/share-image-metadata";
 import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedMenuStaticData, getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
 import { getCachedCompany } from "@/utils/tenant-cache";
@@ -21,6 +22,7 @@ import { serializeJsonLd } from "@/lib/seo/serialize-json-ld";
 import {
 	buildTenantMenuDescription,
 	buildTenantMenuTitle,
+	resolveTenantDisplayName,
 } from "@/lib/tenant/seo-metadata";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 
@@ -37,15 +39,6 @@ export const revalidate = 60;
 interface TenantMenuPageProps {
   params: Promise<{ subdomain: string }>;
   searchParams?: Promise<{ branch?: string; debug?: string }>;
-}
-
-function formatBusinessNameFromSlug(slug: string): string {
-  return slug
-    .split("-")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .map((part) => part[0].toUpperCase() + part.slice(1))
-    .join(" ");
 }
 
 export async function generateMetadata({
@@ -65,23 +58,7 @@ export async function generateMetadata({
   const onApexPathTenant = isMainDomain(host);
 	const company = await getCachedCompany(resolvedParams.subdomain);
 
-  const rawThemeConfig = company?.theme_config;
-  const parsedThemeConfig =
-    typeof rawThemeConfig === "string"
-      ? (() => {
-          try {
-            return JSON.parse(rawThemeConfig) as Record<string, unknown>;
-          } catch {
-            return null;
-          }
-        })()
-      : (rawThemeConfig as Record<string, unknown> | null);
-  const rawDisplayName = parsedThemeConfig?.displayName;
-  const slugFallback = formatBusinessNameFromSlug(resolvedParams.subdomain);
-  const displayName =
-    (typeof rawDisplayName === "string" && rawDisplayName.trim().length > 0
-      ? rawDisplayName.trim()
-      : company?.name?.trim()) || slugFallback || "Menú";
+  const displayName = resolveTenantDisplayName(company, { slug: resolvedParams.subdomain, fallback: "Menú" });
   const menuTitle = buildTenantMenuTitle(displayName);
   const menuDescription = buildTenantMenuDescription({
     displayName,
@@ -92,10 +69,15 @@ export async function generateMetadata({
   const icon = `/tenant-favicon?tenant=${encodeURIComponent(resolvedParams.subdomain)}&v=${encodeURIComponent(String(iconVersionSeed))}`;
   const baseOrigin = `${protocol}://${host}`;
   const resolvedMetadataBase = new URL(baseOrigin);
-  const subdomainOrigin = getTenantSubdomainOrigin(resolvedParams.subdomain);
-  const canonical = onApexPathTenant
-    ? `${subdomainOrigin}/menu`
-    : `${baseOrigin}${pathPrefix}/menu`;
+  // Los subdominios *.godcode.me no existen en DNS: el canonical (y el og:url que
+  // sigue Facebook al armar la vista previa) es la URL servida, o el dominio
+  // propio del local si tiene uno, igual que en la home.
+  const customDomain = typeof company?.custom_domain === "string" ? company.custom_domain.trim() : "";
+  const canonical = customDomain ? `https://${customDomain}/menu` : `${baseOrigin}${pathPrefix}/menu`;
+  const shareImage =
+    company && isTenantSubscriptionAccessible(company)
+      ? buildTenantShareImage({ pathPrefix, versionSeed: String(iconVersionSeed), name: displayName })
+      : null;
 
 	return {
     metadataBase: resolvedMetadataBase,
@@ -115,18 +97,22 @@ export async function generateMetadata({
       description: menuDescription,
       url: canonical,
       type: "website",
+      siteName: displayName,
+      ...(shareImage ? { images: [shareImage] } : {}),
     },
     twitter: {
       card: "summary_large_image",
       title: menuTitle,
       description: menuDescription,
+      ...(shareImage ? { images: [shareImage] } : {}),
     },
 		appleWebApp: {
 			capable: true,
 			statusBarStyle: "default",
 			title: displayName,
 		},
-    robots: onApexPathTenant
+    // Solo se desindexa la copia en godcode.me/{slug} cuando el local tiene dominio propio.
+    robots: onApexPathTenant && customDomain
       ? {
           index: false,
           follow: true,

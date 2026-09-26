@@ -11,8 +11,6 @@ import type { CountryFormStrategy } from "@/lib/geo/country-forms";
 /* dato que vale al pedir valga al registrarse y viceversa.                    */
 /* -------------------------------------------------------------------------- */
 
-export type AccountFieldKey = "document" | "email" | "name" | "phone" | "password";
-
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export const accountFieldRules = {

@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
-import { jsonWithPublicCors, publicApiCorsHeaders } from "@/lib/infra/api-cors";
+import { jsonWithPublicCors, publicApiPreflightResponse } from "@/lib/infra/api-cors";
 import { assertPublicScopedRateLimit, assertPublicRateLimit } from "@/lib/infra/public-rate-limit";
 import { resolveNamedAreaFromAddress } from "@/lib/delivery/delivery-area-resolve";
 import { UBER_NEEDS_COORDINATES_CODE } from "@/lib/delivery/delivery-quote-contract";
@@ -286,9 +286,5 @@ export async function POST(req: NextRequest) {
 }
 
 export async function OPTIONS(req: NextRequest) {
-	const cors = publicApiCorsHeaders(req);
-	if ([...cors.keys()].length === 0) {
-		return new NextResponse(null, { status: 204 });
-	}
-	return new NextResponse(null, { status: 204, headers: cors });
+	return publicApiPreflightResponse(req);
 }

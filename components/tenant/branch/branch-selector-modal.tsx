@@ -65,26 +65,15 @@ export function BranchSelectorModal({
   });
   const showClosedOnly = allBranchesClosed || !hasBranches;
 
+  /* El menú manda el nombre ya maquetado con su estado (ver menu-branch-items).
+     Antes, con un nombre en texto, se adivinaba el estado buscando "OPEN" o
+     "ABIERTO" dentro del nombre: "Open Kitchen" salía como "Kitchen", abierto. */
   const formatBranchName = (rawName: React.ReactNode) => {
-    if (typeof rawName !== "string") return rawName;
-    if (!rawName) return rawName;
-
-    let cleanName = rawName;
-    let badge: React.ReactNode = null;
-
-    if (rawName.includes("ABIERTO") || rawName.includes("OPEN")) {
-      cleanName = rawName.replace(/ABIERTO|OPEN/g, "").trim();
-      badge = <span className="badge-open">{t("branchSelector.openBadge")}</span>;
-    } else if (rawName.includes("CERRADO") || rawName.includes("CLOSED")) {
-      cleanName = rawName.replace(/CERRADO|CLOSED/g, "").trim();
-      badge = <span className="badge-closed">{t("branchSelector.closedBadge")}</span>;
-    }
-
+    if (typeof rawName !== "string" || !rawName) return rawName;
     return (
       <>
         <Store size={18} className="branch-icon-small" />
-        <span>{cleanName}</span>
-        {badge}
+        <span>{rawName}</span>
       </>
     );
   };

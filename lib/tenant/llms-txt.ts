@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { resolveTenantDisplayName } from "@/lib/tenant/seo-metadata";
 import { getCachedCompany } from "@/utils/tenant-cache";
 import { getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
@@ -130,8 +131,7 @@ export async function getLlmsTxtData(subdomain: string, isFullVersion = false) {
   const pathPrefix = isMainDomain(host) ? `/${subdomain}` : "";
   const baseUrl = `${protocol}://${host}${pathPrefix}`;
 
-  const themeConfig = company.theme_config as Record<string, unknown> | null;
-  const displayName = (themeConfig?.displayName as string) ?? company.name ?? "Gcode";
+  const displayName = resolveTenantDisplayName(company, { slug: subdomain });
   const businessDescription = `Menú digital y pedidos online de ${displayName}. Pide online con delivery o retiro a domicilio.`;
   const currency = company.currency ?? "CLP";
 

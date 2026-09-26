@@ -1,74 +1,27 @@
 import { notFound } from "next/navigation";
 
-import { createSupabasePublicServerClient } from "../../utils/supabase/server";
 import { getCachedCompany } from "../../utils/tenant-cache";
-import { getCachedMenuStaticData } from "@/lib/tenant/cached-menu";
-import { HomeClient } from "../../components/tenant/home/home-client";
+import { HomePageView } from "../../components/tenant/home/home-page-view";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
-import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
-import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
+import { loadHomePageInput } from "@/lib/tenant/home-page/load-home-page";
+import { resolveHomePage } from "@/lib/tenant/home-page/resolve-home-page";
 
-import "./styles/Home.css";
-import "./styles/BranchSelectorModal.css";
+import "../../components/tenant/home/home-page.css";
 
 interface TenantPageProps {
   params: Promise<{ subdomain: string }>;
 }
 
-interface TenantPageThemeConfig {
-  displayName?: string;
-  logoUrl?: string;
-}
-
 export default async function TenantPage({ params }: TenantPageProps) {
-  const resolvedParams = await params;
-  const company = await getCachedCompany(resolvedParams.subdomain);
+  const { subdomain } = await params;
+  const company = await getCachedCompany(subdomain);
 
   if (!company || !isTenantSubscriptionAccessible(company)) {
     notFound();
   }
 
-  const supabase = createSupabasePublicServerClient();
+  const model = resolveHomePage(await loadHomePageInput(company, subdomain));
+  const panelBase = (process.env.NEXT_PUBLIC_TENANT_PANEL_URL ?? "").trim().replace(/\/$/, "");
 
-  const [staticData, { data: openShifts }] = await Promise.all([
-    getCachedMenuStaticData(company.id, resolvedParams.subdomain),
-    supabase
-      .from("cash_shifts")
-      .select("branch_id")
-      .eq("company_id", company.id)
-      .eq("status", "open"),
-  ]);
-
-  const openBranchIds = (openShifts ?? [])
-    // `String(null)` devuelve "null" y ese texto pasa el `filter(Boolean)`: una
-    // caja abierta sin sucursal (dato heredado) entraba como id valido, hacia
-    // creer que habia dos locales abiertos y anulaba la auto-seleccion.
-    .map((shift) => (shift.branch_id == null ? "" : String(shift.branch_id)))
-    .filter(Boolean);
-
-  const branchesWithStatus = staticData.branches.map((branch) => {
-    const rawName = branch.name ?? "";
-    if (rawName.includes("ABIERTO") || rawName.includes("CERRADO")) {
-      return branch;
-    }
-    const isOpen = openBranchIds.includes(String(branch.id));
-    const suffix = isOpen ? "ABIERTO" : "CERRADO";
-    const name = rawName ? `${rawName} ${suffix}` : suffix;
-    return { ...branch, name };
-  });
-
-  const theme = (company?.theme_config as unknown as TenantPageThemeConfig) ?? {};
-  const name = theme.displayName || company.name || resolvedParams.subdomain || "Gcode";
-  const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
-  const logoUrl = await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id)) || null;
-
-  return (
-    <HomeClient
-      name={name}
-      logoUrl={logoUrl}
-      schedule={staticData.businessInfo?.schedule ?? null}
-      branches={branchesWithStatus}
-      publicSlug={resolvedParams.subdomain}
-    />
-  );
+  return <HomePageView model={model} publicSlug={subdomain} adminHref={panelBase ? `${panelBase}/` : null} />;
 }

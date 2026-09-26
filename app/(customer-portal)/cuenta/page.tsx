@@ -33,7 +33,7 @@ const getCachedActivePlans = unstable_cache(
     return data ?? [];
   },
   ["customer-account-plans-catalog-public"],
-  { revalidate: 600 },
+  { revalidate: 600, tags: ["tag:plans"] },
 );
 
 const getCachedActiveAddons = unstable_cache(
@@ -46,7 +46,7 @@ const getCachedActiveAddons = unstable_cache(
     return data ?? [];
   },
   ["customer-account-addons-catalog"],
-  { revalidate: 600 },
+  { revalidate: 600, tags: ["tag:addons"] },
 );
 
 type TicketRow = {

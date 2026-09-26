@@ -8,6 +8,8 @@ export function buildModalBranchItems(
 	branches: BranchInfo[],
 	openBranchIds: string[] | undefined,
 	hasOpenBranches: boolean,
+	/** Textos de la insignia ya traducidos (antes iba «ABIERTO»/«CERRADO» fijo en español). */
+	labels: { open: string; closed: string },
 ): BranchModalItem[] {
 	const branchesWithOpenCaja = (openBranchIds ?? []).map(String);
 
@@ -30,7 +32,7 @@ export function buildModalBranchItems(
 						</div>
 						<span className={`branch-status-badge ${isOpen ? "status-open" : "status-closed"}`}>
 							{isOpen ? <span className="status-dot" /> : null}
-							{isOpen ? "ABIERTO" : "CERRADO"}
+							{isOpen ? labels.open : labels.closed}
 						</span>
 					</div>
 				),

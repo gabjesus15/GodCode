@@ -341,7 +341,13 @@
         },
         "previewMap": {
           "locationLabel": "Location on map",
-          "openMap": "Open map"
+          "openInGoogleMaps": "Google Maps",
+          "adjust": "Adjust pin",
+          "adjustHint": "Move the map to your door",
+          "confirm": "Confirm pin",
+          "cancel": "Cancel",
+          "zoomIn": "Zoom in",
+          "zoomOut": "Zoom out"
         },
         "notes": {
           "addTab": "Add note",
@@ -405,6 +411,10 @@
         "delivery": {
           "pickNamedArea": "Choose an area",
           "selectAreaAria": "Select delivery area",
+          "zoneSearch": "Search area",
+          "zoneSearchClear": "Clear search",
+          "zoneNoResults": "No areas match “{query}”.",
+          "zoneClose": "Close",
           "geoNotAvailable": "Your browser cannot access location. Type your address.",
           "geoNeedsHttps": "Location only works on HTTPS (or localhost). Open the site with https.",
           "searchingLocation": "Searching location...",
@@ -442,7 +452,7 @@
           "calculatingWithLocation": "Calculating shipping with your location...",
           "completeDataToContinue": "Complete delivery details to continue.",
           "writeStreetNumberArea": "Enter street, number and {area}; we calculate the fee from the store's zones.",
-          "approxHint": "This location is approximate: the map may be far from your door. Adjust the street or use your current location.",
+          "approxHint": "Approximate location: tap “Adjust pin” and move the map to your door so the driver finds you.",
           "areaLabel": {
             "commune": "Commune",
             "municipality": "Municipality or city",
@@ -709,6 +719,63 @@
       "poweredBy": {
         "madeWith": "Made with",
         "aria": "Made with {brand}: digital menu and online ordering"
+      }
+    },
+    "home": {
+      "links": {
+        "menu": "See the menu",
+        "whatsapp": "WhatsApp",
+        "instagram": "Instagram",
+        "location": "Get directions",
+        "phone": "Call"
+      },
+      "linksAria": "{name} links",
+      "logoAlt": "{name} logo",
+      "admin": "Staff access",
+      "share": {
+        "label": "Share",
+        "copied": "Link copied"
+      },
+      "status": {
+        "open": "Open now",
+        "closed": "Closed now",
+        "partial": "{open} of {total} locations open"
+      },
+      "socials": {
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "facebook": "Facebook",
+        "youtube": "YouTube",
+        "x": "X",
+        "whatsapp": "WhatsApp",
+        "email": "Email",
+        "website": "Website"
+      },
+      "branches": {
+        "title": {
+          "whatsapp": "Which location do you want to message?",
+          "instagram": "Which location do you want to see?",
+          "location": "Which location are you going to?",
+          "phone": "Which location do you want to call?"
+        },
+        "count": "{count, plural, one {# location} other {# locations}} to choose from",
+        "open": "Open",
+        "closed": "Closed",
+        "close": "Close",
+        "unnamed": "Location"
+      },
+      "schedule": {
+        "title": "Opening hours"
+      },
+      "gcode": {
+        "label": "Create your menu",
+        "aria": "Create your digital menu with {brand}"
+      },
+      "qr": {
+        "title": "Open the menu on your phone",
+        "hint": "Point your camera at the code",
+        "copy": "Copy link",
+        "alt": "Menu QR code"
       }
     }
   }

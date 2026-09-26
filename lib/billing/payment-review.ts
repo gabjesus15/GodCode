@@ -248,12 +248,17 @@ export async function applyPortalPayment(
 				return { ok: false, error: "No se pudo aplicar el plan de la renovación.", status: 500 };
 			}
 		}
-		await activateCompanySubscription({
-			supabaseAdmin,
-			companyId: company.id,
-			monthsPaid: getMonthsPaidFromPayment({ months_paid: payment.months_paid }, 1),
-			now,
-		});
+		try {
+			await activateCompanySubscription({
+				supabaseAdmin,
+				companyId: company.id,
+				monthsPaid: getMonthsPaidFromPayment({ months_paid: payment.months_paid }, 1),
+				now,
+			});
+		} catch {
+			await release();
+			return { ok: false, error: "No se pudo renovar la suscripción; el pago quedó para revisión.", status: 500 };
+		}
 		const { data: renewed } = await supabaseAdmin
 			.from("companies")
 			.select("subscription_ends_at")
@@ -272,7 +277,7 @@ export async function applyPortalPayment(
 			return { ok: false, error: "No encontramos el extra de este pago.", status: 400 };
 		}
 		const { isMonthly } = resolveAddonUnitPrice(addon);
-		await supabaseAdmin.from("company_addons").upsert(
+		const { error: addonError } = await supabaseAdmin.from("company_addons").upsert(
 			{
 				company_id: company.id,
 				addon_id: addon.id,
@@ -284,14 +289,24 @@ export async function applyPortalPayment(
 			},
 			{ onConflict: "company_id,addon_id" },
 		);
+		if (addonError) {
+			await release();
+			return { ok: false, error: "No se pudo activar el extra; el pago quedó para revisión.", status: 500 };
+		}
 		message = "Pago validado: el extra quedó activo.";
 		detail = isMonthly ? "Se renueva junto con tu plan." : undefined;
 	} else {
 		// Sucursales extra: se activa la compra ligada a este pago.
-		await supabaseAdmin
+		const { data: entitlements, error: entitlementError } = await supabaseAdmin
 			.from("company_branch_extra_entitlements")
 			.update({ status: "active", starts_at: now.toISOString(), expires_at: endsAt, updated_at: now.toISOString() })
-			.eq("payment_id", payment.id);
+			.eq("payment_id", payment.id)
+			.select("id");
+		// Sin fila ligada al pago no hay nada que habilitar: decirlo, no darlo por hecho.
+		if (entitlementError || !entitlements?.length) {
+			await release();
+			return { ok: false, error: "No se pudo habilitar la sucursal extra; el pago quedó para revisión.", status: 500 };
+		}
 		message = "Pago validado: la sucursal extra quedó habilitada.";
 		detail = "Nuestro equipo crea la sucursal y te avisa por Soporte.";
 	}

@@ -18,6 +18,15 @@ export function publicApiCorsHeaders(request: NextRequest): Headers {
 	return headers;
 }
 
+/** Respuesta 204 al preflight (OPTIONS) de una API pública; sin cabeceras CORS si no hay orígenes configurados. */
+export function publicApiPreflightResponse(request: NextRequest): NextResponse {
+	const cors = publicApiCorsHeaders(request);
+	if ([...cors.keys()].length === 0) {
+		return new NextResponse(null, { status: 204 });
+	}
+	return new NextResponse(null, { status: 204, headers: cors });
+}
+
 export function jsonWithPublicCors(
 	request: NextRequest,
 	body: unknown,

@@ -1,5 +1,3 @@
-import { getAppUrl } from "./app-url";
-
 export function resolveTenantPanelLoginUrl(publicSlug: string | null): string {
 	if (!publicSlug) return "/login?error=no-access";
 	const baseDomain = process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN?.trim()
@@ -19,10 +17,4 @@ export function resolveSalesPanelUrl(publicSlug: string | null): string {
 	const base = (process.env.NEXT_PUBLIC_TENANT_PANEL_URL ?? "").trim().replace(/\/$/, "");
 	if (base) return `${base}/`;
 	return publicSlug ? resolveTenantPanelLoginUrl(publicSlug) : "";
-}
-
-export function resolveCustomerPortalUrl(path = "/cuenta"): string {
-	const base = getAppUrl().replace(/\/$/, "");
-	const normalized = path.startsWith("/") ? path : `/${path}`;
-	return `${base}${normalized}`;
 }

@@ -6,7 +6,11 @@ import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { buildTenantThemeCssString } from "@/lib/store-theme/apply-theme-css-vars";
 import { buildTenantSurfaceCssString, resolveTenantSurfaceSchemeAttr, resolveTenantSurfaceSchemeMode } from "@/lib/store-theme/surface-theme";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
+import { readThemeConfigObject } from "@/lib/store-theme/merge-theme-config";
+import { sanitizeHexColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
+import { readHomePageConfig } from "@/lib/tenant/home-page/home-page-config";
+import { buildTenantShareImage } from "@/lib/tenant/share-card/share-image-metadata";
 import { getCachedCompany } from "../../utils/tenant-cache";
 import "./styles/TenantUiPrimitives.css";
 import "./styles/index.css";
@@ -14,7 +18,7 @@ import "./tenant-base.css";
 import { TenantShell } from "../../components/tenant/shell/tenant-shell";
 import { QueryProvider } from "@/components/ui/query-provider";
 import { resolveStorefrontThemeAssets } from "@/lib/storage/storefront-branding";
-import { buildTenantStorefrontDescription } from "@/lib/tenant/seo-metadata";
+import { buildTenantStorefrontDescription, resolveTenantDisplayName } from "@/lib/tenant/seo-metadata";
 import { serializeJsonLd } from "@/lib/seo/serialize-json-ld";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 
@@ -28,19 +32,11 @@ export async function generateViewport({
 }): Promise<Viewport> {
   const resolvedParams = await params;
   const company = await getCachedCompany(resolvedParams.subdomain);
-  const rawThemeConfig = company?.theme_config;
-  const parsedThemeConfig =
-    typeof rawThemeConfig === "string"
-      ? (() => {
-          try {
-            return JSON.parse(rawThemeConfig) as TenantThemeConfig;
-          } catch {
-            return {} as TenantThemeConfig;
-          }
-        })()
-      : ((rawThemeConfig as unknown as TenantThemeConfig) ?? {});
-  
-  const backgroundColor = parsedThemeConfig.backgroundColor ?? "#0a0a0a";
+  const theme = readThemeConfigObject(company?.theme_config);
+  const backgroundColor = sanitizeHexColor(
+    typeof theme.backgroundColor === "string" ? theme.backgroundColor : "",
+    "#0a0a0a",
+  );
 
   return {
     width: "device-width",
@@ -61,28 +57,6 @@ export async function generateViewport({
 interface TenantLayoutProps {
   children: ReactNode;
   params: Promise<{ subdomain: string }>;
-}
-
-function formatBusinessNameFromSlug(slug: string): string {
-  return slug
-    .split("-")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .map((part) => part[0].toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-interface TenantThemeConfig {
-  displayName?: string;
-  primaryColor?: string;
-  secondaryColor?: string;
-  priceColor?: string;
-  discountColor?: string;
-  hoverColor?: string;
-  backgroundColor?: string;
-  backgroundImageUrl?: string;
-  logoUrl?: string;
-  imageUrl?: string;
 }
 
 export async function generateMetadata({
@@ -114,23 +88,7 @@ export async function generateMetadata({
     return { title: { absolute: "Gcode POS" } };
   }
 
-  const rawThemeConfig = company.theme_config;
-  const parsedThemeConfig =
-    typeof rawThemeConfig === "string"
-      ? (() => {
-          try {
-            return JSON.parse(rawThemeConfig) as TenantThemeConfig;
-          } catch {
-            return {} as TenantThemeConfig;
-          }
-        })()
-      : ((rawThemeConfig as unknown as TenantThemeConfig) ?? {});
-  const theme = parsedThemeConfig;
-  const slugFallback = formatBusinessNameFromSlug(resolvedParams.subdomain);
-  const name =
-    (typeof theme.displayName === "string" && theme.displayName.trim().length > 0
-      ? theme.displayName.trim()
-      : company.name?.trim()) || slugFallback || "Gcode";
+  const name = resolveTenantDisplayName(company, { slug: resolvedParams.subdomain });
   const versionSeed = tenantBrandingIconVersionSeed(company);
   const icon = `/tenant-favicon?tenant=${encodeURIComponent(resolvedParams.subdomain)}&v=${encodeURIComponent(versionSeed)}`;
   const description = buildTenantStorefrontDescription({
@@ -148,6 +106,10 @@ export async function generateMetadata({
     ? `https://${customDomain}/`
     : `${baseOrigin}${pathPrefix}/`;
   const ogUrl = canonical;
+  // Al compartir, la frase del local (si la escribió) dice más que la genérica.
+  const bio = readHomePageConfig(company.theme_config).bio.trim();
+  const shareDescription = bio ? `${bio} · Menú digital y pedidos online.` : description;
+  const shareImage = buildTenantShareImage({ pathPrefix, versionSeed, name });
 
   return {
     metadataBase,
@@ -171,23 +133,17 @@ export async function generateMetadata({
     },
     openGraph: {
       title: name,
-      description: description,
+      description: shareDescription,
       type: 'website',
       siteName: name,
       url: ogUrl,
-      images: [
-        {
-          url: `${pathPrefix}/opengraph-image`,
-          width: 1200,
-          height: 630,
-          alt: `Menú de ${name}`,
-        },
-      ],
+      images: [shareImage],
     },
     twitter: {
       card: 'summary_large_image',
       title: name,
-      description: description,
+      description: shareDescription,
+      images: [shareImage],
     },
     robots: {
       index: true,
@@ -249,7 +205,11 @@ export default async function TenantLayout({
     "name": businessName,
     "url": businessUrl,
     ...(stableLogoUrl ? { "logo": stableLogoUrl } : {}),
-    "image": `${baseUrl}/opengraph-image`,
+    ...(company
+      ? {
+          "image": `${baseUrl}${buildTenantShareImage({ pathPrefix: "", versionSeed: tenantBrandingIconVersionSeed(company), name: businessName }).url}`,
+        }
+      : {}),
     "description": businessDescription,
     "address": {
       "@type": "PostalAddress",

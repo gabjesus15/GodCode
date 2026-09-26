@@ -1,23 +1,16 @@
+import { normalizePlanToken } from "./plan-tokens";
+
 export type PlanFeaturesPayload = Record<string, unknown>;
 
 const INCLUDED_ALIASES = ["included_addons", "addons_included", "includes_addons", "plan_addons_included"];
 const BLOCKED_ALIASES = ["blocked_addons", "addons_blocked", "excluded_addons", "plan_addons_blocked"];
 const ALLOWED_ALIASES = ["allowed_addons", "addons_allowed", "plan_addons_allowed"];
 
-function normalizeToken(input: string | null | undefined): string {
-  return String(input ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-}
-
 function toStringArray(raw: unknown): string[] {
   if (Array.isArray(raw)) {
     const set = new Set<string>();
     for (const item of raw) {
-      const token = normalizeToken(typeof item === "string" ? item : String(item ?? ""));
+      const token = normalizePlanToken(typeof item === "string" ? item : String(item ?? ""));
       if (token) set.add(token);
     }
     return [...set];
@@ -26,7 +19,7 @@ function toStringArray(raw: unknown): string[] {
   if (typeof raw === "string") {
     const parts = raw
       .split(/[\n,;|]/g)
-      .map((part) => normalizeToken(part))
+      .map((part) => normalizePlanToken(part))
       .filter(Boolean);
     return [...new Set(parts)];
   }

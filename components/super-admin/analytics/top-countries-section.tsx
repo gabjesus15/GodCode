@@ -6,6 +6,8 @@ import { SaasDataTable } from "@/components/super-admin/shared/saas-data-table";
 import { useSaasListAnimate } from "@/components/super-admin/shared/use-saas-list-animate";
 import { countryFlagEmoji } from "@/utils/country-flag";
 
+import { AnalyticsProgressBar } from "./analytics-progress-bar";
+
 interface CountryRow {
   countryCode: string;
   views: number;
@@ -14,18 +16,6 @@ interface CountryRow {
 
 interface Props {
   countriesTop: CountryRow[];
-}
-
-function ProgressBar({ value, max }: { value: number; max: number }) {
-  const pct = max > 0 ? Math.max(1, Math.round((value / max) * 100)) : 0;
-  return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-      <div
-        className="h-full rounded-full bg-blue-500 transition-all duration-500"
-        style={{ width: `${pct}%` }}
-      />
-    </div>
-  );
 }
 
 export function TopCountriesSection({ countriesTop }: Props) {
@@ -74,7 +64,7 @@ export function TopCountriesSection({ countriesTop }: Props) {
                   <span className="block text-xs font-semibold text-zinc-900 dark:text-zinc-100">
                     {r.views.toLocaleString("es-CL")}
                   </span>
-                  <ProgressBar value={r.views} max={maxViews} />
+                  <AnalyticsProgressBar value={r.views} max={maxViews} />
                 </div>
               ),
             },

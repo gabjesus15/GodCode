@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
+import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateSuperAdminAccess } from "@/utils/admin/server-auth";
 
 /** @service-role super-admin */
 
@@ -59,36 +59,8 @@ const toDto = (row: BroadcastRow) => ({
   updatedAt: row.updated_at,
 });
 
-async function validateSaasRead() {
-  const result = await validateAdminRolesOnServer([...SAAS_READ_ROLES]);
-  if (!result.ok) {
-    return {
-      ok: false as const,
-      response: NextResponse.json(
-        { error: result.error ?? "No autorizado" },
-        { status: result.status }
-      ),
-    };
-  }
-  return { ok: true as const, email: result.email ?? null };
-}
-
-async function validateSaasMutate() {
-  const result = await validateAdminRolesOnServer([...SAAS_MUTATE_ROLES]);
-  if (!result.ok) {
-    return {
-      ok: false as const,
-      response: NextResponse.json(
-        { error: result.error ?? "No autorizado" },
-        { status: result.status }
-      ),
-    };
-  }
-  return { ok: true as const, email: result.email ?? null };
-}
-
 export async function GET() {
-  const access = await validateSaasRead();
+  const access = await validateSuperAdminAccess(SAAS_READ_ROLES);
   if (!access.ok) return access.response;
 
   const { data, error } = await supabaseAdmin
@@ -105,7 +77,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const access = await validateSaasMutate();
+  const access = await validateSuperAdminAccess(SAAS_MUTATE_ROLES);
   if (!access.ok) return access.response;
 
   const body = await req.json();
@@ -175,7 +147,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const access = await validateSaasMutate();
+  const access = await validateSuperAdminAccess(SAAS_MUTATE_ROLES);
   if (!access.ok) return access.response;
 
   const body = await req.json();
@@ -234,7 +206,7 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const access = await validateSaasMutate();
+  const access = await validateSuperAdminAccess(SAAS_MUTATE_ROLES);
   if (!access.ok) return access.response;
 
   const body = await req.json();

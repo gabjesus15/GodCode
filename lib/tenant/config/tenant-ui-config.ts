@@ -1,6 +1,4 @@
 export const TENANT_UI_CONFIG = {
-	/** Breakpoint móvil — CSS + lógica JS */
-	mobileMaxWidthPx: 768,
 	/** Máximo de imágenes next/image con priority en toda la página menú */
 	priorityImageMax: 6,
 	/** Activar virtualización en scroll mode si productos visibles >= este valor */
@@ -15,6 +13,8 @@ export const TENANT_UI_CONFIG = {
 } as const;
 
 export const TENANT_OVERLAY_PRIORITIES = {
+	/** Hoja de zonas de reparto: vive dentro del carrito, así que va por encima de él. */
+	zoneSheet: 61,
 	contactSheet: 60,
 	contactBranch: 59,
 	productDetails: 55,
@@ -22,8 +22,3 @@ export const TENANT_OVERLAY_PRIORITIES = {
 	megaMenu: 51,
 	cart: 50,
 } as const;
-
-export function isTenantMobileViewport(): boolean {
-	if (typeof window === "undefined") return false;
-	return window.matchMedia(`(max-width: ${TENANT_UI_CONFIG.mobileMaxWidthPx}px)`).matches;
-}

@@ -1,4 +1,5 @@
 import { normalizeMarketingLines } from "./plan-marketing-lines";
+import { normalizePlanToken, toPlainRecord } from "./plan-tokens";
 
 type GenericObject = Record<string, unknown>;
 
@@ -27,34 +28,20 @@ export type AddonOfferDecision = {
   matchedBy: "feature_policy" | "heuristic" | "default";
 };
 
-function normalizeToken(input: string | null | undefined): string {
-  return String(input ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-}
-
-function toObject(input: unknown): GenericObject {
-  if (!input || typeof input !== "object" || Array.isArray(input)) return {};
-  return input as GenericObject;
-}
-
 function toStringList(input: unknown): string[] {
   if (!Array.isArray(input)) return [];
   const out: string[] = [];
   for (const item of input) {
-    const token = normalizeToken(typeof item === "string" ? item : String(item ?? ""));
+    const token = normalizePlanToken(typeof item === "string" ? item : String(item ?? ""));
     if (token) out.push(token);
   }
   return out;
 }
 
 function getFeatureValue(features: GenericObject, keys: string[]): unknown {
-  const normalized = new Set(keys.map((key) => normalizeToken(key)).filter(Boolean));
+  const normalized = new Set(keys.map((key) => normalizePlanToken(key)).filter(Boolean));
   for (const [key, value] of Object.entries(features)) {
-    if (normalized.has(normalizeToken(key))) {
+    if (normalized.has(normalizePlanToken(key))) {
       return value;
     }
   }
@@ -71,7 +58,7 @@ function hasFeatureTruthy(features: GenericObject, keys: string[]): boolean {
   if (typeof value === "boolean") return value;
   if (typeof value === "number") return value > 0;
   if (typeof value === "string") {
-    const token = normalizeToken(value);
+    const token = normalizePlanToken(value);
     return token === "true" || token === "yes" || token === "si" || token === "enabled";
   }
   return false;
@@ -81,11 +68,11 @@ function normalizeAddonMatcher(addon: AddonOfferSnapshot): Set<string> {
   const tokens = new Set<string>();
   const source = [addon.id, addon.slug, addon.name, addon.type, addon.description];
   for (const item of source) {
-    const token = normalizeToken(item);
+    const token = normalizePlanToken(item);
     if (token) tokens.add(token);
   }
 
-  const slug = normalizeToken(addon.slug);
+  const slug = normalizePlanToken(addon.slug);
   if (slug === "custom_domain") {
     tokens.add("dominio_propio");
     tokens.add("custom_domain");
@@ -108,7 +95,7 @@ function matchesTokenSet(matchers: Set<string>, values: Set<string>): boolean {
 }
 
 function inferCapabilities(plan: PlanOfferSnapshot): Set<string> {
-  const features = toObject(plan.features);
+  const features = toPlainRecord(plan.features);
   const caps = new Set<string>();
 
   if (
@@ -128,7 +115,7 @@ function inferCapabilities(plan: PlanOfferSnapshot): Set<string> {
     caps.add("custom_domain_included");
   }
 
-  const lines = normalizeMarketingLines(plan.marketing_lines).map((line) => normalizeToken(line));
+  const lines = normalizeMarketingLines(plan.marketing_lines).map((line) => normalizePlanToken(line));
   for (const line of lines) {
     if (line.includes("personalizacion") || line.includes("plantilla_personalizada") || line.includes("customization")) {
       caps.add("branding_included");
@@ -150,7 +137,7 @@ export function resolveAddonOfferForPlan(plan: PlanOfferSnapshot | null, addon: 
     };
   }
 
-  const features = toObject(plan.features);
+  const features = toPlainRecord(plan.features);
   const included = new Set(
     getFeatureStringList(features, ["included_addons", "addons_included", "includes_addons", "plan_addons_included"])
   );
@@ -188,7 +175,7 @@ export function resolveAddonOfferForPlan(plan: PlanOfferSnapshot | null, addon: 
   }
 
   const caps = inferCapabilities(plan);
-  const addonSlug = normalizeToken(addon.slug);
+  const addonSlug = normalizePlanToken(addon.slug);
 
   if (addonSlug === "branding" && caps.has("branding_included")) {
     return {

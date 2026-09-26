@@ -4,6 +4,7 @@ import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { mergePublicPaymentConfig, sanitizeBranchPaymentMethods } from "@/lib/payments/branch-payment-config";
+import { parseBranchContactUrlInput } from "@/lib/tenant/home-page/home-page-config";
 
 /** @service-role customer-account */
 
@@ -83,9 +84,32 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "El ID de la sucursal es requerido" }, { status: 400 });
   }
 
-  if (!name || !name.trim()) {
+  if (typeof name !== "string" || !name.trim()) {
     return NextResponse.json({ error: "El nombre de la sucursal es requerido" }, { status: 400 });
   }
+
+  // Los enlaces acaban en un `href` de la página pública: solo direcciones web válidas.
+  const contactUrls: Record<string, string | null> = {};
+  for (const [field, label, raw] of [
+    ["whatsapp_url", "WhatsApp", whatsapp_url],
+    ["instagram_url", "Instagram", instagram_url],
+    ["map_url", "Google Maps", map_url],
+  ] as const) {
+    const parsed = parseBranchContactUrlInput(raw ?? null);
+    if (!parsed.ok) {
+      return NextResponse.json(
+        { error: `El enlace de ${label} no es válido. Pega la dirección completa (https://…).`, field },
+        { status: 400 },
+      );
+    }
+    contactUrls[field] = parsed.value ?? null;
+  }
+
+  const toCoordinate = (value: unknown): number | null => {
+    if (value == null || value === "") return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
 
   // Verify branch ownership and get current pause state + payment configs
   const { data: branch, error: fetchError } = await supabaseAdmin
@@ -128,14 +152,12 @@ export async function PUT(req: NextRequest) {
     .from("branches")
     .update({
       name: name.trim(),
-      address: address ? address.trim() : null,
-      phone: phone ? phone.trim() : null,
-      schedule: schedule ? schedule.trim() : null,
-      instagram_url: instagram_url ? instagram_url.trim() : null,
-      whatsapp_url: whatsapp_url ? whatsapp_url.trim() : null,
-      map_url: map_url ? map_url.trim() : null,
-      origin_lat: origin_lat != null ? Number(origin_lat) : null,
-      origin_lng: origin_lng != null ? Number(origin_lng) : null,
+      address: typeof address === "string" && address.trim() ? address.trim() : null,
+      phone: typeof phone === "string" && phone.trim() ? phone.trim() : null,
+      schedule: typeof schedule === "string" && schedule.trim() ? schedule.trim() : null,
+      ...contactUrls,
+      origin_lat: toCoordinate(origin_lat),
+      origin_lng: toCoordinate(origin_lng),
       payment_methods: sanitizeBranchPaymentMethods(payment_methods) ?? [],
       // Solo datos públicos: el menú los lee con la clave anónima y los enseña al cliente.
       pago_movil: mergePublicPaymentConfig("pago_movil", pago_movil, branch.pago_movil),

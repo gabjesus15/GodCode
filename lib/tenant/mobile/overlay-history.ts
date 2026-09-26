@@ -12,14 +12,12 @@ export type OverlayHistoryHandler = {
 const handlers: OverlayHistoryHandler[] = [];
 const depthBySource = new Map<string, number>();
 let listenerInstalled = false;
-let programmaticNav = false;
 let pushedDepth = 0;
 
 function installPopstateListener() {
 	if (listenerInstalled || typeof window === "undefined") return;
 	listenerInstalled = true;
 	window.addEventListener("popstate", () => {
-		if (programmaticNav) return;
 		const sorted = [...handlers].sort((a, b) => b.priority - a.priority);
 		for (const handler of sorted) {
 			if (!handler.isActive()) continue;
@@ -41,16 +39,6 @@ export function pushOverlayHistoryState(label?: string) {
 	if (typeof window === "undefined") return;
 	window.history.pushState({ gcOverlay: label ?? true }, "");
 	pushedDepth += 1;
-}
-
-export function navigateOverlayHistoryBack(steps: number) {
-	if (typeof window === "undefined" || steps <= 0) return;
-	programmaticNav = true;
-	pushedDepth = Math.max(0, pushedDepth - steps);
-	window.history.go(-steps);
-	window.setTimeout(() => {
-		programmaticNav = false;
-	}, 0);
 }
 
 function syncGlobalHistoryDepth(targetDepth: number) {
@@ -103,14 +91,4 @@ export function useOverlayHistoryHandler(handler: OverlayHistoryHandler) {
 			onPop: () => handlerRef.current.onPop(),
 		});
 	}, [handler.id, handler.priority]);
-}
-
-export function getOverlayHistoryDepth(sourceId: string): number {
-	return depthBySource.get(sourceId) ?? 0;
-}
-
-export function clearOverlayHistoryDepth(sourceId: string) {
-	depthBySource.delete(sourceId);
-	const nextTotal = [...depthBySource.values()].reduce((sum, value) => sum + value, 0);
-	syncGlobalHistoryDepth(nextTotal);
 }

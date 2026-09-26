@@ -41,6 +41,10 @@
 	--cart-r-lg: 18px;
 	--cart-shadow-panel: -12px 0 40px rgba(0, 0, 0, 0.45);
 	--cart-shadow-pop: 0 14px 34px -12px rgba(0, 0, 0, 0.7);
+	/* Superficies que flotan sobre el panel: desplegables y hojas inferiores. */
+	--cart-pop-bg: var(--cart-raised-2);
+	--cart-sheet-bg: var(--cart-raised);
+	--cart-scrim: rgba(0, 0, 0, 0.5);
 	--cart-ease: cubic-bezier(0.16, 1, 0.3, 1);
 	/* Por encima de la barra inferior (--z-modal + 20) y del mega menú: el
 	   carrito es la última capa del menú, nada del sitio debe taparlo. */
@@ -79,6 +83,9 @@
 	--cart-overlay-bg: rgba(31, 27, 22, 0.42);
 	--cart-shadow-panel: -8px 0 32px rgba(31, 27, 22, 0.16);
 	--cart-shadow-pop: 0 14px 34px -12px rgba(31, 27, 22, 0.28);
+	--cart-pop-bg: #ffffff;
+	--cart-sheet-bg: #ffffff;
+	--cart-scrim: rgba(31, 27, 22, 0.36);
 }
 
 /* Cierre: el panel queda montado ~200 ms (ver menu-cart-layer) para salir con calma. */
@@ -1357,7 +1364,21 @@ textarea.cart-field {
 	flex-shrink: 0;
 	display: grid;
 	place-items: center;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: var(--cart-accent-soft);
 	color: var(--cart-accent-ink);
+}
+
+.cart-locate__btn[data-loading] .cart-locate__icon svg {
+	animation: cart-locate-spin 0.9s linear infinite;
+}
+
+@keyframes cart-locate-spin {
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 .cart-locate__text {
@@ -1408,19 +1429,10 @@ textarea.cart-field {
 	overflow: hidden;
 }
 
-.cart-address-card .cart-delivery-preview-map {
+.cart-address-card .cart-map {
 	border: 0;
 	border-radius: 0;
 	border-bottom: 1px solid var(--cart-line);
-}
-
-/* La tarjeta ya dice que es la dirección de entrega: el rótulo del mapa sobra. */
-.cart-address-card .cart-delivery-preview-map-head {
-	justify-content: flex-end;
-}
-
-.cart-address-card .cart-delivery-preview-map-label {
-	display: none;
 }
 
 .cart-address-card__body {
@@ -1623,126 +1635,773 @@ textarea.cart-field {
 	animation: cart-ship-wait 1.4s ease-in-out infinite;
 }
 
-.cart-delivery-preview-map {
-	border-radius: var(--cart-r-md);
+/* —— Mapa del punto de entrega ————————————————————————————————————————————
+   Teselas en neutros (en oscuro, invertidas) para que mande el pin del local.
+   El pin es fijo en el centro: al ajustar se mueve el mapa, no el pin. */
+.cart-map {
+	position: relative;
 	overflow: hidden;
+	isolation: isolate;
+	border-radius: var(--cart-r-md);
 	border: 1px solid var(--cart-line);
-	background: var(--cart-raised);
+	background: var(--cart-raised-2);
 }
 
-.cart-delivery-preview-map-head {
+.cart-map__canvas {
+	width: 100%;
+	height: 152px;
+	background: var(--cart-raised-2);
+}
+
+.cart-map[data-adjusting] .cart-map__canvas {
+	height: 288px;
+}
+
+.cart-map .leaflet-container {
+	font: inherit;
+	outline: none;
+	background: var(--cart-raised-2);
+}
+
+.cart-map .leaflet-tile-pane {
+	filter: grayscale(0.92) contrast(0.92) brightness(1.03);
+}
+
+/* Las teselas se solapan medio píxel: en pantallas de alta densidad Leaflet
+   deja costuras de 1px entre ellas, muy visibles con el filtro oscuro. */
+.cart-map .leaflet-tile-container img {
+	width: 256.5px !important;
+	height: 256.5px !important;
+}
+
+.cart-overlay:not([data-scheme="light"]) .cart-map .leaflet-tile-pane {
+	filter: invert(1) hue-rotate(180deg) grayscale(0.9) brightness(0.92) contrast(0.86);
+}
+
+.cart-map .leaflet-control-attribution {
+	margin: 0;
+	padding: 1px 6px;
+	border-top-left-radius: 6px;
+	background: color-mix(in srgb, var(--cart-bg) 72%, transparent);
+	color: var(--cart-fg-3);
+	font-size: 9.5px;
+	line-height: 1.6;
+}
+
+.cart-map .leaflet-control-attribution a {
+	color: inherit;
+}
+
+.cart-map__pin {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	z-index: 500;
+	width: 32px;
+	height: 42px;
+	transform: translate(-50%, -100%);
+	filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+	transition: transform 0.22s var(--cart-ease);
+	pointer-events: none;
+}
+
+.cart-map__pin svg {
+	display: block;
+}
+
+.cart-map__pin-body {
+	fill: var(--cart-accent);
+	stroke: #fff;
+	stroke-width: 1.5;
+}
+
+.cart-map__pin-shadow {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	z-index: 499;
+	width: 14px;
+	height: 5px;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.35);
+	transform: translate(-50%, -50%);
+	transition:
+		transform 0.22s var(--cart-ease),
+		opacity 0.22s ease;
+	pointer-events: none;
+}
+
+/* Mientras el mapa se mueve, el pin se levanta: se ve que el punto está por decidirse. */
+.cart-map[data-moving] .cart-map__pin {
+	transform: translate(-50%, calc(-100% - 10px));
+}
+
+.cart-map[data-moving] .cart-map__pin-shadow {
+	opacity: 0.5;
+	transform: translate(-50%, -50%) scale(1.5);
+}
+
+.cart-map__chips {
+	position: absolute;
+	top: 8px;
+	left: 8px;
+	right: 8px;
+	z-index: 600;
 	display: flex;
-	align-items: center;
 	justify-content: space-between;
 	gap: 8px;
-	padding: 6px 10px;
-	border-bottom: 1px solid var(--cart-line);
+	pointer-events: none;
 }
 
-.cart-delivery-preview-map-label {
-	font-size: 0.75rem;
-	font-weight: 600;
-	color: var(--cart-fg-2);
+.cart-map__chip,
+.cart-map__round,
+.cart-map__btn {
+	border: 1px solid var(--cart-line-strong);
+	background: var(--cart-bg);
+	color: var(--cart-fg);
+	font: inherit;
+	box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.4);
+	cursor: pointer;
 }
 
-.cart-delivery-preview-map-link {
-	flex-shrink: 0;
+.cart-map__chip {
+	pointer-events: auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	height: 30px;
+	padding: 0 11px;
+	border-radius: 999px;
 	font-size: 0.75rem;
 	font-weight: 600;
-	color: var(--cart-accent-ink);
 	text-decoration: none;
-	text-underline-offset: 3px;
+	white-space: nowrap;
 }
 
-.cart-delivery-preview-map-link:hover,
-.cart-delivery-preview-map-link:focus-visible {
-	text-decoration: underline;
+.cart-map__hint {
+	position: absolute;
+	top: 10px;
+	left: 50%;
+	z-index: 600;
+	margin: 0;
+	padding: 6px 12px;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--cart-fg) 88%, transparent);
+	color: var(--cart-bg);
+	font-size: 0.75rem;
+	font-weight: 600;
+	white-space: nowrap;
+	transform: translateX(-50%);
+	pointer-events: none;
 }
 
-.cart-delivery-preview-map-canvas {
-	width: 100%;
-	height: 132px;
-	min-height: 132px;
+.cart-map__zoom {
+	position: absolute;
+	top: 50%;
+	right: 8px;
+	z-index: 600;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	transform: translateY(-50%);
 }
 
-.cart-delivery-preview-map-canvas .leaflet-container {
-	outline: none;
+.cart-map__round {
+	display: grid;
+	place-items: center;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	border-radius: 50%;
 }
 
-.cart-select {
+.cart-map__actions {
+	position: absolute;
+	left: 8px;
+	right: 8px;
+	bottom: 22px;
+	z-index: 600;
+	display: grid;
+	grid-template-columns: 1fr 1.5fr;
+	gap: 8px;
+}
+
+.cart-map__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: 40px;
+	border-radius: var(--cart-r-md);
+	font-size: 0.8125rem;
+	font-weight: 600;
+}
+
+.cart-map__btn--primary {
+	border-color: transparent;
+	background: var(--cart-accent);
+	color: var(--cart-on-accent);
+}
+
+.cart-map__chip:focus-visible,
+.cart-map__round:focus-visible,
+.cart-map__btn:focus-visible {
+	outline: 2px solid var(--cart-accent);
+	outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.cart-map__chip:hover,
+	.cart-map__round:hover,
+	.cart-map__btn:not(.cart-map__btn--primary):hover {
+		border-color: var(--cart-accent);
+		color: var(--cart-accent-ink);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cart-map__pin,
+	.cart-map__pin-shadow {
+		transition: none;
+	}
+
+	.cart-locate__btn[data-loading] .cart-locate__icon svg {
+		animation: none;
+	}
+}
+
+/* --- Zona de reparto --------------------------------------------------------------
+   Un campo que abre la lista de zonas. En computador, un desplegable con buscador
+   bajo el campo; en móvil, una hoja inferior como las del sistema: asa, título,
+   buscador relleno y filas altas con divisores finos. Todo sale de los tokens del
+   carrito, así que sigue al esquema claro u oscuro del local. */
+
+.cart-zone {
 	position: relative;
+	--zone-fill: color-mix(in srgb, var(--cart-fg) 7%, transparent);
+	--zone-fill-strong: color-mix(in srgb, var(--cart-fg) 11%, transparent);
 }
 
-.cart-select.is-open {
+.cart-zone[data-open] {
 	z-index: 5;
 }
 
-.cart-select__trigger {
+.cart-zone__trigger {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
 	gap: 10px;
+	min-height: 52px;
+	padding-block: 7px;
 	text-align: left;
 	cursor: pointer;
 }
 
-.cart-select__value {
+.cart-zone__pin {
+	flex-shrink: 0;
+	color: var(--cart-accent-ink);
+}
+
+.cart-zone__trigger[data-empty] .cart-zone__pin {
+	color: var(--cart-fg-3);
+}
+
+.cart-zone__value {
 	flex: 1;
 	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.cart-zone__sub {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-.cart-select__chevron {
-	flex-shrink: 0;
-	color: var(--cart-fg-2);
-	transition: transform 200ms ease;
+/* Hasta dos líneas: los nombres de zona suelen ser tramos de calle largos. */
+.cart-zone__title {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
+	font-weight: 600;
+	line-height: 1.3;
+	overflow-wrap: anywhere;
 }
 
-.cart-select.is-open .cart-select__chevron {
+.cart-zone__trigger[data-empty] .cart-zone__title {
+	font-weight: 400;
+	color: var(--cart-fg-3);
+}
+
+.cart-zone__sub {
+	font-size: 0.8125rem;
+	line-height: 1.3;
+	color: var(--cart-fg-3);
+}
+
+.cart-zone__fee {
+	flex-shrink: 0;
+	padding: 3px 9px;
+	border-radius: 999px;
+	background: var(--zone-fill);
+	color: var(--cart-fg);
+	font-size: 0.8125rem;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.cart-zone__chevron {
+	flex-shrink: 0;
+	color: var(--cart-fg-3);
+	transition: transform 200ms var(--cart-ease);
+}
+
+.cart-zone[data-open] .cart-zone__chevron {
 	transform: rotate(180deg);
 }
 
-.cart-select__list {
+.cart-zone[data-open] .cart-zone__trigger {
+	border-color: var(--cart-accent-ink);
+	box-shadow: 0 0 0 3px var(--cart-accent-ring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.cart-zone:not([data-open]) .cart-zone__trigger:hover {
+		border-color: color-mix(in srgb, var(--cart-fg) 34%, transparent);
+	}
+}
+
+/* Buscador: plano dentro del desplegable, relleno (estilo sistema) en la hoja. */
+.cart-zone-search {
+	position: relative;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+}
+
+.cart-zone-search__icon {
+	position: absolute;
+	left: 12px;
+	color: var(--cart-fg-3);
+	pointer-events: none;
+}
+
+.cart-zone-search__input {
+	width: 100%;
+	min-height: 44px;
+	padding: 10px 44px 10px 38px;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	color: var(--cart-fg);
+	font: inherit;
+	font-size: 0.9375rem;
+	caret-color: var(--cart-accent-ink);
+	outline: none;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+/* El foco se ve en el cursor y en la lista activa; el anillo general del panel
+   quedaba recortado por el borde del desplegable. */
+.cart-zone-search__input:focus-visible {
+	outline: none;
+}
+
+.cart-zone-search__input::-webkit-search-cancel-button {
+	display: none;
+}
+
+.cart-zone-search__input::placeholder {
+	color: var(--cart-fg-3);
+	opacity: 1;
+}
+
+.cart-zone-search__clear {
+	position: absolute;
+	right: 8px;
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	border-radius: 999px;
+	background: var(--zone-fill-strong);
+	color: var(--cart-fg-2);
+	cursor: pointer;
+}
+
+.cart-zone-search__clear:focus-visible {
+	outline: 2px solid var(--cart-accent-ink);
+	outline-offset: 1px;
+}
+
+/* Lista y filas. */
+.cart-zone-list {
+	margin: 0;
+	padding: 4px;
+	list-style: none;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	scrollbar-width: thin;
+	scrollbar-color: var(--cart-line-strong) transparent;
+	outline: none;
+}
+
+.cart-zone-list:empty {
+	display: none;
+}
+
+.cart-zone-list:focus-visible {
+	box-shadow: inset 0 0 0 2px var(--cart-accent-ring);
+}
+
+.cart-zone-option {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-height: 44px;
+	padding: 8px 10px 8px 12px;
+	border-radius: var(--cart-r-sm);
+	color: var(--cart-fg);
+	cursor: pointer;
+	user-select: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.cart-zone-option[data-active] {
+	background: var(--zone-fill);
+}
+
+.cart-zone-option__text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.cart-zone-option__title {
+	font-size: 0.9375rem;
+	line-height: 1.3;
+	overflow-wrap: anywhere;
+}
+
+.cart-zone-option__sub {
+	font-size: 0.8125rem;
+	line-height: 1.3;
+	color: var(--cart-fg-3);
+}
+
+.cart-zone-option__fee {
+	flex-shrink: 0;
+	font-size: 0.875rem;
+	color: var(--cart-fg-2);
+	font-variant-numeric: tabular-nums;
+}
+
+.cart-zone-option__check {
+	flex-shrink: 0;
+	display: grid;
+	place-items: center;
+	width: 18px;
+	color: var(--cart-accent-ink);
+}
+
+.cart-zone-option[aria-selected="true"] .cart-zone-option__title {
+	font-weight: 600;
+}
+
+.cart-zone-option[aria-selected="true"] .cart-zone-option__fee {
+	color: var(--cart-fg);
+}
+
+.cart-zone-empty {
+	margin: 0;
+	padding: 22px 16px 26px;
+	text-align: center;
+	font-size: 0.875rem;
+	line-height: 1.45;
+	color: var(--cart-fg-3);
+}
+
+/* Desplegable (computador). */
+.cart-zone-pop {
 	position: absolute;
 	left: 0;
 	right: 0;
 	top: calc(100% + 6px);
-	margin: 0;
-	padding: 6px;
-	list-style: none;
-	max-height: min(50vh, 280px);
-	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	max-height: var(--zone-pop-max, 340px);
+	overflow: hidden;
 	border-radius: var(--cart-r-md);
 	border: 1px solid var(--cart-line-strong);
-	background: var(--cart-raised-2);
+	background: var(--cart-pop-bg);
 	box-shadow: var(--cart-shadow-pop);
+	transform-origin: top center;
+	animation: cart-zone-pop-in 160ms var(--cart-ease) both;
 }
 
-.cart-select__option {
-	display: block;
+.cart-zone-pop[data-up] {
+	top: auto;
+	bottom: calc(100% + 6px);
+	transform-origin: bottom center;
+	animation-name: cart-zone-pop-in-up;
+}
+
+.cart-zone-pop .cart-zone-search {
+	border-bottom: 1px solid var(--cart-line);
+}
+
+.cart-zone-pop .cart-zone-list {
+	flex: 1;
+	min-height: 0;
+}
+
+@keyframes cart-zone-pop-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px) scale(0.985);
+	}
+}
+
+@keyframes cart-zone-pop-in-up {
+	from {
+		opacity: 0;
+		transform: translateY(4px) scale(0.985);
+	}
+}
+
+/* Hoja inferior (móvil). El <dialog> va en la capa superior del navegador:
+   tapa la barra del carrito, atrapa el foco y deja el resto inerte. */
+.cart-zone-sheet {
+	--zone-ease: cubic-bezier(0.32, 0.72, 0, 1);
+	--zone-top-gap: max(28px, env(safe-area-inset-top));
+	position: fixed;
+	inset: auto 0 var(--zone-kb, 0px);
 	width: 100%;
-	padding: 10px 12px;
+	max-width: none;
+	height: auto;
+	max-height: none;
+	margin: 0;
+	padding: 0;
 	border: 0;
-	border-radius: var(--cart-r-sm);
 	background: transparent;
 	color: var(--cart-fg);
-	font: inherit;
-	font-size: 0.875rem;
-	text-align: left;
+	overflow: visible;
+}
+
+.cart-zone-sheet::backdrop {
+	background: var(--cart-scrim, rgba(0, 0, 0, 0.45));
+	animation: cart-fade 260ms ease-out backwards;
+	transition: opacity 220ms ease;
+}
+
+.cart-zone-sheet[data-leaving]::backdrop {
+	opacity: 0;
+}
+
+.cart-zone-sheet__panel {
+	display: flex;
+	flex-direction: column;
+	max-height: calc(100dvh - var(--zone-kb, 0px) - var(--zone-top-gap));
+	border-radius: 22px 22px 0 0;
+	background: var(--cart-sheet-bg);
+	box-shadow: 0 -10px 36px rgba(0, 0, 0, 0.18);
+	animation: cart-zone-sheet-in 380ms var(--zone-ease) backwards;
+	transition: transform 300ms var(--zone-ease);
+}
+
+/* Con buscador la hoja tiene alto fijo: filtrar no la hace saltar. */
+.cart-zone-sheet__panel[data-tall] {
+	height: min(86dvh, calc(100dvh - var(--zone-kb, 0px) - var(--zone-top-gap)));
+}
+
+.cart-zone-sheet__panel[data-dragging] {
+	transition: none;
+}
+
+.cart-zone-sheet[data-leaving] .cart-zone-sheet__panel {
+	transform: translateY(100%);
+	transition: transform 220ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+@keyframes cart-zone-sheet-in {
+	from {
+		transform: translateY(100%);
+	}
+}
+
+.cart-zone-sheet__grab {
+	flex-shrink: 0;
+	padding: 8px 14px 6px 20px;
+	touch-action: none;
+	cursor: grab;
+	user-select: none;
+}
+
+.cart-zone-sheet__panel[data-dragging] .cart-zone-sheet__grab {
+	cursor: grabbing;
+}
+
+.cart-zone-sheet__handle {
+	display: block;
+	width: 36px;
+	height: 5px;
+	margin: 0 auto 6px;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--cart-fg) 22%, transparent);
+}
+
+.cart-zone-sheet__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	min-height: 44px;
+}
+
+.cart-zone-sheet__title {
+	margin: 0;
+	font-size: 1.1875rem;
+	font-weight: 700;
+	line-height: 1.2;
+	letter-spacing: -0.01em;
+	color: var(--cart-fg);
+}
+
+.cart-zone-sheet__close {
+	position: relative;
+	flex-shrink: 0;
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 0;
+	border-radius: 999px;
+	background: var(--zone-fill-strong);
+	color: var(--cart-fg-2);
 	cursor: pointer;
-	transition: background-color 120ms ease;
+	-webkit-tap-highlight-color: transparent;
 }
 
-.cart-select__option:hover,
-.cart-select__option:focus-visible {
-	background: var(--cart-raised);
-	outline: none;
+/* Área táctil de 44 px sin agrandar el círculo. */
+.cart-zone-sheet__close::before {
+	content: "";
+	position: absolute;
+	inset: -6px;
 }
 
-.cart-select__option.is-active {
-	background: var(--cart-raised-2);
+.cart-zone-sheet__close:active {
+	background: color-mix(in srgb, var(--cart-fg) 18%, transparent);
+}
+
+.cart-zone-sheet__close:focus-visible {
+	outline: 2px solid var(--cart-accent-ink);
+	outline-offset: 2px;
+}
+
+.cart-zone-sheet .cart-zone-search {
+	margin: 4px 16px 10px;
+}
+
+.cart-zone-sheet .cart-zone-search__icon {
+	left: 11px;
+}
+
+.cart-zone-sheet .cart-zone-search__input {
+	min-height: 40px;
+	padding: 8px 42px 8px 36px;
+	border-radius: 11px;
+	background: var(--zone-fill);
+	/* 16 px: iOS no hace zoom al enfocar. */
+	font-size: 1rem;
+}
+
+.cart-zone-sheet .cart-zone-search__input:focus {
+	box-shadow: 0 0 0 2px var(--cart-accent-ring);
+}
+
+.cart-zone-sheet .cart-zone-search__clear {
+	right: 7px;
+	width: 26px;
+	height: 26px;
+}
+
+.cart-zone-sheet__scroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	border-top: 1px solid var(--cart-line);
+	padding-bottom: calc(10px + env(safe-area-inset-bottom));
+}
+
+.cart-zone-sheet .cart-zone-list {
+	padding: 0;
+	overflow: visible;
+}
+
+.cart-zone-sheet .cart-zone-option {
+	position: relative;
+	gap: 14px;
+	min-height: 58px;
+	padding: 10px 18px 10px 20px;
+	border-radius: 0;
+}
+
+/* Divisor fino desde el texto, como las listas del sistema. */
+.cart-zone-sheet .cart-zone-option + .cart-zone-option::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 20px;
+	right: 0;
+	height: 1px;
+	background: var(--cart-line);
+}
+
+.cart-zone-sheet .cart-zone-option:active {
+	background: var(--zone-fill);
+}
+
+.cart-zone-sheet .cart-zone-option__title {
+	font-size: 1rem;
+}
+
+.cart-zone-sheet .cart-zone-option__fee {
+	font-size: 0.9375rem;
+}
+
+.cart-zone-sheet .cart-zone-option__check {
+	width: 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cart-zone__chevron {
+		transition: none;
+	}
+
+	.cart-zone-pop,
+	.cart-zone-pop[data-up] {
+		animation: cart-fade 120ms ease-out both;
+	}
+
+	.cart-zone-sheet__panel {
+		animation: cart-fade 160ms ease-out backwards;
+		transition: opacity 160ms ease;
+	}
+
+	.cart-zone-sheet[data-leaving] .cart-zone-sheet__panel {
+		transform: none;
+		opacity: 0;
+		transition: opacity 160ms ease;
+	}
 }
 
 /* --- Pago -------------------------------------------------------------------- */
@@ -2222,7 +2881,7 @@ textarea.cart-field {
 .cart-locate__btn,
 .cart-address-card__edit,
 .cart-copy-row,
-.cart-select__trigger,
+.cart-zone__trigger,
 .cart-link-btn {
 	transition-property: background-color, border-color, color, transform, box-shadow, filter;
 	transition-duration: 150ms;

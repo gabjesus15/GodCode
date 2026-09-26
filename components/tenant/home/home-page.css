@@ -1,0 +1,1049 @@
+/* =============================================================================
+   Página de inicio del negocio (link-in-bio). Prefijo `gh-`.
+
+   La marca del local manda: su foto arriba, su logo, su nombre en su
+   tipografía y un único acento (su color primario) en la puerta destacada.
+   Todo lo demás es neutro, sin tinte, en el claro u oscuro que eligió.
+
+   El diseño responde al ancho de `.gh-layout` (container query), no al de la
+   ventana: así se ve igual en la página pública y en el marco de vista previa
+   del editor de /cuenta. El alto de «pantalla» sale de `--gh-viewport-h`
+   (100dvh en la página; el alto del marco en la vista previa).
+   ============================================================================= */
+
+.gh {
+	/* Oscuro por defecto (el sitio nace sobre negro). Los lienzos tienen que
+	   coincidir con SCHEME_CANVAS de resolve-home-page.ts. */
+	--gh-canvas: #111113;
+	--gh-backdrop: #09090a;
+	--gh-surface: #1c1c1f;
+	--gh-surface-hover: #232327;
+	--gh-line: rgba(255, 255, 255, 0.09);
+	--gh-line-strong: rgba(255, 255, 255, 0.2);
+	--gh-fg: #f5f4f2;
+	--gh-fg-2: rgba(245, 244, 242, 0.76);
+	--gh-fg-3: rgba(245, 244, 242, 0.58);
+	--gh-ok: #5fd38d;
+	--gh-shadow-door:
+		0 1px 2px rgba(0, 0, 0, 0.35),
+		0 10px 22px -14px rgba(0, 0, 0, 0.75);
+	--gh-shadow-door-hover:
+		0 2px 4px rgba(0, 0, 0, 0.35),
+		0 18px 32px -16px rgba(0, 0, 0, 0.85);
+	--gh-shadow-sheet:
+		0 2px 6px rgba(0, 0, 0, 0.4),
+		0 40px 90px -30px rgba(0, 0, 0, 0.85);
+	--gh-radius-door: 999px;
+	--gh-radius-card: 28px;
+	--gh-ease: cubic-bezier(0.16, 1, 0.3, 1);
+	/* El acento, la tinta sobre él y la tipografía del nombre llegan en línea
+	   desde el modelo; estos son solo respaldos. */
+	--gh-accent: #e63946;
+	--gh-on-accent: #ffffff;
+
+	color-scheme: dark;
+	position: relative;
+	isolation: isolate;
+	min-height: var(--gh-viewport-h, 100dvh);
+	background: var(--gh-canvas);
+	color: var(--gh-fg);
+	font-family: var(--font-montserrat), "Montserrat", system-ui, sans-serif;
+	font-size: 16px;
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+.gh[data-scheme="light"] {
+	--gh-canvas: #f2f2f2;
+	--gh-backdrop: #dcdcdc;
+	--gh-surface: #ffffff;
+	--gh-surface-hover: #fafafa;
+	--gh-line: #e0e0e0;
+	--gh-line-strong: #c4c4c4;
+	--gh-fg: #151515;
+	--gh-fg-2: rgba(21, 21, 21, 0.76);
+	--gh-fg-3: rgba(21, 21, 21, 0.6);
+	--gh-ok: #1e7f47;
+	--gh-shadow-door:
+		0 1px 2px rgba(0, 0, 0, 0.05),
+		0 8px 20px -12px rgba(0, 0, 0, 0.2);
+	--gh-shadow-door-hover:
+		0 2px 4px rgba(0, 0, 0, 0.06),
+		0 16px 30px -14px rgba(0, 0, 0, 0.26);
+	--gh-shadow-sheet:
+		0 1px 3px rgba(0, 0, 0, 0.06),
+		0 40px 90px -36px rgba(0, 0, 0, 0.35);
+
+	color-scheme: light;
+}
+
+.gh[data-shape="rounded"] {
+	--gh-radius-door: 16px;
+	--gh-radius-card: 24px;
+}
+
+.gh[data-shape="square"] {
+	--gh-radius-door: 6px;
+	--gh-radius-card: 12px;
+}
+
+.gh *,
+.gh *::before,
+.gh *::after {
+	box-sizing: border-box;
+}
+
+.gh ::selection {
+	background: color-mix(in srgb, var(--gh-accent) 32%, transparent);
+	color: var(--gh-fg);
+}
+
+.gh a {
+	color: inherit;
+}
+
+.gh-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* —— Estructura ————————————————————————————————————————————————————————— */
+
+.gh-layout {
+	container: gh / inline-size;
+	position: relative;
+	min-height: inherit;
+}
+
+.gh-backdrop {
+	display: none;
+}
+
+.gh-stage {
+	position: relative;
+	z-index: 1;
+	min-height: inherit;
+}
+
+.gh-sheet {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	min-height: var(--gh-viewport-h, 100dvh);
+	background: var(--gh-canvas);
+	padding-bottom: calc(36px + env(safe-area-inset-bottom, 0px));
+}
+
+/* —— Portada ———————————————————————————————————————————————————————————— */
+
+.gh-cover {
+	position: relative;
+	height: clamp(190px, 56cqi, 264px);
+	overflow: hidden;
+	background: var(--gh-surface);
+}
+
+/* El lienzo sube sobre la portada con las esquinas redondeadas, como una hoja
+   del sistema: la unión deja de ser un corte recto. El radio es el de las
+   tarjetas, así sigue a la forma que eligió el local. */
+.gh-cover::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 1;
+	height: var(--gh-radius-card);
+	border-radius: var(--gh-radius-card) var(--gh-radius-card) 0 0;
+	background: var(--gh-canvas);
+	pointer-events: none;
+}
+
+.gh[data-cover="none"] .gh-cover::before {
+	display: none;
+}
+
+.gh-cover__img {
+	object-fit: cover;
+}
+
+/* Un pie apenas más oscuro que asienta el logo sobre la foto. Arriba solo una
+   sombra corta: el botón de compartir ya lleva su propio disco de cristal, y un
+   velo alto agrisaba las portadas claras. */
+.gh[data-cover="image"] .gh-cover::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background:
+		linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0) 24%),
+		linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0%, rgba(0, 0, 0, 0) 40%);
+	pointer-events: none;
+}
+
+/* Sin foto (o con el menú en fondo sólido): el color del local con luz de su
+   segundo tono y profundidad hacia la esquina opuesta (ver brandCoverFill). */
+.gh[data-cover="brand"] .gh-cover {
+	background: var(--gh-brand-fill, linear-gradient(160deg, var(--gh-accent), color-mix(in srgb, var(--gh-accent) 62%, #000000)));
+}
+
+/* Grano fino: le da cuerpo de impreso y evita bandas en el degradado. */
+.gh[data-cover="brand"] .gh-cover::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+	background-size: 180px 180px;
+	opacity: 0.22;
+	mix-blend-mode: soft-light;
+	pointer-events: none;
+}
+
+.gh[data-cover="none"] .gh-cover {
+	height: calc(68px + env(safe-area-inset-top, 0px));
+	background: transparent;
+}
+
+.gh-topbar {
+	position: absolute;
+	top: max(12px, env(safe-area-inset-top, 0px));
+	left: 12px;
+	right: 12px;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.gh-round {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border-radius: 50%;
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	background: rgba(14, 14, 16, 0.42);
+	-webkit-backdrop-filter: blur(14px) saturate(1.4);
+	backdrop-filter: blur(14px) saturate(1.4);
+	color: #ffffff;
+	cursor: pointer;
+	text-decoration: none;
+	touch-action: manipulation;
+	transition:
+		background-color 0.2s ease,
+		transform 0.25s var(--gh-ease);
+}
+
+.gh[data-cover="none"] .gh-round {
+	border-color: var(--gh-line);
+	background: var(--gh-surface);
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+	color: var(--gh-fg);
+	box-shadow: var(--gh-shadow-door);
+}
+
+.gh-round:focus-visible {
+	outline: 2px solid #ffffff;
+	outline-offset: 2px;
+}
+
+.gh[data-cover="none"] .gh-round:focus-visible {
+	outline-color: var(--gh-fg);
+}
+
+/* —— Perfil ————————————————————————————————————————————————————————————— */
+
+.gh-profile {
+	position: relative;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin-top: -54px;
+	padding: 0 24px;
+	text-align: center;
+}
+
+.gh[data-cover="none"] .gh-profile {
+	margin-top: 0;
+}
+
+/* 108px y no 96: muchos logos de local son sellos circulares con letra chica
+   («Tradición & sabor») que a 96px ya no se lee. */
+.gh-logo {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	width: 108px;
+	height: 108px;
+	border-radius: 50%;
+	overflow: hidden;
+	background: var(--gh-surface);
+	box-shadow:
+		0 0 0 4px var(--gh-canvas),
+		0 12px 28px -12px rgba(0, 0, 0, 0.55);
+}
+
+.gh-logo__img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.gh-logo__initials {
+	display: grid;
+	place-items: center;
+	width: 100%;
+	height: 100%;
+	background: color-mix(in srgb, var(--gh-accent) 16%, var(--gh-surface));
+	color: var(--gh-fg);
+	font-family: var(--gh-name-font, inherit);
+	font-weight: var(--gh-name-weight, 700);
+	font-size: 2.1rem;
+	line-height: 1;
+	letter-spacing: 0.02em;
+	user-select: none;
+}
+
+.gh-name {
+	max-width: 20ch;
+	margin: 16px 0 0;
+	font-family: var(--gh-name-font, inherit);
+	font-weight: var(--gh-name-weight, 700);
+	font-size: clamp(1.7rem, 7.4cqi, 2.2rem);
+	line-height: 1.1;
+	letter-spacing: -0.012em;
+	color: var(--gh-name-color, var(--gh-fg));
+	text-wrap: balance;
+	overflow-wrap: anywhere;
+}
+
+.gh-bio {
+	max-width: 34ch;
+	margin: 8px 0 0;
+	font-size: 0.97rem;
+	line-height: 1.5;
+	color: var(--gh-fg-2);
+	text-wrap: pretty;
+	overflow-wrap: anywhere;
+}
+
+.gh-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	height: 30px;
+	margin: 16px 0 0;
+	padding: 0 13px 0 11px;
+	border-radius: 999px;
+	border: 1px solid var(--gh-line);
+	background: var(--gh-surface);
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: var(--gh-fg-2);
+}
+
+.gh-status__dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--gh-fg-3);
+}
+
+.gh-status[data-open] {
+	color: var(--gh-fg);
+}
+
+.gh-status[data-open] .gh-status__dot {
+	background: var(--gh-ok);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--gh-ok) 24%, transparent);
+}
+
+.gh-socials {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 2px;
+	margin: 12px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.gh-social {
+	display: grid;
+	place-items: center;
+	width: 46px;
+	height: 46px;
+	border-radius: 50%;
+	color: var(--gh-fg);
+	text-decoration: none;
+	transition:
+		background-color 0.2s ease,
+		transform 0.25s var(--gh-ease);
+}
+
+.gh-social:focus-visible {
+	outline: 2px solid var(--gh-fg);
+	outline-offset: 1px;
+}
+
+/* —— Puertas (enlaces) ———————————————————————————————————————————————————— */
+
+.gh-links {
+	padding: 26px 20px 0;
+}
+
+.gh-links ul {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	max-width: 580px;
+	margin: 0 auto;
+	padding: 0;
+	list-style: none;
+}
+
+.gh-door {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 60px;
+	margin: 0;
+	padding: 10px 58px;
+	border-radius: var(--gh-radius-door);
+	border: 1px solid var(--gh-line);
+	background: var(--gh-surface);
+	box-shadow: var(--gh-shadow-door);
+	color: var(--gh-fg);
+	font: inherit;
+	text-align: center;
+	text-decoration: none;
+	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+	transition:
+		transform 0.3s var(--gh-ease),
+		box-shadow 0.3s var(--gh-ease),
+		background-color 0.2s ease,
+		border-color 0.2s ease;
+}
+
+.gh-door__icon {
+	position: absolute;
+	top: 50%;
+	left: 20px;
+	display: grid;
+	place-items: center;
+	width: 24px;
+	height: 24px;
+	transform: translateY(-50%);
+}
+
+.gh[data-shape="square"] .gh-door__icon {
+	left: 16px;
+}
+
+.gh-door__label {
+	display: -webkit-box;
+	min-width: 0;
+	overflow: hidden;
+	font-size: 1rem;
+	font-weight: 600;
+	line-height: 1.25;
+	letter-spacing: -0.005em;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow-wrap: anywhere;
+}
+
+.gh-door__end {
+	position: absolute;
+	top: 50%;
+	right: 20px;
+	display: grid;
+	place-items: center;
+	transform: translateY(-50%);
+	color: var(--gh-fg-3);
+}
+
+.gh-door__count {
+	min-width: 24px;
+	height: 24px;
+	padding: 0 7px;
+	border-radius: 999px;
+	border: 1px solid var(--gh-line);
+	background: var(--gh-canvas);
+	font-size: 0.75rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: var(--gh-fg-2);
+}
+
+.gh[data-style="soft"] .gh-door {
+	border-color: transparent;
+	background: color-mix(in srgb, var(--gh-accent) 13%, var(--gh-surface));
+	box-shadow: none;
+}
+
+.gh[data-style="outline"] .gh-door {
+	border: 1.5px solid color-mix(in srgb, var(--gh-fg) 28%, transparent);
+	background: transparent;
+	box-shadow: none;
+}
+
+/* La destacada es la misma en los tres estilos: el color del local, lleno. */
+.gh .gh-door.is-featured {
+	border-color: transparent;
+	background: var(--gh-accent);
+	color: var(--gh-on-accent);
+	box-shadow:
+		0 1px 2px rgba(0, 0, 0, 0.2),
+		0 14px 28px -16px color-mix(in srgb, var(--gh-accent) 75%, #000000);
+}
+
+.gh .gh-door.is-featured .gh-door__label {
+	font-weight: 700;
+}
+
+.gh .gh-door.is-featured .gh-door__end {
+	color: color-mix(in srgb, var(--gh-on-accent) 72%, transparent);
+}
+
+.gh .gh-door.is-featured .gh-door__count {
+	border-color: color-mix(in srgb, var(--gh-on-accent) 30%, transparent);
+	background: color-mix(in srgb, var(--gh-on-accent) 16%, transparent);
+	color: var(--gh-on-accent);
+}
+
+.gh-door:focus-visible {
+	outline: 2px solid var(--gh-fg);
+	outline-offset: 3px;
+}
+
+.gh-door:active {
+	transform: scale(0.985);
+	transition-duration: 0.08s;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.gh-door:hover {
+		transform: translateY(-2px);
+		box-shadow: var(--gh-shadow-door-hover);
+	}
+
+	.gh[data-style="solid"] .gh-door:not(.is-featured):hover {
+		background: var(--gh-surface-hover);
+		border-color: var(--gh-line-strong);
+	}
+
+	.gh[data-style="soft"] .gh-door:not(.is-featured):hover {
+		background: color-mix(in srgb, var(--gh-accent) 20%, var(--gh-surface));
+		box-shadow: none;
+	}
+
+	.gh[data-style="outline"] .gh-door:not(.is-featured):hover {
+		border-color: color-mix(in srgb, var(--gh-fg) 55%, transparent);
+		box-shadow: none;
+	}
+
+	.gh .gh-door.is-featured:hover {
+		background: color-mix(in srgb, var(--gh-accent) 90%, var(--gh-on-accent));
+		box-shadow:
+			0 2px 4px rgba(0, 0, 0, 0.2),
+			0 20px 34px -16px color-mix(in srgb, var(--gh-accent) 80%, #000000);
+	}
+
+	.gh-door:active {
+		transform: translateY(0) scale(0.99);
+	}
+
+	.gh-social:hover {
+		background: var(--gh-surface);
+		transform: translateY(-1px);
+	}
+
+	.gh-round:hover {
+		background: rgba(14, 14, 16, 0.6);
+	}
+
+	.gh[data-cover="none"] .gh-round:hover {
+		background: var(--gh-surface-hover);
+	}
+}
+
+/* —— Horario ———————————————————————————————————————————————————————————— */
+
+.gh-schedule {
+	width: 100%;
+	max-width: 580px;
+	margin: 32px auto 0;
+	padding: 0 28px;
+	text-align: center;
+}
+
+.gh-schedule__title {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	margin: 0 0 8px;
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--gh-fg);
+}
+
+.gh-schedule ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.gh-schedule li {
+	font-size: 0.9rem;
+	line-height: 1.65;
+	color: var(--gh-fg-2);
+	font-variant-numeric: tabular-nums;
+	overflow-wrap: anywhere;
+}
+
+/* —— Pie: «Crea tu menú» de Gcode ————————————————————————————————————— */
+
+/* Sigue a la lista con una separación fija: un botón más, al final, no un
+   anuncio pegado al fondo de la pantalla. */
+.gh-footer {
+	padding: 24px 20px 0;
+}
+
+.gh-door--gcode {
+	max-width: 580px;
+	margin: 0 auto;
+}
+
+.gh-gcode-mark {
+	display: block;
+	width: 22px;
+	height: 22px;
+	border-radius: 6px;
+}
+
+/* —— QR (solo escritorio ancho) —————————————————————————————————————— */
+
+.gh-qr {
+	display: none;
+}
+
+.gh-qr__code {
+	width: 172px;
+	height: 172px;
+	padding: 12px;
+	border-radius: 16px;
+	/* Un QR se lee siempre oscuro sobre claro, sea cual sea el esquema. */
+	background: #ffffff;
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.gh-qr__svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.gh-qr__title {
+	margin: 16px 0 0;
+	font-size: 0.98rem;
+	font-weight: 700;
+	line-height: 1.3;
+	text-wrap: balance;
+}
+
+.gh-qr__hint {
+	margin: 4px 0 0;
+	font-size: 0.8rem;
+	color: var(--gh-fg-3);
+}
+
+.gh-qr__url {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	max-width: 100%;
+	margin: 14px 0 0;
+	padding: 7px 12px;
+	border-radius: 999px;
+	border: 1px solid var(--gh-line);
+	background: var(--gh-surface);
+	color: var(--gh-fg-2);
+	font: inherit;
+	font-size: 0.78rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition:
+		color 0.2s ease,
+		border-color 0.2s ease;
+}
+
+.gh-qr__url span:first-child {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.gh-qr__url:hover {
+	color: var(--gh-fg);
+	border-color: var(--gh-line-strong);
+}
+
+.gh-qr__url:focus-visible {
+	outline: 2px solid var(--gh-fg);
+	outline-offset: 2px;
+}
+
+/* —— Pantallas anchas: la hoja flota sobre la portada difuminada —————————— */
+
+@container gh (min-width: 700px) {
+	.gh-backdrop {
+		position: absolute;
+		inset: 0;
+		display: block;
+		overflow: hidden;
+		background: var(--gh-backdrop);
+	}
+
+	.gh-backdrop__img {
+		object-fit: cover;
+		transform: scale(1.25);
+		filter: blur(48px) saturate(1.25);
+	}
+
+	/* Atenúa la foto hacia el telón para que la hoja se lea como el objeto. */
+	.gh-backdrop::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: color-mix(in srgb, var(--gh-page, var(--gh-backdrop)) 72%, transparent);
+	}
+
+	/* Sin foto, el telón es el fondo liso del menú del local (o el neutro del
+	   esquema) y el color de la portada se derrama detrás de la hoja, como la
+	   foto difuminada en las portadas con imagen. */
+	.gh[data-cover="brand"] .gh-backdrop,
+	.gh[data-cover="none"] .gh-backdrop {
+		background: var(--gh-page, var(--gh-backdrop));
+	}
+
+	.gh[data-cover="brand"] .gh-backdrop::after {
+		background:
+			radial-gradient(44% 38% at 50% 4%, color-mix(in srgb, var(--gh-accent) 30%, transparent) 0%, transparent 100%),
+			radial-gradient(70% 60% at 50% 0%, color-mix(in srgb, var(--gh-accent) 10%, transparent) 0%, transparent 100%);
+	}
+
+	.gh[data-cover="none"] .gh-backdrop::after {
+		background: radial-gradient(60% 44% at 50% 0%, color-mix(in srgb, var(--gh-accent) 12%, transparent) 0%, transparent 100%);
+	}
+
+	.gh-stage {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 560px) minmax(0, 1fr);
+		align-items: start;
+		padding: 48px 24px 64px;
+		min-height: var(--gh-viewport-h, 100dvh);
+	}
+
+	.gh-sheet {
+		grid-column: 2;
+		min-height: 0;
+		border-radius: var(--gh-radius-card);
+		border: 1px solid var(--gh-line);
+		overflow: hidden;
+		box-shadow: var(--gh-shadow-sheet);
+		padding-bottom: 32px;
+	}
+
+	.gh-cover {
+		height: 228px;
+	}
+
+	.gh[data-cover="none"] .gh-cover {
+		height: 72px;
+	}
+
+	.gh-links {
+		padding: 28px 32px 0;
+	}
+
+	.gh-footer {
+		padding: 24px 32px 0;
+	}
+}
+
+@container gh (min-width: 1180px) {
+	.gh-qr {
+		position: sticky;
+		top: 48px;
+		grid-column: 3;
+		justify-self: start;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		width: 244px;
+		margin-left: 28px;
+		padding: 22px 20px 20px;
+		border-radius: var(--gh-radius-card);
+		border: 1px solid var(--gh-line);
+		background: var(--gh-canvas);
+		box-shadow: var(--gh-shadow-sheet);
+		text-align: center;
+	}
+}
+
+/* —— Selector de sucursal ——————————————————————————————————————————————— */
+
+.gh-picker {
+	width: 100vw;
+	max-width: 100vw;
+	height: 100dvh;
+	max-height: 100dvh;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--gh-fg);
+	overscroll-behavior: contain;
+}
+
+.gh-picker[open] {
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+}
+
+.gh-picker::backdrop {
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.gh-picker__panel {
+	width: 100%;
+	max-width: 480px;
+	max-height: min(80dvh, 640px);
+	overflow-y: auto;
+	padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+	border-radius: 24px 24px 0 0;
+	background: var(--gh-canvas);
+	box-shadow: var(--gh-shadow-sheet);
+}
+
+.gh-picker__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin: 0 4px 16px;
+}
+
+.gh-picker__title {
+	margin: 0;
+	font-size: 1.1rem;
+	font-weight: 700;
+	line-height: 1.3;
+	text-wrap: balance;
+}
+
+.gh-picker__close {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	border-radius: 50%;
+	border: 1px solid var(--gh-line);
+	background: var(--gh-surface);
+	color: var(--gh-fg);
+	cursor: pointer;
+}
+
+.gh-picker__close:focus-visible,
+.gh-picker__item:focus-visible {
+	outline: 2px solid var(--gh-fg);
+	outline-offset: 2px;
+}
+
+.gh-picker__list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.gh-picker__item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-height: 60px;
+	padding: 12px 14px;
+	border-radius: 16px;
+	border: 1px solid var(--gh-line);
+	background: var(--gh-surface);
+	color: var(--gh-fg);
+	text-decoration: none;
+	transition:
+		background-color 0.2s ease,
+		border-color 0.2s ease;
+}
+
+.gh-picker__icon {
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	/* Neutro: el acento del local se reserva para la puerta destacada. */
+	background: var(--gh-canvas);
+	color: var(--gh-fg);
+}
+
+.gh-picker__name {
+	flex: 1;
+	min-width: 0;
+	font-size: 0.97rem;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.gh-picker__state {
+	flex-shrink: 0;
+	padding: 3px 9px;
+	border-radius: 999px;
+	background: var(--gh-canvas);
+	font-size: 0.72rem;
+	font-weight: 700;
+	color: var(--gh-fg-3);
+}
+
+.gh-picker__state[data-open] {
+	background: color-mix(in srgb, var(--gh-ok) 15%, transparent);
+	color: var(--gh-ok);
+}
+
+.gh-picker__go {
+	flex-shrink: 0;
+	color: var(--gh-fg-3);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.gh-picker__item:hover {
+		background: var(--gh-surface-hover);
+		border-color: var(--gh-line-strong);
+	}
+}
+
+@media (min-width: 700px) {
+	.gh-picker[open] {
+		align-items: center;
+	}
+
+	.gh-picker__panel {
+		padding-bottom: 20px;
+		border-radius: 24px;
+	}
+}
+
+/* —— Aviso (enlace copiado) ——————————————————————————————————————————— */
+
+.gh-toast {
+	position: fixed;
+	left: 50%;
+	bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+	z-index: 30;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	max-width: calc(100vw - 32px);
+	margin: 0;
+	padding: 10px 16px;
+	border-radius: 999px;
+	background: var(--gh-fg);
+	color: var(--gh-canvas);
+	font-size: 0.85rem;
+	font-weight: 600;
+	opacity: 0;
+	pointer-events: none;
+	transform: translate(-50%, 16px);
+	transition:
+		opacity 0.25s ease,
+		transform 0.4s var(--gh-ease);
+}
+
+.gh-toast[data-visible] {
+	opacity: 1;
+	transform: translate(-50%, 0);
+}
+
+/* —— Movimiento: una sola entrada, de abajo arriba ——————————————————————— */
+
+@media (prefers-reduced-motion: no-preference) {
+	.gh:not([data-preview]) .gh-rise {
+		animation: gh-rise 0.75s var(--gh-ease) both;
+		animation-delay: calc(80ms + var(--gh-i, 0) * 45ms);
+	}
+
+	.gh:not([data-preview]) .gh-profile.gh-rise {
+		animation-delay: 0ms;
+	}
+
+	.gh:not([data-preview]) .gh-cover__img {
+		animation: gh-cover 1.4s var(--gh-ease) both;
+	}
+
+	.gh-picker[open] .gh-picker__panel {
+		animation: gh-panel 0.42s var(--gh-ease) both;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.gh-door,
+	.gh-social,
+	.gh-round,
+	.gh-toast {
+		transition: none;
+	}
+
+	.gh-door:hover,
+	.gh-door:active,
+	.gh-social:hover {
+		transform: none;
+	}
+}
+
+@keyframes gh-rise {
+	from {
+		opacity: 0.3;
+		transform: translateY(14px);
+	}
+}
+
+@keyframes gh-cover {
+	from {
+		transform: scale(1.06);
+	}
+}
+
+@keyframes gh-panel {
+	from {
+		opacity: 0.4;
+		transform: translateY(24px);
+	}
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import type { DeliveryLocationSource } from "@/lib/delivery/delivery-location";
 import { type OrderCatalogLine } from "../../data/orders/build-order-items-from-branch";
 import { ordersService } from "../../data/orders-service";
 
@@ -24,6 +25,7 @@ export type SubmitOrderParams = {
   delivery_km?: number;
   delivery_lat?: number | null;
   delivery_lng?: number | null;
+  delivery_location_source?: DeliveryLocationSource | null;
   delivery_named_area_id?: string | null;
   uber_quote_id?: string | null;
   coupon_code?: string | null;

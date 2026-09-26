@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import type { DeliveryLocationSource } from "@/lib/delivery/delivery-location";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type {
 	AddToCartOptions,
@@ -40,6 +41,8 @@ export interface CartState {
 	deliveryReference: string;
 	deliveryLat: number | null;
 	deliveryLng: number | null;
+	/** Cómo se obtuvo el punto (GPS, punto ajustado, dirección escrita). */
+	deliveryLocationSource: DeliveryLocationSource | null;
 	deliveryNamedAreaId: string | null;
 	deliveryKmManual: string;
 	globalExtras: CartGlobalExtraSelection[];
@@ -61,7 +64,7 @@ export interface CartState {
 	setDeliveryLine1: (value: string) => void;
 	setDeliveryCommune: (value: string) => void;
 	setDeliveryReference: (value: string) => void;
-	setDeliveryCoords: (lat: number | null, lng: number | null) => void;
+	setDeliveryCoords: (lat: number | null, lng: number | null, source?: DeliveryLocationSource | null) => void;
 	setDeliveryNamedAreaId: (id: string | null) => void;
 	setDeliveryKmManual: (value: string) => void;
 	setGlobalExtras: (extras: CartGlobalExtraSelection[]) => void;
@@ -116,6 +119,7 @@ const EMPTY_DELIVERY = {
 	deliveryReference: "",
 	deliveryLat: null,
 	deliveryLng: null,
+	deliveryLocationSource: null,
 	deliveryNamedAreaId: null,
 	deliveryKmManual: "",
 };
@@ -252,7 +256,8 @@ export const useCartStore = create<CartState>()(
 			setDeliveryLine1: (value) => set({ deliveryLine1: value }),
 			setDeliveryCommune: (value) => set({ deliveryCommune: value }),
 			setDeliveryReference: (value) => set({ deliveryReference: value }),
-			setDeliveryCoords: (lat, lng) => set({ deliveryLat: lat, deliveryLng: lng }),
+			setDeliveryCoords: (lat, lng, source = null) =>
+				set({ deliveryLat: lat, deliveryLng: lng, deliveryLocationSource: lat == null || lng == null ? null : source }),
 			setDeliveryNamedAreaId: (id) => set({ deliveryNamedAreaId: id }),
 			setDeliveryKmManual: (value) => set({ deliveryKmManual: value }),
 			setGlobalExtras: (extras) =>

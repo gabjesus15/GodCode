@@ -51,13 +51,15 @@ export async function activateCompanySubscription(params: {
 	now?: Date;
 }): Promise<void> {
 	const now = params.now ?? new Date();
-	const { data: companyBefore } = await params.supabaseAdmin
+	const { data: companyBefore, error: readError } = await params.supabaseAdmin
 		.from("companies")
 		.select("subscription_ends_at,custom_domain")
 		.eq("id", params.companyId)
 		.maybeSingle();
+	// Sin leer el vencimiento vigente se sumaría desde hoy y el cliente perdería días.
+	if (readError) throw new Error(`No se pudo leer la suscripción: ${readError.message}`);
 	const endsAtIso = getSubscriptionEndsAt(params.monthsPaid, now, companyBefore?.subscription_ends_at ?? null);
-	await params.supabaseAdmin
+	const { error: updateError } = await params.supabaseAdmin
 		.from("companies")
 		.update({
 			subscription_status: "active",
@@ -67,6 +69,8 @@ export async function activateCompanySubscription(params: {
 			updated_at: now.toISOString(),
 		})
 		.eq("id", params.companyId);
+	// Quien llama da el pago por aplicado: un fallo aquí no puede pasar en silencio.
+	if (updateError) throw new Error(`No se pudo activar la suscripción: ${updateError.message}`);
 
 	await Promise.all([
 		params.supabaseAdmin

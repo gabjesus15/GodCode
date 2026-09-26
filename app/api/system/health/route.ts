@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { enforceRateLimit } from "@/lib/infra/api-guard";
-import { flags, getOnboardingBillingBaseUrl } from "@/lib/infra/feature-flags";
+import { flags, getOnboardingBillingBaseUrl, isLoopbackHostname } from "@/lib/infra/feature-flags";
 import { readBearerSecret, secretsMatch } from "@/lib/infra/secret-compare";
 import { startTimer } from "@/lib/infra/logger";
 
@@ -12,11 +12,6 @@ import { startTimer } from "@/lib/infra/logger";
  */
 
 const startedAt = new Date().toISOString();
-
-function isLoopbackHostname(hostname: string): boolean {
-	const value = hostname.trim().toLowerCase();
-	return value === "localhost" || value === "127.0.0.1" || value === "::1";
-}
 
 function isAuthorized(req: NextRequest): boolean {
   return secretsMatch(

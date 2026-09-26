@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
+import { buildInitialsIconSvg, fetchTenantLogo, TENANT_ICON_SECURITY_HEADERS } from "@/lib/tenant/favicon-icon";
+import { resolveTenantDisplayName } from "@/lib/tenant/seo-metadata";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
 import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 
 export const dynamic = "force-dynamic";
-
-const getInitials = (name: string) => {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const initials = parts.slice(0, 2).map((part) => part[0]?.toUpperCase());
-  return initials.join("") || "GC";
-};
-
-const buildFallbackSvg = (name: string, color: string) => {
-  const initials = getInitials(name);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect width="96" height="96" rx="22" fill="${color}"/><text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="36" font-weight="700">${initials}</text></svg>`;
-};
 
 export async function GET(
   _req: NextRequest,
@@ -31,48 +22,27 @@ export async function GET(
     .maybeSingle();
 
   const theme = company?.theme_config as Record<string, unknown> | null | undefined;
-  const displayName =
-    typeof theme?.displayName === "string" ? theme.displayName.trim() : "";
-  const name = displayName || company?.name || "Gcode";
-  const primaryColor =
-    (typeof theme?.primaryColor === "string" && theme.primaryColor.trim()) || "#111827";
+  const name = resolveTenantDisplayName(company, { slug: subdomain });
   const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
   const logoUrl = company?.id
     ? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id))
     : storedLogoUrl;
   if (logoUrl && isTenantSubscriptionAccessible(company)) {
-    try {
-      const upstream = await fetch(String(logoUrl), {
-        cache: "no-store",
-        redirect: "follow",
+    const logo = await fetchTenantLogo(String(logoUrl));
+    if (logo) {
+      return new NextResponse(new Uint8Array(logo.buf), {
         headers: {
-          Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/png,image/jpeg,image/*,*/*;q=0.8",
-          "User-Agent": "Gcode-TenantFavicon/1.0",
+          ...TENANT_ICON_SECURITY_HEADERS,
+          "Content-Type": logo.contentType,
+          "Cache-Control": "public, max-age=300, s-maxage=120",
         },
       });
-      if (upstream.ok) {
-        const buf = await upstream.arrayBuffer();
-        if (buf.byteLength > 0) {
-          const rawType = upstream.headers.get("content-type") || "";
-          const contentType = rawType.split(";")[0]?.trim() || "image/png";
-
-          return new NextResponse(buf, {
-            headers: {
-              "Content-Type": contentType,
-              "Cache-Control": "public, max-age=300, s-maxage=120",
-            },
-          });
-        }
-      }
-    } catch {
-      // Fallback handled below.
     }
   }
 
-  const svg = buildFallbackSvg(name, primaryColor);
-
-  return new NextResponse(svg, {
+  return new NextResponse(buildInitialsIconSvg(name, theme?.primaryColor), {
     headers: {
+      ...TENANT_ICON_SECURITY_HEADERS,
       "Content-Type": "image/svg+xml; charset=utf-8",
       "Cache-Control": "public, max-age=300",
     },

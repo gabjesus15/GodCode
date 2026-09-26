@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { logAdminAudit } from "@/lib/super-admin/admin-audit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
@@ -60,5 +61,7 @@ export async function PATCH(
 		resourceId: id,
 		metadata: { fields: Object.keys(updates) },
 	});
+	// El catálogo de extras de /cuenta está cacheado con este tag.
+	revalidateTag("tag:addons", "max");
 	return NextResponse.json({ ok: true });
 }

@@ -156,12 +156,22 @@ export async function completeOnboardingPayment(
 		return { ok: false, error: "No se pudo registrar el pago", status: 500 };
 	}
 
-	await activateCompanySubscription({
-		supabaseAdmin,
-		companyId,
-		monthsPaid: input.grantedMonths,
-		now,
-	});
+	try {
+		await activateCompanySubscription({
+			supabaseAdmin,
+			companyId,
+			monthsPaid: input.grantedMonths,
+			now,
+		});
+	} catch {
+		// El pago ya figura como pagado: sin esto, un reintento lo daría por completo sin
+		// activar nada. Queda para que el equipo lo valide a mano.
+		await supabaseAdmin
+			.from("payments_history")
+			.update({ status: "pending_validation" })
+			.eq("payment_reference", input.paymentReference);
+		return { ok: false, error: "No se pudo activar la suscripción; el pago quedó para revisión.", status: 500 };
+	}
 
 	const companyPatch: Record<string, unknown> = {};
 	if (input.promoApplied) companyPatch.first_payment_promo_used_at = now.toISOString();

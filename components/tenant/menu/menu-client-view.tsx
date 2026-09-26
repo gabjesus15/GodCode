@@ -2,8 +2,8 @@
 
 import { createPortal } from "react-dom";
 
-import type { HeroBanner } from "../home/hero-carousel";
-import { HeroCarousel } from "../home/hero-carousel";
+import type { HeroBanner } from "./hero-carousel";
+import { HeroCarousel } from "./hero-carousel";
 import { OrderIntakePausedBanner } from "./order-intake-paused-banner";
 import { MegaMenuFab, MegaMenuOverlay, SidebarCategoriesPanel } from "./menu-category-nav";
 import { MenuCatalog } from "./menu-catalog";

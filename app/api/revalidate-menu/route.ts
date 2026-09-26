@@ -1,4 +1,5 @@
 import { revalidateTag } from "next/cache";
+import { readBearerSecret, secretsMatch } from "@/lib/infra/secret-compare";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -60,7 +61,7 @@ function isAuthorized(req: NextRequest): boolean {
   }
   const authHeader = req.headers.get("authorization") ?? "";
   const internalHeader = req.headers.get("x-revalidation-secret") ?? "";
-  return authHeader === `Bearer ${secret}` || internalHeader === secret;
+  return secretsMatch(readBearerSecret(authHeader), secret) || secretsMatch(internalHeader, secret);
 }
 
 export async function POST(req: NextRequest) {

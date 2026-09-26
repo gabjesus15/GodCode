@@ -8,6 +8,7 @@ import { AlertCircle, Check, Clock, Copy, MailCheck, Upload } from "lucide-react
 
 import { Button } from "../../../components/ui/button";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
+import { randomId } from "@/lib/analytics/random-id";
 import { uploadImage } from "@/lib/storage/upload-image-client";
 import { getOnboardingPaymentCopy } from "@/lib/plans/onboarding-payment-copy";
 
@@ -51,23 +52,6 @@ function parseJsonObject(text: string): Record<string, unknown> {
 
 const VISITOR_KEY = "gc_visitor_id";
 const SESSION_KEY = "gc_session_id";
-
-function randomId(prefix: string): string {
-	const cryptoObj = typeof window !== "undefined" ? window.crypto : (typeof globalThis !== "undefined" ? globalThis.crypto : undefined);
-	if (cryptoObj) {
-		if (typeof cryptoObj.randomUUID === "function") {
-			return `${prefix}_${cryptoObj.randomUUID()}`;
-		}
-		if (typeof cryptoObj.getRandomValues === "function") {
-			const array = new Uint32Array(2);
-			cryptoObj.getRandomValues(array);
-			return `${prefix}_${Date.now()}_${array[0].toString(36)}${array[1].toString(36)}`;
-		}
-	}
-	const timePart = Date.now().toString(36);
-	const perfPart = typeof performance !== "undefined" ? Math.floor(performance.now() * 1000).toString(36) : "";
-	return `${prefix}_${timePart}_${perfPart}`;
-}
 
 function getOrCreateStorageId(storage: "local" | "session", key: string, prefix: string): string {
 	if (typeof window === "undefined") return randomId(prefix);

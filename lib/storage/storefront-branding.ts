@@ -26,15 +26,21 @@ export function isCompanyStorefrontAssetPath(
   return path.startsWith(`${company}/storefront/branding/`);
 }
 
+const BRANDING_FOLDERS = {
+  logoUrl: "logo",
+  backgroundImageUrl: "background",
+  /** Foto propia de la portada de la página de inicio. */
+  homeCover: "home-cover",
+} as const;
+
 export function buildStorefrontBrandingFolder(
   companyId: string,
-  field: "logoUrl" | "backgroundImageUrl",
+  field: keyof typeof BRANDING_FOLDERS,
 ): string {
   if (!SAFE_COMPANY_ID.test(companyId)) {
     throw new Error("El companyId no es valido para Storage.");
   }
-  const assetType = field === "logoUrl" ? "logo" : "background";
-  return `${companyId}/storefront/branding/${assetType}`;
+  return `${companyId}/storefront/branding/${BRANDING_FOLDERS[field]}`;
 }
 
 export async function createStorefrontAssetSignedUrl(

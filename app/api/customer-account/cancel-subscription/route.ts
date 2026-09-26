@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { resolveCompanyContact } from "@/lib/billing/company-contact";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { cleanMultilineText } from "@/lib/infra/server-sanitize";
-import { formatEmailDate, timeZoneForCountry } from "@/lib/email/format";
+import { formatEmailDate, formatUtcLongDate, timeZoneForCountry } from "@/lib/email/format";
 import { sendEmail } from "@/lib/email/send";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
@@ -20,13 +20,6 @@ type CompanyRow = {
 	subscription_status: string | null;
 	subscription_ends_at: string | null;
 };
-
-function formatDate(iso: string): string {
-	const date = new Date(iso);
-	return Number.isFinite(date.getTime())
-		? new Intl.DateTimeFormat("es", { dateStyle: "long", timeZone: "UTC" }).format(date)
-		: iso;
-}
 
 export async function POST(req: NextRequest) {
 	const ctx = await getCustomerAccountContext();
@@ -57,7 +50,7 @@ export async function POST(req: NextRequest) {
 	if (status === "cancelled" && current) {
 		return NextResponse.json({
 			ok: true,
-			message: `Tu cancelación ya estaba programada. La tienda sigue online hasta el ${formatDate(endsAt)}.`,
+			message: `Tu cancelación ya estaba programada. La tienda sigue online hasta el ${formatUtcLongDate(endsAt)}.`,
 			subscriptionStatus: "cancelled",
 			subscriptionEndsAt: endsAt,
 		});
@@ -86,7 +79,7 @@ export async function POST(req: NextRequest) {
 		source: "system",
 		subject: `Cancelación programada · ${companyRow.name}`,
 		description: [
-			`Sigue online hasta: ${formatDate(endsAt)}`,
+			`Sigue online hasta: ${formatUtcLongDate(endsAt)}`,
 			`Motivo: ${reason || "No indicado"}`,
 		].join("\n"),
 		category: "billing",
@@ -105,14 +98,14 @@ export async function POST(req: NextRequest) {
 			data: {
 				name: contact.responsibleName || undefined,
 				businessName: contact.businessName,
-				endsAt: formatEmailDate(endsAt, timeZoneForCountry(contact.country)) || formatDate(endsAt),
+				endsAt: formatEmailDate(endsAt, timeZoneForCountry(contact.country)) || formatUtcLongDate(endsAt),
 			},
 		});
 	}
 
 	return NextResponse.json({
 		ok: true,
-		message: `Cancelación programada. Tu tienda sigue online hasta el ${formatDate(endsAt)}; puedes reactivarla gratis antes de esa fecha.`,
+		message: `Cancelación programada. Tu tienda sigue online hasta el ${formatUtcLongDate(endsAt)}; puedes reactivarla gratis antes de esa fecha.`,
 		subscriptionStatus: "cancelled",
 		subscriptionEndsAt: endsAt,
 	});

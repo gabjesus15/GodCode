@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { HeroBanner } from "../home/hero-carousel";
+import type { HeroBanner } from "./hero-carousel";
 import type { Json } from "../../../types/supabase-database";
 import type { OrderChannelMode } from "@/lib/tenant/menu-settings";
 

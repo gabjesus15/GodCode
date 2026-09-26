@@ -341,7 +341,13 @@
         },
         "previewMap": {
           "locationLabel": "Position sur la carte",
-          "openMap": "Ouvrir la carte"
+          "openInGoogleMaps": "Google Maps",
+          "adjust": "Ajuster le point",
+          "adjustHint": "Déplacez la carte jusqu’à votre porte",
+          "confirm": "Confirmer le point",
+          "cancel": "Annuler",
+          "zoomIn": "Zoomer",
+          "zoomOut": "Dézoomer"
         },
         "notes": {
           "addTab": "Ajouter une note",
@@ -405,6 +411,10 @@
         "delivery": {
           "pickNamedArea": "Choisir une zone",
           "selectAreaAria": "Selectionner la zone de livraison",
+          "zoneSearch": "Rechercher une zone",
+          "zoneSearchClear": "Effacer la recherche",
+          "zoneNoResults": "Aucune zone ne correspond à « {query} ».",
+          "zoneClose": "Fermer",
           "geoNotAvailable": "Votre navigateur ne permet pas la localisation.",
           "geoNeedsHttps": "La localisation fonctionne seulement en HTTPS.",
           "searchingLocation": "Recherche de localisation...",
@@ -442,7 +452,7 @@
           "calculatingWithLocation": "Calcul de la livraison avec votre position...",
           "completeDataToContinue": "Completez les informations de livraison pour continuer.",
           "writeStreetNumberArea": "Indiquez la rue, le numéro et {area} ; nous calculons le tarif selon les zones du commerce.",
-          "approxHint": "Cette position est approximative : la carte peut être loin de votre porte. Ajustez la rue ou utilisez votre position actuelle.",
+          "approxHint": "Position approximative : touchez « Ajuster le point » et déplacez la carte jusqu’à votre porte pour que le livreur vous trouve.",
           "areaLabel": {
             "commune": "Commune",
             "municipality": "Municipalité ou ville",
@@ -709,6 +719,63 @@
       "poweredBy": {
         "madeWith": "Créé avec",
         "aria": "Créé avec {brand} : menu digital et commandes en ligne"
+      }
+    },
+    "home": {
+      "links": {
+        "menu": "Voir le menu",
+        "whatsapp": "WhatsApp",
+        "instagram": "Instagram",
+        "location": "Itinéraire",
+        "phone": "Appeler"
+      },
+      "linksAria": "Liens de {name}",
+      "logoAlt": "Logo de {name}",
+      "admin": "Accès équipe",
+      "share": {
+        "label": "Partager",
+        "copied": "Lien copié"
+      },
+      "status": {
+        "open": "Ouvert maintenant",
+        "closed": "Fermé maintenant",
+        "partial": "{open} établissements sur {total} ouverts"
+      },
+      "socials": {
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "facebook": "Facebook",
+        "youtube": "YouTube",
+        "x": "X",
+        "whatsapp": "WhatsApp",
+        "email": "E-mail",
+        "website": "Site web"
+      },
+      "branches": {
+        "title": {
+          "whatsapp": "À quel établissement écrire ?",
+          "instagram": "Quel établissement voulez-vous voir ?",
+          "location": "Dans quel établissement allez-vous ?",
+          "phone": "Quel établissement appeler ?"
+        },
+        "count": "{count, plural, one {# établissement} other {# établissements}} au choix",
+        "open": "Ouvert",
+        "closed": "Fermé",
+        "close": "Fermer",
+        "unnamed": "Établissement"
+      },
+      "schedule": {
+        "title": "Horaires"
+      },
+      "gcode": {
+        "label": "Créez votre menu",
+        "aria": "Créez votre menu digital avec {brand}"
+      },
+      "qr": {
+        "title": "Ouvrez le menu sur votre téléphone",
+        "hint": "Visez le code avec l’appareil photo",
+        "copy": "Copier le lien",
+        "alt": "QR code du menu"
       }
     }
   }

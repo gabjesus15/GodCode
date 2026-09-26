@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
+import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateSuperAdminAccess } from "@/utils/admin/server-auth";
 import { cleanMultilineText, cleanPlainText } from "@/lib/infra/server-sanitize";
 import { orIlikeValue } from "@/lib/db/like-pattern";
 import { notifySiteReady } from "@/lib/email/account-notices";
 import { OPEN_TICKET_STATUSES } from "@/lib/status/status-labels";
+import { addHours, TICKET_SLA_HOURS } from "@/lib/tickets/ticket-sla";
 
 /** @service-role super-admin */
 
@@ -40,19 +41,6 @@ type TicketRow = {
 const STATUS_VALUES = new Set(["open", "in_progress", "waiting_customer", "resolved", "closed"]);
 const PRIORITY_VALUES = new Set(["low", "medium", "high", "critical"]);
 const CATEGORY_VALUES = new Set(["general", "billing", "technical", "product", "account"]);
-
-const SLA_HOURS: Record<TicketPriority, { firstResponse: number; resolution: number }> = {
-  low: { firstResponse: 24, resolution: 120 },
-  medium: { firstResponse: 12, resolution: 48 },
-  high: { firstResponse: 4, resolution: 24 },
-  critical: { firstResponse: 2, resolution: 8 },
-};
-
-const addHours = (iso: string, hours: number) => {
-  const base = new Date(iso);
-  if (Number.isNaN(base.getTime())) return iso;
-  return new Date(base.getTime() + hours * 60 * 60 * 1000).toISOString();
-};
 
 const computeSla = (row: TicketRow) => {
   const now = Date.now();
@@ -111,32 +99,8 @@ const toDto = (row: TicketRow) => ({
   updatedAt: row.updated_at,
 });
 
-async function validateSuperAdminRead() {
-  const result = await validateAdminRolesOnServer([...SAAS_READ_ROLES]);
-  if (!result.ok) {
-    return {
-      ok: false as const,
-      response: NextResponse.json({ error: result.error ?? "No autorizado" }, { status: result.status }),
-    };
-  }
-
-  return { ok: true as const, email: result.email ?? null };
-}
-
-async function validateSuperAdminMutate() {
-  const result = await validateAdminRolesOnServer([...SAAS_MUTATE_ROLES]);
-  if (!result.ok) {
-    return {
-      ok: false as const,
-      response: NextResponse.json({ error: result.error ?? "No autorizado" }, { status: result.status }),
-    };
-  }
-
-  return { ok: true as const, email: result.email ?? null };
-}
-
 export async function GET(req: NextRequest) {
-  const access = await validateSuperAdminRead();
+  const access = await validateSuperAdminAccess(SAAS_READ_ROLES);
   if (!access.ok) return access.response;
 
   const searchParams = req.nextUrl.searchParams;
@@ -173,7 +137,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const access = await validateSuperAdminMutate();
+  const access = await validateSuperAdminAccess(SAAS_MUTATE_ROLES);
   if (!access.ok) return access.response;
 
   const body = await req.json();
@@ -191,7 +155,7 @@ export async function POST(req: NextRequest) {
   if (!PRIORITY_VALUES.has(priority)) return NextResponse.json({ error: "Prioridad inválida" }, { status: 400 });
 
   const nowIso = new Date().toISOString();
-  const { firstResponse, resolution } = SLA_HOURS[priority];
+  const { firstResponse, resolution } = TICKET_SLA_HOURS[priority];
 
   const { data, error } = await supabaseAdmin
     .from("saas_tickets")
@@ -227,7 +191,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const access = await validateSuperAdminMutate();
+  const access = await validateSuperAdminAccess(SAAS_MUTATE_ROLES);
   if (!access.ok) return access.response;
 
   const body = await req.json();

@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { flags, getOnboardingBillingBaseUrl } from "../infra/feature-flags";
+import { flags, getOnboardingBillingBaseUrl, isLoopbackHostname } from "../infra/feature-flags";
 import { logger, createRequestContext, startTimer } from "../infra/logger";
 
 const SERVICE_API_KEY = process.env.SERVICE_API_KEY ?? "";
 const UPSTREAM_TIMEOUT_MS = 25_000;
 /** Lo que ve el cliente cuando el servicio no responde; el detalle queda en el log. */
 export const ONBOARDING_SERVICE_UNAVAILABLE = "El registro no está disponible en este momento. Intenta en unos minutos.";
-
-function isLoopbackHostname(hostname: string): boolean {
-	const value = hostname.trim().toLowerCase();
-	return value === "localhost" || value === "127.0.0.1" || value === "::1";
-}
 
 export async function proxyToOnboardingBilling(
 	req: NextRequest,

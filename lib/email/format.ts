@@ -19,6 +19,14 @@ export function formatEmailDate(iso: string | Date | null | undefined, timeZone 
 	}
 }
 
+/** «30 de septiembre de 2026» en UTC; si la fecha no es válida devuelve el texto tal cual. */
+export function formatUtcLongDate(iso: string): string {
+	const date = new Date(iso);
+	return Number.isFinite(date.getTime())
+		? new Intl.DateTimeFormat("es", { dateStyle: "long", timeZone: "UTC" }).format(date)
+		: iso;
+}
+
 /** Fecha de calendario (AAAA-MM-DD) de un instante en una zona horaria. */
 export function calendarDay(date: Date, timeZone = DEFAULT_EMAIL_TIME_ZONE): string {
 	try {
@@ -38,10 +46,6 @@ export function calendarDaysUntil(target: string | Date, now: Date, timeZone = D
 	const a = Date.parse(`${calendarDay(now, timeZone)}T00:00:00Z`);
 	const b = Date.parse(`${calendarDay(targetDate, timeZone)}T00:00:00Z`);
 	return Math.round((b - a) / 86_400_000);
-}
-
-export function plural(count: number, singular: string, pluralForm: string): string {
-	return `${count} ${count === 1 ? singular : pluralForm}`;
 }
 
 /** «hoy», «mañana», «en 3 días». */

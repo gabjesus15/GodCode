@@ -14,6 +14,7 @@ import {
 	resolvePaymentAmountCopyValue,
 	resolvePaymentAmountDisplay,
 } from "../utils/venezuela-payment-copy";
+import { copyToClipboard } from "../utils/clipboard";
 
 type TransferenciaBancariaConfig = NonNullable<BranchInfo["transferencia_bancaria"]>;
 type PagoMovilConfig = NonNullable<BranchInfo["pago_movil"]>;
@@ -23,12 +24,6 @@ interface PaymentDetailField {
 	key: string;
 	label: string;
 	value: string;
-}
-
-function copyToClipboard(text: string): void {
-	if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-		navigator.clipboard.writeText(text).catch(() => {});
-	}
 }
 
 /** Datos de cobro del método online elegido, cada uno copiable por separado o todos juntos. */

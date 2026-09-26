@@ -35,5 +35,13 @@ export function getClientMessagesForPath(
 		};
 	}
 
+	// El editor de la página de inicio pinta la portada real como vista previa.
+	if (pathname === "/cuenta" || pathname.startsWith("/cuenta/")) {
+		return {
+			common: all.common,
+			tenant: { home: all.tenant.home } as I18nMessages["tenant"],
+		};
+	}
+
 	return { common: all.common };
 }

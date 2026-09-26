@@ -6,7 +6,3 @@
  * o claves de caché.
  */
 export const COMPANY_SLUG_PATTERN = /^[a-z0-9-]{1,80}$/;
-
-export function isValidCompanySlug(value: string | null | undefined): value is string {
-	return typeof value === "string" && COMPANY_SLUG_PATTERN.test(value);
-}

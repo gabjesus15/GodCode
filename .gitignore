@@ -74,3 +74,6 @@ next-env.d.ts
 
 # MCP local (apunta a una IP privada)
 .mcp.json
+
+# Capturas de revisión de diseño (Impeccable): evidencia local, se regeneran.
+.impeccable/review/

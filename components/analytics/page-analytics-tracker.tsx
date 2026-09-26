@@ -5,28 +5,12 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 import { isInternalAnalyticsPath, resolveAnalyticsPageContext } from "@/lib/analytics/page-context";
 import { trackGaPageView } from "@/lib/analytics/gtag";
+import { randomId } from "@/lib/analytics/random-id";
 import { sanitizeAnalyticsPath } from "@/lib/analytics/sanitize-path";
 
 const VISITOR_KEY = "gc_visitor_id";
 const SESSION_KEY = "gc_session_id";
 const LAST_EVENT_KEY = "gc_last_page_view";
-
-function randomId(prefix: string): string {
-	const cryptoObj = typeof window !== "undefined" ? window.crypto : (typeof globalThis !== "undefined" ? globalThis.crypto : undefined);
-	if (cryptoObj) {
-		if (typeof cryptoObj.randomUUID === "function") {
-			return `${prefix}_${cryptoObj.randomUUID()}`;
-		}
-		if (typeof cryptoObj.getRandomValues === "function") {
-			const array = new Uint32Array(2);
-			cryptoObj.getRandomValues(array);
-			return `${prefix}_${Date.now()}_${array[0].toString(36)}${array[1].toString(36)}`;
-		}
-	}
-	const timePart = Date.now().toString(36);
-	const perfPart = typeof performance !== "undefined" ? Math.floor(performance.now() * 1000).toString(36) : "";
-	return `${prefix}_${timePart}_${perfPart}`;
-}
 
 function getOrCreateVisitorId(): string {
 	try {
