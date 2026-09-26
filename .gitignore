@@ -32,6 +32,7 @@ Thumbs.db
 
 # scratch / local one-off dumps
 /_tmp/
+/Claude outputs/
 
 # debug & logs
 npm-debug.log*

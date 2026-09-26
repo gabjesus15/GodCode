@@ -146,7 +146,8 @@
         "sendCode": "Inviami un codice",
         "sendingCode": "Invio…",
         "passwordCodeHint": "Per cambiare la password ti inviamo un codice via email.",
-        "codeSentHint": "Controlla la tua email: il codice scade tra 1 ora."
+        "codeSentHint": "Controlla la tua email: il codice scade tra 1 ora.",
+        "legalTitle": "Note legali"
       },
       "notices": {
         "passwordChanged": "Password aggiornata. Accedi di nuovo con quella nuova.",
@@ -280,11 +281,23 @@
         "name": "Inserisci il tuo nome completo.",
         "phone": "Controlla il telefono.",
         "password": "Almeno 8 caratteri.",
-        "code": "Inserisci il codice a 6 cifre."
+        "code": "Inserisci il codice a 6 cifre.",
+        "terms": "Accetta i termini e le condizioni per creare il tuo account."
       },
       "password": {
         "show": "Mostra password",
         "hide": "Nascondi password"
+      },
+      "terms": {
+        "title": "Termini e Condizioni",
+        "updated": "Ultimo aggiornamento: {date}",
+        "close": "Chiudi",
+        "accept": "Accetta i termini",
+        "openPage": "Apri a pagina intera",
+        "back": "Torna a Il mio account",
+        "view": "Vedi i termini",
+        "rowLabel": "Termini e condizioni",
+        "acceptLabel": "Accetto i <link>termini e condizioni</link>"
       }
     },
     "cart": {

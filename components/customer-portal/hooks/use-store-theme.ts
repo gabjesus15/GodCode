@@ -5,8 +5,10 @@ import type { StoreThemeAssetField, StoreThemeAutosaveStatus, StoreThemeConfig, 
 import {
   buildContrastSuggestions,
   buildStoreThemeChecklist,
+  diffStoreTheme,
   getStoreThemeSignature,
   normalizeStoreThemeInput,
+  rebaseStoreTheme,
   validateStoreThemeAssetFile,
 } from "@/lib/store-theme/store-theme-utils";
 import { STORE_THEME_FIELD_LABELS, STORE_THEME_TEMPLATES } from "../shared/customer-account-store-theme-constants";
@@ -81,6 +83,12 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
   const [storeThemeSelectedTemplate, setStoreThemeSelectedTemplate]   = useState(STORE_THEME_TEMPLATES[0]?.id ?? "");
   const [storeThemePublishComment, setStoreThemePublishComment]       = useState("");
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Último tema confirmado por el servidor: base para enviar solo los cambios. */
+  const lastSavedThemeRef = useRef<StoreThemeConfig | null>(null);
+  const markStoreThemeSaved = useCallback((theme: StoreThemeConfig) => {
+    lastSavedThemeRef.current = theme;
+    setStoreThemeLastSavedSignature(getStoreThemeSignature(theme));
+  }, []);
 
   const storeThemeDraftSignature = useMemo(() => getStoreThemeSignature(storeThemeDraft), [storeThemeDraft]);
   const storeThemeHasLocalUnsavedChanges = Boolean(storeThemeDraft) && storeThemeDraftSignature !== storeThemeLastSavedSignature;
@@ -153,13 +161,13 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
       setStoreThemeUpdatedAt(data.draft.updatedAt ?? null);
       setStoreThemeUpdatedBy(data.draft.updatedByEmail ?? null);
       setStoreThemeHasUnpublished(Boolean(data.draft.hasUnpublishedChanges));
-      setStoreThemeLastSavedSignature(getStoreThemeSignature(data.draft.theme));
+      markStoreThemeSaved(data.draft.theme);
       setStoreThemeAutosaveStatus("idle");
       setStoreThemeAutosaveError(null);
       setStoreThemeLocalPreview("logoUrl", data.assetUrls?.draft.logoUrl ?? null);
       setStoreThemeLocalPreview("backgroundImageUrl", data.assetUrls?.draft.backgroundImageUrl ?? null);
     } finally { setStoreThemeLoading(false); }
-  }, [setStoreThemeLocalPreview]);
+  }, [markStoreThemeSaved, setStoreThemeLocalPreview]);
 
   useEffect(() => { void loadStoreTheme(); }, [loadStoreTheme]);
 
@@ -175,16 +183,21 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
     if (mode === "manual") { setStoreThemeSaving(true); setStoreThemeError(null); setStoreThemeOk(null); setStoreThemeAutosaveError(null); }
     else { setStoreThemeAutosaveStatus("saving"); setStoreThemeAutosaveError(null); }
     try {
-      const res  = await fetch("/api/customer-account/store-theme", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ theme: storeThemeDraft }) });
-      const data = (await res.json().catch(() => ({}))) as { error?: string; message?: string; draft?: { theme?: StoreThemeConfig; updatedAt?: string | null; updatedByEmail?: string | null; hasUnpublishedChanges?: boolean } };
+      const sent = storeThemeDraft;
+      const saved = lastSavedThemeRef.current;
+      const body = saved ? { patch: diffStoreTheme(sent, saved) } : { theme: sent };
+      const res  = await fetch("/api/customer-account/store-theme", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; message?: string; published?: StoreThemeConfig; draft?: { theme?: StoreThemeConfig; updatedAt?: string | null; updatedByEmail?: string | null; hasUnpublishedChanges?: boolean } };
       if (!res.ok) {
         const err = data.error || "No se pudo guardar el borrador.";
         if (mode === "manual") setStoreThemeError(err); else { setStoreThemeAutosaveStatus("error"); setStoreThemeAutosaveError(err); }
         return false;
       }
-      const savedTheme = data.draft?.theme ?? storeThemeDraft;
-      setStoreThemeDraft(savedTheme);
-      setStoreThemeLastSavedSignature(getStoreThemeSignature(savedTheme));
+      const savedTheme = data.draft?.theme ?? sent;
+      // Lo tecleado durante el guardado se mantiene; lo demás llega del servidor.
+      setStoreThemeDraft((prev) => (prev ? rebaseStoreTheme(prev, sent, savedTheme) : savedTheme));
+      markStoreThemeSaved(savedTheme);
+      if (data.published) setStoreThemePublished(data.published);
       setStoreThemeUpdatedAt(data.draft?.updatedAt ?? new Date().toISOString());
       setStoreThemeUpdatedBy((prev) => data.draft?.updatedByEmail ?? prev);
       setStoreThemeHasUnpublished(Boolean(data.draft?.hasUnpublishedChanges ?? true));
@@ -194,7 +207,7 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
     } finally {
       if (mode === "manual") setStoreThemeSaving(false);
     }
-  }, [storeThemeDraft]);
+  }, [markStoreThemeSaved, storeThemeDraft]);
 
   // Autosave debounce
   useEffect(() => {
@@ -249,17 +262,19 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
       autosaveTimerRef.current = null;
     }
     setStoreThemeDraft(storeThemePublished);
+    // El servidor copia lo publicado en la base: la copia del navegador puede estar vieja
+    // si soporte cambió la marca mientras el editor estaba abierto.
     const res = await fetch("/api/customer-account/store-theme", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ theme: storeThemePublished }),
+      body: JSON.stringify({ discard: true }),
     });
-    const data = (await res.json().catch(() => ({}))) as { error?: string; draft?: { hasUnpublishedChanges?: boolean } };
+    const data = (await res.json().catch(() => ({}))) as { error?: string; draft?: { theme?: StoreThemeConfig; hasUnpublishedChanges?: boolean } };
     if (!res.ok) {
       setStoreThemeError(data.error || "No se pudo descartar el borrador.");
       return;
     }
-    setStoreThemeLastSavedSignature(getStoreThemeSignature(storeThemePublished));
+    markStoreThemeSaved(data.draft?.theme ?? storeThemePublished);
     setStoreThemeHasUnpublished(Boolean(data.draft?.hasUnpublishedChanges));
     setStoreThemeAutosaveStatus("idle");
     setStoreThemeOk("Borrador restaurado a produccion.");
@@ -326,8 +341,11 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
       if (!res.ok || !data.draft?.theme) {
         throw new Error(data.error || "No se pudo guardar la imagen.");
       }
-      setStoreThemeDraft(data.draft.theme);
-      setStoreThemeLastSavedSignature(getStoreThemeSignature(data.draft.theme));
+      const serverTheme = data.draft.theme;
+      const saved = lastSavedThemeRef.current;
+      // Antes esto borraba los cambios sin guardar de otros campos; ahora se conservan.
+      setStoreThemeDraft((prev) => (prev && saved ? rebaseStoreTheme(prev, saved, serverTheme) : serverTheme));
+      markStoreThemeSaved(serverTheme);
       setStoreThemeUpdatedAt(data.draft.updatedAt ?? new Date().toISOString());
       setStoreThemeUpdatedBy((prev) => data.draft?.updatedByEmail ?? prev);
       setStoreThemeHasUnpublished(Boolean(data.draft.hasUnpublishedChanges ?? true));

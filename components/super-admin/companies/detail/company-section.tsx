@@ -106,7 +106,7 @@ export function useCompanySection<T extends Record<string, unknown>>(initial: T)
     [companyId, updatedAt, setUpdatedAt, values, router],
   );
 
-  return { values, set, setValues, dirty, saving, error, justSaved, save, reset };
+  return { values, baseline, set, setValues, dirty, saving, error, justSaved, save, reset };
 }
 
 export function SectionCard({

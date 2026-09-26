@@ -8,6 +8,31 @@ import type { StoreThemeAssetField, StoreThemeConfig } from "@/components/custom
 import { parseThemeColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 
+// ─── Borrador compartido con soporte ──────────────────────────────────────────
+
+type StoreThemeKey = keyof StoreThemeConfig;
+
+/** Campos en los que `current` difiere de lo último guardado: es lo único que se envía. */
+export function diffStoreTheme(current: StoreThemeConfig, saved: StoreThemeConfig): Partial<StoreThemeConfig> {
+  const patch: Record<string, unknown> = {};
+  for (const key of Object.keys(current) as StoreThemeKey[]) {
+    if (current[key] !== saved[key]) patch[key] = current[key];
+  }
+  return patch as Partial<StoreThemeConfig>;
+}
+
+/**
+ * Tema del servidor con lo que el dueño cambió en pantalla desde `saved` encima. El
+ * servidor puede traer cambios de soporte (super admin) que el editor no tenía.
+ */
+export function rebaseStoreTheme(local: StoreThemeConfig, saved: StoreThemeConfig, server: StoreThemeConfig): StoreThemeConfig {
+  const next: Record<string, unknown> = { ...server };
+  for (const key of Object.keys(local) as StoreThemeKey[]) {
+    if (local[key] !== saved[key]) next[key] = local[key];
+  }
+  return next as StoreThemeConfig;
+}
+
 // ─── Color math ──────────────────────────────────────────────────────────────
 
 export function hexToRgb(hex: string): [number, number, number] | null {

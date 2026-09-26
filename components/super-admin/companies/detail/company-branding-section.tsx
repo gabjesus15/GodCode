@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 
 import { Input } from "@/components/ui/input";
 import { SaasCheckbox } from "@/components/super-admin/shared/saas-checkbox";
+import { formatThemeColor, parseThemeColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
 import { TENANT_ADMIN_TAB_OPTIONS } from "@/lib/super-admin/tenant-admin-tabs";
@@ -78,7 +79,28 @@ export function CompanyBrandingSection({
     }
   };
 
-  const onSave = () => void section.save((current) => ({ themePatch: current }));
+  // Solo lo que cambió: el mismo guardado se mezcla en el borrador de /cuenta, y mandar
+  // todo pisaba los colores que el dueño tenía sin publicar aunque aquí nadie los tocara.
+  const onSave = () =>
+    void section.save((current) => ({
+      themePatch: Object.fromEntries(
+        (Object.keys(current) as Array<keyof typeof current>)
+          .filter((key) => current[key] !== section.baseline[key])
+          .map((key) => [key, current[key]]),
+      ),
+    }));
+
+  // Tema publicado del local con los cambios sin guardar encima; las imágenes van
+  // como URL firmada porque el menú no resuelve rutas de storage en la vista previa.
+  const previewTheme = useMemo(
+    () => ({
+      ...company.theme_config,
+      ...v,
+      logoUrl: previewUrls.logoUrl || v.logoUrl,
+      backgroundImageUrl: v.backgroundImageUrl ? previewUrls.backgroundImageUrl || v.backgroundImageUrl : "",
+    }),
+    [company.theme_config, v, previewUrls],
+  );
 
   return (
     <SectionCard
@@ -91,20 +113,31 @@ export function CompanyBrandingSection({
           <Field label="Nombre visible" className="sm:col-span-2">
             <Input value={v.displayName} onChange={(e) => section.set("displayName", e.target.value)} placeholder={company.name ?? ""} />
           </Field>
-          {COLOR_FIELDS.map(({ key, label }) => (
-            <Field key={key} label={label}>
-              <div className="flex h-10 items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 dark:border-zinc-700 dark:bg-zinc-900">
-                <input
-                  type="color"
-                  value={v[key]}
-                  onChange={(e) => section.set(key, e.target.value)}
-                  className="h-7 w-10 cursor-pointer rounded border-none bg-transparent p-0"
-                  aria-label={label}
-                />
-                <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400">{v[key]}</span>
-              </div>
-            </Field>
-          ))}
+          {COLOR_FIELDS.map(({ key, label }) => {
+            // /cuenta guarda el fondo con transparencia (rgba) para el tinte sobre la imagen;
+            // el selector solo entiende hex, así que se edita el tono y se conserva el tinte.
+            const color = parseThemeColor(v[key]);
+            const tint = key === "backgroundColor" && color.alpha < 1 ? Math.round(color.alpha * 100) : null;
+            return (
+              <Field key={key} label={label} hint={tint != null ? `Tinte ${tint}% sobre la imagen (se ajusta desde /cuenta).` : undefined}>
+                <div className="flex h-10 items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 dark:border-zinc-700 dark:bg-zinc-900">
+                  <input
+                    type="color"
+                    value={color.hex}
+                    onChange={(e) =>
+                      section.set(key, key === "backgroundColor" ? formatThemeColor(e.target.value, color.alpha) : e.target.value)
+                    }
+                    className="h-7 w-10 cursor-pointer rounded border-none bg-transparent p-0"
+                    aria-label={label}
+                  />
+                  <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400">
+                    {color.hex}
+                    {tint != null ? ` · ${tint}%` : ""}
+                  </span>
+                </div>
+              </Field>
+            );
+          })}
           <Field label="Logo" hint={uploading === "logoUrl" ? "Subiendo…" : "JPG, PNG, WebP o GIF."}>
             <input
               type="file"
@@ -138,19 +171,7 @@ export function CompanyBrandingSection({
           {uploadError ? <p className="text-sm text-red-600 dark:text-red-400 sm:col-span-2" role="alert">{uploadError}</p> : null}
         </div>
         <div className="rounded-2xl border border-zinc-100 p-3 dark:border-zinc-800">
-          <BrandingPreview
-            displayName={v.displayName}
-            name={company.name ?? ""}
-            publicSlug={company.public_slug ?? ""}
-            primaryColor={v.primaryColor}
-            secondaryColor={v.secondaryColor}
-            backgroundColor={v.backgroundColor}
-            backgroundImageUrl={v.backgroundImageUrl ? previewUrls.backgroundImageUrl || v.backgroundImageUrl : ""}
-            logoUrl={previewUrls.logoUrl || v.logoUrl}
-            priceColor={v.priceColor}
-            discountColor={v.discountColor}
-            hoverColor={v.hoverColor}
-          />
+          <BrandingPreview publicSlug={company.public_slug ?? ""} companyName={company.name ?? ""} theme={previewTheme} />
         </div>
       </fieldset>
     </SectionCard>

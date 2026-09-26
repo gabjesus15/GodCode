@@ -146,7 +146,8 @@
         "sendCode": "M'envoyer un code",
         "sendingCode": "Envoi…",
         "passwordCodeHint": "Pour changer le mot de passe, nous envoyons un code à votre e-mail.",
-        "codeSentHint": "Consultez votre e-mail : le code expire dans 1 heure."
+        "codeSentHint": "Consultez votre e-mail : le code expire dans 1 heure.",
+        "legalTitle": "Mentions légales"
       },
       "notices": {
         "passwordChanged": "Mot de passe mis à jour. Reconnectez-vous avec le nouveau.",
@@ -280,11 +281,23 @@
         "name": "Saisis ton nom complet.",
         "phone": "Vérifie le téléphone.",
         "password": "Au moins 8 caractères.",
-        "code": "Saisis le code à 6 chiffres."
+        "code": "Saisis le code à 6 chiffres.",
+        "terms": "Acceptez les conditions générales pour créer votre compte."
       },
       "password": {
         "show": "Afficher le mot de passe",
         "hide": "Masquer le mot de passe"
+      },
+      "terms": {
+        "title": "Conditions générales",
+        "updated": "Dernière mise à jour : {date}",
+        "close": "Fermer",
+        "accept": "Accepter les conditions",
+        "openPage": "Ouvrir en pleine page",
+        "back": "Retour à Mon compte",
+        "view": "Voir les conditions",
+        "rowLabel": "Conditions générales",
+        "acceptLabel": "J'accepte les <link>conditions générales</link>"
       }
     },
     "cart": {

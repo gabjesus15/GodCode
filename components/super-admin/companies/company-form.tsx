@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import rut from 'rut.js';
 // import validator from 'validator';
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -19,14 +18,6 @@ import { uploadImage } from "@/lib/storage/upload-image-client";
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
 import { COUNTRY_OPTIONS, CURRENCY_OPTIONS } from "@/lib/super-admin/form-options";
-
-const BrandingPreview = dynamic(
-  () =>
-    import("@/components/super-admin/branches/branding-preview").then(
-      (mod) => mod.BrandingPreview,
-    ),
-  { ssr: false }
-);
 
 interface PlanOption {
   id: string;
@@ -409,21 +400,11 @@ export function CompanyForm({ plans }: CompanyFormProps) {
           </label>
         </div>
 
-        <div className="mt-6">
-          <BrandingPreview
-            displayName={form.display_name}
-            name={form.name}
-            publicSlug={form.public_slug}
-            primaryColor={form.primary_color}
-            secondaryColor={form.secondary_color}
-            backgroundColor={form.background_color}
-            backgroundImageUrl={form.background_image_url}
-            logoUrl={form.logo_url}
-            priceColor={form.price_color}
-            discountColor={form.discount_color}
-            hoverColor={form.hover_color}
-          />
-        </div>
+        {/* Antes había una maqueta con productos de ejemplo iguales para todos; el menú
+            real solo existe tras crear la empresa, y ahí se ve en «Marca del menú». */}
+        <p className="mt-6 rounded-xl border border-dashed border-zinc-200 px-4 py-3 text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+          La vista previa del menú aparece al abrir la empresa, cuando ya esté creada.
+        </p>
       </CompanySectionCard>
 
       {error ? (
