@@ -4,7 +4,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { assertPublicRateLimit } from "@/lib/infra/public-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { safeStorageFolder, validateImageFile } from "@/lib/storage/image-file";
+import {
+	MAX_FILE_SIZE_BYTES,
+	safeStorageFolder,
+	sniffImageType,
+	validateImageFile,
+} from "@/lib/storage/image-file";
 import {
 	PRIVATE_RECEIPTS_BUCKET,
 	PRIVATE_RECEIPT_SIGNED_URL_TTL,
@@ -40,11 +45,71 @@ function isAllowedFolder(folder: string): boolean {
 	return ADMIN_FOLDERS.has(folder) || CUSTOMER_FOLDERS.has(folder) || PUBLIC_FOLDERS.has(folder);
 }
 
+/** Margen para los separadores y cabeceras del multipart sobre el tamaño máximo del archivo. */
+const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
+
+function folderFrom(value: unknown): string {
+	return safeStorageFolder(String(value ?? "tenant")).split("/")[0] ?? "tenant";
+}
+
+type UploadAuth = { ok: true; customerCompanyId: string | null } | { ok: false; response: NextResponse };
+
+/** Postura de la carpeta: se resuelve antes de leer el cuerpo siempre que la carpeta venga en la URL. */
+async function authorizeFolder(req: NextRequest, folder: string): Promise<UploadAuth> {
+	if (ADMIN_FOLDERS.has(folder)) {
+		const permission = await validateAdminRolesOnServer([...SAAS_MUTATE_ROLES]);
+		if (!permission.ok) {
+			return {
+				ok: false,
+				response: NextResponse.json({ error: permission.error || "No autorizado" }, { status: permission.status }),
+			};
+		}
+		return { ok: true, customerCompanyId: null };
+	}
+	if (CUSTOMER_FOLDERS.has(folder)) {
+		const ctx = await getCustomerAccountContext();
+		if (!ctx) return { ok: false, response: NextResponse.json({ error: "No autorizado" }, { status: 401 }) };
+		return { ok: true, customerCompanyId: ctx.companyId };
+	}
+	const limited = await assertPublicRateLimit(req, `storage_upload_${folder}`, 12, 60_000);
+	if (limited) return { ok: false, response: limited };
+	return { ok: true, customerCompanyId: null };
+}
+
 export async function POST(req: NextRequest) {
+	// `formData()` carga el cuerpo entero en memoria: antes de leerlo se descarta lo que
+	// declara pesar más que el máximo (o no lo declara; fetch con FormData siempre lo manda).
+	const declaredLength = Number(req.headers.get("content-length") ?? "");
+	if (!Number.isFinite(declaredLength) || declaredLength <= 0) {
+		return NextResponse.json({ error: "Falta el tamaño de la subida." }, { status: 411 });
+	}
+	if (declaredLength > MAX_FILE_SIZE_BYTES + MULTIPART_OVERHEAD_BYTES) {
+		return NextResponse.json({ error: "La imagen es muy pesada (max. 5 MB)." }, { status: 413 });
+	}
+
+	// La carpeta viaja en la URL para autorizar sin tocar el cuerpo. Un cliente viejo que
+	// solo la manda en el formulario pasa primero por un rate limit por IP.
+	const queryFolder = req.nextUrl.searchParams.get("folder");
+	let auth: UploadAuth | null = null;
+	if (queryFolder !== null) {
+		const folder = folderFrom(queryFolder);
+		if (!isAllowedFolder(folder)) {
+			return NextResponse.json({ error: "Carpeta de subida no permitida." }, { status: 400 });
+		}
+		auth = await authorizeFolder(req, folder);
+		if (!auth.ok) return auth.response;
+	} else {
+		const limited = await assertPublicRateLimit(req, "storage_upload_unscoped", 12, 60_000);
+		if (limited) return limited;
+	}
+
 	const form = await req.formData().catch(() => null);
 	const file = form?.get("file");
-	const rawFolder = String(form?.get("folder") ?? "tenant");
-	const folder = safeStorageFolder(rawFolder).split("/")[0] ?? "tenant";
+	const formFolder = form?.get("folder");
+	const folder = folderFrom(queryFolder ?? formFolder);
+	if (queryFolder !== null && formFolder != null && folderFrom(formFolder) !== folder) {
+		return NextResponse.json({ error: "Carpeta de subida no permitida." }, { status: 400 });
+	}
 
 	if (!(file instanceof File)) {
 		return NextResponse.json({ error: "Archivo no valido." }, { status: 400 });
@@ -58,42 +123,31 @@ export async function POST(req: NextRequest) {
 		return NextResponse.json({ error: validation.error }, { status: 400 });
 	}
 
-	let customerCompanyId: string | null = null;
-	if (ADMIN_FOLDERS.has(folder)) {
-		const permission = await validateAdminRolesOnServer([...SAAS_MUTATE_ROLES]);
-		if (!permission.ok) {
-			return NextResponse.json(
-				{ error: permission.error || "No autorizado" },
-				{ status: permission.status },
-			);
-		}
-	} else if (CUSTOMER_FOLDERS.has(folder)) {
-		const ctx = await getCustomerAccountContext();
-		if (!ctx) {
-			return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-		}
-		customerCompanyId = ctx.companyId;
-	} else {
-		const limited = await assertPublicRateLimit(req, `storage_upload_${folder}`, 12, 60_000);
-		if (limited) return limited;
+	if (!auth) {
+		auth = await authorizeFolder(req, folder);
+		if (!auth.ok) return auth.response;
 	}
+	const customerCompanyId = auth.customerCompanyId;
 
-	const extension = EXT_BY_TYPE.get(file.type.toLowerCase());
-	if (!extension) {
+	// El tipo declarado lo elige el navegador (o quien arme la petición): se decide por
+	// los primeros bytes, y con ese tipo se guarda el archivo.
+	const bytes = new Uint8Array(await file.arrayBuffer());
+	const contentType = sniffImageType(bytes);
+	const extension = contentType ? EXT_BY_TYPE.get(contentType) : undefined;
+	if (!contentType || !extension) {
 		return NextResponse.json({ error: "Solo se permiten imagenes JPG, PNG o WebP." }, { status: 400 });
 	}
 
 	if (PRIVATE_FOLDERS.has(folder)) {
-		return uploadPrivateReceipt(file, folder, extension, customerCompanyId);
+		return uploadPrivateReceipt(bytes, contentType, folder, extension, customerCompanyId);
 	}
 
 	const path = `uploads/${folder}/${randomUUID()}.${extension}`;
-	const bytes = new Uint8Array(await file.arrayBuffer());
 	const { error: uploadError } = await supabaseAdmin.storage
 		.from(STOREFRONT_BRANDING_BUCKET)
 		.upload(path, bytes, {
 			cacheControl: "31536000",
-			contentType: file.type,
+			contentType,
 			upsert: false,
 		});
 
@@ -118,7 +172,8 @@ export async function POST(req: NextRequest) {
  * corta: el checkout solo comprueba que la subida funcionó y no guarda el enlace.
  */
 async function uploadPrivateReceipt(
-	file: File,
+	bytes: Uint8Array,
+	contentType: string,
 	folder: string,
 	extension: string,
 	customerCompanyId: string | null,
@@ -131,12 +186,11 @@ async function uploadPrivateReceipt(
 		return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 	}
 
-	const bytes = new Uint8Array(await file.arrayBuffer());
 	const { error: uploadError } = await supabaseAdmin.storage
 		.from(PRIVATE_RECEIPTS_BUCKET)
 		.upload(path, bytes, {
 			cacheControl: "3600",
-			contentType: file.type,
+			contentType,
 			upsert: false,
 		});
 	if (uploadError) {
