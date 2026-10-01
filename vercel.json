@@ -3,6 +3,10 @@
     {
       "path": "/api/system/cron/subscription-status",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/onboarding/expire-unverified",
+      "schedule": "30 6 * * *"
     }
   ]
 }

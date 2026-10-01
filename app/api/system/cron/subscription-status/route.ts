@@ -10,8 +10,11 @@ import { proxyToOnboardingBilling } from "@/lib/onboarding/service-proxy";
 // Suspende vencidas, aplica cambios de plan y manda los recordatorios del día (con pausas
 // entre correos por el límite de Resend).
 export const maxDuration = 60;
+/** Margen para suspender, aplicar cambios y responder antes de que Vercel corte la función. */
+const TIME_BUDGET_MS = (maxDuration - 15) * 1000;
 
 export async function GET(req: NextRequest) {
+	const deadlineMs = Date.now() + TIME_BUDGET_MS;
 	const proxied = await proxyToOnboardingBilling(req, "/api/cron/subscription-status");
 	if (proxied) return proxied;
 
@@ -30,7 +33,7 @@ export async function GET(req: NextRequest) {
 		return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 	}
 
-	const summary = await runDailySubscriptionJobs({ supabaseAdmin });
+	const summary = await runDailySubscriptionJobs({ supabaseAdmin, deadlineMs });
 	return NextResponse.json(summary, { status: summary.ok ? 200 : 500 });
 }
 
