@@ -61,11 +61,14 @@ function post(payload: unknown) {
 	);
 }
 
-function mockDb(rpcResult: { data: unknown; error: unknown }) {
+function mockDb(
+	rpcResult: { data: unknown; error: unknown },
+	orders: unknown[] = [{ data: null, error: null }],
+) {
 	const admin = makeAdminMock({
 		tables: {
 			branches: [{ data: { company_id: "company-a" }, error: null }],
-			orders: [{ data: null, error: null }],
+			orders,
 		},
 	}) as ReturnType<typeof makeAdminMock> & { rpc: ReturnType<typeof vi.fn> };
 	admin.rpc = vi.fn(async () => rpcResult);
@@ -143,5 +146,37 @@ describe("POST /api/menu-account/order", () => {
 		const res = await post(body());
 		expect(res.status).toBe(400);
 		await expect(res.json()).resolves.toMatchObject({ error: "invalid_item_price" });
+	});
+
+	it("si el sellado falla una vez, reintenta y responde bien", async () => {
+		const admin = mockDb(
+			{ data: { id: 10, delivery_address: { address: "Av. Principal 123" } }, error: null },
+			[{ data: null, error: { message: "timeout" } }, { data: null, error: null }],
+		);
+		const res = await post(body());
+		expect(res.status).toBe(200);
+		expect(admin.fromCalls.filter((t) => t === "orders")).toHaveLength(2);
+		expect(JSON.stringify(await res.json())).not.toContain("Principal");
+	});
+
+	it("si el sellado falla dos veces, cancela el pedido, borra la dirección en claro y devuelve error", async () => {
+		const admin = mockDb(
+			{ data: { id: 10, delivery_address: { address: "Av. Principal 123" }, note: "sin cebolla" }, error: null },
+			[{ data: null, error: { message: "timeout" } }, { data: null, error: { message: "timeout" } }, { data: null, error: null }],
+		);
+		const res = await post(body());
+		expect(res.status).toBe(503);
+		const json = (await res.json()) as Record<string, unknown>;
+		expect(json).toMatchObject({ code: "order_finalize_failed" });
+		expect(JSON.stringify(json)).not.toContain("Principal");
+
+		const writes = admin.chains.filter((entry) => entry.table === "orders").map((entry) => entry.chain);
+		expect(writes).toHaveLength(3);
+		const abandon = writes[2];
+		expect(abandon.update).toHaveBeenCalledWith(
+			expect.objectContaining({ status: "cancelled", delivery_address: null }),
+		);
+		expect(abandon.eq).toHaveBeenCalledWith("status", "pending");
+		expect(abandon.eq).toHaveBeenCalledWith("client_id", "ficha-de-la-sesion");
 	});
 });

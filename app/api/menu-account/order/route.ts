@@ -13,6 +13,7 @@ import {
 	toMenuAccountErrorResponse,
 } from "@/lib/menu-account/route-helpers";
 import { requireMenuAccount } from "@/lib/menu-account/session";
+import { orphanCancelNote } from "@/lib/orders/orphan-cancel";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,6 +48,31 @@ const bodySchema = z.object({
 	/** Credencial con la que el carrito cierra el pedido en `public-order-delivery`. */
 	clientRequestId: z.string().uuid(),
 });
+
+/**
+ * Último recurso cuando el pedido no se pudo sellar: cancelado y sin la dirección
+ * en claro. Solo si sigue pendiente (carrera con caja). Si también falla, queda el
+ * log con el id para limpiarlo a mano.
+ */
+async function abandonUnsealedOrder(
+	created: { id?: unknown; note?: unknown },
+	clientId: string,
+	clearAddress: boolean,
+): Promise<void> {
+	const { error } = await supabaseAdmin
+		.from("orders")
+		.update({
+			status: "cancelled",
+			note: orphanCancelNote(typeof created.note === "string" ? created.note : null, "seal_failed"),
+			...(clearAddress ? { delivery_address: null } : {}),
+		})
+		.eq("id", created.id as number)
+		.eq("client_id", clientId)
+		.eq("status", "pending");
+	if (error) {
+		logger.error("menu_account_order_abandon_failed", { orderId: created.id, message: error.message });
+	}
+}
 
 export async function POST(req: NextRequest) {
 	const disabled = menuAccountDisabledResponse();
@@ -103,23 +129,34 @@ export async function POST(req: NextRequest) {
 		// El RPC necesita la dirección en claro para calcular el envío; apenas existe
 		// el pedido se cifra, antes de que nadie lo lea. En la misma escritura queda
 		// atado al client_request_id del carrito, que es lo que le pide el cierre.
-		const created = (order ?? {}) as { id?: unknown; delivery_address?: unknown };
+		const created = (order ?? {}) as { id?: unknown; delivery_address?: unknown; note?: unknown };
 		const sealedAddress = sealOrderDeliveryAddress(created.delivery_address);
 		const sealNeeded = Boolean(sealedAddress) && created.delivery_address !== sealedAddress;
 		if (created.id != null) {
-			const { error: updateError } = await supabaseAdmin
-				.from("orders")
-				.update({
-					client_request_id: body.clientRequestId,
-					...(sealNeeded ? { delivery_address: sealedAddress as never } : {}),
-				})
-				.eq("id", created.id as number)
-				.eq("client_id", clientId);
+			const finalize = () =>
+				supabaseAdmin
+					.from("orders")
+					.update({
+						client_request_id: body.clientRequestId,
+						...(sealNeeded ? { delivery_address: sealedAddress as never } : {}),
+					})
+					.eq("id", created.id as number)
+					.eq("client_id", clientId);
+			// Un reintento cubre el corte de red puntual; la escritura es idempotente.
+			let { error: updateError } = await finalize();
+			if (updateError) ({ error: updateError } = await finalize());
 			if (updateError) {
-				logger.error("menu_account_order_seal_failed", { message: updateError.message });
-			} else if (sealNeeded) {
-				created.delivery_address = sealedAddress;
+				// Sin esta escritura el pedido queda con la dirección en claro y sin el
+				// client_request_id, así que el cierre del carrito tampoco lo encontraría:
+				// vivo en caja pero sin terminar. Se cancela y se borra la dirección en vez
+				// de responder éxito; el carrito muestra el error y el reintento crea otro.
+				logger.error("menu_account_order_seal_failed", { orderId: created.id, message: updateError.message });
+				await abandonUnsealedOrder(created, clientId, sealNeeded);
+				return jsonError(503, "No se pudo completar el pedido. Intenta nuevamente.", {
+					code: "order_finalize_failed",
+				});
 			}
+			if (sealNeeded) created.delivery_address = sealedAddress;
 		}
 		return jsonOk({ order: created });
 	} catch (error) {
