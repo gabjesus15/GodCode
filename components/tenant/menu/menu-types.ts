@@ -1,3 +1,4 @@
+import type { ProductSizeOption } from "@/lib/tenant/product-sizes";
 import type { ReactNode } from "react";
 import type { HeroBanner } from "./hero-carousel";
 import type { Json } from "../../../types/supabase-database";
@@ -83,6 +84,8 @@ export interface MenuProduct {
 	has_discount: boolean;
 	discount_price: number | null;
 	is_special: boolean;
+	/** Tamaños con precio propio; sin tamaños, el producto se vende a `price`. */
+	sizes?: ProductSizeOption[];
 }
 
 export interface MenuClientProps {

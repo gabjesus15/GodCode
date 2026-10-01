@@ -303,3 +303,109 @@
 		animation-name: pds-fade-out;
 	}
 }
+
+/* --- Tamaños (Familiar, Mediana…): radios con precio --------------------------- */
+
+/* Hoja de tamaño sin foto: el contenido arranca debajo del asa y el botón cerrar. */
+.pds--compact .pds__content {
+	padding-top: 60px;
+}
+
+.pds--compact .pds__handle {
+	background: var(--menu-line-strong);
+	box-shadow: none;
+}
+
+.pds-sizes {
+	margin: 8px 0 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+
+.pds-sizes__title {
+	padding: 0;
+	margin-bottom: 8px;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--menu-fg);
+}
+
+.pds-sizes__list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.pds-size {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-height: 52px;
+	padding: 10px 14px;
+	border: 1px solid var(--menu-line-strong);
+	border-radius: 14px;
+	background: var(--menu-surface-2);
+	cursor: pointer;
+	transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.pds-size.is-checked {
+	border-color: var(--menu-accent);
+	background: var(--menu-surface);
+}
+
+.pds-size:has(.pds-size__input:focus-visible) {
+	outline: 2px solid var(--menu-accent);
+	outline-offset: 2px;
+}
+
+.pds-size__input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.pds-size__dot {
+	flex: none;
+	width: 20px;
+	height: 20px;
+	border-radius: 999px;
+	border: 2px solid var(--menu-line-strong);
+	transition: border-color 160ms ease, border-width 160ms ease;
+}
+
+.pds-size.is-checked .pds-size__dot {
+	border-color: var(--menu-accent);
+	border-width: 6px;
+}
+
+.pds-size__name {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	font-size: 0.9375rem;
+	font-weight: 500;
+}
+
+.pds-size__badge {
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: var(--menu-fg-3);
+}
+
+.pds-size__price {
+	flex: none;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	color: var(--price-color, var(--menu-fg));
+}
+
+.pds__cta:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}

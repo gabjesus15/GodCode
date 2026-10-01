@@ -695,6 +695,12 @@
         "inCart": "Dans ta commande",
         "done": "Terminé"
       },
+      "sizes": {
+        "title": "Choisissez la taille",
+        "groupAria": "Tailles de {name}",
+        "choose": "Choisir la taille",
+        "sizeInCart": "{count} dans le panier"
+      },
       "contact": {
         "title": "Contact",
         "subtitle": "Comment veux-tu nous contacter ?",

@@ -695,6 +695,12 @@
         "inCart": "Nel tuo ordine",
         "done": "Fatto"
       },
+      "sizes": {
+        "title": "Scegli la misura",
+        "groupAria": "Misure di {name}",
+        "choose": "Scegli la misura",
+        "sizeInCart": "{count} nel carrello"
+      },
       "contact": {
         "title": "Contatti",
         "subtitle": "Come vuoi contattarci?",

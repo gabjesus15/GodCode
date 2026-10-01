@@ -14,6 +14,12 @@ export interface CartProduct {
 	has_discount?: boolean | null;
 	discount_price?: number | null;
 	is_active?: boolean | null;
+	/**
+	 * Tamaño elegido (`product_sizes.id`). Con tamaño, `price` es el del tamaño, no hay
+	 * oferta y `name` ya viene compuesto ("Pizza (Familiar)").
+	 */
+	size_id?: string | null;
+	size_name?: string | null;
 }
 
 export interface CartExtraSelection {

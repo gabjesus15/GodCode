@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isUuidLike } from "../../cart/utils/safe-ids";
+import { composeSizedName } from "@/lib/tenant/product-sizes";
 
 /** Línea de carrito enviada al servicio (producto catálogo por UUID). */
 export interface OrderCatalogLine {
@@ -17,6 +18,8 @@ export interface OrderCatalogLine {
 	is_extra?: boolean;
 	/** Origen del extra para el RPC: `extras` (extra global) o `beverages` (bebida upsell). */
 	manual_order_source?: "extras" | "beverages";
+	/** Tamaño elegido (`product_sizes.id`): su precio reemplaza al del producto. */
+	size_id?: string | null;
 }
 
 interface ProductPriceRow {
@@ -33,6 +36,13 @@ interface ProductBranchRow {
 interface ProductRow {
 	id: string;
 	name: string | null;
+}
+
+interface ProductSizeRow {
+	id: string;
+	product_id: string;
+	name: string | null;
+	price: number | string | null;
 }
 
 /** Línea de catálogo (UUID) enviada al checkout, excluye extras sintéticos del carrito. */
@@ -76,6 +86,7 @@ export async function buildOrderItemsFromBranch(
 			description: item.description ?? null,
 			extras_total: Math.max(0, Math.round(Number(item.extras_total) || 0)),
 			extras: normalizeExtrasPayload(item.extras),
+			sizeId: item.size_id && isUuidLike(String(item.size_id)) ? String(item.size_id) : null,
 		}));
 
 	const requestedIds = [...new Set(requestedLines.map((l) => l.productId))];
@@ -101,6 +112,24 @@ export async function buildOrderItemsFromBranch(
 		supabase.from("products").select("id, name").eq("is_active", true).in("id", requestedIds),
 	]);
 
+	const requestedSizeIds = [
+		...new Set(requestedLines.map((l) => l.sizeId).filter((id): id is string => Boolean(id))),
+	];
+	let sizeRows: ProductSizeRow[] = [];
+	if (requestedSizeIds.length > 0) {
+		const { data: sizes, error: sizesError } = await supabase
+			.from("product_sizes")
+			.select("id, product_id, name, price")
+			.eq("branch_id", branchId)
+			.eq("is_active", true)
+			.in("id", requestedSizeIds);
+		if (sizesError) {
+			throw new Error("No se pudo validar los productos de la sucursal. Intenta nuevamente.");
+		}
+		sizeRows = (sizes ?? []) as ProductSizeRow[];
+	}
+	const sizesById = new Map(sizeRows.map((row) => [String(row.id), row]));
+
 	if (pricesError || branchError || productsError) {
 		throw new Error("No se pudo validar los productos de la sucursal. Intenta nuevamente.");
 	}
@@ -122,6 +151,33 @@ export async function buildOrderItemsFromBranch(
 		const dbPriceRow = pricesByProduct.get(productId);
 		if (!dbPriceRow) continue;
 
+		const extrasTotal = line.extras.reduce(
+			(sum, extra) => sum + Math.max(0, extra.price) * Math.max(1, extra.qty),
+			0,
+		);
+
+		if (line.sizeId) {
+			// Tamaño: precio propio, sin oferta. Un tamaño borrado o de otro producto deja la
+			// línea fuera (el checkout avisa que el carrito cambió).
+			const size = sizesById.get(line.sizeId);
+			if (!size || String(size.product_id) !== productId) continue;
+			const sizePrice = Number(size.price);
+			if (!Number.isFinite(sizePrice) || sizePrice <= 0) continue;
+			normalizedItems.push({
+				id: productId,
+				name: composeSizedName(productNames.get(productId) || "Producto", String(size.name ?? "")),
+				quantity: line.quantity,
+				price: sizePrice,
+				has_discount: false,
+				discount_price: null,
+				description: line.description,
+				extras_total: extrasTotal,
+				extras: line.extras,
+				size_id: line.sizeId,
+			});
+			continue;
+		}
+
 		const basePrice = Number(dbPriceRow.price || 0);
 		const discountPrice = Number(dbPriceRow.discount_price || 0);
 		const hasDiscount = Boolean(dbPriceRow.has_discount) && discountPrice > 0;
@@ -141,10 +197,7 @@ export async function buildOrderItemsFromBranch(
 			discount_price: hasDiscount ? discountPrice : null,
 			description: line.description,
 			// Recalculate from extras lines — never trust client extras_total alone.
-			extras_total: line.extras.reduce(
-				(sum, extra) => sum + Math.max(0, extra.price) * Math.max(1, extra.qty),
-				0,
-			),
+			extras_total: extrasTotal,
 			extras: line.extras,
 		});
 	}

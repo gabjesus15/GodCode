@@ -1,5 +1,6 @@
 import currency from "currency.js";
 import { isUuidLike } from "./safe-ids";
+import { composeSizedName, type ProductSizeOption } from "@/lib/tenant/product-sizes";
 
 /** Fila típica de `product_prices` + join `products` desde Supabase. */
 export type BranchProductPriceRow = {
@@ -13,6 +14,11 @@ export type BranchProductPriceRow = {
     is_active?: boolean | null;
     description?: string | null;
   } | null;
+  /**
+   * Tamaños activos del producto en la sucursal. `undefined` = no se pudieron leer
+   * (se conserva el precio del carrito); `[]` = el producto ya no tiene tamaños.
+   */
+  sizes?: ProductSizeOption[];
 };
 
 export type MergeCartBranchPricesOptions = {
@@ -37,6 +43,8 @@ export function mergeCartWithBranchPrices<
     has_discount?: boolean | null;
     discount_price?: number | null;
     is_active?: boolean | null;
+    size_id?: string | null;
+    size_name?: string | null;
   },
 >(cart: T[], rows: BranchProductPriceRow[] | null | undefined, options: MergeCartBranchPricesOptions): T[] {
   const list = rows ?? [];
@@ -46,6 +54,28 @@ export function mergeCartWithBranchPrices<
   const merged = cart.reduce<T[]>((acc, cartItem) => {
     const priceRow = priceByProductId.get(String(cartItem.id)) ?? null;
     const meta = priceRow?.products;
+    if (priceRow && cartItem.size_id) {
+      // Línea con tamaño: el precio es el del tamaño, nunca el base ni la oferta.
+      const sizes = priceRow.sizes;
+      if (sizes === undefined) {
+        acc.push({ ...cartItem, is_active: meta?.is_active ?? cartItem.is_active });
+        return acc;
+      }
+      const size = sizes.find((entry) => entry.id === String(cartItem.size_id));
+      acc.push({
+        ...cartItem,
+        price: size ? size.price : cartItem.price,
+        has_discount: false,
+        discount_price: null,
+        size_name: size?.name ?? cartItem.size_name,
+        name:
+          size && meta?.name ? composeSizedName(meta.name, size.name) : cartItem.name,
+        description: meta?.description ?? cartItem.description,
+        // Tamaño borrado o desactivado en el panel: la línea sale del carrito.
+        is_active: size ? (meta?.is_active ?? cartItem.is_active) : false,
+      });
+      return acc;
+    }
     if (priceRow) {
       acc.push({
         ...cartItem,
