@@ -21,6 +21,7 @@ import {
 	orderPatchEligibility,
 	orphanCancelNote,
 } from "@/lib/orders/orphan-cancel";
+import { logger } from "@/lib/infra/logger";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isMenuAccountClient, sealOrderDeliveryAddress } from "@/lib/menu-account/order-address";
 import { fetchUberDeliveryEstimate } from "@/lib/delivery/uber-direct";
@@ -33,6 +34,9 @@ import { fetchUberDeliveryEstimate } from "@/lib/delivery/uber-direct";
  */
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Lo que ve el carrito cuando falla algo interno; el detalle queda en el log. */
+const GENERIC_FAILURE = "No se pudo registrar los datos del pedido. Intenta nuevamente.";
 
 const TOTAL_EPS = 2;
 const FEE_EPS = 0.5;
@@ -483,7 +487,9 @@ export async function POST(req: NextRequest) {
 			.eq("client_request_id", clientRequestId);
 
 		if (upErr) {
-			return await rechazarYCancelar({ error: upErr.message }, 400);
+			// El texto de Postgres (columnas, restricciones) no es para un anónimo: va al log.
+			logger.error("public_order_delivery_update_failed", { orderId, message: upErr.message });
+			return await rechazarYCancelar({ error: GENERIC_FAILURE }, 400);
 		}
 
 		return jsonWithPublicCors(req, {
@@ -492,8 +498,10 @@ export async function POST(req: NextRequest) {
 			handoff_code: handoff,
 		});
 	} catch (err) {
-		const message = err instanceof Error ? err.message : "Error en el servidor";
-		return jsonWithPublicCors(req, { error: message }, { status: 500 });
+		logger.error("public_order_delivery_unhandled", {
+			message: err instanceof Error ? err.message : String(err),
+		});
+		return jsonWithPublicCors(req, { error: GENERIC_FAILURE }, { status: 500 });
 	}
 }
 
