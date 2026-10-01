@@ -70,7 +70,7 @@ describe("verifyPayPalWebhookSignature", () => {
 		const result = await verifyPayPalWebhookSignature(RAW_EVENT, new Headers(SIGNATURE_HEADERS), impl);
 		expect(result).toEqual({ ok: true });
 		const verify = calls.find((c) => c.url.endsWith("/v1/notifications/verify-webhook-signature"))!;
-		expect(verify.url.startsWith("https://api-m.sandbox.paypal.com")).toBe(true);
+		expect(new URL(verify.url).origin).toBe("https://api-m.sandbox.paypal.com");
 		expect(verify.body.endsWith(`"webhook_event":${RAW_EVENT}}`)).toBe(true);
 		const parsed = JSON.parse(verify.body) as Record<string, unknown>;
 		expect(parsed).toMatchObject({ webhook_id: "WH-CONFIG", transmission_id: "tx-1", auth_algo: "SHA256withRSA" });
