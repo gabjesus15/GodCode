@@ -8,6 +8,14 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 const TENANT_MANAGEABLE_ROLES = new Set(["admin", "ceo", "cashier"]);
 const RESERVED_NON_TENANT_ROLES = new Set(["super_admin", "owner"]);
 
+/** Tope por página: alcanza para cualquier negocio real y evita traer tablas enteras. */
+const USERS_PAGE_MAX = 500;
+
+function pageParam(value: string | null, fallback: number, max: number): number {
+	const n = Math.floor(Number(value));
+	return Number.isFinite(n) && n >= 0 ? Math.min(n, max) : fallback;
+}
+
 const normalizeTenantRole = (value: unknown) => String(value ?? "").trim().toLowerCase();
 
 async function isAllowedTenantRole(role: string) {
@@ -42,16 +50,23 @@ export async function GET(req: NextRequest) {
 		return NextResponse.json({ error: "Falta companyId" }, { status: 400 });
 	}
 
+	// Paginado con orden estable; se pide uno de más para saber si quedan.
+	const limit = Math.max(1, pageParam(url.searchParams.get("limit"), USERS_PAGE_MAX, USERS_PAGE_MAX));
+	const offset = pageParam(url.searchParams.get("offset"), 0, Number.MAX_SAFE_INTEGER);
 	const { data, error } = await supabaseAdmin
 		.from("users")
 		.select("id,email,role,branch_id,branch:branches!users_branch_id_fkey(name)")
-		.eq("company_id", companyId);
+		.eq("company_id", companyId)
+		.order("email", { ascending: true })
+		.order("id", { ascending: true })
+		.range(offset, offset + limit);
 
 	if (error) {
 		return NextResponse.json({ error: error.message }, { status: 400 });
 	}
 
-	return NextResponse.json({ users: data });
+	const rows = data ?? [];
+	return NextResponse.json({ users: rows.slice(0, limit), hasMore: rows.length > limit });
 }
 
 export async function POST(req: NextRequest) {

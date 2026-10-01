@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { submitPortalReceipt } from "@/lib/billing/portal-billing";
 import { notifyPortalReceipt } from "@/lib/email/account-notices";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { isOwnStorageUrl } from "@/lib/storage/own-storage-url";
+import { parsePrivateReceiptHref, paymentReferenceCompanyId } from "@/lib/storage/private-receipts";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 
@@ -30,8 +30,10 @@ export async function POST(req: NextRequest) {
 	if (!paymentId || !referenceFileUrl) {
 		return NextResponse.json({ error: "Falta el pago o el comprobante." }, { status: 400 });
 	}
-	// Solo archivos subidos a nuestro Storage: el equipo abre este enlace desde el panel.
-	if (!isOwnStorageUrl(referenceFileUrl)) {
+	// Solo comprobantes subidos desde el portal al bucket privado y de esta misma empresa:
+	// el equipo abre este enlace desde el panel y no puede apuntar a otro archivo.
+	const receiptPath = parsePrivateReceiptHref(referenceFileUrl);
+	if (!receiptPath || paymentReferenceCompanyId(receiptPath) !== ctx.companyId) {
 		return NextResponse.json({ error: "Sube el comprobante desde esta página." }, { status: 400 });
 	}
 

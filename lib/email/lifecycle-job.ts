@@ -48,6 +48,8 @@ export type LifecycleReport = {
 	planned: number;
 	sent: number;
 	failed: number;
+	/** La corrida paró antes de terminar por el tiempo de la función; lo pendiente sale en la próxima. */
+	stoppedEarly: boolean;
 	items: LifecycleReportItem[];
 	errors: string[];
 };
@@ -233,6 +235,9 @@ async function buildPlanned(item: PlannedEmail, client: SupabaseClient, now: Dat
 	}
 }
 
+/** Lo que puede tardar un correo (preparar, reservar, Resend y la pausa) en el peor caso razonable. */
+const LIFECYCLE_ITEM_RESERVE_MS = 5_000;
+
 function sleep(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -242,11 +247,18 @@ export async function runLifecycleEmails(params: {
 	now?: Date;
 	mode?: LifecycleMode;
 	maxSends?: number;
+	/**
+	 * Hora límite (ms epoch) para empezar otro correo. Si la función se corta a mitad de
+	 * un envío, la reserva en `email_deliveries` queda en "sending" y ese correo ya no
+	 * sale nunca (la dedupe lo da por enviado): mejor parar limpio antes y dejar el resto
+	 * a la próxima corrida, que lo vuelve a planificar y salta lo ya enviado.
+	 */
+	deadlineMs?: number;
 } = {}): Promise<LifecycleReport> {
 	const client = params.client ?? supabaseAdmin;
 	const now = params.now ?? new Date();
 	const mode = params.mode ?? lifecycleMode();
-	const report: LifecycleReport = { mode, planned: 0, sent: 0, failed: 0, items: [], errors: [] };
+	const report: LifecycleReport = { mode, planned: 0, sent: 0, failed: 0, stoppedEarly: false, items: [], errors: [] };
 	if (mode === "off") return report;
 
 	const { snapshot, errors } = await loadLifecycleSnapshot(client, now);
@@ -271,6 +283,11 @@ export async function runLifecycleEmails(params: {
 		}
 		if (mode === "on" && attempts >= maxSends) {
 			report.items.push({ ...ref, status: "skipped", detail: "Tope de envíos por corrida: sale mañana" });
+			continue;
+		}
+		if (params.deadlineMs != null && Date.now() + LIFECYCLE_ITEM_RESERVE_MS > params.deadlineMs) {
+			report.stoppedEarly = true;
+			report.items.push({ ...ref, status: "skipped", detail: "Sin tiempo en esta corrida: sale en la próxima" });
 			continue;
 		}
 

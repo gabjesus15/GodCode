@@ -16,7 +16,10 @@ type MessageRow = {
   created_at: string;
 };
 
-export async function GET(_: NextRequest, context: { params: Promise<{ id: string }> }) {
+/** Mensajes por pedido: los últimos N, que es lo que muestra la conversación. */
+const MESSAGES_PAGE_MAX = 200;
+
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const access = await validateSuperAdminAccess(SAAS_READ_ROLES);
   if (!access.ok) return access.response;
 
@@ -24,15 +27,25 @@ export async function GET(_: NextRequest, context: { params: Promise<{ id: strin
   const ticketId = String(params.id ?? "").trim();
   if (!ticketId) return NextResponse.json({ error: "Falta id" }, { status: 400 });
 
-  const { data, error } = await supabaseAdmin
+  // Se piden los más nuevos (uno de más para saber si hay anteriores) y se devuelven en
+  // orden cronológico, como siempre. `before` (created_at del más viejo que ya se tiene)
+  // trae la página anterior.
+  const before = req.nextUrl.searchParams.get("before");
+  const beforeIso = before && !Number.isNaN(Date.parse(before)) ? new Date(before).toISOString() : null;
+  let query = supabaseAdmin
     .from("saas_ticket_messages")
     .select("id,ticket_id,author_type,author_email,is_internal,message,created_at")
-    .eq("ticket_id", ticketId)
-    .order("created_at", { ascending: true });
+    .eq("ticket_id", ticketId);
+  if (beforeIso) query = query.lt("created_at", beforeIso);
+  const { data, error } = await query
+    .order("created_at", { ascending: false })
+    .limit(MESSAGES_PAGE_MAX + 1);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
-  return NextResponse.json({ messages: (data ?? []) as MessageRow[] });
+  const rows = (data ?? []) as MessageRow[];
+  const hasMore = rows.length > MESSAGES_PAGE_MAX;
+  return NextResponse.json({ messages: rows.slice(0, MESSAGES_PAGE_MAX).reverse(), hasMore });
 }
 
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {

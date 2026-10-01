@@ -660,5 +660,6 @@ Diferencias con el código y propuesta: <lista o «ninguna»>
 
 - Desplegar **juntos** la app y `services/onboarding-billing`.
 - Variables (en la app y en el servicio): `RESEND_API_KEY`, `RESEND_FROM` (p. ej. `Gcode POS <noreply@godcode.me>`), `ONBOARDING_TEAM_EMAIL` (bandeja del equipo; vacío = correo de soporte), `CRON_SECRET`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_ENVIRONMENT`, `NEXT_PUBLIC_TENANT_PANEL_URL`. Opcionales: `EMAIL_REPLY_TO`, `EMAIL_LOGO_URL`.
+- `PAYPAL_WEBHOOK_ID` (solo la app): id del webhook de PayPal apuntando a `/api/payments/paypal/webhook` con el evento `PAYMENT.CAPTURE.COMPLETED`. Aplica los pagos de /cuenta que PayPal cobra después de la captura. Sin la variable el webhook responde 503 y no aplica nada.
 - **Recordatorios**: el primer despliegue conviene hacerlo con `EMAIL_REMINDERS=dry-run`, revisar en el super admin **Correos → Hoy saldrían** qué se enviaría, y después pasar a `EMAIL_REMINDERS=on` (o quitar la variable).
 - Después de B1, **rotar** en Stripe / Mercado Pago / PayPal cualquier clave que alguna sucursal haya tenido cargada: estuvo expuesta en el menú público.

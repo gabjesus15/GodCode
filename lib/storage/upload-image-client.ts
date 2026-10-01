@@ -13,7 +13,8 @@ export async function uploadImage(file: File, folder = "tenant"): Promise<string
 
 	let response: Response;
 	try {
-		response = await fetch("/api/storage/upload-image", {
+		// La carpeta va también en la URL: el servidor autoriza con ella antes de leer el archivo.
+		response = await fetch(`/api/storage/upload-image?folder=${encodeURIComponent(folder)}`, {
 			method: "POST",
 			body: formData,
 		});
