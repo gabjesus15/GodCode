@@ -122,6 +122,7 @@ async function createAccountOrder(args: {
   p_delivery_address: unknown;
   p_coupon_code?: string;
   p_order_origin: string;
+  p_client_request_id: string;
 }): Promise<{ data: unknown; error: { message: string } | null }> {
   const res = await fetch(`${window.location.origin}/api/menu-account/order`, {
     method: "POST",
@@ -139,6 +140,7 @@ async function createAccountOrder(args: {
       deliveryAddress: args.p_delivery_address ?? null,
       couponCode: args.p_coupon_code ?? null,
       orderOrigin: args.p_order_origin,
+      clientRequestId: args.p_client_request_id,
     }),
   });
   const json = (await res.json().catch(() => ({}))) as { order?: unknown; error?: string };
@@ -561,7 +563,13 @@ export const ordersService = {
       finalNote = `${finalNote}\n[Envio: $${Math.round(deliveryFee).toLocaleString("es-CL")}]`.trim();
     }
 
+    // Credencial del cierre (`public-order-delivery`): el pedido queda atado a este
+    // uuid y la ruta pública no lo toca sin él. Uno nuevo por intento, para que un
+    // reintento no choque con el pedido que el intento anterior dejó cancelado.
+    const clientRequestId = crypto.randomUUID();
+
     const rpcArgs = {
+      p_client_request_id: clientRequestId,
       p_client_name: orderData.client_name,
       p_client_phone: orderData.client_phone,
       p_client_rut: orderData.client_rut || "",
@@ -584,7 +592,7 @@ export const ordersService = {
 
     const { data: newOrder, error: orderError } = orderData.account_order
       ? await createAccountOrder(rpcArgs)
-      : await supabase.rpc("create_order_transaction", rpcArgs);
+      : await supabase.rpc("create_public_order_v1", rpcArgs);
 
     if (orderError) {
       const rpcMessage = String(orderError.message || "").toLowerCase();
@@ -633,6 +641,7 @@ export const ordersService = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderId,
+          clientRequestId,
           orderType: deliveryMode ? "delivery" : "pickup",
           deliveryKm: deliveryMode ? Number(orderData.delivery_km) : 0,
           deliveryFee: deliveryMode ? deliveryFee : 0,

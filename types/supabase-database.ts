@@ -4399,6 +4399,29 @@ export type Database = {
         }
         Returns: Json
       }
+      create_public_order_v1: {
+        Args: {
+          p_branch_id: string
+          p_client_name: string
+          p_client_phone: string
+          p_client_request_id: string
+          p_client_rut: string
+          p_company_id: string
+          p_coupon_code?: string
+          p_delivery_address?: Json
+          p_delivery_fee?: number
+          p_items: Json
+          p_note: string
+          p_order_origin?: string
+          p_order_type?: string
+          p_payment_method_specific?: string
+          p_payment_ref: string
+          p_payment_type: string
+          p_status: string
+          p_total: number
+        }
+        Returns: Json
+      }
       create_role_definition: {
         Args: { p_description?: string; p_name: string }
         Returns: {

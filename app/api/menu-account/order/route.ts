@@ -44,6 +44,8 @@ const bodySchema = z.object({
 	deliveryAddress: z.record(z.string(), z.unknown()).nullable().optional(),
 	couponCode: z.string().trim().max(80).nullable().optional(),
 	orderOrigin: z.string().trim().max(40).optional(),
+	/** Credencial con la que el carrito cierra el pedido en `public-order-delivery`. */
+	clientRequestId: z.string().uuid(),
 });
 
 export async function POST(req: NextRequest) {
@@ -99,18 +101,23 @@ export async function POST(req: NextRequest) {
 		}
 
 		// El RPC necesita la dirección en claro para calcular el envío; apenas existe
-		// el pedido se cifra, antes de que nadie lo lea.
+		// el pedido se cifra, antes de que nadie lo lea. En la misma escritura queda
+		// atado al client_request_id del carrito, que es lo que le pide el cierre.
 		const created = (order ?? {}) as { id?: unknown; delivery_address?: unknown };
 		const sealedAddress = sealOrderDeliveryAddress(created.delivery_address);
-		if (created.id != null && sealedAddress && created.delivery_address !== sealedAddress) {
-			const { error: sealError } = await supabaseAdmin
+		const sealNeeded = Boolean(sealedAddress) && created.delivery_address !== sealedAddress;
+		if (created.id != null) {
+			const { error: updateError } = await supabaseAdmin
 				.from("orders")
-				.update({ delivery_address: sealedAddress as never })
+				.update({
+					client_request_id: body.clientRequestId,
+					...(sealNeeded ? { delivery_address: sealedAddress as never } : {}),
+				})
 				.eq("id", created.id as number)
 				.eq("client_id", clientId);
-			if (sealError) {
-				logger.error("menu_account_order_seal_failed", { message: sealError.message });
-			} else {
+			if (updateError) {
+				logger.error("menu_account_order_seal_failed", { message: updateError.message });
+			} else if (sealNeeded) {
 				created.delivery_address = sealedAddress;
 			}
 		}

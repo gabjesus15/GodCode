@@ -46,6 +46,7 @@ function body(overrides: Record<string, unknown> = {}) {
 		orderType: "delivery",
 		deliveryFee: 3,
 		deliveryAddress: { address: "Av. Principal 123", named_area_label: "Centro" },
+		clientRequestId: "33333333-3333-4333-8333-333333333333",
 		...overrides,
 	};
 }
@@ -119,6 +120,22 @@ describe("POST /api/menu-account/order", () => {
 
 		const update = admin.chains.find((entry) => entry.table === "orders")?.chain;
 		expect(update?.eq).toHaveBeenCalledWith("client_id", "ficha-de-la-sesion");
+	});
+
+	it("ata el pedido al client_request_id del carrito, aunque no haya dirección que cifrar", async () => {
+		const admin = mockDb({ data: { id: 10, delivery_address: null }, error: null });
+		const res = await post(body({ orderType: "pickup", deliveryFee: 0, deliveryAddress: null }));
+		expect(res.status).toBe(200);
+		const update = admin.chains.find((entry) => entry.table === "orders")?.chain;
+		expect(update?.update).toHaveBeenCalledWith({ client_request_id: "33333333-3333-4333-8333-333333333333" });
+		expect(update?.eq).toHaveBeenCalledWith("client_id", "ficha-de-la-sesion");
+	});
+
+	it("sin client_request_id no crea el pedido", async () => {
+		const admin = mockDb({ data: null, error: null });
+		const res = await post(body({ clientRequestId: undefined }));
+		expect(res.status).toBe(400);
+		expect(admin.rpc).not.toHaveBeenCalled();
 	});
 
 	it("devuelve el error del RPC para que el carrito lo traduzca", async () => {
