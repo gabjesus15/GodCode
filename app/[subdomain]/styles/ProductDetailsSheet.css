@@ -351,13 +351,15 @@
 	transition: border-color 160ms ease, background-color 160ms ease;
 }
 
+/* El texto del menú siempre contrasta con su superficie; el color de marca
+   (--menu-accent) puede ser casi del mismo tono que el fondo en temas oscuros. */
 .pds-size.is-checked {
-	border-color: var(--menu-accent);
-	background: var(--menu-surface);
+	border-color: var(--menu-fg);
+	box-shadow: inset 0 0 0 1px var(--menu-fg);
 }
 
 .pds-size:has(.pds-size__input:focus-visible) {
-	outline: 2px solid var(--menu-accent);
+	outline: 2px solid var(--menu-fg);
 	outline-offset: 2px;
 }
 
@@ -377,7 +379,7 @@
 }
 
 .pds-size.is-checked .pds-size__dot {
-	border-color: var(--menu-accent);
+	border-color: var(--menu-fg);
 	border-width: 6px;
 }
 
