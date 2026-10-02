@@ -37,6 +37,7 @@ import { useMenuRealtime } from "./use-menu-realtime";
 import { useMenuOverlayHistory } from "@/lib/tenant/mobile/use-menu-overlay-history";
 import { useOverlayHistoryDepthSync } from "@/lib/tenant/mobile/overlay-history";
 import { TENANT_OVERLAY_PRIORITIES } from "@/lib/tenant/config/tenant-ui-config";
+import { useSizePickerStore } from "./product-size-store";
 import { useTenantMounted } from "@/lib/tenant/hooks/use-tenant-mounted";
 import { useLowEndDevice } from "@/lib/tenant/hooks/use-low-end-device";
 import { resolveEffectiveNavigationMode } from "@/lib/tenant/menu/resolve-effective-navigation-mode";
@@ -95,6 +96,8 @@ export function useMenuClientController(props: MenuClientProps) {
 	const [logoError, setLogoError] = useState(false);
 	const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
 	const [selectedProductDetails, setSelectedProductDetails] = useState<(typeof products)[number] | null>(null);
+	const isSizePickerOpen = useSizePickerStore((state) => state.product !== null);
+	const closeSizePicker = useSizePickerStore((state) => state.close);
 	const [expandedInlineProductId, setExpandedInlineProductId] = useState<string | null>(null);
 
 	const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -292,6 +295,7 @@ export function useMenuClientController(props: MenuClientProps) {
 		(isContactChannelSheetOpen ? 1 : 0)
 		+ (isContactBranchModalOpen ? 1 : 0)
 		+ (selectedProductDetails ? 1 : 0)
+		+ (isSizePickerOpen ? 1 : 0)
 		// Modal obligatorio sin sucursal: no pushState extra (1er atrás = home).
 		+ (isLocationModalOpen && !isBranchSelectorMandatory ? 1 : 0)
 		+ (isMegaMenuOpen ? 1 : 0);
@@ -321,6 +325,12 @@ export function useMenuClientController(props: MenuClientProps) {
 				setIsContactBranchModalOpen(false);
 				setPendingContactChannel(null);
 			},
+		},
+		{
+			id: "size-picker",
+			priority: TENANT_OVERLAY_PRIORITIES.sizePicker,
+			isOpen: isSizePickerOpen,
+			onClose: closeSizePicker,
 		},
 		{
 			id: "product-details",

@@ -25,6 +25,7 @@ import {
 	resolveTenantDisplayName,
 } from "@/lib/tenant/seo-metadata";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { groupProductSizeRows, type ProductSizeOption } from "@/lib/tenant/product-sizes";
 
 // ISR: re-generate at most every 60 s. Menu updates (product edits, theme publish)
 // are pushed instantly via revalidateTag(`menu:${companyId}`) from:
@@ -137,6 +138,7 @@ interface MenuProduct {
   has_discount: boolean;
   discount_price: number | null;
   is_special: boolean;
+  sizes?: ProductSizeOption[];
 }
 
 // ==========================================
@@ -277,6 +279,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
 
     let menuData: MenuDataResponse | null = null;
     let heroBannerRows: HeroBanner[] = [];
+    let sizeRows: unknown[] = [];
 
     if (menuBranch) {
       // --- D. Obtener Menú + Banners desde caché ---
@@ -313,6 +316,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
         ? rpcData.menuData[0]
         : rpcData.menuData;
       heroBannerRows = rpcData.heroBannerRows;
+      sizeRows = rpcData.sizeRows ?? [];
     }
 
     // --- E. Asignación de tipos fuertes (¡Adiós 'any'!) ---
@@ -331,6 +335,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
     const statusByProductId = new Map(
       branchStatuses.map((status) => [status.product_id, status] as const),
     );
+    const sizesByProductId = groupProductSizeRows(sizeRows);
 
     // --- F. Mapeo ultra-seguro y validado ---
     const products: MenuProduct[] = productsRaw
@@ -346,6 +351,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
         if (!Number.isFinite(price) || price <= 0) {
           return null;
         }
+        const sizes = sizesByProductId.get(product.id);
 
         return {
           id: product.id,
@@ -357,6 +363,8 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
           has_discount: Boolean(priceData?.has_discount),
           discount_price: priceData?.discount_price ? Number(priceData.discount_price) : null,
           is_special: Boolean(statusData?.is_special),
+          // Con tamaños, cada uno tiene su precio y la oferta del producto no aplica.
+          ...(sizes ? { sizes, has_discount: false, discount_price: null } : {}),
         };
       })
       .filter((p): p is MenuProduct => p !== null);

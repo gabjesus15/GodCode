@@ -61,6 +61,8 @@ export function mapOrderItems(raw: unknown): MenuAccountOrderItem[] {
 					: extras.reduce((sum, extra) => sum + extra.price * extra.quantity, 0);
 			return {
 				productId: toText(item.id) || null,
+				sizeId: toText(item.size_id) || null,
+				sizeName: toText(item.size_name) || null,
 				name: toText(item.name),
 				quantity,
 				unitPrice,

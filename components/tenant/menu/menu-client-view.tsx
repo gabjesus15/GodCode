@@ -8,6 +8,7 @@ import { OrderIntakePausedBanner } from "./order-intake-paused-banner";
 import { MegaMenuFab, MegaMenuOverlay, SidebarCategoriesPanel } from "./menu-category-nav";
 import { MenuCatalog } from "./menu-catalog";
 import { MenuContactChannelSheet } from "./menu-contact-channel-sheet";
+import { ProductSizeSheet } from "./product-size-picker";
 import { PoweredByGcode } from "../branding/powered-by-gcode";
 import type { BranchInfo, BranchModalItem, CategoryListItem, MenuProduct } from "./menu-types";
 import type { BranchContactChannel } from "@/lib/tenant/menu/menu-helpers";
@@ -230,6 +231,14 @@ export function MenuClientView(props: MenuClientViewProps) {
 						country={effectiveCountry}
 						currency={effectiveCurrency}
 						onlineOrderingEnabled={onlineOrderingEnabled}
+						exchangeRate={exchangeRate}
+					/>
+				) : null}
+
+				{mounted && onlineOrderingEnabled !== false ? (
+					<ProductSizeSheet
+						country={effectiveCountry}
+						currency={effectiveCurrency}
 						exchangeRate={exchangeRate}
 					/>
 				) : null}

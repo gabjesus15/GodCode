@@ -11,11 +11,15 @@ import { useSheetDismiss } from "@/lib/tenant/hooks/use-sheet-dismiss";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { useCartDialog } from "../cart/hooks/use-cart-dialog";
 import {
+	FromPriceLabel,
 	ProductOfferBadges,
 	useProductCardLogic,
 	useProductPricing,
 	type ProductCardProduct,
 } from "./product-card-shared";
+
+import { ProductSizeOptions, toSizedCartProduct, useSizeSelection } from "./product-size-picker";
+import { useCartStore } from "../cart/cart-store";
 
 import "../../../app/[subdomain]/styles/ProductDetailsSheet.css";
 
@@ -54,6 +58,8 @@ export function ProductDetailsSheet({
 	const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
 	const logic = useProductCardLogic(product ?? EMPTY_PRODUCT, country);
 	const pricing = useProductPricing(product ?? EMPTY_PRODUCT, currency, logic, exchangeRate);
+	const addToCart = useCartStore((state) => state.addToCart);
+	const { selected: selectedSize, select: selectSize } = useSizeSelection(product?.sizes);
 	const [closing, setClosing] = useState(false);
 	const panelRef = useRef<HTMLElement>(null);
 	const headRef = useRef<HTMLDivElement>(null);
@@ -85,6 +91,12 @@ export function ProductDetailsSheet({
 	const description = product.description?.trim() ?? "";
 	const inCart = logic.hydrated && logic.quantity > 0;
 	const canOrder = onlineOrderingEnabled !== false;
+	const sizes = product.sizes && product.sizes.length > 0 ? product.sizes : null;
+	const addSelectedSize = () => {
+		if (!selectedSize) return;
+		addToCart(toSizedCartProduct(product, selectedSize));
+		requestClose();
+	};
 
 	const sheet = (
 		<div className="pds-overlay" data-closing={closing || undefined} onClick={requestClose}>
@@ -125,6 +137,7 @@ export function ProductDetailsSheet({
 							{name}
 						</h2>
 						<p className="pds__price">
+							{pricing.fromPrice ? <FromPriceLabel className="pds__price-from" /> : null}
 							{pricing.hasDiscount && pricing.originalPrice ? (
 								<span className="pds__price-was">{pricing.originalPrice}</span>
 							) : null}
@@ -133,12 +146,26 @@ export function ProductDetailsSheet({
 							</span>
 						</p>
 						{description ? <p className="pds__desc">{description}</p> : null}
+						{sizes && canOrder ? (
+							<ProductSizeOptions
+								productId={product.id}
+								productName={name}
+								sizes={sizes}
+								selectedId={selectedSize?.id ?? null}
+								onSelect={selectSize}
+								formatPrice={pricing.formatPrice}
+							/>
+						) : null}
 					</div>
 				</div>
 
 				{canOrder ? (
 					<footer className="pds__foot">
-						{inCart ? (
+						{sizes ? (
+							<button type="button" className="pds__cta pds__cta--wide" onClick={addSelectedSize} disabled={!selectedSize}>
+								{t("details.addWithPrice", { price: pricing.formatPrice(selectedSize?.price ?? 0) })}
+							</button>
+						) : inCart ? (
 							<>
 								<div className="pds__stepper" role="group" aria-label={t("details.quantity")}>
 									<button type="button" className="pds__step" onClick={logic.handleDecrease} aria-label={t("details.decrease")}>

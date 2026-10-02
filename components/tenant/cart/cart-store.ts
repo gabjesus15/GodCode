@@ -79,13 +79,14 @@ function buildLineId(productId: string): string {
 function lineSelectionsKey(
 	extras: CartExtraSelection[] | undefined,
 	beverages: CartUpsellBeverageSelection[] | undefined,
+	sizeId?: string | null,
 ): string {
 	const serialize = (list: CartExtraSelection[] | undefined) =>
 		(list ?? [])
 			.map((x) => `${x.id}:${x.qty}`)
 			.sort()
 			.join("|");
-	return `e(${serialize(extras)})-b(${serialize(beverages)})`;
+	return `s(${sizeId ?? ""})-e(${serialize(extras)})-b(${serialize(beverages)})`;
 }
 
 function sanitizeQty(n: unknown): number {
@@ -151,13 +152,14 @@ export const useCartStore = create<CartState>()(
 					if (!product?.id) return { checkoutSession };
 					const normalizedExtras = normalizeSelections(options?.selectedExtras, "Extra");
 					const normalizedBeverages = normalizeSelections(options?.selectedBeverages, "Bebida");
-					const selectionKey = lineSelectionsKey(normalizedExtras, normalizedBeverages);
+					const sizeId = product.size_id ? String(product.size_id) : null;
+					const selectionKey = lineSelectionsKey(normalizedExtras, normalizedBeverages, sizeId);
 					const existing = options?.forceNewLine
 						? null
 						: state.cart.find(
 								(item) =>
 									item.id === product.id &&
-									lineSelectionsKey(item.selected_extras, item.selected_beverages) ===
+									lineSelectionsKey(item.selected_extras, item.selected_beverages, item.size_id) ===
 										selectionKey,
 							);
 					if (existing) {
@@ -181,6 +183,14 @@ export const useCartStore = create<CartState>()(
 						has_discount: product.has_discount ?? null,
 						discount_price: product.discount_price ?? null,
 						is_active: product.is_active ?? null,
+						...(sizeId
+							? {
+									size_id: sizeId,
+									size_name: product.size_name ?? null,
+									has_discount: false,
+									discount_price: null,
+								}
+							: {}),
 						quantity: 1,
 						selected_extras: normalizedExtras,
 						selected_beverages: normalizedBeverages,

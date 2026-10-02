@@ -8,7 +8,9 @@ import { useTranslations } from "next-intl";
 import { useCartStore } from "../cart/cart-store";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
 import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
-import { PRODUCT_CARD_FALLBACK_IMAGE } from "./product-card-shared";
+import { FromPriceLabel, PRODUCT_CARD_FALLBACK_IMAGE } from "./product-card-shared";
+import { useSizePickerStore } from "./product-size-store";
+import { minSizePrice } from "@/lib/tenant/product-sizes";
 import type { MenuProduct } from "./menu-types";
 
 export function ProductInlinePanel({
@@ -31,6 +33,12 @@ export function ProductInlinePanel({
 	const t = useTranslations("tenant.menu");
 	const addToCart = useCartStore((state) => state.addToCart);
 	const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
+	const openSizePicker = useSizePickerStore((state) => state.open);
+	const fromSizes = minSizePrice(product.sizes);
+	const add = () => {
+		if (fromSizes != null) openSizePicker(product);
+		else addToCart?.(product);
+	};
 	const cart = useCartStore((state) => state.cart);
 	const quantity = cart.reduce(
 		(sum: number, item: { id: string; quantity: number }) =>
@@ -50,9 +58,11 @@ export function ProductInlinePanel({
 		return primaryStr;
 	};
 
-	const displayPrice = product.has_discount && product.discount_price
-		? formatPrice(product.discount_price)
-		: formatPrice(product.price);
+	const displayPrice = fromSizes != null
+		? formatPrice(fromSizes)
+		: product.has_discount && product.discount_price
+			? formatPrice(product.discount_price)
+			: formatPrice(product.price);
 
 	useEffect(() => {
 		panelRef?.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -100,7 +110,10 @@ export function ProductInlinePanel({
 									</span>
 								</>
 							) : (
-								<span className="product-inline-panel__price">{displayPrice}</span>
+								<span className="product-inline-panel__price">
+									{fromSizes != null ? <FromPriceLabel className="product-inline-panel__price-from" /> : null}
+									{displayPrice}
+								</span>
 							)}
 						</div>
 
@@ -109,7 +122,7 @@ export function ProductInlinePanel({
 								<button
 									type="button"
 									className="product-inline-panel__add-btn"
-									onClick={() => addToCart?.(product)}
+									onClick={add}
 									aria-label={t("card.addAria", { name: product.name ?? t("card.productFallback") })}
 								>
 									<Plus size={16} />
@@ -127,7 +140,7 @@ export function ProductInlinePanel({
 									<span>{quantity}</span>
 									<button
 										type="button"
-										onClick={() => addToCart?.(product)}
+										onClick={add}
 										aria-label={t("card.addOne")}
 									>
 										<Plus size={14} />
