@@ -214,7 +214,7 @@ function PagoContent() {
 		fetch("/api/onboarding/bcv-rate")
 			.then((r) => r.json())
 			.then((d: { rate?: number }) => {
-				if (!cancelled && typeof d.rate === "number") setBcvRate(d.rate);
+				if (!cancelled && typeof d.rate === "number" && d.rate > 0) setBcvRate(d.rate);
 			})
 			.catch(() => {});
 		return () => { cancelled = true; };
@@ -667,7 +667,7 @@ function PagoContent() {
 											<p className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">{usd(manualData.amount_usd)}</p>
 											{isVenezuela && bcvRate != null ? (
 												<p className="mt-2 text-sm text-slate-600">
-													{copy.approxLabel}: <strong className="font-semibold text-slate-900">{(manualData.amount_usd * bcvRate).toFixed(2)} VES</strong>
+													{copy.approxLabel}: <strong className="font-semibold text-slate-900">{(manualData.amount_usd * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs</strong>
 													<span className="mt-0.5 block text-xs text-slate-500">{copy.referenceNote}</span>
 												</p>
 											) : null}
