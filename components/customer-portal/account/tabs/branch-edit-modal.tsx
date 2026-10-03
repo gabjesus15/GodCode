@@ -18,8 +18,18 @@ import {
   ShieldCheck,
   ChevronDown,
   ChevronRight,
+  CalendarClock,
 } from "lucide-react";
+import {
+  businessHoursWeekFromScheduleText,
+  emptyBusinessHoursWeek,
+  formatBusinessHoursSummary,
+  hasAnyBusinessHours,
+  normalizeBusinessHours,
+  type BusinessHoursWeek,
+} from "@/lib/tenant/business-hours";
 import type { BranchSummary } from "../../shared/customer-account-types";
+import { BranchHoursEditor } from "./branch-hours-editor";
 
 type BranchEditModalProps = {
   open: boolean;
@@ -53,13 +63,22 @@ const parseJsonField = (field: unknown): Record<string, string> => {
 
 export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: BranchEditModalProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"general" | "payments">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "hours" | "payments">("general");
 
   // General fields
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [schedule, setSchedule] = useState("");
+
+  // Horario por días. Si nunca se guardó, se propone desde el texto libre de antes, pero
+  // solo se envía si el dueño lo toca: guardar otra pestaña no reescribe su texto.
+  const [hoursWeek, setHoursWeek] = useState<BusinessHoursWeek>(emptyBusinessHoursWeek);
+  const [hoursEnabled, setHoursEnabled] = useState(true);
+  const [hoursTimeZone, setHoursTimeZone] = useState<string | null>(null);
+  const [hoursStored, setHoursStored] = useState(false);
+  const [hoursTouched, setHoursTouched] = useState(false);
+  const [legacyParsed, setLegacyParsed] = useState(false);
   const [instagramUrl, setInstagramUrl] = useState("");
   const [whatsappUrl, setWhatsappUrl] = useState("");
   const [mapUrl, setMapUrl] = useState("");
@@ -106,6 +125,16 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
       setPhone(branch.phone || "");
       setAddress(branch.address || "");
       setSchedule(branch.schedule || "");
+      const storedHours = normalizeBusinessHours(branch.business_hours);
+      const hasStoredHours = hasAnyBusinessHours(storedHours);
+      const legacyWeek = hasStoredHours ? null : businessHoursWeekFromScheduleText(branch.schedule);
+      setHoursWeek(hasStoredHours ? storedHours!.week : legacyWeek!);
+      // Sin horario guardado la pausa viene activada; si ya lo guardó, se respeta lo que eligió.
+      setHoursEnabled(hasStoredHours ? storedHours!.enabled : true);
+      setHoursTimeZone(storedHours?.timezone ?? null);
+      setHoursStored(hasStoredHours);
+      setHoursTouched(false);
+      setLegacyParsed(legacyWeek != null && Object.values(legacyWeek).some((intervals) => intervals.length > 0));
       setInstagramUrl(branch.instagram_url || "");
       setWhatsappUrl(branch.whatsapp_url || "");
       setMapUrl(branch.map_url || "");
@@ -175,6 +204,12 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
       setError("El nombre de la sucursal es requerido");
       return;
     }
+    const sendHours = hoursStored || hoursTouched;
+    if (sendHours && hoursEnabled && !Object.values(hoursWeek).some((intervals) => intervals.length > 0)) {
+      setActiveTab("hours");
+      setError("Agrega al menos un día con horario o desactiva la pausa automática.");
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -185,7 +220,9 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
         name: name.trim(),
         phone: phone.trim() || null,
         address: address.trim() || null,
+        // Con días cargados el servidor reescribe este texto a partir de ellos.
         schedule: schedule.trim() || null,
+        ...(sendHours ? { business_hours: { enabled: hoursEnabled, week: hoursWeek } } : {}),
         instagram_url: instagramUrl.trim() || null,
         whatsapp_url: whatsappUrl.trim() || null,
         map_url: mapUrl.trim() || null,
@@ -255,12 +292,15 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
   const inputClass =
     "h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition duration-150";
 
+  // Lo que de verdad queda guardado: el texto de antes hasta que se use el horario por días.
+  const hoursSummary = hoursStored || hoursTouched ? formatBusinessHoursSummary(hoursWeek) : schedule.trim();
+
   return (
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
       title={`Editar Sucursal: ${branch?.name || ""}`}
-      description="Personaliza los datos y configura los métodos de pago habilitados para el carrito de compras."
+      description="Personaliza los datos, el horario y los métodos de pago habilitados para el carrito de compras."
       size="xl"
     >
       <div className="mb-5 flex border-b border-[#e5e5ea]">
@@ -274,6 +314,17 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
           }`}
         >
           <Settings className="w-4 h-4" /> Información General
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("hours")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition ${
+            activeTab === "hours"
+              ? "border-indigo-600 text-indigo-600 font-semibold"
+              : "border-transparent text-[#8e8e93] hover:text-[#6e6e73]"
+          }`}
+        >
+          <CalendarClock className="w-4 h-4" /> Horario
         </button>
         <button
           type="button"
@@ -349,17 +400,24 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-medium text-[#6e6e73]">
+                <span className="mb-1 block text-xs font-medium text-[#6e6e73]">
                   Horarios de Atención
-                </label>
-                <textarea
-                  value={schedule}
-                  onChange={(e) => setSchedule(e.target.value)}
-                  placeholder="Ej. Lunes a Viernes 09:00 a 19:00, Sábados 10:00 a 14:00"
-                  rows={3}
-                  className="w-full resize-none rounded-xl border border-[#d2d2d7] bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition duration-150"
-                  disabled={loading}
-                />
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("hours")}
+                  className="flex w-full items-start justify-between gap-3 rounded-xl border border-[#d2d2d7] bg-white px-3 py-2.5 text-left transition hover:border-indigo-300 hover:bg-indigo-50/30"
+                >
+                  <span className="min-w-0 space-y-1">
+                    <span className="block whitespace-pre-line text-sm text-[#1d1d1f]">
+                      {hoursSummary || <span className="text-[#8e8e93]">Sin horario por días</span>}
+                    </span>
+                    <span className={`block text-[11px] ${hoursEnabled ? "text-emerald-700" : "text-[#8e8e93]"}`}>
+                      {hoursEnabled ? "El menú se pausa solo fuera de horario" : "El menú no se pausa por horario"}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs font-medium text-indigo-600">Editar</span>
+                </button>
               </div>
             </div>
 
@@ -501,6 +559,25 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
               </div>
             </div>
           </div>
+        )}
+
+        {activeTab === "hours" && (
+          <BranchHoursEditor
+            week={hoursWeek}
+            onWeekChange={(week) => {
+              setHoursWeek(week);
+              setHoursTouched(true);
+            }}
+            enabled={hoursEnabled}
+            onEnabledChange={(enabled) => {
+              setHoursEnabled(enabled);
+              setHoursTouched(true);
+            }}
+            disabled={loading}
+            timeZone={hoursTimeZone}
+            legacyText={hoursStored ? null : schedule.trim() || null}
+            legacyParsed={legacyParsed}
+          />
         )}
 
         {activeTab === "payments" && (

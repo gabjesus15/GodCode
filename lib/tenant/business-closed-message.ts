@@ -63,6 +63,13 @@ function parseDayList(segment: string): number[] {
 	const normalized = normalizeText(segment);
 	if (!normalized) return [];
 
+	// Listas: "sab y dom", "lun, mie y vie" (cada parte puede ser un rango).
+	const parts = normalized.split(/\s*(?:,|\by\b)\s*/).filter(Boolean);
+	if (parts.length > 1) {
+		const days = parts.flatMap((part) => parseDayList(part));
+		return days.filter((day, index) => days.indexOf(day) === index);
+	}
+
 	const rangeMatch = normalized.match(
 		/^([a-záéíóúñ]+)\s*(?:-|a|hasta)\s*([a-záéíóúñ]+)$/i,
 	);
@@ -86,25 +93,30 @@ export function parseScheduleRules(schedule: string | null | undefined): Schedul
 	const lines = raw.split(/\n|;|\.(?=\s*[A-Za-zÁÉÍÓÚáéíóú])/).map((line) => line.trim()).filter(Boolean);
 
 	for (const line of lines) {
-		const timeMatch = line.match(/(\d{1,2}:\d{2})\s*(?:-|a|hasta)\s*(\d{1,2}:\d{2})/i);
-		if (!timeMatch) continue;
+		// Todos los tramos de la línea: "Lun a Vie 09:00 a 19:00, Sáb 10:00 a 14:00" o
+		// "Sáb: 12:00 a 15:00 y 19:00 a 23:00". Los días de cada tramo son el texto desde
+		// el tramo anterior; sin días, el segundo turno hereda los del primero.
+		let previousEnd = 0;
+		let previousDays: number[] | null = null;
+		for (const timeMatch of line.matchAll(/(\d{1,2}:\d{2})\s*(?:-|a|hasta)\s*(\d{1,2}:\d{2})/gi)) {
+			const start = timeMatch.index ?? 0;
+			const dayPart = line
+				.slice(previousEnd, start)
+				.replace(/^[\s,;:]+|[\s,;:]+$/g, "")
+				.replace(/^y\s+/i, "")
+				.replace(/\s+(?:de|desde)$/i, "")
+				.trim();
+			previousEnd = start + timeMatch[0].length;
 
-		const openMinutes = parseTimeToMinutes(timeMatch[1]);
-		const closeMinutes = parseTimeToMinutes(timeMatch[2]);
-		if (openMinutes == null || closeMinutes == null) continue;
+			const openMinutes = parseTimeToMinutes(timeMatch[1]);
+			const closeMinutes = parseTimeToMinutes(timeMatch[2]);
+			if (openMinutes == null || closeMinutes == null) continue;
 
-		const dayPart = line.slice(0, timeMatch.index).replace(/[:,\s]+$/g, "").trim();
-		const days = parseDayList(dayPart);
-		if (days.length === 0) {
-			rules.push({
-				days: [0, 1, 2, 3, 4, 5, 6],
-				openMinutes,
-				closeMinutes,
-			});
-			continue;
+			const parsedDays = parseDayList(dayPart);
+			const days: number[] = parsedDays.length > 0 ? parsedDays : (previousDays ?? [0, 1, 2, 3, 4, 5, 6]);
+			previousDays = days;
+			rules.push({ days, openMinutes, closeMinutes });
 		}
-
-		rules.push({ days, openMinutes, closeMinutes });
 	}
 
 	return rules;

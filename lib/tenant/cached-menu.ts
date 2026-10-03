@@ -51,6 +51,8 @@ export interface CachedBranch {
   order_intake_paused: boolean | null;
   order_intake_pause_message: string | null;
   order_intake_paused_at: string | null;
+  /** Horario del menú; se evalúa en el navegador con la hora actual, no al cachear. */
+  business_hours: unknown;
 }
 
 export interface CachedBusinessInfo {
@@ -107,7 +109,7 @@ export const getCachedMenuStaticData = async (
         supabase
           .from("branches")
           .select(
-            "id,name,address,phone,whatsapp_url,instagram_url,map_url,schedule,company_id,payment_methods,pago_movil,zelle,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta,delivery_settings,origin_lat,origin_lng,order_intake_paused,order_intake_pause_message,order_intake_paused_at,country,currency",
+            "id,name,address,phone,whatsapp_url,instagram_url,map_url,schedule,company_id,payment_methods,pago_movil,zelle,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta,delivery_settings,origin_lat,origin_lng,order_intake_paused,order_intake_pause_message,order_intake_paused_at,business_hours,country,currency",
           )
           .eq("company_id", cId)
           .eq("is_active", true)

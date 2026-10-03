@@ -4,6 +4,12 @@ import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { mergePublicPaymentConfig, sanitizeBranchPaymentMethods } from "@/lib/payments/branch-payment-config";
+import {
+  formatBusinessHoursSummary,
+  hasAnyBusinessHours,
+  normalizeBusinessHours,
+  resolveBusinessTimeZone,
+} from "@/lib/tenant/business-hours";
 import { parseBranchContactUrlInput } from "@/lib/tenant/home-page/home-page-config";
 
 /** @service-role customer-account */
@@ -65,6 +71,7 @@ export async function PUT(req: NextRequest) {
     address,
     phone,
     schedule,
+    business_hours,
     instagram_url,
     whatsapp_url,
     map_url,
@@ -111,11 +118,22 @@ export async function PUT(req: NextRequest) {
     return Number.isFinite(n) ? n : null;
   };
 
+  // Horario: sin días cargados no hay nada que hacer cumplir; activarlo así dejaría la
+  // sucursal abierta siempre sin que el dueño lo note.
+  const hasBusinessHoursField = Object.prototype.hasOwnProperty.call(payload, "business_hours");
+  const businessHours = hasBusinessHoursField ? normalizeBusinessHours(business_hours) : null;
+  if (businessHours?.enabled && !hasAnyBusinessHours(businessHours)) {
+    return NextResponse.json(
+      { error: "Agrega al menos un día con horario o desactiva la pausa automática.", field: "business_hours" },
+      { status: 400 },
+    );
+  }
+
   // Verify branch ownership and get current pause state + payment configs
   const { data: branch, error: fetchError } = await supabaseAdmin
     .from("branches")
     .select(
-      "company_id, order_intake_paused, pago_movil, zelle, transferencia_bancaria, mercadopago, paypal",
+      "company_id, country, order_intake_paused, pago_movil, zelle, transferencia_bancaria, mercadopago, paypal",
     )
     .eq("id", id)
     .maybeSingle();
@@ -129,6 +147,25 @@ export async function PUT(req: NextRequest) {
       { error: "No tienes permisos para modificar esta sucursal" },
       { status: 403 }
     );
+  }
+
+  // La zona la fija el servidor: es la del país del local, no la del navegador de quien edita.
+  let businessHoursPatch: { business_hours: typeof businessHours; schedule?: string | null } | null = null;
+  if (hasBusinessHoursField) {
+    let country = branch.country;
+    if (!country) {
+      const { data: company } = await supabaseAdmin.from("companies").select("country").eq("id", ctx.companyId).maybeSingle();
+      country = company?.country ?? null;
+    }
+    const withZone =
+      businessHours && hasAnyBusinessHours(businessHours)
+        ? { ...businessHours, timezone: resolveBusinessTimeZone(country) }
+        : null;
+    businessHoursPatch = {
+      business_hours: withZone,
+      // Con días cargados, el texto que ya muestran la portada y el carrito sale de ellos.
+      ...(withZone ? { schedule: formatBusinessHoursSummary(withZone.week) } : {}),
+    };
   }
 
   const parsedPaused = !!order_intake_paused;
@@ -155,6 +192,7 @@ export async function PUT(req: NextRequest) {
       address: typeof address === "string" && address.trim() ? address.trim() : null,
       phone: typeof phone === "string" && phone.trim() ? phone.trim() : null,
       schedule: typeof schedule === "string" && schedule.trim() ? schedule.trim() : null,
+      ...(businessHoursPatch ?? {}),
       ...contactUrls,
       origin_lat: toCoordinate(origin_lat),
       origin_lng: toCoordinate(origin_lng),

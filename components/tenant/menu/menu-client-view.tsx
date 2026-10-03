@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 
 import type { HeroBanner } from "./hero-carousel";
 import { HeroCarousel } from "./hero-carousel";
-import { OrderIntakePausedBanner } from "./order-intake-paused-banner";
+import { OrderIntakePausedBanner, OutsideBusinessHoursBanner } from "./order-intake-paused-banner";
 import { MegaMenuFab, MegaMenuOverlay, SidebarCategoriesPanel } from "./menu-category-nav";
 import { MenuCatalog } from "./menu-catalog";
 import { MenuContactChannelSheet } from "./menu-contact-channel-sheet";
@@ -178,9 +178,11 @@ export function MenuClientView(props: MenuClientViewProps) {
 			)}
 
 			<div className="main-content-layout">
-				{selectedBranch?.order_intake_paused && (
+				{selectedBranch?.order_intake_paused ? (
 					<OrderIntakePausedBanner message={selectedBranch.order_intake_pause_message} />
-				)}
+				) : selectedBranch ? (
+					<OutsideBusinessHoursBanner branch={selectedBranch} />
+				) : null}
 
 				{mounted && typeof document !== "undefined" && document.getElementById("navbar-portal-root")
 					? createPortal(navbar, document.getElementById("navbar-portal-root") as Element)

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { filterOpenBranchIdsByHours } from "@/lib/tenant/business-hours";
 import { getCachedMenuStaticData } from "@/lib/tenant/cached-menu";
 import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
@@ -83,10 +84,12 @@ export async function loadHomePageInput(company: HomePageCompany, publicSlug: st
 			map_url: branch.map_url,
 			phone: branch.phone,
 		})),
-		// Una caja abierta sin sucursal (dato heredado) no cuenta como local abierto.
-		openBranchIds: (openShifts ?? [])
-			.map((shift) => (shift.branch_id == null ? "" : String(shift.branch_id)))
-			.filter(Boolean),
+		// Una caja abierta sin sucursal (dato heredado) no cuenta como local abierto, ni una
+		// abierta fuera del horario de su sucursal.
+		openBranchIds: filterOpenBranchIdsByHours(
+			(openShifts ?? []).map((shift) => (shift.branch_id == null ? "" : String(shift.branch_id))).filter(Boolean),
+			staticData.branches,
+		),
 		schedule,
 	};
 }

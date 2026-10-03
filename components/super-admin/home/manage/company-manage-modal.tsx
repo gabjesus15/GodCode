@@ -16,6 +16,8 @@ export type ManageModalHeader = {
 	id: string;
 	name: string;
 	host: string;
+	/** Página de inicio pública del negocio; con ella el dominio de la cabecera es un link. */
+	homeUrl?: string;
 	publicSlug: string | null;
 	logoUrl: string | null;
 	status: { label: string; variant: StatusTone };
@@ -123,7 +125,18 @@ export function CompanyManageModal({
 								<SaasStatusBadge label={header.status.label} variant={header.status.variant} />
 							</div>
 							<div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
-								{header.host ? <span className="truncate text-zinc-500 dark:text-zinc-400">{header.host}</span> : null}
+								{header.host && header.homeUrl ? (
+									<a
+										href={header.homeUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="truncate text-zinc-500 hover:text-zinc-950 hover:underline dark:text-zinc-400 dark:hover:text-zinc-50"
+									>
+										{header.host}
+									</a>
+								) : header.host ? (
+									<span className="truncate text-zinc-500 dark:text-zinc-400">{header.host}</span>
+								) : null}
 								{header.menuUrl ? <HeaderLink href={header.menuUrl}>Menú</HeaderLink> : null}
 								{header.panelUrl ? <HeaderLink href={header.panelUrl}>Panel</HeaderLink> : null}
 								<span className="flex gap-1.5">

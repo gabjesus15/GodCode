@@ -14,6 +14,7 @@ type LiveBranchPatch = Pick<
 	| "order_intake_paused"
 	| "order_intake_pause_message"
 	| "order_intake_paused_at"
+	| "business_hours"
 >;
 
 type PoliciesPayload = {
@@ -31,7 +32,7 @@ export type CheckoutBranchLive = {
 
 /**
  * Todo lo que el checkout escucha de la sucursal mientras el carrito está abierto:
- * cambios del admin (métodos de pago, delivery, pausa), la política de comprobantes
+ * cambios del admin (métodos de pago, delivery, pausa, horario), la política de comprobantes
  * y si hay una caja abierta. Cada dato se guarda junto con la sucursal a la que
  * pertenece, así cambiar de sucursal lo invalida sin efectos de reseteo.
  */
@@ -76,6 +77,7 @@ export function useCheckoutBranchLive(params: {
 								| null
 								| undefined,
 							order_intake_paused_at: row.order_intake_paused_at as string | null | undefined,
+							business_hours: row.business_hours,
 						},
 					});
 				},

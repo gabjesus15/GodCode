@@ -778,6 +778,14 @@
         "copy": "Copia link",
         "alt": "Codice QR del menù"
       }
+    },
+    "hours": {
+      "title": "Fuori orario.",
+      "closedNoNext": "Al momento non accettiamo ordini.",
+      "opensToday": "Riprendiamo gli ordini oggi alle {time}.",
+      "opensTomorrow": "Riprendiamo gli ordini domani alle {time}.",
+      "opensOn": "Riprendiamo gli ordini {day} alle {time}.",
+      "cta": "Chiuso ora"
     }
   }
 }

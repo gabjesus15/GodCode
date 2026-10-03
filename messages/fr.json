@@ -778,6 +778,14 @@
         "copy": "Copier le lien",
         "alt": "QR code du menu"
       }
+    },
+    "hours": {
+      "title": "En dehors des horaires d'ouverture.",
+      "closedNoNext": "Nous ne prenons pas de commandes pour le moment.",
+      "opensToday": "Nous reprenons les commandes aujourd'hui à {time}.",
+      "opensTomorrow": "Nous reprenons les commandes demain à {time}.",
+      "opensOn": "Nous reprenons les commandes {day} à {time}.",
+      "cta": "Fermé pour le moment"
     }
   }
 }

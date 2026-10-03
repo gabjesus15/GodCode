@@ -40,6 +40,8 @@ export type BranchSummary = {
   is_active: boolean | null;
   phone?: string | null;
   schedule?: string | null;
+  /** `branches.business_hours` tal cual; se lee con `normalizeBusinessHours`. */
+  business_hours?: unknown;
   instagram_url?: string | null;
   whatsapp_url?: string | null;
   map_url?: string | null;

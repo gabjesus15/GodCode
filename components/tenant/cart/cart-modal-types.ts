@@ -45,6 +45,8 @@ export interface BranchInfo {
 	order_intake_paused?: boolean | null;
 	order_intake_pause_message?: string | null;
 	order_intake_paused_at?: string | null;
+	/** `branches.business_hours`; se lee con `normalizeBusinessHours`. */
+	business_hours?: unknown;
 	schedule?: string | null;
 }
 

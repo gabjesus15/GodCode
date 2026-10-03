@@ -46,6 +46,8 @@ export interface BranchInfo {
 	origin_lng?: number | null;
 	order_intake_paused?: boolean | null;
 	order_intake_pause_message?: string | null;
+	/** `branches.business_hours`; se lee con `normalizeBusinessHours`. */
+	business_hours?: unknown;
 	whatsapp_url?: string | null;
 	instagram_url?: string | null;
 	map_url?: string | null;

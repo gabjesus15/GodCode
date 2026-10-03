@@ -15,6 +15,11 @@ import {
 } from "./orders/build-order-items-from-branch";
 import { mergeCustomLinesForRpc } from "@/lib/orders/merge-custom-lines-for-rpc";
 import {
+	getBusinessHoursStatus,
+	normalizeBusinessHours,
+	resolveBusinessTimeZone,
+} from "@/lib/tenant/business-hours";
+import {
 	buildMenuOrderPaymentPayload,
 	paymentMethodRequiresReceipt,
 } from "../cart/services/menu-order-payment";
@@ -76,6 +81,8 @@ const STALE_CART_MESSAGE =
 
 const TOTAL_MISMATCH_MESSAGE =
 	"No pudimos confirmar el total del pedido. Revisa delivery y extras, o vacia el carrito e intenta de nuevo.";
+const OUTSIDE_BUSINESS_HOURS_MESSAGE =
+	"Estamos fuera de horario y no estamos recibiendo pedidos en este momento.";
 
 async function resolveCouponDiscountForOrder(
 	branchId: string,
@@ -281,7 +288,7 @@ export const ordersService = {
 
     const { data: branchCfg, error: branchCfgError } = await supabase
       .from("branches")
-      .select("delivery_settings, order_intake_paused, order_intake_pause_message")
+      .select("delivery_settings, order_intake_paused, order_intake_pause_message, business_hours, country")
       .eq("id", orderData.branch_id)
       .maybeSingle();
 
@@ -294,6 +301,13 @@ export const ordersService = {
         branchCfg.order_intake_pause_message?.trim() ||
         "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos."
       );
+    }
+
+    const hoursStatus = getBusinessHoursStatus(normalizeBusinessHours(branchCfg?.business_hours), {
+      fallbackTimeZone: resolveBusinessTimeZone(branchCfg?.country),
+    });
+    if (hoursStatus.enforced && !hoursStatus.open) {
+      throw new Error(OUTSIDE_BUSINESS_HOURS_MESSAGE);
     }
 
     const deliverySettings = normalizeDeliverySettings(branchCfg?.delivery_settings);
@@ -611,6 +625,12 @@ export const ordersService = {
       }
       if (rpcMessage.includes("invalid_item_price")) {
         throw new Error(TOTAL_MISMATCH_MESSAGE);
+      }
+      if (rpcMessage.includes("outside_business_hours")) {
+        throw new Error(OUTSIDE_BUSINESS_HOURS_MESSAGE);
+      }
+      if (rpcMessage.includes("order_intake_paused")) {
+        throw new Error("Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.");
       }
       if (rpcMessage.includes("no_items_available")) {
         throw new Error(

@@ -778,6 +778,14 @@
         "copy": "Copiar enlace",
         "alt": "Código QR del menú"
       }
+    },
+    "hours": {
+      "title": "Fuera de horario.",
+      "closedNoNext": "En este momento no estamos recibiendo pedidos.",
+      "opensToday": "Volvemos a recibir pedidos hoy a las {time}.",
+      "opensTomorrow": "Volvemos a recibir pedidos mañana a las {time}.",
+      "opensOn": "Volvemos a recibir pedidos el {day} a las {time}.",
+      "cta": "Fuera de horario"
     }
   }
 }

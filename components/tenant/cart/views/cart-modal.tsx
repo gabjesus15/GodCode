@@ -13,6 +13,7 @@ import {
 import { getFormStrategy, resolveCheckoutCountryCode } from "@/lib/geo/country-forms";
 import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
 import { buildBusinessClosedCustomerMessage } from "@/lib/tenant/business-closed-message";
+import { useBusinessHoursClosedMessage, useBusinessHoursStatus } from "@/lib/tenant/hooks/use-business-hours-status";
 import { useTenantMounted } from "@/lib/tenant/hooks/use-tenant-mounted";
 import type { OrderChannelMode } from "@/lib/tenant/menu-settings";
 import {
@@ -183,7 +184,12 @@ export function CartModal({
 
 	const isPaused = branch?.order_intake_paused === true;
 	const pausedMessage = branch?.order_intake_pause_message || t("intake.pausedFallback");
-	const canCheckout = (requiresOpenShiftForCheckout(orderChannel) ? live.shiftOpen : true) && !isPaused;
+	// Fuera de horario el menú no recibe pedidos aunque la caja siga abierta.
+	const tHours = useTranslations("tenant.hours");
+	const hoursClosedDetail = useBusinessHoursClosedMessage(useBusinessHoursStatus(branch, cart.isCartOpen));
+	const outsideHoursMessage = hoursClosedDetail ? `${tHours("title")} ${hoursClosedDetail}` : null;
+	const canCheckout =
+		(requiresOpenShiftForCheckout(orderChannel) ? live.shiftOpen : true) && !isPaused && !outsideHoursMessage;
 	const closedMessage = useMemo(
 		() =>
 			buildBusinessClosedCustomerMessage({
@@ -334,11 +340,12 @@ export function CartModal({
 			showError(
 				isPaused
 					? pausedMessage
-					: !live.shiftOpen
-						? closedMessage
-						: businessInfo?.schedule
-							? t("errors.scheduleIs", { schedule: businessInfo.schedule })
-							: t("errors.noOrdersNow"),
+					: (outsideHoursMessage ??
+							(!live.shiftOpen
+								? closedMessage
+								: businessInfo?.schedule
+									? t("errors.scheduleIs", { schedule: businessInfo.schedule })
+									: t("errors.noOrdersNow"))),
 			);
 			return;
 		}
@@ -508,7 +515,9 @@ export function CartModal({
 		? { tone: "error", message: error }
 		: isPaused
 			? { tone: "warning", message: pausedMessage }
-			: null;
+			: outsideHoursMessage
+				? { tone: "warning", message: outsideHoursMessage }
+				: null;
 
 	if (result.showSuccess) {
 		return (
@@ -585,7 +594,9 @@ export function CartModal({
 		? ({ kind: "loading" } as const)
 		: isPaused
 			? ({ kind: "paused" } as const)
-			: requiresOpenShiftForCheckout(orderChannel) && !live.shiftOpen
+			: outsideHoursMessage
+				? ({ kind: "closed", message: outsideHoursMessage } as const)
+				: requiresOpenShiftForCheckout(orderChannel) && !live.shiftOpen
 				? ({ kind: "closed", message: closedMessage } as const)
 				: ({ kind: "ready", onContinue: goToFulfillment } as const);
 
@@ -652,7 +663,7 @@ export function CartModal({
 			isOnline={isOnlinePaymentMethod(paymentMethodKey)}
 			skipDetail={flow.skipPaymentDetail}
 			isSaving={result.isSaving}
-			isPaused={isPaused}
+			isPaused={isPaused || Boolean(outsideHoursMessage)}
 			formReady={form.validation.isReady}
 			onContinueToForm={() => flow.patchCheckoutSession({ showForm: true })}
 			onChooseAnother={() => setPaymentMethodKey(null)}

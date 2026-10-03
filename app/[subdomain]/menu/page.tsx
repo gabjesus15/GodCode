@@ -18,6 +18,7 @@ import {
 	resolveOnlineOrderingEnabled,
 } from "@/lib/tenant/menu-settings";
 import { resolveSelectedMenuBranch } from "@/lib/tenant/menu/menu-helpers";
+import { filterOpenBranchIdsByHours } from "@/lib/tenant/business-hours";
 import { serializeJsonLd } from "@/lib/seo/serialize-json-ld";
 import {
 	buildTenantMenuDescription,
@@ -244,12 +245,16 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
     notFound();
   }
 
-    const openBranchIds = (openShifts ?? [])
-      // `String(null)` devuelve "null" y ese texto pasa el `filter(Boolean)`: una
-      // caja abierta sin sucursal (dato heredado) entraba como id valido, hacia
-      // creer que habia dos locales abiertos y anulaba la auto-seleccion.
-      .map((shift) => (shift.branch_id == null ? "" : String(shift.branch_id)))
-      .filter(Boolean);
+    const openBranchIds = filterOpenBranchIdsByHours(
+      (openShifts ?? [])
+        // `String(null)` devuelve "null" y ese texto pasa el `filter(Boolean)`: una
+        // caja abierta sin sucursal (dato heredado) entraba como id valido, hacia
+        // creer que habia dos locales abiertos y anulaba la auto-seleccion.
+        .map((shift) => (shift.branch_id == null ? "" : String(shift.branch_id)))
+        .filter(Boolean),
+      // Caja abierta fuera de horario (alguien la dejó así) cuenta como local cerrado.
+      branches ?? [],
+    );
     const openBranchIdSet = new Set(openBranchIds);
 
     // --- C. Selección segura de la sucursal ---

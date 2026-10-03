@@ -26,7 +26,7 @@ import { DEMO_CANCEL_REASON, DEMO_DAYS_LEFT, demoEndsAt, demoRequestedAt, homeQu
 import { parseDashboardPeriod } from "@/lib/super-admin/super-admin-dashboard-shared";
 import { requireSuperAdminSession } from "@/lib/super-admin/require-super-admin-session";
 import { getEffectiveCustomDomain } from "@/lib/tenant/tenant-effective-custom-domain";
-import { getTenantHost } from "@/utils/tenant-url";
+import { getTenantHomeUrl, getTenantHost } from "@/utils/tenant-url";
 
 export const dynamic = "force-dynamic";
 
@@ -100,15 +100,12 @@ export default async function CompanyManageModalPage({
 		resolvedAssets,
 	} = detail;
 
+	const effectiveDomain = getEffectiveCustomDomain(company.custom_domain, company.subscription_ends_at, company.subscription_status);
 	const header: ManageModalHeader = {
 		id: company.id,
 		name: company.name ?? "Sin nombre",
-		host: company.public_slug
-			? getTenantHost(
-					company.public_slug,
-					getEffectiveCustomDomain(company.custom_domain, company.subscription_ends_at, company.subscription_status),
-				)
-			: "",
+		host: company.public_slug ? getTenantHost(company.public_slug, effectiveDomain) : "",
+		homeUrl: company.public_slug ? getTenantHomeUrl(company.public_slug, effectiveDomain) : "",
 		publicSlug: company.public_slug,
 		logoUrl: resolvedAssets.logoUrl || null,
 		status: statusBadge,

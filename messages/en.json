@@ -778,6 +778,14 @@
         "copy": "Copy link",
         "alt": "Menu QR code"
       }
+    },
+    "hours": {
+      "title": "Outside opening hours.",
+      "closedNoNext": "We're not taking orders right now.",
+      "opensToday": "We'll take orders again today at {time}.",
+      "opensTomorrow": "We'll take orders again tomorrow at {time}.",
+      "opensOn": "We'll take orders again on {day} at {time}.",
+      "cta": "Closed now"
     }
   }
 }

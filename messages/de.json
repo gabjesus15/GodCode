@@ -778,6 +778,14 @@
         "copy": "Link kopieren",
         "alt": "QR-Code der Speisekarte"
       }
+    },
+    "hours": {
+      "title": "Außerhalb der Öffnungszeiten.",
+      "closedNoNext": "Gerade nehmen wir keine Bestellungen an.",
+      "opensToday": "Ab heute um {time} Uhr nehmen wir wieder Bestellungen an.",
+      "opensTomorrow": "Ab morgen um {time} Uhr nehmen wir wieder Bestellungen an.",
+      "opensOn": "Ab {day} um {time} Uhr nehmen wir wieder Bestellungen an.",
+      "cta": "Gerade geschlossen"
     }
   }
 }
