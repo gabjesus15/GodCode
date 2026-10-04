@@ -10,21 +10,16 @@ import {
 	sniffImageType,
 	validateImageFile,
 } from "@/lib/storage/image-file";
-import {
-	PRIVATE_RECEIPTS_BUCKET,
-	PRIVATE_RECEIPT_SIGNED_URL_TTL,
-	paymentReferencePath,
-	privateReceiptHref,
-	storefrontReceiptPath,
-} from "@/lib/storage/private-receipts";
+import { PRIVATE_RECEIPTS_BUCKET, paymentReferencePath, privateReceiptHref } from "@/lib/storage/private-receipts";
 import { STOREFRONT_BRANDING_BUCKET } from "@/lib/storage/storefront-branding";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
 
 /** @service-role super-admin, customer-account, public
  *
- * Una postura por carpeta destino: tenant/landing exige super_admin, payment-reference exige CEO, onboarding/receipts es pública con rate limit.
- * Los comprobantes (payment-reference, receipts) van al bucket privado `receipts`, nunca al público `menu`.
+ * Una postura por carpeta destino: tenant/landing exige super_admin, payment-reference exige CEO, onboarding es pública con rate limit.
+ * El comprobante del portal (payment-reference) va al bucket privado `receipts`, nunca al público `menu`.
+ * El comprobante del checkout del menú no pasa por aquí: se adjunta al pedido en `/api/tenant/public-order-receipt`.
  */
 
 export const runtime = "nodejs";
@@ -37,9 +32,9 @@ const EXT_BY_TYPE = new Map([
 
 const ADMIN_FOLDERS = new Set(["tenant", "landing"]);
 const CUSTOMER_FOLDERS = new Set(["payment-reference"]);
-const PUBLIC_FOLDERS = new Set(["onboarding", "receipts"]);
+const PUBLIC_FOLDERS = new Set(["onboarding"]);
 /** Comprobantes de pago: datos bancarios del cliente, nunca en un bucket público. */
-const PRIVATE_FOLDERS = new Set(["payment-reference", "receipts"]);
+const PRIVATE_FOLDERS = new Set(["payment-reference"]);
 
 function isAllowedFolder(folder: string): boolean {
 	return ADMIN_FOLDERS.has(folder) || CUSTOMER_FOLDERS.has(folder) || PUBLIC_FOLDERS.has(folder);
@@ -139,7 +134,7 @@ export async function POST(req: NextRequest) {
 	}
 
 	if (PRIVATE_FOLDERS.has(folder)) {
-		return uploadPrivateReceipt(bytes, contentType, folder, extension, customerCompanyId);
+		return uploadPrivateReceipt(bytes, contentType, extension, customerCompanyId);
 	}
 
 	const path = `uploads/${folder}/${randomUUID()}.${extension}`;
@@ -166,22 +161,17 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Comprobante al bucket privado. `payment-reference` devuelve el enlace estable a
+ * Comprobante del portal al bucket privado. Devuelve el enlace estable a
  * `/api/storage/receipt`, que es lo que se guarda en `payments_history` y abren el
- * portal y el super admin. `receipts` (checkout del menú) devuelve una URL firmada
- * corta: el checkout solo comprueba que la subida funcionó y no guarda el enlace.
+ * portal y el super admin.
  */
 async function uploadPrivateReceipt(
 	bytes: Uint8Array,
 	contentType: string,
-	folder: string,
 	extension: string,
 	customerCompanyId: string | null,
 ): Promise<NextResponse> {
-	const fileId = randomUUID();
-	const path = folder === "payment-reference"
-		? paymentReferencePath(customerCompanyId ?? "", fileId, extension)
-		: storefrontReceiptPath(fileId, extension);
+	const path = paymentReferencePath(customerCompanyId ?? "", randomUUID(), extension);
 	if (!path) {
 		return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 	}
@@ -197,17 +187,5 @@ async function uploadPrivateReceipt(
 		return NextResponse.json({ error: uploadError.message }, { status: 500 });
 	}
 
-	if (folder === "payment-reference") {
-		return NextResponse.json({ ok: true, url: privateReceiptHref(path), path });
-	}
-
-	const { data, error: signError } = await supabaseAdmin.storage
-		.from(PRIVATE_RECEIPTS_BUCKET)
-		.createSignedUrl(path, PRIVATE_RECEIPT_SIGNED_URL_TTL);
-	const url = String(data?.signedUrl ?? "").trim();
-	if (signError || !url) {
-		await supabaseAdmin.storage.from(PRIVATE_RECEIPTS_BUCKET).remove([path]);
-		return NextResponse.json({ error: "No se pudo guardar el comprobante." }, { status: 500 });
-	}
-	return NextResponse.json({ ok: true, url, path });
+	return NextResponse.json({ ok: true, url: privateReceiptHref(path), path });
 }

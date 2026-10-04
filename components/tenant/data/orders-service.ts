@@ -1,6 +1,5 @@
 import { createSupabaseBrowserClient } from "../../../utils/supabase/client";
 import type { DeliveryLocationSource } from "@/lib/delivery/delivery-location";
-import { uploadImage } from "@/lib/storage/upload-image-client";
 import {
 	computeDeliveryFee,
 	effectiveDeliveryPricingMode,
@@ -173,6 +172,28 @@ async function resolveNormalizedCatalogItems(
 
 	const supabase = createSupabaseBrowserClient("tenant");
 	return buildOrderItemsFromBranch(supabase, branchId, items);
+}
+
+/**
+ * Adjunta el comprobante al pedido recién creado (`POST /api/tenant/public-order-receipt`),
+ * que lo guarda en el bucket privado y lo deja en `orders.payment_ref` para la caja.
+ * No lanza: el pedido ya existe y la caja lo ve igual; si falla, el éxito avisa que lo
+ * mande por WhatsApp.
+ */
+async function attachOrderReceipt(orderId: string, clientRequestId: string, file: File): Promise<boolean> {
+  try {
+    const form = new FormData();
+    form.set("file", file);
+    form.set("orderId", orderId);
+    form.set("clientRequestId", clientRequestId);
+    const res = await fetch(`${window.location.origin}/api/tenant/public-order-receipt`, {
+      method: "POST",
+      body: form,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 function extractOrderId(newOrder: unknown): string | null {
@@ -539,19 +560,9 @@ export const ordersService = {
       throw new Error("Debes adjuntar el comprobante de pago para confirmar el pedido.");
     }
 
-    let receiptUrl: string | null = null;
-    if (needsReceipt) {
-      try {
-        receiptUrl = await uploadImage(receiptFile!, "receipts");
-      } catch {
-        throw new Error("No se pudo subir el comprobante. Intenta nuevamente.");
-      }
-      if (!receiptUrl) {
-        throw new Error("No se pudo subir el comprobante. Intenta nuevamente.");
-      }
-    }
-
-    const menuPayment = buildMenuOrderPaymentPayload(paymentMethod, receiptUrl);
+    // El comprobante se adjunta después, al pedido ya creado (ver attachOrderReceipt):
+    // así queda ligado al pedido en el bucket privado y la caja lo encuentra.
+    const menuPayment = buildMenuOrderPaymentPayload(paymentMethod);
     const paymentRef = orderData.payment_ref?.trim() || menuPayment.payment_ref;
     const paymentType = orderData.payment_type ?? menuPayment.payment_type;
 
@@ -668,6 +679,21 @@ export const ordersService = {
       }
     }
 
-    return { order: newOrder, receiptUploadFailed: false, paymentStatus: null, evidenceStatus: null };
+    // El comprobante va al pedido ya cerrado. Si no se pudo subir, el pedido igual
+    // existe y la caja lo ve: la pantalla de éxito pide mandarlo por WhatsApp.
+    let receiptUploadFailed = false;
+    let paymentStatus: string | null = null;
+    let evidenceStatus: string | null = null;
+    if (needsReceipt && receiptFile && orderId && typeof window !== "undefined") {
+      const attached = await attachOrderReceipt(orderId, clientRequestId, receiptFile);
+      if (attached) {
+        paymentStatus = "pending_verification";
+        evidenceStatus = "uploaded";
+      } else {
+        receiptUploadFailed = true;
+      }
+    }
+
+    return { order: newOrder, receiptUploadFailed, paymentStatus, evidenceStatus };
   },
 };

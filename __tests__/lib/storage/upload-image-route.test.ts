@@ -7,7 +7,6 @@ import {
 	paymentReferenceCompanyId,
 	paymentReferencePath,
 	privateReceiptHref,
-	storefrontReceiptPath,
 } from "@/lib/storage/private-receipts";
 
 const FILE_ID = "11111111-1111-4111-8111-111111111111";
@@ -101,7 +100,7 @@ describe("rutas de comprobantes privados", () => {
 		expect(paymentReferencePath("acme-1", FILE_ID, "jpg")).toBe(`platform/payment-reference/acme-1/${FILE_ID}.jpg`);
 		expect(paymentReferencePath("../otra", FILE_ID, "jpg")).toBeNull();
 		expect(paymentReferencePath("", FILE_ID, "jpg")).toBeNull();
-		expect(storefrontReceiptPath(FILE_ID, "gif")).toBeNull();
+		expect(paymentReferencePath("acme", FILE_ID, "gif")).toBeNull();
 	});
 
 	it("el enlace guardado vuelve a la misma ruta y rechaza cualquier otra cosa", () => {
@@ -128,16 +127,10 @@ describe("POST /api/storage/upload-image con comprobantes", () => {
 		expect(holder.storage.calls.some((c) => c.bucket === "menu")).toBe(false);
 	});
 
-	it("receipts del checkout va al bucket privado y devuelve una URL firmada, nunca pública", async () => {
+	it("el comprobante del checkout ya no entra por aquí: va con su pedido a public-order-receipt", async () => {
 		const res = await uploadImage(await uploadRequest("receipts"));
-		expect(res.status).toBe(200);
-		const body = await res.json();
-
-		const upload = holder.storage.calls.find((c) => c.method === "upload")!;
-		expect(upload.bucket).toBe("receipts");
-		expect(String(upload.args[0])).toMatch(/^platform\/storefront-receipts\//);
-		expect(body.url).toContain("/object/sign/receipts/");
-		expect(holder.storage.calls.some((c) => c.method === "getPublicUrl")).toBe(false);
+		expect(res.status).toBe(400);
+		expect(holder.storage.calls).toHaveLength(0);
 	});
 
 	it("las imágenes de marca siguen en el bucket público", async () => {
@@ -173,15 +166,7 @@ describe("GET /api/storage/receipt", () => {
 		expect(sign.args).toEqual([ownPath, 300]);
 	});
 
-	it("los del checkout solo los abre el equipo", async () => {
-		const storefront = `platform/storefront-receipts/${FILE_ID}.png`;
-		holder.customerCompanyId = "acme";
-		expect((await openReceipt(openRequest(storefront))).status).toBe(404);
-		holder.adminOk = true;
-		expect((await openReceipt(openRequest(storefront))).status).toBe(302);
-	});
-
-	it("rechaza rutas fuera de platform/ aunque sea el equipo", async () => {
+	it("rechaza rutas fuera de platform/ aunque sea el equipo: los de pedidos los abre la caja", async () => {
 		holder.adminOk = true;
 		const res = await openReceipt(openRequest("acme/orders/b1/receipts/2026/01/1/x.jpg"));
 		expect(res.status).toBe(404);
@@ -191,7 +176,7 @@ describe("GET /api/storage/receipt", () => {
 
 describe("POST /api/storage/upload-image antes de leer el cuerpo", () => {
 	it("rechaza sin leer nada lo que declara pesar más que el máximo", async () => {
-		const req = await uploadRequest("receipts", { contentLength: String(10 * 1024 * 1024) });
+		const req = await uploadRequest("onboarding", { contentLength: String(10 * 1024 * 1024) });
 		const formData = vi.spyOn(req, "formData");
 		const res = await uploadImage(req);
 		expect(res.status).toBe(413);
@@ -199,7 +184,7 @@ describe("POST /api/storage/upload-image antes de leer el cuerpo", () => {
 	});
 
 	it("exige Content-Length", async () => {
-		const res = await uploadImage(await uploadRequest("receipts", { contentLength: null }));
+		const res = await uploadImage(await uploadRequest("onboarding", { contentLength: null }));
 		expect(res.status).toBe(411);
 	});
 
@@ -222,7 +207,7 @@ describe("POST /api/storage/upload-image antes de leer el cuerpo", () => {
 	});
 
 	it("un cliente viejo sin carpeta en la URL sigue funcionando", async () => {
-		const res = await uploadImage(await uploadRequest("receipts", { inQuery: false }));
+		const res = await uploadImage(await uploadRequest("onboarding", { inQuery: false }));
 		expect(res.status).toBe(200);
 	});
 });
@@ -230,14 +215,14 @@ describe("POST /api/storage/upload-image antes de leer el cuerpo", () => {
 describe("POST /api/storage/upload-image y el tipo real del archivo", () => {
 	it("rechaza un archivo que dice ser JPEG pero no lo es", async () => {
 		const html = new TextEncoder().encode("<html><script>alert(1)</script></html>");
-		const res = await uploadImage(await uploadRequest("receipts", { bytes: html }));
+		const res = await uploadImage(await uploadRequest("onboarding", { bytes: html }));
 		expect(res.status).toBe(400);
 		expect(holder.storage.calls).toHaveLength(0);
 	});
 
 	it("guarda con el tipo detectado, no con el declarado", async () => {
 		const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
-		const res = await uploadImage(await uploadRequest("receipts", { bytes: png, type: "image/jpeg" }));
+		const res = await uploadImage(await uploadRequest("onboarding", { bytes: png, type: "image/jpeg" }));
 		expect(res.status).toBe(200);
 		const upload = holder.storage.calls.find((c) => c.method === "upload")!;
 		expect(String(upload.args[0])).toMatch(/\.png$/);
