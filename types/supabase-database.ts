@@ -2053,6 +2053,11 @@ export type Database = {
           business_name: string
           company_id: string | null
           country: string | null
+          coupon_code: string | null
+          coupon_discount_usd: number | null
+          coupon_free_months: number | null
+          coupon_id: string | null
+          coupon_keeps_promo: boolean | null
           created_at: string
           currency: string | null
           custom_domain: string | null
@@ -2099,6 +2104,11 @@ export type Database = {
           business_name: string
           company_id?: string | null
           country?: string | null
+          coupon_code?: string | null
+          coupon_discount_usd?: number | null
+          coupon_free_months?: number | null
+          coupon_id?: string | null
+          coupon_keeps_promo?: boolean | null
           created_at?: string
           currency?: string | null
           custom_domain?: string | null
@@ -2145,6 +2155,11 @@ export type Database = {
           business_name?: string
           company_id?: string | null
           country?: string | null
+          coupon_code?: string | null
+          coupon_discount_usd?: number | null
+          coupon_free_months?: number | null
+          coupon_id?: string | null
+          coupon_keeps_promo?: boolean | null
           created_at?: string
           currency?: string | null
           custom_domain?: string | null
@@ -2185,6 +2200,12 @@ export type Database = {
           welcome_email_sent_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "onboarding_applications_coupon_id_fkey"
+            columns: ["coupon_id"]
+            referencedRelation: "subscription_coupons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "onboarding_applications_company_id_fkey"
             columns: ["company_id"]
@@ -3956,6 +3977,121 @@ export type Database = {
           },
         ]
       }
+      subscription_coupon_redemptions: {
+        Row: {
+          application_id: string | null
+          base_amount_usd: number
+          company_id: string | null
+          coupon_id: string
+          discount_usd: number
+          email_normalized: string
+          free_months: number
+          id: string
+          payment_reference: string | null
+          redeemed_at: string
+        }
+        Insert: {
+          application_id?: string | null
+          base_amount_usd?: number
+          company_id?: string | null
+          coupon_id: string
+          discount_usd?: number
+          email_normalized: string
+          free_months?: number
+          id?: string
+          payment_reference?: string | null
+          redeemed_at?: string
+        }
+        Update: {
+          application_id?: string | null
+          base_amount_usd?: number
+          company_id?: string | null
+          coupon_id?: string
+          discount_usd?: number
+          email_normalized?: string
+          free_months?: number
+          id?: string
+          payment_reference?: string | null
+          redeemed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_coupon_redemptions_application_id_fkey"
+            columns: ["application_id"]
+            referencedRelation: "onboarding_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_coupon_redemptions_company_id_fkey"
+            columns: ["company_id"]
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_coupon_redemptions_coupon_id_fkey"
+            columns: ["coupon_id"]
+            referencedRelation: "subscription_coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_coupons: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          keeps_promo: boolean
+          kind: string
+          max_redemptions: number | null
+          min_months: number
+          plan_ids: string[] | null
+          redemptions_count: number
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          keeps_promo?: boolean
+          kind: string
+          max_redemptions?: number | null
+          min_months?: number
+          plan_ids?: string[] | null
+          redemptions_count?: number
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+          value: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          keeps_promo?: boolean
+          kind?: string
+          max_redemptions?: number | null
+          min_months?: number
+          plan_ids?: string[] | null
+          redemptions_count?: number
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
       subscription_notifications: {
         Row: {
           company_id: string
@@ -4655,6 +4791,19 @@ export type Database = {
           p_reason: string
         }
         Returns: Json
+      }
+      redeem_subscription_coupon: {
+        Args: {
+          p_application_id?: string | null
+          p_base_amount_usd?: number
+          p_company_id?: string | null
+          p_coupon_id: string
+          p_discount_usd?: number
+          p_email: string
+          p_free_months?: number
+          p_payment_reference?: string | null
+        }
+        Returns: boolean
       }
       resolve_branch_tax_settings: {
         Args: { p_branch_id: string }

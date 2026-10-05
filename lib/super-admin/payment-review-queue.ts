@@ -59,6 +59,9 @@ type OnboardingRow = {
 	payment_months: number | null;
 	subscription_payment_method: string | null;
 	updated_at: string | null;
+	coupon_code: string | null;
+	coupon_discount_usd: number | null;
+	coupon_free_months: number | null;
 };
 
 export async function loadPaymentReviewQueue(): Promise<{
@@ -76,7 +79,7 @@ export async function loadPaymentReviewQueue(): Promise<{
 			.limit(200),
 		supabaseAdmin
 			.from("onboarding_applications")
-			.select("id,business_name,email,company_id,plan_id,payment_reference,payment_reference_url,payment_amount,payment_months,subscription_payment_method,updated_at")
+			.select("id,business_name,email,company_id,plan_id,payment_reference,payment_reference_url,payment_amount,payment_months,subscription_payment_method,updated_at,coupon_code,coupon_discount_usd,coupon_free_months")
 			.eq("payment_status", "pending_validation")
 			.order("updated_at", { ascending: true })
 			.limit(200),
@@ -141,6 +144,16 @@ export async function loadPaymentReviewQueue(): Promise<{
 	const onboardingItems: PaymentReviewItem[] = onboardingRows.map((row) => {
 		const months = Math.max(1, Number(row.payment_months ?? 1) || 1);
 		const planName = row.plan_id ? plans.get(row.plan_id) : null;
+		// El importe ya trae el descuento: el equipo tiene que saber por qué no cuadra con el plan.
+		const coupon = row.coupon_code
+			? ` · cupón ${row.coupon_code}${
+					Number(row.coupon_discount_usd ?? 0) > 0
+						? ` (−$${Number(row.coupon_discount_usd).toFixed(2)})`
+						: Number(row.coupon_free_months ?? 0) > 0
+							? ` (+${row.coupon_free_months} ${Number(row.coupon_free_months) === 1 ? "mes" : "meses"} gratis)`
+							: ""
+				}`
+			: "";
 		return {
 			key: `onboarding:${row.id}`,
 			source: "onboarding",
@@ -149,7 +162,7 @@ export async function loadPaymentReviewQueue(): Promise<{
 			companyId: row.company_id,
 			businessName: String(row.business_name ?? "Solicitud"),
 			contactEmail: row.email,
-			concept: `Alta${planName ? ` · ${planName}` : ""} · ${months} ${months === 1 ? "mes" : "meses"}`,
+			concept: `Alta${planName ? ` · ${planName}` : ""} · ${months} ${months === 1 ? "mes" : "meses"}${coupon}`,
 			amountUsd: Number(row.payment_amount ?? 0) || 0,
 			method: row.subscription_payment_method ? (methods.get(row.subscription_payment_method) ?? row.subscription_payment_method) : null,
 			receiptUrl: row.payment_reference_url,

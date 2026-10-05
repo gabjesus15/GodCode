@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createPasswordSetupLink } from "@/lib/auth/password-setup-link";
+import { redeemSubscriptionCoupon } from "@/lib/billing/subscription-coupon-service";
 import { sendEmail } from "@/lib/email/send";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { getTenantHomeUrl } from "../../utils/tenant-url";
@@ -53,10 +54,14 @@ type ApplicationRow = OnboardingApplication & {
 	welcome_email_sent_at: string | null;
 	updated_at: string;
 	currency?: string | null;
+	coupon_id?: string | null;
+	coupon_code?: string | null;
+	coupon_discount_usd?: number | null;
+	coupon_free_months?: number | null;
 };
 
 const APPLICATION_COLUMNS =
-	"id,status,payment_status,payment_reference,company_id,plan_id,business_name,responsible_name,email,billing_rut,fiscal_address,logo_url,social_instagram,subscription_payment_method,welcome_email_sent_at,updated_at,country,currency";
+	"id,status,payment_status,payment_reference,company_id,plan_id,business_name,responsible_name,email,billing_rut,fiscal_address,logo_url,social_instagram,subscription_payment_method,welcome_email_sent_at,updated_at,country,currency,coupon_id,coupon_code,coupon_discount_usd,coupon_free_months";
 
 /**
  * Cierra el alta de una solicitud cuyo pago ya está confirmado (PayPal capturado o
@@ -195,12 +200,28 @@ export async function completeOnboardingPayment(
 		.update({ company_id: companyId, status: "active", payment_status: "paid", updated_at: now.toISOString() })
 		.eq("id", app.id);
 
+	// El cupón se canjea cuando el alta ya está cobrada y activa (idempotente por correo).
+	if (app.coupon_id) {
+		const discount = Number(app.coupon_discount_usd ?? 0) || 0;
+		await redeemSubscriptionCoupon(supabaseAdmin, {
+			couponId: app.coupon_id,
+			email: app.email,
+			applicationId: app.id,
+			companyId,
+			paymentReference: input.paymentReference,
+			baseAmountUsd: (Number.isFinite(input.amountPaid) ? input.amountPaid : 0) + discount,
+			discountUsd: discount,
+			freeMonths: Number(app.coupon_free_months ?? 0) || 0,
+		});
+	}
+
 	await alertOnboardingTeam({
 		kind: "activated",
 		businessName: app.business_name ?? "",
 		email: app.email ?? null,
-		via: input.isManualPayment ? "manual" : "paypal",
+		via: input.methodSlug === "coupon" ? "coupon" : input.isManualPayment ? "manual" : "paypal",
 		months: input.grantedMonths,
+		coupon: app.coupon_code ?? null,
 	});
 
 	return finishOwnerAccess({ supabaseAdmin, app, companyId, alreadyCompleted: false, now });

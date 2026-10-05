@@ -355,6 +355,12 @@ export async function updateApplicationPaymentState(
 		paymentReferenceUrl?: string | null;
 		paymentMonths?: number | null;
 		paymentAmount?: number | null;
+		/**
+		 * Foto de lo que el cupón prometió al iniciar este pago (`null` borra la foto). El
+		 * cierre del alta la usa tal cual: si el cupón vence mientras el equipo revisa el
+		 * comprobante, la persona recibe lo que vio al pagar.
+		 */
+		coupon?: { discountUsd: number; freeMonths: number; keepsPromo: boolean } | null;
 		updatedAt?: string;
 	}
 ): Promise<void> {
@@ -365,6 +371,9 @@ export async function updateApplicationPaymentState(
 		payment_reference_url?: string | null;
 		payment_months?: number | null;
 		payment_amount?: number | null;
+		coupon_discount_usd?: number | null;
+		coupon_free_months?: number | null;
+		coupon_keeps_promo?: boolean | null;
 		updated_at: string;
 	} = {
 		updated_at: params.updatedAt ?? new Date().toISOString(),
@@ -376,6 +385,11 @@ export async function updateApplicationPaymentState(
 	if (params.paymentReferenceUrl !== undefined) payload.payment_reference_url = params.paymentReferenceUrl;
 	if (params.paymentMonths !== undefined) payload.payment_months = params.paymentMonths;
 	if (params.paymentAmount !== undefined) payload.payment_amount = params.paymentAmount;
+	if (params.coupon !== undefined) {
+		payload.coupon_discount_usd = params.coupon ? params.coupon.discountUsd : null;
+		payload.coupon_free_months = params.coupon ? params.coupon.freeMonths : null;
+		payload.coupon_keeps_promo = params.coupon ? params.coupon.keepsPromo : null;
+	}
 
 	const { error } = await supabaseAdmin.from("onboarding_applications").update(payload).eq("id", applicationId);
 	// La captura de PayPal solo acepta la orden guardada aquí: si no se guardó, cobrar

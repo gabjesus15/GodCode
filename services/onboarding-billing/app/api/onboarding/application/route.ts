@@ -8,6 +8,8 @@ import {
 	type OnboardingApplication,
 } from "@/lib/onboarding/checkout-service";
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
+import { checkCouponForApplication, findSubscriptionCouponById } from "@/lib/billing/subscription-coupon-service";
+import { toAppliedCoupon, type AppliedCoupon, type CouponProblem } from "@/lib/billing/subscription-coupons";
 
 /** @service-role capability-token
  *
@@ -55,6 +57,35 @@ async function buildQuote(app: {
 	};
 }
 
+/**
+ * El cupón que la persona aplicó, con su problema actual si ya no sirve (vencido, agotado,
+ * otro plan…). Los meses no se revisan aquí: la página lo hace con los que elija.
+ */
+async function describeApplicationCoupon(app: {
+	coupon_id: string | null;
+	coupon_code: string | null;
+	email: string;
+	plan_id: string | null;
+}): Promise<(AppliedCoupon & { problem: CouponProblem | null; message: string | null }) | null> {
+	if (!app.coupon_id) return null;
+	const coupon = await findSubscriptionCouponById(supabaseAdmin, app.coupon_id);
+	if (!coupon) {
+		return {
+			id: app.coupon_id,
+			code: String(app.coupon_code ?? ""),
+			kind: "percent",
+			value: 0,
+			description: null,
+			minMonths: 1,
+			keepsPromo: true,
+			problem: "not_found",
+			message: null,
+		};
+	}
+	const check = await checkCouponForApplication(supabaseAdmin, { coupon, email: app.email, planId: app.plan_id });
+	return { ...toAppliedCoupon(coupon), problem: check.ok ? null : check.problem, message: check.ok ? null : check.message };
+}
+
 export async function GET(req: NextRequest) {
 	const token = req.nextUrl.searchParams.get("token")?.trim();
 	if (!token || token.length > 100) {
@@ -63,7 +94,7 @@ export async function GET(req: NextRequest) {
 
 	const { data, error } = await supabaseAdmin
 		.from("onboarding_applications")
-		.select("id,email,status,company_id,plan_id,business_name,subscription_payment_method,payment_status,payment_reference_url,country")
+		.select("id,email,status,company_id,plan_id,business_name,subscription_payment_method,payment_status,payment_reference_url,country,coupon_id,coupon_code")
 		.eq("verification_token", token)
 		.maybeSingle();
 
@@ -74,12 +105,13 @@ export async function GET(req: NextRequest) {
 		return NextResponse.json({ error: "Solicitud no encontrada" }, { status: 404 });
 	}
 
-	const [promoAvailable, quote] = await Promise.all([
+	const [promoAvailable, quote, coupon] = await Promise.all([
 		isFirstPaymentPromoEligible(supabaseAdmin, {
 			email: data.email,
 			excludeCompanyId: data.company_id,
 		}),
 		buildQuote(data).catch(() => null),
+		describeApplicationCoupon(data).catch(() => null),
 	]);
 
 	return NextResponse.json({
@@ -91,5 +123,6 @@ export async function GET(req: NextRequest) {
 		country: data.country,
 		promo_available: promoAvailable,
 		quote,
+		coupon,
 	});
 }

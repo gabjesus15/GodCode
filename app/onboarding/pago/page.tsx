@@ -4,13 +4,14 @@ import { Suspense, useCallback, useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLocale } from "next-intl";
-import { AlertCircle, Check, Clock, Copy, MailCheck, Upload } from "lucide-react";
+import { AlertCircle, Check, Clock, Copy, MailCheck, TicketPercent, Upload, X } from "lucide-react";
 
 import { Button } from "../../../components/ui/button";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
 import { randomId } from "@/lib/analytics/random-id";
 import { uploadImage } from "@/lib/storage/upload-image-client";
 import { getOnboardingPaymentCopy } from "@/lib/plans/onboarding-payment-copy";
+import { computeCouponPricing, couponFreeMonths, formatPercent, type AppliedCoupon, type CouponProblem } from "@/lib/billing/subscription-coupons";
 
 function getConfigLabel(key: string, labels: Record<string, string>): string {
 	return labels[key] ?? key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -18,9 +19,14 @@ function getConfigLabel(key: string, labels: Record<string, string>): string {
 
 type ManualData = {
 	amount_usd: number;
+	/** Importe antes del cupón (igual a amount_usd si no hubo). */
+	base_amount_usd?: number;
 	months: number;
 	granted_months?: number;
 	promo_applied?: boolean;
+	coupon_code?: string | null;
+	coupon_discount_usd?: number;
+	coupon_free_months?: number;
 	currency: string;
 	country: string | null;
 	method_slug: string;
@@ -99,6 +105,9 @@ function trackAnalyticsEvent(event: string, metadata?: Record<string, unknown>) 
 	}).catch(() => {});
 }
 
+
+/** Cupón aplicado en la solicitud; `problem` llega del servidor si hoy ya no sirve. */
+type CouponState = AppliedCoupon & { problem?: CouponProblem | null; message?: string | null };
 
 type Quote = {
 	plan: { name: string; monthly: number };
@@ -196,11 +205,20 @@ function PagoContent() {
 	const [paypalSdkReady, setPaypalSdkReady] = useState(false);
 	const [quote, setQuote] = useState<Quote | null>(null);
 	const [businessName, setBusinessName] = useState("");
+	const [coupon, setCoupon] = useState<CouponState | null>(null);
+	const [couponOpen, setCouponOpen] = useState(false);
+	const [couponInput, setCouponInput] = useState("");
+	const [couponBusy, setCouponBusy] = useState(false);
+	const [couponError, setCouponError] = useState<string | null>(null);
 	const paypalContainerId = "onboarding-paypal-buttons";
 
 	const isVenezuela = manualData?.country === "Venezuela" || manualData?.country === "VE";
 	const isPaypalSelected = subscriptionMethod === "paypal";
-	const grantedMonths = promoAvailable ? months + 1 : months;
+	// Un cupón puede reemplazar la promo de +1 mes; y solo cuenta si se pagan sus meses mínimos.
+	const promoEffective = promoAvailable && (coupon ? coupon.keepsPromo : true);
+	const couponFits = Boolean(coupon && !coupon.problem && months >= coupon.minMonths);
+	const couponFree = coupon && couponFits ? couponFreeMonths(coupon) : 0;
+	const grantedMonths = (promoEffective ? months + 1 : months) + couponFree;
 
 	function formatPromoDescription(paid: number, granted: number): string {
 		const paidText = `${paid} ${paid === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural}`;
@@ -232,6 +250,7 @@ function PagoContent() {
 				receipt_uploaded?: boolean;
 				business_name?: string | null;
 				quote?: Quote | null;
+				coupon?: CouponState | null;
 			}) => {
 				if (cancelled) return;
 				setSubscriptionMethod((data.subscription_payment_method ?? "").trim().toLowerCase());
@@ -240,6 +259,7 @@ function PagoContent() {
 				setReceiptUploaded(data.receipt_uploaded === true);
 				setBusinessName(String(data.business_name ?? "").trim());
 				setQuote(data.quote ?? null);
+				setCoupon(data.coupon ?? null);
 			})
 			.catch(() => {
 				if (!cancelled) {
@@ -305,6 +325,7 @@ function PagoContent() {
 			const payload = parseJsonObject(raw);
 			const data = payload as {
 				error?: string;
+				coupon_invalid?: boolean;
 				sessionId?: string;
 				plan_name?: string;
 				plan_price?: number;
@@ -312,6 +333,7 @@ function PagoContent() {
 			};
 
 			if (!res.ok) {
+				if (data.coupon_invalid) setCoupon(null);
 				const fallback = raw && raw.trim() ? raw.trim() : copy.errors.createSession;
 				throw new Error(data.error ?? fallback);
 			}
@@ -427,13 +449,20 @@ function PagoContent() {
 			const raw = await res.text();
 			const data = parseJsonObject(raw) as {
 				error?: string;
+				coupon_invalid?: boolean;
 				url?: string;
 				manual?: boolean;
+				free?: boolean;
+				ref?: string;
 				payment_reference?: string;
 				amount_usd?: number;
+				base_amount_usd?: number;
 				months?: number;
 				granted_months?: number;
 				promo_applied?: boolean;
+				coupon_code?: string | null;
+				coupon_discount_usd?: number;
+				coupon_free_months?: number;
 				currency?: string;
 				country?: string | null;
 				method_slug?: string;
@@ -444,6 +473,7 @@ function PagoContent() {
 			};
 
 			if (!res.ok) {
+				if (data.coupon_invalid) setCoupon(null);
 				const message = typeof data?.error === "string" && data.error.trim()
 					? data.error
 					: (raw && raw.trim() ? raw.trim() : copy.errors.createSession);
@@ -458,6 +488,13 @@ function PagoContent() {
 				});
 			}
 
+			// Cupón que cubre todo: el alta ya quedó activa en el servidor.
+			if (data.free === true && typeof data.ref === "string" && data.ref) {
+				trackAnalyticsEvent("onboarding_coupon_free_activation", { months });
+				window.location.href = `/checkout/success?ref=${encodeURIComponent(data.ref)}`;
+				return;
+			}
+
 			if (data.url) {
 				window.location.href = data.url;
 				return;
@@ -466,9 +503,13 @@ function PagoContent() {
 			if (data.manual === true && data.payment_reference) {
 				setManualData({
 					amount_usd: data.amount_usd ?? 0,
+					base_amount_usd: data.base_amount_usd,
 					months: data.months ?? 1,
 					granted_months: data.granted_months,
 					promo_applied: data.promo_applied,
+					coupon_code: data.coupon_code ?? null,
+					coupon_discount_usd: data.coupon_discount_usd,
+					coupon_free_months: data.coupon_free_months,
 					currency: data.currency ?? "USD",
 					country: data.country ?? null,
 					method_slug: data.method_slug ?? "",
@@ -515,8 +556,67 @@ function PagoContent() {
 		}
 	}, [token, manualData, referenceFile, copy]);
 
+	const applyCoupon = useCallback(async () => {
+		if (!token) return;
+		const code = couponInput.trim().toUpperCase().replace(/\s+/g, "");
+		if (!code) return;
+		setCouponBusy(true);
+		setCouponError(null);
+		try {
+			// Los meses no se mandan: si el cupón exige más, la página lo dice y la persona los elige.
+			const res = await fetch("/api/onboarding/coupon", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ token, code }),
+			});
+			const json = (await res.json().catch(() => ({}))) as { error?: string; problem?: CouponProblem; coupon?: AppliedCoupon };
+			if (!res.ok || !json.coupon) {
+				setCouponError((json.problem && copy.coupon.problems[json.problem]) || json.error || copy.coupon.problems.generic);
+				return;
+			}
+			setCoupon({ ...json.coupon, problem: null, message: null });
+			setCouponInput("");
+			setCouponOpen(false);
+			trackAnalyticsEvent("onboarding_coupon_applied", { code: json.coupon.code, kind: json.coupon.kind });
+		} catch {
+			setCouponError(copy.coupon.problems.generic);
+		} finally {
+			setCouponBusy(false);
+		}
+	}, [token, couponInput, copy]);
+
+	const removeCoupon = useCallback(async () => {
+		if (!token) return;
+		setCouponBusy(true);
+		try {
+			const res = await fetch("/api/onboarding/coupon", {
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ token }),
+			});
+			const json = (await res.json().catch(() => ({}))) as { error?: string; problem?: CouponProblem };
+			if (!res.ok) {
+				setError((json.problem && copy.coupon.problems[json.problem]) || json.error || copy.coupon.problems.generic);
+				return;
+			}
+			setCoupon(null);
+		} catch {
+			setError(copy.coupon.problems.generic);
+		} finally {
+			setCouponBusy(false);
+		}
+	}, [token, copy]);
+
 	const ui = copy.ui;
 	const monthsText = (n: number) => `${n} ${n === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural}`;
+	const describeCoupon = (c: AppliedCoupon) =>
+		c.kind === "percent"
+			? copy.coupon.percentOff.replace("{value}", formatPercent(c.value))
+			: c.kind === "fixed"
+				? copy.coupon.amountOff.replace("{value}", usd(c.value))
+				: copy.coupon.freeMonths.replace("{months}", monthsText(couponFreeMonths(c)));
+	const problemText = (problem: CouponProblem | null | undefined, fallback?: string | null) =>
+		(problem && copy.coupon.problems[problem]) || fallback || copy.coupon.problems.generic;
 	/** Mismo cálculo que el checkout: plan × meses + extras mensuales × meses + extras únicos. */
 	const totalFor = (m: number): number | null => {
 		if (!quote) return null;
@@ -549,7 +649,14 @@ function PagoContent() {
 	const methodName = quote?.method?.name ?? (isPaypalSelected ? "PayPal" : "");
 	const chargedMonths = manualData ? manualData.months : months;
 	const coveredMonths = manualData ? manualData.granted_months ?? manualData.months : grantedMonths;
-	const total = manualData ? manualData.amount_usd : totalFor(months);
+	const baseTotal = manualData ? (manualData.base_amount_usd ?? manualData.amount_usd) : totalFor(months);
+	const pricing = !manualData && baseTotal != null ? computeCouponPricing(couponFits ? coupon : null, baseTotal) : null;
+	const total = manualData ? manualData.amount_usd : pricing ? pricing.amountUsd : null;
+	const couponDiscount = manualData ? (manualData.coupon_discount_usd ?? 0) : (pricing?.discountUsd ?? 0);
+	const couponLineCode = manualData ? manualData.coupon_code ?? null : coupon && couponFits ? coupon.code : null;
+	const couponLineFree = manualData ? (manualData.coupon_free_months ?? 0) : couponFree;
+	// Cupón que deja el total en 0: no hay nada que pagar, solo confirmar.
+	const isFree = !manualData && Boolean(coupon && couponFits) && total === 0 && baseTotal != null && baseTotal > 0;
 
 	const summary = (
 		<aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
@@ -596,6 +703,17 @@ function PagoContent() {
 						<span className="text-slate-600">{capitalize(copy.monthSummaryLabel)}</span>
 						<span className="whitespace-nowrap font-medium text-slate-900">{monthsText(chargedMonths)}</span>
 					</li>
+					{couponLineCode && (couponDiscount > 0 || couponLineFree > 0) ? (
+						<li className="flex items-start justify-between gap-4">
+							<span className="inline-flex items-center gap-1.5 text-emerald-700">
+								<TicketPercent className="h-3.5 w-3.5 shrink-0" aria-hidden />
+								{copy.coupon.summaryLine.replace("{code}", couponLineCode)}
+							</span>
+							<span className="whitespace-nowrap font-medium text-emerald-700">
+								{couponDiscount > 0 ? `−${usd(couponDiscount)}` : copy.coupon.freeMonthsBadge.replace("{months}", monthsText(couponLineFree))}
+							</span>
+						</li>
+					) : null}
 				</ul>
 				<div className="mt-4 border-t border-slate-100 pt-4">
 					<div className="flex items-baseline justify-between gap-4">
@@ -747,7 +865,7 @@ function PagoContent() {
 					<h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{copy.title}</h1>
 					<p className="mt-3 text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">{copy.subtitle}</p>
 
-					{promoAvailable ? (
+					{promoEffective ? (
 						<div className="mt-8 rounded-2xl border border-[#D5D9FF] bg-[#F1F2FF] px-5 py-4">
 							<p className="text-sm font-semibold text-[#3640C9]">{copy.promoTitle}</p>
 							<p className="mt-0.5 text-sm text-slate-700">{formatPromoDescription(months, grantedMonths)}</p>
@@ -769,12 +887,96 @@ function PagoContent() {
 										<input type="radio" name="months" value={m} checked={selected} onChange={() => setMonths(m)} className="sr-only" />
 										<span className="text-sm font-semibold text-slate-900">{monthsText(m)}</span>
 										<span className="mt-1 text-sm text-slate-600">{optionTotal != null ? usd(optionTotal) : "—"}</span>
-										{promoAvailable ? <span className="mt-2 text-xs font-medium text-[#3640C9]">{ui.freeMonth}</span> : null}
+										{promoEffective ? <span className="mt-2 text-xs font-medium text-[#3640C9]">{ui.freeMonth}</span> : null}
 									</label>
 								);
 							})}
 						</div>
 					</fieldset>
+
+					<div className="mt-6">
+						{coupon ? (
+							<div
+								className={`rounded-2xl border px-5 py-4 ${coupon.problem || !couponFits ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}
+								role="status"
+							>
+								<div className="flex flex-wrap items-start justify-between gap-3">
+									<div className="min-w-0">
+										<p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+											<TicketPercent className="h-4 w-4 shrink-0" aria-hidden />
+											{copy.coupon.applied.replace("{code}", coupon.code)}
+										</p>
+										{!coupon.problem ? (
+											<p className="mt-0.5 text-sm text-slate-700">
+												{describeCoupon(coupon)}
+												{coupon.description ? ` · ${coupon.description}` : ""}
+											</p>
+										) : null}
+										{coupon.problem ? (
+											<p className="mt-1 text-sm font-medium text-amber-800">{problemText(coupon.problem, coupon.message)}</p>
+										) : !couponFits ? (
+											<p className="mt-1 text-sm font-medium text-amber-800">{copy.coupon.minMonths.replace("{months}", monthsText(coupon.minMonths))}</p>
+										) : null}
+										{couponFits && !coupon.keepsPromo && promoAvailable ? (
+											<p className="mt-1 text-xs text-slate-600">{copy.coupon.replacesPromo}</p>
+										) : null}
+									</div>
+									<button
+										type="button"
+										onClick={() => void removeCoupon()}
+										disabled={couponBusy}
+										className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-medium text-slate-600 transition hover:bg-white/70 hover:text-slate-900 disabled:opacity-60"
+									>
+										<X className="h-3.5 w-3.5" aria-hidden />
+										{copy.coupon.remove}
+									</button>
+								</div>
+							</div>
+						) : couponOpen ? (
+							<form
+								onSubmit={(event) => {
+									event.preventDefault();
+									void applyCoupon();
+								}}
+								className="rounded-2xl border border-slate-200 p-4 sm:p-5"
+							>
+								<label htmlFor="coupon-code" className="text-sm font-semibold text-slate-900">
+									{copy.coupon.prompt}
+								</label>
+								<div className="mt-3 flex flex-col gap-2 sm:flex-row">
+									<input
+										id="coupon-code"
+										value={couponInput}
+										onChange={(e) => {
+											setCouponInput(e.target.value.toUpperCase());
+											setCouponError(null);
+										}}
+										placeholder={copy.coupon.placeholder}
+										autoComplete="off"
+										autoCapitalize="characters"
+										spellCheck={false}
+										maxLength={32}
+										aria-invalid={couponError ? true : undefined}
+										aria-describedby={couponError ? "coupon-error" : undefined}
+										className="h-11 min-w-0 flex-1 rounded-xl border border-slate-300 px-4 font-mono text-sm uppercase tracking-wide text-slate-900 placeholder:font-sans placeholder:normal-case placeholder:tracking-normal focus:border-[#4F5BFF] focus:outline-none focus:ring-2 focus:ring-[#4F5BFF]/30"
+									/>
+									<Button type="submit" loading={couponBusy} disabled={!couponInput.trim()} className="onboarding-btn-primary h-11 rounded-xl px-5 text-sm">
+										{couponBusy ? copy.coupon.applying : copy.coupon.apply}
+									</Button>
+								</div>
+								{couponError ? (
+									<p id="coupon-error" className="mt-2 text-sm text-red-700" role="alert">
+										{couponError}
+									</p>
+								) : null}
+							</form>
+						) : (
+							<button type="button" onClick={() => setCouponOpen(true)} className="onboarding-link inline-flex items-center gap-1.5 text-sm font-medium">
+								<TicketPercent className="h-4 w-4" aria-hidden />
+								{copy.coupon.prompt}
+							</button>
+						)}
+					</div>
 
 					{paymentStatus === "rejected" && !error ? (
 						<div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800" role="status">
@@ -790,12 +992,20 @@ function PagoContent() {
 
 					<div className="mt-8">
 						{!appLoaded ? <div className="h-12 w-full animate-pulse rounded-xl bg-slate-100 sm:w-72" aria-hidden /> : null}
-						{appLoaded && !isPaypalSelected ? (
+						{appLoaded && isFree ? (
+							<div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:p-6">
+								<p className="text-sm text-slate-700">{copy.coupon.freeCheckout}</p>
+								<Button onClick={handlePay} loading={loading} size="lg" className="onboarding-btn-primary mt-4 h-12 w-full rounded-xl text-[15px] sm:w-auto sm:px-8">
+									{copy.coupon.freeButton}
+								</Button>
+							</div>
+						) : null}
+						{appLoaded && !isFree && !isPaypalSelected ? (
 							<Button onClick={handlePay} loading={loading} size="lg" className="onboarding-btn-primary h-12 w-full rounded-xl text-[15px] sm:w-auto sm:px-8">
 								{ui.showBankDetails}
 							</Button>
 						) : null}
-						{isPaypalSelected ? (
+						{isPaypalSelected && !isFree ? (
 							<div className="rounded-2xl border border-slate-200 p-5 sm:p-6">
 								<p className="text-sm font-semibold text-slate-900">{copy.paypalInlineTitle}</p>
 								<p className="mt-1 text-sm text-slate-500">{copy.paypalInlineHint}</p>

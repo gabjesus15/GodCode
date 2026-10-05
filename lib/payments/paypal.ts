@@ -14,19 +14,32 @@ import {
  */
 
 export type PayPalOrderMeta =
-	| { kind: "onboarding"; applicationId: string; chargedMonths: number; grantedMonths: number }
+	| {
+			kind: "onboarding";
+			applicationId: string;
+			chargedMonths: number;
+			/** Pagados + promo + regalo del cupón. */
+			grantedMonths: number;
+			/**
+			 * Si la promo «+1 mes» va incluida en `grantedMonths`. Las órdenes anteriores a los
+			 * cupones no lo traen: entonces se deduce de que se otorgue más de lo pagado.
+			 */
+			promoApplied?: boolean;
+	  }
 	| { kind: "portal"; paymentId: string };
 
 const MAX_MONTHS = 12;
+/** Pagados (12) + promo (1) + meses de regalo de un cupón (12). */
+const MAX_GRANTED_MONTHS = MAX_MONTHS * 2 + 1;
 
-function clampMonths(value: unknown, fallback: number): number {
+function clampMonths(value: unknown, fallback: number, max = MAX_MONTHS + 1): number {
 	const n = Math.floor(Number(value));
-	return Number.isFinite(n) ? Math.min(MAX_MONTHS + 1, Math.max(1, n)) : fallback;
+	return Number.isFinite(n) ? Math.min(max, Math.max(1, n)) : fallback;
 }
 
 export function encodePayPalCustomId(meta: PayPalOrderMeta): string {
 	return meta.kind === "onboarding"
-		? `ob|${meta.applicationId}|${meta.chargedMonths}|${meta.grantedMonths}`
+		? `ob|${meta.applicationId}|${meta.chargedMonths}|${meta.grantedMonths}|${meta.promoApplied ? 1 : 0}`
 		: `pp|${meta.paymentId}`;
 }
 
@@ -35,7 +48,9 @@ export function parsePayPalCustomId(customId: string | null | undefined): PayPal
 	const parts = String(customId ?? "").split("|").map((part) => part.trim());
 	if (parts[0] === "ob" && parts[1]) {
 		const charged = clampMonths(parts[2], 1);
-		return { kind: "onboarding", applicationId: parts[1], chargedMonths: charged, grantedMonths: clampMonths(parts[3], charged) };
+		const granted = clampMonths(parts[3], charged, MAX_GRANTED_MONTHS);
+		const promoApplied = parts[4] === "1" || parts[4] === "0" ? parts[4] === "1" : granted > charged;
+		return { kind: "onboarding", applicationId: parts[1], chargedMonths: charged, grantedMonths: granted, promoApplied };
 	}
 	if (parts[0] === "pp" && parts[1]) {
 		return { kind: "portal", paymentId: parts[1] };

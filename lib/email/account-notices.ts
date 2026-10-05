@@ -82,7 +82,7 @@ export async function notifyOnboardingReceipt(client: SupabaseClient, applicatio
 	try {
 		const { data } = await client
 			.from("onboarding_applications")
-			.select("id,email,responsible_name,business_name,payment_amount,payment_reference,subscription_payment_method,verification_token")
+			.select("id,email,responsible_name,business_name,payment_amount,payment_reference,subscription_payment_method,verification_token,coupon_code")
 			.eq("id", applicationId)
 			.maybeSingle();
 		const app = data as {
@@ -94,8 +94,10 @@ export async function notifyOnboardingReceipt(client: SupabaseClient, applicatio
 			payment_reference: string | null;
 			subscription_payment_method: string | null;
 			verification_token: string | null;
+			coupon_code: string | null;
 		} | null;
 		if (!app) return;
+		const couponCode = String(app.coupon_code ?? "").trim() || null;
 		const slug = String(app.subscription_payment_method ?? "").trim();
 		const { data: method } = slug
 			? await client.from("plan_payment_methods").select("name").eq("slug", slug).maybeSingle()
@@ -129,7 +131,8 @@ export async function notifyOnboardingReceipt(client: SupabaseClient, applicatio
 				client,
 				data: {
 					businessName,
-					concept: "Alta de negocio nuevo",
+					// El equipo compara el comprobante con el importe: si hubo cupón, que se vea.
+					concept: couponCode ? `Alta de negocio nuevo · cupón ${couponCode}` : "Alta de negocio nuevo",
 					amount: amount ?? "Por confirmar",
 					method: methodName,
 					reference,
@@ -145,6 +148,7 @@ export async function notifyOnboardingReceipt(client: SupabaseClient, applicatio
 			amount,
 			method: methodName,
 			reference,
+			coupon: couponCode,
 		});
 	} catch (error) {
 		console.error("onboarding receipt notice:", error);

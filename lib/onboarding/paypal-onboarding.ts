@@ -71,7 +71,9 @@ export async function captureOnboardingPayPalOrder(params: {
 		methodName: "PayPal",
 		chargedMonths: order.meta.chargedMonths,
 		grantedMonths: order.meta.grantedMonths,
-		promoApplied: order.meta.grantedMonths > order.meta.chargedMonths,
+		// Con cupón de meses gratis se otorga más de lo pagado sin que haya promo: el dato
+		// viene explícito en la orden (las órdenes viejas lo deducen al leerse).
+		promoApplied: order.meta.promoApplied ?? order.meta.grantedMonths > order.meta.chargedMonths,
 		isManualPayment: false,
 		payerEmailNormalized: normalizeEmail(captured.payerEmail) || null,
 		paypalPayerIdHash: captured.payerId ? hashPaymentIdentity(captured.payerId) : null,

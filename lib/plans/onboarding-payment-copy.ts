@@ -1,3 +1,5 @@
+import type { CouponProblem } from "@/lib/billing/subscription-coupons";
+
 export type OnboardingPaymentLocale = "es" | "en" | "pt" | "fr" | "de" | "it";
 
 export type OnboardingPaymentCopy = {
@@ -74,6 +76,25 @@ export type OnboardingPaymentCopy = {
     submittedTitle: string;
     submittedBody: string;
     referenceLabel: string;
+  };
+  /** Cupón del alta en el paso de pago. */
+  coupon: {
+    prompt: string;
+    placeholder: string;
+    apply: string;
+    applying: string;
+    remove: string;
+    applied: string;
+    percentOff: string;
+    amountOff: string;
+    freeMonths: string;
+    summaryLine: string;
+    freeMonthsBadge: string;
+    minMonths: string;
+    replacesPromo: string;
+    freeCheckout: string;
+    freeButton: string;
+    problems: Record<CouponProblem | "generic", string>;
   };
 };
 
@@ -156,6 +177,36 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       submittedTitle: "Recibimos tu comprobante",
       submittedBody: "Lo revisamos y te avisamos por correo apenas quede validado. Puedes cerrar esta página.",
       referenceLabel: "Referencia del pago",
+    },
+    coupon: {
+      prompt: "¿Tienes un cupón?",
+      placeholder: "Código del cupón",
+      apply: "Aplicar",
+      applying: "Comprobando…",
+      remove: "Quitar cupón",
+      applied: "Cupón {code} aplicado",
+      percentOff: "{value} de descuento en tu primer pago",
+      amountOff: "{value} de descuento en tu primer pago",
+      freeMonths: "{months} gratis además de lo que pagues",
+      summaryLine: "Cupón {code}",
+      freeMonthsBadge: "+{months} gratis",
+      minMonths: "Este cupón vale pagando al menos {months}. Con menos meses no se aplica.",
+      replacesPromo: "Este cupón reemplaza la promo de +1 mes gratis.",
+      freeCheckout: "Con este cupón no pagas nada: tu cuenta se activa al confirmar.",
+      freeButton: "Activar mi cuenta",
+      problems: {
+        invalid_format: "Ese código no tiene el formato de un cupón.",
+        not_found: "No encontramos ese cupón. Revisa que esté bien escrito.",
+        inactive: "Ese cupón ya no está activo.",
+        not_started: "Ese cupón todavía no está vigente.",
+        expired: "Ese cupón ya venció.",
+        exhausted: "Ese cupón ya alcanzó su límite de usos.",
+        plan_not_allowed: "Ese cupón no vale para el plan que elegiste.",
+        min_months: "Ese cupón exige pagar más meses.",
+        already_used: "Ese cupón ya se usó con tu correo.",
+        locked: "Tu pago ya está en revisión: no se puede cambiar el cupón.",
+        generic: "No pudimos aplicar el cupón. Intenta de nuevo.",
+      },
     },
     errors: {
       createSession: "No pudimos iniciar el pago. Intenta de nuevo.",
@@ -251,6 +302,36 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       submittedBody: "We will review it and email you as soon as it is validated. You can close this page.",
       referenceLabel: "Payment reference",
     },
+    coupon: {
+      prompt: "Have a coupon?",
+      placeholder: "Coupon code",
+      apply: "Apply",
+      applying: "Checking…",
+      remove: "Remove coupon",
+      applied: "Coupon {code} applied",
+      percentOff: "{value} off your first payment",
+      amountOff: "{value} off your first payment",
+      freeMonths: "{months} free on top of what you pay",
+      summaryLine: "Coupon {code}",
+      freeMonthsBadge: "+{months} free",
+      minMonths: "This coupon requires paying at least {months}. With fewer months it doesn't apply.",
+      replacesPromo: "This coupon replaces the +1 free month promo.",
+      freeCheckout: "With this coupon you pay nothing: your account is activated when you confirm.",
+      freeButton: "Activate my account",
+      problems: {
+        invalid_format: "That code doesn't look like a coupon.",
+        not_found: "We couldn't find that coupon. Check the spelling.",
+        inactive: "That coupon is no longer active.",
+        not_started: "That coupon isn't valid yet.",
+        expired: "That coupon has expired.",
+        exhausted: "That coupon has reached its usage limit.",
+        plan_not_allowed: "That coupon doesn't apply to the plan you chose.",
+        min_months: "That coupon requires paying more months.",
+        already_used: "That coupon was already used with your email.",
+        locked: "Your payment is under review: the coupon can't be changed.",
+        generic: "We couldn't apply the coupon. Try again.",
+      },
+    },
     errors: {
       createSession: "We couldn’t start the payment. Please try again.",
       missingUrl: "Payment URL was not returned. Contact support.",
@@ -344,6 +425,36 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       submittedTitle: "Recebemos seu comprovante",
       submittedBody: "Vamos revisá-lo e avisar por e-mail assim que for validado. Você pode fechar esta página.",
       referenceLabel: "Referência do pagamento",
+    },
+    coupon: {
+      prompt: "Tem um cupom?",
+      placeholder: "Código do cupom",
+      apply: "Aplicar",
+      applying: "Verificando…",
+      remove: "Remover cupom",
+      applied: "Cupom {code} aplicado",
+      percentOff: "{value} de desconto no seu primeiro pagamento",
+      amountOff: "{value} de desconto no seu primeiro pagamento",
+      freeMonths: "{months} grátis além do que você pagar",
+      summaryLine: "Cupom {code}",
+      freeMonthsBadge: "+{months} grátis",
+      minMonths: "Este cupom vale pagando pelo menos {months}. Com menos meses não se aplica.",
+      replacesPromo: "Este cupom substitui a promo de +1 mês grátis.",
+      freeCheckout: "Com este cupom você não paga nada: sua conta é ativada ao confirmar.",
+      freeButton: "Ativar minha conta",
+      problems: {
+        invalid_format: "Esse código não tem o formato de um cupom.",
+        not_found: "Não encontramos esse cupom. Confira se está escrito certo.",
+        inactive: "Esse cupom não está mais ativo.",
+        not_started: "Esse cupom ainda não está vigente.",
+        expired: "Esse cupom já venceu.",
+        exhausted: "Esse cupom já atingiu o limite de usos.",
+        plan_not_allowed: "Esse cupom não vale para o plano que você escolheu.",
+        min_months: "Esse cupom exige pagar mais meses.",
+        already_used: "Esse cupom já foi usado com o seu e-mail.",
+        locked: "Seu pagamento já está em análise: não dá para mudar o cupom.",
+        generic: "Não conseguimos aplicar o cupom. Tente de novo.",
+      },
     },
     errors: {
       createSession: "Não foi possível iniciar o pagamento. Tente novamente.",
@@ -439,6 +550,36 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       submittedBody: "Nous le vérifions et vous écrivons dès qu’il est validé. Vous pouvez fermer cette page.",
       referenceLabel: "Référence du paiement",
     },
+    coupon: {
+      prompt: "Vous avez un code promo ?",
+      placeholder: "Code promo",
+      apply: "Appliquer",
+      applying: "Vérification…",
+      remove: "Retirer le code",
+      applied: "Code {code} appliqué",
+      percentOff: "{value} de réduction sur votre premier paiement",
+      amountOff: "{value} de réduction sur votre premier paiement",
+      freeMonths: "{months} offerts en plus de ce que vous payez",
+      summaryLine: "Code {code}",
+      freeMonthsBadge: "+{months} offerts",
+      minMonths: "Ce code est valable à partir de {months} payés. Avec moins de mois, il ne s'applique pas.",
+      replacesPromo: "Ce code remplace la promo +1 mois offert.",
+      freeCheckout: "Avec ce code, vous ne payez rien : votre compte est activé dès la confirmation.",
+      freeButton: "Activer mon compte",
+      problems: {
+        invalid_format: "Ce code n'a pas le format d'un code promo.",
+        not_found: "Nous ne trouvons pas ce code. Vérifiez l'orthographe.",
+        inactive: "Ce code n'est plus actif.",
+        not_started: "Ce code n'est pas encore valable.",
+        expired: "Ce code a expiré.",
+        exhausted: "Ce code a atteint sa limite d'utilisations.",
+        plan_not_allowed: "Ce code ne s'applique pas au plan choisi.",
+        min_months: "Ce code exige de payer plus de mois.",
+        already_used: "Ce code a déjà été utilisé avec votre e-mail.",
+        locked: "Votre paiement est en cours de vérification : le code ne peut plus changer.",
+        generic: "Impossible d'appliquer le code. Réessayez.",
+      },
+    },
     errors: {
       createSession: "Impossible de lancer le paiement. Réessayez.",
       missingUrl: "L’URL de paiement n’a pas été renvoyée. Contactez le support.",
@@ -533,6 +674,36 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       submittedBody: "Wir prüfen ihn und schreiben Ihnen, sobald er bestätigt ist. Sie können diese Seite schließen.",
       referenceLabel: "Zahlungsreferenz",
     },
+    coupon: {
+      prompt: "Haben Sie einen Gutschein?",
+      placeholder: "Gutscheincode",
+      apply: "Einlösen",
+      applying: "Wird geprüft…",
+      remove: "Gutschein entfernen",
+      applied: "Gutschein {code} eingelöst",
+      percentOff: "{value} Rabatt auf Ihre erste Zahlung",
+      amountOff: "{value} Rabatt auf Ihre erste Zahlung",
+      freeMonths: "{months} gratis zusätzlich zu dem, was Sie zahlen",
+      summaryLine: "Gutschein {code}",
+      freeMonthsBadge: "+{months} gratis",
+      minMonths: "Dieser Gutschein gilt ab {months}. Bei weniger Monaten wird er nicht angewendet.",
+      replacesPromo: "Dieser Gutschein ersetzt die Aktion „+1 Monat gratis“.",
+      freeCheckout: "Mit diesem Gutschein zahlen Sie nichts: Ihr Konto wird bei der Bestätigung aktiviert.",
+      freeButton: "Mein Konto aktivieren",
+      problems: {
+        invalid_format: "Dieser Code hat nicht das Format eines Gutscheins.",
+        not_found: "Wir finden diesen Gutschein nicht. Prüfen Sie die Schreibweise.",
+        inactive: "Dieser Gutschein ist nicht mehr aktiv.",
+        not_started: "Dieser Gutschein ist noch nicht gültig.",
+        expired: "Dieser Gutschein ist abgelaufen.",
+        exhausted: "Dieser Gutschein hat sein Nutzungslimit erreicht.",
+        plan_not_allowed: "Dieser Gutschein gilt nicht für den gewählten Plan.",
+        min_months: "Dieser Gutschein erfordert mehr bezahlte Monate.",
+        already_used: "Dieser Gutschein wurde mit Ihrer E-Mail bereits verwendet.",
+        locked: "Ihre Zahlung wird bereits geprüft: der Gutschein kann nicht mehr geändert werden.",
+        generic: "Der Gutschein konnte nicht angewendet werden. Versuchen Sie es erneut.",
+      },
+    },
     errors: {
       createSession: "Die Zahlung konnte nicht gestartet werden. Bitte erneut versuchen.",
       missingUrl: "Die Zahlungs-URL wurde nicht zurückgegeben. Kontaktieren Sie den Support.",
@@ -626,6 +797,36 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       submittedTitle: "Abbiamo ricevuto la tua ricevuta",
       submittedBody: "La controlliamo e ti scriviamo appena è convalidata. Puoi chiudere questa pagina.",
       referenceLabel: "Riferimento del pagamento",
+    },
+    coupon: {
+      prompt: "Hai un coupon?",
+      placeholder: "Codice coupon",
+      apply: "Applica",
+      applying: "Verifica in corso…",
+      remove: "Rimuovi coupon",
+      applied: "Coupon {code} applicato",
+      percentOff: "{value} di sconto sul tuo primo pagamento",
+      amountOff: "{value} di sconto sul tuo primo pagamento",
+      freeMonths: "{months} gratis oltre a quelli che paghi",
+      summaryLine: "Coupon {code}",
+      freeMonthsBadge: "+{months} gratis",
+      minMonths: "Questo coupon vale pagando almeno {months}. Con meno mesi non si applica.",
+      replacesPromo: "Questo coupon sostituisce la promo +1 mese gratis.",
+      freeCheckout: "Con questo coupon non paghi nulla: il tuo account si attiva alla conferma.",
+      freeButton: "Attiva il mio account",
+      problems: {
+        invalid_format: "Quel codice non ha il formato di un coupon.",
+        not_found: "Non troviamo quel coupon. Controlla che sia scritto bene.",
+        inactive: "Quel coupon non è più attivo.",
+        not_started: "Quel coupon non è ancora valido.",
+        expired: "Quel coupon è scaduto.",
+        exhausted: "Quel coupon ha raggiunto il limite di utilizzi.",
+        plan_not_allowed: "Quel coupon non vale per il piano che hai scelto.",
+        min_months: "Quel coupon richiede di pagare più mesi.",
+        already_used: "Quel coupon è già stato usato con la tua email.",
+        locked: "Il tuo pagamento è già in revisione: il coupon non si può cambiare.",
+        generic: "Non siamo riusciti ad applicare il coupon. Riprova.",
+      },
     },
     errors: {
       createSession: "Impossibile avviare il pagamento. Riprova.",

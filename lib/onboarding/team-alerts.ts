@@ -32,6 +32,8 @@ export type OnboardingAlert =
 			months?: number | null;
 			amount?: string | null;
 			method?: string | null;
+			/** Código del cupón del alta, si aplicó uno. */
+			coupon?: string | null;
 	  }
 	| {
 			kind: "receipt_uploaded";
@@ -40,6 +42,7 @@ export type OnboardingAlert =
 			amount?: string | null;
 			method?: string | null;
 			reference?: string | null;
+			coupon?: string | null;
 	  }
 	| {
 			kind: "activated";
@@ -47,8 +50,9 @@ export type OnboardingAlert =
 			email?: string | null;
 			planName?: string | null;
 			months?: number | null;
-			via: "paypal" | "manual" | "promo" | string;
+			via: "paypal" | "manual" | "promo" | "coupon" | string;
 			menuUrl?: string | null;
+			coupon?: string | null;
 	  };
 
 const STEPS_TOTAL = 4;
@@ -109,6 +113,7 @@ export function formatOnboardingAlert(alert: OnboardingAlert, appUrl: string = g
 				`🧾 <b>Eligió plan: ${name}</b>`,
 				line("", alert.email),
 				detail || null,
+				line("Cupón: ", alert.coupon),
 				`Paso 3 de ${STEPS_TOTAL}: falta el pago. Con PayPal se activa solo; con transferencia o Pago Móvil sube el comprobante.`,
 				panel,
 			]
@@ -124,6 +129,7 @@ export function formatOnboardingAlert(alert: OnboardingAlert, appUrl: string = g
 				`📎 <b>Comprobante subido: ${name}</b>`,
 				line("", alert.email),
 				detail || null,
+				line("Cupón: ", alert.coupon),
 				`Paso 4 de ${STEPS_TOTAL}: hay que revisar el comprobante y validar el pago. Hasta entonces el negocio no está activo.`,
 				pagos,
 			]
@@ -136,9 +142,11 @@ export function formatOnboardingAlert(alert: OnboardingAlert, appUrl: string = g
 					? "pagó con PayPal"
 					: alert.via === "promo"
 						? "entró con promoción"
-						: alert.via === "manual"
-							? "pago validado a mano"
-							: escapeTelegramHtml(alert.via);
+						: alert.via === "coupon"
+							? "entró gratis con cupón"
+							: alert.via === "manual"
+								? "pago validado a mano"
+								: escapeTelegramHtml(alert.via);
 			const detail = [
 				alert.planName ? `Plan ${alert.planName}` : null,
 				alert.months ? `${alert.months} ${alert.months === 1 ? "mes" : "meses"}` : null,
@@ -150,6 +158,7 @@ export function formatOnboardingAlert(alert: OnboardingAlert, appUrl: string = g
 				`🎉 <b>Negocio activado: ${name}</b> (${via})`,
 				line("", alert.email),
 				detail || null,
+				line("Cupón: ", alert.coupon),
 				`Ya tiene acceso al panel y su menú está publicado.`,
 				alert.menuUrl ? link(alert.menuUrl, "Ver su menú") : panel,
 			]

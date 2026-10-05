@@ -4,8 +4,8 @@ import { accountUrl, getEmailBrand } from "@/lib/email/brand";
 import { formatEmailDate, timeZoneForCountry } from "@/lib/email/format";
 import { sendEmail } from "@/lib/email/send";
 import { activateCompanySubscription, getMonthsPaidFromPayment } from "@/lib/onboarding/billing-activation";
+import { resolveOnboardingGrant } from "@/lib/billing/subscription-coupons";
 import { completeOnboardingPayment } from "@/lib/onboarding/complete-onboarding-payment";
-import { resolveFirstPaymentPromo } from "@/lib/onboarding/first-payment-promo";
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 import { resolveAddonUnitPrice } from "@/lib/plans/addon-pricing";
 import { syncCompanyPanelAccessFromPlanId } from "@/lib/super-admin/sync-company-panel-access";
@@ -75,10 +75,12 @@ async function findOnboardingApplication(supabaseAdmin: SupabaseClient, referenc
 	if (!ref) return null;
 	const { data } = await supabaseAdmin
 		.from("onboarding_applications")
-		.select("id,email,responsible_name,business_name,company_id,payment_reference,payment_status,payment_months,payment_amount,subscription_payment_method,verification_token")
+		.select("id,email,responsible_name,business_name,company_id,payment_reference,payment_status,payment_months,payment_amount,subscription_payment_method,verification_token,coupon_id,coupon_free_months,coupon_keeps_promo")
 		.eq("payment_reference", ref)
 		.maybeSingle();
-	return data;
+	return data as
+		| (typeof data & { coupon_id: string | null; coupon_free_months: number | null; coupon_keeps_promo: boolean | null })
+		| null;
 }
 
 export async function validatePayment(params: ReviewParams): Promise<PaymentReviewResult> {
@@ -103,7 +105,14 @@ export async function validatePayment(params: ReviewParams): Promise<PaymentRevi
 		email: app.email,
 		excludeCompanyId: app.company_id,
 	});
-	const promo = resolveFirstPaymentPromo(months, eligible);
+	// El cupón entra con la foto que se tomó al iniciar el pago, no con su estado de hoy.
+	const promo = resolveOnboardingGrant({
+		monthsPaid: months,
+		promoEligible: eligible,
+		coupon: app.coupon_id
+			? { keepsPromo: app.coupon_keeps_promo !== false, freeMonths: Number(app.coupon_free_months ?? 0) || 0 }
+			: null,
+	});
 	const slug = String(app.subscription_payment_method ?? "manual");
 	const { data: method } = await supabaseAdmin.from("plan_payment_methods").select("name").eq("slug", slug).maybeSingle();
 

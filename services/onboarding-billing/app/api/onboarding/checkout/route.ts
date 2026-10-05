@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import {
+	checkCouponForApplication,
+	clearApplicationCoupon,
+	findSubscriptionCouponById,
+} from "@/lib/billing/subscription-coupon-service";
+import {
+	computeCouponPricing,
+	couponGrantFromRow,
+	resolveOnboardingGrant,
+	round2,
+	type SubscriptionCouponRow,
+} from "@/lib/billing/subscription-coupons";
+import {
 	calculateAddonsTotalUsd,
 	getManualMethodConfig,
 	isManualMethod,
@@ -10,7 +22,7 @@ import {
 	resolveCheckoutPlanPrice,
 	updateApplicationPaymentState,
 } from "@/lib/onboarding/checkout-service";
-import { resolveFirstPaymentPromo } from "@/lib/onboarding/first-payment-promo";
+import { completeOnboardingPayment } from "@/lib/onboarding/complete-onboarding-payment";
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 import { isPaymentMethodAvailableForCountry } from "@/lib/payments/payment-method-countries";
@@ -29,6 +41,8 @@ type CheckoutApplication = {
 	subscription_payment_method: string | null;
 	payment_status: string | null;
 	business_name: string;
+	coupon_id: string | null;
+	coupon_code: string | null;
 };
 
 export async function POST(req: NextRequest) {
@@ -43,7 +57,7 @@ export async function POST(req: NextRequest) {
 
 		const { data, error: appError } = await supabaseAdmin
 			.from("onboarding_applications")
-			.select("id,email,plan_id,country,currency,company_id,subscription_payment_method,payment_status,business_name")
+			.select("id,email,plan_id,country,currency,company_id,subscription_payment_method,payment_status,business_name,coupon_id,coupon_code")
 			.eq("verification_token", token)
 			.in("status", ["form_completed", "payment_pending"])
 			.maybeSingle();
@@ -77,9 +91,6 @@ export async function POST(req: NextRequest) {
 		) {
 			return NextResponse.json({ error: "El método de pago elegido no está disponible. Elige otro." }, { status: 400 });
 		}
-		if (isPayPal && !isPayPalConfigured()) {
-			return NextResponse.json({ error: "PayPal no está disponible en este momento. Elige otro método." }, { status: 503 });
-		}
 
 		const planResult = await resolveCheckoutPlan(supabaseAdmin, app);
 		if (!planResult.plan) {
@@ -88,17 +99,44 @@ export async function POST(req: NextRequest) {
 		const plan = planResult.plan;
 		const planPricing = resolveCheckoutPlanPrice(plan, app.country);
 
+		// El cupón se vuelve a comprobar aquí, con los meses definitivos: lo que valía al
+		// aplicarlo puede haber vencido o agotado su cupo mientras la persona decidía.
+		let coupon: SubscriptionCouponRow | null = null;
+		if (app.coupon_id) {
+			const row = await findSubscriptionCouponById(supabaseAdmin, app.coupon_id);
+			const check = await checkCouponForApplication(supabaseAdmin, { coupon: row, email: app.email, planId: app.plan_id, months });
+			if (!check.ok) {
+				const code = String(app.coupon_code ?? row?.code ?? "").trim();
+				// Se quita para que el siguiente intento no vuelva a chocar con él.
+				await clearApplicationCoupon(supabaseAdmin, app.id);
+				return NextResponse.json(
+					{
+						error: `El cupón ${code} ya no se puede usar: ${check.message.replace(/^Ese cupón /, "")} Lo quitamos: puedes pagar sin él o probar otro.`,
+						coupon_invalid: true,
+						problem: check.problem,
+					},
+					{ status: 409 },
+				);
+			}
+			coupon = check.coupon;
+		}
+
 		const isPromoEligible = await isFirstPaymentPromoEligible(supabaseAdmin, {
 			email: app.email,
 			excludeCompanyId: app.company_id,
 		});
-		const promo = resolveFirstPaymentPromo(months, isPromoEligible);
+		const grant = resolveOnboardingGrant({ monthsPaid: months, promoEligible: isPromoEligible, coupon: couponGrantFromRow(coupon) });
 
-		const addonsTotalUsd = await calculateAddonsTotalUsd(supabaseAdmin, app.id, promo.chargedMonths, plan);
-		const amountUsd = Number((Number(planPricing.price ?? 0) * promo.chargedMonths + addonsTotalUsd).toFixed(2));
-		if (!(amountUsd > 0)) {
+		const addonsTotalUsd = await calculateAddonsTotalUsd(supabaseAdmin, app.id, grant.chargedMonths, plan);
+		const baseAmountUsd = round2(Number(planPricing.price ?? 0) * grant.chargedMonths + addonsTotalUsd);
+		if (!(baseAmountUsd > 0)) {
 			return NextResponse.json({ error: "No pudimos calcular el total. Escríbenos a soporte." }, { status: 409 });
 		}
+		const pricing = computeCouponPricing(coupon, baseAmountUsd);
+		const amountUsd = pricing.amountUsd;
+		const couponSnapshot = coupon
+			? { discountUsd: pricing.discountUsd, freeMonths: grant.couponFreeMonths, keepsPromo: coupon.keeps_promo !== false }
+			: null;
 
 		// Aviso por Telegram solo la primera vez que inicia un pago: un reintento o un cambio
 		// de meses no vuelve a avisar (el comprobante y la activación tienen aviso propio).
@@ -109,9 +147,10 @@ export async function POST(req: NextRequest) {
 				businessName: app.business_name,
 				email: app.email,
 				planName: plan.name,
-				months: promo.chargedMonths,
+				months: grant.chargedMonths,
 				amount: `$${amountUsd.toFixed(2)} USD`,
 				method: methodRow.name ?? subscriptionMethod,
+				coupon: coupon?.code ?? null,
 			});
 		};
 
@@ -122,14 +161,52 @@ export async function POST(req: NextRequest) {
 			plan_region: planPricing.continent,
 			plan_currency: planPricing.currency,
 			addons_total_usd: addonsTotalUsd,
+			base_amount_usd: baseAmountUsd,
 			amount_usd: amountUsd,
-			months: promo.chargedMonths,
-			granted_months: promo.grantedMonths,
-			promo_applied: promo.promoApplied,
+			months: grant.chargedMonths,
+			granted_months: grant.grantedMonths,
+			promo_applied: grant.promoApplied,
+			coupon_code: coupon?.code ?? null,
+			coupon_discount_usd: pricing.discountUsd,
+			coupon_free_months: grant.couponFreeMonths,
 			currency: app.currency || "USD",
 		};
 
+		// Cupón que cubre todo el importe: no hay nada que cobrar y el alta se cierra aquí
+		// mismo, con la misma vía que un pago confirmado (empresa, suscripción, dueño, canje).
+		if (coupon && amountUsd <= 0) {
+			const paymentRef = `coupon-${app.id}-${Date.now()}`;
+			await updateApplicationPaymentState(supabaseAdmin, app.id, {
+				applicationStatus: "payment_pending",
+				paymentReference: paymentRef,
+				paymentStatus: "pending",
+				paymentReferenceUrl: null,
+				paymentMonths: grant.chargedMonths,
+				paymentAmount: 0,
+				coupon: couponSnapshot,
+			});
+			const result = await completeOnboardingPayment({
+				supabaseAdmin,
+				applicationId: app.id,
+				paymentReference: paymentRef,
+				amountPaid: 0,
+				methodSlug: "coupon",
+				methodName: `Cupón ${coupon.code}`,
+				chargedMonths: grant.chargedMonths,
+				grantedMonths: grant.grantedMonths,
+				promoApplied: grant.promoApplied,
+				isManualPayment: false,
+			});
+			if (!result.ok) {
+				return NextResponse.json({ error: result.error }, { status: result.status });
+			}
+			return NextResponse.json({ ok: true, free: true, ref: paymentRef, ...summary });
+		}
+
 		if (isPayPal) {
+			if (!isPayPalConfigured()) {
+				return NextResponse.json({ error: "PayPal no está disponible en este momento. Elige otro método." }, { status: 503 });
+			}
 			const appUrl = getAppUrl();
 			const order = await createPayPalOrder({
 				amountUsd,
@@ -137,8 +214,9 @@ export async function POST(req: NextRequest) {
 				meta: {
 					kind: "onboarding",
 					applicationId: app.id,
-					chargedMonths: promo.chargedMonths,
-					grantedMonths: promo.grantedMonths,
+					chargedMonths: grant.chargedMonths,
+					grantedMonths: grant.grantedMonths,
+					promoApplied: grant.promoApplied,
 				},
 				returnUrl: `${appUrl}/api/onboarding/paypal-capture`,
 				cancelUrl: `${appUrl}/onboarding/pago?token=${encodeURIComponent(token)}`,
@@ -153,8 +231,9 @@ export async function POST(req: NextRequest) {
 				paymentReference: order.orderId,
 				paymentStatus: "pending",
 				paymentReferenceUrl: null,
-				paymentMonths: promo.chargedMonths,
+				paymentMonths: grant.chargedMonths,
 				paymentAmount: amountUsd,
+				coupon: couponSnapshot,
 			});
 			await notifyPlanChosen();
 
@@ -168,8 +247,9 @@ export async function POST(req: NextRequest) {
 			paymentStatus: "pending_validation",
 			// Un comprobante subido para otro importe no vale para este.
 			paymentReferenceUrl: null,
-			paymentMonths: promo.chargedMonths,
+			paymentMonths: grant.chargedMonths,
 			paymentAmount: amountUsd,
+			coupon: couponSnapshot,
 		});
 		await notifyPlanChosen();
 

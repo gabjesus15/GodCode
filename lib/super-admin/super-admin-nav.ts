@@ -18,6 +18,7 @@ import {
 	Settings,
 	ShieldCheck,
 	SlidersHorizontal,
+	TicketPercent,
 	Wallet,
 } from "lucide-react";
 
@@ -52,6 +53,7 @@ export const SUPER_ADMIN_NAV_GROUPS: SuperAdminNavGroup[] = [
 			{ href: "/plans", label: "Planes", icon: CreditCard, keywords: "precios" },
 			{ href: "/addons", label: "Servicios extra", icon: Package, keywords: "addons extras" },
 			{ href: "/plan-payment-methods", label: "Métodos de cobro", icon: Wallet, keywords: "pago planes transferencia paypal" },
+			{ href: "/cupones", label: "Cupones del alta", icon: TicketPercent, keywords: "cupones descuentos promociones codigos alta onboarding" },
 		],
 	},
 	{
