@@ -1321,6 +1321,20 @@ textarea.cart-field {
 	color: var(--cart-danger);
 }
 
+/* Aviso de privacidad bajo "Confirmar pedido": el local recibe los datos del pedido. */
+.cart-hint--legal {
+	margin-top: 10px;
+	font-size: 0.75rem;
+	line-height: 1.4;
+	text-align: center;
+}
+
+.cart-hint--legal a {
+	color: inherit;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
 .cart-warn {
 	color: var(--cart-warn);
 }

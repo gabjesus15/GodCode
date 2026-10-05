@@ -6,9 +6,26 @@
  * `MENU_ACCOUNT_TERMS_UPDATED_AT`.
  */
 
-export const MENU_ACCOUNT_TERMS_UPDATED_AT = "22 de septiembre de 2026";
+import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
+import { getAppUrl } from "@/lib/tenant/app-url";
 
-const CONTACT_EMAIL = "godcode.administrativo@gmail.com";
+export const MENU_ACCOUNT_TERMS_UPDATED_AT = "4 de octubre de 2026";
+
+/** Mismo correo que los Términos y la Política de privacidad del sitio (NEXT_PUBLIC_SUPPORT_EMAIL). */
+const CONTACT_EMAIL = LANDING_SUPPORT_EMAIL;
+
+function PrivacyPolicyLink() {
+	return (
+		<a
+			href={`${getAppUrl()}/onboarding/privacidad`}
+			target="_blank"
+			rel="noopener noreferrer"
+			className="account-terms-link"
+		>
+			Política de privacidad de Gcode
+		</a>
+	);
+}
 
 function ContactEmail() {
 	return (
@@ -82,12 +99,12 @@ export function MenuAccountTermsContent() {
 				<p>La cuenta del Usuario permite:</p>
 				<ul>
 					<li>Guardar una o más direcciones de entrega o retiro.</li>
+					<li>Consultar el historial de pedidos realizados a través de la cuenta y repetir un pedido anterior.</li>
 					<li>
-						Registrar métodos de pago como referencia para agilizar futuros pedidos, aunque el cobro efectivo del
-						pedido se realiza fuera de la Plataforma, directamente con el restaurante (Sección 6) — Gcode no procesa
-						ni almacena datos completos de tarjetas u otros instrumentos de pago.
+						Elegir el medio con el que pagará cada pedido y, si el restaurante lo pide, adjuntar el comprobante.
+						El cobro se realiza directamente con el restaurante (Sección 6): Gcode no procesa ni almacena datos
+						completos de tarjetas u otros instrumentos de pago.
 					</li>
-					<li>Consultar el historial de pedidos realizados a través de la cuenta.</li>
 					<li>Programa de puntos y fidelización: actualmente no disponible (ver Sección 5).</li>
 				</ul>
 				<p>El Usuario puede editar o eliminar esta información desde su panel de cuenta en cualquier momento.</p>
@@ -135,9 +152,8 @@ export function MenuAccountTermsContent() {
 				</p>
 				<p>
 					<strong>Rol de Gcode.</strong> Respecto de los datos que el Usuario entrega para registrarse y usar su
-					cuenta (identificación, contacto, direcciones, historial de pedidos, puntos), Gcode actúa como responsable
-					del tratamiento. Los usa para operar la cuenta, gestionar pedidos, el programa de puntos y comunicarse con
-					el Usuario.
+					cuenta (identificación, contacto, direcciones, historial de pedidos), Gcode actúa como responsable del
+					tratamiento. Los usa para operar la cuenta, gestionar pedidos y comunicarse con el Usuario.
 				</p>
 				<p>
 					<strong>Datos compartidos con restaurantes.</strong> Al realizar un pedido, Gcode comparte con el
@@ -148,7 +164,10 @@ export function MenuAccountTermsContent() {
 				<p>
 					<strong>Seguridad y transferencias.</strong> Gcode implementa medidas de seguridad técnicas y
 					organizativas razonables (cifrado, control de acceso) y notificará sin demora injustificada ante cualquier
-					vulneración de seguridad que afecte estos datos.
+					vulneración de seguridad que afecte estos datos. Para ubicar la dirección de entrega y cotizar el envío
+					intervienen proveedores de búsqueda de direcciones y, si el restaurante lo activa, de reparto con
+					repartidores externos; algunos tienen servidores fuera de Chile. La lista de proveedores y el dato que
+					recibe cada uno está en la <PrivacyPolicyLink />, que complementa estos Términos.
 				</p>
 				<p>
 					<strong>Derechos del Usuario.</strong> El Usuario puede ejercer sus derechos de acceso, rectificación,
@@ -213,8 +232,9 @@ export function MenuAccountTermsContent() {
 					este último caso.
 				</p>
 				<p>
-					Al eliminarse la cuenta, los puntos acumulados y el historial asociado se pierden, salvo que la ley
-					disponga lo contrario.
+					Al eliminarse la cuenta, el historial asociado deja de estar disponible para el Usuario. Los pedidos ya
+					realizados se conservan en los registros del restaurante correspondiente y, en Gcode, solo por el plazo
+					que exija la ley.
 				</p>
 			</section>
 

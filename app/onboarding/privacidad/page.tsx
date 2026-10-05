@@ -41,7 +41,7 @@ export default function PrivacidadPage() {
 		<div className="mx-auto max-w-2xl px-5 py-10 sm:px-6 sm:py-16">
 			<div className="onboarding-card p-6 sm:p-8">
 				<h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Política de privacidad</h1>
-				<p className="mt-2 text-xs text-slate-400">Última actualización: 24 de septiembre de 2026</p>
+				<p className="mt-2 text-xs text-slate-400">Última actualización: 4 de octubre de 2026</p>
 
 				<div className="mt-6 space-y-5 text-sm leading-relaxed text-slate-600">
 					<p>
@@ -96,7 +96,9 @@ export default function PrivacidadPage() {
 							<li>
 								<Lead>Datos de facturación:</Lead> plan contratado, historial de pagos y los datos necesarios para
 								cobrar. Los datos completos de tarjeta los recibe directamente la pasarela de pago; Gcode no los
-								almacena.
+								almacena. Si el Cliente paga por transferencia u otro medio con comprobante, la imagen del
+								comprobante que sube se guarda en almacenamiento privado y solo la ve nuestro equipo para
+								validar el pago.
 							</li>
 							<li>
 								<Lead>Contenido y uso del Servicio:</Lead> menú, productos, precios, imágenes, sucursales, pedidos
@@ -130,17 +132,47 @@ export default function PrivacidadPage() {
 						</p>
 						<ul className="ml-5 mt-1 list-disc space-y-0.5">
 							<li>
-								<Lead>Pasarela de pago</Lead> (Stripe), para cobrar las suscripciones.
+								<Lead>Pasarela de pago</Lead> (PayPal), para cobrar las suscripciones que se pagan con tarjeta o
+								saldo PayPal. PayPal recibe el correo y el importe del pago; los datos de tarjeta los ingresa el
+								Cliente directamente en PayPal.
 							</li>
 							<li>
-								<Lead>Alojamiento del sitio</Lead> (Vercel) y <Lead>servidores de base de datos</Lead> donde se
-								guarda la información del Servicio.
+								<Lead>Alojamiento del sitio</Lead> (Vercel) y <Lead>servidores de base de datos y archivos</Lead>{" "}
+								(Supabase) donde se guarda la información del Servicio.
 							</li>
 							<li>
 								<Lead>Envío de correos</Lead> (Resend), para correos de cuenta, códigos de verificación y avisos.
 							</li>
 							<li>
+								<Lead>Protección contra bots</Lead> (Google reCAPTCHA) en el formulario de registro, que analiza
+								datos técnicos del navegador para distinguir personas de programas automáticos.
+							</li>
+							<li>
+								<Lead>Límites de uso y caché</Lead> (Upstash), que procesa direcciones IP de forma temporal para
+								frenar abusos en los formularios y las subidas de archivos.
+							</li>
+							<li>
 								<Lead>Medición de uso</Lead> (Google Analytics y Vercel Analytics), según la Sección 6.
+							</li>
+						</ul>
+						<p className="mt-2">
+							Al tratar los pedidos de los comensales por cuenta del Cliente, también intervienen estos
+							proveedores, solo cuando la función se usa:
+						</p>
+						<ul className="ml-5 mt-1 list-disc space-y-0.5">
+							<li>
+								<Lead>Búsqueda de direcciones</Lead> (OpenStreetMap / Nominatim): recibe la dirección que el
+								comensal escribe para ubicarla en el mapa y calcular el costo de envío.
+							</li>
+							<li>
+								<Lead>Reparto con repartidores externos</Lead> (Uber Direct), si el Cliente activa esa
+								integración: recibe la dirección de entrega, el nombre y el teléfono del comensal para cotizar y
+								realizar la entrega.
+							</li>
+							<li>
+								<Lead>WhatsApp</Lead> (Meta): si el Cliente configura que los pedidos se confirmen por WhatsApp,
+								el comensal envía el detalle del pedido desde su propia cuenta de WhatsApp al número del
+								negocio; ese mensaje se rige por las condiciones de WhatsApp.
 							</li>
 						</ul>
 						<p className="mt-2">
@@ -185,10 +217,11 @@ export default function PrivacidadPage() {
 					<section>
 						<h2 className="font-semibold text-slate-800">7. Transferencias internacionales</h2>
 						<p className="mt-1">
-							Algunos de los proveedores de la Sección 5 (pagos, alojamiento, correo y medición) tienen sus
-							servidores fuera de Chile, principalmente en Estados Unidos. En esos casos, los datos se transfieren
-							solo en la medida necesaria para prestar el Servicio y quedan protegidos por las medidas de
-							seguridad y las garantías contractuales de cada proveedor.
+							Los proveedores de la Sección 5 (pagos, alojamiento, correo, medición, direcciones y reparto)
+							tienen sus servidores fuera de Chile, principalmente en Estados Unidos y la Unión Europea. En esos
+							casos, los datos se transfieren solo en la medida necesaria para prestar el Servicio y quedan
+							protegidos por las medidas de seguridad y las garantías contractuales de cada proveedor. Gcode
+							también atiende Clientes fuera de Chile; sus datos se tratan con estas mismas reglas.
 						</p>
 					</section>
 

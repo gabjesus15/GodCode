@@ -36,7 +36,7 @@ export default function TerminosPage() {
 		<div className="mx-auto max-w-2xl px-5 py-10 sm:px-6 sm:py-16">
 			<div className="onboarding-card p-6 sm:p-8">
 				<h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Términos y Condiciones de Gcode</h1>
-				<p className="mt-2 text-xs text-slate-400">Última actualización: 22 de septiembre de 2026</p>
+				<p className="mt-2 text-xs text-slate-400">Última actualización: 4 de octubre de 2026</p>
 
 				<div className="mt-6 space-y-5 text-sm leading-relaxed text-slate-600">
 					<p>
@@ -108,8 +108,16 @@ export default function TerminosPage() {
 							<Link href="/#precios" className="font-medium text-indigo-600 hover:underline">
 								página de precios
 							</Link>
-							. Los precios se expresan en pesos chilenos (CLP) e incluyen los impuestos aplicables, salvo que se
-							indique lo contrario.
+							. Los precios se muestran en la moneda que corresponde al país del Cliente (por ejemplo, dólares
+							estadounidenses, USD, o pesos chilenos, CLP) e incluyen los impuestos aplicables, salvo que se
+							indique lo contrario. Cuando el Cliente paga en otra moneda, el tipo de cambio es el que aplica su
+							banco o la pasarela de pago.
+						</p>
+						<p className="mt-2">
+							<strong className="font-semibold text-slate-700">Pagos con comprobante.</strong> Si el Cliente paga
+							por transferencia, Pago Móvil, Zelle u otro medio que requiera comprobante, el plan se activa o
+							renueva una vez que nuestro equipo valida el comprobante, normalmente dentro de un día hábil. Un
+							comprobante ilegible, incompleto o por un monto distinto se devuelve al Cliente para corregirlo.
 						</p>
 						<p className="mt-2">
 							<strong className="font-semibold text-slate-700">Prueba gratuita.</strong> El Cliente puede acceder
@@ -219,11 +227,15 @@ export default function TerminosPage() {
 							Estos derechos son irrenunciables y no pueden limitarse contractualmente.
 						</p>
 						<p className="mt-2">
-							<strong className="font-semibold text-slate-700">Transferencias internacionales.</strong> Los pagos
-							de las suscripciones se procesan a través de una pasarela de pago con sede en Chile. El Servicio
-							puede ser contratado por Clientes ubicados fuera de Chile; en ese caso, los datos de pago se tratan
-							conforme a los propios términos y medidas de seguridad de dicha pasarela, sin que ello implique que
-							Gcode transfiera datos personales del Cliente fuera de Chile por su propia cuenta.
+							<strong className="font-semibold text-slate-700">Proveedores y transferencias internacionales.</strong>{" "}
+							Para prestar el Servicio, Gcode usa proveedores de pago (PayPal), alojamiento, base de datos,
+							correo, medición y, cuando el Cliente activa esas funciones, de búsqueda de direcciones y reparto.
+							Varios de ellos tienen sus servidores fuera de Chile, principalmente en Estados Unidos. La lista
+							completa, el dato que recibe cada uno y las garantías aplicables están en la{" "}
+							<Link href="/onboarding/privacidad" className="font-medium text-indigo-600 hover:underline">
+								Política de privacidad
+							</Link>
+							, que forma parte de estos Términos.
 						</p>
 					</section>
 
@@ -236,8 +248,9 @@ export default function TerminosPage() {
 							(fallas de terceros proveedores, casos fortuitos o de fuerza mayor).
 						</p>
 						<p className="mt-2">
-							El soporte técnico se presta por correo electrónico a <SupportEmail />, en el horario y con los
-							tiempos de respuesta indicados según el plan contratado.
+							El soporte técnico se presta por correo electrónico a <SupportEmail /> y por los canales que la
+							plataforma indique, en días hábiles. Los tiempos de respuesta comprometidos, cuando los haya,
+							son los que se indican para el plan contratado.
 						</p>
 						<p className="mt-2">
 							En la máxima medida permitida por la ley, Gcode no será responsable por daños indirectos, lucro
