@@ -57,9 +57,10 @@ create trigger trg_product_sizes_updated_at
 -- 2. RLS
 -- ============================================================
 -- Lectura pública de los tamaños activos (el menú público y el carrito anónimo los leen,
--- igual que los precios). El personal ve todos los de su empresa. Las escrituras van solo
--- por `admin_set_product_sizes` (security definer), así que no hay policies de escritura
--- para tenants.
+-- igual que los precios) solo de empresas con suscripción vigente: la misma regla que
+-- `public_menu_read_products` y `public_menu_read_product_prices` en la base. El personal
+-- ve todos los de su empresa. Las escrituras van solo por `admin_set_product_sizes`
+-- (security definer), así que no hay policies de escritura para tenants.
 
 alter table public.product_sizes enable row level security;
 
@@ -69,7 +70,15 @@ create policy admin_full_access on public.product_sizes
 
 drop policy if exists product_sizes_select_public on public.product_sizes;
 create policy product_sizes_select_public on public.product_sizes
-  for select using (is_active = true);
+  for select using (
+    is_active = true
+    and exists (
+      select 1 from public.companies c
+      where c.id = product_sizes.company_id
+        and c.subscription_status in ('active', 'trial')
+        and (c.subscription_ends_at is null or c.subscription_ends_at > now())
+    )
+  );
 
 drop policy if exists product_sizes_select_tenant on public.product_sizes;
 create policy product_sizes_select_tenant on public.product_sizes
