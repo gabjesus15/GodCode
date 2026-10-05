@@ -54,6 +54,9 @@ export type MenuAccountOrderItem = {
 	/** Tamaño elegido (`product_sizes.id`); null si el producto se pidió sin tamaño. */
 	sizeId?: string | null;
 	sizeName?: string | null;
+	/** Variantes elegidas (`product_variants.id`), una por grupo; vacío si no tenía. */
+	variantIds?: string[];
+	variantNames?: string[];
 	name: string;
 	quantity: number;
 	/** Precio unitario ya con descuento de producto, sin extras. */

@@ -26,6 +26,7 @@ import {
 } from "@/lib/tenant/seo-metadata";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 import { groupProductSizeRows, type ProductSizeOption } from "@/lib/tenant/product-sizes";
+import { groupProductVariantRows, type ProductVariantGroup } from "@/lib/tenant/product-variants";
 
 // ISR: re-generate at most every 60 s. Menu updates (product edits, theme publish)
 // are pushed instantly via revalidateTag(`menu:${companyId}`) from:
@@ -139,6 +140,7 @@ interface MenuProduct {
   discount_price: number | null;
   is_special: boolean;
   sizes?: ProductSizeOption[];
+  variants?: ProductVariantGroup[];
 }
 
 // ==========================================
@@ -280,6 +282,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
     let menuData: MenuDataResponse | null = null;
     let heroBannerRows: HeroBanner[] = [];
     let sizeRows: unknown[] = [];
+    let variantRows: unknown[] = [];
 
     if (menuBranch) {
       // --- D. Obtener Menú + Banners desde caché ---
@@ -317,6 +320,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
         : rpcData.menuData;
       heroBannerRows = rpcData.heroBannerRows;
       sizeRows = rpcData.sizeRows ?? [];
+      variantRows = rpcData.variantRows ?? [];
     }
 
     // --- E. Asignación de tipos fuertes (¡Adiós 'any'!) ---
@@ -336,6 +340,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
       branchStatuses.map((status) => [status.product_id, status] as const),
     );
     const sizesByProductId = groupProductSizeRows(sizeRows);
+    const variantsByProductId = groupProductVariantRows(variantRows, (value) => resolveMenuImageUrl(value));
 
     // --- F. Mapeo ultra-seguro y validado ---
     const products: MenuProduct[] = productsRaw
@@ -352,6 +357,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
           return null;
         }
         const sizes = sizesByProductId.get(product.id);
+        const variants = variantsByProductId.get(product.id);
 
         return {
           id: product.id,
@@ -365,6 +371,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
           is_special: Boolean(statusData?.is_special),
           // Con tamaños, cada uno tiene su precio y la oferta del producto no aplica.
           ...(sizes ? { sizes, has_discount: false, discount_price: null } : {}),
+          ...(variants && variants.length > 0 ? { variants } : {}),
         };
       })
       .filter((p): p is MenuProduct => p !== null);

@@ -26,12 +26,15 @@ export interface ProductCardProduct {
   discount_price?: number | null;
   price: number;
   category_id?: string | null;
-  /** Tamaños con precio propio: al agregar se elige uno (ver product-size-picker). */
+  /** Tamaños con precio propio: al agregar se elige uno en la hoja de producto. */
   sizes?: ProductSizeOption[];
+  /** Grupos de variantes (una opción por grupo): también se eligen en la hoja. */
+  variants?: ProductVariantGroup[];
 }
 
 import { TENANT_PRODUCT_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
 import { minSizePrice, type ProductSizeOption } from "@/lib/tenant/product-sizes";
+import { productNeedsConfiguration, type ProductVariantGroup } from "@/lib/tenant/product-variants";
 import { useSizePickerStore } from "./product-size-store";
 import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
 
@@ -125,7 +128,8 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
     (e: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
       e.stopPropagation();
       e.preventDefault();
-      if (product.sizes && product.sizes.length > 0) {
+      // Con tamaños o variantes no hay "agregar a ciegas": se abre la hoja de producto.
+      if (productNeedsConfiguration(product)) {
         openSizePicker(product);
         return;
       }

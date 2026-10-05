@@ -1,7 +1,12 @@
 /* =============================================================================
    Detalle de producto: hoja desde abajo en teléfono, tarjeta centrada en
-   escritorio. Lee los tokens --menu-* de Menu.css (vive dentro de
+   escritorio. Lee los tokens --menu-* de tenant-base.css (vive dentro de
    .tenant-theme-vars por el portal #modal-root).
+
+   El momento autoral es el escenario: el plato crece con el tamaño elegido y el
+   precio se desliza. Todo lo demás (pulgar del segmentado, chips, contador) son
+   acuses de recibo cortos. Sin movimiento (prefers-reduced-motion) quedan solo
+   los fundidos.
    ============================================================================= */
 
 .pds-overlay {
@@ -37,6 +42,12 @@
 	overflow: hidden;
 	animation: pds-rise 360ms var(--menu-ease) both;
 	touch-action: pan-y;
+	/* Selección y foco con la voz del local, no la del navegador. */
+	accent-color: var(--menu-accent);
+}
+
+.pds ::selection {
+	background: color-mix(in srgb, var(--menu-accent) 32%, transparent);
 }
 
 .pds-overlay[data-closing] .pds {
@@ -81,8 +92,7 @@
 	width: 36px;
 	height: 4px;
 	border-radius: 999px;
-	background: rgba(255, 255, 255, 0.7);
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+	background: var(--menu-line-strong);
 }
 
 @media (min-width: 768px) {
@@ -103,8 +113,13 @@
 	border-radius: 999px;
 	background: var(--menu-surface);
 	color: var(--menu-fg);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 6px 16px -6px rgba(0, 0, 0, 0.45);
 	cursor: pointer;
+	transition: transform 140ms var(--menu-ease), background-color 140ms ease;
+}
+
+.pds__close:active {
+	transform: scale(0.92);
 }
 
 /* --- Cuerpo con scroll ------------------------------------------------------- */
@@ -115,31 +130,146 @@
 	overflow-y: auto;
 	overscroll-behavior: contain;
 	scrollbar-width: thin;
+	scrollbar-color: var(--menu-line-strong) transparent;
 }
 
-.pds__media {
+/* --- Escenario: el plato que crece --------------------------------------------- */
+
+.pds__stage {
+	--pds-plate: min(66vw, 300px);
 	position: relative;
-	aspect-ratio: 4 / 3;
-	background: var(--menu-surface-2);
+	display: grid;
+	place-items: center;
+	height: calc(var(--pds-plate) + 76px);
+	overflow: hidden;
+	/* Mismo escenario que las tarjetas: luz arriba, se funde con la hoja abajo. */
+	background:
+		radial-gradient(60% 50% at 50% 42%, var(--menu-media-glow), transparent 70%),
+		linear-gradient(180deg, var(--menu-media-top) 0%, var(--menu-surface) 100%);
+}
+
+@media (min-width: 768px) {
+	.pds__stage {
+		--pds-plate: 264px;
+	}
+}
+
+/* Halo del acento del local detrás del plato: color de marca, casi imperceptible,
+   para que el producto no flote sobre gris. Sin blur en equipos lentos. */
+.pds__glow {
+	position: absolute;
+	width: calc(var(--pds-plate) * 1.15);
+	height: calc(var(--pds-plate) * 0.9);
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -54%);
+	border-radius: 50%;
+	background: radial-gradient(closest-side, color-mix(in srgb, var(--menu-accent) 22%, transparent), transparent);
+	filter: blur(22px);
+	pointer-events: none;
+}
+
+.pds__stage--lite .pds__glow {
+	filter: none;
+	opacity: 0.7;
+}
+
+/* Sombra de contacto del plato: una elipse que se estira con el tamaño. */
+.pds__plate-shadow {
+	position: absolute;
+	bottom: 26px;
+	left: 50%;
+	width: calc(var(--pds-plate) * 0.78);
+	height: calc(var(--pds-plate) * 0.14);
+	margin-left: calc(var(--pds-plate) * -0.39);
+	border-radius: 50%;
+	background: radial-gradient(closest-side, rgba(0, 0, 0, 0.42), transparent);
+	transform-origin: 50% 50%;
+	pointer-events: none;
+}
+
+.tenant-theme-vars[data-scheme="light"] .pds__plate-shadow {
+	background: radial-gradient(closest-side, rgba(20, 20, 20, 0.22), transparent);
+}
+
+.pds__plate {
+	position: relative;
+	width: var(--pds-plate);
+	height: var(--pds-plate);
+	transform-origin: 50% 62%;
+}
+
+.pds__img-wrap {
+	position: absolute;
+	inset: 0;
 }
 
 .pds__img {
 	object-fit: cover;
+	border-radius: 28px;
+	/* Las fotos con fondo caen como una tarjeta; el recorte (PNG) se dibuja solo. */
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18), 0 22px 44px -18px rgba(0, 0, 0, 0.55);
 }
+
+.pds__stage[data-fit="contain"] .pds__img {
+	object-fit: contain;
+	border-radius: 0;
+	box-shadow: none;
+	filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.35));
+}
+
+.pds__stage--lite[data-fit="contain"] .pds__img {
+	filter: none;
+}
+
+/* Etiqueta del tamaño elegido, sobre el borde inferior del escenario. */
+.pds__stage-tag {
+	position: absolute;
+	bottom: 14px;
+	left: 0;
+	right: 0;
+	width: max-content;
+	margin: 0 auto;
+	padding: 5px 11px;
+	border-radius: 999px;
+	background: var(--menu-surface);
+	color: var(--menu-fg-2);
+	font-size: 0.75rem;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	box-shadow: var(--menu-shadow-chip);
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+/* Las insignias de oferta/especial quedan arriba a la izquierda, como en la tarjeta. */
+.pds__stage > .tenant-offer-badges,
+.pds__stage > [class*="badge-stack"] {
+	position: absolute;
+	top: 14px;
+	left: 16px;
+}
+
+/* --- Contenido ------------------------------------------------------------------ */
 
 .pds__content {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	padding: 16px 20px 20px;
+	padding: 14px 20px 22px;
+}
+
+.pds__content > * {
+	animation: pds-up 420ms var(--menu-ease) both;
+	animation-delay: calc(60ms + var(--i, 0) * 40ms);
 }
 
 .pds__title {
 	margin: 0;
-	font-size: 1.25rem;
-	font-weight: 600;
-	line-height: 1.25;
-	letter-spacing: -0.015em;
+	font-size: 1.3125rem;
+	font-weight: 650;
+	line-height: 1.2;
+	letter-spacing: -0.018em;
 	text-wrap: balance;
 }
 
@@ -170,14 +300,269 @@
 	font-size: 0.875rem;
 	color: var(--menu-fg-3);
 	text-decoration: line-through;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 2px;
+}
+
+.pds__price-each {
+	font-size: 0.8125rem;
+	color: var(--menu-fg-3);
 }
 
 .pds__desc {
-	margin: 4px 0 0;
+	margin: 2px 0 0;
 	font-size: 0.9375rem;
 	line-height: 1.55;
 	color: var(--menu-fg-2);
 	text-wrap: pretty;
+	max-width: 62ch;
+}
+
+/* Número que se desliza al cambiar (precio, contador). */
+.pds-num {
+	position: relative;
+	display: inline-flex;
+	overflow: hidden;
+	padding: 2px 0;
+	margin: -2px 0;
+	vertical-align: bottom;
+}
+
+.pds-num__value {
+	display: inline-block;
+	white-space: nowrap;
+}
+
+/* --- Tamaños: control segmentado con pulgar ------------------------------------- */
+
+.pds-sizes,
+.pds-opts {
+	margin: 6px 0 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+
+.pds-sizes__title,
+.pds-opts__title {
+	display: block;
+	padding: 0;
+	margin: 0 0 10px;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--menu-fg);
+}
+
+.pds-seg {
+	position: relative;
+	display: flex;
+	gap: 4px;
+	padding: 4px;
+	border-radius: 16px;
+	background: var(--menu-surface-2);
+	border: 1px solid var(--menu-line);
+	overflow-x: auto;
+	scrollbar-width: none;
+	scroll-snap-type: x proximity;
+}
+
+.pds-seg::-webkit-scrollbar {
+	display: none;
+}
+
+.pds-seg__item {
+	position: relative;
+	flex: 1 1 0;
+	min-width: 88px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	min-height: 56px;
+	padding: 8px 10px;
+	border-radius: 12px;
+	color: var(--menu-fg-2);
+	cursor: pointer;
+	user-select: none;
+	-webkit-tap-highlight-color: transparent;
+	scroll-snap-align: center;
+	transition: color 160ms ease;
+}
+
+.pds-seg__item.is-checked {
+	color: var(--menu-fg);
+}
+
+.pds-seg__thumb {
+	position: absolute;
+	inset: 0;
+	border-radius: 12px;
+	background: var(--menu-surface);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22), 0 6px 14px -8px rgba(0, 0, 0, 0.45);
+	border: 1px solid var(--menu-line-strong);
+}
+
+.tenant-theme-vars[data-scheme="light"] .pds-seg__thumb {
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 6px 14px -8px rgba(0, 0, 0, 0.18);
+}
+
+/* El radio real cubre toda la opción (invisible): al enfocarse, el navegador no tiene
+   nada que desplazar hacia un punto de 1px y la hoja no salta. */
+.pds-seg__input {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.pds-seg__name,
+.pds-seg__price {
+	position: relative;
+	z-index: 1;
+	white-space: nowrap;
+}
+
+.pds-seg__name {
+	font-size: 0.875rem;
+	font-weight: 600;
+	letter-spacing: -0.005em;
+}
+
+.pds-seg__price {
+	font-size: 0.75rem;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	color: var(--menu-fg-3);
+	transition: color 160ms ease;
+}
+
+.pds-seg__item.is-checked .pds-seg__price {
+	color: var(--menu-fg-2);
+}
+
+.pds-seg__item:has(.pds-seg__input:focus-visible) {
+	outline: 2px solid var(--menu-accent);
+	outline-offset: 2px;
+}
+
+@media (hover: hover) {
+	.pds-seg__item:not(.is-checked):hover {
+		color: var(--menu-fg);
+	}
+}
+
+/* --- Variantes: chips con punto de check --------------------------------------- */
+
+.pds-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.pds-chip {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 42px;
+	padding: 8px 14px 8px 10px;
+	border-radius: 999px;
+	border: 1px solid var(--menu-line-strong);
+	background: var(--menu-surface);
+	color: var(--menu-fg-2);
+	cursor: pointer;
+	user-select: none;
+	-webkit-tap-highlight-color: transparent;
+	transition:
+		border-color 180ms var(--menu-ease),
+		background-color 180ms var(--menu-ease),
+		color 180ms ease,
+		transform 120ms var(--menu-ease);
+}
+
+.pds-chip:active {
+	transform: scale(0.97);
+}
+
+.pds-chip.is-checked {
+	border-color: var(--menu-accent);
+	background: var(--menu-accent-soft);
+	color: var(--menu-fg);
+}
+
+.pds-chip__input {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.pds-chip:has(.pds-chip__input:focus-visible) {
+	outline: 2px solid var(--menu-accent);
+	outline-offset: 2px;
+}
+
+.pds-chip__dot {
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 20px;
+	height: 20px;
+	border-radius: 999px;
+	border: 1.5px solid var(--menu-line-strong);
+	color: var(--menu-on-accent);
+	transition: border-color 160ms ease, background-color 160ms var(--menu-ease);
+}
+
+.pds-chip__dot > svg {
+	opacity: 0;
+	transform: scale(0.5);
+	transition: opacity 140ms ease, transform 220ms var(--menu-ease);
+}
+
+.pds-chip.is-checked .pds-chip__dot {
+	border-color: var(--menu-accent);
+	background: var(--menu-accent);
+}
+
+.pds-chip.is-checked .pds-chip__dot > svg {
+	opacity: 1;
+	transform: scale(1);
+}
+
+.pds-chip__name {
+	font-size: 0.875rem;
+	font-weight: 600;
+	letter-spacing: -0.005em;
+}
+
+.pds-chip__delta {
+	font-size: 0.75rem;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	color: var(--menu-fg-3);
+}
+
+.pds-chip.is-checked .pds-chip__delta {
+	color: var(--menu-accent-ink);
+}
+
+.tenant-theme-vars[data-scheme="light"] .pds-chip.is-checked .pds-chip__delta {
+	color: var(--menu-fg-2);
+}
+
+@media (hover: hover) {
+	.pds-chip:not(.is-checked):hover {
+		border-color: var(--menu-fg-3);
+		color: var(--menu-fg);
+	}
 }
 
 /* --- Pie: cantidad y acción ---------------------------------------------------- */
@@ -194,7 +579,7 @@
 
 .pds__cta {
 	flex: 1;
-	min-height: 50px;
+	min-height: 52px;
 	padding: 0 16px;
 	border: 0;
 	border-radius: 14px;
@@ -203,24 +588,49 @@
 	font: inherit;
 	font-size: 0.9375rem;
 	font-weight: 600;
+	font-variant-numeric: tabular-nums;
 	cursor: pointer;
-	transition: transform 120ms ease, filter 150ms ease;
+	overflow: hidden;
+	transition: filter 150ms ease, background-color 220ms var(--menu-ease);
 }
 
-.pds__cta:active {
-	transform: scale(0.98);
+.pds__cta:disabled {
+	cursor: default;
+}
+
+/* Verde de "listo": tinta oscura sobre el verde claro del esquema oscuro; blanca sobre el
+   verde profundo del claro. */
+.pds__cta.is-added {
+	background: var(--menu-ok);
+	color: #0b1a10;
+}
+
+.tenant-theme-vars[data-scheme="light"] .pds__cta.is-added {
+	color: #ffffff;
 }
 
 @media (hover: hover) {
-	.pds__cta:hover {
+	.pds__cta:not(:disabled):hover {
 		filter: brightness(1.06);
 	}
+}
+
+.pds__cta-label {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.pds__cta-dot {
+	opacity: 0.7;
 }
 
 .pds__stepper {
 	display: inline-flex;
 	align-items: center;
-	height: 50px;
+	height: 52px;
 	padding: 4px;
 	border-radius: 14px;
 	border: 1px solid var(--menu-line-strong);
@@ -237,24 +647,54 @@
 	background: none;
 	color: var(--menu-fg);
 	cursor: pointer;
-	transition: transform 120ms ease;
+	transition: transform 120ms var(--menu-ease), opacity 120ms ease;
 }
 
-.pds__step:active {
+.pds__step:active:not(:disabled) {
 	transform: scale(0.9);
 }
 
-.pds__step--plus {
-	background: var(--menu-add-bg);
-	color: var(--menu-add-fg);
+.pds__step:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.pds__step:focus-visible,
+.pds__cta:focus-visible,
+.pds__close:focus-visible {
+	outline: 2px solid var(--menu-fg);
+	outline-offset: 2px;
 }
 
 .pds__count {
-	min-width: 32px;
-	text-align: center;
+	min-width: 34px;
+	display: inline-flex;
+	justify-content: center;
 	font-size: 1.0625rem;
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
+}
+
+/* Teléfonos muy estrechos: contador y botón más compactos para que el total no se corte. */
+@media (max-width: 359px) {
+	.pds__foot {
+		gap: 8px;
+		padding-left: 14px;
+		padding-right: 14px;
+	}
+
+	.pds__step {
+		width: 36px;
+	}
+
+	.pds__count {
+		min-width: 28px;
+	}
+
+	.pds__cta {
+		padding: 0 10px;
+		font-size: 0.875rem;
+	}
 }
 
 /* --- Movimiento --------------------------------------------------------------- */
@@ -290,6 +730,13 @@
 	}
 }
 
+@keyframes pds-up {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.pds-overlay,
 	.pds,
@@ -302,112 +749,18 @@
 	.pds-overlay[data-closing] .pds {
 		animation-name: pds-fade-out;
 	}
-}
 
-/* --- Tamaños (Familiar, Mediana…): radios con precio --------------------------- */
+	.pds__content > * {
+		animation: pds-fade 160ms ease-out both;
+		animation-delay: 0ms;
+	}
 
-/* Hoja de tamaño sin foto: el contenido arranca debajo del asa y el botón cerrar. */
-.pds--compact .pds__content {
-	padding-top: 60px;
-}
-
-.pds--compact .pds__handle {
-	background: var(--menu-line-strong);
-	box-shadow: none;
-}
-
-.pds-sizes {
-	margin: 8px 0 0;
-	padding: 0;
-	border: 0;
-	min-width: 0;
-}
-
-.pds-sizes__title {
-	padding: 0;
-	margin-bottom: 8px;
-	font-size: 0.9375rem;
-	font-weight: 600;
-	color: var(--menu-fg);
-}
-
-.pds-sizes__list {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-
-.pds-size {
-	position: relative;
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	min-height: 52px;
-	padding: 10px 14px;
-	border: 1px solid var(--menu-line-strong);
-	border-radius: 14px;
-	background: var(--menu-surface-2);
-	cursor: pointer;
-	transition: border-color 160ms ease, background-color 160ms ease;
-}
-
-/* El texto del menú siempre contrasta con su superficie; el color de marca
-   (--menu-accent) puede ser casi del mismo tono que el fondo en temas oscuros. */
-.pds-size.is-checked {
-	border-color: var(--menu-fg);
-	box-shadow: inset 0 0 0 1px var(--menu-fg);
-}
-
-.pds-size:has(.pds-size__input:focus-visible) {
-	outline: 2px solid var(--menu-fg);
-	outline-offset: 2px;
-}
-
-.pds-size__input {
-	position: absolute;
-	opacity: 0;
-	pointer-events: none;
-}
-
-.pds-size__dot {
-	flex: none;
-	width: 20px;
-	height: 20px;
-	border-radius: 999px;
-	border: 2px solid var(--menu-line-strong);
-	transition: border-color 160ms ease, border-width 160ms ease;
-}
-
-.pds-size.is-checked .pds-size__dot {
-	border-color: var(--menu-fg);
-	border-width: 6px;
-}
-
-.pds-size__name {
-	flex: 1;
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-	font-size: 0.9375rem;
-	font-weight: 500;
-}
-
-.pds-size__badge {
-	font-size: 0.75rem;
-	font-weight: 500;
-	color: var(--menu-fg-3);
-}
-
-.pds-size__price {
-	flex: none;
-	font-size: 0.9375rem;
-	font-weight: 600;
-	font-variant-numeric: tabular-nums;
-	color: var(--price-color, var(--menu-fg));
-}
-
-.pds__cta:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
+	.pds-chip,
+	.pds-chip__dot,
+	.pds-chip__dot > svg,
+	.pds-seg__item,
+	.pds__step,
+	.pds__close {
+		transition-duration: 0ms;
+	}
 }

@@ -35,6 +35,7 @@ const orderCatalogLineSchema = z.object({
 		.optional(),
 	custom_item: z.boolean().optional(),
 	size_id: z.string().uuid().nullable().optional(),
+	variant_ids: z.array(z.string().uuid()).max(12).optional(),
 });
 
 const bodySchema = z.object({

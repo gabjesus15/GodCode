@@ -22,10 +22,21 @@ type RawSizeRow = {
 	sort_order?: unknown;
 };
 
+/**
+ * Nombre de una línea con tamaño y/o variantes. Mismo formato que la RPC:
+ * "Pizza (Familiar)", "Pizza (Familiar, Pollo)", "Hamburguesa (Mixta)".
+ */
+export function composeLineName(productName: string | null | undefined, parts: Array<string | null | undefined>): string {
+	const base = String(productName ?? "").trim();
+	const labels = parts.map((part) => String(part ?? "").trim()).filter(Boolean);
+	if (labels.length === 0) return base;
+	const suffix = labels.join(", ");
+	return base ? `${base} (${suffix})` : suffix;
+}
+
 /** Nombre de una línea con tamaño. Mismo formato que la RPC: "Pizza (Familiar)". */
 export function composeSizedName(productName: string | null | undefined, sizeName: string): string {
-	const base = String(productName ?? "").trim();
-	return base ? `${base} (${sizeName})` : sizeName;
+	return composeLineName(productName, [sizeName]);
 }
 
 /**

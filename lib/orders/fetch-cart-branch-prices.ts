@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { BranchProductPriceRow } from "@/components/tenant/cart/utils/cart-pricing";
 import { groupProductSizeRows, PRODUCT_SIZES_SELECT } from "@/lib/tenant/product-sizes";
+import { groupProductVariantRows, PRODUCT_VARIANTS_SELECT } from "@/lib/tenant/product-variants";
 
 type LegacyPriceRow = {
 	product_id: string;
@@ -79,6 +80,29 @@ async function attachBranchSizes(
 	}
 }
 
+/** Igual que los tamaños: sin lectura, las filas quedan sin `variants` y el carrito no toca la línea. */
+async function attachBranchVariants(
+	supabase: SupabaseClient,
+	branchId: string,
+	productIds: string[],
+	rows: BranchProductPriceRow[],
+): Promise<BranchProductPriceRow[]> {
+	if (rows.length === 0) return rows;
+	try {
+		const { data, error } = await supabase
+			.from("product_variants")
+			.select(PRODUCT_VARIANTS_SELECT)
+			.eq("branch_id", branchId)
+			.eq("is_active", true)
+			.in("product_id", productIds);
+		if (error) return rows;
+		const variantsByProduct = groupProductVariantRows(data);
+		return rows.map((row) => ({ ...row, variants: variantsByProduct.get(row.product_id) ?? [] }));
+	} catch {
+		return rows;
+	}
+}
+
 /**
  * Precios de carrito por sucursal (misma lógica que el menú público / RPC de checkout).
  */
@@ -90,7 +114,11 @@ export async function fetchCartBranchPrices(
 	const ids = [...new Set(productIds.map((id) => String(id).trim()).filter(Boolean))];
 	if (!branchId || ids.length === 0) return [];
 	const rows = await fetchBranchPriceRows(supabase, branchId, ids);
-	return attachBranchSizes(supabase, branchId, ids, rows);
+	const [withSizes, withVariants] = await Promise.all([
+		attachBranchSizes(supabase, branchId, ids, rows),
+		attachBranchVariants(supabase, branchId, ids, rows),
+	]);
+	return withSizes.map((row, index) => ({ ...row, variants: withVariants[index]?.variants }));
 }
 
 async function fetchBranchPriceRows(

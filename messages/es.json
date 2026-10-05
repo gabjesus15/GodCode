@@ -693,7 +693,8 @@
         "add": "Agregar",
         "addWithPrice": "Agregar · {price}",
         "inCart": "En tu pedido",
-        "done": "Listo"
+        "done": "Listo",
+        "added": "Agregado"
       },
       "sizes": {
         "title": "Elige el tamaño",

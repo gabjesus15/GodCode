@@ -80,6 +80,10 @@ export interface CartLineItem {
 	/** Tamaño elegido (`product_sizes.id`); el precio ya es el del tamaño. */
 	size_id?: string | null;
 	size_name?: string | null;
+	/** Variantes elegidas (`product_variants.id`, una por grupo); el precio ya suma sus deltas. */
+	variant_ids?: string[] | null;
+	variant_names?: string[] | null;
+	variant_delta?: number | null;
 }
 
 /** Tipo unificado para manejar la información activa */

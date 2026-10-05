@@ -11,6 +11,7 @@ import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-ur
 import { FromPriceLabel, PRODUCT_CARD_FALLBACK_IMAGE } from "./product-card-shared";
 import { useSizePickerStore } from "./product-size-store";
 import { minSizePrice } from "@/lib/tenant/product-sizes";
+import { productNeedsConfiguration } from "@/lib/tenant/product-variants";
 import type { MenuProduct } from "./menu-types";
 
 export function ProductInlinePanel({
@@ -36,7 +37,7 @@ export function ProductInlinePanel({
 	const openSizePicker = useSizePickerStore((state) => state.open);
 	const fromSizes = minSizePrice(product.sizes);
 	const add = () => {
-		if (fromSizes != null) openSizePicker(product);
+		if (productNeedsConfiguration(product)) openSizePicker(product);
 		else addToCart?.(product);
 	};
 	const cart = useCartStore((state) => state.cart);
