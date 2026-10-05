@@ -5,6 +5,7 @@ import { ArrowLeft, ChevronRight, Store } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import type { CountryFormStrategy } from "@/lib/geo/country-forms";
+import { getAppUrl } from "@/lib/tenant/app-url";
 import type { ActiveSessionInfo } from "../cart-modal-types";
 import { PAYMENT_METHOD_CONFIG, resolvePaymentMethodLabel } from "../constants";
 import type { CheckoutFieldValidation, CheckoutFormValues } from "../hooks/use-checkout-form";
@@ -180,6 +181,16 @@ export function CartPaymentFoot({
 					<ArrowLeft size={15} aria-hidden />
 					<span>{skipDetail ? t("actions.chooseAnotherMethod") : t("actions.back")}</span>
 				</button>
+				{/* Aviso de privacidad para el comensal: el local es quien recibe sus datos (ver Política, sección 2). */}
+				<p className="cart-hint cart-hint--legal">
+					{t.rich("actions.confirmPrivacyNotice", {
+						link: (chunks) => (
+							<a href={`${getAppUrl()}/onboarding/privacidad`} target="_blank" rel="noopener noreferrer">
+								{chunks}
+							</a>
+						),
+					})}
+				</p>
 			</>
 		);
 	}

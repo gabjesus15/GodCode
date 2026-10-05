@@ -398,6 +398,7 @@
           "backToSummary": "Back to summary",
           "sending": "Sending...",
           "confirmOrder": "Confirm Order",
+          "confirmPrivacyNotice": "By confirming, the restaurant receives your name, phone and address only to prepare and deliver your order. <link>Privacy policy</link>",
           "back": "Go back",
           "alreadyPaid": "I already paid",
           "continue": "Continue",

@@ -398,6 +398,7 @@
           "backToSummary": "Retour au resume",
           "sending": "Envoi...",
           "confirmOrder": "Confirmer la commande",
+          "confirmPrivacyNotice": "En confirmant, le restaurant recoit ton nom, ton telephone et ton adresse uniquement pour preparer et livrer ta commande. <link>Politique de confidentialite</link>",
           "back": "Retour",
           "alreadyPaid": "J'ai deja paye",
           "continue": "Continuer",

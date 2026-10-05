@@ -398,6 +398,7 @@
           "backToSummary": "Volver al resumen",
           "sending": "Enviando…",
           "confirmOrder": "Confirmar pedido",
+          "confirmPrivacyNotice": "Al confirmar, el local recibe tu nombre, teléfono y dirección solo para preparar y entregar tu pedido. <link>Política de privacidad</link>",
           "back": "Volver",
           "alreadyPaid": "Ya pagué",
           "continue": "Continuar",
