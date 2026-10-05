@@ -12,7 +12,7 @@ export type DailyJobsSummary = {
 	failed_plan_changes: number;
 	processed_bookings: number;
 	failed_bookings: number;
-	reminders: { mode: string; planned: number; sent: number; failed: number; errors: string[] };
+	reminders: { mode: string; planned: number; sent: number; failed: number; stopped_early: boolean; errors: string[] };
 };
 
 /**
@@ -23,7 +23,12 @@ export type DailyJobsSummary = {
  * Solo falla (500) si no se pudo suspender o aplicar cambios: un correo que no sale no
  * debe hacer que el cron se reintente y vuelva a tocar suscripciones.
  */
-export async function runDailySubscriptionJobs(params: { supabaseAdmin: SupabaseClient; now?: Date }): Promise<DailyJobsSummary> {
+export async function runDailySubscriptionJobs(params: {
+	supabaseAdmin: SupabaseClient;
+	now?: Date;
+	/** Hora límite (ms epoch) de la función: los correos paran antes y siguen en la próxima corrida. */
+	deadlineMs?: number;
+}): Promise<DailyJobsSummary> {
 	const { supabaseAdmin } = params;
 	const now = params.now ?? new Date();
 
@@ -31,10 +36,17 @@ export async function runDailySubscriptionJobs(params: { supabaseAdmin: Supabase
 	const scheduled = await applyScheduledPlanChangesDue({ supabaseAdmin, now });
 	const bookings = await processDueBookingReminders({ supabaseAdmin, now });
 
-	let reminders: DailyJobsSummary["reminders"] = { mode: "off", planned: 0, sent: 0, failed: 0, errors: [] };
+	let reminders: DailyJobsSummary["reminders"] = { mode: "off", planned: 0, sent: 0, failed: 0, stopped_early: false, errors: [] };
 	try {
-		const report = await runLifecycleEmails({ client: supabaseAdmin, now });
-		reminders = { mode: report.mode, planned: report.planned, sent: report.sent, failed: report.failed, errors: report.errors };
+		const report = await runLifecycleEmails({ client: supabaseAdmin, now, deadlineMs: params.deadlineMs });
+		reminders = {
+			mode: report.mode,
+			planned: report.planned,
+			sent: report.sent,
+			failed: report.failed,
+			stopped_early: report.stoppedEarly,
+			errors: report.errors,
+		};
 	} catch (error) {
 		reminders.errors.push(error instanceof Error ? error.message : "Error en los recordatorios");
 	}

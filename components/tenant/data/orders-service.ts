@@ -1,6 +1,5 @@
 import { createSupabaseBrowserClient } from "../../../utils/supabase/client";
 import type { DeliveryLocationSource } from "@/lib/delivery/delivery-location";
-import { uploadImage } from "@/lib/storage/upload-image-client";
 import {
 	computeDeliveryFee,
 	effectiveDeliveryPricingMode,
@@ -129,6 +128,7 @@ async function createAccountOrder(args: {
   p_delivery_address: unknown;
   p_coupon_code?: string;
   p_order_origin: string;
+  p_client_request_id: string;
 }): Promise<{ data: unknown; error: { message: string } | null }> {
   const res = await fetch(`${window.location.origin}/api/menu-account/order`, {
     method: "POST",
@@ -146,6 +146,7 @@ async function createAccountOrder(args: {
       deliveryAddress: args.p_delivery_address ?? null,
       couponCode: args.p_coupon_code ?? null,
       orderOrigin: args.p_order_origin,
+      clientRequestId: args.p_client_request_id,
     }),
   });
   const json = (await res.json().catch(() => ({}))) as { order?: unknown; error?: string };
@@ -178,6 +179,28 @@ async function resolveNormalizedCatalogItems(
 
 	const supabase = createSupabaseBrowserClient("tenant");
 	return buildOrderItemsFromBranch(supabase, branchId, items);
+}
+
+/**
+ * Adjunta el comprobante al pedido recién creado (`POST /api/tenant/public-order-receipt`),
+ * que lo guarda en el bucket privado y lo deja en `orders.payment_ref` para la caja.
+ * No lanza: el pedido ya existe y la caja lo ve igual; si falla, el éxito avisa que lo
+ * mande por WhatsApp.
+ */
+async function attachOrderReceipt(orderId: string, clientRequestId: string, file: File): Promise<boolean> {
+  try {
+    const form = new FormData();
+    form.set("file", file);
+    form.set("orderId", orderId);
+    form.set("clientRequestId", clientRequestId);
+    const res = await fetch(`${window.location.origin}/api/tenant/public-order-receipt`, {
+      method: "POST",
+      body: form,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 function extractOrderId(newOrder: unknown): string | null {
@@ -551,19 +574,9 @@ export const ordersService = {
       throw new Error("Debes adjuntar el comprobante de pago para confirmar el pedido.");
     }
 
-    let receiptUrl: string | null = null;
-    if (needsReceipt) {
-      try {
-        receiptUrl = await uploadImage(receiptFile!, "receipts");
-      } catch {
-        throw new Error("No se pudo subir el comprobante. Intenta nuevamente.");
-      }
-      if (!receiptUrl) {
-        throw new Error("No se pudo subir el comprobante. Intenta nuevamente.");
-      }
-    }
-
-    const menuPayment = buildMenuOrderPaymentPayload(paymentMethod, receiptUrl);
+    // El comprobante se adjunta después, al pedido ya creado (ver attachOrderReceipt):
+    // así queda ligado al pedido en el bucket privado y la caja lo encuentra.
+    const menuPayment = buildMenuOrderPaymentPayload(paymentMethod);
     const paymentRef = orderData.payment_ref?.trim() || menuPayment.payment_ref;
     const paymentType = orderData.payment_type ?? menuPayment.payment_type;
 
@@ -575,7 +588,13 @@ export const ordersService = {
       finalNote = `${finalNote}\n[Envio: $${Math.round(deliveryFee).toLocaleString("es-CL")}]`.trim();
     }
 
+    // Credencial del cierre (`public-order-delivery`): el pedido queda atado a este
+    // uuid y la ruta pública no lo toca sin él. Uno nuevo por intento, para que un
+    // reintento no choque con el pedido que el intento anterior dejó cancelado.
+    const clientRequestId = crypto.randomUUID();
+
     const rpcArgs = {
+      p_client_request_id: clientRequestId,
       p_client_name: orderData.client_name,
       p_client_phone: orderData.client_phone,
       p_client_rut: orderData.client_rut || "",
@@ -598,7 +617,7 @@ export const ordersService = {
 
     const { data: newOrder, error: orderError } = orderData.account_order
       ? await createAccountOrder(rpcArgs)
-      : await supabase.rpc("create_order_transaction", rpcArgs);
+      : await supabase.rpc("create_public_order_v1", rpcArgs);
 
     if (orderError) {
       const rpcMessage = String(orderError.message || "").toLowerCase();
@@ -653,6 +672,7 @@ export const ordersService = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderId,
+          clientRequestId,
           orderType: deliveryMode ? "delivery" : "pickup",
           deliveryKm: deliveryMode ? Number(orderData.delivery_km) : 0,
           deliveryFee: deliveryMode ? deliveryFee : 0,
@@ -679,6 +699,21 @@ export const ordersService = {
       }
     }
 
-    return { order: newOrder, receiptUploadFailed: false, paymentStatus: null, evidenceStatus: null };
+    // El comprobante va al pedido ya cerrado. Si no se pudo subir, el pedido igual
+    // existe y la caja lo ve: la pantalla de éxito pide mandarlo por WhatsApp.
+    let receiptUploadFailed = false;
+    let paymentStatus: string | null = null;
+    let evidenceStatus: string | null = null;
+    if (needsReceipt && receiptFile && orderId && typeof window !== "undefined") {
+      const attached = await attachOrderReceipt(orderId, clientRequestId, receiptFile);
+      if (attached) {
+        paymentStatus = "pending_verification";
+        evidenceStatus = "uploaded";
+      } else {
+        receiptUploadFailed = true;
+      }
+    }
+
+    return { order: newOrder, receiptUploadFailed, paymentStatus, evidenceStatus };
   },
 };

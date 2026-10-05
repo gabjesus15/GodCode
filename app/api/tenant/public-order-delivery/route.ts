@@ -21,6 +21,7 @@ import {
 	orderPatchEligibility,
 	orphanCancelNote,
 } from "@/lib/orders/orphan-cancel";
+import { logger } from "@/lib/infra/logger";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isMenuAccountClient, sealOrderDeliveryAddress } from "@/lib/menu-account/order-address";
 import { fetchUberDeliveryEstimate } from "@/lib/delivery/uber-direct";
@@ -28,7 +29,14 @@ import { fetchUberDeliveryEstimate } from "@/lib/delivery/uber-direct";
 /** @service-role public
  *
  * Cierre del pedido público; el pedido se ata por client_request_id y edad máxima.
+ * Los id de pedido son correlativos: el client_request_id (uuid que generó el
+ * navegador al crear el pedido) es la credencial, y sin él no se toca nada.
  */
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Lo que ve el carrito cuando falla algo interno; el detalle queda en el log. */
+const GENERIC_FAILURE = "No se pudo registrar los datos del pedido. Intenta nuevamente.";
 
 const TOTAL_EPS = 2;
 const FEE_EPS = 0.5;
@@ -108,6 +116,7 @@ export async function POST(req: NextRequest) {
 
 		const body = (await req.json().catch(() => ({}))) as {
 			orderId?: unknown;
+			clientRequestId?: unknown;
 			orderType?: unknown;
 			deliveryKm?: unknown;
 			deliveryLat?: unknown;
@@ -120,6 +129,8 @@ export async function POST(req: NextRequest) {
 		};
 
 		const orderId = typeof body.orderId === "string" ? body.orderId.trim() : "";
+		const clientRequestId =
+			typeof body.clientRequestId === "string" ? body.clientRequestId.trim() : "";
 		const orderTypeRaw = String(body.orderType ?? "pickup");
 		const deliveryFeeClient = Number(body.deliveryFee);
 		const deliveryLat = Number(body.deliveryLat);
@@ -133,11 +144,15 @@ export async function POST(req: NextRequest) {
 		if (!orderId) {
 			return jsonWithPublicCors(req, { error: "Falta orderId" }, { status: 400 });
 		}
+		if (!UUID_RE.test(clientRequestId)) {
+			return jsonWithPublicCors(req, { error: "Falta clientRequestId" }, { status: 400 });
+		}
 
 		const { data: order, error: orderErr } = await supabaseAdmin
 			.from("orders")
 			.select("id, branch_id, client_id, total, items, created_at, status, discount_total, note")
 			.eq("id", orderId)
+			.eq("client_request_id", clientRequestId)
 			.maybeSingle();
 
 		if (orderErr || !order) {
@@ -468,10 +483,13 @@ export async function POST(req: NextRequest) {
 				...(handoff ? { handoff_code: handoff } : {}),
 			})
 			.eq("id", orderId)
-			.eq("branch_id", order.branch_id);
+			.eq("branch_id", order.branch_id)
+			.eq("client_request_id", clientRequestId);
 
 		if (upErr) {
-			return await rechazarYCancelar({ error: upErr.message }, 400);
+			// El texto de Postgres (columnas, restricciones) no es para un anónimo: va al log.
+			logger.error("public_order_delivery_update_failed", { orderId, message: upErr.message });
+			return await rechazarYCancelar({ error: GENERIC_FAILURE }, 400);
 		}
 
 		return jsonWithPublicCors(req, {
@@ -480,8 +498,10 @@ export async function POST(req: NextRequest) {
 			handoff_code: handoff,
 		});
 	} catch (err) {
-		const message = err instanceof Error ? err.message : "Error en el servidor";
-		return jsonWithPublicCors(req, { error: message }, { status: 500 });
+		logger.error("public_order_delivery_unhandled", {
+			message: err instanceof Error ? err.message : String(err),
+		});
+		return jsonWithPublicCors(req, { error: GENERIC_FAILURE }, { status: 500 });
 	}
 }
 

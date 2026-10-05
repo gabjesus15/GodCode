@@ -89,7 +89,7 @@ export const POSTURES = {
 	},
 	"webhook-signature": {
 		description: "firma criptográfica de la pasarela verificada contra el cuerpo crudo",
-		evidence: /constructEvent|stripe-signature/,
+		evidence: /constructEvent|stripe-signature|verifyPayPalWebhookSignature/,
 	},
 	"payment-provider-verified": {
 		description: "el estado del pago se confirma contra la pasarela, no contra la petición",

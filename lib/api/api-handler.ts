@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/infra/logger";
+
 import { ApiError } from "./errors";
 
 type HandlerContext = unknown;
@@ -24,8 +26,6 @@ export function withApiHandler(handler: RouteHandler) {
       return NextResponse.json({ success: true }, { status: 200 });
       
     } catch (error: unknown) {
-      console.error("[API_ERROR]", req.nextUrl.pathname, error);
-
       if (error instanceof ApiError) {
         return NextResponse.json(
           { error: error.message },
@@ -33,10 +33,16 @@ export function withApiHandler(handler: RouteHandler) {
         );
       }
 
-      // Si es un error desconocido o no manejado
-      const message = error instanceof Error ? error.message : "Internal Server Error";
+      // Error no previsto: el detalle (mensajes de Postgres, rutas, nombres de tablas) va
+      // solo al log; al cliente, un mensaje genérico. Los ApiError sí son para mostrar.
+      logger.error("api_unhandled_error", {
+        endpoint: req.nextUrl.pathname,
+        method: req.method,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return NextResponse.json(
-        { error: message },
+        { error: "Error interno del servidor" },
         { status: 500 }
       );
     }

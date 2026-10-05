@@ -32,6 +32,7 @@ export default async function CorreosPage() {
 				planned: 0,
 				sent: 0,
 				failed: 0,
+				stoppedEarly: false,
 				items: [],
 				errors: [error instanceof Error ? error.message : "No se pudo calcular"],
 			}),

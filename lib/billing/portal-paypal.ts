@@ -67,6 +67,21 @@ export async function capturePortalPayPalOrder(params: {
 		return { ok: false, error: "El importe cobrado no coincide. Nuestro equipo lo revisa y te escribe.", status: 409 };
 	}
 
+	return applyCapturedPortalOrder(supabaseAdmin, payment, captured, orderId);
+}
+
+/**
+ * Lo que hace la captura después de cobrar, compartido con el webhook: aplica lo
+ * comprado y, si no se pudo, deja el pedido para revisión con un ticket.
+ * `applyPortalPayment` reclama la fila con un UPDATE condicional, así que la captura
+ * y el webhook pueden llegar a la vez sin aplicar dos veces.
+ */
+async function applyCapturedPortalOrder(
+	supabaseAdmin: SupabaseClient,
+	payment: PortalPaymentRow,
+	captured: PayPalOrderSnapshot,
+	orderId: string,
+): Promise<CapturePortalOrderResult> {
 	const payerEmail = normalizeEmail(captured.payerEmail);
 	const applied = await applyPortalPayment(supabaseAdmin, payment, {
 		// Con el dinero ya cobrado se aplica aunque el pedido se haya anulado en el camino.
@@ -88,6 +103,56 @@ export async function capturePortalPayPalOrder(params: {
 		error: "Recibimos tu pago, pero no pudimos aplicarlo automáticamente. Nuestro equipo lo revisa hoy y te escribe.",
 		status: 500,
 	};
+}
+
+export type CompletedPortalOrderResult =
+	| { outcome: "applied" | "already_paid" }
+	/** No es nuestro o no hay nada que aplicar: reintentar no cambia nada. */
+	| { outcome: "ignored"; reason: string }
+	/** PayPal no respondió o todavía no da la orden por cobrada: que reintente. */
+	| { outcome: "retry"; reason: string }
+	| { outcome: "failed"; reason: string };
+
+/**
+ * Webhook `PAYMENT.CAPTURE.COMPLETED`: aplica un cobro que la captura no llegó a
+ * aplicar (quedó PENDING, o la persona cerró la pestaña antes de volver de PayPal).
+ *
+ * No confía en el cuerpo del aviso más allá del id de la orden: la vuelve a pedir a
+ * PayPal y aplica los mismos controles que la captura (orden del portal, pedido
+ * existente, importe exacto en USD). Aquí no hay empresa en sesión: la dueña es la
+ * del pedido que PayPal devuelve firmado en `customId`. Nunca captura: solo aplica
+ * lo que PayPal ya cobró.
+ */
+export async function applyCompletedPortalPayPalOrder(params: {
+	supabaseAdmin: SupabaseClient;
+	orderId: string;
+}): Promise<CompletedPortalOrderResult> {
+	const { supabaseAdmin, orderId } = params;
+
+	const order = await getPayPalOrder(orderId);
+	if (!order) return { outcome: "retry", reason: "paypal_unavailable" };
+	if (order.meta?.kind !== "portal") return { outcome: "ignored", reason: "not_portal_order" };
+
+	const { data } = await supabaseAdmin
+		.from("payments_history")
+		.select(PORTAL_PAYMENT_COLUMNS)
+		.eq("id", order.meta.paymentId)
+		.maybeSingle();
+	const payment = data as PortalPaymentRow | null;
+	if (!payment) return { outcome: "ignored", reason: "payment_not_found" };
+
+	if (order.status !== "COMPLETED") return { outcome: "retry", reason: "order_not_completed" };
+	if (String(payment.status ?? "").toLowerCase() === "paid") return { outcome: "already_paid" };
+
+	const expectedCents = toCents(payment.amount_paid);
+	if (!(expectedCents > 0 && order.amountCents === expectedCents && (order.currency ?? "USD") === "USD")) {
+		await openPaymentIssueTicket(supabaseAdmin, payment, orderId, "El importe cobrado por PayPal no coincide con el pedido.");
+		return { outcome: "ignored", reason: "amount_mismatch" };
+	}
+
+	const applied = await applyCapturedPortalOrder(supabaseAdmin, payment, order, orderId);
+	if (applied.ok) return { outcome: applied.alreadyPaid ? "already_paid" : "applied" };
+	return { outcome: "failed", reason: applied.error };
 }
 
 async function openPaymentIssueTicket(

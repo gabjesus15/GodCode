@@ -46,6 +46,7 @@ function body(overrides: Record<string, unknown> = {}) {
 		orderType: "delivery",
 		deliveryFee: 3,
 		deliveryAddress: { address: "Av. Principal 123", named_area_label: "Centro" },
+		clientRequestId: "33333333-3333-4333-8333-333333333333",
 		...overrides,
 	};
 }
@@ -60,11 +61,14 @@ function post(payload: unknown) {
 	);
 }
 
-function mockDb(rpcResult: { data: unknown; error: unknown }) {
+function mockDb(
+	rpcResult: { data: unknown; error: unknown },
+	orders: unknown[] = [{ data: null, error: null }],
+) {
 	const admin = makeAdminMock({
 		tables: {
 			branches: [{ data: { company_id: "company-a" }, error: null }],
-			orders: [{ data: null, error: null }],
+			orders,
 		},
 	}) as ReturnType<typeof makeAdminMock> & { rpc: ReturnType<typeof vi.fn> };
 	admin.rpc = vi.fn(async () => rpcResult);
@@ -121,10 +125,58 @@ describe("POST /api/menu-account/order", () => {
 		expect(update?.eq).toHaveBeenCalledWith("client_id", "ficha-de-la-sesion");
 	});
 
+	it("ata el pedido al client_request_id del carrito, aunque no haya dirección que cifrar", async () => {
+		const admin = mockDb({ data: { id: 10, delivery_address: null }, error: null });
+		const res = await post(body({ orderType: "pickup", deliveryFee: 0, deliveryAddress: null }));
+		expect(res.status).toBe(200);
+		const update = admin.chains.find((entry) => entry.table === "orders")?.chain;
+		expect(update?.update).toHaveBeenCalledWith({ client_request_id: "33333333-3333-4333-8333-333333333333" });
+		expect(update?.eq).toHaveBeenCalledWith("client_id", "ficha-de-la-sesion");
+	});
+
+	it("sin client_request_id no crea el pedido", async () => {
+		const admin = mockDb({ data: null, error: null });
+		const res = await post(body({ clientRequestId: undefined }));
+		expect(res.status).toBe(400);
+		expect(admin.rpc).not.toHaveBeenCalled();
+	});
+
 	it("devuelve el error del RPC para que el carrito lo traduzca", async () => {
 		mockDb({ data: null, error: { message: "invalid_item_price" } });
 		const res = await post(body());
 		expect(res.status).toBe(400);
 		await expect(res.json()).resolves.toMatchObject({ error: "invalid_item_price" });
+	});
+
+	it("si el sellado falla una vez, reintenta y responde bien", async () => {
+		const admin = mockDb(
+			{ data: { id: 10, delivery_address: { address: "Av. Principal 123" } }, error: null },
+			[{ data: null, error: { message: "timeout" } }, { data: null, error: null }],
+		);
+		const res = await post(body());
+		expect(res.status).toBe(200);
+		expect(admin.fromCalls.filter((t) => t === "orders")).toHaveLength(2);
+		expect(JSON.stringify(await res.json())).not.toContain("Principal");
+	});
+
+	it("si el sellado falla dos veces, cancela el pedido, borra la dirección en claro y devuelve error", async () => {
+		const admin = mockDb(
+			{ data: { id: 10, delivery_address: { address: "Av. Principal 123" }, note: "sin cebolla" }, error: null },
+			[{ data: null, error: { message: "timeout" } }, { data: null, error: { message: "timeout" } }, { data: null, error: null }],
+		);
+		const res = await post(body());
+		expect(res.status).toBe(503);
+		const json = (await res.json()) as Record<string, unknown>;
+		expect(json).toMatchObject({ code: "order_finalize_failed" });
+		expect(JSON.stringify(json)).not.toContain("Principal");
+
+		const writes = admin.chains.filter((entry) => entry.table === "orders").map((entry) => entry.chain);
+		expect(writes).toHaveLength(3);
+		const abandon = writes[2];
+		expect(abandon.update).toHaveBeenCalledWith(
+			expect.objectContaining({ status: "cancelled", delivery_address: null }),
+		);
+		expect(abandon.eq).toHaveBeenCalledWith("status", "pending");
+		expect(abandon.eq).toHaveBeenCalledWith("client_id", "ficha-de-la-sesion");
 	});
 });
