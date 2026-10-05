@@ -8,6 +8,7 @@ import { activateCompanyAddonsFromApplication, activateCompanySubscription } fro
 import { formatContactDate, getBookingContactDate, queueBookingReminder } from "./booking-notifications";
 import { provisionCompanyFromApplication, type OnboardingApplication } from "./checkout-service";
 import { ensureCompanyOwner } from "./company-owner";
+import { alertOnboardingTeam } from "./team-alerts";
 
 /** Tras este tiempo, un cierre que quedó a medias se puede retomar. */
 const STALE_CLAIM_MS = 5 * 60_000;
@@ -193,6 +194,14 @@ export async function completeOnboardingPayment(
 		.from("onboarding_applications")
 		.update({ company_id: companyId, status: "active", payment_status: "paid", updated_at: now.toISOString() })
 		.eq("id", app.id);
+
+	await alertOnboardingTeam({
+		kind: "activated",
+		businessName: app.business_name ?? "",
+		email: app.email ?? null,
+		via: input.isManualPayment ? "manual" : "paypal",
+		months: input.grantedMonths,
+	});
 
 	return finishOwnerAccess({ supabaseAdmin, app, companyId, alreadyCompleted: false, now });
 }

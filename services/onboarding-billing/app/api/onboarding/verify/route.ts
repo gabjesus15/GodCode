@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 
 /** @service-role capability-token */
 
@@ -12,7 +13,7 @@ export async function GET(req: NextRequest) {
 
 	const { data, error } = await supabaseAdmin
 		.from("onboarding_applications")
-		.select("id, status, email_verified_at")
+		.select("id, status, email_verified_at, business_name, responsible_name, email")
 		.eq("verification_token", token)
 		.maybeSingle();
 
@@ -45,6 +46,15 @@ export async function GET(req: NextRequest) {
 
 		if (updateError) {
 			return NextResponse.json({ error: "Error al confirmar" }, { status: 500 });
+		}
+		// Solo la primera vez que pasa de "pendiente" a "verificado": un reintento del enlace no avisa de nuevo.
+		if (shouldPromoteStatus) {
+			await alertOnboardingTeam({
+				kind: "email_verified",
+				businessName: String(data.business_name ?? ""),
+				responsibleName: data.responsible_name ?? null,
+				email: String(data.email ?? ""),
+			});
 		}
 	}
 

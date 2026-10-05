@@ -12,6 +12,7 @@ import {
 } from "@/lib/onboarding/checkout-service";
 import { resolveFirstPaymentPromo } from "@/lib/onboarding/first-payment-promo";
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
+import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 import { isPaymentMethodAvailableForCountry } from "@/lib/payments/payment-method-countries";
 import { createPayPalOrder, isPayPalConfigured } from "@/lib/payments/paypal";
 import { getAppUrl } from "@/lib/tenant/app-url";
@@ -99,6 +100,21 @@ export async function POST(req: NextRequest) {
 			return NextResponse.json({ error: "No pudimos calcular el total. Escríbenos a soporte." }, { status: 409 });
 		}
 
+		// Aviso por Telegram solo la primera vez que inicia un pago: un reintento o un cambio
+		// de meses no vuelve a avisar (el comprobante y la activación tienen aviso propio).
+		const notifyPlanChosen = async () => {
+			if (String(app.payment_status ?? "").trim()) return;
+			await alertOnboardingTeam({
+				kind: "plan_chosen",
+				businessName: app.business_name,
+				email: app.email,
+				planName: plan.name,
+				months: promo.chargedMonths,
+				amount: `$${amountUsd.toFixed(2)} USD`,
+				method: methodRow.name ?? subscriptionMethod,
+			});
+		};
+
 		const summary = {
 			country: app.country,
 			plan_name: plan.name,
@@ -140,6 +156,7 @@ export async function POST(req: NextRequest) {
 				paymentMonths: promo.chargedMonths,
 				paymentAmount: amountUsd,
 			});
+			await notifyPlanChosen();
 
 			return NextResponse.json({ ok: true, sessionId: order.orderId, url: order.approveUrl, ...summary });
 		}
@@ -154,6 +171,7 @@ export async function POST(req: NextRequest) {
 			paymentMonths: promo.chargedMonths,
 			paymentAmount: amountUsd,
 		});
+		await notifyPlanChosen();
 
 		const methodConfig = await getManualMethodConfig(supabaseAdmin, subscriptionMethod);
 

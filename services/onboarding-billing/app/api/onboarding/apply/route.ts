@@ -6,6 +6,7 @@ import { getAppUrl } from "@/lib/tenant/app-url";
 import { sendEmail, teamInbox } from "@/lib/email/send";
 import { verifyRecaptcha } from "@/lib/onboarding/recaptcha";
 import { isRateLimited } from "@/lib/onboarding/rate-limit";
+import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 
 /** @service-role public
@@ -117,6 +118,17 @@ export async function POST(req: NextRequest) {
 			console.error("onboarding apply insert:", insertError);
 			return NextResponse.json({ error: "Error al registrar la solicitud" }, { status: 500 });
 		}
+
+		// Aviso por Telegram al equipo (si está configurado): la solicitud ya existe aunque
+		// el correo de verificación falle después.
+		await alertOnboardingTeam({
+			kind: "application_created",
+			businessName,
+			responsibleName,
+			email: emailRaw,
+			phone,
+			sector,
+		});
 
 		if (SKIP_EMAIL_VERIFICATION) {
 			console.warn(

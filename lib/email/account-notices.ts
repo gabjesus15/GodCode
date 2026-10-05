@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveCompanyContact } from "@/lib/billing/company-contact";
 import { classifyPortalPaymentReference, describePortalOrder } from "@/lib/billing/portal-orders";
 import { formatUsd } from "@/lib/billing/portal-pricing";
+import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 import { getTenantHomeUrl } from "../../utils/tenant-url";
 
 import { loadRenewalFacts } from "./billing-facts";
@@ -137,6 +138,14 @@ export async function notifyOnboardingReceipt(client: SupabaseClient, applicatio
 				},
 			}),
 		]);
+		await alertOnboardingTeam({
+			kind: "receipt_uploaded",
+			businessName,
+			email: app.email,
+			amount,
+			method: methodName,
+			reference,
+		});
 	} catch (error) {
 		console.error("onboarding receipt notice:", error);
 	}
