@@ -61,6 +61,12 @@ export function mapOrderItems(raw: unknown): MenuAccountOrderItem[] {
 					: extras.reduce((sum, extra) => sum + extra.price * extra.quantity, 0);
 			return {
 				productId: toText(item.id) || null,
+				sizeId: toText(item.size_id) || null,
+				sizeName: toText(item.size_name) || null,
+				variantIds: Array.isArray(item.variant_ids) ? item.variant_ids.map((id) => toText(id)).filter(Boolean) : [],
+				variantNames: Array.isArray(item.variant_names)
+					? item.variant_names.map((name) => toText(name)).filter(Boolean)
+					: [],
 				name: toText(item.name),
 				quantity,
 				unitPrice,

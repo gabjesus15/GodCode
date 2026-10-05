@@ -1,5 +1,7 @@
 import currency from "currency.js";
 import { isUuidLike } from "./safe-ids";
+import { composeLineName, type ProductSizeOption } from "@/lib/tenant/product-sizes";
+import { resolveVariantSelection, type ProductVariantGroup } from "@/lib/tenant/product-variants";
 
 /** Fila típica de `product_prices` + join `products` desde Supabase. */
 export type BranchProductPriceRow = {
@@ -13,6 +15,16 @@ export type BranchProductPriceRow = {
     is_active?: boolean | null;
     description?: string | null;
   } | null;
+  /**
+   * Tamaños activos del producto en la sucursal. `undefined` = no se pudieron leer
+   * (se conserva el precio del carrito); `[]` = el producto ya no tiene tamaños.
+   */
+  sizes?: ProductSizeOption[];
+  /**
+   * Grupos de variantes activos del producto en la sucursal. `undefined` = no se
+   * pudieron leer (se conserva lo que hay en el carrito); `[]` = sin variantes.
+   */
+  variants?: ProductVariantGroup[];
 };
 
 export type MergeCartBranchPricesOptions = {
@@ -37,6 +49,11 @@ export function mergeCartWithBranchPrices<
     has_discount?: boolean | null;
     discount_price?: number | null;
     is_active?: boolean | null;
+    size_id?: string | null;
+    size_name?: string | null;
+    variant_ids?: string[] | null;
+    variant_names?: string[] | null;
+    variant_delta?: number | null;
   },
 >(cart: T[], rows: BranchProductPriceRow[] | null | undefined, options: MergeCartBranchPricesOptions): T[] {
   const list = rows ?? [];
@@ -46,6 +63,43 @@ export function mergeCartWithBranchPrices<
   const merged = cart.reduce<T[]>((acc, cartItem) => {
     const priceRow = priceByProductId.get(String(cartItem.id)) ?? null;
     const meta = priceRow?.products;
+    const needsSize = Boolean(cartItem.size_id);
+    const needsVariants = Boolean(cartItem.variant_ids && cartItem.variant_ids.length > 0);
+    if (priceRow && (needsSize || needsVariants)) {
+      // Línea configurada: el precio sale del tamaño (o del base) más los deltas de las
+      // variantes, siempre con los valores vigentes de la sucursal.
+      const { sizes, variants } = priceRow;
+      if ((needsSize && sizes === undefined) || (needsVariants && variants === undefined)) {
+        acc.push({ ...cartItem, is_active: meta?.is_active ?? cartItem.is_active });
+        return acc;
+      }
+      const size = needsSize ? sizes?.find((entry) => entry.id === String(cartItem.size_id)) ?? null : null;
+      const selection = needsVariants
+        ? resolveVariantSelection(variants, cartItem.variant_ids)
+        : { ids: [], names: [], delta: 0 };
+      // Tamaño o variante borrados o desactivados en el panel: la línea sale del carrito.
+      if ((needsSize && !size) || !selection) {
+        acc.push({ ...cartItem, is_active: false });
+        return acc;
+      }
+      const basePrice = size ? size.price : Number(priceRow.price ?? cartItem.price ?? 0);
+      const discount = Number(priceRow.discount_price ?? 0);
+      const hasDiscount = !size && Boolean(priceRow.has_discount) && discount > 0;
+      acc.push({
+        ...cartItem,
+        price: basePrice + selection.delta,
+        has_discount: hasDiscount,
+        discount_price: hasDiscount ? discount + selection.delta : null,
+        size_name: size?.name ?? cartItem.size_name,
+        ...(needsVariants
+          ? { variant_ids: selection.ids, variant_names: selection.names, variant_delta: selection.delta }
+          : {}),
+        name: meta?.name ? composeLineName(meta.name, [size?.name ?? null, ...selection.names]) : cartItem.name,
+        description: meta?.description ?? cartItem.description,
+        is_active: meta?.is_active ?? cartItem.is_active,
+      });
+      return acc;
+    }
     if (priceRow) {
       acc.push({
         ...cartItem,

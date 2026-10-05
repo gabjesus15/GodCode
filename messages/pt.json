@@ -694,7 +694,14 @@
         "add": "Adicionar",
         "addWithPrice": "Adicionar · {price}",
         "inCart": "No seu pedido",
-        "done": "Pronto"
+        "done": "Pronto",
+        "added": "Adicionado"
+      },
+      "sizes": {
+        "title": "Escolha o tamanho",
+        "groupAria": "Tamanhos de {name}",
+        "choose": "Escolher tamanho",
+        "sizeInCart": "{count} no carrinho"
       },
       "contact": {
         "title": "Contato",

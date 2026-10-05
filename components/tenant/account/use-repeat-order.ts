@@ -50,6 +50,11 @@ export function useRepeatOrder() {
 				price: item.unitPrice,
 				has_discount: false,
 				discount_price: null,
+				// El provider refresca el precio del tamaño y quita la línea si el tamaño ya no existe.
+				...(item.sizeId ? { size_id: item.sizeId, size_name: item.sizeName ?? null } : {}),
+				...(item.variantIds && item.variantIds.length > 0
+					? { variant_ids: item.variantIds, variant_names: item.variantNames ?? [] }
+					: {}),
 				quantity: Math.min(Math.max(1, Math.round(item.quantity)), MAX_LINE_QUANTITY),
 				selected_extras: item.extras
 					.filter((extra) => extra.id)

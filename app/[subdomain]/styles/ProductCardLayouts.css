@@ -1729,3 +1729,15 @@
 .product-layout-sidebar .sidebar-desc {
   font-weight: 450;
 }
+
+/* "Desde" delante del precio de un producto con tamaños (precio del más barato). */
+.layout-price-from,
+.gcard__price-from,
+.pds__price-from,
+.product-inline-panel__price-from {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--menu-fg-3, currentColor);
+  white-space: nowrap;
+}

@@ -85,6 +85,10 @@ export function buildCatalogOrderLines(cart: CartLineItem[]): OrderCatalogLine[]
 			extras_total: Math.round(extrasTotal),
 			extras: [...selectedExtras, ...selectedBeverages],
 			custom_item: isUpsellBeverage,
+			...(item.size_id && !isUpsellBeverage ? { size_id: String(item.size_id) } : {}),
+			...(Array.isArray(item.variant_ids) && item.variant_ids.length > 0 && !isUpsellBeverage
+				? { variant_ids: item.variant_ids.map(String) }
+				: {}),
 		};
 	});
 }

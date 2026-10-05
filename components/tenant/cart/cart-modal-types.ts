@@ -79,6 +79,13 @@ export interface CartLineItem {
 	selected_beverages?: Array<{ id: string; name: string; price: number; qty: number }>;
 	line_summary?: string | null;
 	line_note?: string | null;
+	/** Tamaño elegido (`product_sizes.id`); el precio ya es el del tamaño. */
+	size_id?: string | null;
+	size_name?: string | null;
+	/** Variantes elegidas (`product_variants.id`, una por grupo); el precio ya suma sus deltas. */
+	variant_ids?: string[] | null;
+	variant_names?: string[] | null;
+	variant_delta?: number | null;
 }
 
 /** Tipo unificado para manejar la información activa */

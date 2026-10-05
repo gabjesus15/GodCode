@@ -17,6 +17,8 @@ export const TENANT_OVERLAY_PRIORITIES = {
 	zoneSheet: 61,
 	contactSheet: 60,
 	contactBranch: 59,
+	/** Selector de tamaño: puede abrirse desde una tarjeta con el detalle cerrado. */
+	sizePicker: 56,
 	productDetails: 55,
 	branchSelector: 52,
 	megaMenu: 51,

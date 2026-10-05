@@ -79,13 +79,20 @@ function buildLineId(productId: string): string {
 function lineSelectionsKey(
 	extras: CartExtraSelection[] | undefined,
 	beverages: CartUpsellBeverageSelection[] | undefined,
+	sizeId?: string | null,
+	variantIds?: string[] | null,
 ): string {
 	const serialize = (list: CartExtraSelection[] | undefined) =>
 		(list ?? [])
 			.map((x) => `${x.id}:${x.qty}`)
 			.sort()
 			.join("|");
-	return `e(${serialize(extras)})-b(${serialize(beverages)})`;
+	const variants = [...(variantIds ?? [])].map(String).sort().join(",");
+	return `s(${sizeId ?? ""})-v(${variants})-e(${serialize(extras)})-b(${serialize(beverages)})`;
+}
+
+function normalizeVariantIds(value: unknown): string[] {
+	return Array.isArray(value) ? value.map((id) => String(id ?? "").trim()).filter(Boolean) : [];
 }
 
 function sanitizeQty(n: unknown): number {
@@ -151,13 +158,16 @@ export const useCartStore = create<CartState>()(
 					if (!product?.id) return { checkoutSession };
 					const normalizedExtras = normalizeSelections(options?.selectedExtras, "Extra");
 					const normalizedBeverages = normalizeSelections(options?.selectedBeverages, "Bebida");
-					const selectionKey = lineSelectionsKey(normalizedExtras, normalizedBeverages);
+					const sizeId = product.size_id ? String(product.size_id) : null;
+					const variantIds = normalizeVariantIds(product.variant_ids);
+					const addQty = Math.min(MAX_LINE_QUANTITY, sanitizeQty(options?.quantity));
+					const selectionKey = lineSelectionsKey(normalizedExtras, normalizedBeverages, sizeId, variantIds);
 					const existing = options?.forceNewLine
 						? null
 						: state.cart.find(
 								(item) =>
 									item.id === product.id &&
-									lineSelectionsKey(item.selected_extras, item.selected_beverages) ===
+									lineSelectionsKey(item.selected_extras, item.selected_beverages, item.size_id, item.variant_ids) ===
 										selectionKey,
 							);
 					if (existing) {
@@ -166,7 +176,7 @@ export const useCartStore = create<CartState>()(
 							checkoutSession,
 							cart: state.cart.map((item) =>
 								item.lineId === existing.lineId
-									? { ...item, quantity: item.quantity + 1 }
+									? { ...item, quantity: Math.min(MAX_LINE_QUANTITY, item.quantity + addQty) }
 									: item,
 							),
 						};
@@ -181,7 +191,24 @@ export const useCartStore = create<CartState>()(
 						has_discount: product.has_discount ?? null,
 						discount_price: product.discount_price ?? null,
 						is_active: product.is_active ?? null,
-						quantity: 1,
+						...(sizeId
+							? {
+									size_id: sizeId,
+									size_name: product.size_name ?? null,
+									has_discount: false,
+									discount_price: null,
+								}
+							: {}),
+						...(variantIds.length > 0
+							? {
+									variant_ids: variantIds,
+									variant_names: Array.isArray(product.variant_names)
+										? product.variant_names.map((name) => String(name ?? ""))
+										: [],
+									variant_delta: Number(product.variant_delta) || 0,
+								}
+							: {}),
+						quantity: addQty,
 						selected_extras: normalizedExtras,
 						selected_beverages: normalizedBeverages,
 						line_summary: null,

@@ -44,6 +44,8 @@ export function useMenuRealtime(
 					.on("postgres_changes", { event: "*", schema: "public", table: "product_prices", filter: `branch_id=eq.${selectedBranchId}` }, scheduleServerRefresh)
 					.on("postgres_changes", { event: "*", schema: "public", table: "product_branch", filter: `branch_id=eq.${selectedBranchId}` }, scheduleServerRefresh)
 					.on("postgres_changes", { event: "*", schema: "public", table: "product_extras_groups", filter: `branch_id=eq.${selectedBranchId}` }, scheduleServerRefresh)
+					.on("postgres_changes", { event: "*", schema: "public", table: "product_sizes", filter: `branch_id=eq.${selectedBranchId}` }, scheduleServerRefresh)
+					.on("postgres_changes", { event: "*", schema: "public", table: "product_variants", filter: `branch_id=eq.${selectedBranchId}` }, scheduleServerRefresh)
 					.on("postgres_changes", { event: "*", schema: "public", table: "product_upsell_beverages", filter: `branch_id=eq.${selectedBranchId}` }, scheduleServerRefresh);
 			}
 

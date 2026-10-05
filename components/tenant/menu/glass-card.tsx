@@ -6,6 +6,7 @@ import { Minus, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import {
+	FromPriceLabel,
 	PRODUCT_IMAGE_SIZES,
 	ProductCardImage,
 	ProductOfferBadges,
@@ -130,6 +131,7 @@ export const GlassCard = memo(function GlassCard({
 
 			<div className="gcard__foot">
 				<div className="gcard__price">
+					{pricing.fromPrice ? <FromPriceLabel className="gcard__price-from" /> : null}
 					{pricing.hasDiscount && pricing.originalPrice ? (
 						<span className="gcard__price--was">{pricing.originalPrice}</span>
 					) : null}

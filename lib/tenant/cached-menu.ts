@@ -2,6 +2,8 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
 import { sanitizeBranchPaymentConfig } from "@/lib/payments/branch-payment-config";
+import { PRODUCT_SIZES_SELECT } from "@/lib/tenant/product-sizes";
+import { PRODUCT_VARIANTS_SELECT } from "@/lib/tenant/product-variants";
 
 // ==========================================
 // CACHED MENU DATA FETCHING
@@ -85,6 +87,10 @@ export interface CachedMenuStaticData {
 export interface CachedMenuRpcData {
   menuData: unknown | null;
   heroBannerRows: { id: string; image_url: string }[];
+  /** Filas de `product_sizes` activas de la sucursal (vacío si la tabla aún no existe). */
+  sizeRows: unknown[];
+  /** Filas de `product_variants` activas de la sucursal (vacío si la tabla aún no existe). */
+  variantRows: unknown[];
   menuError: { message: string; code?: string } | null;
 }
 
@@ -155,7 +161,7 @@ export const getCachedMenuRpcData = async (
     async (slug: string, bId: string) => {
       const supabase = createSupabasePublicServerClient();
 
-      const [menuResult, bannersResult] = await Promise.all([
+      const [menuResult, bannersResult, sizesResult, variantsResult] = await Promise.all([
         supabase.rpc("get_public_menu", {
           p_company_slug: slug,
           p_branch_id: bId,
@@ -167,6 +173,20 @@ export const getCachedMenuRpcData = async (
           .eq("is_active", true)
           .gt("expires_at", new Date().toISOString())
           .order("sort_order"),
+        // Un error aquí (p. ej. la migración de tamaños aún no aplicada) deja el menú sin
+        // tamaños en vez de romperlo.
+        supabase
+          .from("product_sizes")
+          .select(PRODUCT_SIZES_SELECT)
+          .eq("branch_id", bId)
+          .eq("is_active", true)
+          .order("sort_order"),
+        supabase
+          .from("product_variants")
+          .select(PRODUCT_VARIANTS_SELECT)
+          .eq("branch_id", bId)
+          .eq("is_active", true)
+          .order("sort_order"),
       ]);
 
       return {
@@ -176,6 +196,8 @@ export const getCachedMenuRpcData = async (
         ).filter(
           (r) => typeof r.image_url === "string" && r.image_url.trim().length > 0,
         ),
+        sizeRows: sizesResult.error ? [] : ((sizesResult.data ?? []) as unknown[]),
+        variantRows: variantsResult.error ? [] : ((variantsResult.data ?? []) as unknown[]),
         menuError: menuResult.error
           ? { message: menuResult.error.message, code: menuResult.error.code }
           : null,

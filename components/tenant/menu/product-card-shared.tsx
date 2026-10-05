@@ -26,9 +26,16 @@ export interface ProductCardProduct {
   discount_price?: number | null;
   price: number;
   category_id?: string | null;
+  /** Tamaños con precio propio: al agregar se elige uno en la hoja de producto. */
+  sizes?: ProductSizeOption[];
+  /** Grupos de variantes (una opción por grupo): también se eligen en la hoja. */
+  variants?: ProductVariantGroup[];
 }
 
 import { TENANT_PRODUCT_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
+import { minSizePrice, type ProductSizeOption } from "@/lib/tenant/product-sizes";
+import { productNeedsConfiguration, type ProductVariantGroup } from "@/lib/tenant/product-variants";
+import { useSizePickerStore } from "./product-size-store";
 import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
 
 export const PRODUCT_CARD_FALLBACK_IMAGE = TENANT_PRODUCT_FALLBACK_IMAGE;
@@ -67,8 +74,11 @@ export function useProductCartQuantity(productId: string): number {
 }
 
 export function getProductSalePrice(
-  product: Pick<ProductCardProduct, "price" | "has_discount" | "discount_price">,
+  product: Pick<ProductCardProduct, "price" | "has_discount" | "discount_price" | "sizes">,
 ): number {
+  // Con tamaños, la oferta del producto no aplica: se muestra el tamaño más barato.
+  const fromSizes = minSizePrice(product.sizes);
+  if (fromSizes != null) return fromSizes;
   if (
     product.has_discount &&
     typeof product.discount_price === "number" &&
@@ -82,6 +92,7 @@ export function getProductSalePrice(
 export function useProductCardLogic(product: ProductCardProduct, country = "CL") {
   const addToCart = useCartStore((state) => state.addToCart);
   const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
+  const openSizePicker = useSizePickerStore((state) => state.open);
   const quantity = useProductCartQuantity(product.id);
   const hydrated = useHydrated();
   // Identidad de la imagen: evita race donde un reset async borra un onLoad ya disparado (caché).
@@ -117,9 +128,14 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
     (e: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
       e.stopPropagation();
       e.preventDefault();
+      // Con tamaños o variantes no hay "agregar a ciegas": se abre la hoja de producto.
+      if (productNeedsConfiguration(product)) {
+        openSizePicker(product);
+        return;
+      }
       addToCart?.(product);
     },
-    [addToCart, product],
+    [addToCart, openSizePicker, product],
   );
 
   const handleDecrease = useCallback(
@@ -180,9 +196,12 @@ export function useProductPricing(
 ) {
   return useMemo(() => {
     const effectiveCurrency = logic.showUSD ? "USD" : currency;
-    const listPrice = Number(product.price) || 0;
+    const fromSizes = minSizePrice(product.sizes);
+    const fromPrice = fromSizes != null;
+    const listPrice = fromSizes ?? (Number(product.price) || 0);
     const salePrice = logic.getPrice(product);
     const hasDiscount =
+      !fromPrice &&
       Boolean(product.has_discount) &&
       product.discount_price != null &&
       product.discount_price > 0 &&
@@ -206,6 +225,9 @@ export function useProductPricing(
       hasDiscount,
       displayPrice: getDualPrice(salePrice),
       originalPrice: hasDiscount ? getDualPrice(listPrice) : null,
+      /** true: el producto tiene tamaños y `displayPrice` es el del más barato ("Desde"). */
+      fromPrice,
+      formatPrice: getDualPrice,
       effectiveCurrency,
     };
   }, [product, currency, logic, exchangeRate]);
@@ -442,6 +464,7 @@ export function ProductPriceBlock({
 }) {
   return (
     <div className={blockClassName}>
+      {pricing.fromPrice ? <FromPriceLabel /> : null}
       {pricing.hasDiscount && pricing.originalPrice ? (
         <>
           <span className={originalClassName}>{pricing.originalPrice}</span>
@@ -452,4 +475,10 @@ export function ProductPriceBlock({
       )}
     </div>
   );
+}
+
+/** "Desde" delante del precio de un producto con tamaños. */
+export function FromPriceLabel({ className = "layout-price-from" }: { className?: string }) {
+	const t = useTranslations("tenant.menu");
+	return <span className={className}>{t("card.from")} </span>;
 }

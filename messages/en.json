@@ -694,7 +694,14 @@
         "add": "Add",
         "addWithPrice": "Add · {price}",
         "inCart": "In your order",
-        "done": "Done"
+        "done": "Done",
+        "added": "Added"
+      },
+      "sizes": {
+        "title": "Choose a size",
+        "groupAria": "Sizes for {name}",
+        "choose": "Choose size",
+        "sizeInCart": "{count} in cart"
       },
       "contact": {
         "title": "Contact",

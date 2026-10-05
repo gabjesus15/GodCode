@@ -14,6 +14,20 @@ export interface CartProduct {
 	has_discount?: boolean | null;
 	discount_price?: number | null;
 	is_active?: boolean | null;
+	/**
+	 * Tamaño elegido (`product_sizes.id`). Con tamaño, `price` es el del tamaño, no hay
+	 * oferta y `name` ya viene compuesto ("Pizza (Familiar)").
+	 */
+	size_id?: string | null;
+	size_name?: string | null;
+	/**
+	 * Variantes elegidas (`product_variants.id`, una por grupo). `price` (y la oferta, si
+	 * la hay) ya incluyen la suma de sus deltas (`variant_delta`) y `name` viene compuesto
+	 * ("Pizza (Familiar, Pollo)").
+	 */
+	variant_ids?: string[] | null;
+	variant_names?: string[] | null;
+	variant_delta?: number | null;
 }
 
 export interface CartExtraSelection {
@@ -39,6 +53,8 @@ export type AddToCartOptions = {
 	selectedExtras?: CartExtraSelection[];
 	selectedBeverages?: CartUpsellBeverageSelection[];
 	forceNewLine?: boolean;
+	/** Unidades a agregar de una vez (la hoja de producto trae su propio contador). */
+	quantity?: number;
 };
 
 /** Línea que es solo una bebida del upsell (no un plato con bebida añadida). */
