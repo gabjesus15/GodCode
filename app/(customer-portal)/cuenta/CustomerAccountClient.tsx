@@ -21,6 +21,7 @@ import { useConfirmDialog }    from "@/components/customer-portal/ui/ConfirmDial
 import { OrderPaymentDialog }  from "@/components/customer-portal/payments/order-payment-dialog";
 
 import { AccountResumenTab }    from "@/components/customer-portal/account/tabs/account-resumen-tab";
+import { AccountMenuTab }       from "@/components/customer-portal/account/tabs/account-menu-tab";
 import { AccountPerfilPublicoTab } from "@/components/customer-portal/account/tabs/account-perfil-publico-tab";
 import { AccountTiendaTab }     from "@/components/customer-portal/account/tabs/account-tienda-tab";
 import { AccountPlanTab }       from "@/components/customer-portal/account/tabs/account-plan-tab";
@@ -43,6 +44,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
   const {
     company, branches, businessInfo, payments, activeAddons, availablePlans, availableAddons,
     initialTickets, initialBranchEntitlements, initialBillingOptions, initialSyncedAt,
+    firstSteps, menuSetup,
   } = props;
 
   const [mounted,       setMounted]       = useState(false);
@@ -273,6 +275,14 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             activityFilter={activityFilter}
             setActivityFilter={setActivityFilter}
             onNavigate={handleTabChange}
+            firstSteps={firstSteps}
+          />
+        )}
+
+        {tab === "menu" && (
+          <AccountMenuTab
+            company={company}
+            menuSetup={menuSetup ?? { productCount: 0, sampleCount: 0, categoryCount: 0, importEnabled: false, sector: null }}
           />
         )}
 

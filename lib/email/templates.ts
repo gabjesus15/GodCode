@@ -39,6 +39,8 @@ export type EmailTemplates = {
 		setPasswordUrl: string;
 		loginUrl: string;
 		storeUrl?: string;
+		/** `/cuenta?tab=menu`: cargar la carta desde una foto o empezar con un ejemplo. */
+		menuUrl?: string;
 		contactDate?: string;
 	};
 	password_reset: { name?: string; resetUrl: string };
@@ -244,7 +246,10 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 		const { product } = getEmailBrand();
 		const steps = [
 			{ title: "Crea tu contraseña", text: "El enlace de arriba sirve una sola vez." },
-			{ title: "Carga tu menú", text: "Productos, fotos, precios y horarios desde tu panel." },
+			{
+				title: "Carga tu menú",
+				text: "En tu cuenta, en «Mi menú»: súbelo desde una foto o un Excel, o empieza con un menú de ejemplo.",
+			},
 			...(d.contactDate ? [{ title: `Te escribimos el ${d.contactDate}`, text: "Para ayudarte a dejar tu página lista." }] : []),
 		];
 		return {
@@ -263,6 +268,7 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 					title: "Guarda estos enlaces",
 					rows: [
 						{ label: "Tu panel", value: d.loginUrl },
+						...(d.menuUrl ? [{ label: "Cargar tu menú", value: d.menuUrl }] : []),
 						{ label: "Tu menú público", value: d.storeUrl ?? "" },
 					],
 				},
@@ -731,6 +737,7 @@ export const EMAIL_CATALOG: EmailCatalogEntry[] = [
 			setPasswordUrl: "https://example.com/login/nueva-clave?code=demo",
 			loginUrl: "https://example.com/login",
 			storeUrl: "https://la-parada.example.com",
+			menuUrl: "https://example.com/cuenta?tab=menu",
 			contactDate: "viernes, 26 de septiembre de 2026",
 		},
 	}),

@@ -7,6 +7,7 @@ import {
   Palette,
   Shield,
   Store,
+  UtensilsCrossed,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -21,6 +22,7 @@ import type { PortalTab } from "./customer-account-types";
 
 export const PORTAL_TAB_ORDER: PortalTab[] = [
   "resumen",
+  "menu",
   "perfil",
   "tienda",
   "plan",
@@ -32,6 +34,7 @@ export const PORTAL_TAB_ORDER: PortalTab[] = [
 
 export const PORTAL_TAB_LABELS: Record<PortalTab, string> = {
   resumen: "Resumen",
+  menu: "Mi menú",
   perfil: "Página de inicio",
   tienda: "Tienda",
   plan: "Plan y extras",
@@ -44,6 +47,7 @@ export const PORTAL_TAB_LABELS: Record<PortalTab, string> = {
 /** Etiquetas breves para la barra inferior en móvil. */
 export const PORTAL_TAB_MOBILE_LABELS: Record<PortalTab, string> = {
   resumen: "Resumen",
+  menu: "Menú",
   perfil: "Inicio web",
   tienda: "Tienda",
   plan: "Plan",
@@ -55,6 +59,7 @@ export const PORTAL_TAB_MOBILE_LABELS: Record<PortalTab, string> = {
 
 export const PORTAL_TAB_ICONS: Record<PortalTab, LucideIcon> = {
   resumen: LayoutDashboard,
+  menu: UtensilsCrossed,
   perfil: Home,
   tienda: Palette,
   plan: CreditCard,

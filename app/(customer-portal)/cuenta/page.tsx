@@ -14,6 +14,9 @@ import { resolveTenantPanelLoginUrl } from "@/lib/tenant/panel-url";
 import { buildBillingOptionsResponse, getCustomerAccountBillingContext } from "@/lib/tenant/customer-account-billing";
 import { getCountryConfig } from "@/lib/geo/country-registry";
 import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
+import { getMenuStatus } from "@/lib/menu/create-menu-items";
+import { isMenuImportEnabled } from "@/lib/menu/ai-menu-import";
+import { buildFirstSteps } from "@/lib/tenant/account-first-steps";
 
 /** @service-role tenant-session
  *
@@ -105,16 +108,25 @@ export default async function CustomerAccountPage({
   const companyId = membership.companyId;
   const initialSyncedAt = new Date().toISOString();
 
-  const [plans, addons, billingCtx] = await Promise.all([
+  const [plans, addons, billingCtx, menuStatus, { count: orderCount }, { data: application }] = await Promise.all([
     getCachedActivePlans(),
     getCachedActiveAddons(),
     getCustomerAccountBillingContext(companyId),
+    getMenuStatus(supabaseAdmin, companyId),
+    supabaseAdmin.from("orders").select("id", { count: "exact", head: true }).eq("company_id", companyId),
+    supabaseAdmin
+      .from("onboarding_applications")
+      .select("sector")
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const [{ data: company }, { data: branches }, { data: businessInfoRaw }, { data: payments }, { data: companyAddons }, { data: tickets }, { data: branchEntitlements }, { data: schedule }] = await Promise.all([
     supabaseAdmin
       .from("companies")
-      .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,plan:plans(id,name,name_i18n,price,prices_by_continent,max_branches,max_users,features)")
+      .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,theme_config,plan:plans(id,name,name_i18n,price,prices_by_continent,max_branches,max_users,features)")
       .eq("id", companyId)
       .maybeSingle(),
     supabaseAdmin
@@ -295,6 +307,15 @@ export default async function CustomerAccountPage({
 
   const initialBillingOptions = billingCtx ? buildBillingOptionsResponse(companyId, billingCtx) : null;
 
+  const themeConfig = (company as { theme_config?: { logoUrl?: unknown } | null } | null)?.theme_config;
+  const firstSteps = buildFirstSteps({
+    productCount: menuStatus.productCount,
+    sampleCount: menuStatus.sampleCount,
+    branches: (branches ?? []) as Array<{ whatsapp_url?: string | null; business_hours?: unknown; schedule?: string | null }>,
+    logoUrl: typeof themeConfig?.logoUrl === "string" ? themeConfig.logoUrl : null,
+    orderCount: orderCount ?? 0,
+  });
+
   const businessInfo: BusinessInfoSummary | null = businessInfoRaw
     ? {
         name: (businessInfoRaw as { name?: string | null }).name ?? null,
@@ -342,6 +363,12 @@ export default async function CustomerAccountPage({
         initialBranchEntitlements={initialBranchEntitlements}
         initialBillingOptions={initialBillingOptions}
         initialSyncedAt={initialSyncedAt}
+        firstSteps={firstSteps}
+        menuSetup={{
+          ...menuStatus,
+          importEnabled: isMenuImportEnabled(),
+          sector: ((application as { sector?: string | null } | null)?.sector ?? null) as string | null,
+        }}
       />
   );
 }

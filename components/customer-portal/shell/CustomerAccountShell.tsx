@@ -30,7 +30,7 @@ export type CustomerAccountShellProps = {
 };
 
 /** En móvil caben 4 secciones y «Más»; antes eran 8 en una barra que había que deslizar. */
-const MOBILE_PRIMARY_TABS: PortalTab[] = ["resumen", "plan", "facturacion", "soporte"];
+const MOBILE_PRIMARY_TABS: PortalTab[] = ["resumen", "menu", "plan", "soporte"];
 const MOBILE_MORE_TABS: PortalTab[] = PORTAL_TAB_ORDER.filter((tab) => !MOBILE_PRIMARY_TABS.includes(tab));
 
 export function CustomerAccountShell({

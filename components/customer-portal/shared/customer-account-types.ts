@@ -1,5 +1,6 @@
 /** Tipos compartidos del portal de cuenta cliente (`/cuenta`). */
 
+import type { FirstStep } from "@/lib/tenant/account-first-steps";
 import type { PlanChangeQuote, RenewalQuote, SubscriptionPhase } from "@/lib/billing/portal-pricing";
 
 export type { SubscriptionPhase };
@@ -172,6 +173,20 @@ export type CustomerAccountClientProps = {
   initialBranchEntitlements: BranchEntitlementSummary[];
   initialBillingOptions?: BillingOptionsResponse | null;
   initialSyncedAt?: string | null;
+  /** Lo que le falta a la tienda para vender (Resumen). */
+  firstSteps?: FirstStep[];
+  menuSetup?: MenuSetupSummary;
+};
+
+/** Estado del menú para la sección «Mi menú». */
+export type MenuSetupSummary = {
+  productCount: number;
+  sampleCount: number;
+  categoryCount: number;
+  /** La lectura de cartas con IA está encendida (`ANTHROPIC_API_KEY`). */
+  importEnabled: boolean;
+  /** Tipo de negocio que eligió en el alta, para proponer el menú de ejemplo. */
+  sector: string | null;
 };
 
 export type BillingMethodOption = {
@@ -327,4 +342,4 @@ export type StoreThemeAutosaveStatus = "idle" | "pending" | "saving" | "saved" |
 
 export type StoreThemeAssetField = "logoUrl" | "backgroundImageUrl";
 
-export type PortalTab = "resumen" | "perfil" | "tienda" | "plan" | "sucursales" | "facturacion" | "soporte" | "seguridad";
+export type PortalTab = "resumen" | "menu" | "perfil" | "tienda" | "plan" | "sucursales" | "facturacion" | "soporte" | "seguridad";

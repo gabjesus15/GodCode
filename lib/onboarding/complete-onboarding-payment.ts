@@ -326,6 +326,7 @@ async function finishOwnerAccess(params: {
 			setPasswordUrl: setupLink ?? `${getAppUrl()}/login/recuperar`,
 			loginUrl,
 			storeUrl: storeUrl || undefined,
+			menuUrl: `${getAppUrl()}/cuenta?tab=menu`,
 			contactDate,
 		},
 	});
