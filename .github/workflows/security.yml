@@ -60,7 +60,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # La acción falla de entrada si el repositorio tiene desactivado el grafo de
+      # dependencias (Settings → Code security → Dependency graph), sin revisar
+      # nada. En ese caso se avisa y se omite; al activarlo, la revisión corre sola.
+      - name: Comprobar el grafo de dependencias
+        id: graph
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/dependency-graph/sbom" --silent 2>/dev/null; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Dependency Review omitido::El grafo de dependencias está desactivado. Actívalo en https://github.com/${GITHUB_REPOSITORY}/settings/security_analysis para revisar las dependencias de cada PR."
+          fi
+
       - name: Dependency review
+        if: steps.graph.outputs.enabled == 'true'
         uses: actions/dependency-review-action@v4
 
   codeql:
