@@ -1,5 +1,5 @@
 import { getCachedCompany } from "../../utils/tenant-cache";
-import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
+import { resolveStorefrontAssetPublicUrl } from "@/lib/storage/storefront-branding";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 import { sanitizeHexColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { readThemeConfigObject } from "@/lib/store-theme/merge-theme-config";
@@ -28,7 +28,7 @@ export default async function Icon(props: { params: Promise<{ subdomain: string 
 
 	// Logo del tema: solo imágenes de mapa de bits desde https público o nuestro Storage.
 	const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
-	const logoUrl = company?.id ? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id)) : "";
+	const logoUrl = company?.id ? resolveStorefrontAssetPublicUrl(storedLogoUrl, String(company.id)) : "";
 
 	if (logoUrl && !isUnavailable) {
 		const logo = await fetchTenantLogo(logoUrl);

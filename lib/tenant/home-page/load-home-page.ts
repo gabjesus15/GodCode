@@ -2,7 +2,7 @@ import "server-only";
 
 import { filterOpenBranchIdsByHours } from "@/lib/tenant/business-hours";
 import { getCachedMenuStaticData } from "@/lib/tenant/cached-menu";
-import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
+import { resolveStorefrontAssetPublicUrl } from "@/lib/storage/storefront-branding";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { resolveTenantDisplayName } from "@/lib/tenant/seo-metadata";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
@@ -18,7 +18,7 @@ type HomePageCompany = {
 
 /**
  * Lo mínimo para dibujar la marca del local (tarjeta de vista previa al
- * compartir): tema, config de portada y URLs firmadas del logo y la portada.
+ * compartir): tema, config de portada y URLs públicas del logo y la portada.
  * Sin sucursales ni cajas: la tarjeta queda en caché y no muestra estado. El
  * horario solo se lee para la frase por defecto, igual que en la home.
  */
@@ -27,11 +27,10 @@ export async function loadHomeBrandInput(company: HomePageCompany, publicSlug: s
 	const theme = normalizeStoreThemeConfig(company.theme_config, company.name ?? "");
 	const staticData = await getCachedMenuStaticData(companyId, publicSlug);
 	const config = readHomePageConfig(company.theme_config, { schedule: staticData.businessInfo?.schedule ?? null });
-	const [logoUrl, menuImageUrl, customCoverUrl] = await Promise.all([
-		createStorefrontAssetSignedUrl(theme.logoUrl, companyId),
-		createStorefrontAssetSignedUrl(theme.backgroundImageUrl, companyId),
-		config.coverMode === "custom-image" ? createStorefrontAssetSignedUrl(config.coverImagePath, companyId) : Promise.resolve(""),
-	]);
+	const logoUrl = resolveStorefrontAssetPublicUrl(theme.logoUrl, companyId);
+	const menuImageUrl = resolveStorefrontAssetPublicUrl(theme.backgroundImageUrl, companyId);
+	const customCoverUrl =
+		config.coverMode === "custom-image" ? resolveStorefrontAssetPublicUrl(config.coverImagePath, companyId) : "";
 	return {
 		config,
 		theme,
@@ -47,7 +46,7 @@ export async function loadHomeBrandInput(company: HomePageCompany, publicSlug: s
 
 /**
  * Todo lo que necesita `resolveHomePage` a partir de la fila de la empresa:
- * config de la portada, tema publicado, imágenes firmadas, sucursales activas,
+ * config de la portada, tema publicado, URLs de las imágenes, sucursales activas,
  * cajas abiertas y horario.
  */
 export async function loadHomePageInput(company: HomePageCompany, publicSlug: string): Promise<ResolveHomePageInput> {
@@ -63,11 +62,10 @@ export async function loadHomePageInput(company: HomePageCompany, publicSlug: st
 	const schedule = staticData.businessInfo?.schedule ?? null;
 	const config = readHomePageConfig(company.theme_config, { schedule });
 
-	const [logoUrl, menuImageUrl, customCoverUrl] = await Promise.all([
-		createStorefrontAssetSignedUrl(theme.logoUrl, companyId),
-		createStorefrontAssetSignedUrl(theme.backgroundImageUrl, companyId),
-		config.coverMode === "custom-image" ? createStorefrontAssetSignedUrl(config.coverImagePath, companyId) : Promise.resolve(""),
-	]);
+	const logoUrl = resolveStorefrontAssetPublicUrl(theme.logoUrl, companyId);
+	const menuImageUrl = resolveStorefrontAssetPublicUrl(theme.backgroundImageUrl, companyId);
+	const customCoverUrl =
+		config.coverMode === "custom-image" ? resolveStorefrontAssetPublicUrl(config.coverImagePath, companyId) : "";
 
 	return {
 		config,

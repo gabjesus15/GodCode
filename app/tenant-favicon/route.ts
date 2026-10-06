@@ -7,7 +7,7 @@ import sharp from "sharp";
 import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { buildInitialsIconSvg, fetchTenantLogo, TENANT_ICON_SECURITY_HEADERS } from "@/lib/tenant/favicon-icon";
 import { resolveTenantDisplayName } from "@/lib/tenant/seo-metadata";
-import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
+import { resolveStorefrontAssetPublicUrl } from "@/lib/storage/storefront-branding";
 import { resolveTenantSlugFromCustomDomainHost } from "@/lib/tenant/custom-domain-resolve";
 import { getCachedCompany } from "@/utils/tenant-cache";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
   const name = resolveTenantDisplayName(company, { slug: tenantSlug });
   const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
   const logoUrl = company?.id
-    ? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id))
+    ? resolveStorefrontAssetPublicUrl(storedLogoUrl, String(company.id))
     : storedLogoUrl;
   if (logoUrl && isTenantSubscriptionAccessible(company)) {
     const logo = await fetchTenantLogo(String(logoUrl));
