@@ -9,6 +9,7 @@ import { AlertCircle, Check, Clock, Copy, MailCheck, TicketPercent, Upload, X } 
 import { Button } from "../../../components/ui/button";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
 import { randomId } from "@/lib/analytics/random-id";
+import { rememberOnboardingToken } from "@/lib/onboarding/onboarding-token-storage";
 import { uploadImage } from "@/lib/storage/upload-image-client";
 import { getOnboardingPaymentCopy } from "@/lib/plans/onboarding-payment-copy";
 import { computeCouponPricing, couponFreeMonths, formatPercent, type AppliedCoupon, type CouponProblem } from "@/lib/billing/subscription-coupons";
@@ -225,6 +226,10 @@ function PagoContent() {
 		const grantedText = `${granted} ${granted === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural}`;
 		return copy.promoDescription.replace("{paid}", paidText).replace("{granted}", grantedText);
 	}
+
+	useEffect(() => {
+		if (token) rememberOnboardingToken(token);
+	}, [token]);
 
 	useEffect(() => {
 		if (!isVenezuela) return;

@@ -5,6 +5,8 @@ import { AlertCircle, Clock, MailCheck } from "lucide-react";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getCurrentLocale } from "@/lib/i18n/server";
+import { resolveAvailablePublicSlug } from "@/lib/onboarding/checkout-service";
+import { getTenantHomeUrl } from "@/utils/tenant-url";
 import { resolvePlanMarketingLines, resolvePlanName } from "@/lib/plans/plan-i18n";
 import { OnboardingStep2Form } from "@/components/onboarding/steps/OnboardingStep2Form";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
@@ -279,11 +281,13 @@ export default async function OnboardingCompletePage({
     return <ErrorCard tone="review" title={copy.reviewTitle} text={copy.reviewText} backHome={copy.backHome} />;
   }
 
-  const [plansResult, addonsResult, applicationAddonsResult] = await Promise.all([
+  const [plansResult, addonsResult, applicationAddonsResult, storeSlug] = await Promise.all([
     // Solo planes a la venta: los internos (dev, promos) no se contratan desde aquí.
     supabaseAdmin.from("plans").select("id,name,name_i18n,price,prices_by_continent,max_branches,marketing_lines,marketing_lines_i18n").eq("is_active", true).eq("is_public", true).order("price", { ascending: true }),
     supabaseAdmin.from("addons").select("id,slug,name,description,price_one_time,price_monthly,type,sort_order").eq("is_active", true).order("sort_order", { ascending: true }),
     supabaseAdmin.from("onboarding_application_addons").select("addon_id,quantity").eq("application_id", app.id),
+    // Cómo quedará el enlace de la tienda (el mismo cálculo que hace el alta al crearla).
+    resolveAvailablePublicSlug(supabaseAdmin, String(app.business_name ?? "")).catch(() => null),
   ]);
 
   if (plansResult.error) {
@@ -333,7 +337,12 @@ export default async function OnboardingCompletePage({
           subscription_payment_method: app.subscription_payment_method,
           addons: applicationAddons,
           email: app.email,
+          phone: app.phone,
+          social_instagram: app.social_instagram,
+          fiscal_address: app.fiscal_address,
+          sector: app.sector,
         }}
+        storeUrl={storeSlug ? getTenantHomeUrl(storeSlug) : null}
         plans={plans}
         addons={addons}
       />

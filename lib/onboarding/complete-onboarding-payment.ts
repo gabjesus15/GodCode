@@ -46,7 +46,8 @@ export type CompleteOnboardingPaymentResult =
 			welcomeSent: boolean;
 			ownerError?: string;
 	  }
-	| { ok: false; error: string; status: number };
+	/** `inProgress`: otra llamada está cerrando este mismo pago ahora mismo (no es un fallo). */
+	| { ok: false; error: string; status: number; inProgress?: boolean };
 
 type ApplicationRow = OnboardingApplication & {
 	status: string;
@@ -61,7 +62,7 @@ type ApplicationRow = OnboardingApplication & {
 };
 
 const APPLICATION_COLUMNS =
-	"id,status,payment_status,payment_reference,company_id,plan_id,business_name,responsible_name,email,billing_rut,fiscal_address,logo_url,social_instagram,subscription_payment_method,welcome_email_sent_at,updated_at,country,currency,coupon_id,coupon_code,coupon_discount_usd,coupon_free_months";
+	"id,status,payment_status,payment_reference,company_id,plan_id,business_name,responsible_name,email,phone,sector,billing_rut,fiscal_address,logo_url,social_instagram,subscription_payment_method,welcome_email_sent_at,updated_at,country,currency,coupon_id,coupon_code,coupon_discount_usd,coupon_free_months";
 
 /**
  * Cierra el alta de una solicitud cuyo pago ya está confirmado (PayPal capturado o
@@ -115,7 +116,7 @@ export async function completeOnboardingPayment(
 			return finishOwnerAccess({ supabaseAdmin, app, companyId: String(app.company_id), alreadyCompleted: true, now });
 		}
 		if (!stale) {
-			return { ok: false, error: "Estamos procesando este pago. Intenta de nuevo en un minuto.", status: 409 };
+			return { ok: false, error: "Estamos procesando este pago. Intenta de nuevo en un minuto.", status: 409, inProgress: true };
 		}
 		// Un cierre anterior quedó a medias (se cayó tras reclamar): se retoma entero.
 	}
@@ -321,7 +322,8 @@ async function finishOwnerAccess(params: {
 		data: {
 			name: app.responsible_name ?? "",
 			businessName: app.business_name,
-			setPasswordUrl: setupLink ?? loginUrl,
+			// Sin enlace, el dueño tiene una contraseña aleatoria: que pida uno con su correo.
+			setPasswordUrl: setupLink ?? `${getAppUrl()}/login/recuperar`,
 			loginUrl,
 			storeUrl: storeUrl || undefined,
 			contactDate,

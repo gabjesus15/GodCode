@@ -261,6 +261,101 @@ const STEP2_COPY = {
   },
 } as const;
 
+
+/** Contacto del local y enlace de la tienda: lo que sale en la página de inicio desde el día 1. */
+const PROFILE_COPY = {
+  es: {
+    section: "Contacto de tu local",
+    sectionHint: "Opcional. Con esto tu página de inicio sale con sus botones de WhatsApp, Instagram y ubicación desde el primer día.",
+    whatsapp: "WhatsApp",
+    whatsappHint: "Con código de país, por ejemplo +58 412 1234567.",
+    instagram: "Instagram",
+    address: "Dirección del local",
+    sector: "Tipo de negocio",
+    sectorPlaceholder: "Selecciona una opción",
+    storeLink: "Tu tienda quedará en",
+    storeLinkHint: "Sale del nombre de tu negocio. Luego puedes conectar tu propio dominio.",
+  },
+  en: {
+    section: "Your venue’s contact",
+    sectionHint: "Optional. Your home page will show WhatsApp, Instagram and location buttons from day one.",
+    whatsapp: "WhatsApp",
+    whatsappHint: "With country code, e.g. +58 412 1234567.",
+    instagram: "Instagram",
+    address: "Venue address",
+    sector: "Type of business",
+    sectorPlaceholder: "Choose an option",
+    storeLink: "Your store will be at",
+    storeLinkHint: "Based on your business name. You can connect your own domain later.",
+  },
+  pt: {
+    section: "Contato do seu local",
+    sectionHint: "Opcional. Sua página inicial já sai com os botões de WhatsApp, Instagram e localização.",
+    whatsapp: "WhatsApp",
+    whatsappHint: "Com código do país, por exemplo +58 412 1234567.",
+    instagram: "Instagram",
+    address: "Endereço do local",
+    sector: "Tipo de negócio",
+    sectorPlaceholder: "Selecione uma opção",
+    storeLink: "Sua loja ficará em",
+    storeLinkHint: "Vem do nome do seu negócio. Depois você pode conectar seu próprio domínio.",
+  },
+  fr: {
+    section: "Contact de votre établissement",
+    sectionHint: "Facultatif. Votre page d’accueil affichera dès le départ les boutons WhatsApp, Instagram et localisation.",
+    whatsapp: "WhatsApp",
+    whatsappHint: "Avec l’indicatif du pays, par ex. +58 412 1234567.",
+    instagram: "Instagram",
+    address: "Adresse de l’établissement",
+    sector: "Type d’établissement",
+    sectorPlaceholder: "Choisissez une option",
+    storeLink: "Votre boutique sera à",
+    storeLinkHint: "Basé sur le nom de votre établissement. Vous pourrez connecter votre domaine plus tard.",
+  },
+  de: {
+    section: "Kontakt Ihres Lokals",
+    sectionHint: "Optional. Ihre Startseite zeigt von Anfang an WhatsApp-, Instagram- und Standort-Buttons.",
+    whatsapp: "WhatsApp",
+    whatsappHint: "Mit Ländervorwahl, z. B. +58 412 1234567.",
+    instagram: "Instagram",
+    address: "Adresse des Lokals",
+    sector: "Art des Geschäfts",
+    sectorPlaceholder: "Option wählen",
+    storeLink: "Ihr Shop wird erreichbar sein unter",
+    storeLinkHint: "Aus dem Namen Ihres Geschäfts. Eine eigene Domain können Sie später verbinden.",
+  },
+  it: {
+    section: "Contatti del tuo locale",
+    sectionHint: "Facoltativo. La tua home page avrà da subito i pulsanti WhatsApp, Instagram e posizione.",
+    whatsapp: "WhatsApp",
+    whatsappHint: "Con prefisso internazionale, es. +58 412 1234567.",
+    instagram: "Instagram",
+    address: "Indirizzo del locale",
+    sector: "Tipo di attività",
+    sectorPlaceholder: "Scegli un’opzione",
+    storeLink: "Il tuo negozio sarà su",
+    storeLinkHint: "Deriva dal nome della tua attività. Potrai collegare il tuo dominio più avanti.",
+  },
+} as const;
+
+/** El valor que se guarda es el texto en español (lo lee el equipo en los avisos). */
+const SECTORS: Array<{ value: string; label: Record<keyof typeof PROFILE_COPY, string> }> = [
+  { value: "Pizzería", label: { es: "Pizzería", en: "Pizzeria", pt: "Pizzaria", fr: "Pizzeria", de: "Pizzeria", it: "Pizzeria" } },
+  { value: "Sushi", label: { es: "Sushi", en: "Sushi", pt: "Sushi", fr: "Sushi", de: "Sushi", it: "Sushi" } },
+  { value: "Hamburguesas", label: { es: "Hamburguesas", en: "Burgers", pt: "Hambúrgueres", fr: "Burgers", de: "Burger", it: "Hamburger" } },
+  { value: "Comida rápida", label: { es: "Comida rápida", en: "Fast food", pt: "Fast food", fr: "Restauration rapide", de: "Fast Food", it: "Fast food" } },
+  { value: "Restaurante", label: { es: "Restaurante", en: "Restaurant", pt: "Restaurante", fr: "Restaurant", de: "Restaurant", it: "Ristorante" } },
+  { value: "Cafetería", label: { es: "Cafetería", en: "Café", pt: "Cafeteria", fr: "Café", de: "Café", it: "Caffetteria" } },
+  { value: "Panadería y pastelería", label: { es: "Panadería y pastelería", en: "Bakery", pt: "Padaria e confeitaria", fr: "Boulangerie-pâtisserie", de: "Bäckerei", it: "Panetteria e pasticceria" } },
+  { value: "Otro", label: { es: "Otro", en: "Other", pt: "Outro", fr: "Autre", de: "Andere", it: "Altro" } },
+];
+
+function profileLocale(locale: string): keyof typeof PROFILE_COPY {
+  const value = String(locale ?? "es").toLowerCase();
+  for (const candidate of ["en", "pt", "fr", "de", "it"] as const) if (value.startsWith(candidate)) return candidate;
+  return "es";
+}
+
 function getStep2Copy(locale: string) {
   const normalized = String(locale ?? "es").toLowerCase();
   const short = normalized.startsWith("en")
@@ -329,6 +424,7 @@ export function OnboardingStep2Form({
   initialData,
   plans,
   addons = [],
+  storeUrl = null,
 }: {
   token: string;
   initialData: {
@@ -338,12 +434,24 @@ export function OnboardingStep2Form({
     subscription_payment_method?: string | null;
     addons?: { addon_id: string; quantity?: number; price_snapshot?: number | null }[];
     email?: string | null;
+    phone?: string | null;
+    social_instagram?: string | null;
+    fiscal_address?: string | null;
+    sector?: string | null;
   };
   plans: Plan[];
   addons?: Addon[];
+  /** Cómo quedará el enlace público de la tienda. */
+  storeUrl?: string | null;
 }) {
   const locale = useLocale();
   const copy = useMemo(() => getStep2Copy(locale), [locale]);
+  const profileLang = profileLocale(locale);
+  const profileCopy = PROFILE_COPY[profileLang];
+  const [phone, setPhone] = useState(initialData.phone ?? "");
+  const [instagram, setInstagram] = useState(initialData.social_instagram ?? "");
+  const [address, setAddress] = useState(initialData.fiscal_address ?? "");
+  const [sector, setSector] = useState(initialData.sector ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [planPaymentMethods, setPlanPaymentMethods] = useState<PlanPaymentMethod[]>([]);
@@ -491,6 +599,10 @@ export function OnboardingStep2Form({
           subscription_payment_method: subMethod,
           addons: selectedAddons.length > 0 ? selectedAddons : undefined,
           payment_methods: [],
+          phone: phone.trim() || undefined,
+          social_instagram: instagram.trim() || undefined,
+          fiscal_address: address.trim() || undefined,
+          sector: sector || undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -532,6 +644,70 @@ export function OnboardingStep2Form({
                 {CURRENCIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
               <span className="text-xs font-normal text-slate-500">{copy.currencyHint}</span>
+            </label>
+          </div>
+        </section>
+
+        <section className="space-y-5">
+          <SectionHeading title={profileCopy.section} hint={profileCopy.sectionHint} />
+          {storeUrl ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
+              <p className="text-sm text-slate-600">
+                {profileCopy.storeLink}{" "}
+                <strong className="break-all font-semibold text-slate-900">{storeUrl.replace(/^https?:\/\//, "")}</strong>
+              </p>
+              <p className="mt-1 text-xs text-slate-500">{profileCopy.storeLinkHint}</p>
+            </div>
+          ) : null}
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-800">
+              {profileCopy.whatsapp}
+              <input
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                className={selectClass}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+58 412 1234567"
+                maxLength={50}
+              />
+              <span className="text-xs font-normal text-slate-500">{profileCopy.whatsappHint}</span>
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-800">
+              {profileCopy.instagram}
+              <input
+                type="text"
+                className={selectClass}
+                value={instagram}
+                onChange={(e) => setInstagram(e.target.value)}
+                placeholder="@tunegocio"
+                maxLength={200}
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-800">
+              {profileCopy.address}
+              <input
+                type="text"
+                autoComplete="street-address"
+                className={selectClass}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                maxLength={500}
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm font-medium text-slate-800">
+              {profileCopy.sector}
+              <select className={selectClass} value={sector} onChange={(e) => setSector(e.target.value)}>
+                <option value="">{profileCopy.sectorPlaceholder}</option>
+                {SECTORS.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label[profileLang]}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
         </section>

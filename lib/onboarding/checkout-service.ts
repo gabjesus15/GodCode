@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
+import { socialInputToUrl } from "@/lib/tenant/home-page/home-page-config";
 import { slugify as slugifyBase } from "../../utils/slugify";
 import { isSingleInstanceAddon, resolveAddonUnitPrice } from "../plans/addon-pricing";
 import { resolveAddonOfferForPlan, type PlanOfferSnapshot } from "../plans/plan-offer-rules";
@@ -20,6 +21,9 @@ export type OnboardingApplication = {
 	fiscal_address?: string | null;
 	logo_url?: string | null;
 	social_instagram?: string | null;
+	/** WhatsApp del local (del paso 2); va a la empresa y a la sucursal principal. */
+	phone?: string | null;
+	sector?: string | null;
 	custom_domain?: string | null;
 	custom_plan_name?: string | null;
 	custom_plan_price?: number | string | null;
@@ -239,6 +243,44 @@ async function resolveCompanyCreatorId(supabaseAdmin: SupabaseClient): Promise<s
 	return activeUser?.id ?? null;
 }
 
+/**
+ * Primer enlace libre para el nombre del negocio (`rica-pizza`, `rica-pizza-1`…). Lo usa
+ * el alta al crear la empresa y el paso 2 para mostrar cómo quedará el enlace de la tienda.
+ */
+export async function resolveAvailablePublicSlug(supabaseAdmin: SupabaseClient, businessName: string): Promise<string> {
+	const baseSlug = slugifyCompanyPublicSlug(businessName);
+	let publicSlug = baseSlug;
+	let suffix = 0;
+	while (true) {
+		const { data: existing } = await supabaseAdmin
+			.from("companies")
+			.select("id")
+			.eq("public_slug", publicSlug)
+			.maybeSingle();
+		if (!existing) return publicSlug;
+		suffix += 1;
+		publicSlug = `${baseSlug}-${suffix}`;
+	}
+}
+
+/**
+ * WhatsApp escrito a mano → enlace `wa.me`. Sin código de país, se completa con el del
+ * país del alta cuando es inequívoco (Chile: 9 dígitos que empiezan en 9; Venezuela: 11
+ * que empiezan en 0, como 0412…).
+ */
+export function whatsappUrlFromPhone(raw: string | null | undefined, country: string | null | undefined): string | null {
+	const value = String(raw ?? "").trim();
+	if (!value) return null;
+	let digits = value.replace(/[^\d]/g, "");
+	if (!value.startsWith("+")) {
+		const c = String(country ?? "").trim().toLowerCase();
+		if ((c === "chile" || c === "cl") && digits.length === 9 && digits.startsWith("9")) digits = `56${digits}`;
+		else if ((c === "venezuela" || c === "ve") && digits.length === 11 && digits.startsWith("0")) digits = `58${digits.slice(1)}`;
+	}
+	if (digits.length < 8 || digits.length > 15) return null;
+	return `https://wa.me/${digits}`;
+}
+
 export async function provisionCompanyFromApplication(
 	supabaseAdmin: SupabaseClient,
 	app: OnboardingApplication,
@@ -253,19 +295,7 @@ export async function provisionCompanyFromApplication(
 		if (existing) return { ok: true, company: existing };
 	}
 
-	const baseSlug = slugifyCompanyPublicSlug(app.business_name);
-	let publicSlug = baseSlug;
-	let suffix = 0;
-	while (true) {
-		const { data: existing } = await supabaseAdmin
-			.from("companies")
-			.select("id")
-			.eq("public_slug", publicSlug)
-			.maybeSingle();
-		if (!existing) break;
-		suffix += 1;
-		publicSlug = `${baseSlug}-${suffix}`;
-	}
+	const publicSlug = await resolveAvailablePublicSlug(supabaseAdmin, app.business_name);
 
 	const createdBy = await resolveCompanyCreatorId(supabaseAdmin);
 	if (!createdBy) {
@@ -289,7 +319,7 @@ export async function provisionCompanyFromApplication(
 		created_by: createdBy,
 		legal_rut: app.billing_rut ?? null,
 		email: app.email,
-		phone: null,
+		phone: app.phone ?? null,
 		address: app.fiscal_address ?? null,
 		public_slug: publicSlug,
 		plan_id: app.plan_id,
@@ -316,11 +346,16 @@ export async function provisionCompanyFromApplication(
 		return { ok: false, error: mapped.error, status: mapped.status };
 	}
 
+	// Lo que dio en el paso 2 (WhatsApp, Instagram, dirección) va a la sucursal principal:
+	// la página de inicio del negocio sale con sus botones de contacto desde el primer día.
 	const { error: branchError } = await supabaseAdmin.from("branches").insert({
 		company_id: inserted.id,
 		name: "Principal",
 		slug: "principal",
 		address: app.fiscal_address ?? null,
+		phone: app.phone ?? null,
+		whatsapp_url: whatsappUrlFromPhone(app.phone, app.country),
+		instagram_url: app.social_instagram ? socialInputToUrl("instagram", app.social_instagram) || null : null,
 		is_active: true,
 	});
 	if (branchError) console.error("onboarding checkout branch insert:", branchError);
@@ -329,6 +364,7 @@ export async function provisionCompanyFromApplication(
 		company_id: inserted.id,
 		name: app.business_name,
 		address: app.fiscal_address ?? null,
+		phone: app.phone ?? null,
 		instagram: app.social_instagram ?? null,
 		schedule: null,
 	}).then(() => {});
