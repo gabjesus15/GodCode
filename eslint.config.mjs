@@ -15,6 +15,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
   ]),
   {
+    // Mismos archivos que registran el plugin `react` en eslint-config-next: sin
+    // esto `npm run lint` fallaba al llegar a los .cjs de scripts/video.
+    files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
     rules: {
       // Allow inline styles for CSS custom properties (CSS variables)
       "@next/next/no-css-tags": "off",
@@ -27,6 +30,13 @@ const eslintConfig = defineConfig([
         "destructuredArrayIgnorePattern": "^_",
       }],
       "no-console": ["warn", { allow: ["warn", "error"] }],
+    },
+  },
+  // Scripts CommonJS (generadores de video): `require` es su forma de importar.
+  {
+    files: ["**/*.cjs"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
   // Navegación con <a> a rutas internas para forzar recarga completa (evita estilos residuales tras 404/onboarding).
