@@ -6,6 +6,7 @@ import { Building2, Check, CreditCard, Landmark } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics/track-event";
+import { BUSINESS_SECTOR_OPTIONS } from "@/lib/onboarding/business-sectors";
 import { resolveAddonUnitPrice } from "@/lib/plans/addon-pricing";
 import { resolveRegionalPlanPrice, resolveContinentFromCountryInput } from "@/lib/plans/plan-regional-pricing";
 import { cn } from "@/utils/cn";
@@ -339,16 +340,7 @@ const PROFILE_COPY = {
 } as const;
 
 /** El valor que se guarda es el texto en español (lo lee el equipo en los avisos). */
-const SECTORS: Array<{ value: string; label: Record<keyof typeof PROFILE_COPY, string> }> = [
-  { value: "Pizzería", label: { es: "Pizzería", en: "Pizzeria", pt: "Pizzaria", fr: "Pizzeria", de: "Pizzeria", it: "Pizzeria" } },
-  { value: "Sushi", label: { es: "Sushi", en: "Sushi", pt: "Sushi", fr: "Sushi", de: "Sushi", it: "Sushi" } },
-  { value: "Hamburguesas", label: { es: "Hamburguesas", en: "Burgers", pt: "Hambúrgueres", fr: "Burgers", de: "Burger", it: "Hamburger" } },
-  { value: "Comida rápida", label: { es: "Comida rápida", en: "Fast food", pt: "Fast food", fr: "Restauration rapide", de: "Fast Food", it: "Fast food" } },
-  { value: "Restaurante", label: { es: "Restaurante", en: "Restaurant", pt: "Restaurante", fr: "Restaurant", de: "Restaurant", it: "Ristorante" } },
-  { value: "Cafetería", label: { es: "Cafetería", en: "Café", pt: "Cafeteria", fr: "Café", de: "Café", it: "Caffetteria" } },
-  { value: "Panadería y pastelería", label: { es: "Panadería y pastelería", en: "Bakery", pt: "Padaria e confeitaria", fr: "Boulangerie-pâtisserie", de: "Bäckerei", it: "Panetteria e pasticceria" } },
-  { value: "Otro", label: { es: "Otro", en: "Other", pt: "Outro", fr: "Autre", de: "Andere", it: "Altro" } },
-];
+const SECTORS = BUSINESS_SECTOR_OPTIONS;
 
 function profileLocale(locale: string): keyof typeof PROFILE_COPY {
   const value = String(locale ?? "es").toLowerCase();

@@ -1,8 +1,10 @@
+import { BUSINESS_SECTORS, resolveBusinessSector, type BusinessSector } from "@/lib/onboarding/business-sectors";
+
 import type { MenuDraft } from "./menu-draft";
 
 /**
  * Menús de ejemplo para que la tienda no nazca vacía. Los tipos de negocio son los del
- * paso 2 del alta (`OnboardingStep2Form`, campo `sector`).
+ * alta (`lib/onboarding/business-sectors.ts`).
  *
  * Los precios van en USD y se pasan a la moneda del negocio con una tasa aproximada:
  * son de muestra y el dueño los cambia. Un producto cuenta como ejemplo mientras su
@@ -13,18 +15,9 @@ import type { MenuDraft } from "./menu-draft";
 type SampleProduct = { name: string; description: string; usd: number };
 type SampleCategory = { name: string; products: SampleProduct[] };
 
-export const SAMPLE_MENU_SECTORS = [
-	"Pizzería",
-	"Sushi",
-	"Hamburguesas",
-	"Comida rápida",
-	"Restaurante",
-	"Cafetería",
-	"Panadería y pastelería",
-	"Otro",
-] as const;
+export const SAMPLE_MENU_SECTORS = BUSINESS_SECTORS;
 
-export type SampleMenuSector = (typeof SAMPLE_MENU_SECTORS)[number];
+export type SampleMenuSector = BusinessSector;
 
 const DRINKS: SampleCategory = {
 	name: "Bebidas",
@@ -202,10 +195,7 @@ export function sampleLocalPrice(usd: number, currency: string): number {
 	return Math.round(value * 2) / 2;
 }
 
-export function resolveSampleSector(raw: string | null | undefined): SampleMenuSector {
-	const value = String(raw ?? "").trim().toLocaleLowerCase("es");
-	return SAMPLE_MENU_SECTORS.find((s) => s.toLocaleLowerCase("es") === value) ?? "Otro";
-}
+export const resolveSampleSector = resolveBusinessSector;
 
 export function buildSampleMenu(sector: SampleMenuSector, currency: string): MenuDraft {
 	return {
