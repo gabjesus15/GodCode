@@ -36,9 +36,12 @@ const nextConfig: NextConfig = {
   // otro host y la página no se hidrata. `127.0.0.1` permite tener abiertas a la vez dos
   // sesiones (las cookies van por host); `*.localhost` es el storefront de un tenant.
   allowedDevOrigins: ["127.0.0.1", "*.localhost"],
+  // Quita console.log/info/debug del build, pero deja error y warn: `true` los
+  // borraba también en el servidor y `lib/infra/logger.ts` no escribía nada en
+  // los logs de producción.
   compiler: isProduction
     ? {
-        removeConsole: true,
+        removeConsole: { exclude: ["error", "warn"] },
       }
     : undefined,
   // Turbopack en dev y build (default de Next 16). `root` evita que infiera `app/`
@@ -94,24 +97,6 @@ const nextConfig: NextConfig = {
     return [
       ...previewNoindexHeaders,
       {
-        source: "/images/:path*",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-      },
-      {
-        source: "/fonts/:path*",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-      },
-      {
         source: "/(.*)",
         headers: [
           {
@@ -129,6 +114,27 @@ const nextConfig: NextConfig = {
           {
             key: "X-Frame-Options",
             value: "SAMEORIGIN",
+          },
+        ],
+      },
+      // Imágenes y fuentes propias: van después de "/(.*)" para ganarle (la
+      // última coincidencia manda); antes iban delante y quedaban en max-age=0.
+      {
+        source: "/images/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/fonts/:path*",
+        headers: [
+          {
+            // Sin `immutable`: los nombres no llevan hash (custom-fonts.css puede cambiar).
+            key: "Cache-Control",
+            value: "public, max-age=2592000, stale-while-revalidate=86400",
           },
         ],
       },
