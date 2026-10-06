@@ -146,9 +146,16 @@ async function applySessionRefresh(
     return response;
   }
 
+  // Sin cookie de este scope no hay sesión que refrescar (la cookie puede ir
+  // troceada en `<nombre>.0`, `<nombre>.1`…): nos ahorramos crear el cliente.
+  const cookieName = getAuthCookieName(scope);
+  if (!request.cookies.getAll().some(({ name }) => name === cookieName || name.startsWith(`${cookieName}.`))) {
+    return response;
+  }
+
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookieOptions: {
-      name: getAuthCookieName(scope),
+      name: cookieName,
     },
     cookies: {
       getAll() {
@@ -173,12 +180,16 @@ async function applySessionRefresh(
  * En hosts de tenant conviven dos sesiones posibles: el panel del negocio y la
  * cuenta del cliente final del menú. Hay que refrescar ambas, o el access token de
  * la que no se refresque expira a la hora y desloguea aunque su refresh token siga
- * siendo válido. Encadenar es seguro: cada scope usa su propia cookie, y cada
- * llamada muta `request.cookies` y escribe en la misma `response`.
+ * siendo válido. Van en paralelo (antes, una detrás de otra): cada scope usa su
+ * propia cookie, así que las dos llamadas tocan nombres distintos de
+ * `request.cookies` y de la misma `response`.
  */
 async function applyTenantHostRefresh(request: NextRequest, response: NextResponse) {
-  await applySessionRefresh(request, response, "tenant");
-  return applySessionRefresh(request, response, "menu-client");
+  await Promise.all([
+    applySessionRefresh(request, response, "tenant"),
+    applySessionRefresh(request, response, "menu-client"),
+  ]);
+  return response;
 }
 
 const resolveTenantSlugFromReferer = (refererHeader: string | null) => {
@@ -430,15 +441,17 @@ async function _proxy(req: NextRequest): Promise<NextResponse> {
   });
   // En dominio principal el tenant llega por path (`/{slug}/mi-cuenta`), así que ahí
   // también hay que refrescar la sesión del cliente final del menú.
-  if (resolvedTenantSlug) {
-    await applySessionRefresh(req, response, "menu-client");
-  }
-  return await applySessionRefresh(req, response, "super-admin");
+  await Promise.all([
+    resolvedTenantSlug ? applySessionRefresh(req, response, "menu-client") : null,
+    applySessionRefresh(req, response, "super-admin"),
+  ]);
+  return response;
 }
 
 export const config = {
   matcher: [
     // Exclude asset-like paths and next internals; keep /favicon.ico in the middleware so tenants can serve their own icon.
-    "/((?!_next/static|_next/image|tenant-favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Los .js/.css no se excluyen: `menu/sw.js` y `saas-admin/sw.js` son rutas que necesitan la reescritura del tenant.
+    "/((?!_next/static|_next/image|tenant-favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|mp4|webm|woff2?|ttf|otf)$).*)",
   ],
 };
