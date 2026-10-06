@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Mail, MailCheck } from "lucide-react";
 
@@ -12,6 +12,12 @@ export default function RecoverPasswordPage() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [sentTo, setSentTo] = useState<string | null>(null);
+	// Llega aquí desde un enlace de contraseña vencido o ya usado (`/login/confirmar`).
+	const [expired, setExpired] = useState(false);
+
+	useEffect(() => {
+		setExpired(new URLSearchParams(window.location.search).get("vencido") === "1");
+	}, []);
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -52,9 +58,11 @@ export default function RecoverPasswordPage() {
 			) : (
 				<div className="flex flex-col gap-5">
 					<div>
-						<h1 className="text-xl font-semibold text-zinc-900">Recupera tu acceso</h1>
+						<h1 className="text-xl font-semibold text-zinc-900">{expired ? "Pide un enlace nuevo" : "Recupera tu acceso"}</h1>
 						<p className="mt-1 text-sm text-zinc-500">
-							Escribe el correo con el que entras al panel y te enviamos un enlace para elegir una nueva contraseña.
+							{expired
+								? "El enlace que abriste venció o ya se usó. Escribe tu correo y te mandamos uno nuevo al momento."
+								: "Escribe el correo con el que entras al panel y te enviamos un enlace para elegir una nueva contraseña."}
 						</p>
 					</div>
 

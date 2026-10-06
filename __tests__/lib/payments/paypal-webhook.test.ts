@@ -5,6 +5,10 @@ const applyCompleted = vi.fn();
 vi.mock("@/lib/billing/portal-paypal", () => ({
 	applyCompletedPortalPayPalOrder: (...args: unknown[]) => applyCompleted(...args),
 }));
+const applyOnboarding = vi.fn();
+vi.mock("@/lib/onboarding/paypal-onboarding", () => ({
+	applyOnboardingPayPalWebhook: (...args: unknown[]) => applyOnboarding(...args),
+}));
 vi.mock("@/lib/infra/supabase-admin", () => ({ supabaseAdmin: { tag: "admin" } }));
 
 import { captureEventOrderId, verifyPayPalWebhookSignature } from "@/lib/payments/paypal-webhook";
@@ -43,6 +47,7 @@ beforeEach(() => {
 	vi.stubEnv("PAYPAL_CLIENT_SECRET", "secret");
 	vi.stubEnv("PAYPAL_WEBHOOK_ID", "WH-CONFIG");
 	applyCompleted.mockReset();
+	applyOnboarding.mockReset();
 });
 afterEach(() => {
 	vi.unstubAllEnvs();
@@ -123,5 +128,30 @@ describe("POST /api/payments/paypal/webhook", () => {
 		const res = await POST(webhookRequest('{"id":"WH-2","event_type":"PAYMENT.CAPTURE.REFUNDED","resource":{}}'));
 		expect(res.status).toBe(200);
 		expect(applyCompleted).not.toHaveBeenCalled();
+	});
+
+	it("una captura que no es del portal se aplica como alta", async () => {
+		vi.stubGlobal("fetch", paypalFetch("SUCCESS").impl);
+		applyCompleted.mockResolvedValue({ outcome: "ignored", reason: "not_portal_order" });
+		applyOnboarding.mockResolvedValue({ outcome: "applied" });
+		const res = await POST(webhookRequest());
+		expect(res.status).toBe(200);
+		expect(applyOnboarding).toHaveBeenCalledWith({ supabaseAdmin: { tag: "admin" }, orderId: "ORDER-9" });
+	});
+
+	it("una orden aprobada (cerró la pestaña antes de volver) se cobra como alta", async () => {
+		vi.stubGlobal("fetch", paypalFetch("SUCCESS").impl);
+		applyOnboarding.mockResolvedValue({ outcome: "applied" });
+		const res = await POST(webhookRequest('{"id":"WH-3","event_type":"CHECKOUT.ORDER.APPROVED","resource":{"id":"ORDER-7"}}'));
+		expect(res.status).toBe(200);
+		expect(applyOnboarding).toHaveBeenCalledWith({ supabaseAdmin: { tag: "admin" }, orderId: "ORDER-7" });
+		expect(applyCompleted).not.toHaveBeenCalled();
+	});
+
+	it("si PayPal no responde al cobrar el alta, pide reintento", async () => {
+		vi.stubGlobal("fetch", paypalFetch("SUCCESS").impl);
+		applyOnboarding.mockResolvedValue({ outcome: "retry", reason: "paypal_unavailable" });
+		const res = await POST(webhookRequest('{"id":"WH-4","event_type":"CHECKOUT.ORDER.APPROVED","resource":{"id":"ORDER-7"}}'));
+		expect(res.status).toBe(503);
 	});
 });

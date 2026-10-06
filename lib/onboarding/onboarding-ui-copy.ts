@@ -47,6 +47,8 @@ export type OnboardingUiCopy = {
 		errorUnexpected: string;
 		sentTitle: string;
 		sentBody: string;
+		/** Volvió a registrarse con un correo que ya tenía un alta en curso. */
+		resumedBody: string;
 		sentTips: string[];
 		notSentTitle: string;
 		notSentBody: string;
@@ -124,6 +126,7 @@ const es: OnboardingUiCopy = {
 		errorUnexpected: "Algo salió mal. Intenta de nuevo.",
 		sentTitle: "Revisa tu correo",
 		sentBody: "Enviamos un enlace a {email}. Ábrelo para elegir tu plan.",
+		resumedBody: "Ya tenías un alta con {email}. Te enviamos un enlace para seguir donde quedaste.",
 		sentTips: ["Llega en menos de un minuto. Si no lo ves, revisa spam o promociones.", "El enlace vence en 24 horas."],
 		notSentTitle: "Guardamos tu solicitud",
 		notSentBody: "Pero el correo a {email} no salió. Pulsa «Reenviar correo» en unos minutos.",
@@ -196,6 +199,7 @@ const en: OnboardingUiCopy = {
 		errorUnexpected: "Something went wrong. Please try again.",
 		sentTitle: "Check your email",
 		sentBody: "We sent a link to {email}. Open it to choose your plan.",
+		resumedBody: "You had already started with {email}. We sent you a link to pick up where you left off.",
 		sentTips: ["It arrives in under a minute. If you don't see it, check spam or promotions.", "The link expires in 24 hours."],
 		notSentTitle: "We saved your request",
 		notSentBody: "But the email to {email} did not go out. Tap “Resend email” in a few minutes.",
@@ -268,6 +272,7 @@ const pt: OnboardingUiCopy = {
 		errorUnexpected: "Algo deu errado. Tente novamente.",
 		sentTitle: "Confira seu e-mail",
 		sentBody: "Enviamos um link para {email}. Abra-o para escolher seu plano.",
+		resumedBody: "Você já tinha um cadastro com {email}. Enviamos um link para continuar de onde parou.",
 		sentTips: ["Chega em menos de um minuto. Se não aparecer, veja o spam ou promoções.", "O link expira em 24 horas."],
 		notSentTitle: "Guardamos sua solicitação",
 		notSentBody: "Mas o e-mail para {email} não saiu. Toque em “Reenviar e-mail” em alguns minutos.",
@@ -340,6 +345,7 @@ const fr: OnboardingUiCopy = {
 		errorUnexpected: "Une erreur s’est produite. Réessayez.",
 		sentTitle: "Consultez votre e-mail",
 		sentBody: "Nous avons envoyé un lien à {email}. Ouvrez-le pour choisir votre offre.",
+		resumedBody: "Vous aviez déjà commencé avec {email}. Nous vous avons envoyé un lien pour reprendre là où vous en étiez.",
 		sentTips: ["Il arrive en moins d’une minute. Sinon, vérifiez les spams ou les promotions.", "Le lien expire dans 24 heures."],
 		notSentTitle: "Nous avons enregistré votre demande",
 		notSentBody: "Mais l’e-mail à {email} n’est pas parti. Appuyez sur « Renvoyer l’e-mail » dans quelques minutes.",
@@ -412,6 +418,7 @@ const de: OnboardingUiCopy = {
 		errorUnexpected: "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
 		sentTitle: "Prüfen Sie Ihr Postfach",
 		sentBody: "Wir haben einen Link an {email} gesendet. Öffnen Sie ihn, um Ihren Plan zu wählen.",
+		resumedBody: "Sie hatten mit {email} bereits begonnen. Wir haben Ihnen einen Link gesendet, um dort weiterzumachen, wo Sie aufgehört haben.",
 		sentTips: ["Er kommt in weniger als einer Minute. Sonst prüfen Sie Spam oder Werbung.", "Der Link läuft nach 24 Stunden ab."],
 		notSentTitle: "Wir haben Ihre Anfrage gespeichert",
 		notSentBody: "Aber die E-Mail an {email} wurde nicht gesendet. Tippen Sie in ein paar Minuten auf „E-Mail erneut senden“.",
@@ -484,6 +491,7 @@ const it: OnboardingUiCopy = {
 		errorUnexpected: "Qualcosa è andato storto. Riprova.",
 		sentTitle: "Controlla la tua email",
 		sentBody: "Abbiamo inviato un link a {email}. Aprilo per scegliere il tuo piano.",
+		resumedBody: "Avevi già iniziato con {email}. Ti abbiamo inviato un link per riprendere da dove avevi lasciato.",
 		sentTips: ["Arriva in meno di un minuto. Se non lo vedi, controlla spam o promozioni.", "Il link scade dopo 24 ore."],
 		notSentTitle: "Abbiamo salvato la tua richiesta",
 		notSentBody: "Ma l’email a {email} non è partita. Tocca «Invia di nuovo» tra qualche minuto.",

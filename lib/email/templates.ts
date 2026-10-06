@@ -19,6 +19,12 @@ export type EmailTemplates = {
 		attempt: 1 | 2;
 		planName?: string;
 	};
+	onboarding_continue: {
+		name: string;
+		businessName: string;
+		continueUrl: string;
+		step: "plan" | "payment" | "review";
+	};
 	onboarding_receipt_received: {
 		name: string;
 		businessName: string;
@@ -139,14 +145,14 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 			audience: "prospect",
 			tone: "brand",
 			subject: `Confirma tu correo para crear ${d.businessName} en ${product}`,
-			preheader: "Un clic y sigues con el alta. El enlace vence en 24 horas.",
+			preheader: "Un clic y sigues con el alta. El enlace vale 7 días.",
 			title: "Confirma tu correo",
 			greeting: greet(d.name),
 			intro: `Recibimos la solicitud para crear **${d.businessName}** en ${product}. Confirma que este correo es tuyo y sigue con la elección de tu plan.`,
 			cta: { label: "Confirmar mi correo", url: d.verifyUrl, showUrl: true },
 			ctaFirst: true,
 			blocks: [],
-			reason: `Recibes este correo porque se registró ${d.businessName} con esta dirección. Si no fuiste tú, ignóralo: no se creará nada. El enlace vence en 24 horas.`,
+			reason: `Recibes este correo porque se registró ${d.businessName} con esta dirección. Si no fuiste tú, ignóralo: no se creará nada. El enlace vale 7 días.`,
 		};
 	},
 
@@ -177,6 +183,28 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 			blocks,
 			cta: { label: payment ? "Ir al pago" : "Elegir mi plan", url: d.resumeUrl },
 			reason: `Recibes este correo porque empezaste el alta de ${d.businessName}.${d.attempt === 2 ? " Es el último recordatorio: no te escribiremos más sobre esto." : ""}`,
+		};
+	},
+
+	onboarding_continue: (d) => {
+		const copy =
+			d.step === "plan"
+				? { title: "Sigue con el alta", intro: `Aquí tienes el enlace para seguir con el alta de **${d.businessName}**. Tus datos están guardados: solo falta elegir el plan y pagar.`, cta: "Elegir mi plan" }
+				: d.step === "payment"
+					? { title: "Sigue con el pago", intro: `Aquí tienes el enlace para terminar el alta de **${d.businessName}**. Ya elegiste tu plan: solo falta el pago.`, cta: "Ir al pago" }
+					: { title: "Tu comprobante está en revisión", intro: `Ya recibimos el comprobante de **${d.businessName}**. Te escribimos apenas lo validemos; desde este enlace puedes ver el estado o subir otro si te lo pedimos.`, cta: "Ver el estado" };
+		return {
+			audience: "prospect",
+			tone: "brand",
+			subject: `Tu enlace para seguir con ${d.businessName}`,
+			preheader: "Pediste retomar el alta desde la web.",
+			title: copy.title,
+			greeting: greet(d.name),
+			intro: copy.intro,
+			cta: { label: copy.cta, url: d.continueUrl, showUrl: true },
+			ctaFirst: true,
+			blocks: [],
+			reason: "Recibes este correo porque alguien pidió retomar el alta con esta dirección. Si no fuiste tú, ignóralo.",
 		};
 	},
 
@@ -674,6 +702,14 @@ export const EMAIL_CATALOG: EmailCatalogEntry[] = [
 		trigger: "Automático: si el alta queda sin terminar, al día siguiente y a los 3 días. Nunca más de dos.",
 		automatic: true,
 		sample: { name: SAMPLE_NAME, businessName: SAMPLE_BUSINESS, resumeUrl: "https://example.com/onboarding/pago?token=demo", step: "payment", attempt: 1, planName: "Pro" },
+	}),
+	entry({
+		kind: "onboarding_continue",
+		group: "Alta",
+		label: "Retomar el alta",
+		trigger: "Cuando alguien vuelve a registrarse con un correo que ya tiene un alta en curso, o pide reenviar el enlace.",
+		automatic: false,
+		sample: { name: SAMPLE_NAME, businessName: SAMPLE_BUSINESS, continueUrl: "https://example.com/onboarding/pago?token=demo", step: "payment" },
 	}),
 	entry({
 		kind: "onboarding_receipt_received",

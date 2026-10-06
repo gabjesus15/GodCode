@@ -7,6 +7,7 @@ import { sendEmail, teamInbox } from "@/lib/email/send";
 import { verifyRecaptcha } from "@/lib/onboarding/recaptcha";
 import { isRateLimited } from "@/lib/onboarding/rate-limit";
 import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
+import { sendOnboardingResumeLink } from "@/lib/onboarding/resume-application";
 import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 
 /** @service-role public
@@ -110,6 +111,17 @@ export async function POST(req: NextRequest) {
 
 		if (insertError) {
 			if (insertError.code === "23505") {
+				// Ya hay un alta con este correo: en vez de un error sin salida, se le manda el
+				// enlace para seguir donde quedó. La respuesta no dice en qué paso va.
+				const resumed = await sendOnboardingResumeLink(supabaseAdmin, emailRaw);
+				if (resumed.found && resumed.email) {
+					return NextResponse.json({
+						ok: true,
+						resumed: true,
+						emailSent: resumed.email.status === "sent" || resumed.email.status === "duplicate",
+						message: "Ya tenías un alta con este correo. Te enviamos un enlace para seguir donde quedaste.",
+					});
+				}
 				return NextResponse.json(
 					{ error: "Ya existe una solicitud con este email. Revisa tu bandeja o espera unos minutos." },
 					{ status: 409 }

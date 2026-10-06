@@ -14,6 +14,17 @@ beforeEach(() => sendTelegramMessage.mockClear());
 afterEach(() => vi.unstubAllEnvs());
 
 describe("formatOnboardingAlert", () => {
+	it("un alta trabada dice qué pasó y enlaza al panel", () => {
+		const text = formatOnboardingAlert(
+			{ kind: "needs_attention", businessName: "Juni", email: "n@x.com", problem: "PayPal cobró y no hay cuenta.", detail: "Orden 9" },
+			APP,
+		);
+		expect(text).toContain("<b>Revisar alta: Juni</b>");
+		expect(text).toContain("PayPal cobró y no hay cuenta.");
+		expect(text).toContain("Orden 9");
+		expect(text).toContain(`<a href="${APP}/dashboard">Abrir el panel</a>`);
+	});
+
 	it("la nueva solicitud dice quién es, en qué paso va y enlaza al panel", () => {
 		const text = formatOnboardingAlert(
 			{ kind: "application_created", businessName: "Junistreetfood", responsibleName: "Nelli", email: "nelli@example.com", phone: "+58 412", sector: "Comida rápida" },

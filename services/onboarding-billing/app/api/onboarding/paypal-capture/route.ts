@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { captureOnboardingPayPalOrder } from "@/lib/onboarding/paypal-onboarding";
+import { alertChargedOnboardingFailure, captureOnboardingPayPalOrder } from "@/lib/onboarding/paypal-onboarding";
 import { getAppUrl } from "@/lib/tenant/app-url";
 
 /** @service-role payment-provider-verified
@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
 			supabaseAdmin,
 			orderId,
 		});
+		if (!result.ok) await alertChargedOnboardingFailure(orderId, result, "el regreso de PayPal");
 		const target = result.ok
 			? `/checkout/success?ref=${encodeURIComponent(result.ref)}`
 			: `/checkout/success?ref=${encodeURIComponent(orderId)}&error=${encodeURIComponent(result.error)}`;

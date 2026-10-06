@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { captureOnboardingPayPalOrder } from "@/lib/onboarding/paypal-onboarding";
+import { alertChargedOnboardingFailure, captureOnboardingPayPalOrder } from "@/lib/onboarding/paypal-onboarding";
 
 /** @service-role payment-provider-verified
  *
@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
 		});
 
 		if (!result.ok) {
+			await alertChargedOnboardingFailure(orderId, result, "el botón de PayPal");
 			return NextResponse.json({ error: result.error }, { status: result.status });
 		}
 		return NextResponse.json({ ok: true, ref: result.ref });
