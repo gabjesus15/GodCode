@@ -50,14 +50,14 @@ describe("parseCriptoYaRate", () => {
 
 describe("fetchExchangeRate", () => {
 	it("consulta el euro oficial para bcv_eur", async () => {
-		const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ promedio: 977.2 }), { status: 200 }));
+		const fetchImpl = vi.fn(async (_url: string) => new Response(JSON.stringify({ promedio: 977.2 }), { status: 200 }));
 		const result = await fetchExchangeRate("bcv_eur", fetchImpl as unknown as typeof fetch);
 		expect(result?.rate).toBe(977.2);
 		expect(fetchImpl.mock.calls[0][0]).toBe("https://ve.dolarapi.com/v1/euros/oficial");
 	});
 
 	it("consulta el P2P de Binance para binance_usdt", async () => {
-		const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ ask: 996, bid: 994 }), { status: 200 }));
+		const fetchImpl = vi.fn(async (_url: string) => new Response(JSON.stringify({ ask: 996, bid: 994 }), { status: 200 }));
 		const result = await fetchExchangeRate("binance_usdt", fetchImpl as unknown as typeof fetch);
 		expect(result?.rate).toBe(995);
 		expect(String(fetchImpl.mock.calls[0][0])).toContain("binancep2p/USDT/VES");
