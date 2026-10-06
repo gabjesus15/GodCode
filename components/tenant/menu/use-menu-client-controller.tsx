@@ -41,6 +41,8 @@ import { useSizePickerStore } from "./product-size-store";
 import { useTenantMounted } from "@/lib/tenant/hooks/use-tenant-mounted";
 import { useLowEndDevice } from "@/lib/tenant/hooks/use-low-end-device";
 import { resolveEffectiveNavigationMode } from "@/lib/tenant/menu/resolve-effective-navigation-mode";
+import { isVenezuelaCountry } from "@/components/tenant/cart/utils/venezuela-payment-copy";
+import { useBranchExchangeRate } from "./use-branch-exchange-rate";
 
 export function useMenuClientController(props: MenuClientProps) {
 	const {
@@ -192,10 +194,14 @@ export function useMenuClientController(props: MenuClientProps) {
 		() => selectedBranch?.company_id ?? branches[0]?.company_id ?? null,
 		[selectedBranch?.company_id, branches],
 	);
-	const exchangeRate = useMemo(
+	const legacyExchangeRate = useMemo(
 		() => (selectedBranch ? normalizeDeliverySettings(selectedBranch.delivery_settings)?.exchangeRate ?? null : null),
 		[selectedBranch],
 	);
+	const exchangeRate = useBranchExchangeRate(selectedBranch?.id ?? null, {
+		enabled: isVenezuelaCountry(effectiveCountry),
+		legacyRate: legacyExchangeRate,
+	});
 
 	useMenuRealtime(isEmbeddedPreview ? null : companyId, isEmbeddedPreview ? null : selectedBranchId, router, {
 		deferMs: isLowEnd ? 8000 : undefined,
