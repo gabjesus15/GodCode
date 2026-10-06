@@ -1,7 +1,9 @@
 "use client";
 
 import { useSizePickerStore } from "./product-size-store";
-import { ProductDetailsSheet } from "./product-details-sheet";
+// Diferida, como el detalle de producto: con el import directo la hoja (y
+// framer-motion) entraban en la carga inicial del menú.
+import { LazyProductDetailsModal as ProductDetailsSheet } from "@/lib/tenant/lazy/tenant-dynamic";
 
 /**
  * "Agregar" en una tarjeta o en el panel en línea de un producto con tamaños o

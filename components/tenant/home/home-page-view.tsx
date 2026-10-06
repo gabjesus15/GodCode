@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { QRCodeSVG } from "qrcode.react";
 import { ArrowUpRight, Check, ChevronRight, Clock, Copy, Settings, Share, X } from "lucide-react";
 
 import { LANDING_BRAND_NAME } from "@/lib/landing/brand";
@@ -14,6 +13,10 @@ import { canOptimizeRemoteImage } from "@/lib/tenant/images/can-optimize-remote-
 import { brandCoverFill, type HomeContactChannel, type HomeViewLink, type HomeViewModel } from "@/lib/tenant/home-page/resolve-home-page";
 import { getTenantScopedPath } from "../utils/tenant-route";
 import { HomeLinkIconGlyph, HomeSocialGlyph } from "./home-icons";
+import { createClientDynamic } from "@/lib/lazy/create-client-dynamic";
+
+// Solo se pinta si el local activa el QR: diferido para no cargarlo siempre.
+const QRCodeSVG = createClientDynamic(() => import("qrcode.react").then((mod) => ({ default: mod.QRCodeSVG })));
 
 type HomePageViewProps = {
 	model: HomeViewModel;

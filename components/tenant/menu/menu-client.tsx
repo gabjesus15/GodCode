@@ -1,6 +1,8 @@
 "use client";
 
-import { CartProvider } from "../cart";
+// Ruta directa y no el barril `../cart`: el barril reexporta CartModal y
+// CartFloat, y los arrastraba a la carga inicial aunque se cargan diferidos.
+import { CartProvider } from "../cart/provider/cart-provider";
 import { MenuPerfProvider } from "@/lib/tenant/menu/menu-perf-context";
 import { MenuClientView } from "./menu-client-view";
 import type { MenuClientProps } from "./menu-types";
