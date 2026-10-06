@@ -309,7 +309,6 @@ export function FeatureSplit({ featureImages }: FeatureSplitProps) {
 									<PhoneFrame
 										src={featureImages[item.imageKey].src}
 										alt={featureImages[item.imageKey].alt}
-										priority={i === 0}
 										imageFit="cover"
 										showSystemChrome={false}
 										aspectRatio={item.aspectRatio}

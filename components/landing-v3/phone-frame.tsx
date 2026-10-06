@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { canOptimizeRemoteImage } from "@/lib/tenant/images/can-optimize-remote-image";
 import { cn } from "@/utils/cn";
 
 type PhoneFrameProps = {
@@ -85,7 +86,9 @@ export function PhoneFrame({
 							src={src}
 							alt={alt}
 							fill
-							unoptimized
+							// Optimizada (AVIF/WebP al tamaño de `sizes`) salvo que el origen no
+							// lo permita: la captura del hero era un PNG de 822 KB servido tal cual.
+							unoptimized={!canOptimizeRemoteImage(src)}
 							quality={92}
 							className={cn(
 								imageFit === "contain"
