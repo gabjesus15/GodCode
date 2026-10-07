@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { ArrowRight, Check } from "lucide-react";
 
 import type { FirstStep } from "@/lib/tenant/account-first-steps";
@@ -15,6 +16,7 @@ export function AccountFirstSteps({
 	storeUrl: string;
 	onNavigate: (tab: PortalTab) => void;
 }) {
+	const router = useRouter();
 	const done = steps.filter((s) => s.done).length;
 	if (steps.length === 0 || done === steps.length) return null;
 	const nextId = steps.find((s) => !s.done)?.id;
@@ -22,6 +24,10 @@ export function AccountFirstSteps({
 	const open = (step: FirstStep) => {
 		if (step.target === "store") {
 			if (storeUrl) window.open(storeUrl, "_blank", "noopener,noreferrer");
+			return;
+		}
+		if (step.target === "setup") {
+			router.push(`/cuenta/configurar${step.setupStep ? `?paso=${step.setupStep}` : ""}`);
 			return;
 		}
 		onNavigate(step.target);

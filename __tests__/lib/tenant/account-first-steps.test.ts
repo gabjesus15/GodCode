@@ -7,7 +7,7 @@ const base = { productCount: 0, sampleCount: 0, branches: [{}], logoUrl: null, o
 describe("buildFirstSteps", () => {
 	it("una tienda recién creada tiene todo pendiente y el menú primero", () => {
 		const steps = buildFirstSteps(base);
-		expect(steps.map((s) => s.id)).toEqual(["menu", "whatsapp", "hours", "logo", "first_order"]);
+		expect(steps.map((s) => s.id)).toEqual(["menu", "whatsapp", "hours", "logo", "design", "first_order"]);
 		expect(steps.every((s) => !s.done)).toBe(true);
 		expect(steps[0]).toMatchObject({ target: "menu", actionLabel: "Cargar mi menú" });
 	});
@@ -34,7 +34,15 @@ describe("buildFirstSteps", () => {
 			whatsapp: true,
 			hours: true,
 			logo: true,
+			design: false,
 			first_order: true,
 		});
+	});
+
+	it("el diseño queda listo al elegir plantilla o al terminar «Configura tu tienda», y abre el asistente", () => {
+		const design = (input: Partial<Parameters<typeof buildFirstSteps>[0]>) => buildFirstSteps({ ...base, ...input }).find((s) => s.id === "design")!;
+		expect(design({})).toMatchObject({ done: false, target: "setup", setupStep: "diseno" });
+		expect(design({ templateId: "sushi-night" }).done).toBe(true);
+		expect(design({ setupFinished: true }).done).toBe(true);
 	});
 });

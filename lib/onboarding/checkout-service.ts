@@ -1,7 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { resolveBusinessSector } from "@/lib/onboarding/business-sectors";
+import { templatesForSector } from "@/lib/store-theme/menu-templates";
 import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
 import { socialInputToUrl } from "@/lib/tenant/home-page/home-page-config";
+import { whatsappUrlFromPhone } from "@/lib/tenant/whatsapp-url";
 import { slugify as slugifyBase } from "../../utils/slugify";
 import { isSingleInstanceAddon, resolveAddonUnitPrice } from "../plans/addon-pricing";
 import { resolveAddonOfferForPlan, type PlanOfferSnapshot } from "../plans/plan-offer-rules";
@@ -263,22 +266,19 @@ export async function resolveAvailablePublicSlug(supabaseAdmin: SupabaseClient, 
 	}
 }
 
+export { whatsappUrlFromPhone };
+
 /**
- * WhatsApp escrito a mano → enlace `wa.me`. Sin código de país, se completa con el del
- * país del alta cuando es inequívoco (Chile: 9 dígitos que empiezan en 9; Venezuela: 11
- * que empiezan en 0, como 0412…).
+ * Tema con el que nace la tienda: el diseño recomendado para su tipo de negocio, con su
+ * nombre y el logo del alta. En «Configura tu tienda» el dueño lo ajusta y lo publica.
  */
-export function whatsappUrlFromPhone(raw: string | null | undefined, country: string | null | undefined): string | null {
-	const value = String(raw ?? "").trim();
-	if (!value) return null;
-	let digits = value.replace(/[^\d]/g, "");
-	if (!value.startsWith("+")) {
-		const c = String(country ?? "").trim().toLowerCase();
-		if ((c === "chile" || c === "cl") && digits.length === 9 && digits.startsWith("9")) digits = `56${digits}`;
-		else if ((c === "venezuela" || c === "ve") && digits.length === 11 && digits.startsWith("0")) digits = `58${digits.slice(1)}`;
-	}
-	if (digits.length < 8 || digits.length > 15) return null;
-	return `https://wa.me/${digits}`;
+export function initialStoreTheme(app: Pick<OnboardingApplication, "business_name" | "logo_url" | "sector">): Record<string, unknown> {
+	const template = templatesForSector(resolveBusinessSector(app.sector))[0];
+	return {
+		...(template ? { ...template.theme, templateId: template.id } : {}),
+		displayName: app.business_name,
+		logoUrl: app.logo_url ?? null,
+	};
 }
 
 export async function provisionCompanyFromApplication(
@@ -325,13 +325,7 @@ export async function provisionCompanyFromApplication(
 		plan_id: app.plan_id,
 		subscription_status: isManualPayment ? "payment_pending" : "trial",
 		custom_domain: app.custom_domain ?? null,
-		theme_config: {
-			displayName: app.business_name,
-			logoUrl: app.logo_url ?? null,
-			primaryColor: "#111827",
-			secondaryColor: "#111827",
-			panelAccess,
-		},
+		theme_config: { ...initialStoreTheme(app), panelAccess },
 	};
 
 	const { data: inserted, error: companyError } = await supabaseAdmin

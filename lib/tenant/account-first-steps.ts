@@ -1,4 +1,5 @@
 import { normalizeBusinessHours } from "./business-hours";
+import type { OwnerSetupStep } from "./owner-setup";
 
 /**
  * «Primeros pasos» del Resumen de /cuenta: lo que le falta a la tienda para vender,
@@ -6,15 +7,17 @@ import { normalizeBusinessHours } from "./business-hours";
  * tarjeta desaparece cuando están todos hechos.
  */
 
-export type FirstStepId = "menu" | "whatsapp" | "hours" | "logo" | "first_order";
+export type FirstStepId = "menu" | "whatsapp" | "hours" | "logo" | "design" | "first_order";
 
 export type FirstStep = {
 	id: FirstStepId;
 	title: string;
 	detail: string;
 	done: boolean;
-	/** Sección de /cuenta que lo resuelve; `store` abre la tienda pública. */
-	target: "menu" | "perfil" | "tienda" | "store";
+	/** Sección de /cuenta que lo resuelve; `store` abre la tienda pública y `setup`, «Configura tu tienda». */
+	target: "menu" | "perfil" | "tienda" | "store" | "setup";
+	/** Paso de «Configura tu tienda» en el que se abre (con `target: "setup"`). */
+	setupStep?: OwnerSetupStep;
 	actionLabel: string;
 };
 
@@ -24,6 +27,10 @@ export type FirstStepsInput = {
 	branches: Array<{ whatsapp_url?: string | null; business_hours?: unknown; schedule?: string | null }>;
 	logoUrl: string | null;
 	orderCount: number;
+	/** Plantilla de menú elegida (`theme_config.templateId`). */
+	templateId?: string | null;
+	/** Terminó «Configura tu tienda». */
+	setupFinished?: boolean;
 };
 
 export function buildFirstSteps(input: FirstStepsInput): FirstStep[] {
@@ -50,7 +57,8 @@ export function buildFirstSteps(input: FirstStepsInput): FirstStep[] {
 			title: "Agrega tu WhatsApp",
 			detail: "Para que tus clientes te escriban y te lleguen los pedidos.",
 			done: hasWhatsapp,
-			target: "perfil",
+			target: "setup",
+			setupStep: "local",
 			actionLabel: "Agregar WhatsApp",
 		},
 		{
@@ -58,7 +66,8 @@ export function buildFirstSteps(input: FirstStepsInput): FirstStep[] {
 			title: "Carga tu horario",
 			detail: "La tienda avisa sola cuando estás cerrado.",
 			done: hasHours,
-			target: "perfil",
+			target: "setup",
+			setupStep: "local",
 			actionLabel: "Cargar horario",
 		},
 		{
@@ -66,8 +75,18 @@ export function buildFirstSteps(input: FirstStepsInput): FirstStep[] {
 			title: "Sube tu logo",
 			detail: "Aparece en tu tienda y en tu página de inicio.",
 			done: Boolean(input.logoUrl?.trim()),
-			target: "tienda",
+			target: "setup",
+			setupStep: "marca",
 			actionLabel: "Subir logo",
+		},
+		{
+			id: "design",
+			title: "Elige cómo se ve tu menú",
+			detail: "Diseños pensados para tu tipo de negocio, con tu logo y tus colores.",
+			done: Boolean(input.templateId?.trim()) || input.setupFinished === true,
+			target: "setup",
+			setupStep: "diseno",
+			actionLabel: "Elegir diseño",
 		},
 		{
 			id: "first_order",

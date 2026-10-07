@@ -312,6 +312,8 @@ export type StoreThemeConfig = {
   brandNameColor?: string;
   /** Tipografía del menú público (id de STORE_THEME_FONTS). */
   fontFamily?: string;
+  /** Plantilla de menú elegida (id de MENU_TEMPLATES); vacío = ninguna. */
+  templateId?: string;
 };
 
 export type StoreThemeResponse = {

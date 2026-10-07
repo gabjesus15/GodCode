@@ -195,6 +195,7 @@ export function normalizeStoreThemeConfig(
     backgroundMode: normalizeBackgroundMode(value.backgroundMode ?? defaults.backgroundMode),
     brandNameColor: normalizeBrandNameColor(value.brandNameColor ?? defaults.brandNameColor),
     fontFamily: normalizeFontFamily(value.fontFamily ?? defaults.fontFamily),
+    templateId: String(value.templateId ?? defaults.templateId ?? "").slice(0, 64),
   };
 }
 

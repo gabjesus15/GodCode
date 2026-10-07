@@ -14,7 +14,7 @@ import { MenuImportReview, type EditableDraft, toEditableDraft } from "./menu-im
 import { resolveSampleSector, SAMPLE_MENU_SECTORS } from "@/lib/menu/sample-menus";
 import { getTenantMenuUrl } from "@/utils/tenant-url";
 
-type MenuStatus = Pick<MenuSetupSummary, "productCount" | "sampleCount" | "categoryCount">;
+export type MenuStatus = Pick<MenuSetupSummary, "productCount" | "sampleCount" | "categoryCount">;
 type Feedback = { tone: "success" | "danger" | "warning"; title: string; text: string } | null;
 
 type CreateResponse = {
@@ -51,12 +51,20 @@ function plural(n: number, one: string, many: string): string {
 }
 
 export type AccountMenuTabProps = {
-	company: CompanySnapshot;
+	company: Pick<CompanySnapshot, "tenantAdminUrl" | "publicSlug" | "customDomain">;
 	menuSetup: MenuSetupSummary;
+	/** Dentro de «Configura tu tienda»: sin el encabezado de la sección. */
+	embedded?: boolean;
+	/** Avisa cuántos productos hay después de cada cambio. */
+	onStatusChange?: (status: MenuStatus) => void;
 };
 
-export function AccountMenuTab({ company, menuSetup }: AccountMenuTabProps) {
-	const [status, setStatus] = useState<MenuStatus>(menuSetup);
+export function AccountMenuTab({ company, menuSetup, embedded = false, onStatusChange }: AccountMenuTabProps) {
+	const [status, setStatusState] = useState<MenuStatus>(menuSetup);
+	const setStatus = (next: MenuStatus) => {
+		setStatusState(next);
+		onStatusChange?.(next);
+	};
 	const [sector, setSector] = useState<string>(resolveSampleSector(menuSetup.sector));
 	const [busy, setBusy] = useState<"import" | "sample" | "create" | "delete" | null>(null);
 	const [feedback, setFeedback] = useState<Feedback>(null);
@@ -192,7 +200,7 @@ export function AccountMenuTab({ company, menuSetup }: AccountMenuTabProps) {
 
 	return (
 		<div className="space-y-5 sm:space-y-6">
-			<PageHeader
+			{!embedded && <PageHeader
 				title="Mi menú"
 				description="Carga tus productos de una vez. Después cambias fotos, precios y variantes cuando quieras en la Caja."
 				aside={
@@ -208,7 +216,7 @@ export function AccountMenuTab({ company, menuSetup }: AccountMenuTabProps) {
 						</a>
 					) : null
 				}
-			/>
+			/>}
 
 			<Card compact>
 				<div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[#6e6e73]">

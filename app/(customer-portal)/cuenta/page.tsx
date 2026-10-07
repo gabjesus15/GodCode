@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { CustomerAccountClient } from "./CustomerAccountClient";
 import { requireCustomerPortalSession } from "@/lib/tenant/customer-portal-session";
@@ -17,6 +18,7 @@ import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
 import { getMenuStatus } from "@/lib/menu/create-menu-items";
 import { isMenuImportEnabled } from "@/lib/menu/ai-menu-import";
 import { buildFirstSteps } from "@/lib/tenant/account-first-steps";
+import { readOwnerSetup, shouldAutoOpenOwnerSetup } from "@/lib/tenant/owner-setup";
 
 /** @service-role tenant-session
  *
@@ -102,7 +104,9 @@ export default async function CustomerAccountPage({
 }: {
   searchParams: Promise<{ tab?: string | string[] }>;
 }) {
-  const initialTab = parseInitialTab((await searchParams)?.tab);
+  const rawTab = (await searchParams)?.tab;
+  const initialTab = parseInitialTab(rawTab);
+  const hasTabParam = rawTab != null && rawTab !== "";
   const locale = await getCurrentLocale();
   const { membership } = await requireCustomerPortalSession();
   const companyId = membership.companyId;
@@ -126,7 +130,7 @@ export default async function CustomerAccountPage({
   const [{ data: company }, { data: branches }, { data: businessInfoRaw }, { data: payments }, { data: companyAddons }, { data: tickets }, { data: branchEntitlements }, { data: schedule }] = await Promise.all([
     supabaseAdmin
       .from("companies")
-      .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,theme_config,plan:plans(id,name,name_i18n,price,prices_by_continent,max_branches,max_users,features)")
+      .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,theme_config,created_at,plan:plans(id,name,name_i18n,price,prices_by_continent,max_branches,max_users,features)")
       .eq("id", companyId)
       .maybeSingle(),
     supabaseAdmin
@@ -173,6 +177,14 @@ export default async function CustomerAccountPage({
       .eq("status", "scheduled")
       .maybeSingle(),
   ]);
+
+  // Negocio recién creado que no terminó ni saltó «Configura tu tienda»: entra directo ahí.
+  // Con `?tab=` (los enlaces de los correos) se respeta la sección pedida.
+  const companyRow = company as { theme_config?: unknown; created_at?: string | null } | null;
+  if (!hasTabParam && shouldAutoOpenOwnerSetup({ themeConfig: companyRow?.theme_config, companyCreatedAt: companyRow?.created_at ?? null })) {
+    redirect("/cuenta/configurar");
+  }
+  const ownerSetupFinished = Boolean(readOwnerSetup(companyRow?.theme_config).finishedAt);
 
   const supportEmail = LANDING_SUPPORT_EMAIL;
   const rawCountry = (company as { country?: string | null } | null)?.country ?? null;
@@ -307,13 +319,15 @@ export default async function CustomerAccountPage({
 
   const initialBillingOptions = billingCtx ? buildBillingOptionsResponse(companyId, billingCtx) : null;
 
-  const themeConfig = (company as { theme_config?: { logoUrl?: unknown } | null } | null)?.theme_config;
+  const themeConfig = (company as { theme_config?: { logoUrl?: unknown; templateId?: unknown } | null } | null)?.theme_config;
   const firstSteps = buildFirstSteps({
     productCount: menuStatus.productCount,
     sampleCount: menuStatus.sampleCount,
     branches: (branches ?? []) as Array<{ whatsapp_url?: string | null; business_hours?: unknown; schedule?: string | null }>,
     logoUrl: typeof themeConfig?.logoUrl === "string" ? themeConfig.logoUrl : null,
     orderCount: orderCount ?? 0,
+    templateId: typeof themeConfig?.templateId === "string" ? themeConfig.templateId : null,
+    setupFinished: ownerSetupFinished,
   });
 
   const businessInfo: BusinessInfoSummary | null = businessInfoRaw
