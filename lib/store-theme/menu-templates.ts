@@ -1,6 +1,11 @@
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
 import { asThemeConfigObject } from "@/lib/store-theme/merge-theme-config";
-import { normalizeBrandNameColor, type ProductCardStyle, type StoreThemeFontId } from "@/lib/store-theme/theme-config";
+import {
+	normalizeBrandNameColor,
+	normalizeStoreThemeConfig,
+	type ProductCardStyle,
+	type StoreThemeFontId,
+} from "@/lib/store-theme/theme-config";
 
 /**
  * Plantillas del menú público: cada una es un look completo (tarjeta,
@@ -8,7 +13,7 @@ import { normalizeBrandNameColor, type ProductCardStyle, type StoreThemeFontId }
  *
  * Elegir una plantilla escribe sus campos en `companies.theme_config`, como si
  * el dueño los hubiera tocado uno a uno en «Tienda», y guarda además su id en
- * `theme_config.menuTemplate` para saber de dónde salió el look. Después el
+ * `theme_config.templateId` para saber de dónde salió el look. Después el
  * dueño puede seguir cambiando cualquier campo suelto.
  *
  * Los tipos de negocio son los del paso 2 del alta (`onboarding_applications.sector`),
@@ -20,7 +25,7 @@ export const MENU_TEMPLATE_IDS = ["horno", "brasa", "combo", "nori", "mantel", "
 export type MenuTemplateId = (typeof MENU_TEMPLATE_IDS)[number];
 
 /** Clave en theme_config donde queda la plantilla elegida. */
-export const MENU_TEMPLATE_THEME_KEY = "menuTemplate";
+export const MENU_TEMPLATE_THEME_KEY = "templateId";
 
 /** Campos del tema que fija una plantilla. Logo, nombre e imagen de fondo son del local y no se tocan. */
 export type MenuTemplateTheme = Required<
@@ -51,6 +56,8 @@ export type MenuTemplate = {
 	/** Tipos de negocio para los que es la recomendada (el primero que coincida gana). */
 	sectors: readonly string[];
 	theme: MenuTemplateTheme;
+	/** Captura del menú con la plantilla; si está, el asistente la muestra en vez de la miniatura dibujada. */
+	previewImageUrl?: string;
 };
 
 const BASE = {
@@ -241,36 +248,21 @@ export function orderMenuTemplatesForSector(sector: string | null | undefined): 
 /** Lo mismo que `orderMenuTemplatesForSector` (nombre que usa el alta). */
 export const templatesForSector = orderMenuTemplatesForSector;
 
-/** Plantilla por id, o undefined si el id no existe (sin caer en la de por defecto). */
-export function findMenuTemplate(id: unknown): MenuTemplate | undefined {
-	return isMenuTemplateId(id) ? BY_ID.get(id) : undefined;
+/** Plantilla por id, o null si el id no existe (sin caer en la de por defecto). */
+export function findMenuTemplate(id: unknown): MenuTemplate | null {
+	return isMenuTemplateId(id) ? (BY_ID.get(id) ?? null) : null;
 }
 
-type MenuTemplatePatch = MenuTemplateTheme & { menuTemplate: MenuTemplateId };
+type MenuTemplatePatch = MenuTemplateTheme & { templateId: MenuTemplateId };
 
 /**
- * Aplica la plantilla.
+ * Campos que hay que escribir en theme_config para aplicar la plantilla.
  *
- * - `applyMenuTemplate(id, { accentColor })` devuelve solo los campos que hay
- *   que escribir en theme_config. `accentColor` es el color de marca que ya
- *   tiene el local (por ejemplo, sacado del logo): si es un hex válido
- *   sustituye al acento de la plantilla.
- * - `applyMenuTemplate(theme, id)` devuelve el tema entero con la plantilla
- *   encima; logo, nombre e imagen de fondo del local se quedan como estaban.
+ * `accentColor`: color de marca que ya tiene el local (por ejemplo, sacado del
+ * logo). Si es un hex válido sustituye al acento de la plantilla, para que
+ * elegir un diseño no le cambie el color de su marca.
  */
-export function applyMenuTemplate(id: MenuTemplateId, options?: { accentColor?: string | null }): MenuTemplatePatch;
-export function applyMenuTemplate<T extends Partial<StoreThemeConfig>>(theme: T, id: MenuTemplateId): T & MenuTemplatePatch;
-export function applyMenuTemplate(
-	first: MenuTemplateId | Partial<StoreThemeConfig>,
-	second?: MenuTemplateId | { accentColor?: string | null },
-): MenuTemplatePatch | (Partial<StoreThemeConfig> & MenuTemplatePatch) {
-	if (typeof first === "object" && first !== null) {
-		return { ...first, ...buildMenuTemplatePatch(second as MenuTemplateId) };
-	}
-	return buildMenuTemplatePatch(first, (second as { accentColor?: string | null } | undefined) ?? {});
-}
-
-function buildMenuTemplatePatch(id: MenuTemplateId, options: { accentColor?: string | null } = {}): MenuTemplatePatch {
+export function menuTemplatePatch(id: MenuTemplateId, options: { accentColor?: string | null } = {}): MenuTemplatePatch {
 	const template = getMenuTemplate(id);
 	const theme: MenuTemplateTheme = { ...template.theme };
 	const accent = normalizeBrandNameColor(options.accentColor ?? "");
@@ -280,6 +272,22 @@ function buildMenuTemplatePatch(id: MenuTemplateId, options: { accentColor?: str
 		if (template.theme.priceColor === template.theme.primaryColor) theme.priceColor = accent;
 	}
 	return { ...theme, [MENU_TEMPLATE_THEME_KEY]: template.id } as MenuTemplatePatch;
+}
+
+/**
+ * El tema entero con el aspecto de la plantilla; logo, nombre e imagen de
+ * fondo quedan como estaban. Con un id que no existe devuelve el mismo tema.
+ */
+export function applyMenuTemplate(theme: StoreThemeConfig, templateId: string): StoreThemeConfig {
+	const template = findMenuTemplate(templateId);
+	if (!template) return theme;
+	return normalizeStoreThemeConfig({
+		...theme,
+		...menuTemplatePatch(template.id),
+		logoUrl: theme.logoUrl,
+		displayName: theme.displayName,
+		backgroundImageUrl: theme.backgroundImageUrl,
+	});
 }
 
 /** Plantilla guardada en theme_config, o null si el local nunca eligió una. */

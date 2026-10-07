@@ -298,7 +298,7 @@ export type StoreThemeConfig = {
   /** Tipografía del menú público (id de STORE_THEME_FONTS). */
   fontFamily?: string;
   /** Plantilla de la que salió el look (id de MENU_TEMPLATES); vacío si nunca eligió una. */
-  menuTemplate?: string;
+  templateId?: string;
 };
 
 export type StoreThemeResponse = {

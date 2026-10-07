@@ -12,7 +12,7 @@ import {
   validateStoreThemeAssetFile,
 } from "@/lib/store-theme/store-theme-utils";
 import { STORE_THEME_FIELD_LABELS } from "../shared/customer-account-store-theme-constants";
-import { applyMenuTemplate, getMenuTemplate, type MenuTemplateId } from "@/lib/store-theme/menu-templates";
+import { getMenuTemplate, menuTemplatePatch, type MenuTemplateId } from "@/lib/store-theme/menu-templates";
 
 export type UseStoreThemeReturn = {
   storeThemeLoading:        boolean;
@@ -288,7 +288,7 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
     if (!storeThemeDraft) return;
     const template = getMenuTemplate(id);
     setStoreThemeError(null);
-    setStoreThemeDraft((prev) => (prev ? { ...prev, ...applyMenuTemplate(template.id) } : prev));
+    setStoreThemeDraft((prev) => (prev ? { ...prev, ...menuTemplatePatch(template.id) } : prev));
     setStoreThemeHasUnpublished(true);
     setStoreThemeOk(`Plantilla aplicada: ${template.name}. Revisa la vista previa y publica cuando te guste.`);
   };

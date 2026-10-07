@@ -4,11 +4,13 @@ import {
 	MENU_TEMPLATES,
 	applyMenuTemplate,
 	findMenuTemplate,
+	menuTemplatePatch,
 	orderMenuTemplatesForSector,
 	readMenuTemplateId,
 	recommendMenuTemplate,
 	templatesForSector,
 } from "@/lib/store-theme/menu-templates";
+import { DEFAULT_STORE_THEME } from "@/components/customer-portal/shared/customer-account-store-theme-constants";
 import { normalizeStoreThemeConfig, PRODUCT_CARD_STYLES, STORE_THEME_FONTS } from "@/lib/store-theme/theme-config";
 
 /** Los tipos de negocio del paso 2 del alta (OnboardingStep2Form, campo `sector`). */
@@ -43,24 +45,24 @@ describe("menu templates", () => {
 	});
 
 	it("aplicar una plantilla deja su id y sobrevive a la normalización del tema", () => {
-		const patch = applyMenuTemplate("horno");
+		const patch = menuTemplatePatch("horno");
 		const theme = normalizeStoreThemeConfig({ displayName: "Rica Pizza", logoUrl: "logo.png", ...patch });
 		expect(theme.productCardStyle).toBe("layout-cartel");
 		expect(theme.fontFamily).toBe("anton");
-		expect(theme.menuTemplate).toBe("horno");
+		expect(theme.templateId).toBe("horno");
 		expect(theme.logoUrl).toBe("logo.png");
 		expect(readMenuTemplateId(theme)).toBe("horno");
 	});
 
 	it("respeta el color de marca del local si se lo pasan", () => {
-		const patch = applyMenuTemplate("mantel", { accentColor: "#123ABC" });
+		const patch = menuTemplatePatch("mantel", { accentColor: "#123ABC" });
 		expect(patch.primaryColor).toBe("#123abc");
 		expect(patch.priceColor).toBe("#123abc");
-		expect(applyMenuTemplate("mantel", { accentColor: "rojo" }).primaryColor).toBe("#1f6f4a");
+		expect(menuTemplatePatch("mantel", { accentColor: "rojo" }).primaryColor).toBe("#1f6f4a");
 	});
 
 	it("no lee como plantilla un id desconocido", () => {
-		expect(readMenuTemplateId({ menuTemplate: "nope" })).toBeNull();
+		expect(readMenuTemplateId({ templateId: "nope" })).toBeNull();
 		expect(readMenuTemplateId(null)).toBeNull();
 	});
 });
@@ -69,18 +71,23 @@ describe("contrato con el alta", () => {
 	it("templatesForSector y findMenuTemplate", () => {
 		expect(templatesForSector("Sushi")[0].id).toBe("nori");
 		expect(findMenuTemplate("brasa")?.name).toBe("Brasa");
-		expect(findMenuTemplate("nada")).toBeUndefined();
+		expect(findMenuTemplate("nada")).toBeNull();
 	});
 
 	it("applyMenuTemplate(theme, id) conserva logo, nombre e imagen de fondo", () => {
-		const out = applyMenuTemplate(
-			{ logoUrl: "https://x/logo.png", displayName: "Mi local", backgroundImageUrl: "https://x/bg.jpg", primaryColor: "#000000" },
-			"horno",
-		);
+		const theme = {
+			...DEFAULT_STORE_THEME,
+			logoUrl: "https://x/logo.png",
+			displayName: "Mi local",
+			backgroundImageUrl: "https://x/bg.jpg",
+			primaryColor: "#000000",
+		};
+		const out = applyMenuTemplate(theme, "horno");
 		expect(out.logoUrl).toBe("https://x/logo.png");
 		expect(out.displayName).toBe("Mi local");
 		expect(out.backgroundImageUrl).toBe("https://x/bg.jpg");
 		expect(out.primaryColor).toBe("#d62828");
-		expect(out.menuTemplate).toBe("horno");
+		expect(out.templateId).toBe("horno");
+		expect(applyMenuTemplate(theme, "no-existe")).toBe(theme);
 	});
 });

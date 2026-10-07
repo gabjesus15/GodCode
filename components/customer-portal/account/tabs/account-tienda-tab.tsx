@@ -312,7 +312,7 @@ export function AccountTiendaTab({
               </p>
               <MenuTemplatePicker
                 sector={storeBusinessSector}
-                value={storeThemeDraft?.menuTemplate || null}
+                value={storeThemeDraft?.templateId || null}
                 onChange={applyStoreThemeTemplate}
                 disabled={busy || !storeThemeDraft}
               />

@@ -169,11 +169,6 @@ export function normalizeBackgroundBrightness(value: unknown): number | null {
 }
 
 /** Id de plantilla tal cual (lo valida lib/store-theme/menu-templates); cualquier otra cosa → "". */
-function normalizeMenuTemplateRef(value: unknown): string {
-  const raw = String(value ?? "").trim().toLowerCase();
-  return /^[a-z][a-z0-9-]{0,31}$/.test(raw) ? raw : "";
-}
-
 export function normalizeStoreThemeConfig(
   input: unknown,
   fallbackName = "",
@@ -205,7 +200,7 @@ export function normalizeStoreThemeConfig(
     backgroundMode: normalizeBackgroundMode(value.backgroundMode ?? defaults.backgroundMode),
     brandNameColor: normalizeBrandNameColor(value.brandNameColor ?? defaults.brandNameColor),
     fontFamily: normalizeFontFamily(value.fontFamily ?? defaults.fontFamily),
-    menuTemplate: normalizeMenuTemplateRef(value.menuTemplate ?? defaults.menuTemplate),
+    templateId: String(value.templateId ?? defaults.templateId ?? "").slice(0, 64),
   };
 }
 

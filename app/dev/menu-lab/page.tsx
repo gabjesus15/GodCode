@@ -25,7 +25,7 @@ import {
 	resolveTenantSurfaceSchemeMode,
 } from "@/lib/store-theme/surface-theme";
 
-import { applyMenuTemplate, getMenuTemplate, recommendMenuTemplate } from "@/lib/store-theme/menu-templates";
+import { getMenuTemplate, menuTemplatePatch, recommendMenuTemplate } from "@/lib/store-theme/menu-templates";
 
 import { LAB_MENUS, labBranch } from "./fixtures";
 
@@ -58,7 +58,7 @@ export default async function MenuLabPage({ searchParams }: { searchParams: Prom
 	const raw: Record<string, unknown> = {
 		displayName: menu.name,
 		backgroundMode: "solid",
-		...(templateId ? applyMenuTemplate(getMenuTemplate(templateId).id) : {}),
+		...(templateId ? menuTemplatePatch(getMenuTemplate(templateId).id) : {}),
 	};
 	const keys: Record<string, string> = {
 		card: "productCardStyle",

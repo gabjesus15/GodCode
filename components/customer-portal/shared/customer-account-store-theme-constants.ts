@@ -28,7 +28,7 @@ export const STORE_THEME_FIELD_LABELS: Record<keyof StoreThemeConfig, string> = 
   backgroundMode: "Fondo",
   brandNameColor: "Color del nombre",
   fontFamily: "Tipografía del nombre",
-  menuTemplate: "Plantilla",
+  templateId: "Plantilla",
 };
 
 export const DEFAULT_STORE_THEME: StoreThemeConfig = {
@@ -50,7 +50,7 @@ export const DEFAULT_STORE_THEME: StoreThemeConfig = {
   backgroundMode: "image",
   brandNameColor: "",
   fontFamily: "montserrat",
-  menuTemplate: "",
+  templateId: "",
 };
 
 export const STORE_THEME_COLOR_HELPERS: Record<
