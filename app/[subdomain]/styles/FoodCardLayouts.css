@@ -92,9 +92,7 @@
 .fcard-photo {
 	position: relative;
 	overflow: hidden;
-	background:
-		radial-gradient(70% 60% at 50% 45%, var(--menu-media-glow), transparent 70%),
-		linear-gradient(180deg, var(--menu-media-top), var(--menu-media-bottom));
+	background: var(--menu-surface-2);
 }
 .fcard-photo .product-card-media {
 	position: absolute;
@@ -114,10 +112,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background:
-		radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--menu-accent) 30%, transparent), transparent 65%),
-		radial-gradient(90% 90% at 100% 100%, color-mix(in srgb, var(--menu-accent) 20%, transparent), transparent 65%),
-		color-mix(in srgb, var(--menu-accent) 8%, var(--menu-surface-2));
+	background: color-mix(in srgb, var(--menu-accent) 7%, var(--menu-surface-2));
 }
 .fcard-photo__initials {
 	font-family: var(--tenant-font, inherit);
@@ -125,7 +120,7 @@
 	font-size: clamp(1.6rem, 9cqi, 3rem);
 	line-height: 1;
 	letter-spacing: 0.02em;
-	color: color-mix(in srgb, var(--menu-accent-ink) 70%, transparent);
+	color: color-mix(in srgb, var(--menu-accent-ink) 55%, transparent);
 	user-select: none;
 }
 
@@ -177,7 +172,7 @@
 	border-radius: 999px;
 	background: var(--menu-add-bg);
 	color: var(--menu-add-fg);
-	box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--menu-accent) 70%, transparent);
+	box-shadow: none;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -517,9 +512,7 @@
 }
 /* Sin foto: el cartel es tipográfico, sobre el color del local. */
 .product-layout-cartel.fcard--no-photo {
-	background:
-		radial-gradient(120% 80% at 100% 0%, rgba(255, 255, 255, 0.16), transparent 55%),
-		var(--menu-accent);
+	background: var(--menu-accent);
 }
 .product-layout-cartel.fcard--no-photo .cartel-photo {
 	background: transparent;
@@ -537,7 +530,7 @@
 .product-layout-cartel.fcard--no-photo .fcard-add.tenant-ui-btn {
 	background: #fff;
 	color: #111;
-	box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.5);
+	box-shadow: none;
 }
 
 /* ---------- Nori ---------- */

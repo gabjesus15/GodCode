@@ -37,20 +37,6 @@
 	pointer-events: none;
 }
 
-/* Sin foto: el color del local con un brillo suave, nunca una foto de stock. */
-.store-cover__media--plain {
-	background:
-		radial-gradient(120% 140% at 85% -10%, color-mix(in srgb, var(--menu-accent) 70%, #fff 0%) 0%, transparent 55%),
-		radial-gradient(90% 120% at 0% 110%, color-mix(in srgb, var(--menu-accent) 55%, #000) 0%, transparent 60%),
-		color-mix(in srgb, var(--menu-accent) 80%, #000);
-}
-
-.store-cover__media--plain::after {
-	background:
-		repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 14px),
-		linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.25) 100%);
-}
-
 /* El logo sube sobre el borde de la foto; el texto empieza justo debajo de
    ella, nunca encima (sobre la foto un nombre claro u oscuro no se leería). */
 .store-cover {
@@ -165,8 +151,16 @@
 	white-space: nowrap;
 }
 
-/* Sin foto la portada es solo color: en pantallas anchas una franja más baja,
-   para que no se vea un bloque vacío encima de la carta. */
-.store-cover__media--plain {
-	height: clamp(120px, 22vw, 180px);
+/* Sin foto: solo logo, nombre y estado, sin bloque de relleno encima. */
+.store-cover--plain .store-cover__body {
+	margin-top: 0;
+	align-items: center;
+}
+
+.store-cover--plain .store-cover__info {
+	padding-top: 0;
+}
+
+.store-cover--plain {
+	margin-bottom: clamp(10px, 2.5vw, 18px);
 }

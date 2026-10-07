@@ -49,9 +49,11 @@ export function MenuStoreCover({
 	const place = [branch?.name, branch?.address].filter(Boolean).join(" · ");
 
 	return (
-		<section className="store-cover" aria-label={displayName}>
-			<div className={`store-cover__media${coverImageUrl ? "" : " store-cover__media--plain"}`}>
-				{coverImageUrl ? (
+		<section className={`store-cover${coverImageUrl ? "" : " store-cover--plain"}`} aria-label={displayName}>
+			{/* Sin foto no se dibuja un bloque de color de relleno: el logo y el nombre
+			    bastan, como en la ficha de un local en un mapa. */}
+			{coverImageUrl ? (
+				<div className="store-cover__media">
 					<Image
 						src={coverImageUrl}
 						alt=""
@@ -61,8 +63,8 @@ export function MenuStoreCover({
 						className="store-cover__img"
 						unoptimized={shouldUnoptimizeImageSrc(coverImageUrl)}
 					/>
-				) : null}
-			</div>
+				</div>
+			) : null}
 			<div className="store-cover__body">
 				<div className="store-cover__logo">
 					{logoUrl && !logoError ? (

@@ -217,9 +217,9 @@
        llevan las tarjetas, que reparten ese trabajo de una en una. */
 }
 
-/* Título de sección con una marca vertical en el color del local. La marca
-   es lo único de color: el título sigue en tinta para que no compita con las
-   tarjetas. */
+/* Título de sección en tinta, sin adornos: la barrita de color delante es
+   el gesto de plantilla genérica que más se repite. Lo que distingue al
+   local es su letra (ver FoodCardLayouts.css), no un adorno. */
 .category-title {
     position: relative;
     display: flex;
@@ -227,7 +227,7 @@
     gap: 10px;
     min-width: 0;
     margin: 0;
-    padding-left: 14px;
+    padding-left: 0;
     font-size: clamp(1.3rem, 1.15rem + 0.5vw, 1.55rem);
     font-weight: 700;
     letter-spacing: -0.02em;
@@ -237,7 +237,7 @@
 }
 
 .category-title::before {
-    content: "";
+    content: none;
     position: absolute;
     left: 0;
     top: 0.15em;
@@ -335,7 +335,7 @@ section {
     .category-title {
         font-size: 1.2rem;
         gap: 8px;
-        padding-left: 12px;
+        padding-left: 0;
     }
 
     .category-title::before {
