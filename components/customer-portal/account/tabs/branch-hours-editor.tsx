@@ -33,6 +33,8 @@ type BranchHoursEditorProps = {
   /** Texto libre de antes, cuando todavía no hay horario por días guardado. */
   legacyText: string | null;
   legacyParsed: boolean;
+  /** «Configura tu tienda» muestra su propio interruptor de pausa. */
+  showPauseToggle?: boolean;
 };
 
 export function BranchHoursEditor({
@@ -44,6 +46,7 @@ export function BranchHoursEditor({
   timeZone,
   legacyText,
   legacyParsed,
+  showPauseToggle = true,
 }: BranchHoursEditorProps) {
   const firstOpenDay = WEEKDAYS_FROM_MONDAY.find((day) => week[day].length > 0) ?? null;
 
@@ -88,6 +91,7 @@ export function BranchHoursEditor({
 
   return (
     <div className="space-y-4">
+      {showPauseToggle ? (
       <label className="flex cursor-pointer select-none items-start gap-3 rounded-xl border border-[#e5e5ea] bg-[#fbfbfd] p-4">
         <input
           type="checkbox"
@@ -104,6 +108,7 @@ export function BranchHoursEditor({
           </span>
         </span>
       </label>
+      ) : null}
 
       {legacyText ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs leading-relaxed text-amber-900">

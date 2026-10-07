@@ -1,89 +1,133 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, Smartphone, X } from "lucide-react";
-
-import { AccountMenuTab, type MenuStatus } from "../account/tabs/account-menu-tab";
-import type { StoreThemeConfig } from "../shared/customer-account-types";
-import { Alert } from "../ui/Alert";
-import { Button } from "../ui/Button";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
+import { ArrowLeft, ArrowRight, Check, ChevronLeft, Rocket, Smartphone, X } from "lucide-react";
+import { Drawer } from "vaul";
 
 import type { OwnerSetupInitial } from "./owner-setup-types";
 import { SetupPreview } from "./setup-preview";
 import { BrandStep } from "./steps/brand-step";
-import { DesignStep } from "./steps/design-step";
-import { LocalStep, type LocalForm } from "./steps/local-step";
+import { DesignStep, SECTOR_NOUN } from "./steps/design-step";
+import { LocalStep } from "./steps/local-step";
+import { MenuStep } from "./steps/menu-step";
 import { PublishStep } from "./steps/publish-step";
+import { SetupButton } from "./ui/setup-button";
+import { SetupNotice } from "./ui/setup-notice";
+import { SetupProgress, SetupProgressCompact } from "./ui/setup-progress";
+import { useMediaQuery } from "./ui/use-media-query";
 
-import { applyMenuTemplate, findMenuTemplate } from "@/lib/store-theme/menu-templates";
-import { diffStoreTheme, validateStoreThemeAssetFile } from "@/lib/store-theme/store-theme-utils";
-import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
-import { businessHoursWeekFromScheduleText, hasAnyBusinessHours } from "@/lib/tenant/business-hours";
-import { socialInputToUrl } from "@/lib/tenant/home-page/home-page-config";
+import { LandingBrandMark } from "@/components/landing-v3/landing-brand-mark";
+import { setupCssVariables, SETUP_TOKENS } from "@/lib/owner-setup/design-tokens";
+import { OWNER_SETUP_STEP_META, type OwnerSetupStep } from "@/lib/owner-setup/steps";
+import { useOwnerSetup } from "@/lib/owner-setup/use-owner-setup";
+import { findMenuTemplate } from "@/lib/store-theme/menu-templates";
+import { validateStoreThemeAssetFile } from "@/lib/store-theme/store-theme-utils";
 import { brandButtonColors } from "@/lib/tenant/logo-colors";
-import { OWNER_SETUP_STEPS, type OwnerSetupStep } from "@/lib/tenant/owner-setup";
-import { phoneFromWhatsappUrl, whatsappUrlFromPhone } from "@/lib/tenant/whatsapp-url";
 
-const STEP_LABEL: Record<OwnerSetupStep, string> = {
-	marca: "Tu marca",
-	diseno: "Diseño",
-	menu: "Tu menú",
-	local: "Datos del local",
-	publicar: "Publicar",
-};
+const ROOT_STYLE = setupCssVariables() as CSSProperties;
+const EASE = SETUP_TOKENS.motion.ease;
 
-function instagramHandle(url: string | null): string {
-	const match = /instagram\.com\/([A-Za-z0-9._]+)/i.exec(url ?? "");
-	return match ? `@${match[1]}` : (url ?? "");
+/** Fondo del escenario del teléfono: un halo suave del color de la marca sobre gris. */
+function stageBackground(accent: string): string {
+	return [
+		`radial-gradient(55% 42% at 50% 46%, color-mix(in srgb, ${accent} 24%, transparent) 0%, transparent 72%)`,
+		"radial-gradient(circle at 1px 1px, rgba(17,17,19,0.07) 1px, transparent 0) 0 0 / 22px 22px",
+		"linear-gradient(180deg, #f3f3f6 0%, #e9e9ef 100%)",
+	].join(", ");
 }
 
-function initialLocalForm(initial: OwnerSetupInitial): LocalForm {
-	const branch = initial.branch;
-	const stored = branch?.businessHours ?? null;
-	const hasStored = hasAnyBusinessHours(stored);
-	const legacyWeek = hasStored ? null : businessHoursWeekFromScheduleText(branch?.schedule);
-	return {
-		whatsapp: phoneFromWhatsappUrl(branch?.whatsappUrl),
-		instagram: instagramHandle(branch?.instagramUrl ?? null),
-		address: branch?.address ?? "",
-		hoursWeek: hasStored ? stored!.week : legacyWeek!,
-		hoursEnabled: hasStored ? stored!.enabled : true,
-		hoursStored: hasStored,
-		legacySchedule: branch?.schedule?.trim() || null,
-		legacyParsed: legacyWeek != null && Object.values(legacyWeek).some((intervals) => intervals.length > 0),
-		timeZone: stored?.timezone ?? null,
-	};
+function LivePill() {
+	return (
+		<span className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3.5 py-1.5 text-[12.5px] font-medium text-(--su-ink2) shadow-[0_1px_2px_rgba(17,17,19,0.06)] ring-1 ring-black/5 backdrop-blur">
+			<span className="relative flex h-2 w-2" aria-hidden>
+				<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60 motion-reduce:hidden" />
+				<span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+			</span>
+			En vivo · así lo ven tus clientes
+		</span>
+	);
 }
 
-type ThemeSaveResponse = { error?: string; draft?: { theme?: StoreThemeConfig }; signedUrl?: string | null };
+function SaveIndicator({ saving, savedAt }: { saving: boolean; savedAt: number | null }) {
+	return (
+		<AnimatePresence mode="wait" initial={false}>
+			{saving ? (
+				<motion.span key="saving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 text-[12.5px] text-(--su-muted)" role="status">
+					<span className="h-3 w-3 animate-spin rounded-full border-[1.5px] border-current border-t-transparent" aria-hidden />
+					Guardando…
+				</motion.span>
+			) : savedAt ? (
+				<motion.span key="saved" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-1.5 text-[12.5px] text-(--su-subtle)" role="status">
+					<Check className="h-3.5 w-3.5" aria-hidden />
+					Guardado
+				</motion.span>
+			) : null}
+		</AnimatePresence>
+	);
+}
+
+function StepHeader({ eyebrow, title, description, celebrate }: { eyebrow: string; title: string; description: string; celebrate: boolean }) {
+	return (
+		<div className="mb-8 sm:mb-10">
+			{celebrate ? (
+				<motion.span
+					initial={{ scale: 0.4, opacity: 0 }}
+					animate={{ scale: 1, opacity: 1 }}
+					transition={{ type: "spring", stiffness: 420, damping: 20 }}
+					className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-(--su-success) text-white shadow-[0_10px_24px_-8px_rgba(22,163,74,0.6)]"
+				>
+					<Check className="h-7 w-7" strokeWidth={3} aria-hidden />
+				</motion.span>
+			) : (
+				<p className="mb-2.5 hidden text-[12.5px] font-semibold uppercase tracking-[0.09em] text-(--su-accent) lg:block">{eyebrow}</p>
+			)}
+			<h1 className="text-balance text-[28px] font-semibold leading-[1.12] tracking-[-0.026em] text-(--su-ink) sm:text-[34px]">{title}</h1>
+			<p className="mt-3 max-w-[54ch] text-pretty text-[15px] leading-relaxed text-(--su-muted) sm:text-base">{description}</p>
+		</div>
+	);
+}
+
+function PreviewSheet({ open, onOpenChange, background, children }: { open: boolean; onOpenChange: (open: boolean) => void; background: string; children: ReactNode }) {
+	return (
+		<Drawer.Root open={open} onOpenChange={onOpenChange} handleOnly>
+			<Drawer.Portal>
+				<Drawer.Overlay className="fixed inset-0 z-[150] bg-black/45 backdrop-blur-[2px]" />
+				<Drawer.Content
+					className="fixed inset-x-0 bottom-0 z-[151] flex h-[94dvh] flex-col rounded-t-[28px] outline-none"
+					style={{ ...ROOT_STYLE, background }}
+				>
+					<Drawer.Handle className="!mt-2.5 !h-1.5 !w-10 !rounded-full !bg-black/20" />
+					<div className="flex items-center justify-between px-5 pt-3">
+						<Drawer.Title className="text-[15px] font-semibold text-(--su-ink)">Así se ve tu menú</Drawer.Title>
+						<Drawer.Close asChild>
+							<SetupButton variant="secondary" size="sm">
+								Listo
+							</SetupButton>
+						</Drawer.Close>
+					</div>
+					<Drawer.Description className="sr-only">Vista previa en vivo de tu menú, con los cambios que vas haciendo.</Drawer.Description>
+					<div className="min-h-0 flex-1 px-6 pb-[max(env(safe-area-inset-bottom),20px)] pt-4">{children}</div>
+				</Drawer.Content>
+			</Drawer.Portal>
+		</Drawer.Root>
+	);
+}
 
 export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetupInitial; initialStep: OwnerSetupStep }) {
 	const router = useRouter();
-	const [step, setStep] = useState<OwnerSetupStep>(initialStep);
-	const [theme, setTheme] = useState<StoreThemeConfig>(initial.theme);
-	const [displayName, setDisplayName] = useState(initial.theme.displayName || initial.company.name);
-	const [pickedTemplateId, setPickedTemplateId] = useState<string | null>(null);
-	// Si ya había elegido un color de marca (el botón no es el de la plantilla), se conserva al
-	// cambiar de diseño; si no, el paso 1 propone el del logo.
-	const [brandColor, setBrandColor] = useState<string | null | undefined>(() => {
-		const template = findMenuTemplate(initial.theme.templateId);
-		return template && template.theme.primaryColor !== initial.theme.primaryColor ? initial.theme.primaryColor : undefined;
-	});
-	const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(initial.logoPreviewUrl);
+	const exit = useCallback(() => router.push("/cuenta"), [router]);
+	const setup = useOwnerSetup({ initial, initialStep, onExit: exit });
+	const isDesktop = useMediaQuery("(min-width: 1024px)");
+	const reduceMotion = useReducedMotion();
+	const [previewOpen, setPreviewOpen] = useState(false);
 	// El archivo recién elegido, solo para leer sus colores; lo que se muestra es el logo ya subido.
 	const [logoColorUrl, setLogoColorUrl] = useState<string | null>(null);
 	const logoBlobUrl = useRef<string | null>(null);
-	const [uploading, setUploading] = useState(false);
-	const [menuStatus, setMenuStatus] = useState<MenuStatus>(initial.menuSetup);
-	const [reloadKey, setReloadKey] = useState(0);
-	const [local, setLocal] = useState<LocalForm>(() => initialLocalForm(initial));
-	const [localDirty, setLocalDirty] = useState(false);
-	const [whatsappError, setWhatsappError] = useState<string | null>(null);
-	const [busy, setBusy] = useState<"save" | "skip" | "publish" | "finish" | null>(null);
-	const [error, setError] = useState<string | null>(null);
-	const [published, setPublished] = useState(false);
-	const [previewOpen, setPreviewOpen] = useState(false);
+	const scrollPane = useRef<HTMLDivElement>(null);
+
+	const { step, stepIndex, steps, published, busy, effectiveTheme, menuStatus } = setup;
 
 	useEffect(
 		() => () => {
@@ -92,384 +136,260 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 		[],
 	);
 
-	/** Lo que se ve: el borrador con la plantilla elegida y el color de la marca encima. */
-	const effectiveTheme = useMemo(() => {
-		let next: StoreThemeConfig = { ...theme, displayName: displayName.trim() || theme.displayName };
-		if (pickedTemplateId) next = applyMenuTemplate(next, pickedTemplateId);
-		if (brandColor) {
-			const buttons = brandButtonColors(brandColor);
-			if (buttons) next = { ...next, ...buttons };
-		} else if (brandColor === null) {
-			const template = findMenuTemplate(next.templateId);
-			if (template?.theme.primaryColor) {
-				next = { ...next, primaryColor: template.theme.primaryColor, hoverColor: template.theme.hoverColor ?? next.hoverColor };
-			}
-		}
-		return next;
-	}, [theme, displayName, pickedTemplateId, brandColor]);
+	// Cada paso empieza arriba (en escritorio se desplaza el panel; en el teléfono, la página).
+	useEffect(() => {
+		scrollPane.current?.scrollTo({ top: 0 });
+		window.scrollTo({ top: 0 });
+	}, [step]);
 
-	const previewTheme = useMemo(
-		() => ({ ...effectiveTheme, logoUrl: logoPreviewUrl || effectiveTheme.logoUrl }),
-		[effectiveTheme, logoPreviewUrl],
-	);
-
-	const stepIndex = OWNER_SETUP_STEPS.indexOf(step);
-	const realProducts = Math.max(0, menuStatus.productCount - menuStatus.sampleCount);
-	const savedWhatsapp = whatsappUrlFromPhone(local.whatsapp, initial.company.country);
-	const stepDone: Record<OwnerSetupStep, boolean> = {
-		marca: Boolean(theme.logoUrl.trim()),
-		diseno: Boolean(effectiveTheme.templateId),
-		menu: menuStatus.productCount > 0,
-		local: Boolean(savedWhatsapp && local.address.trim()),
-		publicar: published,
-	};
-
-	async function saveTheme(): Promise<boolean> {
-		const patch: Partial<StoreThemeConfig> = diffStoreTheme(effectiveTheme, theme);
-		delete patch.logoUrl;
-		if (Object.keys(patch).length === 0) return true;
-		const res = await fetch("/api/customer-account/store-theme", {
-			method: "PUT",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ patch }),
-		});
-		const data = (await res.json().catch(() => ({}))) as ThemeSaveResponse;
-		if (!res.ok || !data.draft?.theme) {
-			setError(data.error || "No pudimos guardar el diseño. Intenta de nuevo.");
-			return false;
-		}
-		setTheme(normalizeStoreThemeConfig(data.draft.theme));
-		return true;
-	}
-
-	async function saveLocal(): Promise<boolean> {
-		if (!localDirty || !initial.branch) return true;
-		const whatsappUrl = whatsappUrlFromPhone(local.whatsapp, initial.company.country);
-		if (local.whatsapp.trim() && !whatsappUrl) {
-			const example = /venezuela|^ve$/i.test(initial.company.country ?? "") ? "+58 412…" : "+56 9…";
-			setWhatsappError(`Escribe el número completo, con el código de país (por ejemplo ${example}).`);
-			return false;
-		}
-		setWhatsappError(null);
-		const body: Record<string, unknown> = {
-			id: initial.branch.id,
-			whatsapp_url: whatsappUrl ?? "",
-			instagram_url: local.instagram.trim() ? socialInputToUrl("instagram", local.instagram) : "",
-			address: local.address,
-		};
-		const anyHours = Object.values(local.hoursWeek).some((intervals) => intervals.length > 0);
-		if (anyHours) body.business_hours = { enabled: local.hoursEnabled, timezone: local.timeZone, week: local.hoursWeek };
-		const res = await fetch("/api/customer-account/branches/contact", {
-			method: "PATCH",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(body),
-		});
-		const data = (await res.json().catch(() => ({}))) as { error?: string };
-		if (!res.ok) {
-			setError(data.error || "No pudimos guardar los datos del local.");
-			return false;
-		}
-		setLocalDirty(false);
-		setReloadKey((key) => key + 1);
-		return true;
-	}
-
-	/** Guarda lo del paso actual antes de moverse. */
-	async function saveCurrent(): Promise<boolean> {
-		if (step === "marca" || step === "diseno") return saveTheme();
-		if (step === "local") return saveLocal();
-		return true;
-	}
-
-	async function goTo(next: OwnerSetupStep) {
-		if (next === step || busy) return;
-		setError(null);
-		setBusy("save");
-		try {
-			if (!(await saveCurrent())) return;
-			setStep(next);
-			window.scrollTo({ top: 0, behavior: "smooth" });
-		} finally {
-			setBusy(null);
-		}
-	}
-
-	async function uploadLogo(file: File) {
-		setError(null);
+	async function pickLogo(file: File) {
 		const validation = await validateStoreThemeAssetFile("logoUrl", file);
 		if (!validation.ok) {
-			setError(validation.error || "Ese archivo no sirve como logo.");
+			setup.reportError(validation.error || "Ese archivo no sirve como logo.");
 			return;
 		}
 		if (logoBlobUrl.current) URL.revokeObjectURL(logoBlobUrl.current);
 		logoBlobUrl.current = URL.createObjectURL(file);
 		setLogoColorUrl(logoBlobUrl.current);
-		setBrandColor(undefined);
-		setUploading(true);
-		try {
-			const form = new FormData();
-			form.set("field", "logoUrl");
-			form.set("file", file);
-			const res = await fetch("/api/customer-account/store-theme/assets", { method: "POST", body: form });
-			const data = (await res.json().catch(() => ({}))) as ThemeSaveResponse;
-			if (!res.ok || !data.draft?.theme) throw new Error(data.error || "No pudimos subir tu logo.");
-			const saved = normalizeStoreThemeConfig(data.draft.theme);
-			setTheme((prev) => ({ ...prev, logoUrl: saved.logoUrl }));
-			if (data.signedUrl) setLogoPreviewUrl(data.signedUrl);
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "No pudimos subir tu logo.");
-			setLogoColorUrl(null);
-		} finally {
-			setUploading(false);
-		}
+		if (!(await setup.uploadLogo(file, file.name))) setLogoColorUrl(null);
 	}
 
-	async function skip() {
-		setBusy("skip");
-		try {
-			await saveCurrent().catch(() => false);
-			await fetch("/api/customer-account/setup", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ action: "skip" }),
-			}).catch(() => null);
-			router.push("/cuenta");
-		} finally {
-			setBusy(null);
-		}
-	}
+	const template = findMenuTemplate(effectiveTheme.templateId);
+	const templateColor = template?.theme.primaryColor ?? null;
+	const accent = effectiveTheme.primaryColor || SETUP_TOKENS.color.accent;
+	const businessName = effectiveTheme.displayName || initial.company.name;
+	const realProducts = Math.max(0, menuStatus.productCount - menuStatus.sampleCount);
 
-	async function publish() {
-		setError(null);
-		setBusy("publish");
-		try {
-			if (!(await saveTheme())) return;
-			// Sin borrador guardado no hay nada que publicar: se guarda el nombre para crearlo.
-			const ensure = await fetch("/api/customer-account/store-theme", {
-				method: "PUT",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ patch: { displayName: effectiveTheme.displayName } }),
-			});
-			if (!ensure.ok) {
-				const data = (await ensure.json().catch(() => ({}))) as { error?: string };
-				setError(data.error || "No pudimos preparar tu tienda para publicar.");
-				return;
-			}
-			const res = await fetch("/api/customer-account/store-theme/publish", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ comment: "Configura tu tienda", changedFields: [] }),
-			});
-			const data = (await res.json().catch(() => ({}))) as { error?: string };
-			if (!res.ok) {
-				setError(data.error || "No pudimos publicar. Intenta de nuevo.");
-				return;
-			}
-			setPublished(true);
-			await fetch("/api/customer-account/setup", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ action: "finish" }),
-			}).catch(() => null);
-		} finally {
-			setBusy(null);
-		}
-	}
+	const meta = OWNER_SETUP_STEP_META[step];
+	const header = published
+		? { title: "¡Tu tienda está en línea!", description: "Comparte el enlace o imprime el QR para las mesas y el mostrador." }
+		: step === "diseno"
+			? { title: meta.title, description: `Primero van los que mejor quedan para ${SECTOR_NOUN[initial.sector]}. Toca uno y míralo en el teléfono con tu logo.` }
+			: meta;
 
-	function finish() {
-		setBusy("finish");
-		router.push("/cuenta");
-	}
-
-	const next = OWNER_SETUP_STEPS[stepIndex + 1];
-	const prev = OWNER_SETUP_STEPS[stepIndex - 1];
-	const nextLabel = step === "menu" && menuStatus.productCount === 0 ? "Lo hago después" : "Siguiente";
+	const primary = published
+		? { label: "Ir a mi cuenta", onClick: () => void setup.finish(), loading: busy === "finish", variant: "primary" as const, icon: null, trailing: <ArrowRight aria-hidden /> }
+		: step === "publicar"
+			? { label: "Publicar mi tienda", onClick: () => void setup.publish(), loading: busy === "publish", variant: "accent" as const, icon: <Rocket aria-hidden />, trailing: null }
+			: {
+					label: step === "menu" && menuStatus.productCount === 0 ? "Lo hago después" : "Continuar",
+					onClick: () => void setup.goNext(),
+					loading: busy === "save",
+					variant: "primary" as const,
+					icon: null,
+					trailing: <ArrowRight aria-hidden />,
+				};
+	const primaryButton = (className?: string) => (
+		<SetupButton
+			variant={primary.variant}
+			size="lg"
+			onClick={primary.onClick}
+			loading={primary.loading}
+			disabled={busy != null && !primary.loading}
+			icon={primary.icon}
+			trailingIcon={primary.trailing}
+			className={className}
+		>
+			{primary.label}
+		</SetupButton>
+	);
 
 	const preview = (
 		<SetupPreview
-			theme={previewTheme}
+			theme={setup.previewTheme}
 			menuSlug={initial.company.publicSlug}
 			customDomain={initial.company.customDomain}
 			branchId={initial.branch?.id ?? null}
-			reloadKey={reloadKey}
+			reloadKey={setup.reloadKey}
 		/>
 	);
 
+	const variants: Variants = {
+		enter: (direction: number) => ({ opacity: 0, x: reduceMotion ? 0 : direction * 28 }),
+		center: { opacity: 1, x: 0, transition: { duration: SETUP_TOKENS.motion.base, ease: EASE } },
+		exit: (direction: number) => ({ opacity: 0, x: reduceMotion ? 0 : direction * -18, transition: { duration: SETUP_TOKENS.motion.fast, ease: EASE } }),
+	};
+
+	let content: ReactNode = null;
+	if (step === "marca") {
+		content = (
+			<BrandStep
+				displayName={setup.displayName}
+				onDisplayNameChange={setup.setDisplayName}
+				logoPreviewUrl={setup.logoPreviewUrl}
+				logoColorUrl={logoColorUrl ?? setup.logoPreviewUrl}
+				onPickLogo={(file) => void pickLogo(file)}
+				uploading={setup.uploading}
+				brandColor={setup.brandColor}
+				onBrandColorChange={setup.setBrandColor}
+				templateColor={templateColor}
+			/>
+		);
+	} else if (step === "diseno") {
+		content = (
+			<DesignStep
+				sector={initial.sector}
+				selectedId={effectiveTheme.templateId ?? ""}
+				onSelect={setup.selectTemplate}
+				brandColor={setup.brandColor ? (brandButtonColors(setup.brandColor)?.primaryColor ?? null) : null}
+				logoUrl={setup.logoPreviewUrl}
+				displayName={businessName}
+			/>
+		);
+	} else if (step === "menu") {
+		content = <MenuStep company={initial.company} menuSetup={{ ...initial.menuSetup, ...menuStatus }} onStatusChange={setup.setMenuStatus} />;
+	} else if (step === "local") {
+		content = initial.branch ? (
+			<LocalStep form={setup.local} onChange={setup.updateLocal} whatsappError={setup.whatsappError} disabled={busy != null} country={initial.company.country} />
+		) : (
+			<SetupNotice tone="info" title="Tu tienda todavía no tiene un local">
+				Lo puedes crear desde «Locales» en tu cuenta.
+			</SetupNotice>
+		);
+	} else {
+		content = (
+			<PublishStep
+				storeUrl={initial.storeUrl}
+				published={published}
+				businessName={businessName}
+				logoUrl={setup.logoPreviewUrl}
+				accentColor={accent}
+				onGoToStep={(target) => void setup.goTo(target)}
+				checklist={[
+					{ step: "marca", label: "Tu logo", done: setup.stepDone.marca },
+					{ step: "diseno", label: "Un diseño para tu menú", done: setup.stepDone.diseno },
+					{
+						step: "menu",
+						label: realProducts > 0 || menuStatus.sampleCount === 0 ? "Tu menú con productos" : "Menú de ejemplo (cámbialo por el tuyo)",
+						done: setup.stepDone.menu,
+					},
+					{ step: "local", label: "WhatsApp y dirección", done: setup.stepDone.local },
+				]}
+			/>
+		);
+	}
+
+	const stage = stageBackground(accent);
+
 	return (
-		<div className="min-h-screen bg-[#f5f5f7] pb-20 lg:pb-0">
-			<header className="sticky top-0 z-20 border-b border-[#e5e5ea] bg-white/90 backdrop-blur">
-				<div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-					<div className="min-w-0">
-						<p className="text-xs font-medium text-[#86868b]">
-							Paso {stepIndex + 1} de {OWNER_SETUP_STEPS.length}
-						</p>
-						<h1 className="truncate text-lg font-semibold tracking-[-0.01em] text-[#1d1d1f]">Configura tu tienda</h1>
+		<div style={ROOT_STYLE} className="min-h-dvh overflow-x-clip bg-(--su-canvas) text-(--su-ink) antialiased lg:h-dvh lg:overflow-hidden">
+			<header className="sticky top-0 z-30 border-b border-(--su-line) bg-white/85 backdrop-blur-xl">
+				<div className="flex h-14 items-center gap-2 px-2 sm:px-4 lg:h-16 lg:gap-4 lg:px-6">
+					<div className="flex min-w-0 items-center gap-3 lg:w-[250px] lg:shrink-0">
+						{setup.previous && !published ? (
+							<SetupButton variant="ghost" iconOnly aria-label="Volver al paso anterior" onClick={() => void setup.goBack()} disabled={busy != null} className="lg:hidden">
+								<ChevronLeft className="h-5 w-5" aria-hidden />
+							</SetupButton>
+						) : (
+							<span className="flex h-11 w-11 items-center justify-center lg:hidden">
+								<LandingBrandMark variant="onLight" className="h-[18px]" />
+							</span>
+						)}
+						<span className="hidden items-center gap-3 lg:flex">
+							<LandingBrandMark variant="onLight" className="h-[22px]" />
+							<span className="h-5 w-px bg-(--su-line-strong)" aria-hidden />
+							<span className="truncate text-[15px] font-semibold tracking-[-0.01em]">Configura tu tienda</span>
+						</span>
 					</div>
-					{!published && (
-						<Button variant="ghost" size="sm" onClick={skip} loading={busy === "skip"}>
-							Hacerlo después
-						</Button>
-					)}
+
+					<div className="hidden flex-1 justify-center lg:flex">
+						<SetupProgress
+							steps={steps}
+							current={step}
+							done={setup.stepDone}
+							onSelect={(target) => void setup.goTo(target)}
+							disabled={(target) => published && target !== "publicar"}
+						/>
+					</div>
+					<div className="flex min-w-0 flex-1 flex-col items-center gap-1.5 px-1 lg:hidden">
+						<span className="truncate text-[13px] font-semibold">
+							{meta.label}
+							<span className="font-normal text-(--su-subtle)">
+								{" "}
+								· {stepIndex + 1} de {steps.length}
+							</span>
+						</span>
+						<div className="w-full max-w-[200px]">
+							<SetupProgressCompact steps={steps} current={step} />
+						</div>
+					</div>
+
+					<div className="flex items-center justify-end gap-3 lg:w-[250px] lg:shrink-0">
+						<span className="hidden lg:block">
+							<SaveIndicator saving={busy === "save" || setup.uploading} savedAt={setup.savedAt} />
+						</span>
+						{!published ? (
+							<>
+								<SetupButton variant="ghost" size="sm" onClick={() => void setup.skip()} loading={busy === "skip"} className="hidden lg:inline-flex">
+									Terminar después
+								</SetupButton>
+								<SetupButton variant="ghost" iconOnly aria-label="Terminar después" onClick={() => void setup.skip()} loading={busy === "skip"} className="lg:hidden">
+									<X className="h-5 w-5" aria-hidden />
+								</SetupButton>
+							</>
+						) : (
+							<span className="h-11 w-11 lg:hidden" aria-hidden />
+						)}
+					</div>
 				</div>
-				<nav aria-label="Pasos" className="mx-auto max-w-6xl overflow-x-auto px-4 pb-3 sm:px-6">
-					<ol className="flex min-w-max gap-1.5">
-						{OWNER_SETUP_STEPS.map((id, index) => {
-							const current = id === step;
-							const done = stepDone[id];
-							return (
-								<li key={id}>
-									<button
-										type="button"
-										onClick={() => void goTo(id)}
-										disabled={published && id !== "publicar"}
-										aria-current={current ? "step" : undefined}
-										className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${current ? "bg-[#1d1d1f] text-white" : "bg-[#f5f5f7] text-[#6e6e73] hover:bg-[#e8e8ed]"}`}
-									>
-										<span
-											className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${current ? "bg-white text-[#1d1d1f]" : done ? "bg-emerald-500 text-white" : "bg-white text-[#86868b]"}`}
-										>
-											{done && !current ? <Check className="h-2.5 w-2.5" aria-hidden /> : index + 1}
-										</span>
-										{STEP_LABEL[id]}
-									</button>
-								</li>
-							);
-						})}
-					</ol>
-				</nav>
 			</header>
 
-			<main className="mx-auto grid max-w-6xl gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_410px] lg:py-8">
-				<div className="min-w-0 space-y-6">
-					{error && (
-						<Alert variant="danger" onDismiss={() => setError(null)}>
-							{error}
-						</Alert>
-					)}
+			<div className="lg:grid lg:h-[calc(100dvh-4rem)] lg:grid-cols-[minmax(0,1fr)_minmax(440px,46%)] xl:grid-cols-[minmax(0,1fr)_minmax(520px,47%)]">
+				<div ref={scrollPane} className="relative flex flex-col lg:h-full lg:overflow-y-auto lg:overscroll-contain">
+					<main className="mx-auto w-full max-w-[640px] flex-1 px-5 pb-36 pt-7 sm:px-8 sm:pt-10 lg:px-10 lg:pb-12 lg:pt-12">
+						<AnimatePresence mode="wait" custom={setup.direction} initial={false}>
+							<motion.div key={`${step}-${published}`} custom={setup.direction} variants={variants} initial="enter" animate="center" exit="exit">
+								<StepHeader eyebrow={`Paso ${stepIndex + 1} de ${steps.length}`} title={header.title} description={header.description} celebrate={published} />
+								<AnimatePresence>
+									{setup.error ? (
+										<SetupNotice tone="danger" onDismiss={setup.clearError} className="mb-6">
+											{setup.error}
+										</SetupNotice>
+									) : null}
+								</AnimatePresence>
+								{content}
+							</motion.div>
+						</AnimatePresence>
+					</main>
 
-					<section className="rounded-3xl border border-[#e5e5ea] bg-white p-5 sm:p-7">
-						{step === "marca" && (
-							<BrandStep
-								displayName={displayName}
-								onDisplayNameChange={setDisplayName}
-								logoPreviewUrl={logoPreviewUrl}
-								logoColorUrl={logoColorUrl ?? logoPreviewUrl}
-								onUploadLogo={(file) => void uploadLogo(file)}
-								uploading={uploading}
-								brandColor={brandColor}
-								onBrandColorChange={setBrandColor}
-							/>
-						)}
-						{step === "diseno" && (
-							<DesignStep
-								sector={initial.sector}
-								selectedId={effectiveTheme.templateId ?? ""}
-								onSelect={setPickedTemplateId}
-								brandColor={brandColor ? (brandButtonColors(brandColor)?.primaryColor ?? null) : null}
-							/>
-						)}
-						{step === "menu" && (
-							<>
-								<div className="mb-6">
-									<h2 className="text-xl font-semibold tracking-[-0.01em] text-[#1d1d1f]">Tu menú</h2>
-									<p className="mt-1 text-sm text-[#6e6e73]">Súbelo desde una foto o un Excel, o empieza con un ejemplo y cámbialo después.</p>
-								</div>
-								<AccountMenuTab
-									embedded
-									company={initial.company}
-									menuSetup={{ ...initial.menuSetup, ...menuStatus }}
-									onStatusChange={(status) => {
-										setMenuStatus(status);
-										setReloadKey((key) => key + 1);
-									}}
-								/>
-							</>
-						)}
-						{step === "local" &&
-							(initial.branch ? (
-								<LocalStep
-									form={local}
-									onChange={(patch) => {
-										setLocal((prevForm) => ({ ...prevForm, ...patch }));
-										setLocalDirty(true);
-										if ("whatsapp" in patch) setWhatsappError(null);
-									}}
-									whatsappError={whatsappError}
-									disabled={busy != null}
-									country={initial.company.country}
-								/>
-							) : (
-								<p className="text-sm text-[#6e6e73]">Tu tienda todavía no tiene un local. Lo puedes crear desde «Locales» en tu cuenta.</p>
-							))}
-						{step === "publicar" && (
-							<PublishStep
-								storeUrl={initial.storeUrl}
-								published={published}
-								publishing={busy === "publish"}
-								onPublish={() => void publish()}
-								onFinish={finish}
-								finishing={busy === "finish"}
-								checklist={[
-									{ label: "Tu logo", done: stepDone.marca },
-									{ label: "Un diseño para tu menú", done: stepDone.diseno },
-									{
-										label: realProducts > 0 ? "Tu menú con productos" : menuStatus.sampleCount > 0 ? "Menú de ejemplo (cámbialo por el tuyo)" : "Tu menú con productos",
-										done: menuStatus.productCount > 0,
-									},
-									{ label: "WhatsApp y dirección", done: stepDone.local },
-								]}
-							/>
-						)}
-					</section>
-
-					{step !== "publicar" && (
-						<div className="flex items-center justify-between gap-3">
-							{prev ? (
-								<Button variant="secondary" onClick={() => void goTo(prev)} disabled={busy != null} icon={<ArrowLeft className="h-4 w-4" aria-hidden />}>
+					<footer className="sticky bottom-0 z-10 hidden bg-(--su-canvas) lg:block before:pointer-events-none before:absolute before:inset-x-0 before:-top-8 before:h-8 before:bg-linear-to-t before:from-(--su-canvas) before:to-transparent">
+						<div className="mx-auto flex max-w-[640px] items-center justify-between gap-3 border-t border-(--su-line) px-10 py-4">
+							{setup.previous && !published ? (
+								<SetupButton variant="ghost" size="lg" icon={<ArrowLeft aria-hidden />} onClick={() => void setup.goBack()} disabled={busy != null} className="-ml-3">
 									Atrás
-								</Button>
+								</SetupButton>
 							) : (
 								<span />
 							)}
-							{next && (
-								<Button onClick={() => void goTo(next)} loading={busy === "save"}>
-									{nextLabel}
-									<ArrowRight className="h-4 w-4" aria-hidden />
-								</Button>
-							)}
+							{primaryButton("min-w-[180px]")}
 						</div>
-					)}
+					</footer>
 				</div>
 
-				<aside className="hidden lg:block">
-					<div className="sticky top-36">{preview}</div>
-				</aside>
-			</main>
+				{isDesktop ? (
+					<aside className="relative flex h-full flex-col overflow-hidden border-l border-(--su-line)" style={{ background: stage }} aria-label="Vista previa de tu menú">
+						<div className="flex justify-center pt-6">
+							<LivePill />
+						</div>
+						<div className="min-h-0 flex-1 px-8 pb-8 pt-5">{preview}</div>
+					</aside>
+				) : null}
+			</div>
 
-			{/* En el teléfono la vista previa se abre encima, para no tener que bajar hasta ella. */}
-			<button
-				type="button"
-				onClick={() => setPreviewOpen(true)}
-				className="fixed bottom-5 right-4 z-30 inline-flex items-center gap-2 rounded-full bg-[#1d1d1f] px-4 py-3 text-sm font-medium text-white shadow-lg lg:hidden"
-			>
-				<Smartphone className="h-4 w-4" aria-hidden />
-				Ver cómo queda
-			</button>
-			{previewOpen && (
-				<div role="dialog" aria-modal="true" aria-label="Vista previa de tu menú" className="fixed inset-0 z-40 overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm lg:hidden">
-					<div className="mx-auto mb-3 flex max-w-[410px] justify-end">
-						<button
-							type="button"
-							onClick={() => setPreviewOpen(false)}
-							className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-sm font-medium text-[#1d1d1f]"
-						>
-							<X className="h-4 w-4" aria-hidden />
-							Cerrar
-						</button>
-					</div>
-					{preview}
+			<div className="fixed inset-x-0 bottom-0 z-30 border-t border-(--su-line) bg-white/95 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 backdrop-blur-xl lg:hidden">
+				<div className="mx-auto flex max-w-[640px] items-center gap-2.5">
+					<SetupButton variant="secondary" size="lg" iconOnly aria-label="Ver cómo queda tu menú" onClick={() => setPreviewOpen(true)}>
+						<Smartphone className="h-5 w-5" aria-hidden />
+					</SetupButton>
+					{primaryButton("flex-1")}
 				</div>
-			)}
+			</div>
+
+			{!isDesktop ? (
+				<PreviewSheet open={previewOpen} onOpenChange={setPreviewOpen} background={stage}>
+					{previewOpen ? preview : null}
+				</PreviewSheet>
+			) : null}
 		</div>
 	);
 }

@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import type { StoreThemeConfig } from "../shared/customer-account-types";
+
+import { PHONE_SCREEN, PhoneFrame } from "./ui/phone-frame";
 
 import { postPreviewThemeToIframe } from "@/lib/store-theme/preview-theme-messaging";
 import { getTenantMenuPreviewUrl, mergeMenuPathQuery } from "@/utils/tenant-url";
@@ -20,6 +22,7 @@ export function SetupPreview({
 	customDomain,
 	branchId,
 	reloadKey = 0,
+	maxScale,
 }: {
 	theme: StoreThemeConfig;
 	menuSlug: string | null;
@@ -27,8 +30,10 @@ export function SetupPreview({
 	branchId: string | null;
 	/** Cambia cuando se crean productos, para recargar el menú y verlos. */
 	reloadKey?: number;
+	maxScale?: number;
 }) {
 	const iframeRef = useRef<HTMLIFrameElement | null>(null);
+	const [loaded, setLoaded] = useState(false);
 	// La URL sale del origen de la ventana (mismo origen que /cuenta): solo en el navegador.
 	const mounted = useSyncExternalStore(subscribeNothing, () => true, () => false);
 	const src = useMemo(() => {
@@ -51,21 +56,38 @@ export function SetupPreview({
 		retries.current.forEach(clearTimeout);
 		push();
 		retries.current = [300, 1000, 2500].map((ms) => setTimeout(push, ms));
+		// Se descubre cuando el menú ya tiene el tema nuevo, para que no se vea el viejo un instante.
+		retries.current.push(setTimeout(() => setLoaded(true), 450));
 	}, [push]);
 	useEffect(() => () => retries.current.forEach(clearTimeout), []);
 
+	const background = theme.backgroundColor || "#111111";
+	const ink = theme.surfaceScheme === "light" ? "dark" : "light";
+
 	return (
-		<div className="mx-auto w-full max-w-[410px]">
-			<div className="overflow-hidden rounded-[2.2rem] border-[10px] border-[#1d1d1f] bg-[#1d1d1f] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.45)]">
-				{src ? (
-					<iframe ref={iframeRef} title="Vista previa de tu menú" src={src} onLoad={onLoad} className="h-[700px] w-full rounded-[1.5rem] bg-white" />
-				) : (
-					<div className="flex h-[700px] items-center justify-center rounded-[1.5rem] bg-white px-6 text-center text-sm text-[#6e6e73]">
-						{menuSlug ? "Cargando tu menú…" : "La vista previa aparece cuando tu tienda tenga dirección."}
-					</div>
-				)}
-			</div>
-			<p className="mt-3 text-center text-xs text-[#86868b]">Así lo ven tus clientes en el teléfono.</p>
-		</div>
+		<PhoneFrame screenBackground={background} statusInk={ink} maxScale={maxScale}>
+			{src ? (
+				<iframe
+					ref={iframeRef}
+					title="Vista previa de tu menú"
+					src={src}
+					onLoad={onLoad}
+					className="block border-0 transition-opacity duration-500"
+					style={{ width: PHONE_SCREEN.width, height: PHONE_SCREEN.height - PHONE_SCREEN.statusBar, opacity: loaded ? 1 : 0 }}
+				/>
+			) : null}
+			{!loaded ? (
+				<div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-10 text-center" style={{ color: ink === "light" ? "rgba(255,255,255,0.7)" : "rgba(17,17,19,0.6)" }}>
+					{menuSlug ? (
+						<>
+							<span className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden />
+							<span className="text-[15px]">Cargando tu menú…</span>
+						</>
+					) : (
+						<span className="text-[15px] leading-relaxed">La vista previa aparece cuando tu tienda tenga dirección.</span>
+					)}
+				</div>
+			) : null}
+		</PhoneFrame>
 	);
 }

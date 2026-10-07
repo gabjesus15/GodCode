@@ -130,3 +130,9 @@ body {
 .portal-scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* «Configura tu tienda»: barra de carga sin porcentaje */
+@keyframes setup-indeterminate {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(320%); }
+}

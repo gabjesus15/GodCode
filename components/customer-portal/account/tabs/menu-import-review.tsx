@@ -5,23 +5,9 @@ import { Plus, X } from "lucide-react";
 import { Button } from "../../ui/Button";
 import { Card } from "../../ui/Card";
 
-/** Borrador editable: el precio queda como texto mientras el dueño lo corrige. */
-export type EditableProduct = { key: string; name: string; description: string; price: string };
-export type EditableCategory = { key: string; name: string; products: EditableProduct[] };
-export type EditableDraft = EditableCategory[];
+import { nextKey, type EditableCategory, type EditableDraft, type EditableProduct } from "@/lib/menu/editable-draft";
 
-let keySeq = 0;
-const nextKey = () => `row-${++keySeq}`;
-
-export function toEditableDraft(draft: {
-	categories: Array<{ name: string; products: Array<{ name: string; description: string; price: number }> }>;
-}): EditableDraft {
-	return draft.categories.map((c) => ({
-		key: nextKey(),
-		name: c.name,
-		products: c.products.map((p) => ({ key: nextKey(), name: p.name, description: p.description, price: String(p.price) })),
-	}));
-}
+export { toEditableDraft, type EditableCategory, type EditableDraft, type EditableProduct } from "@/lib/menu/editable-draft";
 
 function isValidRow(p: EditableProduct): boolean {
 	return p.name.trim().length > 0 && /\d/.test(p.price);
