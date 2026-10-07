@@ -130,7 +130,17 @@ export function MenuTemplateThumbnail({ template }: { template: MenuTemplate }) 
 				className="flex gap-1.5 px-2.5 pb-1.5 pt-1.5"
 				style={{ background: theme.headerStyle === "cover" ? "transparent" : dark ? "#151518" : "rgba(255,255,255,0.7)" }}
 			>
-				{theme.navbarType === "underline-tabs" ? (
+				{theme.navbarType === "icon-list" || theme.navbarType === "floating-bottom" ? (
+					[0, 1, 2, 3].map((i) => (
+						<span
+							key={i}
+							className="h-4 w-4 rounded-full"
+							style={{ background: i === 0 ? dishes[0] : line, boxShadow: i === 0 ? `0 0 0 1.5px ${accent}` : undefined }}
+						/>
+					))
+				) : theme.navbarType === "mega-menu" ? (
+					<span className="ml-auto h-2.5 w-10 rounded-full" style={{ background: line }} />
+				) : theme.navbarType === "underline-tabs" || theme.navbarType === "sidebar-categories" ? (
 					<>
 						<span className="flex flex-col gap-0.5">
 							<span className="h-1.5 w-6 rounded-full" style={{ background: fg, opacity: 0.85 }} />

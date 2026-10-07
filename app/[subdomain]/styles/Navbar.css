@@ -275,16 +275,20 @@
 
 /* =========================================
    CATEGORÍAS SUBRAYADAS (navbarType "underline-tabs")
+   La barra lateral usa este mismo estilo en teléfono y tablet, donde el
+   panel no cabe.
    Solo texto; la activa lleva una línea del color del local debajo y la tira
    entera una línea fina de base, como las pestañas de una app nativa.
    ========================================= */
 
-.navbar-type-underline-tabs .navbar-container {
+.navbar-type-underline-tabs .navbar-container,
+.navbar-type-sidebar-categories .navbar-container {
     gap: 2px;
     padding: 0 6px;
 }
 
-.navbar-type-underline-tabs .tab-item {
+.navbar-type-underline-tabs .tab-item,
+.navbar-type-sidebar-categories .tab-item {
     position: relative;
     min-height: 44px;
     padding: 10px 14px 12px;
@@ -297,7 +301,8 @@
     letter-spacing: -0.005em;
 }
 
-.navbar-type-underline-tabs .tab-item::after {
+.navbar-type-underline-tabs .tab-item::after,
+.navbar-type-sidebar-categories .tab-item::after {
     content: "";
     position: absolute;
     left: 14px;
@@ -310,27 +315,32 @@
     transition: transform 0.25s var(--menu-ease, ease);
 }
 
-.navbar-type-underline-tabs .tab-item:hover {
+.navbar-type-underline-tabs .tab-item:hover,
+.navbar-type-sidebar-categories .tab-item:hover {
     color: var(--menu-fg);
 }
 
-.navbar-type-underline-tabs .tab-item.active {
+.navbar-type-underline-tabs .tab-item.active,
+.navbar-type-sidebar-categories .tab-item.active {
     background: none;
     color: var(--menu-fg);
     box-shadow: none;
 }
 
-.navbar-type-underline-tabs .tab-item.active::after {
+.navbar-type-underline-tabs .tab-item.active::after,
+.navbar-type-sidebar-categories .tab-item.active::after {
     transform: scaleX(1);
 }
 
 @media (max-width: 640px) {
-    .navbar-type-underline-tabs .tab-item {
+    .navbar-type-underline-tabs .tab-item,
+.navbar-type-sidebar-categories .tab-item {
         padding: 10px 12px 12px;
         font-size: 0.86rem;
     }
 
-    .navbar-type-underline-tabs .tab-item::after {
+    .navbar-type-underline-tabs .tab-item::after,
+.navbar-type-sidebar-categories .tab-item::after {
         left: 12px;
         right: 12px;
     }

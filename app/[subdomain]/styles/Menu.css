@@ -536,11 +536,9 @@ html, body {
         left: 0;
         bottom: 0;
         width: 280px;
-        background: rgba(18, 18, 18, 0.6);
-        -webkit-backdrop-filter: blur(20px);
-        backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 24px 20px;
+        background: var(--menu-surface);
+        border-right: 1px solid var(--menu-line);
+        padding: 24px 16px;
         z-index: calc(var(--z-sticky-header, 100) + 10);
         overflow-y: auto;
     }
@@ -573,14 +571,44 @@ html, body {
     align-items: flex-start;
     gap: 16px;
     padding-bottom: 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    margin-bottom: 24px;
+    border-bottom: 1px solid var(--menu-line);
+    margin-bottom: 20px;
+}
+
+.sidebar-header-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+/* Con portada, el logo y el nombre ya están en ella: el panel no los repite. */
+.page-wrapper.header-style-cover .sidebar-header-row {
+    display: none;
+}
+
+.page-wrapper.header-style-cover .sidebar-header:not(:has(.sidebar-location-selector)) {
+    display: none;
 }
 
 .sidebar-logo {
+    flex-shrink: 0;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--menu-line);
     object-fit: cover;
+}
+
+.sidebar-logo--monogram {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    background: var(--menu-accent);
+    color: var(--menu-on-accent, #fff);
+    font-family: var(--tenant-font, inherit);
+    font-weight: var(--tenant-font-weight, 700);
+    font-size: 1rem;
 }
 
 .sidebar-brand-title {
@@ -609,10 +637,10 @@ html, body {
     align-items: center;
     gap: 12px;
     padding: 10px 14px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--menu-surface-2);
+    border: 1px solid var(--menu-line);
     border-radius: 12px;
-    color: white;
+    color: var(--menu-fg);
     cursor: pointer;
     text-align: left;
     transition: all 0.2s ease;
@@ -621,8 +649,7 @@ html, body {
 }
 
 .sidebar-location-button:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: var(--menu-fg-3);
 }
 
 .sidebar-location-icon {
@@ -639,7 +666,7 @@ html, body {
 
 .sidebar-location-label {
     font-size: 0.68rem;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--menu-fg-3);
     margin: 0;
     font-weight: 500;
     text-transform: uppercase;
@@ -648,7 +675,7 @@ html, body {
 
 .sidebar-location-value {
     font-size: 0.85rem;
-    color: white;
+    color: var(--menu-fg);
     margin: 0;
     font-weight: 600;
     overflow: hidden;
@@ -658,13 +685,13 @@ html, body {
 
 .sidebar-location-chevron {
     flex-shrink: 0;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--menu-fg-3);
 }
 
 .sidebar-nav {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 2px;
     flex: 1;
 }
 
@@ -672,36 +699,38 @@ html, body {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 16px;
-    border-radius: 12px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 10px;
     background: transparent;
-    border: 1px solid transparent;
-    color: rgba(255, 255, 255, 0.65);
-    font-size: 0.9rem;
-    font-weight: 600;
+    border: 0;
+    color: var(--menu-fg-2);
+    font-size: 0.92rem;
+    font-weight: 500;
     text-align: left;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .sidebar-nav-item:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: white;
-    border-color: rgba(255, 255, 255, 0.1);
-    transform: translateX(4px);
+    background: var(--menu-surface-2);
+    color: var(--menu-fg);
 }
 
+/* La activa: fondo tenue y texto en tinta, como un índice. Sin relleno de
+   color de marca ni sombra: el panel es un índice, no un botón. */
 .sidebar-nav-item.active {
-    background: var(--accent-primary);
-    color: white;
-    border-color: var(--accent-primary);
-    box-shadow: 0 4px 15px rgba(255, 78, 80, 0.35);
-    transform: translateX(4px);
+    background: var(--menu-surface-2);
+    color: var(--menu-fg);
     font-weight: 700;
 }
 
 .sidebar-item-icon {
     flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    object-fit: cover;
 }
 
 
@@ -798,9 +827,11 @@ html, body {
     border: none;
     cursor: pointer;
     flex-shrink: 0;
-    /* Ancho fijo: al activarse el nombre pasa a negrita y, con ancho
-       automático, la tarjeta crecía 1-2px y movía a todas las de al lado. */
-    width: 80px;
+    /* Ancho según el nombre (entre 64 y 96px) para que "Hamburguesas" entre
+       entera. La activa ya no cambia de peso, así que nada se mueve. */
+    width: auto;
+    min-width: 64px;
+    max-width: 96px;
     padding: 0;
 }
 
@@ -900,21 +931,24 @@ html, body {
    la sección al llegar a ella, y la tira se mantiene baja. */
 .icon-list-card-name {
     font-size: 0.7rem;
-    font-weight: 500;
-    color: var(--menu-fg-2);
+    font-weight: 600;
+    color: var(--menu-fg-3);
     transition: color 0.2s ease;
-    width: 100%;
-    max-width: 86px;
+    width: max-content;
+    max-width: 96px;
     text-align: center;
     line-height: 1.2;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
+    /* Solo corta entre palabras, nunca a mitad de una. */
+    overflow-wrap: normal;
+    word-break: keep-all;
 }
 
 .icon-list-card.active .icon-list-card-name {
     color: var(--menu-fg);
-    font-weight: 600;
 }
 
 /* En claro el círculo iba del mismo gris cálido que la cabecera y se perdía:
@@ -1249,7 +1283,6 @@ html, body {
 
     .icon-list-card {
         gap: 6px;
-        width: 76px;
     }
 
     .icon-list-card-image-wrapper {
@@ -1258,7 +1291,6 @@ html, body {
     }
 
     .icon-list-card-name {
-        max-width: 78px;
         font-size: 0.6875rem;
         line-height: 1.15;
     }
@@ -1299,4 +1331,21 @@ main.container > .category-section:first-child {
 .category-section--featured .tenant-ui-badge--special,
 #section-special .tenant-ui-badge--special {
     display: none;
+}
+
+
+/* Pantallas anchas: la tira de categorías con foto arranca en el mismo borde
+   que el contenido, en vez de flotar centrada sobre una carta alineada a la
+   izquierda. */
+@media (min-width: 900px) {
+    .icon-list-categories-shell {
+        max-width: 1220px;
+        margin-inline: auto;
+        padding-inline: clamp(12px, 4vw, 28px);
+    }
+
+    .icon-list-container {
+        justify-content: flex-start;
+        padding-inline: 0;
+    }
 }

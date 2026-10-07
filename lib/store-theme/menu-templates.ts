@@ -81,7 +81,7 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 		theme: {
 			...BASE,
 			headerStyle: "cover",
-			navbarType: "underline-tabs",
+			navbarType: "icon-list",
 			featuredStyle: "carousel",
 			cartStyle: "bar",
 			productCardStyle: "layout-cartel",
@@ -102,7 +102,7 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 		theme: {
 			...BASE,
 			headerStyle: "cover",
-			navbarType: "category-tabs",
+			navbarType: "floating-bottom",
 			featuredStyle: "carousel",
 			cartStyle: "bar",
 			productCardStyle: "layout-cartel",
@@ -144,7 +144,7 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 		theme: {
 			...BASE,
 			headerStyle: "cover",
-			navbarType: "underline-tabs",
+			navbarType: "mega-menu",
 			featuredStyle: "carousel",
 			cartStyle: "float",
 			productCardStyle: "layout-nori",
@@ -165,7 +165,7 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 		theme: {
 			...BASE,
 			headerStyle: "cover",
-			navbarType: "underline-tabs",
+			navbarType: "sidebar-categories",
 			featuredStyle: "section",
 			cartStyle: "bar",
 			productCardStyle: "layout-carta",
@@ -186,7 +186,7 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 		theme: {
 			...BASE,
 			headerStyle: "cover",
-			navbarType: "category-tabs",
+			navbarType: "underline-tabs",
 			featuredStyle: "carousel",
 			cartStyle: "float",
 			productCardStyle: "glass-row",
@@ -207,7 +207,7 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 		theme: {
 			...BASE,
 			headerStyle: "cover",
-			navbarType: "underline-tabs",
+			navbarType: "icon-list",
 			featuredStyle: "carousel",
 			cartStyle: "float",
 			productCardStyle: "layout-vitrina",

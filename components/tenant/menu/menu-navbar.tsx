@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import Image from "next/image";
-import { ChevronDown, ChevronLeft, Compass, MapPin, Search, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, MapPin, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { CategoryTabsNav, IconListCategories } from "./menu-category-nav";
@@ -27,7 +27,8 @@ type MenuNavbarProps = {
 	onSearchChange: (value: string) => void;
 	onSearchExpand: () => void;
 	onSearchCollapse: () => void;
-	onOpenMegaMenu: () => void;
+	/** Ya no se usa aquí: el menú de categorías se abre con el botón flotante. */
+	onOpenMegaMenu?: () => void;
 	categories: CategoryListItem[];
 	visibleCategories: Array<{ id: string; name: string }>;
 	specialProductsCount: number;
@@ -62,7 +63,6 @@ export const MenuNavbar = memo(function MenuNavbar({
 	onSearchChange,
 	onSearchExpand,
 	onSearchCollapse,
-	onOpenMegaMenu,
 	categories,
 	visibleCategories,
 	specialProductsCount,
@@ -121,13 +121,6 @@ export const MenuNavbar = memo(function MenuNavbar({
 					</div>
 				</div>
 				<div className="nav-search-section">
-					<div className="nav-actions-wrapper">
-						{navbarType === "mega-menu" && (
-							<button type="button" onClick={onOpenMegaMenu} className="mega-menu-header-trigger" aria-label={t("nav.viewCategories")}>
-								<Compass size={20} />
-							</button>
-						)}
-					</div>
 					<div
 						className={`search-pill-wrapper ${searchExpanded ? "expanded" : ""}`}
 						onClick={() => {
