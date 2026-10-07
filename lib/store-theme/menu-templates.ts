@@ -238,17 +238,39 @@ export function orderMenuTemplatesForSector(sector: string | null | undefined): 
 	return [getMenuTemplate(recommended), ...MENU_TEMPLATES.filter((template) => template.id !== recommended)];
 }
 
+/** Lo mismo que `orderMenuTemplatesForSector` (nombre que usa el alta). */
+export const templatesForSector = orderMenuTemplatesForSector;
+
+/** Plantilla por id, o undefined si el id no existe (sin caer en la de por defecto). */
+export function findMenuTemplate(id: unknown): MenuTemplate | undefined {
+	return isMenuTemplateId(id) ? BY_ID.get(id) : undefined;
+}
+
+type MenuTemplatePatch = MenuTemplateTheme & { menuTemplate: MenuTemplateId };
+
 /**
- * Campos que hay que escribir en theme_config para aplicar la plantilla.
+ * Aplica la plantilla.
  *
- * `accentColor`: color de marca que ya tiene el local (por ejemplo, sacado del
- * logo). Si es un hex válido sustituye al acento de la plantilla, para que
- * elegir un diseño no le cambie el color de su marca.
+ * - `applyMenuTemplate(id, { accentColor })` devuelve solo los campos que hay
+ *   que escribir en theme_config. `accentColor` es el color de marca que ya
+ *   tiene el local (por ejemplo, sacado del logo): si es un hex válido
+ *   sustituye al acento de la plantilla.
+ * - `applyMenuTemplate(theme, id)` devuelve el tema entero con la plantilla
+ *   encima; logo, nombre e imagen de fondo del local se quedan como estaban.
  */
+export function applyMenuTemplate(id: MenuTemplateId, options?: { accentColor?: string | null }): MenuTemplatePatch;
+export function applyMenuTemplate<T extends Partial<StoreThemeConfig>>(theme: T, id: MenuTemplateId): T & MenuTemplatePatch;
 export function applyMenuTemplate(
-	id: MenuTemplateId,
-	options: { accentColor?: string | null } = {},
-): MenuTemplateTheme & { menuTemplate: MenuTemplateId } {
+	first: MenuTemplateId | Partial<StoreThemeConfig>,
+	second?: MenuTemplateId | { accentColor?: string | null },
+): MenuTemplatePatch | (Partial<StoreThemeConfig> & MenuTemplatePatch) {
+	if (typeof first === "object" && first !== null) {
+		return { ...first, ...buildMenuTemplatePatch(second as MenuTemplateId) };
+	}
+	return buildMenuTemplatePatch(first, (second as { accentColor?: string | null } | undefined) ?? {});
+}
+
+function buildMenuTemplatePatch(id: MenuTemplateId, options: { accentColor?: string | null } = {}): MenuTemplatePatch {
 	const template = getMenuTemplate(id);
 	const theme: MenuTemplateTheme = { ...template.theme };
 	const accent = normalizeBrandNameColor(options.accentColor ?? "");
@@ -257,7 +279,7 @@ export function applyMenuTemplate(
 		theme.hoverColor = accent;
 		if (template.theme.priceColor === template.theme.primaryColor) theme.priceColor = accent;
 	}
-	return { ...theme, [MENU_TEMPLATE_THEME_KEY]: template.id } as MenuTemplateTheme & { menuTemplate: MenuTemplateId };
+	return { ...theme, [MENU_TEMPLATE_THEME_KEY]: template.id } as MenuTemplatePatch;
 }
 
 /** Plantilla guardada en theme_config, o null si el local nunca eligió una. */

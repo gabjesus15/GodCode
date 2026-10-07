@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
 	MENU_TEMPLATES,
 	applyMenuTemplate,
+	findMenuTemplate,
 	orderMenuTemplatesForSector,
 	readMenuTemplateId,
 	recommendMenuTemplate,
+	templatesForSector,
 } from "@/lib/store-theme/menu-templates";
 import { normalizeStoreThemeConfig, PRODUCT_CARD_STYLES, STORE_THEME_FONTS } from "@/lib/store-theme/theme-config";
 
@@ -60,5 +62,25 @@ describe("menu templates", () => {
 	it("no lee como plantilla un id desconocido", () => {
 		expect(readMenuTemplateId({ menuTemplate: "nope" })).toBeNull();
 		expect(readMenuTemplateId(null)).toBeNull();
+	});
+});
+
+describe("contrato con el alta", () => {
+	it("templatesForSector y findMenuTemplate", () => {
+		expect(templatesForSector("Sushi")[0].id).toBe("nori");
+		expect(findMenuTemplate("brasa")?.name).toBe("Brasa");
+		expect(findMenuTemplate("nada")).toBeUndefined();
+	});
+
+	it("applyMenuTemplate(theme, id) conserva logo, nombre e imagen de fondo", () => {
+		const out = applyMenuTemplate(
+			{ logoUrl: "https://x/logo.png", displayName: "Mi local", backgroundImageUrl: "https://x/bg.jpg", primaryColor: "#000000" },
+			"horno",
+		);
+		expect(out.logoUrl).toBe("https://x/logo.png");
+		expect(out.displayName).toBe("Mi local");
+		expect(out.backgroundImageUrl).toBe("https://x/bg.jpg");
+		expect(out.primaryColor).toBe("#d62828");
+		expect(out.menuTemplate).toBe("horno");
 	});
 });
