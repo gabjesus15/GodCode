@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { memo, useState, type KeyboardEvent } from "react";
 import clsx from "clsx";
 import { Minus, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -16,6 +16,7 @@ import {
 	type ProductCardLogic,
 	type ProductCardProduct,
 } from "./product-card-shared";
+import { MotionCount } from "./ui/tenant-ui";
 
 /**
  * Variantes de la misma tarjeta: comparten marcado, tokens, accesibilidad y
@@ -70,7 +71,6 @@ export const GlassCard = memo(function GlassCard({
 	const t = useTranslations("tenant.menu");
 	const pricing = useProductPricing(product, currency, logic, exchangeRate);
 	const [expanded, setExpanded] = useState(false);
-	const [pop, setPop] = useState(false);
 
 	const name = product.name || t("card.productFallback");
 	const description = product.description?.trim() ?? "";
@@ -89,11 +89,6 @@ export const GlassCard = memo(function GlassCard({
 			event.preventDefault();
 			openDetails();
 		}
-	};
-
-	const add = (event: MouseEvent<HTMLButtonElement>) => {
-		logic.handleAdd(event);
-		setPop(true);
 	};
 
 	const content = (
@@ -174,18 +169,17 @@ export const GlassCard = memo(function GlassCard({
 							<Minus size={16} strokeWidth={2.5} aria-hidden />
 						</button>
 						<span className="gcard__count" aria-live="polite">
-							{logic.quantity}
+							<MotionCount value={logic.quantity} />
 						</span>
-						<button type="button" className="gcard__step gcard__step--plus" onClick={add} aria-label={t("card.addOne")}>
+						<button type="button" className="gcard__step gcard__step--plus" onClick={logic.handleAdd} aria-label={t("card.addOne")}>
 							<Plus size={16} strokeWidth={2.5} aria-hidden />
 						</button>
 					</div>
 				) : (
 					<button
 						type="button"
-						className={clsx("gcard__add", pop && "is-pop")}
-						onClick={add}
-						onAnimationEnd={() => setPop(false)}
+						className="gcard__add"
+						onClick={logic.handleAdd}
 						aria-label={t("card.addAria", { name })}
 					>
 						<Plus size={20} strokeWidth={2.5} aria-hidden />

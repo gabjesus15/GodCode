@@ -179,14 +179,17 @@
 	align-items: center;
 	justify-content: center;
 	cursor: pointer;
-	transition: transform 0.2s var(--menu-ease), filter 0.2s ease;
+	transition:
+		transform var(--menu-dur-press) var(--menu-ease-out),
+		filter var(--menu-dur-fast) ease-out;
 }
-.fcard .fcard-add.tenant-ui-btn:hover {
-	filter: brightness(1.08);
-	transform: scale(1.06);
+@media (hover: hover) {
+	.fcard .fcard-add.tenant-ui-btn:hover {
+		filter: brightness(1.08);
+	}
 }
 .fcard .fcard-add.tenant-ui-btn:active {
-	transform: scale(0.94);
+	transform: scale(0.92);
 }
 .fcard .fcard-stepper {
 	display: inline-flex;
@@ -210,6 +213,10 @@
 	background: var(--menu-surface-2);
 	color: var(--menu-fg);
 	cursor: pointer;
+	transition: transform var(--menu-dur-press) var(--menu-ease-out);
+}
+.fcard .fcard-stepper button:active {
+	transform: scale(0.9);
 }
 .fcard .fcard-stepper button:last-child {
 	background: var(--menu-add-bg);
@@ -624,5 +631,11 @@
 	.product-layout-nori .fcard-stepper button:last-child {
 		width: 36px;
 		height: 36px;
+	}
+	/* Aquí el selector se ve igual que el "+": no hay nada que presentar. */
+	.fcard.product-layout-vitrina .fcard-stepper,
+	.fcard.product-layout-cartel .fcard-stepper,
+	.fcard.product-layout-nori .fcard-stepper {
+		animation: none;
 	}
 }

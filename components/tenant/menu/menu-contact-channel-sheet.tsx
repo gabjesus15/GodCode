@@ -37,7 +37,7 @@ const CHANNEL_KEYS: Record<BranchContactChannel, { label: string; hint: string }
 
 
 
-const SHEET_CLOSE_MS = 360;
+const SHEET_CLOSE_MS = 240;
 
 
 

@@ -29,7 +29,7 @@
 	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
 	transition:
 		width 320ms var(--cart-float-ease),
-		transform 160ms ease,
+		transform 120ms cubic-bezier(0.23, 1, 0.32, 1),
 		box-shadow 320ms ease;
 	-webkit-tap-highlight-color: transparent;
 }
@@ -122,23 +122,21 @@
 	}
 }
 
-/* Tras 10 s sin interacción con productos en el carrito, un pulso suave recuerda el pedido. */
-@keyframes cart-float-pulse {
-	0% {
-		box-shadow: 0 0 0 0 var(--accent-shadow-strong, rgba(230, 57, 70, 0.5));
-	}
-
-	70% {
-		box-shadow: 0 0 0 15px transparent;
-	}
-
-	100% {
-		box-shadow: 0 0 0 0 transparent;
-	}
+/* Cada vez que cambia el número del pedido, el globo da un saltito corto: es
+   la confirmación de que el producto llegó al carrito. Antes, tras 10 s sin
+   tocar nada, el botón latía sin fin para "recordar" el pedido; se quitó, era
+   insistencia y no información. */
+.cart-float-badge {
+	animation: cart-badge-bump 260ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-.cart-float.pulse-urgent {
-	animation: cart-float-pulse 2s infinite;
+@keyframes cart-badge-bump {
+	from {
+		transform: scale(0.8);
+	}
+	55% {
+		transform: scale(1.1);
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -147,7 +145,7 @@
 		transition: none;
 	}
 
-	.cart-float.pulse-urgent {
+	.cart-float-badge {
 		animation: none;
 	}
 }
@@ -195,6 +193,14 @@
 
 .cart-bar:active {
 	transform: translate(-50%, 0) scale(0.985);
+	transition-duration: 120ms;
+}
+
+/* Al irse (se vació el pedido) baja más rápido de lo que subió. */
+.cart-bar:not(.is-visible) {
+	transition:
+		transform 200ms cubic-bezier(0.4, 0, 1, 1),
+		opacity 160ms ease;
 }
 
 .cart-bar:focus-visible {

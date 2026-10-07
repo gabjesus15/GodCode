@@ -12,6 +12,25 @@ function cx(...parts: Array<string | false | undefined | null>) {
 	return parts.filter(Boolean).join(" ");
 }
 
+/**
+ * Un número que cambia (cantidad, artículos del pedido) entra rodando desde
+ * abajo si sube y desde arriba si baja, en vez de cambiar de golpe. El primer
+ * valor se pinta quieto: solo se anima lo que cambia mientras se mira.
+ */
+export function MotionCount({ value, className }: { value: number; className?: string }) {
+	const [previous, setPrevious] = React.useState(value);
+	const [direction, setDirection] = React.useState<"up" | "down" | null>(null);
+	if (previous !== value) {
+		setPrevious(value);
+		setDirection(value > previous ? "up" : "down");
+	}
+	return (
+		<span key={value} className={cx("menu-tick", className)} data-dir={direction ?? undefined}>
+			{value}
+		</span>
+	);
+}
+
 export type TenantBadgeVariant = "default" | "secondary" | "destructive" | "outline" | "success" | "special" | "promo";
 
 export type TenantBadgeProps = React.HTMLAttributes<HTMLSpanElement> & {
@@ -91,7 +110,7 @@ export const TenantStepper = React.memo(function TenantStepper({
 				<Minus size={iconSize} strokeWidth={2.5} />
 			</button>
 			<span className={isGlass ? "step-count" : undefined} aria-live="polite">
-				{quantity}
+				<MotionCount value={quantity} />
 			</span>
 			<button
 				type="button"

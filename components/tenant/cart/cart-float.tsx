@@ -5,6 +5,7 @@ import { ArrowRight, ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCart } from "./use-cart";
 import { formatCartMoney } from "./utils/format-cart-money";
+import { MotionCount } from "../menu/ui/tenant-ui";
 import "../../../app/[subdomain]/styles/CartFloat.css";
 
 /**
@@ -18,11 +19,9 @@ export function CartFloat({ currency = "CLP", variant = "float" }: { currency?: 
   const { totalItems, grandTotal, isCartOpen, openCart, closeCart, currency: cartCurrency } = useCart();
   const displayCurrency = cartCurrency || currency;
   const hasItems = totalItems > 0;
-  const [isIdle, setIsIdle] = useState(false);
   const [mounted, setMounted] = useState(false);
   const userInteractedRef = useRef(false);
   const prevCountRef = useRef(totalItems);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 0);
@@ -60,26 +59,6 @@ export function CartFloat({ currency = "CLP", variant = "float" }: { currency?: 
     prevCountRef.current = totalItems;
   }, [totalItems]);
 
-  useEffect(() => {
-    const resetTimer = () => {
-      setIsIdle(false);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (totalItems > 0) {
-        timerRef.current = setTimeout(() => setIsIdle(true), 10000);
-      }
-    };
-    window.addEventListener("touchstart", resetTimer);
-    window.addEventListener("click", resetTimer);
-    window.addEventListener("scroll", resetTimer);
-    resetTimer();
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      window.removeEventListener("touchstart", resetTimer);
-      window.removeEventListener("click", resetTimer);
-      window.removeEventListener("scroll", resetTimer);
-    };
-  }, [totalItems]);
-
   /* Barra: ancho completo abajo, solo con algo en el pedido. Cuenta, "Ver
      pedido" y el total a la vista sin hover: en el teléfono no lo hay. */
   if (variant === "bar") {
@@ -98,7 +77,7 @@ export function CartFloat({ currency = "CLP", variant = "float" }: { currency?: 
       >
         <span className="cart-bar__count" aria-hidden>
           <ShoppingBag size={18} strokeWidth={2.4} />
-          {visible ? totalItems : 0}
+          <MotionCount value={visible ? totalItems : 0} />
         </span>
         <span className="cart-bar__label">{t("viewOrder")}</span>
         <span className="cart-bar__total">{visible ? formatCartMoney(grandTotal, displayCurrency) : ""}</span>
@@ -114,13 +93,11 @@ export function CartFloat({ currency = "CLP", variant = "float" }: { currency?: 
         if (isCartOpen) closeCart();
         else openCart();
       }}
-      className={["cart-float", mounted && hasItems ? "has-items" : "", mounted && isIdle && hasItems ? "pulse-urgent" : ""]
-        .filter(Boolean)
-        .join(" ")}
+      className={["cart-float", mounted && hasItems ? "has-items" : ""].filter(Boolean).join(" ")}
     >
       <div className="cart-icon-wrapper">
         <ShoppingBag size={24} strokeWidth={2.5} />
-        {mounted && hasItems ? <span className="cart-float-badge">{totalItems}</span> : null}
+        {mounted && hasItems ? <span key={totalItems} className="cart-float-badge">{totalItems}</span> : null}
       </div>
       <div className="cart-label-container">
         <span className="cart-label-text">

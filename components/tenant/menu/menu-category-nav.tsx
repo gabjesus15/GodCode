@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { Navbar } from "../navbar/navbar";
+import { useSlidingIndicator } from "../navbar/use-sliding-indicator";
 import { PoweredByGcode } from "../branding/powered-by-gcode";
 import type { BranchInfo, CategoryListItem } from "./menu-types";
 
@@ -152,6 +153,16 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 	tenantSlug?: string | null;
 }) {
 	const t = useTranslations("tenant.menu");
+	// El fondo de la activa se desliza por la lista en vez de saltar.
+	const sidebarNavRef = useRef<HTMLElement | null>(null);
+	const sidebarIndicatorRef = useRef<HTMLSpanElement | null>(null);
+	useSlidingIndicator(
+		sidebarNavRef,
+		sidebarIndicatorRef,
+		activeCategory ? `.sidebar-nav-item[data-id="${activeCategory}"]` : null,
+		"y",
+		[categories],
+	);
 	return (
 		<aside className="sidebar-categories-panel">
 			<div className="sidebar-header">
@@ -202,11 +213,13 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 					</div>
 				) : null}
 			</div>
-			<nav className="sidebar-nav" aria-label={t("nav.categories")}>
+			<nav ref={sidebarNavRef} className="sidebar-nav" aria-label={t("nav.categories")}>
+				<span ref={sidebarIndicatorRef} className="sidebar-nav-indicator" aria-hidden />
 				{categories.map((cat) => (
 					<button
 						key={cat.id}
 						type="button"
+						data-id={cat.id}
 						onClick={() => onCategoryClick(cat.id)}
 						{...currentCategoryProps(activeCategory === cat.id)}
 						className={`sidebar-nav-item ${activeCategory === cat.id ? "active" : ""}`}

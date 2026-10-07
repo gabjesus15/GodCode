@@ -310,17 +310,17 @@
 }
 
 .menu-contact-sheet-overlay--closing {
-    animation: menu-contact-overlay-out 0.28s ease-in both;
+    animation: menu-contact-overlay-out 0.2s ease-in both;
     pointer-events: none;
 }
 
 .menu-contact-sheet-overlay--closing .menu-contact-sheet {
-    animation: menu-contact-sheet-out 0.34s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: menu-contact-sheet-out 0.22s cubic-bezier(0.4, 0, 1, 1) both;
 }
 
 
 .menu-contact-sheet-overlay--closing .menu-contact-sheet__btn {
-    animation: menu-contact-item-out 0.24s ease-in both;
+    animation: menu-contact-item-out 0.16s ease-in both;
 }
 
 

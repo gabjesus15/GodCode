@@ -618,12 +618,12 @@
    con la curva expo de la casa. Antes vivía en CartFloat.css, así que solo
    se animaba cuando el botón flotante estaba montado. */
 .animate-pop-in {
-  animation: product-qty-pop-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: product-qty-pop-in 240ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 @keyframes product-qty-pop-in {
   0% {
-    transform: scale(0.6);
+    transform: scale(0.8);
     opacity: 0;
   }
 

@@ -111,6 +111,15 @@ body {
     --menu-r-md: 14px;
     --menu-r-lg: 20px;
     --menu-ease: cubic-bezier(0.16, 1, 0.3, 1);
+    /* Movimiento del menú: tres duraciones y dos curvas para todo. Lo que
+       responde a un toque (pulsar, contar) es corto; lo que entra se toma un
+       poco más y sale siempre más rápido de lo que entró. Nada pasa de 300ms
+       salvo hojas y paneles grandes. */
+    --menu-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --menu-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --menu-dur-press: 120ms;
+    --menu-dur-fast: 180ms;
+    --menu-dur-enter: 240ms;
 }
 
 .tenant-theme-vars[data-scheme="light"] {
@@ -280,4 +289,57 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     justify-content: flex-start;
     width: 100%;
+}
+
+/* --- Movimiento compartido del menú ------------------------------------------
+   Números que cambian (cantidad en la tarjeta, globo y barra del pedido):
+   entran rodando en el sentido del cambio. Ver MotionCount en tenant-ui.tsx. */
+.menu-tick {
+    display: inline-block;
+}
+
+.menu-tick[data-dir="up"] {
+    animation: menu-tick-up var(--menu-dur-fast, 180ms) var(--menu-ease-out, ease-out);
+}
+
+.menu-tick[data-dir="down"] {
+    animation: menu-tick-down var(--menu-dur-fast, 180ms) var(--menu-ease-out, ease-out);
+}
+
+@keyframes menu-tick-up {
+    from {
+        opacity: 0;
+        transform: translateY(45%);
+    }
+}
+
+@keyframes menu-tick-down {
+    from {
+        opacity: 0;
+        transform: translateY(-45%);
+    }
+}
+
+/* El "+" se convierte en "− 1 +": el selector se abre desde el "+" (a la
+   derecha) en vez de aparecer de golpe. En el teléfono, donde el selector se
+   ve igual que el "+", se apaga en GlassCard.css / FoodCardLayouts.css. */
+.gcard__stepper,
+.fcard .fcard-stepper {
+    transform-origin: right center;
+    animation: menu-stepper-in var(--menu-dur-enter, 240ms) var(--menu-ease-out, ease-out);
+}
+
+@keyframes menu-stepper-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .menu-tick[data-dir],
+    .gcard__stepper,
+    .fcard .fcard-stepper {
+        animation: none;
+    }
 }

@@ -145,7 +145,7 @@ export const VitrinaCard = React.memo(function VitrinaCard({ product, logic, cur
 		<article className="product-layout-vitrina fcard" {...interactionProps(onClick)}>
 			<div className="vitrina-photo-wrap">
 				<ProductOfferBadges product={product} />
-				<ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="fcard-qty" />
+				<ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="fcard-qty animate-pop-in" />
 				<FoodPhoto logic={logic} name={product.name} priority={priority} sizes={PHOTO_SIZES.tile} className="vitrina-photo" />
 			</div>
 			<div className="vitrina-body">
@@ -180,7 +180,7 @@ export const CartelCard = React.memo(function CartelCard({ product, logic, curre
 			<div className="cartel-shade" aria-hidden />
 			<div className="cartel-top">
 				<ProductOfferBadges product={product} />
-				<ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="fcard-qty" />
+				<ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="fcard-qty animate-pop-in" />
 			</div>
 			<div className="cartel-body">
 				<h3 className="cartel-title">{product.name}</h3>
@@ -209,7 +209,7 @@ export const NoriCard = React.memo(function NoriCard({ product, logic, currency,
 		<article className="product-layout-nori fcard" {...interactionProps(onClick)}>
 			<div className="nori-photo-wrap">
 				<ProductOfferBadges product={product} />
-				<ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="fcard-qty" />
+				<ProductQtyBadge quantity={logic.quantity} hydrated={logic.hydrated} className="fcard-qty animate-pop-in" />
 				<FoodPhoto logic={logic} name={product.name} priority={priority} sizes={PHOTO_SIZES.tile} className="nori-photo" />
 			</div>
 			<div className="nori-body">

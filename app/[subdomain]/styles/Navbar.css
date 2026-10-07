@@ -63,7 +63,11 @@
     font-weight: 500;
     font-size: 0.84rem;
     cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+    transition:
+        background-color var(--menu-dur-fast) ease-out,
+        color var(--menu-dur-fast) ease-out,
+        border-color var(--menu-dur-fast) ease-out,
+        transform var(--menu-dur-press) var(--menu-ease-out);
     -webkit-user-select: none;
     user-select: none;
 }
@@ -84,7 +88,7 @@
 }
 
 .tab-item:active {
-    transform: scale(0.98);
+    transform: scale(0.97);
 }
 
 /* Iconos dentro de los tabs */
@@ -301,20 +305,6 @@
     letter-spacing: -0.005em;
 }
 
-.navbar-type-underline-tabs .tab-item::after,
-.navbar-type-sidebar-categories .tab-item::after {
-    content: "";
-    position: absolute;
-    left: 14px;
-    right: 14px;
-    bottom: 0;
-    height: 3px;
-    border-radius: 3px 3px 0 0;
-    background: var(--menu-accent);
-    transform: scaleX(0);
-    transition: transform 0.25s var(--menu-ease, ease);
-}
-
 .navbar-type-underline-tabs .tab-item:hover,
 .navbar-type-sidebar-categories .tab-item:hover {
     color: var(--menu-fg);
@@ -327,9 +317,36 @@
     box-shadow: none;
 }
 
-.navbar-type-underline-tabs .tab-item.active::after,
-.navbar-type-sidebar-categories .tab-item.active::after {
-    transform: scaleX(1);
+/* La línea de la activa es una sola (.tab-indicator, la coloca navbar.tsx)
+   que se desliza de una pestaña a otra. */
+.tab-indicator {
+    display: none;
+}
+
+.navbar-type-underline-tabs .navbar-container,
+.navbar-type-sidebar-categories .navbar-container {
+    position: relative;
+}
+
+.navbar-type-underline-tabs .tab-indicator,
+.navbar-type-sidebar-categories .tab-indicator {
+    display: block;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 1px;
+    height: 3px;
+    background: var(--menu-accent);
+    transform-origin: left center;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.navbar-type-underline-tabs .tab-indicator[data-ready],
+.navbar-type-sidebar-categories .tab-indicator[data-ready] {
+    transition:
+        transform 280ms var(--menu-ease-out),
+        opacity var(--menu-dur-fast) ease-out;
 }
 
 @media (max-width: 640px) {
@@ -338,16 +355,11 @@
         padding: 10px 12px 12px;
         font-size: 0.86rem;
     }
-
-    .navbar-type-underline-tabs .tab-item::after,
-.navbar-type-sidebar-categories .tab-item::after {
-        left: 12px;
-        right: 12px;
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .navbar-type-underline-tabs .tab-item::after {
+    .navbar-type-underline-tabs .tab-indicator[data-ready],
+    .navbar-type-sidebar-categories .tab-indicator[data-ready] {
         transition: none;
     }
 }

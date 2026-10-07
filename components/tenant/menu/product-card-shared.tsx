@@ -9,6 +9,7 @@ import { useCartStore } from "../cart/cart-store";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import {
+	MotionCount,
 	TenantBadge,
 	TenantButton,
 	TenantOfferBadgeStack,
@@ -338,7 +339,7 @@ export const ProductQtyBadge = React.memo(function ProductQtyBadge({
 	if (!hydrated || quantity <= 0) return null;
 	return (
 		<TenantBadge variant="default" className={className} aria-label={t("card.inCart", { count: quantity })}>
-			{quantity}
+			<MotionCount value={quantity} />
 		</TenantBadge>
 	);
 });

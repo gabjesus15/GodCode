@@ -277,7 +277,9 @@
 	background: var(--menu-add-bg);
 	color: var(--menu-add-fg);
 	box-shadow: none;
-	transition: transform 150ms ease, filter 150ms ease;
+	transition:
+		transform var(--menu-dur-press) var(--menu-ease-out),
+		filter var(--menu-dur-fast) ease-out;
 }
 
 @media (hover: hover) {
@@ -287,12 +289,7 @@
 }
 
 .gcard__add:active {
-	transform: scale(0.94);
-	transition-duration: 80ms;
-}
-
-.gcard__add.is-pop {
-	animation: gcard-pop 280ms var(--menu-ease);
+	transform: scale(0.92);
 }
 
 .gcard__stepper {
@@ -348,6 +345,11 @@
 		display: none;
 	}
 
+	/* Aquí el selector se ve igual que el "+": no hay nada que presentar. */
+	.gcard:not(.gcard--row):not(.gcard--wide) .gcard__stepper {
+		animation: none;
+	}
+
 	.gcard__step--plus {
 		width: 40px;
 		height: 40px;
@@ -364,11 +366,11 @@
 	border-radius: 999px;
 	background: none;
 	color: var(--menu-fg);
-	transition: transform 120ms ease;
+	transition: transform var(--menu-dur-press) var(--menu-ease-out);
 }
 
 .gcard__step:active {
-	transform: scale(0.88);
+	transform: scale(0.9);
 }
 
 .gcard__step--plus {
@@ -639,6 +641,34 @@
 	}
 }
 
+/* Fila estrecha (la del carrusel de destacados): "− 1 +" no cabe junto al
+   precio sin recortarlo. Queda solo el "+" y la cantidad pasa a la foto, como
+   en la tarjeta de cuadrícula del teléfono. */
+@container (max-width: 330px) {
+	.gcard.gcard--row .gcard__qty.tenant-ui-badge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.gcard.gcard--row .gcard__stepper {
+		padding: 0;
+		border: 0;
+		background: none;
+		animation: none;
+	}
+
+	.gcard.gcard--row .gcard__step:not(.gcard__step--plus),
+	.gcard.gcard--row .gcard__count {
+		display: none;
+	}
+
+	.gcard.gcard--row .gcard__step--plus {
+		width: 40px;
+		height: 40px;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.gcard--plate:hover .gcard__media img {
 		transform: none;
@@ -654,12 +684,6 @@
 }
 
 /* --- Movimiento --------------------------------------------------------------- */
-
-@keyframes gcard-pop {
-	40% {
-		transform: scale(0.88);
-	}
-}
 
 @keyframes gcard-reveal {
 	from {
