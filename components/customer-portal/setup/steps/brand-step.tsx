@@ -28,6 +28,7 @@ export function BrandStep({
 	displayName,
 	onDisplayNameChange,
 	logoPreviewUrl,
+	logoColorUrl,
 	onUploadLogo,
 	uploading,
 	brandColor,
@@ -36,6 +37,8 @@ export function BrandStep({
 	displayName: string;
 	onDisplayNameChange: (value: string) => void;
 	logoPreviewUrl: string | null;
+	/** De dónde se leen los colores: el archivo recién elegido o el logo guardado. */
+	logoColorUrl: string | null;
 	onUploadLogo: (file: File) => void;
 	uploading: boolean;
 	/** `undefined` = todavía no eligió; `null` = los colores del diseño. */
@@ -48,12 +51,12 @@ export function BrandStep({
 
 	useEffect(() => {
 		setReadFailed(false);
-		if (!logoPreviewUrl) {
+		if (!logoColorUrl) {
 			setSuggested([]);
 			return;
 		}
 		let cancelled = false;
-		colorsFromImage(logoPreviewUrl)
+		colorsFromImage(logoColorUrl)
 			.then((colors) => {
 				if (cancelled) return;
 				setSuggested(colors);
@@ -71,7 +74,7 @@ export function BrandStep({
 		};
 		// Solo al cambiar el logo: elegir otro color no debe volver a leerlo.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [logoPreviewUrl]);
+	}, [logoColorUrl]);
 
 	return (
 		<div className="space-y-6">
@@ -122,7 +125,7 @@ export function BrandStep({
 				<p className="mb-2 text-sm font-medium text-[#1d1d1f]">Color de tu marca</p>
 				{suggested.length === 0 ? (
 					<p className="text-sm text-[#86868b]">
-						{!logoPreviewUrl
+						{!logoColorUrl
 							? "Sube tu logo y te proponemos sus colores."
 							: readFailed
 								? "No pudimos leer los colores de tu logo: usamos los del diseño que elijas."

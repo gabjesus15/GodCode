@@ -56,7 +56,7 @@ function initialLocalForm(initial: OwnerSetupInitial): LocalForm {
 	};
 }
 
-type ThemeSaveResponse = { error?: string; draft?: { theme?: StoreThemeConfig } };
+type ThemeSaveResponse = { error?: string; draft?: { theme?: StoreThemeConfig }; signedUrl?: string | null };
 
 export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetupInitial; initialStep: OwnerSetupStep }) {
 	const router = useRouter();
@@ -71,6 +71,8 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 		return template && template.theme.primaryColor !== initial.theme.primaryColor ? initial.theme.primaryColor : undefined;
 	});
 	const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(initial.logoPreviewUrl);
+	// El archivo recién elegido, solo para leer sus colores; lo que se muestra es el logo ya subido.
+	const [logoColorUrl, setLogoColorUrl] = useState<string | null>(null);
 	const logoBlobUrl = useRef<string | null>(null);
 	const [uploading, setUploading] = useState(false);
 	const [menuStatus, setMenuStatus] = useState<MenuStatus>(initial.menuSetup);
@@ -199,10 +201,9 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 			setError(validation.error || "Ese archivo no sirve como logo.");
 			return;
 		}
-		// El archivo local sirve para leer sus colores y para la vista previa (mismo origen).
 		if (logoBlobUrl.current) URL.revokeObjectURL(logoBlobUrl.current);
 		logoBlobUrl.current = URL.createObjectURL(file);
-		setLogoPreviewUrl(logoBlobUrl.current);
+		setLogoColorUrl(logoBlobUrl.current);
 		setBrandColor(undefined);
 		setUploading(true);
 		try {
@@ -214,9 +215,10 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 			if (!res.ok || !data.draft?.theme) throw new Error(data.error || "No pudimos subir tu logo.");
 			const saved = normalizeStoreThemeConfig(data.draft.theme);
 			setTheme((prev) => ({ ...prev, logoUrl: saved.logoUrl }));
+			if (data.signedUrl) setLogoPreviewUrl(data.signedUrl);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "No pudimos subir tu logo.");
-			setLogoPreviewUrl(initial.logoPreviewUrl);
+			setLogoColorUrl(null);
 		} finally {
 			setUploading(false);
 		}
@@ -351,6 +353,7 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 								displayName={displayName}
 								onDisplayNameChange={setDisplayName}
 								logoPreviewUrl={logoPreviewUrl}
+								logoColorUrl={logoColorUrl ?? logoPreviewUrl}
 								onUploadLogo={(file) => void uploadLogo(file)}
 								uploading={uploading}
 								brandColor={brandColor}
