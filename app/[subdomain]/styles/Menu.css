@@ -1293,3 +1293,10 @@ html, body {
 main.container > .category-section:first-child {
     margin-top: 16px;
 }
+
+/* Dentro de «Destacados» o de los especiales el título ya lo dice: la
+   etiqueta «Especial» en cada tarjeta sobra. */
+.category-section--featured .tenant-ui-badge--special,
+#section-special .tenant-ui-badge--special {
+    display: none;
+}

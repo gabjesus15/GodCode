@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -25,8 +26,11 @@ function initials(name: string): string {
  * categoría.
  *
  * La foto es la imagen de fondo del tema o, sin ella, el primer banner. Sin
- * ninguna de las dos la portada se pinta con el color del local, nunca con
- * una foto de stock.
+ * ninguna de las dos solo van el logo y el nombre, sin bloque de relleno.
+ *
+ * Mientras la portada se ve, la barra de arriba esconde su logo y nombre
+ * (clase `cover-in-view` en `.page-wrapper`) para no mostrarlos dos veces;
+ * al bajar, vuelven.
  */
 export function MenuStoreCover({
 	displayName,
@@ -47,9 +51,26 @@ export function MenuStoreCover({
 }) {
 	const t = useTranslations("tenant.home.status");
 	const place = [branch?.name, branch?.address].filter(Boolean).join(" · ");
+	const sectionRef = useRef<HTMLElement>(null);
+
+	useEffect(() => {
+		const section = sectionRef.current;
+		const page = section?.closest(".page-wrapper");
+		if (!section || !page || typeof IntersectionObserver === "undefined") return;
+		const observer = new IntersectionObserver(
+			([entry]) => page.classList.toggle("cover-in-view", entry.isIntersecting),
+			// Cuenta como fuera en cuanto el nombre pasa por debajo de la barra fija.
+			{ rootMargin: "-120px 0px 0px 0px" },
+		);
+		observer.observe(section);
+		return () => {
+			observer.disconnect();
+			page.classList.remove("cover-in-view");
+		};
+	}, []);
 
 	return (
-		<section className={`store-cover${coverImageUrl ? "" : " store-cover--plain"}`} aria-label={displayName}>
+		<section ref={sectionRef} className={`store-cover${coverImageUrl ? "" : " store-cover--plain"}`} aria-label={displayName}>
 			{/* Sin foto no se dibuja un bloque de color de relleno: el logo y el nombre
 			    bastan, como en la ficha de un local en un mapa. */}
 			{coverImageUrl ? (

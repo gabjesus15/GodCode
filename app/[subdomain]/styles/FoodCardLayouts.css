@@ -141,6 +141,8 @@
 	font-size: 1rem;
 	font-weight: 800;
 	letter-spacing: -0.01em;
+	/* "CLP 14.990" nunca se parte en dos renglones. */
+	white-space: nowrap;
 }
 .fcard-price__now.layout-price--sale {
 	color: var(--discount-color, var(--menu-accent-ink));
@@ -596,7 +598,7 @@
 	min-width: 0;
 }
 .product-layout-nori .fcard-price__now {
-	font-size: 1.04rem;
+	font-size: clamp(0.9rem, 3.8cqi, 1.04rem);
 }
 
 /* Tarjetas estrechas (dos columnas en el teléfono): el selector completo no cabe

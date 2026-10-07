@@ -358,8 +358,12 @@ export function ProductOfferBadges({
 
 	return (
 		<TenantOfferBadgeStack>
-			{hasDiscount ? <TenantBadge variant="destructive">{t("card.offer")}</TenantBadge> : null}
-			{isSpecial ? <TenantBadge variant="special">{t("card.special")}</TenantBadge> : null}
+			{/* Una sola etiqueta: si está rebajado, «Oferta» ya lo destaca. */}
+			{hasDiscount ? (
+				<TenantBadge variant="destructive">{t("card.offer")}</TenantBadge>
+			) : (
+				<TenantBadge variant="special">{t("card.special")}</TenantBadge>
+			)}
 		</TenantOfferBadgeStack>
 	);
 }

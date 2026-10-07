@@ -164,3 +164,13 @@
 .store-cover--plain {
 	margin-bottom: clamp(10px, 2.5vw, 18px);
 }
+
+/* Con la portada a la vista, la barra de arriba no repite logo y nombre. */
+.page-wrapper.header-style-cover .nav-brand-wrapper {
+	transition: opacity 0.2s ease;
+}
+
+.page-wrapper.header-style-cover.cover-in-view .nav-brand-wrapper {
+	opacity: 0;
+	pointer-events: none;
+}
