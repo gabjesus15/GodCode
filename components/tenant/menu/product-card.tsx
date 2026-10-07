@@ -1,18 +1,8 @@
 import React, { useCallback } from "react";
 
 import { normalizeProductCardStyle } from "@/lib/store-theme/theme-config";
-import { GlassCard } from "./glass-card";
+import { GlassCard, type GlassCardVariant } from "./glass-card";
 import { useProductCardLogic, type ProductCardProduct } from "./product-card-shared";
-import {
-	CleanCard,
-	DetailedCard,
-	FoodCard,
-	HorizontalCard,
-	RappiCard,
-	SidebarCard,
-	SkewCard,
-	SneakerCard,
-} from "./product-card-layouts";
 import { CartaCard, CartelCard, NoriCard, VitrinaCard } from "./product-card-food-layouts";
 
 export const ProductCard = React.memo(function ProductCard({
@@ -20,7 +10,7 @@ export const ProductCard = React.memo(function ProductCard({
 	priority = false,
 	country = "CL",
 	currency = "CLP",
-	cardStyle = "layout-clean",
+	cardStyle = "glass",
 	detailsMode = "modal-premium",
 	onClick,
 	onProductClick,
@@ -56,9 +46,18 @@ export const ProductCard = React.memo(function ProductCard({
 	};
 
 	switch (resolvedStyle) {
-		case "glass":
+		case "layout-carta":
+			return <CartaCard {...layoutProps} />;
+		case "layout-vitrina":
+			return <VitrinaCard {...layoutProps} />;
+		case "layout-cartel":
+			return <CartelCard {...layoutProps} />;
+		case "layout-nori":
+			return <NoriCard {...layoutProps} />;
+		default:
 			return (
 				<GlassCard
+					variant={GLASS_VARIANTS[resolvedStyle]}
 					product={product}
 					logic={logic}
 					currency={currency}
@@ -70,30 +69,12 @@ export const ProductCard = React.memo(function ProductCard({
 					exchangeRate={exchangeRate}
 				/>
 			);
-		case "layout-detailed":
-			return <DetailedCard {...layoutProps} />;
-		case "layout-horizontal":
-			return <HorizontalCard {...layoutProps} />;
-		case "layout-sidebar":
-			return <SidebarCard {...layoutProps} />;
-		case "layout-rappi":
-			return <RappiCard {...layoutProps} />;
-		case "layout-sneaker":
-			return <SneakerCard {...layoutProps} />;
-		case "layout-skew":
-			return <SkewCard {...layoutProps} />;
-		case "layout-food":
-			return <FoodCard {...layoutProps} />;
-		case "layout-carta":
-			return <CartaCard {...layoutProps} />;
-		case "layout-vitrina":
-			return <VitrinaCard {...layoutProps} />;
-		case "layout-cartel":
-			return <CartelCard {...layoutProps} />;
-		case "layout-nori":
-			return <NoriCard {...layoutProps} />;
-		case "layout-clean":
-		default:
-			return <CleanCard {...layoutProps} />;
 	}
 });
+
+const GLASS_VARIANTS: Record<string, GlassCardVariant> = {
+	glass: "grid",
+	"glass-row": "row",
+	"glass-plate": "plate",
+	"glass-wide": "wide",
+};

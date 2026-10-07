@@ -13,6 +13,13 @@ import {
   normalizeNavigationMode,
   normalizeProductCardStyle,
   normalizeProductDetailsMode,
+  isGlassCardStyle,
+  normalizeCartStyle,
+  normalizeFeaturedStyle,
+  normalizeHeaderStyle,
+  type CartStyle,
+  type FeaturedStyle,
+  type HeaderStyle,
 } from "@/lib/store-theme/theme-config";
 import { parseThemeColor, themeColorsToCssVarEntries } from "@/lib/store-theme/apply-theme-css-vars";
 import { contrastRatio } from "@/lib/store-theme/store-theme-utils";
@@ -25,7 +32,8 @@ const PRODUCT_DETAILS_OPTIONS: Array<{ value: ProductDetailsMode; label: string;
 ];
 
 const NAVBAR_OPTIONS: Array<{ value: NavbarType; label: string; description: string }> = [
-  { value: "category-tabs", label: "Pestañas", description: "Tabs horizontales con scroll" },
+  { value: "category-tabs", label: "Pastillas", description: "Categorías en pastillas; la activa con tu color" },
+  { value: "underline-tabs", label: "Subrayado", description: "Texto limpio con una línea bajo la categoría activa" },
   { value: "sidebar-categories", label: "Barra lateral", description: "Categorías en panel lateral" },
   { value: "mega-menu", label: "Mega menú", description: "Menú flotante por categorías" },
   { value: "icon-list", label: "Iconos", description: "Categorías en círculos con icono" },
@@ -33,19 +41,14 @@ const NAVBAR_OPTIONS: Array<{ value: NavbarType; label: string; description: str
 ];
 
 const PRODUCT_CARD_OPTIONS: Array<{ value: ProductCardStyle; label: string; description: string }> = [
+  { value: "glass", label: "Cristal", description: "Foto arriba y precio abajo. La de Rica Pizza y Oishi" },
+  { value: "glass-row", label: "Cristal en fila", description: "Foto a la izquierda; caben más productos por pantalla" },
+  { value: "glass-plate", label: "Plato", description: "El plato redondo sale por encima de la tarjeta" },
+  { value: "glass-wide", label: "Foto grande", description: "Una foto grande por producto, ideal para platos vistosos" },
   { value: "layout-carta", label: "Carta", description: "Lista con la foto al lado, como una carta impresa" },
   { value: "layout-vitrina", label: "Vitrina", description: "Foto cuadrada y ficha limpia, luminosa" },
   { value: "layout-cartel", label: "Cartel", description: "La foto llena la tarjeta y el nombre va encima, grande" },
   { value: "layout-nori", label: "Nori", description: "Foto de canto a canto y una línea fina, sobria" },
-  { value: "glass", label: "Cristal", description: "Tarjeta translúcida sobre el fondo" },
-  { value: "layout-clean", label: "Zapatillas", description: "Imagen a sangre con panel lateral" },
-  { value: "layout-detailed", label: "Tecnología", description: "Imagen cuadrada y ficha con descripción" },
-  { value: "layout-horizontal", label: "Horizontal", description: "Fila compacta, más productos por pantalla" },
-  { value: "layout-sidebar", label: "Barra lateral", description: "Acciones apiladas al borde de la imagen" },
-  { value: "layout-rappi", label: "Rappi", description: "Imagen enmarcada y botón de acción redondo" },
-  { value: "layout-sneaker", label: "Sneaker", description: "Producto centrado sobre pedestal oscuro" },
-  { value: "layout-skew", label: "Gaming", description: "Bloque inclinado y marca de agua" },
-  { value: "layout-food", label: "Food Deluxe", description: "Sin marco, el plato flota sobre el fondo" },
 ];
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -125,6 +128,21 @@ function PreviewStage({ className = "", children }: { className?: string; childr
 }
 
 function NavbarPreview({ type }: { type: NavbarType }) {
+  if (type === "underline-tabs") {
+    return (
+      <PreviewStage className="flex h-14 flex-col justify-end px-2">
+        <div className="flex items-end gap-2 border-b border-[var(--pick-hairline)]">
+          <div className="flex flex-col items-center gap-1">
+            <div className="h-1.5 w-8 rounded-full bg-[var(--pick-ink)]" />
+            <div className="h-[3px] w-8 rounded-t bg-[var(--accent-primary)]" />
+          </div>
+          <div className="mb-[7px] h-1.5 w-7 rounded-full bg-[var(--pick-surface-strong)]" />
+          <div className="mb-[7px] h-1.5 w-6 rounded-full bg-[var(--pick-surface-strong)]" />
+        </div>
+        <div className="h-3" />
+      </PreviewStage>
+    );
+  }
   if (type === "sidebar-categories") {
     return (
       <PreviewStage className="flex h-14 gap-1 p-1.5">
@@ -243,116 +261,43 @@ function ProductCardPreview({ style }: { style: ProductCardStyle }) {
       </PreviewStage>
     );
   }
-  if (style === "layout-clean") {
+  if (style === "glass-row") {
     return (
-      <PreviewStage className="h-[92px]">
-        <div className="absolute inset-0 bg-[var(--pick-surface)]" />
-        <div className="absolute bottom-0 left-0 top-8 w-7 bg-[var(--pick-surface-strong)]" />
-        <div className="absolute bottom-2 left-9 right-2 flex items-center justify-between">
-          <div className="h-2 w-10 rounded-full bg-[var(--price-color)]" />
-          <div className="h-6 w-6 rounded-full bg-[var(--accent-primary)]" />
-        </div>
-      </PreviewStage>
-    );
-  }
-  if (style === "layout-detailed") {
-    return (
-      <PreviewStage className="flex h-[92px] flex-col">
-        {/* Barra de acento superior: `.product-layout-detailed::before` */}
-        <div className="h-[3px] shrink-0 bg-[var(--accent-primary)]" />
-        <div className="relative h-[46%] bg-[var(--pick-surface)]">
-          <div className="absolute left-1.5 top-1.5 h-2 w-6 rounded-full bg-[var(--discount-color)]" />
-        </div>
-        <div className="flex flex-1 flex-col justify-center gap-1 border-t border-[var(--pick-hairline)] px-2">
-          <div className="h-2 w-4/5 rounded-full bg-[var(--pick-ink)]" />
-          <div className="flex items-center justify-between gap-1">
-            <div className="h-2 w-8 rounded-full bg-[var(--price-color)]" />
-            <div className="h-4 w-12 rounded-md bg-[var(--pick-surface-strong)]" />
-          </div>
-        </div>
-      </PreviewStage>
-    );
-  }
-  if (style === "layout-horizontal") {
-    return (
-      <PreviewStage className="flex h-[72px]">
-        <div className="w-1 shrink-0 bg-[var(--accent-primary)]" />
-        <div className="w-[36%] shrink-0 border-r border-[var(--pick-hairline)] bg-[var(--pick-surface-strong)]" />
-        <div className="flex flex-1 flex-col justify-center gap-1 p-2">
-          <div className="h-2 w-4/5 rounded-full bg-[var(--pick-ink)]" />
-          <div className="h-3 w-14 rounded-full bg-[var(--price-color)]" />
-        </div>
-      </PreviewStage>
-    );
-  }
-  if (style === "layout-sidebar") {
-    return (
-      <PreviewStage className="flex h-[92px] flex-col">
-        <div className="relative h-[62%] bg-[var(--pick-surface)]">
-          <div className="absolute right-0 top-0 flex h-full w-6 flex-col items-center justify-center gap-1 bg-[var(--pick-surface-strong)]">
-            <div className="h-4 w-4 rounded-full border border-[var(--card-border)]" />
-            <div className="h-4 w-4 rounded-full bg-[var(--accent-primary)]" />
-          </div>
-        </div>
-        <div className="flex flex-1 items-center justify-between px-2">
-          <div className="h-2 w-1/2 rounded-full bg-[var(--pick-ink)]" />
-          <div className="h-2 w-8 rounded-full bg-[var(--price-color)]" />
-        </div>
-      </PreviewStage>
-    );
-  }
-  if (style === "layout-rappi") {
-    return (
-      <PreviewStage className="flex h-[92px] flex-col">
-        <div className="mx-2 mt-2 h-[48%] rounded-lg bg-[var(--pick-surface)]" />
-        <div className="flex flex-1 items-center justify-between px-2 pb-2">
+      <PreviewStage className="flex h-[72px] items-center gap-2 border border-[var(--card-border)] p-1.5">
+        <div className="h-full w-[52px] shrink-0 rounded-md bg-[var(--pick-surface-strong)]" />
+        <div className="flex h-full flex-1 flex-col justify-between py-0.5">
           <div className="space-y-1">
-            <div className="h-2 w-16 rounded-full bg-[var(--pick-ink)]" />
-            <div className="h-2 w-8 rounded-full bg-[var(--price-color)]" />
+            <div className="h-2 w-4/5 rounded-full bg-[var(--pick-ink)]" />
+            <div className="h-1.5 w-full rounded-full bg-[var(--pick-surface-strong)]" />
           </div>
-          <div className="h-7 w-7 rounded-full bg-[var(--accent-primary)] shadow-[0_2px_8px_var(--accent-shadow)]" />
+          <div className="flex items-center justify-between">
+            <div className="h-2 w-9 rounded-full bg-[var(--price-color)]" />
+            <div className="h-5 w-5 rounded-full bg-[var(--accent-primary)]" />
+          </div>
         </div>
       </PreviewStage>
     );
   }
-  if (style === "layout-sneaker") {
+  if (style === "glass-plate") {
     return (
-      <PreviewStage className="flex h-[92px] flex-col">
-        <div className="flex flex-1 items-end justify-center pb-1">
-          <div className="h-10 w-16 rounded-lg bg-[var(--pick-surface-strong)]" />
-        </div>
-        <div className="flex items-center justify-between border-t border-[var(--pick-hairline)] bg-[var(--pick-surface)] px-2 py-1.5">
-          <div className="h-2.5 w-10 rounded-full bg-[var(--price-color)]" />
-          <div className="h-6 w-6 rounded-lg bg-[var(--accent-primary)]" />
+      <PreviewStage className="flex h-[92px] flex-col items-center border border-[var(--card-border)] px-2 pb-1.5 pt-1">
+        <div className="h-11 w-11 rounded-full bg-[var(--pick-surface-strong)] shadow-[0_6px_12px_-4px_rgba(0,0,0,0.45)] ring-2 ring-[var(--pick-surface)]" />
+        <div className="mt-1.5 h-2 w-12 rounded-full bg-[var(--pick-ink)]" />
+        <div className="mt-auto flex w-full items-center justify-between">
+          <div className="h-2 w-9 rounded-full bg-[var(--price-color)]" />
+          <div className="h-5 w-5 rounded-full bg-[var(--accent-primary)]" />
         </div>
       </PreviewStage>
     );
   }
-  if (style === "layout-skew") {
+  if (style === "glass-wide") {
     return (
-      <PreviewStage className="flex h-[92px] flex-col p-2">
-        <div className="absolute right-1 top-1 text-[10px] font-black text-[var(--pick-surface-strong)]">GM</div>
-        <div className="my-1 flex-1 skew-y-[-3deg] rounded-lg bg-[var(--accent-secondary)] opacity-40" />
-        <div className="flex items-center justify-between gap-1">
-          <div className="h-2 w-1/2 rounded-full bg-[var(--pick-ink)]" />
-          <div className="h-2 w-8 rounded-full bg-[var(--price-color)]" />
-        </div>
-      </PreviewStage>
-    );
-  }
-  if (style === "layout-food") {
-    /* Food Deluxe no tiene marco: el plato flota sobre el fondo del menú. */
-    return (
-      <PreviewStage className="flex h-[92px] flex-col p-2">
-        <div className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--pick-surface-strong)]">
-          <div className="h-1.5 w-1.5 rounded-full bg-[var(--discount-color)]" />
-        </div>
-        <div className="flex flex-1 items-center justify-center">
-          <div className="h-9 w-14 rounded-full bg-[var(--pick-surface-strong)] shadow-[0_6px_14px_rgba(0,0,0,0.35)]" />
-        </div>
-        <div className="mt-1 flex items-center justify-between">
-          <div className="h-2.5 w-10 rounded bg-[var(--price-color)]" />
-          <div className="h-4 w-4 rounded bg-[var(--accent-primary)]" />
+      <PreviewStage className="flex h-[92px] flex-col border border-[var(--card-border)] p-1">
+        <div className="h-[58%] rounded-md bg-[var(--pick-surface-strong)]" />
+        <div className="mt-1 h-2 w-2/3 rounded-full bg-[var(--pick-ink)]" />
+        <div className="mt-auto flex items-center justify-between">
+          <div className="h-2 w-10 rounded-full bg-[var(--price-color)]" />
+          <div className="h-5 w-5 rounded-full bg-[var(--accent-primary)]" />
         </div>
       </PreviewStage>
     );
@@ -589,6 +534,131 @@ export const StoreThemeProductDetailsPicker = memo(function StoreThemeProductDet
   );
 });
 
+const HEADER_OPTIONS: Array<{ value: HeaderStyle; label: string; description: string }> = [
+  { value: "bar", label: "Barra", description: "Logo y nombre en la barra de arriba, directo a la carta" },
+  { value: "cover", label: "Portada", description: "Foto grande, tu logo encima y si estás abierto" },
+];
+
+const FEATURED_OPTIONS: Array<{ value: FeaturedStyle; label: string; description: string }> = [
+  { value: "section", label: "Como categoría", description: "Los especiales van como una categoría más" },
+  { value: "carousel", label: "Carrusel", description: "Fila de destacados arriba que se desliza con el dedo" },
+];
+
+const CART_OPTIONS: Array<{ value: CartStyle; label: string; description: string }> = [
+  { value: "float", label: "Botón", description: "Botón redondo en la esquina con la cantidad" },
+  { value: "bar", label: "Barra con total", description: "Barra abajo con la cantidad y el total al agregar" },
+];
+
+function HeaderPreview({ style }: { style: HeaderStyle }) {
+  if (style === "cover") {
+    return (
+      <PreviewStage className="flex h-[72px] flex-col p-1.5">
+        <div className="h-7 rounded-md bg-[var(--pick-surface-strong)]" />
+        <div className="-mt-3 flex items-end gap-1.5 px-1">
+          <div className="h-7 w-7 rounded-lg bg-[var(--accent-primary)] ring-2 ring-[var(--pick-surface)]" />
+          <div className="mb-0.5 space-y-1">
+            <div className="h-2 w-14 rounded-full bg-[var(--pick-ink)]" />
+            <div className="h-1.5 w-9 rounded-full bg-[var(--pick-surface-strong)]" />
+          </div>
+        </div>
+      </PreviewStage>
+    );
+  }
+  return (
+    <PreviewStage className="flex h-[72px] flex-col gap-1.5 p-1.5">
+      <div className="flex items-center justify-center gap-1.5">
+        <div className="h-4 w-4 rounded bg-[var(--accent-primary)]" />
+        <div className="h-2 w-12 rounded-full bg-[var(--pick-ink)]" />
+      </div>
+      <div className="grid flex-1 grid-cols-2 gap-1">
+        <div className="rounded bg-[var(--pick-surface)]" />
+        <div className="rounded bg-[var(--pick-surface)]" />
+      </div>
+    </PreviewStage>
+  );
+}
+
+function FeaturedPreview({ style }: { style: FeaturedStyle }) {
+  if (style === "carousel") {
+    return (
+      <PreviewStage className="flex h-[72px] flex-col gap-1 p-1.5">
+        <div className="h-1.5 w-12 rounded-full bg-[var(--pick-ink)]" />
+        <div className="flex flex-1 gap-1 overflow-hidden">
+          <div className="w-[38%] shrink-0 rounded bg-[var(--pick-surface-strong)]" />
+          <div className="w-[38%] shrink-0 rounded bg-[var(--pick-surface-strong)]" />
+          <div className="w-[38%] shrink-0 rounded bg-[var(--pick-surface-strong)] opacity-60" />
+        </div>
+      </PreviewStage>
+    );
+  }
+  return (
+    <PreviewStage className="flex h-[72px] flex-col gap-1 p-1.5">
+      <div className="h-1.5 w-12 rounded-full bg-[var(--pick-ink)]" />
+      <div className="grid flex-1 grid-cols-2 gap-1">
+        <div className="rounded bg-[var(--pick-surface-strong)]" />
+        <div className="rounded bg-[var(--pick-surface-strong)]" />
+      </div>
+    </PreviewStage>
+  );
+}
+
+function CartPreview({ style }: { style: CartStyle }) {
+  return (
+    <PreviewStage className="h-[72px]">
+      <div className="absolute inset-x-1.5 top-1.5 grid grid-cols-2 gap-1">
+        <div className="h-8 rounded bg-[var(--pick-surface)]" />
+        <div className="h-8 rounded bg-[var(--pick-surface)]" />
+      </div>
+      {style === "bar" ? (
+        <div className="absolute inset-x-1.5 bottom-1.5 flex h-5 items-center gap-1 rounded-md bg-[var(--accent-primary)] px-1">
+          <div className="h-3 w-4 rounded bg-black/20" />
+          <div className="h-1.5 flex-1 rounded-full bg-white/80" />
+          <div className="h-1.5 w-5 rounded-full bg-white" />
+        </div>
+      ) : (
+        <div className="absolute bottom-1.5 right-1.5 h-6 w-6 rounded-full bg-[var(--accent-primary)] shadow" />
+      )}
+    </PreviewStage>
+  );
+}
+
+function makeSimplePicker<T extends string>(
+  name: string,
+  legend: string,
+  options: Array<{ value: T; label: string; description: string }>,
+  normalize: (value: unknown) => T,
+  Preview: (props: { style: T }) => ReactNode,
+) {
+  return memo(function SimplePicker({ value, onChange, disabled, theme }: PickerProps<T>) {
+    const selected = normalize(value);
+    const themeStyle = usePickerThemeStyle(theme);
+    return (
+      <fieldset className="space-y-2" disabled={disabled}>
+        <legend className="sr-only">{legend}</legend>
+        <div style={themeStyle} className="grid grid-cols-2 gap-3">
+          {options.map((option) => (
+            <OptionTile
+              key={option.value}
+              name={name}
+              value={option.value}
+              label={option.label}
+              description={option.description}
+              isActive={selected === option.value}
+              onSelect={() => onChange(option.value)}
+            >
+              <Preview style={option.value} />
+            </OptionTile>
+          ))}
+        </div>
+      </fieldset>
+    );
+  });
+}
+
+export const StoreThemeHeaderPicker = makeSimplePicker("headerStyle", "Cabecera del menú", HEADER_OPTIONS, normalizeHeaderStyle, HeaderPreview);
+export const StoreThemeFeaturedPicker = makeSimplePicker("featuredStyle", "Destacados", FEATURED_OPTIONS, normalizeFeaturedStyle, FeaturedPreview);
+export const StoreThemeCartPicker = makeSimplePicker("cartStyle", "Carrito", CART_OPTIONS, normalizeCartStyle, CartPreview);
+
 export function useStoreThemeLayoutHandlers(
   setStoreThemeDraft: Dispatch<SetStateAction<StoreThemeConfig | null>>,
   onDraftMutated?: () => void,
@@ -629,7 +699,15 @@ export function useStoreThemeLayoutHandlers(
     [setStoreThemeDraft, touch],
   );
 
-  return { setNavbarType, setProductCardStyle, setNavigationMode, setProductDetailsMode };
+  const setLayoutPiece = useCallback(
+    (key: "headerStyle" | "featuredStyle" | "cartStyle", value: string) => {
+      setStoreThemeDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
+      touch();
+    },
+    [setStoreThemeDraft, touch],
+  );
+
+  return { setNavbarType, setProductCardStyle, setNavigationMode, setProductDetailsMode, setLayoutPiece };
 }
 
 export function getStoreThemeComboWarnings(theme: StoreThemeConfig | null | undefined): string[] {
@@ -640,24 +718,14 @@ export function getStoreThemeComboWarnings(theme: StoreThemeConfig | null | unde
   const navigationMode = normalizeNavigationMode(theme.navigationMode);
   const productDetailsMode = normalizeProductDetailsMode(theme.productDetailsMode);
 
-  if (navbarType === "mega-menu" && productCardStyle === "layout-food") {
-    warnings.push("Con mega menú y tarjetas Food Deluxe, el botón flotante de categorías se oculta; usa el header o el overlay.");
-  }
-  if (navbarType === "floating-bottom" && productCardStyle !== "layout-food") {
-    warnings.push("La barra inferior también aparece con navbar flotante, no solo con tarjetas Food Deluxe.");
+  if (navbarType === "floating-bottom") {
     warnings.push("Configura WhatsApp, Instagram o ubicación en tus sucursales para que aparezca la pestaña Contacto.");
   }
   if (navigationMode === "pagination") {
     warnings.push("En modo paginación los clientes ven una categoría a la vez.");
   }
-  if (productDetailsMode === "inline" && productCardStyle !== "glass") {
+  if (productDetailsMode === "inline" && !isGlassCardStyle(productCardStyle)) {
     warnings.push("Con expansión en tarjeta (no Cristal), los detalles se abren en un panel debajo del producto.");
-  }
-  if (productDetailsMode === "inline" && ["layout-clean", "layout-skew", "layout-food"].includes(productCardStyle)) {
-    warnings.push("Estas tarjetas muestran poca información antes de abrir el panel de detalles.");
-  }
-  if (productDetailsMode === "modal-premium" && productCardStyle === "glass") {
-    warnings.push("Cristal + modal premium usa un flujo distinto al de otras tarjetas con el mismo ajuste de detalles.");
   }
   if (navbarType === "sidebar-categories") {
     warnings.push("En móvil, la barra lateral usa pestañas horizontales en el header.");

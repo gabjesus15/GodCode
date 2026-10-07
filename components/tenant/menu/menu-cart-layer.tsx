@@ -16,6 +16,8 @@ const CART_EXIT_MS = 220;
 type MenuCartLayerProps = {
 	selectedBranch: BranchInfo | null;
 	showBottomNav: boolean;
+	/** "float" botón redondo; "bar" barra abajo con el total. */
+	cartStyle?: "float" | "bar";
 	onlineOrderingEnabled?: boolean;
 	orderChannel?: OrderChannelMode;
 	effectiveCurrency: string;
@@ -48,6 +50,7 @@ type MenuCartLayerProps = {
 export const MenuCartLayer = memo(function MenuCartLayer({
 	selectedBranch,
 	showBottomNav,
+	cartStyle = "float",
 	onlineOrderingEnabled,
 	orderChannel = "both",
 	effectiveCurrency,
@@ -125,7 +128,7 @@ export const MenuCartLayer = memo(function MenuCartLayer({
 	if (mode === "float-with-modal" && cartModalProps) {
 		return (
 			<>
-				<LazyCartFloat currency={effectiveCurrency} />
+				<LazyCartFloat currency={effectiveCurrency} variant={cartStyle} />
 				{cartVisible ? <LazyCartModal {...cartModalProps} closing={cartClosing} /> : null}
 			</>
 		);

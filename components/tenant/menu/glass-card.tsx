@@ -11,12 +11,31 @@ import {
 	ProductCardImage,
 	ProductOfferBadges,
 	ProductQtyBadge,
+	productInitials,
 	useProductPricing,
 	type ProductCardLogic,
 	type ProductCardProduct,
 } from "./product-card-shared";
 
+/**
+ * Variantes de la misma tarjeta: comparten marcado, tokens, accesibilidad y
+ * pie; solo cambia cómo se reparte el espacio (ver GlassCard.css).
+ * - grid: foto arriba, la de siempre (Rica Pizza, Oishi).
+ * - row: fila con la foto a la izquierda; caben más productos por pantalla.
+ * - plate: el plato redondo sale por encima de la tarjeta; luce con recortes PNG.
+ * - wide: foto grande a lo ancho; una columna en el teléfono.
+ */
+export type GlassCardVariant = "grid" | "row" | "plate" | "wide";
+
+const VARIANT_IMAGE_SIZES: Record<GlassCardVariant, string> = {
+	grid: PRODUCT_IMAGE_SIZES.grid,
+	row: "(max-width: 640px) 112px, 140px",
+	plate: "(max-width: 480px) 36vw, (max-width: 1024px) 22vw, 180px",
+	wide: "(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 420px",
+};
+
 export type GlassCardProps = {
+	variant?: GlassCardVariant;
 	product: ProductCardProduct;
 	logic: ProductCardLogic;
 	priority?: boolean;
@@ -37,6 +56,7 @@ const LONG_DESCRIPTION = 60;
  * rótulo; el acento del local se reserva para el cromo, no para cada "+".
  */
 export const GlassCard = memo(function GlassCard({
+	variant = "grid",
 	product,
 	logic,
 	priority = false,
@@ -79,13 +99,21 @@ export const GlassCard = memo(function GlassCard({
 	const content = (
 		<>
 			<div className="gcard__media">
-				<ProductCardImage
-					src={logic.imageSrc}
-					alt={name}
-					priority={priority}
-					sizes={PRODUCT_IMAGE_SIZES.grid}
-					onError={logic.setImageError}
-				/>
+				{/* Sin foto propia: relleno con las iniciales en el color del local, en vez
+				    de una foto genérica de comida que no es suya. */}
+				{logic.hasPhoto ? (
+					<ProductCardImage
+						src={logic.imageSrc}
+						alt={name}
+						priority={priority}
+						sizes={VARIANT_IMAGE_SIZES[variant]}
+						onError={logic.setImageError}
+					/>
+				) : (
+					<div className="product-card-media fcard-photo--empty gcard__empty" aria-hidden>
+						<span className="fcard-photo__initials">{productInitials(name)}</span>
+					</div>
+				)}
 				<ProductOfferBadges product={product} />
 				{/* Solo en tarjeta estrecha (ver CSS): ahí el pie muestra solo el "+" y la
 				    cantidad va sobre la foto; quitar se hace desde el carrito. */}
@@ -100,7 +128,7 @@ export const GlassCard = memo(function GlassCard({
 
 	return (
 		<article
-			className={clsx("product-card glass gcard", expanded && "is-expanded", detailsMode === "inline" && "gcard--inline")}
+			className={clsx("product-card glass gcard", variant !== "grid" && `gcard--${variant}`, expanded && "is-expanded", detailsMode === "inline" && "gcard--inline")}
 		>
 			{clickable ? (
 				<div

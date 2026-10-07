@@ -22,6 +22,8 @@ export type ProductGridProps = {
 	inlinePanelRef?: React.RefObject<HTMLDivElement | null>;
 	onlineOrderingEnabled?: boolean;
 	priorityProductIds: ReadonlySet<string>;
+	/** Fila que se desliza en vez de cuadrícula (destacados en carrusel). */
+	rail?: boolean;
 };
 
 export const ProductGrid = memo(function ProductGrid({
@@ -37,12 +39,13 @@ export const ProductGrid = memo(function ProductGrid({
 	inlinePanelRef,
 	onlineOrderingEnabled,
 	priorityProductIds,
+	rail = false,
 }: ProductGridProps) {
 	const interaction = useProductDetailsInteraction(detailsMode, cardStyle, onProductClick);
 
 	return (
 		<div className="product-grid-container">
-			<div className={`product-grid ${productCardGridClass(cardStyle)}`}>
+			<div className={`product-grid ${productCardGridClass(cardStyle)}${rail ? " product-rail" : ""}`}>
 			{products.flatMap((product) => {
 				const card = (
 					<ProductCard

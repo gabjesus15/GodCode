@@ -299,6 +299,12 @@ export type StoreThemeConfig = {
   fontFamily?: string;
   /** Plantilla de menú elegida (id de MENU_TEMPLATES); vacío = ninguna. */
   templateId?: string;
+  /** Cabecera del menú: "bar" o "cover" (portada con foto y logo grande). */
+  headerStyle?: string;
+  /** Destacados ("Solo hoy"): "section" o "carousel". */
+  featuredStyle?: string;
+  /** Carrito: "float" (botón) o "bar" (barra con el total). */
+  cartStyle?: string;
 };
 
 export type StoreThemeResponse = {

@@ -272,3 +272,72 @@
         transition: none;
     }
 }
+
+/* =========================================
+   CATEGORÍAS SUBRAYADAS (navbarType "underline-tabs")
+   Solo texto; la activa lleva una línea del color del local debajo y la tira
+   entera una línea fina de base, como las pestañas de una app nativa.
+   ========================================= */
+
+.navbar-type-underline-tabs .navbar-container {
+    gap: 2px;
+    padding: 0 6px;
+}
+
+.navbar-type-underline-tabs .tab-item {
+    position: relative;
+    min-height: 44px;
+    padding: 10px 14px 12px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--menu-fg-3);
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+}
+
+.navbar-type-underline-tabs .tab-item::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 0;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: var(--menu-accent);
+    transform: scaleX(0);
+    transition: transform 0.25s var(--menu-ease, ease);
+}
+
+.navbar-type-underline-tabs .tab-item:hover {
+    color: var(--menu-fg);
+}
+
+.navbar-type-underline-tabs .tab-item.active {
+    background: none;
+    color: var(--menu-fg);
+    box-shadow: none;
+}
+
+.navbar-type-underline-tabs .tab-item.active::after {
+    transform: scaleX(1);
+}
+
+@media (max-width: 640px) {
+    .navbar-type-underline-tabs .tab-item {
+        padding: 10px 12px 12px;
+        font-size: 0.86rem;
+    }
+
+    .navbar-type-underline-tabs .tab-item::after {
+        left: 12px;
+        right: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .navbar-type-underline-tabs .tab-item::after {
+        transition: none;
+    }
+}

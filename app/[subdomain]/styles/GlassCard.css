@@ -427,6 +427,224 @@
 	}
 }
 
+/* =============================================================================
+   Variantes de la Cristal (glass-card.tsx, `variant`). Mismo marcado, mismos
+   tokens y mismo pie; solo cambia cómo se reparte el espacio.
+   ============================================================================= */
+
+/* --- Fila: foto cuadrada a la izquierda, texto y pie a la derecha ------------- */
+
+.gcard--row {
+	--gcard-row-thumb: clamp(96px, 30cqi, 136px);
+	--gcard-row-pad: clamp(10px, 2.4cqi, 12px);
+	--gcard-name-size: clamp(0.9375rem, 0.85rem + 0.6cqi, 1.0625rem);
+	--gcard-desc-lines: 2;
+}
+
+.gcard--row .gcard__hit {
+	display: grid;
+	grid-template-columns: var(--gcard-row-thumb) minmax(0, 1fr);
+	align-items: start;
+	gap: clamp(10px, 3cqi, 14px);
+	padding: var(--gcard-row-pad);
+}
+
+.gcard--row .gcard__media {
+	margin: 0;
+	aspect-ratio: 1;
+	border-radius: 12px;
+}
+
+/* El pie va dentro de la columna del texto: abajo a la derecha. El cuerpo
+   reserva su alto para que nombre y descripción no pasen por debajo. */
+.gcard--row .gcard__body {
+	padding: 2px 0 50px;
+}
+
+.gcard--row .gcard__name,
+.gcard--row .gcard__desc {
+	min-height: 0;
+}
+
+.gcard--row .gcard__desc,
+.gcard--wide .gcard__desc,
+.gcard--plate .gcard__desc {
+	--gcard-desc-lines: 2;
+}
+
+.gcard--row .gcard__foot {
+	position: absolute;
+	left: calc(var(--gcard-row-pad) + var(--gcard-row-thumb) + clamp(10px, 3cqi, 14px));
+	right: var(--gcard-row-pad);
+	bottom: var(--gcard-row-pad);
+	flex-wrap: nowrap;
+	margin: 0;
+	padding: 0;
+}
+
+.gcard--row .gcard__price {
+	min-height: 0;
+}
+
+/* --- Plato: la foto redonda sale por encima de la tarjeta ---------------------- */
+
+/* El plato no puede salirse de la caja de la tarjeta: el catálogo usa
+   `content-visibility: auto`, que recorta lo que sobresale. Así que la
+   tarjeta pinta su fondo con ::before a partir de media altura del plato, y
+   el plato queda dentro de la caja pero por encima del fondo. */
+.gcard--plate {
+	--gcard-plate-lift: clamp(30px, 18cqi, 44px);
+	overflow: visible;
+	text-align: center;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+	isolation: isolate;
+}
+
+.gcard--plate::before {
+	content: "";
+	position: absolute;
+	inset: var(--gcard-plate-lift) 0 0;
+	z-index: -1;
+	border-radius: inherit;
+	border: 1px solid var(--menu-line);
+	background: var(--menu-surface);
+	box-shadow: var(--menu-shadow-card);
+	transition:
+		box-shadow 300ms var(--menu-ease),
+		border-color 300ms var(--menu-ease);
+}
+
+@media (hover: hover) {
+	.gcard--plate:hover {
+		box-shadow: none;
+	}
+
+	.gcard--plate:hover::before {
+		border-color: color-mix(in srgb, var(--menu-accent) 55%, var(--menu-line-strong));
+		box-shadow: var(--menu-shadow-card-hover);
+	}
+}
+
+.gcard--plate .gcard__media {
+	width: 72%;
+	aspect-ratio: 1;
+	/* Aire para el aro del plato: lo que sobresale de la caja se recorta. */
+	margin: 6px auto 0;
+	border-radius: 999px;
+	overflow: visible;
+	background: none;
+	box-shadow: none;
+}
+
+/* El plato: círculo con sombra apoyada abajo, como un plato sobre la mesa. Un
+   recorte PNG (Rica Pizza) se ve entero sobre el tono de la tarjeta; una foto
+   JPG se recorta en círculo. */
+.gcard--plate .gcard__media .product-card-media {
+	border-radius: 999px;
+	overflow: hidden;
+	background:
+		radial-gradient(circle at 50% 40%, var(--menu-media-glow, transparent), transparent 70%),
+		var(--menu-surface-2);
+	box-shadow:
+		0 18px 30px -14px rgba(0, 0, 0, 0.55),
+		0 0 0 4px var(--menu-surface),
+		0 0 0 5px var(--menu-line);
+}
+
+.gcard--plate .gcard__media img {
+	transition: transform 600ms var(--menu-ease);
+}
+
+@media (hover: hover) {
+	.gcard--plate:hover .gcard__media img {
+		transform: rotate(8deg) scale(1.05);
+	}
+}
+
+.gcard--plate .gcard__body {
+	align-items: center;
+	padding-top: clamp(10px, 4cqi, 14px);
+}
+
+.gcard--plate .gcard__name {
+	min-height: 0;
+	font-size: clamp(0.9375rem, 0.62rem + 3.3cqi, 1.125rem);
+	font-family: var(--tenant-font, inherit);
+	font-weight: var(--tenant-font-weight, 600);
+}
+
+.gcard--plate .gcard__qty.tenant-ui-badge {
+	top: 4px;
+	right: 4px;
+}
+
+/* --- Foto grande: la foto manda, una tarjeta por fila en el teléfono -------- */
+
+.gcard--wide {
+	--gcard-name-size: clamp(1rem, 0.8rem + 1.4cqi, 1.25rem);
+	--gcard-price-size: clamp(1rem, 0.85rem + 1cqi, 1.1875rem);
+	--gcard-desc-lines: 2;
+}
+
+.gcard--wide .gcard__media {
+	aspect-ratio: 16 / 10;
+}
+
+.gcard--wide .gcard__name {
+	min-height: 0;
+	font-family: var(--tenant-font, inherit);
+	font-weight: var(--tenant-font-weight, 600);
+}
+
+.gcard--wide .gcard__desc {
+	min-height: 0;
+}
+
+/* Fila y foto grande tienen sitio para "− 1 +" junto al precio también en el
+   teléfono: se deshace el recorte a solo "+" del bloque móvil de arriba. */
+@media (max-width: 640px) {
+	.gcard--row .gcard__qty.tenant-ui-badge,
+	.gcard--wide .gcard__qty.tenant-ui-badge {
+		display: none;
+	}
+
+	.gcard--row .gcard__stepper,
+	.gcard--wide .gcard__stepper {
+		padding: 2px;
+		border: 1px solid var(--menu-line-strong);
+		background: var(--menu-surface-2);
+	}
+
+	.gcard--row .gcard__step:not(.gcard__step--plus),
+	.gcard--wide .gcard__step:not(.gcard__step--plus) {
+		display: grid;
+	}
+
+	.gcard--row .gcard__count,
+	.gcard--wide .gcard__count {
+		display: inline;
+	}
+
+	.gcard--row .gcard__step,
+	.gcard--wide .gcard__step,
+	.gcard--row .gcard__step--plus,
+	.gcard--wide .gcard__step--plus {
+		width: 34px;
+		height: 34px;
+		box-shadow: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.gcard--plate:hover .gcard__media img {
+		transform: none;
+	}
+}
+
 /* --- Menú sin pedidos online: solo carta ------------------------------------- */
 
 .online-ordering-disabled .gcard__add,

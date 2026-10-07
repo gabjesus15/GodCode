@@ -303,7 +303,8 @@
     "cart": {
       "float": {
         "totalPrefix": "Totale:",
-        "emptyLabel": "Il tuo Carrello"
+        "emptyLabel": "Il tuo Carrello",
+        "viewOrder": "Vedi ordine"
       },
       "modal": {
         "common": {
@@ -660,6 +661,7 @@
       },
       "catalog": {
         "onlyToday": "Solo per oggi",
+        "featured": "In evidenza",
         "resultsFor": "Risultati per “{query}”",
         "noResults": "Nessun piatto con questo nome.",
         "emptyCategory": "Nessun prodotto in questa categoria."

@@ -56,6 +56,9 @@ export const STORE_THEME_PATCH_KEYS = [
 	"brandNameColor",
 	"fontFamily",
 	"templateId",
+	"headerStyle",
+	"featuredStyle",
+	"cartStyle",
 ] as const;
 
 /**

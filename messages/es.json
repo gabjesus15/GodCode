@@ -303,7 +303,8 @@
     "cart": {
       "float": {
         "totalPrefix": "Total:",
-        "emptyLabel": "Tu bandeja"
+        "emptyLabel": "Tu bandeja",
+        "viewOrder": "Ver pedido"
       },
       "modal": {
         "common": {
@@ -660,6 +661,7 @@
       },
       "catalog": {
         "onlyToday": "Solo por hoy",
+        "featured": "Destacados",
         "resultsFor": "Resultados para “{query}”",
         "noResults": "No hay platos con ese nombre.",
         "emptyCategory": "No hay productos en esta categoría."

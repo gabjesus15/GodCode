@@ -168,7 +168,7 @@ export const MenuNavbar = memo(function MenuNavbar({
 					</div>
 				</div>
 			</div>
-			{(navbarType === "category-tabs" || navbarType === "sidebar-categories") && (
+			{(navbarType === "category-tabs" || navbarType === "underline-tabs" || navbarType === "sidebar-categories") && (
 				<CategoryTabsNav
 					specialProductsCount={specialProductsCount}
 					fireIcon={fireIcon}

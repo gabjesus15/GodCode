@@ -8,7 +8,8 @@ import { PRODUCT_CARD_STYLES } from "@/lib/store-theme/theme-config";
 /**
  * El panel de tienda expone "Color precio" y valida su contraste contra el
  * fondo en `buildStoreThemeChecklist`. Ese control solo dice la verdad si los
- * nueve estilos de tarjeta pintan el precio con `--price-color`.
+ * estilos de tarjeta pintan el precio con `--price-color` (las variantes de
+ * Cristal comparten el mismo precio).
  *
  * Durante mucho tiempo no fue asi: solo Cristal leia el token. Los demas
  * llevaban `#fff` a pelo, y Horizontal y Gaming usaban `--tenant-primary`, lo
@@ -47,14 +48,9 @@ function colorRuleBody(css: string, selector: string): string | null {
 /** Selector que pinta el precio vigente en cada estilo de tarjeta. */
 const PRICE_SELECTOR_BY_STYLE: Record<string, { file: string; selector: string }> = {
 	glass: { file: "GlassCard.css", selector: ".gcard__price-main" },
-	"layout-clean": { file: "ProductCardLayouts.css", selector: ".product-layout-clean .card__preci--now" },
-	"layout-detailed": { file: "ProductCardLayouts.css", selector: ".product-layout-detailed .detailed-new-price" },
-	"layout-horizontal": { file: "ProductCardLayouts.css", selector: ".product-layout-horizontal .horizontal-price" },
-	"layout-sidebar": { file: "ProductCardLayouts.css", selector: ".product-layout-sidebar .sidebar-price" },
-	"layout-rappi": { file: "ProductCardLayouts.css", selector: ".product-layout-rappi .rappi-price" },
-	"layout-sneaker": { file: "ProductCardLayouts.css", selector: ".product-layout-sneaker .sneaker-price-label" },
-	"layout-skew": { file: "ProductCardLayouts.css", selector: ".product-layout-skew .contentBox .price" },
-	"layout-food": { file: "ProductCardLayouts.css", selector: ".product-layout-food .food-price" },
+	"glass-row": { file: "GlassCard.css", selector: ".gcard__price-main" },
+	"glass-plate": { file: "GlassCard.css", selector: ".gcard__price-main" },
+	"glass-wide": { file: "GlassCard.css", selector: ".gcard__price-main" },
 	"layout-carta": { file: "FoodCardLayouts.css", selector: ".product-layout-carta .fcard-price__now" },
 	"layout-vitrina": { file: "FoodCardLayouts.css", selector: ".product-layout-vitrina .fcard-price__now" },
 	"layout-cartel": { file: "FoodCardLayouts.css", selector: ".product-layout-cartel .fcard-price__now" },
@@ -77,7 +73,7 @@ describe("precio del menu: contrato con --price-color", () => {
 	}
 
 	it("el precio rebajado usa --discount-color en todos los estilos", () => {
-		const css = readStyles("ProductCardLayouts.css");
+		const css = readStyles("FoodCardLayouts.css");
 		const saleColors = [...css.matchAll(/\.layout-price--sale[^{]*\{([^}]*)\}/g)]
 			.map(([, body]) => /color:\s*([^;]+);/.exec(body)?.[1]?.trim())
 			.filter((value): value is string => Boolean(value));
@@ -89,10 +85,8 @@ describe("precio del menu: contrato con --price-color", () => {
 	});
 
 	it("ningun estilo pinta el precio con el color de marca", () => {
-		const css = readStyles("ProductCardLayouts.css");
 		for (const { file, selector } of Object.values(PRICE_SELECTOR_BY_STYLE)) {
-			if (file !== "ProductCardLayouts.css") continue;
-			const body = colorRuleBody(css, selector);
+			const body = colorRuleBody(readStyles(file), selector);
 			expect(body, selector).not.toMatch(/color:\s*var\(--tenant-primary/);
 		}
 	});

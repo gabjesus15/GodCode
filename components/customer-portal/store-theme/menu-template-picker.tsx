@@ -106,24 +106,55 @@ export function MenuTemplateThumbnail({ template }: { template: MenuTemplate }) 
 
 	return (
 		<span className="block aspect-[4/3] w-full overflow-hidden border-b border-[#f0f0f2]" style={root} aria-hidden>
-			<span className="flex items-center gap-1.5 px-2.5 pt-2" style={{ background: dark ? "#151518" : "rgba(255,255,255,0.7)" }}>
-				<span className="h-3.5 w-3.5 rounded-[4px]" style={{ background: accent }} />
+			{theme.headerStyle === "cover" ? (
+				<span className="relative block h-9" style={{ background: `linear-gradient(135deg, ${accent}, ${theme.secondaryColor})` }}>
+					<span
+						className="absolute -bottom-2.5 left-2.5 h-5 w-5 rounded-[6px]"
+						style={{ background: surface, boxShadow: `0 0 0 2px ${theme.backgroundColor}` }}
+					/>
+				</span>
+			) : null}
+			<span
+				className={`flex items-center gap-1.5 px-2.5 ${theme.headerStyle === "cover" ? "pt-3" : "pt-2"}`}
+				style={{ background: theme.headerStyle === "cover" ? "transparent" : dark ? "#151518" : "rgba(255,255,255,0.7)" }}
+			>
+				{theme.headerStyle === "cover" ? null : <span className="h-3.5 w-3.5 rounded-[4px]" style={{ background: accent }} />}
 				<span
 					className="truncate text-[11px] leading-none"
-					style={{ fontFamily: font, fontWeight: Number(fontWeight), color: accent }}
+					style={{ fontFamily: font, fontWeight: Number(fontWeight), color: theme.headerStyle === "cover" ? fg : accent }}
 				>
 					{template.name}
 				</span>
 			</span>
-			<span className="flex gap-1 px-2.5 pb-1.5 pt-1.5" style={{ background: dark ? "#151518" : "rgba(255,255,255,0.7)" }}>
-				<span className="h-2 w-7 rounded-full" style={{ background: accent }} />
-				<span className="h-2 w-6 rounded-full" style={{ background: line }} />
-				<span className="h-2 w-5 rounded-full" style={{ background: line }} />
+			<span
+				className="flex gap-1.5 px-2.5 pb-1.5 pt-1.5"
+				style={{ background: theme.headerStyle === "cover" ? "transparent" : dark ? "#151518" : "rgba(255,255,255,0.7)" }}
+			>
+				{theme.navbarType === "underline-tabs" ? (
+					<>
+						<span className="flex flex-col gap-0.5">
+							<span className="h-1.5 w-6 rounded-full" style={{ background: fg, opacity: 0.85 }} />
+							<span className="h-[2px] w-6 rounded-full" style={{ background: accent }} />
+						</span>
+						<span className="h-1.5 w-5 rounded-full" style={{ background: muted }} />
+						<span className="h-1.5 w-5 rounded-full" style={{ background: muted }} />
+					</>
+				) : (
+					<>
+						<span className="h-2 w-7 rounded-full" style={{ background: accent }} />
+						<span className="h-2 w-6 rounded-full" style={{ background: line }} />
+						<span className="h-2 w-5 rounded-full" style={{ background: line }} />
+					</>
+				)}
 			</span>
-			{theme.productCardStyle === "layout-carta" ? (
+			{theme.productCardStyle === "layout-carta" || theme.productCardStyle === "glass-row" ? (
 				<span className="flex flex-col gap-1.5 px-2.5 pt-2">
 					{[...dishes, dishes[0]].map((dish, i) => (
-						<span key={i} className="flex items-center gap-2 rounded-lg p-1.5" style={{ background: surface, border: `1px solid ${line}` }}>
+						<span
+							key={i}
+							className={`flex items-center gap-2 rounded-lg p-1.5 ${theme.productCardStyle === "glass-row" ? "flex-row-reverse" : ""}`}
+							style={{ background: surface, border: `1px solid ${line}` }}
+						>
 							<span className="flex flex-1 flex-col gap-1">
 								<span className="h-1.5 w-3/4 rounded-full" style={{ background: fg, opacity: 0.85 }} />
 								<span className="h-1 w-full rounded-full" style={{ background: muted }} />

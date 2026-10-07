@@ -8,8 +8,9 @@ import {
 } from "@/lib/store-theme/theme-config";
 
 /**
- * Plantillas del menú público: cada una es un look completo (tarjeta,
- * tipografía, colores, claro/oscuro y fondo) pensado para un tipo de negocio.
+ * Plantillas del menú público: cada una es una combinación de piezas
+ * (cabecera, categorías, destacados, tarjeta y carrito) con su tipografía,
+ * colores, claro/oscuro y fondo, pensada para un tipo de negocio.
  *
  * Elegir una plantilla escribe sus campos en `companies.theme_config`, como si
  * el dueño los hubiera tocado uno a uno en «Tienda», y guarda además su id en
@@ -45,6 +46,9 @@ export type MenuTemplateTheme = Required<
 		| "backgroundMode"
 		| "brandNameColor"
 		| "fontFamily"
+		| "headerStyle"
+		| "featuredStyle"
+		| "cartStyle"
 	>
 > & { productCardStyle: ProductCardStyle; fontFamily: StoreThemeFontId };
 
@@ -61,7 +65,6 @@ export type MenuTemplate = {
 };
 
 const BASE = {
-	navbarType: "category-tabs",
 	navigationMode: "scroll",
 	productDetailsMode: "modal-premium",
 	backgroundMode: "solid",
@@ -77,6 +80,10 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 		sectors: ["Pizzería"],
 		theme: {
 			...BASE,
+			headerStyle: "cover",
+			navbarType: "underline-tabs",
+			featuredStyle: "carousel",
+			cartStyle: "bar",
 			productCardStyle: "layout-cartel",
 			fontFamily: "anton",
 			surfaceScheme: "dark",
@@ -94,6 +101,10 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 		sectors: ["Hamburguesas"],
 		theme: {
 			...BASE,
+			headerStyle: "cover",
+			navbarType: "category-tabs",
+			featuredStyle: "carousel",
+			cartStyle: "bar",
 			productCardStyle: "layout-cartel",
 			fontFamily: "bebas",
 			surfaceScheme: "dark",
@@ -111,6 +122,10 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 		sectors: ["Comida rápida"],
 		theme: {
 			...BASE,
+			headerStyle: "bar",
+			navbarType: "category-tabs",
+			featuredStyle: "carousel",
+			cartStyle: "bar",
 			productCardStyle: "layout-vitrina",
 			fontFamily: "lilita",
 			surfaceScheme: "light",
@@ -128,6 +143,10 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 		sectors: ["Sushi"],
 		theme: {
 			...BASE,
+			headerStyle: "cover",
+			navbarType: "underline-tabs",
+			featuredStyle: "carousel",
+			cartStyle: "float",
 			productCardStyle: "layout-nori",
 			fontFamily: "poppins",
 			surfaceScheme: "dark",
@@ -145,6 +164,10 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 		sectors: ["Restaurante"],
 		theme: {
 			...BASE,
+			headerStyle: "cover",
+			navbarType: "underline-tabs",
+			featuredStyle: "section",
+			cartStyle: "bar",
 			productCardStyle: "layout-carta",
 			fontFamily: "playfair",
 			surfaceScheme: "light",
@@ -158,11 +181,15 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 	{
 		id: "aroma",
 		name: "Aroma",
-		description: "Crema y café, cálida y luminosa. Para cafeterías y desayunos.",
+		description: "Crema y café, en lista con foto al lado. Para cafeterías y desayunos.",
 		sectors: ["Cafetería"],
 		theme: {
 			...BASE,
-			productCardStyle: "layout-vitrina",
+			headerStyle: "cover",
+			navbarType: "category-tabs",
+			featuredStyle: "carousel",
+			cartStyle: "float",
+			productCardStyle: "glass-row",
 			fontFamily: "lora",
 			surfaceScheme: "light",
 			backgroundColor: "#f4ede4",
@@ -179,6 +206,10 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 		sectors: ["Panadería y pastelería"],
 		theme: {
 			...BASE,
+			headerStyle: "cover",
+			navbarType: "underline-tabs",
+			featuredStyle: "carousel",
+			cartStyle: "float",
 			productCardStyle: "layout-vitrina",
 			fontFamily: "playfair",
 			surfaceScheme: "light",
@@ -192,11 +223,15 @@ export const MENU_TEMPLATES: readonly MenuTemplate[] = [
 	{
 		id: "clasica",
 		name: "Clásica",
-		description: "Lista clara y ordenada que sirve para cualquier carta.",
+		description: "Tarjetas con foto arriba, claras y ordenadas. Sirve para cualquier carta.",
 		sectors: ["Otro"],
 		theme: {
 			...BASE,
-			productCardStyle: "layout-carta",
+			headerStyle: "bar",
+			navbarType: "category-tabs",
+			featuredStyle: "section",
+			cartStyle: "float",
+			productCardStyle: "glass",
 			fontFamily: "montserrat",
 			surfaceScheme: "light",
 			backgroundColor: "#f0f0f0",

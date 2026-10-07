@@ -4,6 +4,7 @@ import { asThemeConfigObject, STORE_THEME_PATCH_KEYS } from "@/lib/store-theme/m
 
 export const NAVBAR_TYPES = [
   "category-tabs",
+  "underline-tabs",
   "sidebar-categories",
   "mega-menu",
   "icon-list",
@@ -17,6 +18,62 @@ export type NavigationMode = (typeof NAVIGATION_MODES)[number];
 
 export const PRODUCT_DETAILS_MODES = ["modal-premium", "inline"] as const;
 export type ProductDetailsMode = (typeof PRODUCT_DETAILS_MODES)[number];
+
+/**
+ * Piezas del menú que el dueño elige una a una en «Tienda», además de
+ * categorías (navbarType), tarjeta (productCardStyle) y detalle
+ * (productDetailsMode):
+ * - headerStyle: "bar" solo la barra de arriba; "cover" suma una portada con
+ *   foto, logo grande, estado abierto/cerrado y sucursal.
+ * - featuredStyle: cómo van los destacados ("Solo hoy"): "section" como una
+ *   categoría más; "carousel" en una fila que se desliza.
+ * - cartStyle: "float" botón redondo; "bar" barra abajo con el total, solo
+ *   cuando hay algo en el pedido.
+ */
+export const HEADER_STYLES = ["bar", "cover"] as const;
+export type HeaderStyle = (typeof HEADER_STYLES)[number];
+
+export const FEATURED_STYLES = ["section", "carousel"] as const;
+export type FeaturedStyle = (typeof FEATURED_STYLES)[number];
+
+export const CART_STYLES = ["float", "bar"] as const;
+export type CartStyle = (typeof CART_STYLES)[number];
+
+export type MenuLayoutConfig = {
+  headerStyle: HeaderStyle;
+  featuredStyle: FeaturedStyle;
+  cartStyle: CartStyle;
+  /** Foto de la portada: la imagen de fondo del tema, si la hay. */
+  coverImageUrl: string;
+};
+
+function pickOption<T extends string>(options: readonly T[], value: unknown): T {
+  const raw = String(value ?? "").trim();
+  return (options as readonly string[]).includes(raw) ? (raw as T) : options[0];
+}
+
+export function normalizeHeaderStyle(value: unknown): HeaderStyle {
+  return pickOption(HEADER_STYLES, value);
+}
+
+export function normalizeFeaturedStyle(value: unknown): FeaturedStyle {
+  return pickOption(FEATURED_STYLES, value);
+}
+
+export function normalizeCartStyle(value: unknown): CartStyle {
+  return pickOption(CART_STYLES, value);
+}
+
+/** Las tres piezas sueltas del tema, normalizadas (lo que no venga, por defecto). */
+export function normalizeMenuLayout(input: unknown): MenuLayoutConfig {
+  const value = (input ?? {}) as Record<string, unknown>;
+  return {
+    headerStyle: normalizeHeaderStyle(value.headerStyle),
+    featuredStyle: normalizeFeaturedStyle(value.featuredStyle),
+    cartStyle: normalizeCartStyle(value.cartStyle),
+    coverImageUrl: String(value.coverImageUrl ?? value.backgroundImageUrl ?? "").trim(),
+  };
+}
 
 /** "auto" decide por la luminancia del color de fondo (ver lib/tenant/theme/surface-scheme). */
 export const SURFACE_SCHEMES = ["auto", "light", "dark"] as const;
@@ -96,14 +153,9 @@ export function normalizeBrandNameColor(value: unknown): string {
 
 export const PRODUCT_CARD_STYLES = [
   "glass",
-  "layout-clean",
-  "layout-detailed",
-  "layout-horizontal",
-  "layout-sidebar",
-  "layout-rappi",
-  "layout-sneaker",
-  "layout-skew",
-  "layout-food",
+  "glass-row",
+  "glass-plate",
+  "glass-wide",
   "layout-carta",
   "layout-vitrina",
   "layout-cartel",
@@ -112,9 +164,22 @@ export const PRODUCT_CARD_STYLES = [
 
 export type ProductCardStyle = (typeof PRODUCT_CARD_STYLES)[number];
 
+/**
+ * Tarjetas retiradas el 07-10 (copias de tiendas de ropa, zapatillas o gaming
+ * que no se veían bien con comida). Un local que tenía una guardada se ve con
+ * la más parecida de las de ahora.
+ */
 const PRODUCT_CARD_ALIASES: Record<string, ProductCardStyle> = {
-  minimal: "layout-clean",
-  flat: "layout-horizontal",
+  minimal: "glass",
+  flat: "glass-row",
+  "layout-clean": "glass",
+  "layout-detailed": "glass-wide",
+  "layout-horizontal": "glass-row",
+  "layout-sidebar": "glass",
+  "layout-rappi": "glass",
+  "layout-sneaker": "glass-plate",
+  "layout-skew": "glass-wide",
+  "layout-food": "glass-plate",
 };
 
 const NAVBAR_ALIASES: Record<string, NavbarType> = {
@@ -154,6 +219,11 @@ export function normalizeProductDetailsMode(value: unknown): ProductDetailsMode 
     return raw as ProductDetailsMode;
   }
   return "modal-premium"; // Fallback to premium modal
+}
+
+/** La familia Cristal: la tarjeta de siempre y sus variantes (fila, plato, foto grande). */
+export function isGlassCardStyle(style: unknown): boolean {
+  return String(style ?? "").startsWith("glass");
 }
 
 /** Clase CSS del grid (`grid-glass`, `grid-layout-clean`, …). */
@@ -201,6 +271,9 @@ export function normalizeStoreThemeConfig(
     brandNameColor: normalizeBrandNameColor(value.brandNameColor ?? defaults.brandNameColor),
     fontFamily: normalizeFontFamily(value.fontFamily ?? defaults.fontFamily),
     templateId: String(value.templateId ?? defaults.templateId ?? "").slice(0, 64),
+    headerStyle: normalizeHeaderStyle(value.headerStyle ?? defaults.headerStyle),
+    featuredStyle: normalizeFeaturedStyle(value.featuredStyle ?? defaults.featuredStyle),
+    cartStyle: normalizeCartStyle(value.cartStyle ?? defaults.cartStyle),
   };
 }
 

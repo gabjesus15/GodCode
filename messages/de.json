@@ -303,7 +303,8 @@
     "cart": {
       "float": {
         "totalPrefix": "Summe:",
-        "emptyLabel": "Dein Warenkorb"
+        "emptyLabel": "Dein Warenkorb",
+        "viewOrder": "Bestellung ansehen"
       },
       "modal": {
         "common": {
@@ -660,6 +661,7 @@
       },
       "catalog": {
         "onlyToday": "Nur heute",
+        "featured": "Empfehlungen",
         "resultsFor": "Ergebnisse für „{query}“",
         "noResults": "Kein Gericht mit diesem Namen.",
         "emptyCategory": "Keine Produkte in dieser Kategorie."

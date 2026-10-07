@@ -1,0 +1,166 @@
+/* =============================================================================
+   Portada del menú (headerStyle "cover", menu-store-cover.tsx).
+
+   Foto ancha con un velo hacia abajo, logo grande apoyado en su borde y el
+   nombre con el estado del local. Lee los tokens de superficie (`--menu-*`):
+   sirve igual en claro y en oscuro.
+   ============================================================================= */
+
+.store-cover {
+	position: relative;
+	width: 100%;
+	max-width: min(1220px, 100%);
+	margin: clamp(10px, 2.5vw, 18px) auto 4px;
+	padding: 0 clamp(12px, 4vw, 28px);
+}
+
+.store-cover__media {
+	position: relative;
+	height: clamp(150px, 34vw, 280px);
+	border-radius: clamp(18px, 3.2vw, 26px);
+	overflow: hidden;
+	background: var(--menu-surface-2);
+	box-shadow: var(--menu-shadow-card);
+	border: 1px solid var(--menu-line);
+}
+
+.store-cover__img {
+	object-fit: cover;
+}
+
+/* Velo hacia abajo: la foto se funde con la página donde se apoya el logo. */
+.store-cover__media::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.35) 100%);
+	pointer-events: none;
+}
+
+/* Sin foto: el color del local con un brillo suave, nunca una foto de stock. */
+.store-cover__media--plain {
+	background:
+		radial-gradient(120% 140% at 85% -10%, color-mix(in srgb, var(--menu-accent) 70%, #fff 0%) 0%, transparent 55%),
+		radial-gradient(90% 120% at 0% 110%, color-mix(in srgb, var(--menu-accent) 55%, #000) 0%, transparent 60%),
+		color-mix(in srgb, var(--menu-accent) 80%, #000);
+}
+
+.store-cover__media--plain::after {
+	background:
+		repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 14px),
+		linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.25) 100%);
+}
+
+/* El logo sube sobre el borde de la foto; el texto empieza justo debajo de
+   ella, nunca encima (sobre la foto un nombre claro u oscuro no se leería). */
+.store-cover {
+	--cover-overlap: clamp(34px, 7vw, 46px);
+}
+
+.store-cover__body {
+	position: relative;
+	display: flex;
+	align-items: flex-start;
+	gap: clamp(12px, 3vw, 18px);
+	margin-top: calc(-1 * var(--cover-overlap));
+	padding: 0 clamp(12px, 3vw, 22px);
+}
+
+.store-cover__logo {
+	flex-shrink: 0;
+	width: clamp(76px, 18vw, 96px);
+	aspect-ratio: 1;
+	border-radius: clamp(20px, 4.5vw, 26px);
+	overflow: hidden;
+	background: var(--menu-surface);
+	box-shadow:
+		0 0 0 4px var(--menu-bg, var(--menu-surface)),
+		0 12px 28px -10px rgba(0, 0, 0, 0.55);
+}
+
+.store-cover__logo img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.store-cover__monogram {
+	display: grid;
+	place-items: center;
+	width: 100%;
+	height: 100%;
+	background: var(--menu-accent);
+	color: var(--menu-on-accent);
+	font-family: var(--tenant-font, inherit);
+	font-weight: var(--tenant-font-weight, 700);
+	font-size: clamp(1.6rem, 6vw, 2rem);
+	letter-spacing: 0.01em;
+}
+
+.store-cover__info {
+	min-width: 0;
+	padding-top: calc(var(--cover-overlap) + 10px);
+}
+
+.store-cover__name {
+	margin: 0;
+	font-family: var(--tenant-font, inherit);
+	font-weight: var(--tenant-font-weight, 700);
+	font-size: clamp(1.35rem, 1.05rem + 1.6vw, 2rem);
+	line-height: 1.1;
+	letter-spacing: -0.01em;
+	color: var(--menu-fg);
+	overflow-wrap: anywhere;
+}
+
+.store-cover__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 12px;
+	margin-top: 6px;
+	font-size: 0.82rem;
+	color: var(--menu-fg-2);
+}
+
+.store-cover__status {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 24px;
+	padding: 0 10px;
+	border-radius: 999px;
+	background: var(--menu-surface-2);
+	border: 1px solid var(--menu-line);
+	font-weight: 600;
+	color: var(--menu-fg-2);
+}
+
+.store-cover__dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 999px;
+	background: var(--menu-fg-3);
+}
+
+.store-cover__status.is-open {
+	color: var(--menu-fg);
+}
+
+.store-cover__status.is-open .store-cover__dot {
+	background: #22c55e;
+	box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+.store-cover__place {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+}
+
+.store-cover__place span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

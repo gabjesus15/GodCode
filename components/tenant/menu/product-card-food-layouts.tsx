@@ -8,11 +8,22 @@ import {
 	ProductOfferBadges,
 	ProductPriceBlock,
 	ProductQtyBadge,
+	productInitials,
 	truncateText,
 	useProductPricing,
 	type ProductCardLogic,
+	type ProductCardProduct,
 } from "./product-card-shared";
-import type { LayoutCardProps } from "./product-card-layouts";
+
+export type LayoutCardProps = {
+	product: ProductCardProduct;
+	logic: ProductCardLogic;
+	currency: string;
+	priority: boolean;
+	onClick?: () => void;
+	detailsMode?: string;
+	exchangeRate?: number | null;
+};
 
 /**
  * Tarjetas pensadas para comida (plantillas de menú por tipo de negocio).
@@ -46,16 +57,6 @@ function interactionProps(onClick?: () => void) {
 			}
 		},
 	};
-}
-
-/** Inicial (o dos) del producto: "Pollo crispy" → "PC", "Americano" → "A". */
-function productInitials(name: string | null | undefined): string {
-	const words = String(name ?? "").trim().split(/\s+/).filter((w) => w.length > 2);
-	if (words.length === 0) return String(name ?? "?").trim().charAt(0).toUpperCase() || "?";
-	return words
-		.slice(0, 2)
-		.map((w) => w.charAt(0).toUpperCase())
-		.join("");
 }
 
 function FoodPhoto({

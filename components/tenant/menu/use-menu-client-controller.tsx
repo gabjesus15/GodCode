@@ -41,6 +41,7 @@ import { useSizePickerStore } from "./product-size-store";
 import { useTenantMounted } from "@/lib/tenant/hooks/use-tenant-mounted";
 import { useLowEndDevice } from "@/lib/tenant/hooks/use-low-end-device";
 import { resolveEffectiveNavigationMode } from "@/lib/tenant/menu/resolve-effective-navigation-mode";
+import { normalizeMenuLayout, type MenuLayoutConfig } from "@/lib/store-theme/theme-config";
 
 export function useMenuClientController(props: MenuClientProps) {
 	const {
@@ -84,6 +85,23 @@ export function useMenuClientController(props: MenuClientProps) {
 	const [navigationMode, setNavigationMode] = useState(initialNavigationMode);
 	const [cardStyle, setCardStyle] = useState(initialProductCardStyle);
 	const [detailsMode, setDetailsMode] = useState(initialProductDetailsMode);
+	const {
+		headerStyle: rawHeaderStyle,
+		featuredStyle: rawFeaturedStyle,
+		cartStyle: rawCartStyle,
+		coverImageUrl: rawCoverImageUrl,
+	} = props.menuLayout ?? {};
+	const initialMenuLayout = useMemo(
+		() =>
+			normalizeMenuLayout({
+				headerStyle: rawHeaderStyle,
+				featuredStyle: rawFeaturedStyle,
+				cartStyle: rawCartStyle,
+				coverImageUrl: rawCoverImageUrl,
+			}),
+		[rawHeaderStyle, rawFeaturedStyle, rawCartStyle, rawCoverImageUrl],
+	);
+	const [menuLayout, setMenuLayout] = useState<MenuLayoutConfig>(initialMenuLayout);
 	const [previewDisplayName, setPreviewDisplayName] = useState<string | null>(null);
 	const [previewLogoUrl, setPreviewLogoUrl] = useState<string | null>(null);
 	const [activeBottomTab, setActiveBottomTab] = useState<"home" | "cart" | "contact" | "account">("home");
@@ -140,6 +158,8 @@ export function useMenuClientController(props: MenuClientProps) {
 		initialNavigationMode,
 		initialProductCardStyle,
 		initialProductDetailsMode,
+		initialMenuLayout,
+		setMenuLayout,
 		setNavbarType,
 		setNavigationMode,
 		setCardStyle,
@@ -209,6 +229,7 @@ export function useMenuClientController(props: MenuClientProps) {
 		onlineOrderingEnabled,
 		showBottomNav,
 	});
+	const cartStyleClass = cartUiMode === "float-with-modal" ? ` cart-style-${menuLayout.cartStyle}` : "";
 	const visibleCategories = useMemo(() => [...categories], [categories]);
 	const showContactTab = shouldShowContactTab(branches, selectedBranchId);
 	const availableContactChannels = useMemo(
@@ -468,7 +489,7 @@ export function useMenuClientController(props: MenuClientProps) {
 				: "preview-device-mobile"
 		: "";
 
-	const pageClassName = `page-wrapper navbar-type-${navbarType} nav-mode-${effectiveNavigationMode} card-style-${cardStyle} cart-ui-${cartUiMode}${onlineOrderingEnabled === false ? " online-ordering-disabled" : ""}${isLowEnd ? " low-end-device" : ""}${previewDeviceClass ? ` ${previewDeviceClass}` : ""}${isEmbeddedPreview ? " embedded-preview" : ""}`;
+	const pageClassName = `page-wrapper navbar-type-${navbarType} nav-mode-${effectiveNavigationMode} card-style-${cardStyle} cart-ui-${cartUiMode}${cartStyleClass} header-style-${menuLayout.headerStyle}${onlineOrderingEnabled === false ? " online-ordering-disabled" : ""}${isLowEnd ? " low-end-device" : ""}${previewDeviceClass ? ` ${previewDeviceClass}` : ""}${isEmbeddedPreview ? " embedded-preview" : ""}`;
 
 	/**
 	 * Es seguro bajar el selector: sin sucursal elegida `resolveMenuCartUiMode`
@@ -522,6 +543,7 @@ export function useMenuClientController(props: MenuClientProps) {
 		<MenuCartLayer
 			selectedBranch={selectedBranch}
 			showBottomNav={showBottomNav}
+			cartStyle={menuLayout.cartStyle}
 			onlineOrderingEnabled={onlineOrderingEnabled}
 			orderChannel={orderChannel}
 			effectiveCurrency={effectiveCurrency}
@@ -589,6 +611,7 @@ export function useMenuClientController(props: MenuClientProps) {
 		filteredBySearch,
 		cardStyle,
 		detailsMode,
+		menuLayout,
 		exchangeRate,
 		expandedInlineProductId,
 		handleProductClick,
@@ -601,6 +624,7 @@ export function useMenuClientController(props: MenuClientProps) {
 		setIsLocationModalOpen,
 		goHomeFromMenu,
 		hasOpenBranches,
+		selectedBranchOpen: selectedBranchId ? (openBranchIds ?? []).includes(selectedBranchId) : null,
 		modalBranches,
 		branches,
 		canSwitchBranch,

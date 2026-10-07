@@ -13,8 +13,8 @@ import {
 } from "@/lib/tenant/menu/menu-helpers";
 
 describe("menu-helpers", () => {
-	it("shouldShowBottomNav for food and floating-bottom", () => {
-		expect(shouldShowBottomNav("layout-food", "category-tabs")).toBe(true);
+	it("shouldShowBottomNav only for floating-bottom", () => {
+		expect(shouldShowBottomNav("layout-food", "category-tabs")).toBe(false);
 		expect(shouldShowBottomNav("glass", "floating-bottom")).toBe(true);
 		expect(shouldShowBottomNav("glass", "category-tabs")).toBe(false);
 	});

@@ -520,6 +520,12 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
           navigationMode={navigationMode}
           productCardStyle={productCardStyle}
           productDetailsMode={productDetailsMode}
+          menuLayout={{
+            headerStyle: theme.headerStyle,
+            featuredStyle: theme.featuredStyle,
+            cartStyle: theme.cartStyle,
+            coverImageUrl: theme.backgroundImageUrl,
+          }}
           onlineOrderingEnabled={onlineOrderingEnabled}
           orderChannel={orderChannel}
           tenantSlug={resolvedParams.subdomain}

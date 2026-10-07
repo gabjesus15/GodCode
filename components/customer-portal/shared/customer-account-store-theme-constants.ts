@@ -29,6 +29,9 @@ export const STORE_THEME_FIELD_LABELS: Record<keyof StoreThemeConfig, string> = 
   brandNameColor: "Color del nombre",
   fontFamily: "Tipografía del nombre",
   templateId: "Plantilla",
+  headerStyle: "Cabecera",
+  featuredStyle: "Destacados",
+  cartStyle: "Carrito",
 };
 
 export const DEFAULT_STORE_THEME: StoreThemeConfig = {
@@ -51,6 +54,9 @@ export const DEFAULT_STORE_THEME: StoreThemeConfig = {
   brandNameColor: "",
   fontFamily: "montserrat",
   templateId: "",
+  headerStyle: "bar",
+  featuredStyle: "section",
+  cartStyle: "float",
 };
 
 export const STORE_THEME_COLOR_HELPERS: Record<

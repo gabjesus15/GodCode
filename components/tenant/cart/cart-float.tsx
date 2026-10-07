@@ -13,7 +13,7 @@ import "../../../app/[subdomain]/styles/CartFloat.css";
  * `selectedBranch.currency`, que en Venezuela vale "VES" aunque los precios
  * estén en dólares, y el proveedor ya aplica esa excepción.
  */
-export function CartFloat({ currency = "CLP" }: { currency?: string }) {
+export function CartFloat({ currency = "CLP", variant = "float" }: { currency?: string; variant?: "float" | "bar" }) {
   const t = useTranslations("tenant.cart.float");
   const { totalItems, grandTotal, isCartOpen, openCart, closeCart, currency: cartCurrency } = useCart();
   const displayCurrency = cartCurrency || currency;
@@ -79,6 +79,33 @@ export function CartFloat({ currency = "CLP" }: { currency?: string }) {
       window.removeEventListener("scroll", resetTimer);
     };
   }, [totalItems]);
+
+  /* Barra: ancho completo abajo, solo con algo en el pedido. Cuenta, "Ver
+     pedido" y el total a la vista sin hover: en el teléfono no lo hay. */
+  if (variant === "bar") {
+    const visible = mounted && hasItems;
+    return (
+      <button
+        type="button"
+        suppressHydrationWarning
+        onClick={() => {
+          if (isCartOpen) closeCart();
+          else openCart();
+        }}
+        aria-hidden={!visible}
+        tabIndex={visible ? 0 : -1}
+        className={["cart-bar", visible ? "is-visible" : ""].filter(Boolean).join(" ")}
+      >
+        <span className="cart-bar__count" aria-hidden>
+          <ShoppingBag size={18} strokeWidth={2.4} />
+          {visible ? totalItems : 0}
+        </span>
+        <span className="cart-bar__label">{t("viewOrder")}</span>
+        <span className="cart-bar__total">{visible ? formatCartMoney(grandTotal, displayCurrency) : ""}</span>
+        <ArrowRight size={18} className="cart-bar__arrow" aria-hidden />
+      </button>
+    );
+  }
 
   return (
     <button

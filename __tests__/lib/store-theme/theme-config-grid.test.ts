@@ -12,9 +12,9 @@ describe("productCardGridClass", () => {
 
 		expect(productCardGridClass("glass")).toBe("grid-glass");
 
-		expect(productCardGridClass("layout-food")).toBe("grid-layout-food");
+		expect(productCardGridClass("glass-row")).toBe("grid-glass-row");
 
-		expect(productCardGridClass("layout-horizontal")).toBe("grid-layout-horizontal");
+		expect(productCardGridClass("layout-carta")).toBe("grid-layout-carta");
 
 	});
 
@@ -22,7 +22,19 @@ describe("productCardGridClass", () => {
 
 	it("normalizes aliases", () => {
 
-		expect(productCardGridClass("minimal")).toBe("grid-layout-clean");
+		expect(productCardGridClass("minimal")).toBe("grid-glass");
+
+	});
+
+	it("las tarjetas retiradas caen en una variante de Cristal", () => {
+
+		expect(productCardGridClass("layout-clean")).toBe("grid-glass");
+
+		expect(productCardGridClass("layout-horizontal")).toBe("grid-glass-row");
+
+		expect(productCardGridClass("layout-food")).toBe("grid-glass-plate");
+
+		expect(productCardGridClass("layout-detailed")).toBe("grid-glass-wide");
 
 	});
 

@@ -25,8 +25,8 @@ export function resolveHomeCategoryId(
 	return visibleCategoryIds[0] ?? null;
 }
 
-export function shouldShowBottomNav(cardStyle: string, navbarType: string): boolean {
-	return cardStyle === "layout-food" || navbarType === "floating-bottom";
+export function shouldShowBottomNav(_cardStyle: string, navbarType: string): boolean {
+	return navbarType === "floating-bottom";
 }
 
 export type BranchSelectorPlacement = "navbar" | "bottom-nav";

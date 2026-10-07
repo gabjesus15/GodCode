@@ -605,3 +605,29 @@
 .product-layout-nori .fcard-price__now {
 	font-size: 1.04rem;
 }
+
+/* Tarjetas estrechas (dos columnas en el teléfono): el selector completo no cabe
+   junto al precio y lo pisaba. Queda solo el "+"; la cantidad ya va sobre la
+   foto y quitar se hace desde el carrito, igual que en Cristal. */
+@container product-catalog (max-width: 519px) {
+	.product-layout-vitrina .fcard-stepper,
+	.product-layout-cartel .fcard-stepper,
+	.product-layout-nori .fcard-stepper {
+		padding: 0;
+		gap: 0;
+		border: none;
+		background: transparent;
+		box-shadow: none;
+	}
+	.product-layout-vitrina .fcard-stepper > :not(:last-child),
+	.product-layout-cartel .fcard-stepper > :not(:last-child),
+	.product-layout-nori .fcard-stepper > :not(:last-child) {
+		display: none;
+	}
+	.product-layout-vitrina .fcard-stepper button:last-child,
+	.product-layout-cartel .fcard-stepper button:last-child,
+	.product-layout-nori .fcard-stepper button:last-child {
+		width: 36px;
+		height: 36px;
+	}
+}

@@ -50,6 +50,9 @@ describe("menu templates", () => {
 		expect(theme.productCardStyle).toBe("layout-cartel");
 		expect(theme.fontFamily).toBe("anton");
 		expect(theme.templateId).toBe("horno");
+		expect(theme.headerStyle).toBe("cover");
+		expect(theme.featuredStyle).toBe("carousel");
+		expect(theme.cartStyle).toBe("bar");
 		expect(theme.logoUrl).toBe("logo.png");
 		expect(readMenuTemplateId(theme)).toBe("horno");
 	});

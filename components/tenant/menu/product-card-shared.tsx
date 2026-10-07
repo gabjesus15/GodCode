@@ -40,6 +40,16 @@ import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-ur
 
 export const PRODUCT_CARD_FALLBACK_IMAGE = TENANT_PRODUCT_FALLBACK_IMAGE;
 
+export /** Inicial (o dos) del producto: "Pollo crispy" → "PC", "Americano" → "A". */
+function productInitials(name: string | null | undefined): string {
+	const words = String(name ?? "").trim().split(/\s+/).filter((w) => w.length > 2);
+	if (words.length === 0) return String(name ?? "?").trim().charAt(0).toUpperCase() || "?";
+	return words
+		.slice(0, 2)
+		.map((w) => w.charAt(0).toUpperCase())
+		.join("");
+}
+
 /** Tamaños responsive para next/image según layout del grid */
 export const PRODUCT_IMAGE_SIZES = {
   grid: "(max-width: 480px) 45vw, (max-width: 768px) 42vw, (max-width: 1024px) 28vw, 220px",

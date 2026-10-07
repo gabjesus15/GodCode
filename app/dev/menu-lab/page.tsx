@@ -10,8 +10,8 @@ import "../../[subdomain]/styles/ProductCard.css";
 import "../../[subdomain]/styles/GlassCard.css";
 import "../../[subdomain]/styles/Navbar.css";
 import "../../[subdomain]/styles/HeroCarousel.css";
-import "../../[subdomain]/styles/ProductCardLayouts.css";
 import "../../[subdomain]/styles/FoodCardLayouts.css";
+import "../../[subdomain]/styles/StoreCover.css";
 import "../../[subdomain]/styles/BranchSelectorModal.css";
 import "../../[subdomain]/styles/BottomNavbar.css";
 
@@ -43,14 +43,25 @@ function one(value: string | string[] | undefined): string | undefined {
 /**
  * Laboratorio del menú público: solo en desarrollo. Pinta el menú real con una
  * carta de ejemplo por tipo de negocio y el tema que digan los parámetros
- * (`sector`, `card`, `nav`, `font`, `scheme`, `bg`, `primary`, …), sin base de
+ * (`sector`, `card`, `nav`, `font`, `scheme`, `bg`, `primary`, `cut`, …), sin base de
  * datos. Sirve para comparar plantillas y sacar capturas.
  */
 export default async function MenuLabPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
 	if (process.env.NODE_ENV === "production") notFound();
 	const params = await searchParams;
 	const sector = one(params.sector) ?? "Pizzería";
-	const menu = LAB_MENUS[sector] ?? LAB_MENUS["Otro"];
+	const baseMenu = LAB_MENUS[sector] ?? LAB_MENUS["Otro"];
+	// `cut=1`: fotos recortadas en PNG (como las de Rica Pizza) en vez de JPG.
+	const menu =
+		one(params.cut) === "1"
+			? {
+					...baseMenu,
+					products: baseMenu.products.map((product) => ({
+						...product,
+						image_url: product.image_url?.replace(/\/(margherita|pepperoni|cuatro-quesos|pizza-champinon|pizza-quesos-miel)\.jpg$/, "/$1-cut.png") ?? null,
+					})),
+				}
+			: baseMenu;
 
 	// `template=auto` usa la recomendada para el tipo de negocio; los demás parámetros la retocan.
 	const templateParam = one(params.template);
@@ -74,6 +85,9 @@ export default async function MenuLabPage({ searchParams }: { searchParams: Prom
 		discount: "discountColor",
 		brand: "brandNameColor",
 		bgmode: "backgroundMode",
+		header: "headerStyle",
+		featured: "featuredStyle",
+		cart: "cartStyle",
 	};
 	for (const [param, key] of Object.entries(keys)) {
 		const value = one(params[param]);
@@ -107,9 +121,17 @@ export default async function MenuLabPage({ searchParams }: { searchParams: Prom
 					navigationMode={theme.navigationMode}
 					productCardStyle={theme.productCardStyle}
 					productDetailsMode={theme.productDetailsMode}
+					menuLayout={{
+						headerStyle: theme.headerStyle,
+						featuredStyle: theme.featuredStyle,
+						cartStyle: theme.cartStyle,
+						coverImageUrl: one(params.cover) ?? "",
+					}}
 					onlineOrderingEnabled
 					tenantSlug="lab"
 				/>
+				{/* En el menú real lo pone TenantShell; sin él no se ve el carrito. */}
+				<div id="cart-portal-root" className="tenant-portal-cart" />
 			</div>
 		</QueryProvider>
 	);

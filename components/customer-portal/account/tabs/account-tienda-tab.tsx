@@ -27,6 +27,9 @@ import {
   StoreThemeNavbarPicker,
   StoreThemeProductCardPicker,
   StoreThemeProductDetailsPicker,
+  StoreThemeHeaderPicker,
+  StoreThemeFeaturedPicker,
+  StoreThemeCartPicker,
   getStoreThemeComboWarnings,
   useStoreThemeLayoutHandlers,
 } from "../../store-theme/store-theme-layout-pickers";
@@ -185,6 +188,7 @@ export function AccountTiendaTab({
   const [navbarOpen, setNavbarOpen] = useState(false);
   const [productCardOpen, setProductCardOpen] = useState(false);
   const [productDetailsOpen, setProductDetailsOpen] = useState(false);
+  const [openPiece, setOpenPiece] = useState<"headerStyle" | "featuredStyle" | "cartStyle" | null>(null);
   /* Lo que el usuario va tecleando en el hex del color del nombre. Va aparte
      del borrador porque "#ff" a medio escribir no es un color válido y, si se
      guardara tal cual, el selector saltaría a "Primario" con cada tecla. */
@@ -198,7 +202,7 @@ export function AccountTiendaTab({
       : autosaveLabels[storeThemeAutosaveStatus];
 
   const busy = storeThemeLoading || storeThemeSaving || storeThemePublishing;
-  const { setNavbarType, setProductCardStyle, setNavigationMode, setProductDetailsMode } = useStoreThemeLayoutHandlers(
+  const { setNavbarType, setProductCardStyle, setNavigationMode, setProductDetailsMode, setLayoutPiece } = useStoreThemeLayoutHandlers(
     setStoreThemeDraft,
     () => setStoreThemeHasUnpublished(true),
   );
@@ -402,6 +406,34 @@ export function AccountTiendaTab({
                   </div>
                 )}
               </Card>
+
+              {/* Piezas del menú: cabecera, destacados y carrito */}
+              {([
+                { key: "headerStyle", title: "Cabecera", Picker: StoreThemeHeaderPicker },
+                { key: "featuredStyle", title: "Destacados", Picker: StoreThemeFeaturedPicker },
+                { key: "cartStyle", title: "Carrito", Picker: StoreThemeCartPicker },
+              ] as const).map(({ key, title, Picker }) => (
+                <Card noPadding key={key}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenPiece((open) => (open === key ? null : key))}
+                    className="flex w-full items-center justify-between px-5 py-4 text-sm font-semibold text-[#1d1d1f]"
+                  >
+                    <span>{title}</span>
+                    <ChevronDown className={`h-4 w-4 text-[#a1a1a6] transition-transform ${openPiece === key ? "rotate-180" : ""}`} aria-hidden />
+                  </button>
+                  {openPiece === key && (
+                    <div className="px-5 pb-5">
+                      <Picker
+                        value={storeThemeDraft?.[key]}
+                        theme={storeThemeDraft}
+                        onChange={(next: string) => setLayoutPiece(key, next)}
+                        disabled={busy}
+                      />
+                    </div>
+                  )}
+                </Card>
+              ))}
             </div>
 
             {/* Apariencia: modo, tipografía y color del nombre */}
