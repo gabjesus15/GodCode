@@ -341,3 +341,18 @@
         transition: none;
     }
 }
+
+/* Pantallas anchas: las categorías arrancan en el mismo borde que el
+   contenido (portada, títulos y tarjetas: 1220px como máximo), no pegadas
+   al borde de la ventana. */
+@media (min-width: 900px) {
+    .navbar-main-row {
+        max-width: 1220px;
+        margin-inline: auto;
+        padding-inline: clamp(12px, 4vw, 28px);
+    }
+
+    .navbar-main-row .navbar-container {
+        padding-inline: 0;
+    }
+}

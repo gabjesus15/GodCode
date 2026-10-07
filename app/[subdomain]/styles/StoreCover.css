@@ -164,3 +164,9 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+
+/* Sin foto la portada es solo color: en pantallas anchas una franja más baja,
+   para que no se vea un bloque vacío encima de la carta. */
+.store-cover__media--plain {
+	height: clamp(120px, 22vw, 180px);
+}
