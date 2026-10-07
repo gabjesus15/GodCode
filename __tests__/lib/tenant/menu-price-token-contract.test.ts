@@ -55,10 +55,14 @@ const PRICE_SELECTOR_BY_STYLE: Record<string, { file: string; selector: string }
 	"layout-sneaker": { file: "ProductCardLayouts.css", selector: ".product-layout-sneaker .sneaker-price-label" },
 	"layout-skew": { file: "ProductCardLayouts.css", selector: ".product-layout-skew .contentBox .price" },
 	"layout-food": { file: "ProductCardLayouts.css", selector: ".product-layout-food .food-price" },
+	"layout-carta": { file: "FoodCardLayouts.css", selector: ".product-layout-carta .fcard-price__now" },
+	"layout-vitrina": { file: "FoodCardLayouts.css", selector: ".product-layout-vitrina .fcard-price__now" },
+	"layout-cartel": { file: "FoodCardLayouts.css", selector: ".product-layout-cartel .fcard-price__now" },
+	"layout-nori": { file: "FoodCardLayouts.css", selector: ".product-layout-nori .fcard-price__now" },
 };
 
 describe("precio del menu: contrato con --price-color", () => {
-	it("cubre los nueve estilos de tarjeta declarados", () => {
+	it("cubre todos los estilos de tarjeta declarados", () => {
 		expect(Object.keys(PRICE_SELECTOR_BY_STYLE).sort()).toEqual([...PRODUCT_CARD_STYLES].sort());
 	});
 

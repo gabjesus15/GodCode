@@ -88,6 +88,23 @@
     border-radius: 6px;
 }
 
+/* Sin logo: iniciales del local sobre su color (antes, un muñeco genérico). */
+.nav-logo--monogram {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: var(--menu-accent);
+    color: var(--menu-on-accent);
+    font-family: var(--tenant-font, inherit);
+    font-weight: var(--tenant-font-weight, 700);
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    user-select: none;
+}
+
 /*
  * Es el <h1> de la pagina —el nombre del negocio— y estaba a 1rem: exactamente
  * el tamano por defecto del navegador para un parrafo. Al lado de un logo de

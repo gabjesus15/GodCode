@@ -113,6 +113,8 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
   const imageSrc = imageError
     ? PRODUCT_CARD_FALLBACK_IMAGE
     : resolvedProductImage || PRODUCT_CARD_FALLBACK_IMAGE;
+  /** Foto propia del producto que cargó bien; sin ella las tarjetas nuevas pintan su relleno. */
+  const hasPhoto = Boolean(resolvedProductImage) && !imageError;
 
   const setImageLoaded = useCallback((_value: boolean | ((prev: boolean) => boolean) = true) => {
     // Callers always mark loaded=true; identity mismatch already means "not loaded".
@@ -161,6 +163,7 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
       imageError,
       setImageError,
       imageSrc,
+      hasPhoto,
       imageIdentity,
       handleAdd,
       handleDecrease,
@@ -176,6 +179,7 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
       imageError,
       setImageError,
       imageSrc,
+      hasPhoto,
       imageIdentity,
       handleAdd,
       handleDecrease,

@@ -104,6 +104,10 @@ export const PRODUCT_CARD_STYLES = [
   "layout-sneaker",
   "layout-skew",
   "layout-food",
+  "layout-carta",
+  "layout-vitrina",
+  "layout-cartel",
+  "layout-nori",
 ] as const;
 
 export type ProductCardStyle = (typeof PRODUCT_CARD_STYLES)[number];
@@ -164,6 +168,12 @@ export function normalizeBackgroundBrightness(value: unknown): number | null {
   return Math.min(1.8, Math.max(0.2, Math.round(n * 100) / 100));
 }
 
+/** Id de plantilla tal cual (lo valida lib/store-theme/menu-templates); cualquier otra cosa → "". */
+function normalizeMenuTemplateRef(value: unknown): string {
+  const raw = String(value ?? "").trim().toLowerCase();
+  return /^[a-z][a-z0-9-]{0,31}$/.test(raw) ? raw : "";
+}
+
 export function normalizeStoreThemeConfig(
   input: unknown,
   fallbackName = "",
@@ -195,6 +205,7 @@ export function normalizeStoreThemeConfig(
     backgroundMode: normalizeBackgroundMode(value.backgroundMode ?? defaults.backgroundMode),
     brandNameColor: normalizeBrandNameColor(value.brandNameColor ?? defaults.brandNameColor),
     fontFamily: normalizeFontFamily(value.fontFamily ?? defaults.fontFamily),
+    menuTemplate: normalizeMenuTemplateRef(value.menuTemplate ?? defaults.menuTemplate),
   };
 }
 

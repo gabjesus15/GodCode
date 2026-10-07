@@ -13,6 +13,7 @@ import {
 	SkewCard,
 	SneakerCard,
 } from "./product-card-layouts";
+import { CartaCard, CartelCard, NoriCard, VitrinaCard } from "./product-card-food-layouts";
 
 export const ProductCard = React.memo(function ProductCard({
 	product,
@@ -83,6 +84,14 @@ export const ProductCard = React.memo(function ProductCard({
 			return <SkewCard {...layoutProps} />;
 		case "layout-food":
 			return <FoodCard {...layoutProps} />;
+		case "layout-carta":
+			return <CartaCard {...layoutProps} />;
+		case "layout-vitrina":
+			return <VitrinaCard {...layoutProps} />;
+		case "layout-cartel":
+			return <CartelCard {...layoutProps} />;
+		case "layout-nori":
+			return <NoriCard {...layoutProps} />;
 		case "layout-clean":
 		default:
 			return <CleanCard {...layoutProps} />;

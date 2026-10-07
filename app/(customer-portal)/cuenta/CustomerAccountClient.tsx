@@ -327,9 +327,8 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             storeThemeVersions={storeTheme.storeThemeVersions}
             restoreStoreVersion={storeTheme.restoreStoreVersion}
             storeThemeRestoring={storeTheme.storeThemeRestoring}
-            storeThemeSelectedTemplate={storeTheme.storeThemeSelectedTemplate}
-            setStoreThemeSelectedTemplate={storeTheme.setStoreThemeSelectedTemplate}
             applyStoreThemeTemplate={storeTheme.applyStoreThemeTemplate}
+            storeBusinessSector={storeTheme.storeBusinessSector}
             importStoreThemeJson={(file) => storeTheme.importStoreThemeJson(file, company.name)}
             exportStoreThemeJson={() => storeTheme.exportStoreThemeJson(company.publicSlug || company.id)}
             discardStoreThemeChanges={storeTheme.discardStoreThemeChanges}

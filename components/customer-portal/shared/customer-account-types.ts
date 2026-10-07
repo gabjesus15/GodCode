@@ -297,12 +297,16 @@ export type StoreThemeConfig = {
   brandNameColor?: string;
   /** Tipografía del menú público (id de STORE_THEME_FONTS). */
   fontFamily?: string;
+  /** Plantilla de la que salió el look (id de MENU_TEMPLATES); vacío si nunca eligió una. */
+  menuTemplate?: string;
 };
 
 export type StoreThemeResponse = {
   company: {
     id: string;
     name: string;
+    /** Tipo de negocio que eligió en el alta ("Pizzería", "Sushi"…), para recomendar plantilla. */
+    sector?: string | null;
   };
   published: StoreThemeConfig;
   draft: {

@@ -5,7 +5,9 @@ import type { Dispatch, SetStateAction } from "react";
 import { CheckCircle2, ChevronDown, Download, History, Upload, XCircle } from "lucide-react";
 import Image from "next/image";
 
-import { STORE_THEME_COLOR_FIELDS, STORE_THEME_COLOR_HELPERS, STORE_THEME_TEMPLATES } from "../../shared/customer-account-store-theme-constants";
+import { STORE_THEME_COLOR_FIELDS, STORE_THEME_COLOR_HELPERS } from "../../shared/customer-account-store-theme-constants";
+import type { MenuTemplateId } from "@/lib/store-theme/menu-templates";
+import { MenuTemplatePicker } from "../../store-theme/menu-template-picker";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { formatThemeColor, parseThemeColor } from "@/lib/store-theme/apply-theme-css-vars";
 import {
@@ -85,9 +87,8 @@ export type AccountTiendaTabProps = {
   storeThemeVersions: StoreThemeVersionRow[];
   restoreStoreVersion: (versionId: string) => Promise<void>;
   storeThemeRestoring: string | null;
-  storeThemeSelectedTemplate: string;
-  setStoreThemeSelectedTemplate: (v: string) => void;
-  applyStoreThemeTemplate: () => void;
+  applyStoreThemeTemplate: (id: MenuTemplateId) => void;
+  storeBusinessSector: string | null;
   importStoreThemeJson: (file: File | null) => Promise<void>;
   exportStoreThemeJson: () => void;
   discardStoreThemeChanges: () => void;
@@ -160,9 +161,8 @@ export function AccountTiendaTab({
   storeThemeVersions,
   restoreStoreVersion,
   storeThemeRestoring,
-  storeThemeSelectedTemplate,
-  setStoreThemeSelectedTemplate,
   applyStoreThemeTemplate,
+  storeBusinessSector,
   importStoreThemeJson,
   exportStoreThemeJson,
   discardStoreThemeChanges,
@@ -301,6 +301,21 @@ export function AccountTiendaTab({
                   className="mt-1.5 h-10 w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm text-[#1d1d1f] focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 />
               </label>
+            </Card>
+
+            {/* Plantilla: el look completo de una vez; lo de abajo sirve para retocarlo. */}
+            <Card compact>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Plantilla del menú</p>
+              <p className="mb-3 mt-1 text-sm text-[#6e6e73]">
+                Elige cómo se ve tu menú. Cambia tarjetas, letra y colores de una vez; tu logo y tu nombre se quedan.
+                Después puedes retocar cualquier detalle más abajo.
+              </p>
+              <MenuTemplatePicker
+                sector={storeBusinessSector}
+                value={storeThemeDraft?.menuTemplate || null}
+                onChange={applyStoreThemeTemplate}
+                disabled={busy || !storeThemeDraft}
+              />
             </Card>
 
             {/* Layout y Navegación */}
@@ -909,20 +924,6 @@ export function AccountTiendaTab({
               </button>
               {advancedOpen && (
                 <div className="space-y-4 px-5 pb-5">
-                  <div>
-                    <label htmlFor="store-theme-template" className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Plantillas</label>
-                    <div className="flex gap-2">
-                      <select
-                        id="store-theme-template"
-                        value={storeThemeSelectedTemplate}
-                        onChange={(e) => setStoreThemeSelectedTemplate(e.target.value)}
-                        className="h-9 flex-1 rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none"
-                      >
-                        {STORE_THEME_TEMPLATES.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                      </select>
-                      <Button variant="secondary" size="sm" onClick={applyStoreThemeTemplate}>Aplicar</Button>
-                    </div>
-                  </div>
                   <div>
                     <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">JSON</p>
                     <div className="flex gap-2">

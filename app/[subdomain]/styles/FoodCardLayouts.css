@@ -1,0 +1,607 @@
+/* -----------------------------------------------------------------------------
+ * Tarjetas de comida: Carta, Vitrina, Cartel y Nori
+ * (components/tenant/menu/product-card-food-layouts.tsx).
+ *
+ * Solo leen los tokens de superficie del menú (tenant-base.css), así que el
+ * modo claro/oscuro sale gratis. El acento del local entra por `--menu-accent`
+ * (botón +) y `--menu-accent-ink` (precio legible sobre la superficie).
+ * ----------------------------------------------------------------------------- */
+
+/* ---------- Parrillas ---------- */
+.product-grid.grid-layout-carta {
+	--grid-gap: 10px;
+	grid-template-columns: minmax(0, 1fr);
+}
+@container product-catalog (min-width: 720px) {
+	.product-grid.grid-layout-carta {
+		--grid-gap: 14px;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+@container product-catalog (min-width: 1180px) {
+	.product-grid.grid-layout-carta {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+.product-grid.grid-layout-vitrina,
+.product-grid.grid-layout-nori,
+.product-grid.grid-layout-cartel {
+	--grid-gap: 12px;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@container product-catalog (min-width: 600px) {
+	.product-grid.grid-layout-vitrina,
+	.product-grid.grid-layout-nori,
+	.product-grid.grid-layout-cartel {
+		--grid-gap: 16px;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+@container product-catalog (min-width: 900px) {
+	.product-grid.grid-layout-vitrina,
+	.product-grid.grid-layout-nori,
+	.product-grid.grid-layout-cartel {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+}
+@container product-catalog (min-width: 1150px) {
+	.product-grid.grid-layout-vitrina,
+	.product-grid.grid-layout-nori,
+	.product-grid.grid-layout-cartel {
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+	}
+}
+
+/* ---------- Títulos de categoría con la letra del local ---------- */
+.card-style-layout-carta .category-title,
+.card-style-layout-vitrina .category-title,
+.card-style-layout-cartel .category-title,
+.card-style-layout-nori .category-title {
+	font-family: var(--tenant-font, inherit);
+	font-weight: var(--tenant-font-weight, 700);
+}
+/* Las de cartel (Anton, Bebas) son de un solo peso y en mayúsculas se leen mejor. */
+.card-style-layout-cartel .category-title {
+	text-transform: uppercase;
+	letter-spacing: 0.01em;
+	font-size: clamp(1.5rem, 1.3rem + 0.6vw, 1.9rem);
+}
+
+/* ---------- Común ---------- */
+.fcard {
+	position: relative;
+	min-width: 0;
+	color: var(--menu-fg);
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+	transition:
+		transform 0.25s var(--menu-ease),
+		box-shadow 0.25s var(--menu-ease),
+		border-color 0.25s ease;
+}
+.fcard:focus-visible {
+	outline: 2px solid var(--menu-accent);
+	outline-offset: 2px;
+}
+.fcard h3 {
+	margin: 0;
+	letter-spacing: -0.01em;
+}
+
+.fcard-photo {
+	position: relative;
+	overflow: hidden;
+	background:
+		radial-gradient(70% 60% at 50% 45%, var(--menu-media-glow), transparent 70%),
+		linear-gradient(180deg, var(--menu-media-top), var(--menu-media-bottom));
+}
+.fcard-photo .product-card-media {
+	position: absolute;
+	inset: 0;
+}
+.fcard-photo__img {
+	transition: transform 0.5s var(--menu-ease);
+}
+@media (hover: hover) {
+	.fcard:hover .fcard-photo__img {
+		transform: scale(1.04);
+	}
+}
+
+/* Sin foto: un relleno con la inicial en la tipografía del local. */
+.fcard-photo--empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background:
+		radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--menu-accent) 30%, transparent), transparent 65%),
+		radial-gradient(90% 90% at 100% 100%, color-mix(in srgb, var(--menu-accent) 20%, transparent), transparent 65%),
+		color-mix(in srgb, var(--menu-accent) 8%, var(--menu-surface-2));
+}
+.fcard-photo__initials {
+	font-family: var(--tenant-font, inherit);
+	font-weight: var(--tenant-font-weight, 700);
+	font-size: clamp(1.6rem, 9cqi, 3rem);
+	line-height: 1;
+	letter-spacing: 0.02em;
+	color: color-mix(in srgb, var(--menu-accent-ink) 70%, transparent);
+	user-select: none;
+}
+
+.fcard-price {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	column-gap: 6px;
+	row-gap: 0;
+	font-variant-numeric: tabular-nums;
+}
+.fcard-price .layout-price-from {
+	font-size: 0.72rem;
+	font-weight: 500;
+	color: var(--menu-fg-3);
+}
+.fcard-price__now {
+	font-size: 1rem;
+	font-weight: 800;
+	letter-spacing: -0.01em;
+}
+.fcard-price__now.layout-price--sale {
+	color: var(--discount-color, var(--menu-accent-ink));
+}
+/* El precio lee "Color precio" de «Tienda» (contrato de menu-price-token-contract). */
+.product-layout-carta .fcard-price__now {
+	color: var(--price-color, var(--menu-fg));
+}
+.product-layout-vitrina .fcard-price__now {
+	color: var(--price-color, var(--menu-fg));
+}
+.product-layout-nori .fcard-price__now {
+	color: var(--price-color, var(--menu-fg));
+}
+.fcard-price__old {
+	font-size: 0.78rem;
+	font-weight: 500;
+	color: var(--menu-fg-3);
+	text-decoration: line-through;
+}
+
+/* Botón + (CardCartActions compacto) */
+.fcard .fcard-add.tenant-ui-btn {
+	width: 38px;
+	height: 38px;
+	min-width: 38px;
+	padding: 0;
+	border: none;
+	border-radius: 999px;
+	background: var(--menu-add-bg);
+	color: var(--menu-add-fg);
+	box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--menu-accent) 70%, transparent);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: transform 0.2s var(--menu-ease), filter 0.2s ease;
+}
+.fcard .fcard-add.tenant-ui-btn:hover {
+	filter: brightness(1.08);
+	transform: scale(1.06);
+}
+.fcard .fcard-add.tenant-ui-btn:active {
+	transform: scale(0.94);
+}
+.fcard .fcard-stepper {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 3px;
+	border-radius: 999px;
+	background: var(--menu-surface);
+	border: 1px solid var(--menu-line);
+	box-shadow: var(--menu-shadow-chip);
+	color: var(--menu-fg);
+}
+.fcard .fcard-stepper button {
+	width: 30px;
+	height: 30px;
+	border: none;
+	border-radius: 999px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--menu-surface-2);
+	color: var(--menu-fg);
+	cursor: pointer;
+}
+.fcard .fcard-stepper button:last-child {
+	background: var(--menu-add-bg);
+	color: var(--menu-add-fg);
+}
+.fcard .fcard-stepper span {
+	min-width: 20px;
+	text-align: center;
+	font-size: 0.85rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+.fcard .fcard-qty {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	z-index: 12;
+	min-width: 24px;
+	height: 24px;
+	padding: 0 7px;
+	background: var(--menu-accent);
+	color: var(--menu-on-accent);
+	box-shadow: var(--menu-shadow-chip);
+}
+
+/* ---------- Carta ---------- */
+.product-layout-carta {
+	display: flex;
+	align-items: stretch;
+	gap: 14px;
+	padding: 14px;
+	min-height: 132px;
+	border-radius: var(--menu-r-lg);
+	background: var(--menu-surface);
+	border: 1px solid var(--menu-line);
+	box-shadow: var(--menu-shadow-card);
+}
+.product-layout-carta.fcard--no-photo {
+	min-height: 0;
+}
+@media (hover: hover) {
+	.product-layout-carta:hover {
+		border-color: var(--menu-line-strong);
+		box-shadow: var(--menu-shadow-card-hover);
+	}
+}
+.product-layout-carta .carta-text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+.product-layout-carta .carta-title {
+	font-size: 1rem;
+	font-weight: 700;
+	line-height: 1.25;
+	color: var(--menu-fg);
+}
+.product-layout-carta .carta-desc {
+	margin: 0;
+	font-size: 0.82rem;
+	line-height: 1.45;
+	color: var(--menu-fg-3);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.product-layout-carta .fcard-price {
+	margin-top: auto;
+	padding-top: 6px;
+}
+.product-layout-carta .carta-side {
+	position: relative;
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	justify-content: flex-end;
+}
+.product-layout-carta .carta-photo-wrap {
+	position: relative;
+	width: 112px;
+	height: 112px;
+	border-radius: var(--menu-r-md);
+	overflow: hidden;
+}
+@container product-catalog (min-width: 520px) {
+	.product-layout-carta .carta-photo-wrap {
+		width: 128px;
+		height: 128px;
+	}
+}
+.product-layout-carta .carta-photo {
+	position: absolute;
+	inset: 0;
+}
+.product-layout-carta .carta-photo-wrap .tenant-ui-offer-badges {
+	top: 6px;
+	left: 6px;
+	max-width: calc(100% - 12px);
+}
+.product-layout-carta .carta-photo-wrap .tenant-ui-offer-badges .tenant-ui-badge {
+	font-size: 0.6rem;
+	padding: 3px 7px;
+}
+/* Sin foto los distintivos van en línea, arriba a la derecha. */
+.product-layout-carta.fcard--no-photo .carta-side {
+	justify-content: space-between;
+	gap: 8px;
+}
+.product-layout-carta.fcard--no-photo .tenant-ui-offer-badges {
+	position: static;
+	justify-content: flex-end;
+}
+.product-layout-carta .carta-action {
+	position: relative;
+	z-index: 2;
+	margin-top: auto;
+}
+.product-layout-carta .carta-photo-wrap + .carta-action {
+	position: absolute;
+	right: -6px;
+	bottom: -6px;
+}
+.product-layout-carta .carta-photo-wrap + .carta-action .fcard-add.tenant-ui-btn {
+	box-shadow:
+		0 0 0 3px var(--menu-surface),
+		0 6px 16px -6px color-mix(in srgb, var(--menu-accent) 70%, transparent);
+}
+
+/* ---------- Vitrina ---------- */
+.product-layout-vitrina {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	border-radius: var(--menu-r-lg);
+	background: var(--menu-surface);
+	border: 1px solid var(--menu-line);
+	box-shadow: var(--menu-shadow-card);
+	overflow: hidden;
+}
+@media (hover: hover) {
+	.product-layout-vitrina:hover {
+		transform: translateY(-3px);
+		box-shadow: var(--menu-shadow-card-hover);
+	}
+}
+.product-layout-vitrina .vitrina-photo-wrap {
+	position: relative;
+	padding: 8px 8px 0;
+}
+.product-layout-vitrina .vitrina-photo {
+	aspect-ratio: 1 / 1;
+	border-radius: calc(var(--menu-r-lg) - 6px);
+}
+.product-layout-vitrina .vitrina-photo-wrap .tenant-ui-offer-badges {
+	top: 16px;
+	left: 16px;
+}
+.product-layout-vitrina .vitrina-photo-wrap .fcard-qty {
+	top: 16px;
+	right: 16px;
+}
+.product-layout-vitrina .vitrina-body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 10px 12px 12px;
+}
+.product-layout-vitrina .vitrina-title {
+	font-family: var(--tenant-font, inherit);
+	font-size: 1.02rem;
+	font-weight: 700;
+	line-height: 1.22;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.product-layout-vitrina .vitrina-desc {
+	margin: 0;
+	font-size: 0.76rem;
+	line-height: 1.4;
+	color: var(--menu-fg-3);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.product-layout-vitrina .vitrina-foot {
+	margin-top: auto;
+	padding-top: 8px;
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 8px;
+}
+.product-layout-vitrina .fcard-price {
+	flex-direction: column;
+	align-items: flex-start;
+	min-width: 0;
+}
+
+/* ---------- Cartel ---------- */
+.product-layout-cartel {
+	aspect-ratio: 4 / 5;
+	border-radius: var(--menu-r-lg);
+	overflow: hidden;
+	background: var(--menu-surface-2);
+	box-shadow: var(--menu-shadow-card);
+	isolation: isolate;
+	container-type: inline-size;
+}
+@media (hover: hover) {
+	.product-layout-cartel:hover {
+		transform: translateY(-3px);
+		box-shadow: var(--menu-shadow-card-hover);
+	}
+}
+.product-layout-cartel .cartel-photo {
+	position: absolute;
+	inset: 0;
+	z-index: -2;
+}
+.product-layout-cartel .cartel-shade {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background: linear-gradient(
+		180deg,
+		rgba(0, 0, 0, 0) 30%,
+		rgba(0, 0, 0, 0.55) 62%,
+		rgba(0, 0, 0, 0.88) 100%
+	);
+}
+.product-layout-cartel .cartel-top .tenant-ui-offer-badges {
+	top: 10px;
+	left: 10px;
+}
+.product-layout-cartel .cartel-body {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	color: #fff;
+}
+.product-layout-cartel .cartel-title {
+	font-family: var(--tenant-font, inherit);
+	font-weight: var(--tenant-font-weight, 800);
+	font-size: clamp(1.05rem, 11cqi, 1.6rem);
+	line-height: 1.02;
+	text-transform: uppercase;
+	letter-spacing: 0.01em;
+	color: #fff;
+	text-wrap: balance;
+	text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.product-layout-cartel .cartel-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+.product-layout-cartel .cartel-price {
+	flex-direction: column;
+	align-items: flex-start;
+	min-width: 0;
+}
+.product-layout-cartel .fcard-price__now {
+	color: var(--price-color, #fff);
+}
+/* Sobre la foto el precio va en una píldora oscura para leerse con cualquier plato. */
+.product-layout-cartel .cartel-price .fcard-price__now {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: 999px;
+	background: rgba(0, 0, 0, 0.55);
+	-webkit-backdrop-filter: blur(6px);
+	backdrop-filter: blur(6px);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	font-size: clamp(0.78rem, 7.5cqi, 0.92rem);
+	white-space: nowrap;
+}
+.product-layout-cartel .cartel-price .fcard-price__now.layout-price--sale {
+	color: var(--discount-color, #fff);
+}
+.product-layout-cartel .cartel-price .fcard-price__old,
+.product-layout-cartel .cartel-price .layout-price-from {
+	color: rgba(255, 255, 255, 0.82);
+}
+/* Sin foto: el cartel es tipográfico, sobre el color del local. */
+.product-layout-cartel.fcard--no-photo {
+	background:
+		radial-gradient(120% 80% at 100% 0%, rgba(255, 255, 255, 0.16), transparent 55%),
+		var(--menu-accent);
+}
+.product-layout-cartel.fcard--no-photo .cartel-photo {
+	background: transparent;
+	align-items: flex-start;
+	justify-content: flex-end;
+	padding: 6px 10px;
+}
+.product-layout-cartel.fcard--no-photo .fcard-photo__initials {
+	font-size: clamp(3rem, 40cqi, 5.5rem);
+	color: rgba(255, 255, 255, 0.16);
+}
+.product-layout-cartel.fcard--no-photo .cartel-shade {
+	background: linear-gradient(180deg, transparent 40%, rgba(0, 0, 0, 0.28) 100%);
+}
+.product-layout-cartel.fcard--no-photo .fcard-add.tenant-ui-btn {
+	background: #fff;
+	color: #111;
+	box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- Nori ---------- */
+.product-layout-nori {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	border-radius: var(--menu-r-md);
+	background: var(--menu-surface);
+	border: 1px solid var(--menu-line);
+	overflow: hidden;
+	box-shadow: var(--menu-shadow-card);
+}
+@media (hover: hover) {
+	.product-layout-nori:hover {
+		border-color: color-mix(in srgb, var(--menu-accent) 45%, var(--menu-line));
+	}
+}
+.product-layout-nori .nori-photo-wrap {
+	position: relative;
+}
+.product-layout-nori .nori-photo {
+	aspect-ratio: 1 / 1;
+}
+.product-layout-nori .nori-body {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 12px 12px 12px;
+}
+.product-layout-nori .nori-title {
+	font-size: 0.98rem;
+	font-weight: 700;
+	line-height: 1.25;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.product-layout-nori .nori-desc {
+	margin: 0;
+	font-size: 0.76rem;
+	line-height: 1.4;
+	color: var(--menu-fg-3);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.product-layout-nori .nori-foot {
+	margin-top: auto;
+	padding-top: 10px;
+	border-top: 1px solid var(--menu-line);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+.product-layout-nori .fcard-price {
+	flex-direction: column;
+	align-items: flex-start;
+	min-width: 0;
+}
+.product-layout-nori .fcard-price__now {
+	font-size: 1.04rem;
+}

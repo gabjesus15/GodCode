@@ -33,6 +33,10 @@ const NAVBAR_OPTIONS: Array<{ value: NavbarType; label: string; description: str
 ];
 
 const PRODUCT_CARD_OPTIONS: Array<{ value: ProductCardStyle; label: string; description: string }> = [
+  { value: "layout-carta", label: "Carta", description: "Lista con la foto al lado, como una carta impresa" },
+  { value: "layout-vitrina", label: "Vitrina", description: "Foto cuadrada y ficha limpia, luminosa" },
+  { value: "layout-cartel", label: "Cartel", description: "La foto llena la tarjeta y el nombre va encima, grande" },
+  { value: "layout-nori", label: "Nori", description: "Foto de canto a canto y una línea fina, sobria" },
   { value: "glass", label: "Cristal", description: "Tarjeta translúcida sobre el fondo" },
   { value: "layout-clean", label: "Zapatillas", description: "Imagen a sangre con panel lateral" },
   { value: "layout-detailed", label: "Tecnología", description: "Imagen cuadrada y ficha con descripción" },
@@ -186,6 +190,59 @@ function NavbarPreview({ type }: { type: NavbarType }) {
 }
 
 function ProductCardPreview({ style }: { style: ProductCardStyle }) {
+  if (style === "layout-carta") {
+    return (
+      <PreviewStage className="flex h-[72px] items-center gap-2 p-2">
+        <div className="flex flex-1 flex-col gap-1">
+          <div className="h-2 w-4/5 rounded-full bg-[var(--pick-ink)]" />
+          <div className="h-1.5 w-full rounded-full bg-[var(--pick-surface-strong)]" />
+          <div className="h-2 w-10 rounded-full bg-[var(--price-color)]" />
+        </div>
+        <div className="relative h-12 w-12 shrink-0 rounded-lg bg-[var(--pick-surface-strong)]">
+          <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-[var(--accent-primary)]" />
+        </div>
+      </PreviewStage>
+    );
+  }
+  if (style === "layout-vitrina") {
+    return (
+      <PreviewStage className="flex h-[92px] flex-col p-1.5">
+        <div className="h-[55%] rounded-md bg-[var(--pick-surface-strong)]" />
+        <div className="flex flex-1 items-end justify-between px-0.5 pb-0.5">
+          <div className="space-y-1">
+            <div className="h-2 w-12 rounded-full bg-[var(--pick-ink)]" />
+            <div className="h-2 w-8 rounded-full bg-[var(--price-color)]" />
+          </div>
+          <div className="h-5 w-5 rounded-full bg-[var(--accent-primary)]" />
+        </div>
+      </PreviewStage>
+    );
+  }
+  if (style === "layout-cartel") {
+    return (
+      <PreviewStage className="h-[92px]">
+        <div className="absolute inset-0 bg-[var(--pick-surface-strong)]" />
+        <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-b from-transparent to-black/80" />
+        <div className="absolute bottom-7 left-2 h-2.5 w-14 rounded-sm bg-white" />
+        <div className="absolute bottom-2 left-2 h-3 w-9 rounded-full bg-white/90" />
+        <div className="absolute bottom-2 right-2 h-5 w-5 rounded-full bg-[var(--accent-primary)]" />
+      </PreviewStage>
+    );
+  }
+  if (style === "layout-nori") {
+    return (
+      <PreviewStage className="flex h-[92px] flex-col">
+        <div className="h-[52%] bg-[var(--pick-surface-strong)]" />
+        <div className="px-2 pt-1.5">
+          <div className="h-2 w-3/4 rounded-full bg-[var(--pick-ink)]" />
+        </div>
+        <div className="mx-2 mt-auto flex items-center justify-between border-t border-[var(--pick-hairline)] py-1.5">
+          <div className="h-2 w-9 rounded-full bg-[var(--price-color)]" />
+          <div className="h-5 w-5 rounded-full bg-[var(--accent-primary)]" />
+        </div>
+      </PreviewStage>
+    );
+  }
   if (style === "layout-clean") {
     return (
       <PreviewStage className="h-[92px]">

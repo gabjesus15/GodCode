@@ -28,6 +28,7 @@ export const STORE_THEME_FIELD_LABELS: Record<keyof StoreThemeConfig, string> = 
   backgroundMode: "Fondo",
   brandNameColor: "Color del nombre",
   fontFamily: "Tipografía del nombre",
+  menuTemplate: "Plantilla",
 };
 
 export const DEFAULT_STORE_THEME: StoreThemeConfig = {
@@ -49,6 +50,7 @@ export const DEFAULT_STORE_THEME: StoreThemeConfig = {
   backgroundMode: "image",
   brandNameColor: "",
   fontFamily: "montserrat",
+  menuTemplate: "",
 };
 
 export const STORE_THEME_COLOR_HELPERS: Record<
@@ -62,50 +64,3 @@ export const STORE_THEME_COLOR_HELPERS: Record<
   hoverColor: "Color al pasar mouse sobre CTA y acciones.",
   backgroundColor: "Fondo base del menú. La imagen de fondo se escala para llenar la pantalla, sin repetirse: se recorta según la forma del dispositivo. A 0% se quita el tint. Ajustá el brillo aparte.",
 };
-
-export const STORE_THEME_TEMPLATES: Array<{
-  id: string;
-  name: string;
-  description: string;
-  colors: Pick<StoreThemeConfig, "primaryColor" | "secondaryColor" | "priceColor" | "discountColor" | "hoverColor" | "backgroundColor">;
-}> = [
-  {
-    id: "sushi-night",
-    name: "Sushi Night",
-    description: "Tonos intensos para gastronomía nocturna y alto contraste.",
-    colors: {
-      primaryColor: "#eb3b00",
-      secondaryColor: "#ff4f00",
-      priceColor: "#ffffff",
-      discountColor: "#25d366",
-      hoverColor: "#ff6a2a",
-      backgroundColor: "#111111",
-    },
-  },
-  {
-    id: "coffee-warm",
-    name: "Coffee Warm",
-    description: "Paleta cálida para cafeterías y pastelería.",
-    colors: {
-      primaryColor: "#7c3f1d",
-      secondaryColor: "#b1622c",
-      priceColor: "#ffe8c2",
-      discountColor: "#8ee381",
-      hoverColor: "#9b5229",
-      backgroundColor: "#2a1a12",
-    },
-  },
-  {
-    id: "fresh-market",
-    name: "Fresh Market",
-    description: "Estilo claro y fresco para retail alimentario.",
-    colors: {
-      primaryColor: "#0f766e",
-      secondaryColor: "#14b8a6",
-      priceColor: "#f8fafc",
-      discountColor: "#84cc16",
-      hoverColor: "#0d9488",
-      backgroundColor: "#134e4a",
-    },
-  },
-];

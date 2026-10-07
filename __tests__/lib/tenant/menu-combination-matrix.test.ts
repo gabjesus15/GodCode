@@ -42,6 +42,6 @@ describe("menu theme combination matrix (card × details)", () => {
 	}
 
 	it("exports full navbar and navigation mode lists for QA checklist", () => {
-		expect(NAVBAR_TYPES.length * NAVIGATION_MODES.length * PRODUCT_CARD_STYLES.length * PRODUCT_DETAILS_MODES.length).toBe(180);
+		expect(NAVBAR_TYPES.length * NAVIGATION_MODES.length * PRODUCT_CARD_STYLES.length * PRODUCT_DETAILS_MODES.length).toBe(260);
 	});
 });

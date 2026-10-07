@@ -11,7 +11,8 @@ import {
   rebaseStoreTheme,
   validateStoreThemeAssetFile,
 } from "@/lib/store-theme/store-theme-utils";
-import { STORE_THEME_FIELD_LABELS, STORE_THEME_TEMPLATES } from "../shared/customer-account-store-theme-constants";
+import { STORE_THEME_FIELD_LABELS } from "../shared/customer-account-store-theme-constants";
+import { applyMenuTemplate, getMenuTemplate, type MenuTemplateId } from "@/lib/store-theme/menu-templates";
 
 export type UseStoreThemeReturn = {
   storeThemeLoading:        boolean;
@@ -42,8 +43,6 @@ export type UseStoreThemeReturn = {
   storeThemeAssetDragOver:  StoreThemeAssetField | null;
   setStoreThemeAssetDragOver: React.Dispatch<React.SetStateAction<StoreThemeAssetField | null>>;
   storeThemeAssetHint:      Record<StoreThemeAssetField, string | null>;
-  storeThemeSelectedTemplate: string;
-  setStoreThemeSelectedTemplate: (v: string) => void;
   storeThemePublishComment: string;
   setStoreThemePublishComment: (v: string) => void;
   latestPublishedVersion:   StoreThemeResponse["versions"][number] | null;
@@ -51,7 +50,9 @@ export type UseStoreThemeReturn = {
   publishStoreTheme:        () => Promise<void>;
   restoreStoreVersion:      (versionId: string) => Promise<void>;
   discardStoreThemeChanges: () => void;
-  applyStoreThemeTemplate:  () => void;
+  applyStoreThemeTemplate:  (id: MenuTemplateId) => void;
+  /** Tipo de negocio del alta; null si no lo dijo. */
+  storeBusinessSector: string | null;
   exportStoreThemeJson:     (slug: string) => void;
   importStoreThemeJson:     (file: File | null, companyName: string) => Promise<void>;
   handleStoreThemeAssetUpload: (field: StoreThemeAssetField, file: File | null) => Promise<void>;
@@ -80,8 +81,8 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
   const [storeThemeAssetDragOver,  setStoreThemeAssetDragOver]  = useState<StoreThemeAssetField | null>(null);
   const [storeThemeAssetHint,      setStoreThemeAssetHint]      = useState<Record<StoreThemeAssetField, string | null>>({ logoUrl: null, backgroundImageUrl: null });
   const [storeThemeAssetLocalPreview, setStoreThemeAssetLocalPreview] = useState<{ logoUrl: string | null; backgroundImageUrl: string | null }>({ logoUrl: null, backgroundImageUrl: null });
-  const [storeThemeSelectedTemplate, setStoreThemeSelectedTemplate]   = useState(STORE_THEME_TEMPLATES[0]?.id ?? "");
   const [storeThemePublishComment, setStoreThemePublishComment]       = useState("");
+  const [storeBusinessSector,      setStoreBusinessSector]      = useState<string | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Último tema confirmado por el servidor: base para enviar solo los cambios. */
   const lastSavedThemeRef = useRef<StoreThemeConfig | null>(null);
@@ -157,6 +158,7 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
       }
       setStoreThemePublished(data.published);
       setStoreThemeDraft(data.draft.theme);
+      setStoreBusinessSector(data.company?.sector ?? null);
       setStoreThemeVersions(data.versions);
       setStoreThemeUpdatedAt(data.draft.updatedAt ?? null);
       setStoreThemeUpdatedBy(data.draft.updatedByEmail ?? null);
@@ -281,14 +283,14 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
     await loadStoreTheme();
   };
 
-  const applyStoreThemeTemplate = () => {
-    if (!storeThemeDraft || !storeThemeSelectedTemplate) return;
-    const template = STORE_THEME_TEMPLATES.find((t) => t.id === storeThemeSelectedTemplate);
-    if (!template) return;
+  /** Aplica una plantilla de menú al borrador; logo, nombre e imagen de fondo se quedan como están. */
+  const applyStoreThemeTemplate = (id: MenuTemplateId) => {
+    if (!storeThemeDraft) return;
+    const template = getMenuTemplate(id);
     setStoreThemeError(null);
-    setStoreThemeDraft((prev) => (prev ? { ...prev, ...template.colors } : prev));
+    setStoreThemeDraft((prev) => (prev ? { ...prev, ...applyMenuTemplate(template.id) } : prev));
     setStoreThemeHasUnpublished(true);
-    setStoreThemeOk(`Plantilla aplicada: ${template.name}.`);
+    setStoreThemeOk(`Plantilla aplicada: ${template.name}. Revisa la vista previa y publica cuando te guste.`);
   };
 
   const exportStoreThemeJson = (slug: string) => {
@@ -385,10 +387,10 @@ export function useStoreTheme(onConfirmDiscard: () => Promise<boolean>): UseStor
     storePreviewTheme, publicationStateLabel, storeThemeDiffRows,
     storeThemeChecklist, storeThemeChecklistBlockingIssues, storeThemeContrastSuggestions,
     storeThemeAssetLocalPreview, storeThemeAssetUploading, storeThemeAssetDragOver, setStoreThemeAssetDragOver,
-    storeThemeAssetHint, storeThemeSelectedTemplate, setStoreThemeSelectedTemplate,
+    storeThemeAssetHint,
     storeThemePublishComment, setStoreThemePublishComment,
     latestPublishedVersion, saveStoreDraft, publishStoreTheme, restoreStoreVersion,
-    discardStoreThemeChanges, applyStoreThemeTemplate, exportStoreThemeJson, importStoreThemeJson,
+    discardStoreThemeChanges, applyStoreThemeTemplate, storeBusinessSector, exportStoreThemeJson, importStoreThemeJson,
     handleStoreThemeAssetUpload, restoreStoreThemeColorsFromProduction,
     applyStoreThemeContrastSuggestions, setStoreThemeLocalPreview,
   };

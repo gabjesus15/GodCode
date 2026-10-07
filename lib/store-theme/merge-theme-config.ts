@@ -55,6 +55,7 @@ export const STORE_THEME_PATCH_KEYS = [
 	"backgroundMode",
 	"brandNameColor",
 	"fontFamily",
+	"menuTemplate",
 ] as const;
 
 /**
