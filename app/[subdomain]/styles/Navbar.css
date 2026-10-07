@@ -113,7 +113,11 @@
     position: relative;
     display: flex;
     align-items: center;
-    justify-content: center;
+    /* La lupa va siempre pegada a la izquierda con el mismo margen: centrada
+       en el círculo, y quieta mientras la pastilla se estira o se recoge (con
+       justify-content: center saltaba al centro al cerrar). */
+    justify-content: flex-start;
+    padding-left: 7px;
     width: 36px;
     height: 36px;
     background: var(--menu-surface-2);
@@ -121,15 +125,14 @@
     border-radius: 50px;
     cursor: pointer;
     overflow: hidden;
-    transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+    transition:
+        width var(--menu-dur-enter, 240ms) var(--menu-ease-out, ease-out),
+        border-color var(--menu-dur-fast, 180ms) ease-out;
 }
 
 .search-pill-wrapper.expanded {
     width: 160px;
     border-color: var(--menu-accent);
-    box-shadow: 0 4px 14px var(--accent-shadow, rgba(0, 0, 0, 0.25));
-    justify-content: flex-start;
-    padding-left: 10px;
 }
 
 .search-pill-wrapper.expanded .search-icon-pill {
@@ -169,7 +172,9 @@
     color: var(--menu-fg-3);
 }
 
+/* La X aparece cuando la pastilla ya tiene sitio, no encima de la lupa. */
 .btn-close-pill {
+    animation: search-close-in var(--menu-dur-fast, 180ms) ease-out 100ms both;
     background: var(--menu-surface);
     border: none;
     color: var(--menu-fg);
@@ -209,12 +214,6 @@
     background: linear-gradient(to left, var(--menu-chrome), transparent);
 }
 
-@media (max-width: 380px) {
-    .search-pill-wrapper.expanded {
-        width: 140px;
-    }
-}
-
 @media (max-width: 600px) {
     .navbar-main-row {
         padding: 0 4px;
@@ -234,9 +233,21 @@
         scroll-snap-align: start;
     }
 
+    /* El hueco del buscador mide siempre lo mismo: abierto, la pastilla crece
+       hacia la izquierda por encima del nombre (que se funde) en vez de
+       empujarlo. Así el nombre no se encoge ni se vuelve a partir. */
     .nav-search-section {
         position: relative;
         flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+    }
+
+    .nav-search-section .search-pill-wrapper {
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 2;
     }
 
     /* Encogia a 32x32 justo en movil, que es donde se usa con el dedo: el objetivo
@@ -247,15 +258,14 @@
     .search-pill-wrapper {
         width: 40px;
         height: 40px;
+        padding-left: 9px;
     }
 
-    .search-pill-wrapper.expanded {
-        position: relative;
-        right: auto;
-        width: min(58vw, 190px);
+    /* De la flecha al borde: 100vw menos la flecha (44) y los márgenes. */
+    .nav-search-section .search-pill-wrapper.expanded {
+        width: calc(100vw - 88px);
         height: 40px;
-        padding-left: 8px;
-        z-index: auto;
+        background: var(--menu-surface);
     }
 
     .search-input-pill {
@@ -376,5 +386,22 @@
 
     .navbar-main-row .navbar-container {
         padding-inline: 0;
+    }
+}
+
+@keyframes search-close-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-close-pill {
+        animation: none;
+    }
+
+    .search-pill-wrapper {
+        transition: none;
     }
 }

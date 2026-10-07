@@ -360,7 +360,6 @@ section {
     display: flex;
     align-items: center;
     gap: 12px;
-    transition: gap 0.3s ease;
     min-width: 0;
 }
 
@@ -369,8 +368,14 @@ section {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    /* Transición suave para ocultar/mostrar */
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Al abrir el buscador en el teléfono el nombre solo se funde (ver abajo):
+       se anima opacidad y posición, nunca el ancho, para que el texto no se
+       vuelva a partir en líneas mientras desaparece. Al volver espera a que el
+       buscador se haya recogido. */
+    transition:
+        opacity var(--menu-dur-fast, 180ms) ease-out 90ms,
+        transform var(--menu-dur-enter, 240ms) var(--menu-ease-out, ease-out) 90ms;
+    transform-origin: left center;
     opacity: 1;
     /* Sube con el titulo: a 1.35rem un nombre de dos palabras pedia mas de los
        200px de antes y se cortaba con puntos suspensivos. */
@@ -406,15 +411,32 @@ section {
 }
 
 @media (max-width: 600px) {
-    .nav-brand-wrapper.mobile-search-active {
-        gap: 4px;
+    /* El buscador abierto ocupa la fila (de la flecha al borde): logo y nombre
+       se funden a la vez, rápido, y vuelven cuando la pastilla ya se recogió. */
+    .nav-brand-wrapper > .nav-logo {
+        transition:
+            opacity var(--menu-dur-fast, 180ms) ease-out 90ms,
+            transform var(--menu-dur-enter, 240ms) var(--menu-ease-out, ease-out) 90ms;
     }
 
+    .nav-brand-wrapper.mobile-search-active > .nav-logo,
     .nav-brand-wrapper.mobile-search-active .nav-brand-info {
         opacity: 0;
-        max-width: 0;
-        transform: translateX(-6px);
+        transform: scale(0.96);
         pointer-events: none;
+        transition:
+            opacity 120ms ease-out,
+            transform var(--menu-dur-fast, 180ms) var(--menu-ease-out, ease-out);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .nav-brand-wrapper > .nav-logo,
+        .nav-brand-info,
+        .nav-brand-wrapper.mobile-search-active > .nav-logo,
+        .nav-brand-wrapper.mobile-search-active .nav-brand-info {
+            transition: opacity 120ms ease-out;
+            transform: none;
+        }
     }
 }
 
