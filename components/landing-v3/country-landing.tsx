@@ -62,7 +62,7 @@ export function CountryLanding({ country, fromPrice, socialLinks, jsonLd }: Coun
 
 						<div className="mt-9 flex flex-col items-center gap-5 sm:flex-row sm:gap-7">
 							<Link
-								href="/onboarding"
+								href={`/onboarding?pais=${country.code}`}
 								className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#4f5bff] px-7 py-3.5 text-[15px] font-semibold text-white transition-[background-color,transform] duration-200 hover:bg-[#3d47e6] active:scale-[0.98]"
 							>
 								Crear mi tienda

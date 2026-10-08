@@ -106,7 +106,7 @@ const CHILE: LandingCountry = {
 	deliveryApps: ["PedidosYa", "Rappi", "Uber Eats"],
 	paymentMethods: ["Efectivo", "Tarjeta en el local", "Transferencia", "Mercado Pago"],
 	// El cobro de la suscripción es en dólares (PayPal o transferencia); no prometer CLP hasta que exista.
-	billingNote: "Plan fijo en dólares, el mismo precio cada mes. Sin UF, sin comisión por venta ni reajustes sorpresa.",
+	billingNote: "Armas tu tienda gratis y eliges tu plan cuando la publicas. Es un monto fijo en dólares al mes, sin UF, sin comisión por venta ni reajustes sorpresa.",
 	localFeatures: [
 		{
 			title: "Un plan fijo, sin comisión",
@@ -129,7 +129,7 @@ const CHILE: LandingCountry = {
 		{
 			question: `¿Cuánto cuesta ${LANDING_PRODUCT_NAME} en Chile?`,
 			answer:
-				"Es un plan mensual fijo en dólares (se paga con PayPal o transferencia), que ves en la sección de planes de la home. No hay comisión por venta ni por pedido, ni reajuste por UF, y en tu primer pago llevas 2 meses al precio de 1.",
+				"Armar tu tienda no cuesta nada. Pagas cuando la publicas, con un plan mensual fijo en dólares que ves en la sección de planes de la home y se paga con PayPal o transferencia. No hay comisión por venta ni por pedido, ni reajuste por UF, y en tu primer pago llevas 2 meses al precio de 1.",
 		},
 		{
 			question: "¿Sirve para dejar PedidosYa, Rappi o Uber Eats?",
@@ -181,7 +181,7 @@ const VENEZUELA: LandingCountry = {
 		"Tus clientes piden desde tu link o tu QR y pagan en bolívares o en dólares. Tú ves el total en las dos monedas, a la tasa BCV del día, y no pagas comisión por venta.",
 	deliveryApps: ["Yummy", "PedidosYa"],
 	paymentMethods: ["Pago móvil", "Zelle", "Transferencia", "Efectivo", "Tarjeta en el local"],
-	billingNote: "La suscripción se paga en dólares, con un precio fijo al mes.",
+	billingNote: "Armas tu tienda gratis y eliges tu plan cuando la publicas. La suscripción es un monto fijo en dólares al mes.",
 	localFeatures: [
 		{
 			title: "Bolívares y dólares, sin calculadora",
@@ -204,7 +204,7 @@ const VENEZUELA: LandingCountry = {
 		{
 			question: `¿Cuánto cuesta ${LANDING_PRODUCT_NAME} en Venezuela?`,
 			answer:
-				"Es un plan mensual fijo en dólares, que ves en la sección de planes de la home. No hay comisión por venta ni por pedido, y en tu primer pago llevas 2 meses al precio de 1.",
+				"Armar tu tienda no cuesta nada. Pagas cuando la publicas, con un plan mensual fijo en dólares que ves en la sección de planes de la home. No hay comisión por venta ni por pedido, y en tu primer pago llevas 2 meses al precio de 1.",
 		},
 		{
 			question: "¿Puedo cobrar en bolívares y en dólares?",
