@@ -147,11 +147,20 @@
         "sendingCode": "Enviando…",
         "passwordCodeHint": "Para cambiar la contraseña te enviamos un código a tu correo.",
         "codeSentHint": "Revisa tu correo: el código caduca en 1 hora.",
-        "legalTitle": "Legal"
+        "legalTitle": "Legal",
+        "deleteTitle": "Eliminar cuenta",
+        "deleteLabel": "Eliminar mi cuenta en este negocio",
+        "deleteStart": "Eliminar mi cuenta",
+        "deleteHint": "Borramos tus datos, tus direcciones guardadas y tu acceso en este negocio. Los pedidos ya hechos quedan en los registros del negocio y tus cuentas en otros negocios no cambian.",
+        "deleteCodeHint": "Te enviamos un código a tu correo. Escríbelo para confirmar: la eliminación no se puede deshacer.",
+        "deleteCancel": "Cancelar",
+        "deleteConfirm": "Eliminar definitivamente",
+        "deleting": "Eliminando…"
       },
       "notices": {
         "passwordChanged": "Contraseña actualizada. Entra de nuevo con la nueva.",
-        "linked": "Listo, vinculamos este negocio a tu cuenta."
+        "linked": "Listo, vinculamos este negocio a tu cuenta.",
+        "accountDeleted": "Eliminamos tu cuenta en este negocio."
       },
       "errors": {
         "company_not_found": "Este negocio no está disponible.",

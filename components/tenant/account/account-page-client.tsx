@@ -50,7 +50,7 @@ export function AccountPageClient({
 	const returnToCart = searchParams.get("next") === "cart";
 
 	const [account, setAccount] = useState<MenuAccountPublic | null>(initialAccount);
-	const [notice, setNotice] = useState<"passwordChanged" | "linked" | null>(null);
+	const [notice, setNotice] = useState<"passwordChanged" | "linked" | "accountDeleted" | null>(null);
 
 	return (
 		<div className="account-page">
@@ -81,6 +81,10 @@ export function AccountPageClient({
 						}}
 						onPasswordChanged={() => {
 							setNotice("passwordChanged");
+							setAccount(null);
+						}}
+						onAccountDeleted={() => {
+							setNotice("accountDeleted");
 							setAccount(null);
 						}}
 					/>

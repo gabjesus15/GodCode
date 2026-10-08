@@ -53,6 +53,12 @@ export const menuAccountPasswordSchema = z.object({
 	newPassword: passwordField,
 });
 
+/** Eliminar la cuenta: el código del correo es la confirmación. */
+export const menuAccountDeleteSchema = z.object({
+	companySlug,
+	code: codeField,
+});
+
 /** Pedir un código (confirmación o recuperación): solo identifica la cuenta. */
 export const menuAccountDocumentSchema = z.object({
 	companySlug,

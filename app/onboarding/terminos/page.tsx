@@ -200,8 +200,13 @@ export default function TerminosPage() {
 					<li>
 						<Lead>Precios en bolívares (Venezuela).</Lead> Si el Cliente cobra en bolívares, la tasa de cambio que
 						elige en el panel y los montos que muestra a sus comensales son decisión y responsabilidad suya. La
-						normativa venezolana exige usar y exhibir la tasa oficial del BCV; Gcode la ofrece como opción por
-						defecto.
+						normativa venezolana exige usar y exhibir la tasa oficial del BCV, que es la que ofrece Gcode.
+					</li>
+					<li>
+						<Lead>Medios de pago.</Lead> Los pagos que el Cliente recibe por transferencia, Pago Móvil, Zelle,
+						Binance Pay u otros medios llegan directo a sus propias cuentas: Gcode no los procesa ni los custodia. Si
+						acepta pagos en divisas o criptoactivos, debe cumplir las obligaciones tributarias que correspondan (por
+						ejemplo, el IGTF en Venezuela).
 					</li>
 					<li>
 						Atender a sus comensales: pedidos, entregas, cobros, reclamos, garantías y devoluciones. Gcode puede

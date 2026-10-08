@@ -53,11 +53,14 @@ export default function CookiesPage() {
 				</p>
 			</section>
 			<section>
-				<h2 className="font-semibold text-slate-800">2. Medición sin cookies (siempre activa)</h2>
+				<h2 className="font-semibold text-slate-800">2. Medición propia (siempre activa)</h2>
 				<ul className="ml-5 mt-1 list-disc space-y-1">
 					<li>
-						<Lead>Analítica propia de Gcode:</Lead> registra visitas y rutas con un identificador de sesión
-						seudonimizado, sin cookies de terceros.
+						<Lead>Analítica propia de Gcode:</Lead> cuenta visitas y páginas vistas, también en los menús de los
+						negocios. Guarda en el almacenamiento local un identificador aleatorio de visitante
+						(<code>gc_visitor_id</code>, hasta que lo borres) y, mientras la pestaña está abierta, uno de sesión
+						(<code>gc_session_id</code> y <code>gc_last_page_view</code>). No contienen tu nombre ni tu correo y no
+						se comparten con terceros.
 					</li>
 					<li>
 						<Lead>Vercel Analytics y Speed Insights:</Lead> miden visitas y rendimiento de forma agregada y sin

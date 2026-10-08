@@ -172,6 +172,7 @@ export default function PrivacidadPage() {
 						[<>Cuenta y contenido del negocio</>, <>Mientras la cuenta exista, más 30 días para que puedas pedir una copia (sección 13 de los Términos)</>],
 						[<>Registros de facturación y pagos</>, <>6 años, por las obligaciones tributarias</>],
 						[<>Comprobantes de pago</>, <>Hasta validar el pago y luego el mismo plazo que la facturación</>],
+						[<>Cuenta del comensal en un menú</>, <>Hasta que la elimines desde Mi cuenta, lo pidas o el negocio deje Gcode</>],
 						[<>Pedidos y datos de comensales</>, <>Mientras el negocio tenga cuenta, o hasta que el negocio o el comensal pidan su eliminación, salvo obligación legal</>],
 						[<>Solicitudes de registro no completadas</>, <>12 meses</>],
 						[<>Datos técnicos y de seguridad</>, <>Hasta 12 meses</>],
@@ -198,7 +199,8 @@ export default function PrivacidadPage() {
 				</p>
 				<p className="mt-2">
 					Si eres comensal, puedes dirigirte al negocio o escribirnos; si la solicitud le corresponde al negocio, se
-					la haremos llegar y te avisaremos.
+					la haremos llegar y te avisaremos. Si tienes cuenta en el menú de un negocio, también puedes eliminarla tú
+					mismo desde Mi cuenta.
 				</p>
 				<p className="mt-2">
 					Si no quedas conforme con nuestra respuesta, puedes reclamar ante la autoridad de tu país: en Chile, ante

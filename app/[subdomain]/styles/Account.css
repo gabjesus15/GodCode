@@ -537,6 +537,15 @@ form > .account-actions {
     border-color: var(--menu-danger-line);
 }
 
+/* Confirmar la eliminación de la cuenta: el único botón destructivo de Mi cuenta.
+   El texto toma el color de la superficie: blanco sobre el rojo claro del modo
+   oscuro no llega al contraste AA. */
+.account-button--danger {
+    border-color: var(--menu-danger);
+    background: var(--menu-danger);
+    color: var(--menu-surface);
+}
+
 .account-empty {
     margin: 0;
     padding: 28px 0;

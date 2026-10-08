@@ -147,11 +147,20 @@
         "sendingCode": "Enviando…",
         "passwordCodeHint": "Para alterar a senha, enviamos um código para seu e-mail.",
         "codeSentHint": "Confira seu e-mail: o código expira em 1 hora.",
-        "legalTitle": "Legal"
+        "legalTitle": "Legal",
+        "deleteTitle": "Excluir conta",
+        "deleteLabel": "Excluir minha conta neste negócio",
+        "deleteStart": "Excluir minha conta",
+        "deleteHint": "Apagamos seus dados, endereços salvos e seu acesso neste negócio. Os pedidos já feitos ficam nos registros do negócio, e suas contas em outros negócios não mudam.",
+        "deleteCodeHint": "Enviamos um código para seu e-mail. Digite-o para confirmar: a exclusão não pode ser desfeita.",
+        "deleteCancel": "Cancelar",
+        "deleteConfirm": "Excluir definitivamente",
+        "deleting": "Excluindo…"
       },
       "notices": {
         "passwordChanged": "Senha atualizada. Entre novamente com a nova.",
-        "linked": "Pronto, vinculamos este negócio à sua conta."
+        "linked": "Pronto, vinculamos este negócio à sua conta.",
+        "accountDeleted": "Excluímos sua conta neste negócio."
       },
       "errors": {
         "company_not_found": "Este negócio não está disponível.",

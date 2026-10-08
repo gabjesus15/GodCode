@@ -85,6 +85,9 @@ export function MenuAccountTermsContent() {
 					<li>
 						Elegir cómo pagarás cada pedido y, si el Negocio lo pide, adjuntar el comprobante.
 					</li>
+					<li>
+						Eliminar la Cuenta cuando quieras (sección 7).
+					</li>
 				</ul>
 				<p>
 					Por ahora la Cuenta no tiene programa de puntos. Si se agrega uno, estos Términos se actualizarán antes
@@ -102,6 +105,11 @@ export function MenuAccountTermsContent() {
 					<li>
 						El precio final, el costo de envío y los medios de pago son los que el Negocio muestra antes de que
 						confirmes. Gcode no cobra comisiones ni procesa los pagos de los pedidos: pagas directamente al Negocio.
+					</li>
+					<li>
+						Los pagos por medios externos (transferencia, Pago Móvil, Zelle, Binance Pay u otros que acepte el
+						Negocio) los haces desde tu propia cuenta en ese servicio y se rigen por sus condiciones. Gcode no recibe
+						tu dinero.
 					</li>
 					<li>
 						<strong>Si el Negocio cobra en bolívares (Venezuela),</strong> el monto en bolívares se calcula con la
@@ -138,9 +146,14 @@ export function MenuAccountTermsContent() {
 			<section>
 				<h2>7. Eliminar la Cuenta</h2>
 				<p>
-					Puedes pedir que eliminemos tu Cuenta en cualquier momento escribiendo a <ContactEmail /> desde el correo
-					de la Cuenta, o pidiéndoselo al Negocio. La eliminaremos dentro de 30 días corridos. Los pedidos ya hechos
-					se conservan en los registros del Negocio y en Gcode solo por el plazo que exija la ley.
+					Puedes eliminar tu Cuenta en cualquier momento desde Mi cuenta, en Ajustes, confirmando con un código que
+					te enviamos al correo. Al eliminarla borramos tus datos, tus direcciones guardadas y tu acceso en este
+					Negocio; tus cuentas en otros negocios que usan Gcode no cambian. También puedes pedirlo escribiendo a{" "}
+					<ContactEmail /> desde el correo de la Cuenta, o al Negocio, y la eliminaremos dentro de 30 días corridos.
+				</p>
+				<p>
+					Los pedidos ya hechos se conservan en los registros del Negocio, y en Gcode solo por el plazo que exija la
+					ley.
 				</p>
 				<p>
 					Gcode o el Negocio pueden suspender una Cuenta usada para fraude o en incumplimiento de estos Términos. Si
