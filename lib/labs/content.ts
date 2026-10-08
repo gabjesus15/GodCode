@@ -47,22 +47,16 @@ export const LABS_HOME = {
 	eyebrow: "Estudio de desarrollo · Santiago",
 	/** Qué hacemos y para quién, con palabras que un dueño de negocio usa. El inventario completo va en el intro y en Servicios. */
 	title: "Sitios web y sistemas a medida para negocios que venden todos los días.",
+	/** El estudio y su amplitud, sin nombrar un producto: la persona tiene que sentir que construimos de todo. */
 	intro:
-		`Somos ${LANDING_COMPANY_NAME}, un estudio de desarrollo en Santiago de Chile. Diseñamos y programamos lo que tu empresa necesita, lo dejamos a tu nombre y te acompañamos después del lanzamiento. También creamos ${LANDING_PRODUCT_NAME}, el menú digital y punto de venta que usan restaurantes en Chile y Venezuela.`,
+		`Somos ${LANDING_COMPANY_NAME}, un estudio de desarrollo en Santiago de Chile. Diseñamos y programamos sitios, sistemas internos, tiendas y automatizaciones para empresas de Chile y Venezuela: lo dejamos a tu nombre y te acompañamos después del lanzamiento.`,
 	primaryCta: "Cotizar un proyecto",
-	/** Reparte a la otra audiencia de la página: quien tiene un restaurante no cotiza, va al producto. */
-	secondaryCta: `¿Tienes un restaurante? Conoce ${LANDING_PRODUCT_NAME}`,
+	secondaryCta: "Ver proyectos",
 	/** Tres respuestas a los miedos de quien cotiza: perder plata, quedar amarrado, no recibir respuesta. Van en una sola línea bajo el botón. */
 	assurances: ["Propuesta cerrada por escrito", "Código y dominio a tu nombre", "Respuesta en dos días hábiles"],
-	/** La prueba de que lo que construimos llega a producción: nuestro propio producto, en un teléfono. */
-	heroFigure: {
-		src: "/pedidos_caja_v2.png",
-		alt: `Pantalla de pedidos de ${LANDING_PRODUCT_NAME} en un teléfono`,
-		caption: `${LANDING_PRODUCT_NAME}, nuestro producto propio, en producción`,
-	},
 	/** Credenciales, no promesas: lo que el hero ya promete no se repite aquí. */
 	facts: [
-		{ label: "Producto propio en producción", detail: `Operamos ${LANDING_PRODUCT_NAME} con restaurantes de Chile y Venezuela.` },
+		{ label: "Software propio en producción", detail: "Operamos nuestro propio producto todos los días, con pagos, dominios y soporte." },
 		{ label: "Clientes en tres países", detail: "Chile, Venezuela y Estados Unidos, trabajando a distancia." },
 		{ label: "Interlocutor directo", detail: "Hablas con quien diseña y programa, no con un vendedor." },
 		{ label: "Avances cada semana", detail: "Ves el proyecto funcionando en un entorno de prueba desde la primera entrega." },
@@ -73,13 +67,11 @@ export const LABS_HOME = {
 		"Trabajamos con empresas que necesitan algo que un producto estándar no cubre: una web que convierta, un sistema que ordene la operación o una tienda que venda sin intermediarios.",
 	processEyebrow: "02 · Cómo trabajamos",
 	processTitle: "Un método sencillo, de principio a fin",
-	productsEyebrow: "03 · Producto propio",
-	productsTitle: "No solo construimos software. También lo operamos.",
-	/** El origen del producto se cuenta una sola vez, en Equipo. Aquí va el argumento: operar en producción nos enseña a construir. */
-	productsIntro:
-		`${LANDING_PRODUCT_NAME} es nuestro producto: menú digital, pedidos online y punto de venta para restaurantes de Chile y Venezuela. Mantenerlo en producción todos los días, con pagos, dominios, soporte y datos aislados por negocio, es lo que nos enseña a construir sistemas que aguantan el uso real.`,
-	/** Prueba social verificable: el directorio público de negocios que usan el producto. */
-	productsProof: "Ver los restaurantes que lo usan",
+	stackEyebrow: "03 · Con qué construimos",
+	stackTitle: "Herramientas probadas, conectadas con lo que ya usas",
+	/** Solo lo que de verdad usamos y mantenemos en producción; es el inventario de `LABS_STACK`. */
+	stackIntro:
+		"No reinventamos la base de cada proyecto. Trabajamos con tecnología que mantenemos en producción todos los días y la conectamos con los sistemas que tu empresa ya tiene.",
 	projectsEyebrow: "04 · Proyectos",
 	projectsTitle: "Trabajo reciente",
 	teamEyebrow: "05 · Equipo",
@@ -139,6 +131,16 @@ export const LABS_SERVICES: LabsService[] = [
 		deliverables: ["Monitoreo y respaldos", "Actualizaciones de dependencias", "Mejoras mensuales acordadas", "Soporte por WhatsApp y correo"],
 		fit: "Empresas con un sistema en producción que nadie mantiene.",
 	},
+];
+
+/** Con qué construimos: herramientas e integraciones que usamos de verdad, por grupo. Sin logos, solo nombres. */
+export const LABS_STACK: Array<{ label: string; items: string[] }> = [
+	{ label: "Web y aplicaciones", items: ["Next.js", "React", "TypeScript"] },
+	{ label: "Datos", items: ["Supabase", "PostgreSQL", "APIs REST"] },
+	{ label: "Pagos", items: ["PayPal", "Transferencias", "Zelle", "Pago móvil"] },
+	{ label: "Avisos", items: ["WhatsApp", "Telegram", "Correo"] },
+	{ label: "Infraestructura", items: ["Vercel", "Dominios propios", "Certificados SSL", "Respaldos"] },
+	{ label: "Calidad", items: ["Pruebas automáticas", "Análisis de código", "Revisión de seguridad"] },
 ];
 
 export const LABS_PROCESS: LabsProcessStep[] = [

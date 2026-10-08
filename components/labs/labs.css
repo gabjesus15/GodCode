@@ -1,0 +1,79 @@
+/* Movimiento de la home de Gcode Labs. Con «reducir movimiento» activado, nada se mueve. */
+
+@media (prefers-reduced-motion: no-preference) {
+	/* Entrada del hero: cada bloque sube y se enfoca, uno tras otro (`--labs-i` es el orden). */
+	@keyframes labs-rise {
+		from {
+			opacity: 0;
+			transform: translateY(18px);
+			filter: blur(3px);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+			filter: none;
+		}
+	}
+
+	.labs-rise {
+		animation: labs-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+		animation-delay: calc(var(--labs-i, 0) * 110ms);
+	}
+
+	/* Las pantallas de muestra flotan despacio, cada una con su propio ritmo. */
+	@keyframes labs-float {
+		0%,
+		100% {
+			translate: 0 0;
+		}
+		50% {
+			translate: 0 -8px;
+		}
+	}
+
+	.labs-float {
+		animation: labs-float 7s ease-in-out infinite;
+		animation-delay: calc(var(--labs-i, 0) * -1.4s);
+	}
+
+	@keyframes labs-glow {
+		0%,
+		100% {
+			transform: translate(-50%, -50%) scale(1);
+		}
+		50% {
+			transform: translate(-54%, -46%) scale(1.08);
+		}
+	}
+
+	.labs-glow {
+		animation: labs-glow 14s ease-in-out infinite;
+	}
+}
+
+/* Al bajar, cada bloque entra ligado al scroll. Sin soporte de scroll-timeline, ya está visible. */
+@supports (animation-timeline: view()) {
+	@media (prefers-reduced-motion: no-preference) {
+		@keyframes labs-reveal {
+			from {
+				opacity: 0.1;
+				transform: translateY(22px);
+			}
+			to {
+				opacity: 1;
+				transform: none;
+			}
+		}
+
+		/* Propiedades largas a propósito: el minificador descarta el shorthand junto a animation-timeline. */
+		.labs-reveal {
+			animation-name: labs-reveal;
+			animation-duration: 1ms;
+			animation-timing-function: linear;
+			animation-fill-mode: both;
+			animation-timeline: view();
+			animation-range-start: entry 5%;
+			animation-range-end: entry 70%;
+		}
+	}
+}

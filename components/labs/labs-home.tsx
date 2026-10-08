@@ -1,9 +1,8 @@
-import { Fragment } from "react";
+import { Fragment, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 
-import { PhoneFrame } from "@/components/landing-v3/phone-frame";
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
 import type { LandingSocialLink } from "@/lib/landing/contact";
 import {
@@ -12,12 +11,15 @@ import {
 	LABS_PROCESS,
 	LABS_PROJECTS,
 	LABS_SERVICES,
+	LABS_STACK,
 	LABS_TEAM,
 	LABS_WHATSAPP_GREETING,
 } from "@/lib/labs/content";
 
+import { LabsHeroVisual } from "./labs-hero-visual";
 import { LabsNavbar, type LabsNavLink } from "./labs-navbar";
 import { QuoteForm } from "./quote-form";
+import "./labs.css";
 
 type LabsHomeProps = {
 	/** Ruta donde vive esta página («/» cuando sea la raíz; «/labs» en la vista previa). */
@@ -28,13 +30,16 @@ type LabsHomeProps = {
 	jsonLd: string;
 };
 
+/** El producto propio no va en la barra: es un proyecto más del estudio, y vive en Proyectos y en el pie. */
 const NAV_LINKS: LabsNavLink[] = [
 	{ label: "Servicios", href: "#servicios" },
 	{ label: "Cómo trabajamos", href: "#proceso" },
 	{ label: "Proyectos", href: "#proyectos" },
-	{ label: LANDING_PRODUCT_NAME, href: "#productos" },
 	{ label: "Equipo", href: "#equipo" },
 ];
+
+/** Orden de entrada de cada bloque del hero (`--labs-i` en labs.css). */
+const rise = (order: number) => ({ "--labs-i": order }) as CSSProperties;
 
 /**
  * Home corporativa de Gcode Labs. Fondo claro y tipografía sobria, a diferencia
@@ -64,16 +69,23 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 			/>
 
 			<main>
-				{/* Hero: la promesa a la izquierda y, como prueba, el producto propio en un teléfono. */}
-				<section className="bg-[#080808] px-6 pb-20 pt-32 text-[#f4f4f5] sm:pb-28 sm:pt-40 lg:pb-32 lg:pt-44">
-					<div className="mx-auto grid max-w-6xl gap-16 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)] lg:items-center lg:gap-12">
+				{/* Hero: la promesa a la izquierda y, a la derecha, cuatro pantallas de muestra de lo que construimos. */}
+				<section className="relative overflow-hidden bg-[#080808] px-6 pb-20 pt-32 text-[#f4f4f5] sm:pb-28 sm:pt-40 lg:pb-32 lg:pt-44">
+					<div className="mx-auto grid max-w-6xl gap-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center lg:gap-12">
 						<div>
-							<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#a1a1aa]">{LABS_HOME.eyebrow}</p>
-							<h1 className="mt-6 text-[clamp(2.5rem,4.8vw,4.25rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-balance">
+							<p className="labs-rise text-xs font-medium uppercase tracking-[0.2em] text-[#a1a1aa]" style={rise(0)}>
+								{LABS_HOME.eyebrow}
+							</p>
+							<h1
+								className="labs-rise mt-6 text-[clamp(2.5rem,4.8vw,4.25rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-balance"
+								style={rise(1)}
+							>
 								{LABS_HOME.title}
 							</h1>
-							<p className="mt-7 max-w-xl text-base leading-relaxed text-[#a1a1aa] text-pretty sm:text-lg">{LABS_HOME.intro}</p>
-							<div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
+							<p className="labs-rise mt-7 max-w-xl text-base leading-relaxed text-[#a1a1aa] text-pretty sm:text-lg" style={rise(2)}>
+								{LABS_HOME.intro}
+							</p>
+							<div className="labs-rise mt-9 flex flex-wrap items-center gap-x-7 gap-y-4" style={rise(3)}>
 								<Link
 									href="#cotizar"
 									className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-[#0d0d0d] transition-colors hover:bg-[#4f5bff] hover:text-white"
@@ -82,15 +94,15 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 									<ArrowRight className="h-4 w-4" aria-hidden />
 								</Link>
 								<Link
-									href={posPath}
+									href="#proyectos"
 									className="inline-flex items-center gap-1.5 text-[15px] font-medium text-[#d4d4d8] underline decoration-white/20 underline-offset-[6px] transition-colors hover:text-white hover:decoration-white/60"
 								>
 									{LABS_HOME.secondaryCta}
-									<ArrowUpRight className="h-4 w-4" aria-hidden />
+									<ArrowRight className="h-4 w-4" aria-hidden />
 								</Link>
 							</div>
 							{/* Las tres garantías en una línea con punto medio, como en el landing del producto. En el teléfono van una debajo de otra, sin puntos. */}
-							<p className="mt-8 text-sm leading-relaxed text-[#a1a1aa]">
+							<p className="labs-rise mt-8 text-sm leading-relaxed text-[#a1a1aa]" style={rise(4)}>
 								{LABS_HOME.assurances.map((item, index) => (
 									<Fragment key={item}>
 										{index > 0 ? " " : null}
@@ -106,17 +118,14 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 								))}
 							</p>
 						</div>
-						<figure className="mx-auto w-full max-w-[260px] lg:max-w-[300px]">
-							<PhoneFrame src={LABS_HOME.heroFigure.src} alt={LABS_HOME.heroFigure.alt} priority />
-							<figcaption className="mt-10 text-center text-sm text-[#71717a]">{LABS_HOME.heroFigure.caption}</figcaption>
-						</figure>
+						<LabsHeroVisual />
 					</div>
 				</section>
 
 				{/* Hechos */}
 				<section className="border-b border-[#e5e5ea] bg-[#fbfbfd]">
 					<div className="mx-auto max-w-6xl px-6">
-						<dl className="grid divide-y divide-[#e5e5ea] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
+						<dl className="labs-reveal grid divide-y divide-[#e5e5ea] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
 							{LABS_HOME.facts.map((fact) => (
 								<div key={fact.label} className="py-9 sm:px-8 sm:first:pl-0 lg:last:pr-0">
 									<dt className="border-t-2 border-[#4f5bff] pt-4 text-base font-semibold tracking-tight">{fact.label}</dt>
@@ -130,7 +139,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 				{/* Servicios */}
 				<section id="servicios" className="scroll-mt-24 bg-white">
 					<div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-						<div className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
+						<div className="labs-reveal grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
 							<div>
 								<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#8e8e93]">{LABS_HOME.servicesEyebrow}</p>
 								<h2 className="mt-4 text-[clamp(2rem,3.6vw,3.25rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-balance">
@@ -142,8 +151,14 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 
 						<ol className="mt-16 divide-y divide-[#e5e5ea] border-y border-[#e5e5ea]">
 							{LABS_SERVICES.map((service, index) => (
-								<li key={service.id} id={service.id} className="scroll-mt-24 grid gap-6 py-10 lg:grid-cols-[6rem_minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">
-									<span className="font-mono text-sm text-[#8e8e93]">{String(index + 1).padStart(2, "0")}</span>
+								<li
+									key={service.id}
+									id={service.id}
+									className="labs-reveal group scroll-mt-24 grid gap-6 py-10 lg:grid-cols-[6rem_minmax(0,1fr)_minmax(0,1fr)] lg:gap-12"
+								>
+									<span className="font-mono text-sm text-[#8e8e93] transition-colors duration-300 group-hover:text-[#4f5bff]">
+										{String(index + 1).padStart(2, "0")}
+									</span>
 									<div>
 										<h3 className="text-2xl font-semibold tracking-tight">{service.title}</h3>
 										<p className="mt-3 max-w-lg leading-relaxed text-[#6e6e73] text-pretty">{service.summary}</p>
@@ -168,11 +183,13 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 				{/* Proceso */}
 				<section id="proceso" className="scroll-mt-24 border-t border-[#e5e5ea] bg-[#fbfbfd]">
 					<div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-						<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#8e8e93]">{LABS_HOME.processEyebrow}</p>
-						<h2 className="mt-4 max-w-2xl text-[clamp(2rem,3.6vw,3.25rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-balance">
-							{LABS_HOME.processTitle}
-						</h2>
-						<ol className="mt-16 grid gap-px overflow-hidden rounded-2xl border border-[#e5e5ea] bg-[#e5e5ea] sm:grid-cols-2 lg:grid-cols-4">
+						<div className="labs-reveal">
+							<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#8e8e93]">{LABS_HOME.processEyebrow}</p>
+							<h2 className="mt-4 max-w-2xl text-[clamp(2rem,3.6vw,3.25rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-balance">
+								{LABS_HOME.processTitle}
+							</h2>
+						</div>
+						<ol className="labs-reveal mt-16 grid gap-px overflow-hidden rounded-2xl border border-[#e5e5ea] bg-[#e5e5ea] sm:grid-cols-2 lg:grid-cols-4">
 							{LABS_PROCESS.map((step) => (
 								<li key={step.num} className="flex flex-col bg-white p-8">
 									<span className="font-mono text-sm text-[#4f5bff]">{step.num}</span>
@@ -184,55 +201,39 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 					</div>
 				</section>
 
-				{/* Productos propios */}
-				<section id="productos" className="scroll-mt-24 bg-[#080808] text-[#f4f4f5]">
+				{/* Con qué construimos: la amplitud del estudio en herramientas reales, sin logos. */}
+				<section id="tecnologia" className="scroll-mt-24 bg-[#080808] text-[#f4f4f5]">
 					<div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-						<div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20">
+						<div className="labs-reveal grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
 							<div>
-								<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#a1a1aa]">{LABS_HOME.productsEyebrow}</p>
+								<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#a1a1aa]">{LABS_HOME.stackEyebrow}</p>
 								<h2 className="mt-4 text-[clamp(2rem,3.6vw,3.25rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-balance">
-									{LABS_HOME.productsTitle}
+									{LABS_HOME.stackTitle}
 								</h2>
-								<p className="mt-7 text-lg leading-relaxed text-[#a1a1aa] text-pretty">{LABS_HOME.productsIntro}</p>
 							</div>
-							<div className="flex flex-col justify-between rounded-2xl border border-white/10 bg-white/[0.04] p-8 sm:p-10">
-								<div>
-									<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#8b93ff]">Un producto de {LANDING_COMPANY_NAME}</p>
-									<h3 className="mt-4 text-3xl font-semibold tracking-tight">{LANDING_PRODUCT_NAME}</h3>
-									<p className="mt-3 text-[#a1a1aa] text-pretty">
-										Menú digital con QR, pedidos online, punto de venta, delivery e inventario para restaurantes.
-										Suscripción mensual, sin comisión por venta.
-									</p>
-									<p className="mt-6 text-sm leading-relaxed text-[#a1a1aa]">{dotted(LABS_PROJECTS[0]?.scope ?? [])}</p>
-								</div>
-								<div className="mt-8 flex flex-wrap items-center gap-5">
-									<Link
-										href={posPath}
-										className="inline-flex items-center gap-2 rounded-full bg-[#4f5bff] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#3d47e6]"
-									>
-										Ver {LANDING_PRODUCT_NAME}
-										<ArrowRight className="h-4 w-4" aria-hidden />
-									</Link>
-									<Link
-										href="/onboarding/negocios"
-										className="text-sm font-medium text-[#d4d4d8] underline decoration-white/20 underline-offset-[6px] hover:text-white"
-									>
-										{LABS_HOME.productsProof}
-									</Link>
-								</div>
-							</div>
+							<p className="self-end text-lg leading-relaxed text-[#a1a1aa] text-pretty">{LABS_HOME.stackIntro}</p>
 						</div>
+						<dl className="labs-reveal mt-16 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
+							{LABS_STACK.map((group) => (
+								<div key={group.label} className="bg-[#0d0d0f] p-7 transition-colors duration-300 hover:bg-[#121216]">
+									<dt className="text-xs font-medium uppercase tracking-[0.18em] text-[#8b93ff]">{group.label}</dt>
+									<dd className="mt-3 text-[15px] leading-relaxed text-[#d4d4d8]">{dotted(group.items)}</dd>
+								</div>
+							))}
+						</dl>
 					</div>
 				</section>
 
 				{/* Proyectos */}
 				<section id="proyectos" className="scroll-mt-24 bg-white">
 					<div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-						<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#8e8e93]">{LABS_HOME.projectsEyebrow}</p>
-						<h2 className="mt-4 text-[clamp(2rem,3.6vw,3.25rem)] font-semibold leading-[1.08] tracking-[-0.03em]">
-							{LABS_HOME.projectsTitle}
-						</h2>
-						<ul className="mt-14 grid gap-6 lg:grid-cols-2">
+						<div className="labs-reveal">
+							<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#8e8e93]">{LABS_HOME.projectsEyebrow}</p>
+							<h2 className="mt-4 text-[clamp(2rem,3.6vw,3.25rem)] font-semibold leading-[1.08] tracking-[-0.03em]">
+								{LABS_HOME.projectsTitle}
+							</h2>
+						</div>
+						<ul className="labs-reveal mt-14 grid gap-6 lg:grid-cols-2">
 							{LABS_PROJECTS.map((project) => {
 								const external = project.href?.startsWith("http");
 								const body = (
@@ -281,7 +282,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 				{LABS_TEAM.length > 0 ? (
 					<section id="equipo" className="scroll-mt-24 border-t border-[#e5e5ea] bg-[#fbfbfd]">
 						<div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-							<div className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
+							<div className="labs-reveal grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
 								<div>
 									<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#8e8e93]">{LABS_HOME.teamEyebrow}</p>
 									<h2 className="mt-4 text-[clamp(2rem,3.6vw,3.25rem)] font-semibold leading-[1.08] tracking-[-0.03em]">
@@ -340,7 +341,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 									{LABS_HOME.faqTitle}
 								</h2>
 							</div>
-							<dl className="divide-y divide-[#e5e5ea] border-y border-[#e5e5ea]">
+							<dl className="labs-reveal divide-y divide-[#e5e5ea] border-y border-[#e5e5ea]">
 								{LABS_FAQ.map((item) => (
 									<div key={item.question} className="py-7">
 										<dt className="text-lg font-semibold tracking-tight">{item.question}</dt>
@@ -355,7 +356,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 				{/* Cotizar */}
 				<section id="cotizar" className="scroll-mt-24 border-t border-[#e5e5ea] bg-[#fbfbfd]">
 					<div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-						<div className="grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-20">
+						<div className="labs-reveal grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-20">
 							<div>
 								<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#8e8e93]">{LABS_HOME.quoteEyebrow}</p>
 								<h2 className="mt-4 text-[clamp(2rem,3.6vw,3.25rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-balance">
