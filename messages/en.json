@@ -512,6 +512,7 @@
           "tarjeta": "Card (In store)",
           "pago_movil": "Mobile payment",
           "zelle": "Zelle",
+          "binance_pay": "Binance Pay",
           "transferencia_bancaria": "Bank transfer",
           "stripe": "Card (Online)",
           "mercadopago": "MercadoPago",
@@ -526,6 +527,7 @@
           "noBankData": "No bank data configured.",
           "noMobilePaymentData": "No mobile payment data.",
           "noZelleData": "No Zelle data.",
+          "noBinancePayData": "No Binance Pay data.",
           "followInstructions": "Follow the instructions to pay with",
           "detailsTitle": "Payment details",
           "configLabels": {
@@ -538,6 +540,8 @@
             "phone": "Phone",
             "idCard": "ID card",
             "zelleEmail": "Zelle email",
+            "binancePayId": "Binance Pay ID",
+            "binanceEmail": "Binance email",
             "link": "Payment link",
             "alias": "Alias"
           },

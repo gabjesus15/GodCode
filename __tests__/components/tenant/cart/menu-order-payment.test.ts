@@ -10,6 +10,7 @@ describe("paymentMethodRequiresReceipt", () => {
     expect(paymentMethodRequiresReceipt("transferencia_bancaria")).toBe(true);
     expect(paymentMethodRequiresReceipt("pago_movil")).toBe(true);
     expect(paymentMethodRequiresReceipt("zelle")).toBe(true);
+    expect(paymentMethodRequiresReceipt("binance_pay")).toBe(true);
     expect(paymentMethodRequiresReceipt("paypal")).toBe(true);
   });
 

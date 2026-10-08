@@ -6,7 +6,7 @@
 -- Ahora el local elige una fuente y el sistema la mantiene al día:
 --   bcv_usd       dólar oficial del BCV
 --   bcv_eur       euro oficial del BCV (se aplica igual a los precios en dólares)
---   binance_usdt  promedio del P2P de Binance (USDT/VES)
+-- Solo fuentes oficiales: la tasa del P2P de Binance no se ofrece.
 --
 -- `exchange_rates` guarda cada valor distinto que publicó cada fuente: nunca se edita una
 -- fila salvo `checked_at` (la última vez que se confirmó ese mismo valor). Las escribe solo
@@ -28,16 +28,22 @@ create table if not exists public.exchange_rates (
   published_at timestamptz not null,
   fetched_at   timestamptz not null default now(),
   checked_at   timestamptz not null default now(),
-  constraint exchange_rates_source_chk check (source in ('bcv_usd', 'bcv_eur', 'binance_usdt')),
   constraint exchange_rates_rate_chk check (rate > 0)
 );
+
+-- Se agrega aparte para que volver a correr el archivo también quite fuentes viejas (una
+-- versión anterior aceptaba binance_usdt). `not valid` deja el historial que ya exista.
+alter table public.exchange_rates
+  drop constraint if exists exchange_rates_source_chk;
+alter table public.exchange_rates
+  add constraint exchange_rates_source_chk check (source in ('bcv_usd', 'bcv_eur')) not valid;
 
 create index if not exists exchange_rates_source_latest_idx
   on public.exchange_rates (source, id desc);
 
 alter table public.exchange_rates enable row level security;
 
--- Son datos públicos (los publica el BCV o Binance): cualquiera puede leerlos, nadie
+-- Son datos públicos (los publica el BCV): cualquiera puede leerlos, nadie
 -- puede escribirlos salvo el servidor.
 drop policy if exists exchange_rates_public_read on public.exchange_rates;
 create policy exchange_rates_public_read on public.exchange_rates
@@ -55,9 +61,14 @@ alter table public.branches
 
 alter table public.branches
   drop constraint if exists branches_exchange_rate_source_chk;
+-- Una versión anterior aceptaba binance_usdt: esas sucursales pasan al dólar BCV.
+update public.branches
+set exchange_rate_source = 'bcv_usd'
+where exchange_rate_source is not null
+  and exchange_rate_source not in ('bcv_usd', 'bcv_eur');
 alter table public.branches
   add constraint branches_exchange_rate_source_chk
-  check (exchange_rate_source is null or exchange_rate_source in ('bcv_usd', 'bcv_eur', 'binance_usdt'));
+  check (exchange_rate_source is null or exchange_rate_source in ('bcv_usd', 'bcv_eur'));
 
 -- Las sucursales de Venezuela arrancan con el dólar BCV, que es lo que ya usaba la tienda.
 update public.branches b
@@ -115,7 +126,7 @@ declare
   v_last public.exchange_rates;
   v_row public.exchange_rates;
 begin
-  if p_source is null or p_source not in ('bcv_usd', 'bcv_eur', 'binance_usdt') then
+  if p_source is null or p_source not in ('bcv_usd', 'bcv_eur') then
     raise exception 'invalid_exchange_rate_source' using errcode = '22000';
   end if;
   if p_rate is null or p_rate <= 0 then
@@ -203,7 +214,7 @@ declare
   v_branch_company_id uuid;
   v_old text;
 begin
-  if p_source is null or p_source not in ('bcv_usd', 'bcv_eur', 'binance_usdt') then
+  if p_source is null or p_source not in ('bcv_usd', 'bcv_eur') then
     raise exception 'invalid_exchange_rate_source' using errcode = '22000';
   end if;
 

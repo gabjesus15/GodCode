@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import {
 	fetchExchangeRate,
 	isExchangeRateSource,
-	parseCriptoYaRate,
 	parseDolarApiRate,
 } from "@/lib/exchange-rates/sources";
 
@@ -31,36 +30,12 @@ describe("parseDolarApiRate", () => {
 	});
 });
 
-describe("parseCriptoYaRate", () => {
-	it("promedia compra y venta y usa el time en segundos", () => {
-		expect(parseCriptoYaRate({ ask: 1000, bid: 990, time: 1791316331 }, NOW)).toEqual({
-			rate: 995,
-			publishedAt: new Date(1791316331 * 1000).toISOString(),
-		});
-	});
-
-	it("usa el lado que haya si falta el otro", () => {
-		expect(parseCriptoYaRate({ ask: 1000 }, NOW)).toEqual({ rate: 1000, publishedAt: NOW.toISOString() });
-	});
-
-	it("descarta respuestas sin precios", () => {
-		expect(parseCriptoYaRate({ ask: 0, bid: null }, NOW)).toBeNull();
-	});
-});
-
 describe("fetchExchangeRate", () => {
 	it("consulta el euro oficial para bcv_eur", async () => {
 		const fetchImpl = vi.fn(async (_url: string) => new Response(JSON.stringify({ promedio: 977.2 }), { status: 200 }));
 		const result = await fetchExchangeRate("bcv_eur", fetchImpl as unknown as typeof fetch);
 		expect(result?.rate).toBe(977.2);
 		expect(fetchImpl.mock.calls[0][0]).toBe("https://ve.dolarapi.com/v1/euros/oficial");
-	});
-
-	it("consulta el P2P de Binance para binance_usdt", async () => {
-		const fetchImpl = vi.fn(async (_url: string) => new Response(JSON.stringify({ ask: 996, bid: 994 }), { status: 200 }));
-		const result = await fetchExchangeRate("binance_usdt", fetchImpl as unknown as typeof fetch);
-		expect(result?.rate).toBe(995);
-		expect(String(fetchImpl.mock.calls[0][0])).toContain("binancep2p/USDT/VES");
 	});
 
 	it("devuelve null si la fuente falla", async () => {
@@ -74,10 +49,10 @@ describe("fetchExchangeRate", () => {
 });
 
 describe("isExchangeRateSource", () => {
-	it("solo acepta las tres fuentes", () => {
+	it("solo acepta las fuentes del BCV", () => {
 		expect(isExchangeRateSource("bcv_usd")).toBe(true);
 		expect(isExchangeRateSource("bcv_eur")).toBe(true);
-		expect(isExchangeRateSource("binance_usdt")).toBe(true);
+		expect(isExchangeRateSource("binance_usdt")).toBe(false);
 		expect(isExchangeRateSource("manual")).toBe(false);
 		expect(isExchangeRateSource(null)).toBe(false);
 	});

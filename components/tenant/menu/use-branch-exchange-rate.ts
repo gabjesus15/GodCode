@@ -36,7 +36,7 @@ function loadBranchRate(branchId: string): Promise<number | null> {
 }
 
 /**
- * Tasa de la fuente que eligió la sucursal (BCV dólar, BCV euro o Binance), la misma en
+ * Tasa de la fuente que eligió la sucursal (BCV dólar o BCV euro), la misma en
  * el menú y en el carrito.
  *
  * Si el servidor no responde, o la base todavía no tiene la migración de tasas, se usa

@@ -22,6 +22,12 @@ describe("pickPublicPaymentConfig", () => {
 	it("recorta valores y omite los vacíos", () => {
 		expect(pickPublicPaymentConfig("zelle", { email: "  pagos@x.com ", name: "   " })).toEqual({ email: "pagos@x.com" });
 	});
+
+	it("Binance Pay guarda Pay ID, correo y nombre", () => {
+		expect(
+			pickPublicPaymentConfig("binance_pay", { pay_id: " 123456789 ", email: "b@x.com", name: "Local", api_key: "no" }),
+		).toEqual({ pay_id: "123456789", email: "b@x.com", name: "Local" });
+	});
 });
 
 describe("sanitizeBranchPaymentConfig", () => {

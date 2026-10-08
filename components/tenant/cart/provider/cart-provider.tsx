@@ -124,8 +124,8 @@ export function CartProvider({
 	const pricingMode = useMemo(() => effectiveDeliveryPricingMode(settings), [settings]);
 	const branchFeatureFlags = useCartBranchFeatureFlags(branchDeliverySettings, selectedBranchId);
 
-	// Misma tasa que el menú: la de la fuente que eligió la sucursal (BCV dólar, BCV euro
-	// o Binance). Fuera de Venezuela se mantiene la tasa guardada en la sucursal.
+	// Misma tasa que el menú: la de la fuente que eligió la sucursal (BCV dólar o BCV
+	// euro). Fuera de Venezuela se mantiene la tasa guardada en la sucursal.
 	const exchangeRate = useBranchExchangeRate(selectedBranchId ?? null, {
 		enabled: isVenezuela,
 		legacyRate: settings.exchangeRate ?? null,

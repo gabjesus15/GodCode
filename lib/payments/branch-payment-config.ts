@@ -14,6 +14,7 @@ import { mergePaymentJsonField } from "./merge-payment-json-field";
 export const BRANCH_PAYMENT_PUBLIC_FIELDS = {
 	pago_movil: ["banco", "telefono", "identificacion"],
 	zelle: ["email", "name"],
+	binance_pay: ["pay_id", "email", "name"],
 	transferencia_bancaria: ["banco", "tipo_cuenta", "nro_cuenta", "identificacion", "titular", "email"],
 	mercadopago: ["link", "alias"],
 	paypal: ["email", "link"],

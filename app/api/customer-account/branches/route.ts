@@ -21,7 +21,7 @@ function defaultPaymentPolicy(method: string) {
     : ["tarjeta", "card", "stripe", "mercadopago"].includes(normalized)
       ? "card"
       : "online";
-  const requiresReceipt = ["pago_movil", "zelle", "paypal", "transferencia_bancaria"].includes(normalized);
+  const requiresReceipt = ["pago_movil", "zelle", "binance_pay", "paypal", "transferencia_bancaria"].includes(normalized);
   return {
     method_name: method,
     display_name: method.replaceAll("_", " "),
@@ -39,7 +39,7 @@ function defaultPaymentPolicy(method: string) {
             : "manual_verification",
     settlement_currency: normalized === "pago_movil"
       ? "VES"
-      : normalized === "zelle"
+      : normalized === "zelle" || normalized === "binance_pay"
         ? "USD"
         : null,
     allow_mixed_payment: true,
@@ -80,6 +80,7 @@ export async function PUT(req: NextRequest) {
     payment_methods,
     pago_movil,
     zelle,
+    binance_pay,
     transferencia_bancaria,
     mercadopago,
     paypal,
@@ -133,7 +134,7 @@ export async function PUT(req: NextRequest) {
   const { data: branch, error: fetchError } = await supabaseAdmin
     .from("branches")
     .select(
-      "company_id, country, order_intake_paused, pago_movil, zelle, transferencia_bancaria, mercadopago, paypal",
+      "company_id, country, order_intake_paused, pago_movil, zelle, binance_pay, transferencia_bancaria, mercadopago, paypal",
     )
     .eq("id", id)
     .maybeSingle();
@@ -200,6 +201,7 @@ export async function PUT(req: NextRequest) {
       // Solo datos públicos: el menú los lee con la clave anónima y los enseña al cliente.
       pago_movil: mergePublicPaymentConfig("pago_movil", pago_movil, branch.pago_movil),
       zelle: mergePublicPaymentConfig("zelle", zelle, branch.zelle),
+      binance_pay: mergePublicPaymentConfig("binance_pay", binance_pay, branch.binance_pay),
       transferencia_bancaria: mergePublicPaymentConfig(
         "transferencia_bancaria",
         transferencia_bancaria,

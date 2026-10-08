@@ -31,12 +31,12 @@ describe("getCurrentExchangeRate", () => {
 	});
 
 	it("consulta y registra la tasa cuando la guardada venció", async () => {
-		const last = { id: 7, source: "binance_usdt", rate: 990, published_at: "2026-10-06T14:00:00.000Z", checked_at: "2026-10-06T14:00:00.000Z" };
-		const recorded = { id: 8, source: "binance_usdt", rate: 995, published_at: "2026-10-06T14:59:00.000Z", checked_at: "2026-10-06T15:00:00.000Z" };
+		const last = { id: 7, source: "bcv_eur", rate: 990, published_at: "2026-10-06T14:00:00.000Z", checked_at: "2026-10-06T14:00:00.000Z" };
+		const recorded = { id: 8, source: "bcv_eur", rate: 995, published_at: "2026-10-06T14:59:00.000Z", checked_at: "2026-10-06T15:00:00.000Z" };
 		const { client, rpc } = fakeSupabase(last, recorded);
-		const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ ask: 996, bid: 994 }), { status: 200 }));
-		const result = await getCurrentExchangeRate(client, "binance_usdt", { now: NOW, fetchImpl: fetchImpl as unknown as typeof fetch });
-		expect(rpc).toHaveBeenCalledWith("record_exchange_rate", expect.objectContaining({ p_source: "binance_usdt", p_rate: 995 }));
+		const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ promedio: 995 }), { status: 200 }));
+		const result = await getCurrentExchangeRate(client, "bcv_eur", { now: NOW, fetchImpl: fetchImpl as unknown as typeof fetch });
+		expect(rpc).toHaveBeenCalledWith("record_exchange_rate", expect.objectContaining({ p_source: "bcv_eur", p_rate: 995 }));
 		expect(result).toMatchObject({ rateId: 8, rate: 995, stale: false });
 	});
 

@@ -312,6 +312,7 @@ export type Database = {
           account_type: string | null
           address: string | null
           bank_name: string | null
+          binance_pay: string | null
           business_hours: Json | null
           company_id: string
           country: string | null
@@ -354,6 +355,7 @@ export type Database = {
           account_type?: string | null
           address?: string | null
           bank_name?: string | null
+          binance_pay?: string | null
           business_hours?: Json | null
           company_id: string
           country?: string | null
@@ -396,6 +398,7 @@ export type Database = {
           account_type?: string | null
           address?: string | null
           bank_name?: string | null
+          binance_pay?: string | null
           business_hours?: Json | null
           company_id?: string
           country?: string | null

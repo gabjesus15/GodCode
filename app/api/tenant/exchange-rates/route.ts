@@ -8,7 +8,7 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 /** @service-role public
  *
- * Tasas de cambio de Venezuela (BCV dólar, BCV euro y Binance), al día.
+ * Tasas de cambio de Venezuela (BCV dólar y BCV euro), al día.
  *
  * - `?branchId=<uuid>`: la tasa de la fuente que eligió esa sucursal (la usan el menú y el
  *   carrito). Responde `rate: null` si la sucursal no tiene fuente (fuera de Venezuela).

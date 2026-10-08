@@ -43,6 +43,11 @@ export type Branch = {
         email?: string;
         name?: string;
     } | null;
+    binance_pay?: {
+        pay_id?: string;
+        email?: string;
+        name?: string;
+    } | null;
     transferencia_bancaria?: {
         banco?: string;
         nro_cuenta?: string;
@@ -74,6 +79,7 @@ const branchFormSchema = z.object({
     // Objetos dinámicos: z.any() permite flexibilidad para los campos cambiantes por país
     pago_movil: z.any(),
     zelle: z.any(),
+    binance_pay: z.any(),
     transferencia_bancaria: z.any(),
     stripe: z.any(),
     mercadopago: z.any(),
@@ -105,6 +111,7 @@ const ALL_PAYMENT_METHODS = [
   "tarjeta",
   "pago_movil",
   "zelle",
+  "binance_pay",
   "transferencia_bancaria",
   "mercadopago",
   "paypal",
@@ -153,6 +160,13 @@ const getPaymentMethodFields = (method: string, country: string): { key: string;
             return [
                 { key: "email", label: "Correo Electrónico" },
                 { key: "name", label: "Nombre Titular" }
+            ];
+        case "binance_pay":
+            // USDT 1 a 1 con el dólar.
+            return [
+                { key: "pay_id", label: "Pay ID" },
+                { key: "email", label: "Correo Binance" },
+                { key: "name", label: "Nombre en Binance" }
             ];
         case "transferencia_bancaria":
             const idLabel = country === "CL" ? "RUT" : (country === "VE" ? "Cédula/RIF" : "Documento ID");
@@ -710,6 +724,7 @@ function BranchEditForm({ branch, onCancel }: { branch: Branch, onCancel: () => 
                                                                         `${method}.${field.key}` as
                                                                             | `pago_movil.${string}`
                                                                             | `zelle.${string}`
+                                                                            | `binance_pay.${string}`
                                                                             | `transferencia_bancaria.${string}`
                                                                             | `stripe.${string}`
                                                                             | `mercadopago.${string}`

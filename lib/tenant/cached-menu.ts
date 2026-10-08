@@ -41,6 +41,7 @@ export interface CachedBranch {
   /** Payment config fields — stored as serialized strings in DB */
   pago_movil: string | null;
   zelle: string | null;
+  binance_pay: string | null;
   transferencia_bancaria: string | null;
   stripe: string | null;
   mercadopago: string | null;
@@ -115,7 +116,7 @@ export const getCachedMenuStaticData = async (
         supabase
           .from("branches")
           .select(
-            "id,name,address,phone,whatsapp_url,instagram_url,map_url,schedule,company_id,payment_methods,pago_movil,zelle,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta,delivery_settings,origin_lat,origin_lng,order_intake_paused,order_intake_pause_message,order_intake_paused_at,business_hours,country,currency",
+            "id,name,address,phone,whatsapp_url,instagram_url,map_url,schedule,company_id,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta,delivery_settings,origin_lat,origin_lng,order_intake_paused,order_intake_pause_message,order_intake_paused_at,business_hours,country,currency",
           )
           .eq("company_id", cId)
           .eq("is_active", true)
