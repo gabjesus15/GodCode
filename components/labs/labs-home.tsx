@@ -10,6 +10,7 @@ import {
 	LABS_PROJECTS,
 	LABS_SERVICES,
 	LABS_TEAM,
+	LABS_WHATSAPP_GREETING,
 } from "@/lib/labs/content";
 
 import { LabsNavbar, type LabsNavLink } from "./labs-navbar";
@@ -38,6 +39,7 @@ const NAV_LINKS: LabsNavLink[] = [
  */
 export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) {
 	const whatsapp = socialLinks.find((link) => link.kind === "whatsapp") ?? null;
+	const whatsappHref = whatsapp ? withWhatsAppText(whatsapp.href, LABS_WHATSAPP_GREETING) : null;
 	const email = socialLinks.find((link) => link.kind === "email") ?? null;
 	const linkedin = socialLinks.find((link) => link.kind === "linkedin") ?? null;
 	const instagram = socialLinks.find((link) => link.kind === "instagram") ?? null;
@@ -83,6 +85,14 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 								<ArrowUpRight className="h-4 w-4" aria-hidden />
 							</Link>
 						</div>
+						<ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#d4d4d8]">
+							{LABS_HOME.assurances.map((item) => (
+								<li key={item} className="flex items-center gap-2">
+									<span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#8b93ff]" />
+									{item}
+								</li>
+							))}
+						</ul>
 					</div>
 				</section>
 
@@ -171,7 +181,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 							</div>
 							<div className="flex flex-col justify-between rounded-2xl border border-white/10 bg-white/[0.04] p-8 sm:p-10">
 								<div>
-									<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#8b93ff]">Producto</p>
+									<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#8b93ff]">Un producto de {LANDING_COMPANY_NAME}</p>
 									<h3 className="mt-4 text-3xl font-semibold tracking-tight">{LANDING_PRODUCT_NAME}</h3>
 									<p className="mt-3 text-[#a1a1aa] text-pretty">
 										Menú digital con QR, pedidos online, punto de venta, delivery e inventario para restaurantes.
@@ -234,6 +244,11 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 												</li>
 											))}
 										</ul>
+										{project.href && project.linkLabel ? (
+											<p className="mt-6 text-sm font-medium text-[#1d1d1f] underline decoration-black/20 underline-offset-4 group-hover:decoration-black/60">
+												{project.linkLabel}
+											</p>
+										) : null}
 									</>
 								);
 								const className =
@@ -270,9 +285,9 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 									<h2 className="mt-4 text-[clamp(2rem,3.6vw,3.25rem)] font-semibold leading-[1.08] tracking-[-0.03em]">
 										{LABS_HOME.teamTitle}
 									</h2>
-									<p className="mt-6 max-w-md text-lg leading-relaxed text-[#6e6e73] text-pretty">
-										Un equipo pequeño con base en Santiago de Chile. En cada proyecto hablas directamente con quien lo
-										diseña y lo programa.
+									<p className="mt-6 max-w-md text-lg leading-relaxed text-[#6e6e73] text-pretty">{LABS_HOME.teamIntro}</p>
+									<p className="mt-6 max-w-md border-l-2 border-[#4f5bff] pl-5 text-[15px] leading-relaxed text-[#3a3a3f] text-pretty">
+										{LABS_HOME.founderNote}
 									</p>
 								</div>
 								<ul className="grid gap-6 sm:grid-cols-2">
@@ -335,11 +350,11 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 								</h2>
 								<p className="mt-6 max-w-md text-lg leading-relaxed text-[#6e6e73] text-pretty">{LABS_HOME.quoteText}</p>
 								<ul className="mt-10 space-y-4 text-[15px]">
-									{whatsapp ? (
+									{whatsapp && whatsappHref ? (
 										<li>
 											<span className="block text-xs font-medium uppercase tracking-[0.18em] text-[#8e8e93]">WhatsApp</span>
-											<a href={whatsapp.href} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block font-medium hover:underline">
-												{whatsapp.label}
+											<a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block font-medium hover:underline">
+												{whatsapp.display}
 											</a>
 										</li>
 									) : null}
@@ -347,7 +362,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 										<li>
 											<span className="block text-xs font-medium uppercase tracking-[0.18em] text-[#8e8e93]">Correo</span>
 											<a href={email.href} className="mt-1 inline-block font-medium hover:underline">
-												{email.label}
+												{email.display}
 											</a>
 										</li>
 									) : null}
@@ -357,7 +372,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 									</li>
 								</ul>
 							</div>
-							<QuoteForm whatsappHref={whatsapp?.href ?? null} />
+							<QuoteForm whatsappHref={whatsappHref} />
 						</div>
 					</div>
 				</section>
@@ -406,6 +421,17 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 			</footer>
 		</div>
 	);
+}
+
+/** Añade el saludo al enlace de WhatsApp (wa.me acepta `text`). */
+function withWhatsAppText(href: string, text: string): string {
+	try {
+		const url = new URL(href);
+		url.searchParams.set("text", text);
+		return url.toString();
+	} catch {
+		return href;
+	}
 }
 
 function initials(name: string): string {

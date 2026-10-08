@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { LABS_FAQ, LABS_PROJECTS, LABS_SERVICES, LABS_TEAM } from "@/lib/labs/content";
+import { LABS_FAQ, LABS_HOME, LABS_PROJECTS, LABS_SERVICES, LABS_TEAM } from "@/lib/labs/content";
 import { LABS_DESCRIPTION, LABS_TITLE, buildLabsJsonLd, buildLabsMetadata } from "@/lib/labs/metadata";
 import { MAIN_DOMAIN_RESERVED_PATH_SEGMENTS } from "@/lib/tenant/reserved-path-segments";
 
@@ -50,8 +50,14 @@ describe("home de Gcode Labs: contenido", () => {
 		for (const member of LABS_TEAM) expect(member.linkedinUrl).toMatch(/^https:\/\/www\.linkedin\.com\//);
 	});
 
+	it("responde a los tres miedos bajo el botón del hero", () => {
+		expect(LABS_HOME.assurances).toHaveLength(3);
+		expect(LABS_HOME.assurances.join(" ")).toMatch(/por escrito/);
+		expect(LABS_HOME.assurances.join(" ")).toMatch(/a tu nombre/);
+	});
+
 	it("no promete cifras que no existen", () => {
-		const text = JSON.stringify([LABS_SERVICES, LABS_FAQ, LABS_PROJECTS]).toLowerCase();
+		const text = JSON.stringify([LABS_SERVICES, LABS_FAQ, LABS_PROJECTS, LABS_HOME]).toLowerCase();
 		expect(text).not.toMatch(/\d+\+? (clientes|proyectos entregados|años de experiencia)/);
 		expect(text).not.toContain("premio");
 	});

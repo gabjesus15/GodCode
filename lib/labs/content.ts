@@ -30,6 +30,8 @@ export type LabsProject = {
 	kind: string;
 	summary: string;
 	href?: string;
+	/** Texto del enlace cuando el proyecto se puede ver en vivo. */
+	linkLabel?: string;
 	/** Qué se construyó, en 3 o 4 piezas. */
 	scope: string[];
 	/** Marca el producto propio para dibujarlo distinto. */
@@ -47,6 +49,8 @@ export const LABS_HOME = {
 		`${LANDING_COMPANY_NAME} es un estudio de desarrollo. Construimos sitios web, sistemas internos y tiendas online para empresas de Chile y Venezuela, y desarrollamos productos propios como ${LANDING_PRODUCT_NAME}, el menú digital y punto de venta para restaurantes.`,
 	primaryCta: "Cotizar un proyecto",
 	secondaryCta: `Conocer ${LANDING_PRODUCT_NAME}`,
+	/** Tres respuestas a los miedos de quien cotiza: perder plata, quedar amarrado, no recibir respuesta. */
+	assurances: ["Propuesta cerrada por escrito", "Código y dominio a tu nombre", "Respuesta en menos de dos días hábiles"],
 	facts: [
 		{ label: "Propuesta cerrada", detail: "Alcance, plazo y precio por escrito antes de empezar." },
 		{ label: "Código y dominio tuyos", detail: "Lo que construimos queda a tu nombre, sin dependencia." },
@@ -59,7 +63,7 @@ export const LABS_HOME = {
 		"Trabajamos con empresas que necesitan algo que un producto estándar no cubre: una web que convierta, un sistema que ordene la operación o una tienda que venda sin intermediarios.",
 	processEyebrow: "02 · Cómo trabajamos",
 	processTitle: "Un método sencillo, de principio a fin",
-	productsEyebrow: "03 · Productos propios",
+	productsEyebrow: "03 · Producto propio",
 	productsTitle: "Lo que aprendemos operando nuestro producto lo aplicamos en cada proyecto",
 	productsIntro:
 		`${LANDING_PRODUCT_NAME} nació como un proyecto del estudio para un nicho concreto: restaurantes que pierden margen en las apps de delivery. Hoy es un producto con clientes en Chile y Venezuela, y la razón por la que sabemos lo que cuesta mantener software en producción: pagos, dominios, soporte y datos aislados por negocio.`,
@@ -67,6 +71,11 @@ export const LABS_HOME = {
 	projectsTitle: "Trabajo reciente",
 	teamEyebrow: "05 · Equipo",
 	teamTitle: "Quiénes somos",
+	teamIntro:
+		"Somos un equipo chico, y por eso hablas directamente con quien diseña y programa tu proyecto. No hay vendedores ni intermediarios: la persona que te responde es la que escribe el código.",
+	/** Por qué existe el estudio: solo hechos conocidos. */
+	founderNote:
+		`${LANDING_COMPANY_NAME} nació en Santiago de Chile haciendo sitios y sistemas para negocios que venden todos los días. De ese trabajo salió ${LANDING_PRODUCT_NAME}: vimos restaurantes perdiendo margen en las apps de delivery y construimos el canal de venta propio que necesitaban. Hoy operamos ese producto y seguimos construyendo a medida.`,
 	faqEyebrow: "Preguntas frecuentes",
 	faqTitle: "Antes de cotizar",
 	quoteEyebrow: "Cotizar",
@@ -149,6 +158,7 @@ export const LABS_PROJECTS: LabsProject[] = [
 		summary:
 			"Menú digital con QR, pedidos online, punto de venta, delivery e inventario para restaurantes, con un panel por negocio y suscripción mensual sin comisión por venta.",
 		href: "/pos",
+		linkLabel: "Ver el producto",
 		scope: ["Plataforma multiempresa con datos aislados", "Pagos en Chile y Venezuela, incluida tasa BCV", "Dominio propio por negocio", "Alta en línea con pago y verificación"],
 		ownProduct: true,
 	},
@@ -158,6 +168,7 @@ export const LABS_PROJECTS: LabsProject[] = [
 		summary:
 			"Detailing y protección anticorrosión en Stoughton, Wisconsin. Un sitio que presenta los paquetes con precio y permite reservar día y hora pagando en línea, completo o con depósito.",
 		href: "https://autocareplanet.com",
+		linkLabel: "Ver el sitio en vivo",
 		scope: ["Catálogo de servicios con precios", "Reserva con calendario y pago o depósito en línea", "Términos de reserva y cancelación", "Galería de trabajos y preguntas frecuentes"],
 	},
 ];
@@ -200,11 +211,24 @@ export const LABS_FAQ: LabsFaq[] = [
 			`${LANDING_PRODUCT_NAME} es un producto creado y operado por ${LANDING_COMPANY_NAME}. Si tienes un restaurante, probablemente te sirve tal cual; si tu negocio necesita algo distinto, lo construimos a medida.`,
 	},
 	{
+		question: "¿Ya tengo una web o un sistema? ¿Pueden mejorarlo?",
+		answer:
+			"Sí. Revisamos lo que tienes, te decimos con franqueza qué conviene conservar y qué conviene rehacer, y trabajamos sobre eso. No hace falta empezar de cero para tener algo que funcione.",
+	},
+	{
+		question: "¿Se conecta con lo que ya uso?",
+		answer:
+			"Casi siempre. Integramos pasarelas de pago, correo, WhatsApp y Telegram, hojas de cálculo y APIs de terceros. Si una herramienta no tiene forma de conectarse, te lo decimos antes de cotizar, no después.",
+	},
+	{
 		question: "¿Qué pasa después del lanzamiento?",
 		answer:
 			"El primer mes de ajustes está incluido. Después puedes contratar mantenimiento mensual (monitoreo, actualizaciones y mejoras) o quedarte con el código y gestionarlo tú.",
 	},
 ];
+
+/** Saludo con el que se abre el chat de WhatsApp desde la home del estudio. */
+export const LABS_WHATSAPP_GREETING = `Hola, vi ${LANDING_COMPANY_NAME} en la web y quiero cotizar un proyecto.`;
 
 export const LABS_QUOTE_PROJECT_TYPES = [
 	{ value: "sitio-web", label: "Sitio web o landing" },
