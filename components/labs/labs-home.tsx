@@ -1,6 +1,9 @@
+import { Fragment } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 
+import { PhoneFrame } from "@/components/landing-v3/phone-frame";
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
 import type { LandingSocialLink } from "@/lib/landing/contact";
 import {
@@ -61,38 +64,52 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 			/>
 
 			<main>
-				{/* Hero */}
-				<section className="bg-[#080808] px-6 pb-20 pt-36 text-[#f4f4f5] sm:pb-28 sm:pt-40 lg:pb-32 lg:pt-44">
-					<div className="mx-auto max-w-6xl">
-						<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#a1a1aa]">{LABS_HOME.eyebrow}</p>
-						<h1 className="mt-6 max-w-4xl text-[clamp(2.5rem,5.6vw,5rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-balance">
-							{LABS_HOME.title}
-						</h1>
-						<p className="mt-8 max-w-2xl text-lg leading-relaxed text-[#a1a1aa] text-pretty sm:text-xl">{LABS_HOME.intro}</p>
-						<div className="mt-10 flex flex-wrap items-center gap-6">
-							<Link
-								href="#cotizar"
-								className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-[#0d0d0d] transition-colors hover:bg-[#4f5bff] hover:text-white"
-							>
-								{LABS_HOME.primaryCta}
-								<ArrowRight className="h-4 w-4" aria-hidden />
-							</Link>
-							<Link
-								href={posPath}
-								className="inline-flex items-center gap-1.5 text-[15px] font-medium text-[#d4d4d8] underline decoration-white/20 underline-offset-[6px] transition-colors hover:text-white hover:decoration-white/60"
-							>
-								{LABS_HOME.secondaryCta}
-								<ArrowUpRight className="h-4 w-4" aria-hidden />
-							</Link>
+				{/* Hero: la promesa a la izquierda y, como prueba, el producto propio en un teléfono. */}
+				<section className="bg-[#080808] px-6 pb-20 pt-32 text-[#f4f4f5] sm:pb-28 sm:pt-40 lg:pb-32 lg:pt-44">
+					<div className="mx-auto grid max-w-6xl gap-16 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)] lg:items-center lg:gap-12">
+						<div>
+							<p className="text-xs font-medium uppercase tracking-[0.2em] text-[#a1a1aa]">{LABS_HOME.eyebrow}</p>
+							<h1 className="mt-6 text-[clamp(2.5rem,4.8vw,4.25rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-balance">
+								{LABS_HOME.title}
+							</h1>
+							<p className="mt-7 max-w-xl text-base leading-relaxed text-[#a1a1aa] text-pretty sm:text-lg">{LABS_HOME.intro}</p>
+							<div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4">
+								<Link
+									href="#cotizar"
+									className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-[15px] font-semibold text-[#0d0d0d] transition-colors hover:bg-[#4f5bff] hover:text-white"
+								>
+									{LABS_HOME.primaryCta}
+									<ArrowRight className="h-4 w-4" aria-hidden />
+								</Link>
+								<Link
+									href={posPath}
+									className="inline-flex items-center gap-1.5 text-[15px] font-medium text-[#d4d4d8] underline decoration-white/20 underline-offset-[6px] transition-colors hover:text-white hover:decoration-white/60"
+								>
+									{LABS_HOME.secondaryCta}
+									<ArrowUpRight className="h-4 w-4" aria-hidden />
+								</Link>
+							</div>
+							{/* Las tres garantías en una línea con punto medio, como en el landing del producto. En el teléfono van una debajo de otra, sin puntos. */}
+							<p className="mt-8 text-sm leading-relaxed text-[#a1a1aa]">
+								{LABS_HOME.assurances.map((item, index) => (
+									<Fragment key={item}>
+										{index > 0 ? " " : null}
+										<span className="block whitespace-nowrap sm:inline">
+											{index > 0 ? (
+												<span aria-hidden className="ml-1 mr-2 hidden sm:inline">
+													·
+												</span>
+											) : null}
+											{item}
+										</span>
+									</Fragment>
+								))}
+							</p>
 						</div>
-						<ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#d4d4d8]">
-							{LABS_HOME.assurances.map((item) => (
-								<li key={item} className="flex items-center gap-2">
-									<span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#8b93ff]" />
-									{item}
-								</li>
-							))}
-						</ul>
+						<figure className="mx-auto w-full max-w-[260px] lg:max-w-[300px]">
+							<PhoneFrame src={LABS_HOME.heroFigure.src} alt={LABS_HOME.heroFigure.alt} priority />
+							<figcaption className="mt-10 text-center text-sm text-[#71717a]">{LABS_HOME.heroFigure.caption}</figcaption>
+						</figure>
 					</div>
 				</section>
 
@@ -130,19 +147,18 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 									<div>
 										<h3 className="text-2xl font-semibold tracking-tight">{service.title}</h3>
 										<p className="mt-3 max-w-lg leading-relaxed text-[#6e6e73] text-pretty">{service.summary}</p>
-										<p className="mt-4 text-sm text-[#8e8e93]">
-											<span className="font-medium text-[#1d1d1f]">Para quién: </span>
-											{service.fit}
-										</p>
 									</div>
-									<ul className="grid gap-2.5 self-start sm:grid-cols-2 lg:grid-cols-1">
-										{service.deliverables.map((item) => (
-											<li key={item} className="flex items-start gap-3 text-[15px] text-[#1d1d1f]">
-												<span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#4f5bff]" />
-												{item}
-											</li>
-										))}
-									</ul>
+									{/* Para quién y qué incluye, en dos líneas de prosa: se leen de corrido y no parecen una ficha. */}
+									<dl className="space-y-4 self-start text-[15px] leading-relaxed text-[#6e6e73]">
+										<div>
+											<dt className="text-xs font-medium uppercase tracking-[0.18em] text-[#8e8e93]">Para quién</dt>
+											<dd className="mt-1 text-pretty">{service.fit}</dd>
+										</div>
+										<div>
+											<dt className="text-xs font-medium uppercase tracking-[0.18em] text-[#8e8e93]">Incluye</dt>
+											<dd className="mt-1 text-pretty">{sentence(service.deliverables)}</dd>
+										</div>
+									</dl>
 								</li>
 							))}
 						</ol>
@@ -187,14 +203,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 										Menú digital con QR, pedidos online, punto de venta, delivery e inventario para restaurantes.
 										Suscripción mensual, sin comisión por venta.
 									</p>
-									<ul className="mt-6 grid gap-2.5 text-[15px] text-[#d4d4d8] sm:grid-cols-2">
-										{LABS_PROJECTS[0]?.scope.map((item) => (
-											<li key={item} className="flex items-start gap-3">
-												<span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#4f5bff]" />
-												{item}
-											</li>
-										))}
-									</ul>
+									<p className="mt-6 text-sm leading-relaxed text-[#a1a1aa]">{dotted(LABS_PROJECTS[0]?.scope ?? [])}</p>
 								</div>
 								<div className="mt-8 flex flex-wrap items-center gap-5">
 									<Link
@@ -208,7 +217,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 										href="/onboarding/negocios"
 										className="text-sm font-medium text-[#d4d4d8] underline decoration-white/20 underline-offset-[6px] hover:text-white"
 									>
-										Negocios que lo usan
+										{LABS_HOME.productsProof}
 									</Link>
 								</div>
 							</div>
@@ -236,14 +245,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 											) : null}
 										</h3>
 										<p className="mt-3 leading-relaxed text-[#6e6e73] text-pretty">{project.summary}</p>
-										<ul className="mt-6 grid gap-2 text-sm text-[#1d1d1f] sm:grid-cols-2">
-											{project.scope.map((item) => (
-												<li key={item} className="flex items-start gap-3">
-													<span aria-hidden className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#4f5bff]" />
-													{item}
-												</li>
-											))}
-										</ul>
+										<p className="mt-6 text-sm leading-relaxed text-[#6e6e73]">{dotted(project.scope)}</p>
 										{project.href && project.linkLabel ? (
 											<p className="mt-6 text-sm font-medium text-[#1d1d1f] underline decoration-black/20 underline-offset-4 group-hover:decoration-black/60">
 												{project.linkLabel}
@@ -290,12 +292,23 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 										{LABS_HOME.founderNote}
 									</p>
 								</div>
-								<ul className="grid gap-6 sm:grid-cols-2">
+								<ul className="grid gap-6 self-start sm:grid-cols-2">
 									{LABS_TEAM.map((member) => (
 										<li key={member.name} className="rounded-2xl border border-[#e5e5ea] bg-white p-7">
-											<div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1d1d1f] text-lg font-semibold text-white">
-												{initials(member.name)}
-											</div>
+											{/* Con foto real la tarjeta pesa más que con iniciales; basta con poner photoUrl en el contenido. */}
+											{member.photoUrl ? (
+												<Image
+													src={member.photoUrl}
+													alt={member.name}
+													width={112}
+													height={112}
+													className="h-14 w-14 rounded-full object-cover"
+												/>
+											) : (
+												<div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1d1d1f] text-lg font-semibold text-white">
+													{initials(member.name)}
+												</div>
+											)}
 											<h3 className="mt-5 text-lg font-semibold tracking-tight">{member.name}</h3>
 											<p className="mt-1 text-sm text-[#6e6e73]">{member.role}</p>
 											{member.linkedinUrl ? (
@@ -354,7 +367,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 										<li>
 											<span className="block text-xs font-medium uppercase tracking-[0.18em] text-[#8e8e93]">WhatsApp</span>
 											<a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block font-medium hover:underline">
-												{whatsapp.display}
+												{phoneDisplay(whatsapp.display)}
 											</a>
 										</li>
 									) : null}
@@ -441,4 +454,27 @@ function initials(name: string): string {
 		.slice(0, 2)
 		.map((part) => part[0]?.toUpperCase() ?? "")
 		.join("");
+}
+
+/** Une piezas cortas con punto medio, la misma línea gris del landing del producto. */
+function dotted(items: readonly string[]): string {
+	return items.join(" · ");
+}
+
+/** Convierte una lista en una frase: «Diseño y contenido, SEO técnico, analítica y formularios.» Respeta siglas y marcas. */
+function sentence(items: readonly string[]): string {
+	const parts = items.map((item, index) => {
+		if (index === 0 || !item[1] || item[1] !== item[1].toLowerCase()) return item;
+		return item[0]!.toLowerCase() + item.slice(1);
+	});
+	return `${parts.join(", ")}.`;
+}
+
+/** Número legible: +56943848080 → +56 9 4384 8080; +584121234567 → +58 412 123 4567. Otros, tal cual. */
+function phoneDisplay(display: string): string {
+	const chile = display.match(/^\+56(9\d{8})$/);
+	if (chile) return `+56 ${chile[1]!.slice(0, 1)} ${chile[1]!.slice(1, 5)} ${chile[1]!.slice(5)}`;
+	const venezuela = display.match(/^\+58(\d{3})(\d{3})(\d{4})$/);
+	if (venezuela) return `+58 ${venezuela[1]} ${venezuela[2]} ${venezuela[3]}`;
+	return display;
 }

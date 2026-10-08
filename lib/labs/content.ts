@@ -43,19 +43,29 @@ export type LabsTeamMember = { name: string; role: string; photoUrl?: string; li
 export type LabsFaq = { question: string; answer: string };
 
 export const LABS_HOME = {
-	eyebrow: `${LANDING_COMPANY_NAME} · Santiago de Chile`,
-	title: "Software a medida y productos propios para negocios que venden todos los días.",
+	/** El nombre ya está en el logo; la línea dice qué somos y dónde. */
+	eyebrow: "Estudio de desarrollo · Santiago",
+	/** Qué hacemos y para quién, con palabras que un dueño de negocio usa. El inventario completo va en el intro y en Servicios. */
+	title: "Sitios web y sistemas a medida para negocios que venden todos los días.",
 	intro:
-		`${LANDING_COMPANY_NAME} es un estudio de desarrollo. Construimos sitios web, sistemas internos y tiendas online para empresas de Chile y Venezuela, y desarrollamos productos propios como ${LANDING_PRODUCT_NAME}, el menú digital y punto de venta para restaurantes.`,
+		`Somos ${LANDING_COMPANY_NAME}, un estudio de desarrollo en Santiago de Chile. Diseñamos y programamos lo que tu empresa necesita, lo dejamos a tu nombre y te acompañamos después del lanzamiento. También creamos ${LANDING_PRODUCT_NAME}, el menú digital y punto de venta que usan restaurantes en Chile y Venezuela.`,
 	primaryCta: "Cotizar un proyecto",
-	secondaryCta: `Conocer ${LANDING_PRODUCT_NAME}`,
-	/** Tres respuestas a los miedos de quien cotiza: perder plata, quedar amarrado, no recibir respuesta. */
-	assurances: ["Propuesta cerrada por escrito", "Código y dominio a tu nombre", "Respuesta en menos de dos días hábiles"],
+	/** Reparte a la otra audiencia de la página: quien tiene un restaurante no cotiza, va al producto. */
+	secondaryCta: `¿Tienes un restaurante? Conoce ${LANDING_PRODUCT_NAME}`,
+	/** Tres respuestas a los miedos de quien cotiza: perder plata, quedar amarrado, no recibir respuesta. Van en una sola línea bajo el botón. */
+	assurances: ["Propuesta cerrada por escrito", "Código y dominio a tu nombre", "Respuesta en dos días hábiles"],
+	/** La prueba de que lo que construimos llega a producción: nuestro propio producto, en un teléfono. */
+	heroFigure: {
+		src: "/pedidos_caja_v2.png",
+		alt: `Pantalla de pedidos de ${LANDING_PRODUCT_NAME} en un teléfono`,
+		caption: `${LANDING_PRODUCT_NAME}, nuestro producto propio, en producción`,
+	},
+	/** Credenciales, no promesas: lo que el hero ya promete no se repite aquí. */
 	facts: [
-		{ label: "Propuesta cerrada", detail: "Alcance, plazo y precio por escrito antes de empezar." },
-		{ label: "Código y dominio tuyos", detail: "Lo que construimos queda a tu nombre, sin dependencia." },
-		{ label: "Producto propio en producción", detail: `Operamos ${LANDING_PRODUCT_NAME} con restaurantes reales.` },
-		{ label: "Interlocutor directo", detail: "Hablas con quien diseña y programa, no con un intermediario." },
+		{ label: "Producto propio en producción", detail: `Operamos ${LANDING_PRODUCT_NAME} con restaurantes de Chile y Venezuela.` },
+		{ label: "Clientes en tres países", detail: "Chile, Venezuela y Estados Unidos, trabajando a distancia." },
+		{ label: "Interlocutor directo", detail: "Hablas con quien diseña y programa, no con un vendedor." },
+		{ label: "Avances cada semana", detail: "Ves el proyecto funcionando en un entorno de prueba desde la primera entrega." },
 	],
 	servicesEyebrow: "01 · Servicios",
 	servicesTitle: "Qué construimos",
@@ -64,15 +74,18 @@ export const LABS_HOME = {
 	processEyebrow: "02 · Cómo trabajamos",
 	processTitle: "Un método sencillo, de principio a fin",
 	productsEyebrow: "03 · Producto propio",
-	productsTitle: "Lo que aprendemos operando nuestro producto lo aplicamos en cada proyecto",
+	productsTitle: "No solo construimos software. También lo operamos.",
+	/** El origen del producto se cuenta una sola vez, en Equipo. Aquí va el argumento: operar en producción nos enseña a construir. */
 	productsIntro:
-		`${LANDING_PRODUCT_NAME} nació como un proyecto del estudio para un nicho concreto: restaurantes que pierden margen en las apps de delivery. Hoy es un producto con clientes en Chile y Venezuela, y la razón por la que sabemos lo que cuesta mantener software en producción: pagos, dominios, soporte y datos aislados por negocio.`,
+		`${LANDING_PRODUCT_NAME} es nuestro producto: menú digital, pedidos online y punto de venta para restaurantes de Chile y Venezuela. Mantenerlo en producción todos los días, con pagos, dominios, soporte y datos aislados por negocio, es lo que nos enseña a construir sistemas que aguantan el uso real.`,
+	/** Prueba social verificable: el directorio público de negocios que usan el producto. */
+	productsProof: "Ver los restaurantes que lo usan",
 	projectsEyebrow: "04 · Proyectos",
 	projectsTitle: "Trabajo reciente",
 	teamEyebrow: "05 · Equipo",
 	teamTitle: "Quiénes somos",
 	teamIntro:
-		"Somos un equipo chico, y por eso hablas directamente con quien diseña y programa tu proyecto. No hay vendedores ni intermediarios: la persona que te responde es la que escribe el código.",
+		"Somos un equipo pequeño a propósito. Hablas directamente con quien diseña y programa tu proyecto, y la persona que te responde es la que escribe el código.",
 	/** Por qué existe el estudio: solo hechos conocidos. */
 	founderNote:
 		`${LANDING_COMPANY_NAME} nació en Santiago de Chile haciendo sitios y sistemas para negocios que venden todos los días. De ese trabajo salió ${LANDING_PRODUCT_NAME}: vimos restaurantes perdiendo margen en las apps de delivery y construimos el canal de venta propio que necesitaban. Hoy operamos ese producto y seguimos construyendo a medida.`,
@@ -81,7 +94,7 @@ export const LABS_HOME = {
 	quoteEyebrow: "Cotizar",
 	quoteTitle: "Cuéntanos qué necesitas",
 	quoteText:
-		"Respondemos en menos de dos días hábiles con una primera lectura del proyecto y, si tiene sentido, agendamos una llamada corta. La propuesta formal llega después, por escrito.",
+		"Te respondemos en menos de dos días hábiles con una primera lectura del proyecto. Si tiene sentido, agendamos una llamada de 30 minutos y después llega la propuesta por escrito.",
 	footerNote: `${LANDING_COMPANY_NAME} (antes ${LANDING_BRAND_ALTERNATE}) · Santiago de Chile`,
 } as const;
 

@@ -196,7 +196,7 @@ export function QuoteForm({ whatsappHref }: { whatsappHref: string | null }) {
 				<button
 					type="submit"
 					disabled={status.kind === "sending"}
-					className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1d1d1f] px-7 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-[#4f5bff] disabled:cursor-wait disabled:opacity-70"
+					className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#1d1d1f] px-7 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-[#4f5bff] disabled:cursor-wait disabled:opacity-70"
 				>
 					{status.kind === "sending" ? "Enviando…" : "Enviar solicitud"}
 					<ArrowRight className="h-4 w-4" aria-hidden />
