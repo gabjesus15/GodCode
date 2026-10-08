@@ -46,7 +46,9 @@ export function Pricing({ plans, country }: PricingProps) {
       <div className="v3-container">
         <div data-reveal className="mb-14 md:mb-16">
           <h2 className="font-display text-5xl leading-[0.95] text-[#f4f4f5] md:text-6xl">Planes</h2>
-          <p className="mt-5 text-lg text-[#a1a1aa]">Un pago mensual. En tu primer pago, 2 meses al precio de 1.</p>
+          <p className="mt-5 text-lg text-[#a1a1aa]">
+            Pagas un plan fijo al mes, no un porcentaje de tus ventas. En tu primer pago, 2 meses al precio de 1.
+          </p>
         </div>
 
         {paidPlans.length === 0 ? (
@@ -77,8 +79,9 @@ export function Pricing({ plans, country }: PricingProps) {
                   )}
                 >
                   {isPopular ? (
+                    // «Recomendado» y no «Más elegido»: es nuestra sugerencia, no un dato de ventas que hoy no medimos.
                     <span className="absolute -top-2.5 left-6 rounded-full bg-[#4f5bff] px-2.5 py-0.5 text-[11px] font-semibold text-white">
-                      Más elegido
+                      Recomendado
                     </span>
                   ) : null}
                   <h3 className="text-sm font-medium uppercase tracking-[0.12em] text-[#a1a1aa]">{plan.name}</h3>

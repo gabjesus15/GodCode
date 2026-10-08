@@ -126,7 +126,7 @@ export async function getPublicPlansForLanding(locale: AppLocale): Promise<Publi
   return getPublicPlansForLandingCached(locale);
 }
 
-/** Índice del plan destacado estilo “Popular” (centro de la lista). */
+/** Índice del plan destacado como «Recomendado» (centro de la lista). */
 export function popularPlanIndex(count: number): number {
   if (count <= 1) return 0;
   return Math.floor(count / 2);

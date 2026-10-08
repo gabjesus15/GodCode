@@ -39,7 +39,7 @@ export const LANDING_FAQ: LandingFaqItem[] = [
 	{
 		question: "¿Cuánto tardo en tener mi tienda lista?",
 		answer:
-			"Si ya tienes tus productos y fotos, menos de una hora. El registro toma unos 5 minutos.",
+			"En una tarde la tienes funcionando. El registro toma unos 5 minutos y, si ya tienes tus productos y fotos a mano, cargar el menú lleva menos de una hora.",
 	},
 	{
 		question: "¿Puedo tener más de una sucursal?",

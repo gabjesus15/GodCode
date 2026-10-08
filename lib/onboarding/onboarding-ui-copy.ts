@@ -91,8 +91,8 @@ const es: OnboardingUiCopy = {
 		includesTitle: "Todos los planes incluyen",
 		includes: [
 			"Menú digital con tu marca, listo para compartir",
-			"Pedidos online y delivery",
-			"Caja, comandas e inventario",
+			"Pedidos online desde tu link o tu QR",
+			"Caja para cobrar en tu local",
 			"Sin comisiones por venta",
 		],
 		nextTitle: "Cómo sigue",
@@ -166,7 +166,7 @@ const en: OnboardingUiCopy = {
 		title: "Create your business account",
 		subtitle: "Digital menu, online orders and POS in one place. No commission on sales.",
 		includesTitle: "Every plan includes",
-		includes: ["A branded digital menu, ready to share", "Online orders and delivery", "POS, kitchen tickets and inventory", "No commission on sales"],
+		includes: ["A branded digital menu, ready to share", "Online orders from your link or QR code", "A POS to take payments at your venue", "No commission on sales"],
 		nextTitle: "What happens next",
 		next: [
 			{ title: "Confirm your email", text: "We are sending you a link right now." },
@@ -238,7 +238,7 @@ const pt: OnboardingUiCopy = {
 		title: "Crie a conta do seu negócio",
 		subtitle: "Cardápio digital, pedidos online e caixa em um só lugar. Sem comissão por venda.",
 		includesTitle: "Todos os planos incluem",
-		includes: ["Cardápio digital com a sua marca, pronto para compartilhar", "Pedidos online e delivery", "Caixa, comandas e estoque", "Sem comissão por venda"],
+		includes: ["Cardápio digital com a sua marca, pronto para compartilhar", "Pedidos online pelo seu link ou QR", "Caixa para cobrar no seu local", "Sem comissão por venda"],
 		nextTitle: "Como continua",
 		next: [
 			{ title: "Confirme seu e-mail", text: "Enviamos um link agora mesmo." },
@@ -310,7 +310,7 @@ const fr: OnboardingUiCopy = {
 		title: "Créez le compte de votre établissement",
 		subtitle: "Menu digital, commandes en ligne et caisse au même endroit. Sans commission sur les ventes.",
 		includesTitle: "Toutes les offres incluent",
-		includes: ["Un menu digital à votre image, prêt à partager", "Commandes en ligne et livraison", "Caisse, bons de cuisine et stock", "Sans commission sur les ventes"],
+		includes: ["Un menu digital à votre image, prêt à partager", "Commandes en ligne depuis votre lien ou votre QR", "Une caisse pour encaisser sur place", "Sans commission sur les ventes"],
 		nextTitle: "La suite",
 		next: [
 			{ title: "Confirmez votre e-mail", text: "Nous vous envoyons un lien tout de suite." },
@@ -382,7 +382,7 @@ const de: OnboardingUiCopy = {
 		title: "Erstellen Sie das Konto Ihres Geschäfts",
 		subtitle: "Digitale Speisekarte, Online-Bestellungen und Kasse an einem Ort. Ohne Provision pro Verkauf.",
 		includesTitle: "Alle Pläne enthalten",
-		includes: ["Digitale Speisekarte mit Ihrer Marke, bereit zum Teilen", "Online-Bestellungen und Lieferung", "Kasse, Küchenbons und Lager", "Keine Provision pro Verkauf"],
+		includes: ["Digitale Speisekarte mit Ihrer Marke, bereit zum Teilen", "Online-Bestellungen über Ihren Link oder QR-Code", "Kasse für Zahlungen vor Ort", "Keine Provision pro Verkauf"],
 		nextTitle: "So geht es weiter",
 		next: [
 			{ title: "E-Mail bestätigen", text: "Wir senden Ihnen sofort einen Link." },
@@ -454,7 +454,7 @@ const it: OnboardingUiCopy = {
 		title: "Crea l’account della tua attività",
 		subtitle: "Menu digitale, ordini online e cassa in un unico posto. Senza commissioni sulle vendite.",
 		includesTitle: "Tutti i piani includono",
-		includes: ["Menu digitale con il tuo marchio, pronto da condividere", "Ordini online e consegna", "Cassa, comande e magazzino", "Nessuna commissione sulle vendite"],
+		includes: ["Menu digitale con il tuo marchio, pronto da condividere", "Ordini online dal tuo link o QR", "Cassa per incassare nel tuo locale", "Nessuna commissione sulle vendite"],
 		nextTitle: "Come prosegue",
 		next: [
 			{ title: "Conferma la tua email", text: "Ti inviamo subito un link." },

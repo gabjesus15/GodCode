@@ -4,8 +4,36 @@ import {
 	getLandingOrganizationSameAs,
 	getLandingSocialLinksFromEnv,
 	LANDING_LINKEDIN_URL_DEFAULT,
+	LANDING_POS_WHATSAPP_GREETING,
 	normalizeLinkedInUrl,
+	whatsappDisplay,
+	withWhatsAppText,
 } from "@/lib/landing/contact";
+
+describe("withWhatsAppText", () => {
+	const query = `text=${encodeURIComponent(LANDING_POS_WHATSAPP_GREETING)}`;
+
+	it("abre el chat con el saludo ya escrito", () => {
+		expect(withWhatsAppText("https://wa.me/56912345678", LANDING_POS_WHATSAPP_GREETING)).toBe(
+			`https://wa.me/56912345678?${query}`,
+		);
+		expect(withWhatsAppText("https://api.whatsapp.com/send?phone=56912345678", LANDING_POS_WHATSAPP_GREETING)).toBe(
+			`https://api.whatsapp.com/send?phone=56912345678&${query}`,
+		);
+	});
+
+	it("respeta un texto propio y no toca enlaces que no son de WhatsApp", () => {
+		expect(withWhatsAppText("https://wa.me/56912345678?text=Hola", "Otro")).toBe("https://wa.me/56912345678?text=Hola");
+		expect(withWhatsAppText("https://wa.link/abc123", "Hola")).toBe("https://wa.link/abc123");
+		expect(withWhatsAppText("no es una url", "Hola")).toBe("no es una url");
+	});
+
+	it("el número que se muestra no cambia por el saludo", () => {
+		expect(whatsappDisplay(withWhatsAppText("https://wa.me/56912345678", "Hola"))).toBe(
+			whatsappDisplay("https://wa.me/56912345678"),
+		);
+	});
+});
 
 describe("normalizeLinkedInUrl", () => {
 	it("acepta URL completa o slug de página de empresa", () => {

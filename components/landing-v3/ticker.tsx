@@ -43,7 +43,7 @@ export function Ticker({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 					<h2 className="font-display text-6xl leading-[0.92] text-[#f4f4f5] text-balance md:text-8xl">
 						Empieza a vender <span className="text-[#4f5bff]">sin comisiones</span>
 					</h2>
-					<p className="mt-6 text-lg text-[#a1a1aa]">Tu tienda puede estar lista hoy.</p>
+					<p className="mt-6 text-lg text-[#a1a1aa]">Tu tienda puede quedar lista en una tarde.</p>
 					<div className="mt-10 flex flex-col items-center gap-5 sm:flex-row sm:gap-7">
 						<Link
 							href="/onboarding"
