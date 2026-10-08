@@ -37,14 +37,18 @@ describe("páginas de país del landing", () => {
 		for (const f of LANDING_COUNTRIES.venezuela.faq) expect(chileQuestions.has(f.question)).toBe(false);
 	});
 
-	it("Venezuela habla de bolívares, pago móvil y tasa BCV; Chile de pesos y Mercado Pago", () => {
+	it("Venezuela habla de bolívares, pago móvil y tasa BCV; Chile de Mercado Pago y no promete pesos", () => {
 		const ve = JSON.stringify(LANDING_COUNTRIES.venezuela).toLowerCase();
 		expect(ve).toContain("bolívares");
 		expect(ve).toContain("pago móvil");
 		expect(ve).toContain("tasa bcv");
 		expect(ve).toContain("zelle");
 		const cl = JSON.stringify(LANDING_COUNTRIES.chile).toLowerCase();
-		expect(cl).toContain("pesos");
+		// La suscripción se cobra en USD (CL resuelve a «Latinoamérica» en country-registry):
+		// prometer pesos al lado de «Desde $19 USD/mes» sería publicidad engañosa.
+		expect(cl).not.toContain("pesos chilenos");
+		expect(cl).not.toContain(" clp");
+		expect(cl).toContain("dólares");
 		expect(cl).toContain("mercado pago");
 		expect(cl).toContain("santiago");
 	});

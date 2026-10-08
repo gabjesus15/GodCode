@@ -86,7 +86,7 @@ const CHILE: LandingCountry = {
 	cities: ["Santiago", "Valparaíso", "Viña del Mar", "Concepción", "Antofagasta", "La Serena", "Temuco"],
 	metaTitle: "Menú digital y POS para restaurantes en Chile",
 	metaDescription:
-		"Carta digital con QR, pedidos online y punto de venta para restaurantes en Chile, sin comisión por venta. Precios en pesos chilenos, soporte desde Santiago.",
+		"Carta digital con QR, pedidos online y punto de venta para restaurantes en Chile, sin comisión por venta. Plan fijo al mes, sin UF, soporte desde Santiago.",
 	keywords: [
 		"menú digital Chile",
 		"carta digital QR Chile",
@@ -102,14 +102,15 @@ const CHILE: LandingCountry = {
 	],
 	heroTitle: ["Menú digital y POS para", "restaurantes en Chile"],
 	heroSubtitle:
-		"Hecho en Santiago. Tus clientes piden desde tu link o tu QR, pagas un plan fijo en pesos y no cedes comisión en ningún pedido.",
+		"Hecho en Santiago. Tus clientes piden desde tu link o tu QR, pagas un plan fijo al mes y no cedes comisión en ningún pedido.",
 	deliveryApps: ["PedidosYa", "Rappi", "Uber Eats"],
 	paymentMethods: ["Efectivo", "Tarjeta en el local", "Transferencia", "Mercado Pago"],
-	billingNote: "Planes en pesos chilenos, con precios fijos cada mes. Sin UF ni reajustes sorpresa.",
+	// El cobro de la suscripción es en dólares (PayPal o transferencia); no prometer CLP hasta que exista.
+	billingNote: "Plan fijo en dólares, el mismo precio cada mes. Sin UF, sin comisión por venta ni reajustes sorpresa.",
 	localFeatures: [
 		{
-			title: "Precios en pesos, sin comisión",
-			text: "Pagas un plan mensual en CLP y nada más. Un local que vende $2.000.000 al mes por apps de delivery puede dejar ahí entre $400.000 y $600.000 solo en comisiones.",
+			title: "Un plan fijo, sin comisión",
+			text: "Pagas un plan mensual en dólares y nada más: ni UF ni porcentaje por pedido. Un local que vende $2.000.000 al mes por apps de delivery puede dejar ahí entre $400.000 y $600.000 solo en comisiones.",
 		},
 		{
 			title: "Cobra como ya cobras",
@@ -128,7 +129,7 @@ const CHILE: LandingCountry = {
 		{
 			question: `¿Cuánto cuesta ${LANDING_PRODUCT_NAME} en Chile?`,
 			answer:
-				"Es un plan mensual fijo en pesos chilenos, que ves en la sección de planes de la home. No hay comisión por venta ni por pedido, y en tu primer pago llevas 2 meses al precio de 1.",
+				"Es un plan mensual fijo en dólares (se paga con PayPal o transferencia), que ves en la sección de planes de la home. No hay comisión por venta ni por pedido, ni reajuste por UF, y en tu primer pago llevas 2 meses al precio de 1.",
 		},
 		{
 			question: "¿Sirve para dejar PedidosYa, Rappi o Uber Eats?",
