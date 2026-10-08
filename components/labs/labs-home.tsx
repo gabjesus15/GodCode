@@ -18,6 +18,7 @@ import {
 
 import { LabsHeroVisual } from "./labs-hero-visual";
 import { LabsNavbar, type LabsNavLink } from "./labs-navbar";
+import { LabsSourceBanner } from "./labs-source-banner";
 import { QuoteForm } from "./quote-form";
 import "./labs.css";
 
@@ -30,7 +31,7 @@ type LabsHomeProps = {
 	jsonLd: string;
 };
 
-/** El producto propio no va en la barra: es un proyecto más del estudio, y vive en Proyectos y en el pie. */
+/** El producto propio no va entre las secciones: tiene su propio enlace, discreto, a la derecha, para quien llega buscándolo. */
 const NAV_LINKS: LabsNavLink[] = [
 	{ label: "Servicios", href: "#servicios" },
 	{ label: "Cómo trabajamos", href: "#proceso" },
@@ -66,6 +67,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 				ctaHref="#cotizar"
 				ctaLabel={LABS_HOME.primaryCta}
 				companyName={LANDING_COMPANY_NAME}
+				product={{ label: LANDING_PRODUCT_NAME, href: posPath }}
 			/>
 
 			<main>
@@ -73,6 +75,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 				<section className="relative overflow-hidden bg-[#080808] px-6 pb-20 pt-32 text-[#f4f4f5] sm:pb-28 sm:pt-40 lg:pb-32 lg:pt-44">
 					<div className="mx-auto grid max-w-6xl gap-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center lg:gap-12">
 						<div>
+							<LabsSourceBanner href={posPath} productName={LANDING_PRODUCT_NAME} />
 							<p className="labs-rise text-xs font-medium uppercase tracking-[0.2em] text-[#a1a1aa]" style={rise(0)}>
 								{LABS_HOME.eyebrow}
 							</p>

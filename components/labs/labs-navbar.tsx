@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Menu, X } from "lucide-react";
 
 import { LandingBrandMark } from "@/components/landing-v3/landing-brand-mark";
 import { cn } from "@/utils/cn";
@@ -17,13 +17,15 @@ type LabsNavbarProps = {
 	ctaHref: string;
 	ctaLabel: string;
 	companyName: string;
+	/** Enlace discreto al producto propio, para quien llega buscándolo (Instagram, boca a boca). */
+	product?: LabsNavLink;
 };
 
 /**
  * Barra de la home corporativa: fondo claro, enlaces de sección y un solo CTA.
  * Sobre el hero oscuro va translúcida; al hacer scroll pasa a blanco sólido.
  */
-export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName }: LabsNavbarProps) {
+export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName, product }: LabsNavbarProps) {
 	const [scrolled, setScrolled] = useState(false);
 	const [open, setOpen] = useState(false);
 
@@ -79,7 +81,19 @@ export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName }: 
 					))}
 				</ul>
 
-				<div className="flex items-center gap-3">
+				<div className="flex items-center gap-3 sm:gap-5">
+					{product ? (
+						<Link
+							href={product.href}
+							className={cn(
+								"hidden items-center gap-1 text-sm font-medium transition-colors md:inline-flex",
+								solid ? "text-[#71717a] hover:text-[#1d1d1f]" : "text-[#a1a1aa] hover:text-white",
+							)}
+						>
+							{product.label}
+							<ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+						</Link>
+					) : null}
 					<Link
 						href={ctaHref}
 						className="hidden items-center gap-1.5 rounded-full bg-[#1d1d1f] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4f5bff] sm:inline-flex"
@@ -117,6 +131,21 @@ export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName }: 
 								</Link>
 							</li>
 						))}
+						{product ? (
+							<li className="mt-2 border-t border-black/[0.06] pt-2">
+								<Link
+									href={product.href}
+									onClick={() => setOpen(false)}
+									className="flex items-center justify-between py-3 text-base font-medium text-[#1d1d1f]"
+								>
+									<span>
+										{product.label}
+										<span className="ml-2 text-sm font-normal text-[#71717a]">para restaurantes</span>
+									</span>
+									<ArrowUpRight className="h-4 w-4 text-[#71717a]" aria-hidden />
+								</Link>
+							</li>
+						) : null}
 						<li className="pt-3">
 							<Link
 								href={ctaHref}
