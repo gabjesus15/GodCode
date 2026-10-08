@@ -54,6 +54,11 @@ export function buildOrganizationJsonLd(base: string): Record<string, unknown> {
 			"@type": "PostalAddress",
 			...LANDING_COMPANY_ADDRESS,
 		},
+		// Países donde ya operan restaurantes con el producto (ver /chile y /venezuela).
+		areaServed: [
+			{ "@type": "Country", name: "Chile", identifier: "CL" },
+			{ "@type": "Country", name: "Venezuela", identifier: "VE" },
+		],
 		knowsAbout: [
 			"desarrollo web",
 			"sistemas a medida",
@@ -103,6 +108,7 @@ export function buildLandingJsonLd({ base, faq, plans, country }: BuildLandingJs
 		image: logoUrl,
 		applicationCategory: "BusinessApplication",
 		operatingSystem: "Web",
+		inLanguage: "es",
 		description:
 			`${LANDING_PRODUCT_NAME} es la plataforma SaaS de ${LANDING_COMPANY_NAME} para crear tu tienda online con menú digital, carrito, delivery, caja, comandas e inventario. Sin comisiones por venta.`,
 		author: organizationRef,

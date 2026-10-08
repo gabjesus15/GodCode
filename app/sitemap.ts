@@ -1,9 +1,11 @@
 import type { MetadataRoute } from "next";
+import { LANDING_COUNTRY_SLUGS } from "@/lib/landing/countries";
+import { isInternalTestTenantSlug } from "@/lib/seo/internal-test-tenant";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { createSupabasePublicServerClient } from "../utils/supabase/server";
 
 /** Actualizar al desplegar cambios de marketing relevantes para incentivar recrawl. */
-const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-09-26T00:00:00.000Z";
+const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-10-08T00:00:00.000Z";
 
 function getMarketingLastModified(): Date {
 	const fromEnv = process.env.NEXT_PUBLIC_SITEMAP_LAST_MODIFIED?.trim();
@@ -35,6 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			(c): c is { public_slug: string; custom_domain: string | null; updated_at: string | null } =>
 				typeof c.public_slug === "string" &&
 				c.public_slug.length > 0 &&
+				!isInternalTestTenantSlug(c.public_slug) &&
 				!String(c.custom_domain ?? "").trim(),
 		)
 		.flatMap((c) => {
@@ -70,6 +73,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			changeFrequency: "monthly",
 			priority: 0.8,
 		},
+		// Páginas de país: compiten por «menú digital Chile» y «sistema para restaurantes Venezuela».
+		...LANDING_COUNTRY_SLUGS.map((slug) => ({
+			url: `${base}/${slug}`,
+			lastModified: marketingLastModified,
+			changeFrequency: "monthly" as const,
+			priority: 0.9,
+		})),
 		{
 			url: `${base}/calculadora-comisiones`,
 			lastModified: marketingLastModified,

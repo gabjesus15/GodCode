@@ -60,6 +60,8 @@ export async function getMainDomainLlmsTxt(isFullVersion = false): Promise<strin
 	markdown += `${formatLlmsTxtLink("Registro y onboarding", `${base}/onboarding`, "Crear cuenta nueva")}\n`;
 	markdown += `${formatLlmsTxtLink(`Sobre ${LANDING_COMPANY_NAME}`, `${base}/sobre-godcode`, "Información institucional: estudio web y creadores de Gcode POS")}\n`;
 	markdown += `${formatLlmsTxtLink("Calculadora de comisiones", `${base}/calculadora-comisiones`, "Cuánto cobran las apps de delivery y cuánto se ahorra con tienda propia")}\n`;
+	markdown += `${formatLlmsTxtLink(`${LANDING_PRODUCT_NAME} en Chile`, `${base}/chile`, "Menú digital y POS para restaurantes en Chile: precios en pesos, Mercado Pago, soporte desde Santiago")}\n`;
+	markdown += `${formatLlmsTxtLink(`${LANDING_PRODUCT_NAME} en Venezuela`, `${base}/venezuela`, "Menú digital y caja para restaurantes en Venezuela: bolívares y dólares, pago móvil, Zelle, tasa BCV")}\n`;
 	if (isFullVersion) {
 		markdown += `${formatLlmsTxtLink("Resumen IA (llms.txt)", `${base}/llms.txt`, "Versión resumida para LLMs")}\n`;
 	} else {
