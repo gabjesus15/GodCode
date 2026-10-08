@@ -27,6 +27,7 @@ const TABS_DEL_PANEL_DEL_LOCAL = [
 	"inventory",
 	"beverages", // alias de menu_beverages
 	"extras", // alias de menu_extras
+	"menu_modifiers",
 	"menu_carousel",
 	"admin_menu_options", // alias de menu_options
 	"clients",

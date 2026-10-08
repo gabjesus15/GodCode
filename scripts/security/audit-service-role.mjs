@@ -80,7 +80,7 @@ export const POSTURES = {
 		description:
 			"token no adivinable en la petición (verification_token, client_request_id…)",
 		evidence:
-			/verification_token|client_request_id|clientRequestId|evidenceId|payment_reference|paymentReference|HEALTH_CHECK_SECRET/,
+			/verification_token|client_request_id|clientRequestId|evidenceId|payment_reference|paymentReference|HEALTH_CHECK_SECRET|verifyUnsubscribe/,
 	},
 	public: {
 		description: "sin sesión a propósito (storefront anónimo); exige rate limit",
