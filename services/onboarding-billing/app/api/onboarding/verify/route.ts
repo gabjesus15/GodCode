@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
 	const { data, error } = await supabaseAdmin
 		.from("onboarding_applications")
-		.select("id, status, email_verified_at, business_name, responsible_name, email")
+		.select("id, status, email_verified_at, business_name, responsible_name, email, phone")
 		.eq("verification_token", token)
 		.maybeSingle();
 
@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
 				businessName: String(data.business_name ?? ""),
 				responsibleName: data.responsible_name ?? null,
 				email: String(data.email ?? ""),
+				phone: data.phone ?? null,
 			});
 		}
 	}

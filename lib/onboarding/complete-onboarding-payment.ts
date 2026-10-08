@@ -57,6 +57,7 @@ export type CompleteOnboardingPaymentResult =
 type ApplicationRow = OnboardingApplication & {
 	status: string;
 	responsible_name: string | null;
+	phone?: string | null;
 	welcome_email_sent_at: string | null;
 	updated_at: string;
 	currency?: string | null;
@@ -236,7 +237,9 @@ export async function completeOnboardingPayment(
 	await alertOnboardingTeam({
 		kind: "activated",
 		businessName: app.business_name ?? "",
+		responsibleName: app.responsible_name,
 		email: app.email ?? null,
+		phone: app.phone ?? null,
 		via: input.methodSlug === "coupon" ? "coupon" : input.isManualPayment ? "manual" : "paypal",
 		months: input.grantedMonths,
 		coupon: app.coupon_code ?? null,

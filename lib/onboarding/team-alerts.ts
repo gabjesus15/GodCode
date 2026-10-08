@@ -9,25 +9,28 @@ import { getAppUrl } from "@/lib/tenant/app-url";
  * correo al equipo que ya existe.
  */
 
-export type OnboardingAlert =
+/** Con quién hablar: va en todos los avisos para escribirle sin entrar al panel. */
+type AlertContact = {
+	responsibleName?: string | null;
+	email?: string | null;
+	phone?: string | null;
+};
+
+type OnboardingStep =
 	| {
 			kind: "application_created";
 			businessName: string;
-			responsibleName?: string | null;
 			email: string;
-			phone?: string | null;
 			sector?: string | null;
 	  }
 	| {
 			kind: "email_verified";
 			businessName: string;
-			responsibleName?: string | null;
 			email: string;
 	  }
 	| {
 			kind: "plan_chosen";
 			businessName: string;
-			email?: string | null;
 			planName?: string | null;
 			months?: number | null;
 			amount?: string | null;
@@ -38,7 +41,6 @@ export type OnboardingAlert =
 	| {
 			kind: "receipt_uploaded";
 			businessName: string;
-			email?: string | null;
 			amount?: string | null;
 			method?: string | null;
 			reference?: string | null;
@@ -47,7 +49,6 @@ export type OnboardingAlert =
 	| {
 			kind: "activated";
 			businessName: string;
-			email?: string | null;
 			planName?: string | null;
 			months?: number | null;
 			via: "paypal" | "manual" | "promo" | "coupon" | string;
@@ -62,6 +63,8 @@ export type OnboardingAlert =
 			problem: string;
 			detail?: string | null;
 	  };
+
+export type OnboardingAlert = AlertContact & OnboardingStep;
 
 const STEPS_TOTAL = 4;
 
@@ -80,18 +83,18 @@ export function formatOnboardingAlert(alert: OnboardingAlert, appUrl: string = g
 	const panel = link(`${base}/dashboard`, "Abrir el panel");
 	const pagos = link(`${base}/dashboard/pagos`, "Validar el pago");
 	const name = escapeTelegramHtml(alert.businessName || "Negocio sin nombre");
-	const who = ["responsibleName" in alert ? alert.responsibleName : null, "email" in alert ? alert.email : null]
+	const who = [alert.responsibleName, alert.email]
 		.map((value) => String(value ?? "").trim())
 		.filter(Boolean)
 		.map(escapeTelegramHtml)
 		.join(" · ");
+	const contact = [who || null, line("Teléfono: ", alert.phone)];
 
 	switch (alert.kind) {
 		case "application_created":
 			return [
 				`🆕 <b>Nueva solicitud de alta: ${name}</b>`,
-				who || null,
-				line("Teléfono: ", alert.phone),
+				...contact,
 				line("Rubro: ", alert.sector),
 				`Paso 1 de ${STEPS_TOTAL}: le mandamos el correo de verificación. Si no lo confirma en 7 días, la solicitud se borra sola.`,
 				panel,
@@ -101,7 +104,7 @@ export function formatOnboardingAlert(alert: OnboardingAlert, appUrl: string = g
 		case "email_verified":
 			return [
 				`✅ <b>Correo verificado: ${name}</b>`,
-				who || null,
+				...contact,
 				`Paso 2 de ${STEPS_TOTAL}: ya está dentro del formulario. Falta que elija plan y forma de pago.`,
 				panel,
 			]
@@ -119,7 +122,7 @@ export function formatOnboardingAlert(alert: OnboardingAlert, appUrl: string = g
 				.join(" · ");
 			return [
 				`🧾 <b>Eligió plan: ${name}</b>`,
-				line("", alert.email),
+				...contact,
 				detail || null,
 				line("Cupón: ", alert.coupon),
 				`Paso 3 de ${STEPS_TOTAL}: falta el pago. Con PayPal se activa solo; con transferencia o Pago Móvil sube el comprobante.`,
@@ -135,7 +138,7 @@ export function formatOnboardingAlert(alert: OnboardingAlert, appUrl: string = g
 				.join(" · ");
 			return [
 				`📎 <b>Comprobante subido: ${name}</b>`,
-				line("", alert.email),
+				...contact,
 				detail || null,
 				line("Cupón: ", alert.coupon),
 				`Paso 4 de ${STEPS_TOTAL}: hay que revisar el comprobante y validar el pago. Hasta entonces el negocio no está activo.`,
@@ -164,7 +167,7 @@ export function formatOnboardingAlert(alert: OnboardingAlert, appUrl: string = g
 				.join(" · ");
 			return [
 				`🎉 <b>Negocio activado: ${name}</b> (${via})`,
-				line("", alert.email),
+				...contact,
 				detail || null,
 				line("Cupón: ", alert.coupon),
 				`Ya tiene acceso al panel y su menú está publicado.`,

@@ -89,11 +89,19 @@ export async function findDeliveredKeys(keys: string[], client?: SupabaseClient)
 	return new Set(((data ?? []) as Array<{ dedupe_key: string | null }>).map((row) => String(row.dedupe_key)));
 }
 
+/**
+ * Los cupones que un negocio manda a sus clientes (Edge Function `coupon-emails` del
+ * panel) usan la misma tabla, pero no son correos de GodCode al negocio y llevan el
+ * correo del cliente final: los historiales del super admin no los muestran.
+ */
+export const COUPON_DELIVERY_KIND = "coupon";
+
 export async function listCompanyDeliveries(companyId: string, limit = 30, client?: SupabaseClient): Promise<DeliveryRow[] | null> {
 	const { data, error } = await db(client)
 		.from(TABLE)
 		.select("id,kind,recipient,subject,status,error,created_at,sent_at")
 		.eq("company_id", companyId)
+		.neq("kind", COUPON_DELIVERY_KIND)
 		.order("created_at", { ascending: false })
 		.limit(limit);
 	if (error) return null;
@@ -104,6 +112,7 @@ export async function listRecentDeliveries(limit = 50, client?: SupabaseClient):
 	const { data, error } = await db(client)
 		.from(TABLE)
 		.select("id,kind,recipient,subject,status,error,created_at,sent_at,company_id")
+		.neq("kind", COUPON_DELIVERY_KIND)
 		.order("created_at", { ascending: false })
 		.limit(limit);
 	if (error) return null;

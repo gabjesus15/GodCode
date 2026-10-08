@@ -42,6 +42,7 @@ export type UseTicketsReturn = {
   handleSendMessage:    () => Promise<void>;
   handleSupportTicket:  () => Promise<void>;
   handleOpenBillingSupport: (payment: PaymentSummary) => void;
+  handleOpenCouponEmailSupport: (customDomain: string) => void;
   handleApplySupportTemplate: (t: "facturacion" | "tecnico" | "sucursales") => void;
   onNavigateToSupport:  () => void;
   setOnNavigateToSupport: (fn: () => void) => void;
@@ -142,6 +143,13 @@ export function useTickets(
     navigateToSupport();
   };
 
+  const handleOpenCouponEmailSupport = (customDomain: string) => {
+    setSupportCategory("technical"); setSupportPriority("medium");
+    setSupportSubject(`Cupones desde mi dominio (${customDomain})`.slice(0, 120));
+    setSupportDescription([`Hola, quiero que los cupones que mando a mis clientes salgan desde mi dominio ${customDomain}. ¿Me ayudan a conectar mi Resend?`, "¿Ya tienes cuenta en Resend?:", "Correo remitente que quieres usar:", "(No pegues tu API key de Resend aquí: te decimos cómo pasárnosla de forma segura.)"].join("\n"));
+    navigateToSupport();
+  };
+
   const handleApplySupportTemplate = (t: "facturacion" | "tecnico" | "sucursales") => {
     if (t === "facturacion") { setSupportCategory("billing"); setSupportPriority("medium"); setSupportSubject("Consulta de facturacion / cobro"); setSupportDescription(["Hola, necesito ayuda con un cobro.", "Referencia de pago:", "Detalle del problema:", "Resultado esperado:"].join("\n")); return; }
     if (t === "tecnico") { setSupportCategory("technical"); setSupportPriority("high"); setSupportSubject("Incidencia tecnica"); setSupportDescription(["Hola, reporto una incidencia tecnica.", "Modulo afectado:", "Que accion estabas realizando:", "Error recibido:"].join("\n")); return; }
@@ -155,7 +163,7 @@ export function useTickets(
     supportSubject, setSupportSubject, supportCategory, setSupportCategory,
     supportPriority, setSupportPriority, supportDescription, setSupportDescription,
     handleSelectTicket, handleSendMessage, handleSupportTicket,
-    handleOpenBillingSupport, handleApplySupportTemplate,
+    handleOpenBillingSupport, handleOpenCouponEmailSupport, handleApplySupportTemplate,
     onNavigateToSupport: navigateToSupport,
     setOnNavigateToSupport: (fn) => setNavigateToSupportFn(() => fn),
     isOnSupportTab, setIsOnSupportTab,

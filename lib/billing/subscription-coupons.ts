@@ -3,7 +3,7 @@ import { resolveFirstPaymentPromo } from "@/lib/onboarding/first-payment-promo";
 /**
  * Cupones del alta (la suscripción del SaaS). Lógica pura, sin base de datos, que
  * comparten la página de pago (vista previa), el checkout (importe real) y la
- * validación del equipo (meses a otorgar). Ver `migrations/20261006_subscription_coupons.sql`.
+ * validación del equipo (meses a otorgar).
  *
  * - `percent` y `fixed` bajan el importe del primer pago.
  * - `free_months` suma meses de regalo a los pagados.

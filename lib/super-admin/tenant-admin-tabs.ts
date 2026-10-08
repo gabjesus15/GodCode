@@ -32,6 +32,8 @@ export const TENANT_ADMIN_TAB_OPTIONS = [
 	{ id: "inventory", label: "Inventario" },
 	{ id: "beverages", label: "Bebidas" },
 	{ id: "extras", label: "Extras" },
+	/** Armador de modificaciones por producto (quitar / agregar / cambiar). Independiente de Extras. */
+	{ id: "menu_modifiers", label: "Agregar cambios" },
 	{ id: "menu_carousel", label: "Carrusel" },
 	{ id: "admin_menu_options", label: "Opciones de sucursal" },
 	{ id: "clients", label: "Clientes" },

@@ -1,7 +1,7 @@
 /**
  * Supabase en memoria para probar lógica que encadena consultas (`from().update().eq()…`).
  * Cubre solo lo que usan los módulos probados: select/insert/update/upsert/delete con
- * filtros eq / neq / in / not(is null) y maybeSingle / single. Las columnas del select se
+ * filtros eq / neq / in / is(null) / not(is null) y maybeSingle / single. Las columnas del select se
  * ignoran (devuelve la fila completa). Opcional: columnas únicas por tabla (un insert
  * repetido devuelve 23505, como Postgres) y tablas que «no existen» (42P01), para probar
  * el código que depende de una migración.
@@ -66,6 +66,10 @@ class FakeQuery implements PromiseLike<FakeResult> {
 	}
 	in(column: string, values: unknown[]) {
 		this.filters.push((row) => values.includes(row[column]));
+		return this;
+	}
+	is(column: string, value: null) {
+		this.filters.push((row) => (row[column] ?? null) === value);
 		return this;
 	}
 	not(column: string, operator: string, value: unknown) {

@@ -124,7 +124,7 @@ export function EmailCenter({ data }: { data: EmailCenterData }) {
 					text={
 						config.ledgerReady
 							? "Evita duplicados y guarda el historial de cada negocio."
-							: "Sin la tabla email_deliveries los recordatorios no salen (20260924_email_deliveries.sql)."
+							: "Sin la tabla email_deliveries los recordatorios no salen."
 					}
 				/>
 				<StatusTile title="Avisos al equipo" badge="Equipo" tone="neutral" text={`${config.teamInbox} · las respuestas de clientes llegan a ${config.replyTo}`} />

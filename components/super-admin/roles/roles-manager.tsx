@@ -306,7 +306,7 @@ export default function RolesManager() {
         </div>
 
         <div className="rounded-xl border border-amber-200/60 bg-amber-50/60 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
-          <strong>Nota:</strong> este panel usa la API interna para gestionar roles directamente en base de datos. Si ves errores de RPC/tablas, aplica la migración de roles incluida en <strong>supabase/migrations</strong>.
+          <strong>Nota:</strong> este panel usa la API interna para gestionar roles directamente en base de datos. Si ves errores de RPC/tablas, falta aplicar en la base las funciones y tablas de roles.
         </div>
 
         {customRolesCount > 0 && (

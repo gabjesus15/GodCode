@@ -6,6 +6,7 @@ import { CompanyUberCredentialsForm } from "@/components/super-admin/companies/c
 import { CompanyUserManagement } from "@/components/super-admin/companies/company-user-management";
 import { CompanyBrandingSection, CompanyPanelAccessSection } from "@/components/super-admin/companies/detail/company-branding-section";
 import { CompanyGeneralSection, CompanyPublicInfoSection } from "@/components/super-admin/companies/detail/company-data-sections";
+import { CompanyEmailSenderSection } from "@/components/super-admin/companies/detail/company-email-sender-section";
 import { CompanyEmailsSection } from "@/components/super-admin/companies/detail/company-emails-section";
 import { CompanyEditProvider, SectionCard } from "@/components/super-admin/companies/detail/company-section";
 import {
@@ -229,6 +230,7 @@ export default async function CompanyManageModalPage({
 							content: (
 								<div className={stack}>
 									<CompanyGeneralSection company={company} />
+									<CompanyEmailSenderSection companyId={company.id} />
 									<CompanyPublicInfoSection businessInfo={businessInfo} companyName={company.name ?? ""} />
 								</div>
 							),
