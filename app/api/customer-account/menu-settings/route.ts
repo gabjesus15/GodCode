@@ -11,6 +11,7 @@ import {
 	normalizeMenuSettingsPatch,
 	type CompanyMenuSettings,
 } from "@/lib/tenant/menu-settings";
+import { resolvePlanOrderChannel, resolvePlanProductMode } from "@/lib/plans/plan-product-mode";
 
 /** @service-role customer-account */
 
@@ -33,11 +34,17 @@ export async function GET() {
 		return NextResponse.json({ error: error.message }, { status: 500 });
 	}
 
-	const menuSettings = extractMenuSettingsFromIntegration(data?.integration_settings);
 	const planFeatures = (data?.plans as { features?: unknown } | null)?.features ?? null;
+	const savedSettings = extractMenuSettingsFromIntegration(data?.integration_settings);
+	// Se muestra el canal que vale de verdad: con «solo menú digital» siempre es WhatsApp.
+	const menuSettings = {
+		...savedSettings,
+		orderChannel: resolvePlanOrderChannel(planFeatures, savedSettings.orderChannel),
+	};
 
 	return NextResponse.json({
 		menuSettings,
+		planProductMode: resolvePlanProductMode(planFeatures),
 		planAllowsOnlineOrdering:
 			planFeatures == null ||
 			(typeof planFeatures === "object" &&
@@ -104,6 +111,20 @@ export async function PUT(req: NextRequest) {
 		);
 	}
 
+	const planProductMode = resolvePlanProductMode(planFeatures);
+	if (planProductMode === "panel_only") {
+		return NextResponse.json(
+			{ error: "Tu plan es solo panel CEO: no incluye menú público." },
+			{ status: 403 },
+		);
+	}
+	if (planProductMode === "menu_only" && patch.orderChannel && patch.orderChannel !== "whatsapp_only") {
+		return NextResponse.json(
+			{ error: "Con el plan solo menú digital los pedidos llegan por WhatsApp." },
+			{ status: 403 },
+		);
+	}
+
 	const nextIntegration = mergeMenuSettingsIntoIntegration(company?.integration_settings, patch);
 	const menuSettings = normalizeMenuSettingsPatch(
 		extractMenuSettingsFromIntegration(nextIntegration),
@@ -124,5 +145,9 @@ export async function PUT(req: NextRequest) {
 		revalidateTag(`company-slug:${publicSlug}`, "max");
 	}
 
-	return NextResponse.json({ menuSettings, planAllowsOnlineOrdering: planAllows });
+	return NextResponse.json({
+		menuSettings: { ...menuSettings, orderChannel: resolvePlanOrderChannel(planFeatures, menuSettings.orderChannel) },
+		planAllowsOnlineOrdering: planAllows,
+		planProductMode,
+	});
 }

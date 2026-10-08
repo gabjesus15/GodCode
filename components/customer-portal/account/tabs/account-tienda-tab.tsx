@@ -39,6 +39,7 @@ import { PageHeader } from "../../ui/PageHeader";
 import { Skeleton } from "../../ui/Skeleton";
 import { MenuOrderSettingsCard } from "../menu-order-settings-card";
 import type { OrderChannelMode } from "@/lib/tenant/menu-settings";
+import type { PlanProductMode } from "@/lib/plans/plan-product-mode";
 
 export type StoreThemeChecklistItem = { id: string; title: string; ok: boolean; detail: string };
 export type StoreThemeContrastChange = { key: keyof StoreThemeConfig; label: string; from: string; to: string; ratio: number | null; min: number };
@@ -99,6 +100,7 @@ export type AccountTiendaTabProps = {
   menuSettingsCartEnabled: boolean;
   menuSettingsOrderChannel: OrderChannelMode;
   menuSettingsPlanAllowsOnlineOrdering: boolean;
+  menuSettingsPlanProductMode?: PlanProductMode;
   menuSettingsDirty: boolean;
   onMenuSettingsCartEnabledChange: (enabled: boolean) => void;
   onMenuSettingsOrderChannelChange: (channel: OrderChannelMode) => void;
@@ -174,6 +176,7 @@ export function AccountTiendaTab({
   menuSettingsCartEnabled,
   menuSettingsOrderChannel,
   menuSettingsPlanAllowsOnlineOrdering,
+  menuSettingsPlanProductMode = "full",
   menuSettingsDirty,
   onMenuSettingsCartEnabledChange,
   onMenuSettingsOrderChannelChange,
@@ -213,6 +216,7 @@ export function AccountTiendaTab({
         cartEnabled={menuSettingsCartEnabled}
         orderChannel={menuSettingsOrderChannel}
         planAllowsOnlineOrdering={menuSettingsPlanAllowsOnlineOrdering}
+        planProductMode={menuSettingsPlanProductMode}
         dirty={menuSettingsDirty}
         onCartEnabledChange={onMenuSettingsCartEnabledChange}
         onOrderChannelChange={onMenuSettingsOrderChannelChange}

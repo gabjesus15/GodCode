@@ -2731,6 +2731,15 @@ textarea.cart-field {
 	animation-delay: 260ms;
 }
 
+/* «Abrir WhatsApp» en el éxito: enlace con el mismo aspecto que el botón principal. */
+a.cart-cta {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	text-decoration: none;
+}
+
 .cart-success__title {
 	margin: 0;
 	font-size: 1.25rem;

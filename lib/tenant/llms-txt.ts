@@ -6,6 +6,7 @@ import { createSupabasePublicServerClient } from "@/utils/supabase/server";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { formatLlmsTxtLink } from "@/lib/seo/llms-txt-format";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { companyHasPublicMenu } from "@/lib/plans/plan-product-mode";
 
 interface MenuCategory {
   id: string;
@@ -49,6 +50,9 @@ export async function getLlmsTxtData(subdomain: string, isFullVersion = false) {
   }
 
   if (!isTenantSubscriptionAccessible(company)) {
+    return null;
+  }
+  if (!companyHasPublicMenu(company)) {
     return null;
   }
 

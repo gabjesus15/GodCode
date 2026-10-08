@@ -407,7 +407,8 @@
           "newOrder": "Nouvelle commande",
           "backToMenu": "Retour au menu",
           "backToDelivery": "Retour à la livraison",
-          "repeatLastOrder": "Recommander la dernière commande"
+          "repeatLastOrder": "Recommander la dernière commande",
+          "openWhatsApp": "Ouvrir WhatsApp"
         },
         "delivery": {
           "pickNamedArea": "Choisir une zone",
@@ -579,7 +580,8 @@
           "paymentConfirmed": "Paiement confirmé et enregistré.",
           "paymentPendingVerification": "Justificatif reçu. Le paiement est en attente de vérification.",
           "keepCodesTitle": "Conservez ces informations.",
-          "keepCodesBody": "Nous vous les demanderons à la livraison : montrez-les ou dictez-les au livreur."
+          "keepCodesBody": "Nous vous les demanderons à la livraison : montrez-les ou dictez-les au livreur.",
+          "whatsappSendHint": "Dernière étape : envoyez le message ouvert dans WhatsApp pour que l'établissement reçoive votre commande."
         },
         "empty": {
           "title": "Panier vide",
@@ -618,7 +620,17 @@
           "holder": "Titulaire",
           "bankTransferHint": "Une fois le virement effectue, joignez le recu a votre commande.",
           "note": "Note",
-          "taxLabel": "Taxe (TVA)"
+          "taxLabel": "Taxe (TVA)",
+          "taxIncluded": "inclus",
+          "taxAdded": "en sus",
+          "addressReference": "Indication",
+          "mapLink": "Localisation",
+          "branch": "Établissement",
+          "webReference": "Réf.",
+          "extras": "Suppléments",
+          "beverages": "Boissons",
+          "changes": "Modifications",
+          "generalExtra": "Supplément de la commande"
         },
         "intake": {
           "paused": "Commandes en pause",

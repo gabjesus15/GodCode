@@ -26,6 +26,7 @@ import {
 	resolveTenantDisplayName,
 } from "@/lib/tenant/seo-metadata";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { companyHasPublicMenu, resolvePlanOrderChannel } from "@/lib/plans/plan-product-mode";
 import { groupProductSizeRows, type ProductSizeOption } from "@/lib/tenant/product-sizes";
 import { groupProductVariantRows, type ProductVariantGroup } from "@/lib/tenant/product-variants";
 
@@ -213,11 +214,16 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
   const planFeatures = (company.plans as { features?: unknown } | null)?.features ?? null;
   const menuSettings = extractMenuSettingsFromIntegration(company.integration_settings);
   const onlineOrderingEnabled = resolveOnlineOrderingEnabled(planFeatures, menuSettings);
-  const orderChannel = menuSettings.orderChannel;
+  // «Solo menú digital»: sin panel donde recibir pedidos, todo sale por WhatsApp.
+  const orderChannel = resolvePlanOrderChannel(planFeatures, menuSettings.orderChannel);
 
   // Misma regla en todo lo público: una cancelación sigue online hasta el vencimiento y
   // un plan vencido se corta aunque el cron todavía no lo haya suspendido.
   if (!isTenantSubscriptionAccessible(company)) {
+    notFound();
+  }
+  // «Solo panel CEO»: el plan no incluye menú público.
+  if (!companyHasPublicMenu(company)) {
     notFound();
   }
 

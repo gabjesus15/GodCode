@@ -3,6 +3,7 @@
 import { MessageCircle, ShoppingCart, Monitor } from "lucide-react";
 
 import type { OrderChannelMode } from "@/lib/tenant/menu-settings";
+import type { PlanProductMode } from "@/lib/plans/plan-product-mode";
 import { Alert } from "../ui/Alert";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
@@ -43,6 +44,8 @@ export type MenuOrderSettingsCardProps = {
 	cartEnabled: boolean;
 	orderChannel: OrderChannelMode;
 	planAllowsOnlineOrdering: boolean;
+	/** `menu_only`: el canal queda fijo en WhatsApp. `panel_only`: no hay menú público. */
+	planProductMode?: PlanProductMode;
 	dirty: boolean;
 	onCartEnabledChange: (enabled: boolean) => void;
 	onOrderChannelChange: (channel: OrderChannelMode) => void;
@@ -57,6 +60,7 @@ export function MenuOrderSettingsCard({
 	cartEnabled,
 	orderChannel,
 	planAllowsOnlineOrdering,
+	planProductMode = "full",
 	dirty,
 	onCartEnabledChange,
 	onOrderChannelChange,
@@ -71,6 +75,25 @@ export function MenuOrderSettingsCard({
 			</Card>
 		);
 	}
+
+	if (planProductMode === "panel_only") {
+		return (
+			<Card className="space-y-2 p-4 sm:p-5">
+				<h2 className="text-base font-semibold text-[#1d1d1f]">Carrito y pedidos</h2>
+				<Alert variant="info">
+					Tu plan es solo panel CEO: no incluye menú público. Tus ventas se registran desde la caja del panel.
+				</Alert>
+			</Card>
+		);
+	}
+
+	const menuOnly = planProductMode === "menu_only";
+	const channelOptions = menuOnly
+		? CHANNEL_OPTIONS.filter((option) => option.value === "whatsapp_only").map((option) => ({
+				...option,
+				description: "El cliente arma su pedido en el menú y te llega a WhatsApp con todo el detalle.",
+			}))
+		: CHANNEL_OPTIONS;
 
 	return (
 		<Card className="space-y-4 p-4 sm:p-5">
@@ -90,6 +113,12 @@ export function MenuOrderSettingsCard({
 			{!planAllowsOnlineOrdering ? (
 				<Alert variant="warning">
 					Tu plan actual no incluye pedidos en línea. El carrito permanece desactivado hasta que actualices el plan.
+				</Alert>
+			) : null}
+
+			{menuOnly ? (
+				<Alert variant="info">
+					Tu plan es solo menú digital: cada pedido te llega a WhatsApp con el detalle listo para preparar.
 				</Alert>
 			) : null}
 
@@ -113,7 +142,7 @@ export function MenuOrderSettingsCard({
 				<div className="space-y-2">
 					<p className="text-sm font-medium text-[#1d1d1f]">Canal de pedidos</p>
 					<div className="grid gap-2">
-						{CHANNEL_OPTIONS.map((option) => {
+						{channelOptions.map((option) => {
 							const Icon = option.icon;
 							const selected = orderChannel === option.value;
 							return (

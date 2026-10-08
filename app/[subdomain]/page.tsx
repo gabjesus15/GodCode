@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getCachedCompany } from "../../utils/tenant-cache";
 import { HomePageView } from "../../components/tenant/home/home-page-view";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { companyHasPublicMenu } from "@/lib/plans/plan-product-mode";
 import { loadHomePageInput } from "@/lib/tenant/home-page/load-home-page";
 import { resolveHomePage } from "@/lib/tenant/home-page/resolve-home-page";
 
@@ -19,6 +20,8 @@ export default async function TenantPage({ params }: TenantPageProps) {
   if (!company || !isTenantSubscriptionAccessible(company)) {
     notFound();
   }
+  // «Solo panel CEO»: el negocio no tiene página pública.
+  if (!companyHasPublicMenu(company)) notFound();
 
   const model = resolveHomePage(await loadHomePageInput(company, subdomain));
   const panelBase = (process.env.NEXT_PUBLIC_TENANT_PANEL_URL ?? "").trim().replace(/\/$/, "");

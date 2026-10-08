@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { getCachedCompany } from "../../../utils/tenant-cache";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { companyHasPublicMenu } from "@/lib/plans/plan-product-mode";
 import { resolveCheckoutCountryCode } from "@/lib/geo/country-forms";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
 import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
@@ -38,6 +39,7 @@ export default async function TenantAccountPage({
   if (!company || !isTenantSubscriptionAccessible(company)) {
     notFound();
   }
+  if (!companyHasPublicMenu(company)) notFound();
 
   const companyId = String(company.id);
 

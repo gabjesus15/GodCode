@@ -45,6 +45,15 @@ import {
 	extractCeoTabsFromPlanFeatures,
 	upsertPlanFeaturesCeoTabs,
 } from "@/lib/plans/tenant-plan-features";
+import {
+	MENU_ONLY_CEO_TABS,
+	PLAN_PRODUCT_MODES,
+	PLAN_PRODUCT_MODE_KEY,
+	PLAN_PRODUCT_MODE_LABELS,
+	resolvePlanProductMode,
+	upsertPlanProductMode,
+	type PlanProductMode,
+} from "@/lib/plans/plan-product-mode";
 
 function newDescriptionLineId(): string {
 	if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -182,6 +191,7 @@ type PlanFormState = {
 	is_public: boolean;
 	is_active: boolean;
 	ceoTabs: string[];
+	productMode: PlanProductMode;
 	baseFeatures: Record<string, unknown>;
 	includedAddonTokens: string[];
 	blockedAddonTokens: string[];
@@ -277,6 +287,7 @@ const emptyForm = (): PlanFormState => ({
 	is_public: true,
 	is_active: true,
 	ceoTabs: [...DEFAULT_ROLE_NAV_PERMISSIONS.ceo],
+	productMode: "full",
 	baseFeatures: {},
 	includedAddonTokens: [],
 	blockedAddonTokens: [],
@@ -342,6 +353,7 @@ export function PlansAdminClient({
 			}
 		);
 		const { baseFeatures, includedAddonTokens, blockedAddonTokens, allowedAddonTokens } = splitBaseAndPolicyFeatures(p.features);
+		delete baseFeatures[PLAN_PRODUCT_MODE_KEY];
 		setForm({
 			name: baseName,
 			price: p.price ?? "",
@@ -354,6 +366,7 @@ export function PlansAdminClient({
 			is_public: p.is_public !== false,
 			is_active: p.is_active !== false,
 			ceoTabs: ceoTabsByPlan,
+			productMode: resolvePlanProductMode(p.features),
 			baseFeatures,
 			includedAddonTokens,
 			blockedAddonTokens,
@@ -409,7 +422,10 @@ export function PlansAdminClient({
 			max_users: maxUsersNum,
 			is_public: form.is_public,
 			is_active: form.is_active,
-			features: upsertPlanFeaturesCeoTabs(buildFeaturesPayload(form), form.ceoTabs),
+			features: upsertPlanProductMode(
+				upsertPlanFeaturesCeoTabs(buildFeaturesPayload(form), form.ceoTabs),
+				form.productMode,
+			),
 			marketing_lines: normalizeMarketingLines(form.descriptionLines.map((l) => l.text)),
 			name_i18n: buildPlanNameI18nPayload(form.nameByLocale, nameTrimmed),
 			marketing_lines_i18n: buildPlanMarketingLinesI18nPayload(
@@ -868,6 +884,49 @@ export function PlansAdminClient({
 					</FormSection>
 
 					<FormSection
+						title="Qué incluye el plan"
+						description="«Solo menú digital» manda los pedidos al WhatsApp del dueño y deja el panel en productos y banners. «Solo panel CEO» no publica menú."
+					>
+						<div className="grid gap-2.5 sm:grid-cols-3" role="radiogroup" aria-label="Qué incluye el plan">
+							{PLAN_PRODUCT_MODES.map((mode) => {
+								const selected = form.productMode === mode;
+								const label = PLAN_PRODUCT_MODE_LABELS[mode];
+								return (
+									<button
+										key={mode}
+										type="button"
+										role="radio"
+										aria-checked={selected}
+										onClick={() =>
+											setForm((prev) => ({
+												...prev,
+												productMode: mode,
+												// Solo menú: el panel queda en catálogo y banners. Al volver a otro
+												// modo se restauran las pestañas por defecto del CEO.
+												ceoTabs:
+													mode === "menu_only"
+														? [...MENU_ONLY_CEO_TABS]
+														: prev.productMode === "menu_only"
+															? [...DEFAULT_ROLE_NAV_PERMISSIONS.ceo]
+															: prev.ceoTabs,
+											}))
+										}
+										className={cn(
+											"rounded-lg border px-3 py-2.5 text-left transition-colors",
+											selected
+												? "border-zinc-900 bg-zinc-50 dark:border-zinc-100 dark:bg-zinc-900"
+												: "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800",
+										)}
+									>
+										<span className="block text-sm font-medium text-zinc-950 dark:text-zinc-50">{label.title}</span>
+										<span className="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">{label.description}</span>
+									</button>
+								);
+							})}
+						</div>
+					</FormSection>
+
+					<FormSection
 						title="Accesos del panel de la empresa por membresía"
 						description="Selecciona las pestañas que tendrá activa la empresa cuando use este plan."
 					>
@@ -1110,6 +1169,7 @@ function isLongFeatureLine(line: string): boolean {
 }
 
 function PlanCard({ plan, rate, onEdit }: { plan: Plan; rate: number | null; onEdit: (plan: Plan) => void }) {
+	const productMode = resolvePlanProductMode(plan.features);
 	const [expanded, setExpanded] = useState(false);
 	const listId = useId();
 	const latinPrice = plan.prices_by_continent?.["Latinoamérica"];
@@ -1128,8 +1188,11 @@ function PlanCard({ plan, rate, onEdit }: { plan: Plan; rate: number | null; onE
 					<h3 className="truncate text-sm font-semibold text-zinc-950 dark:text-zinc-50" title={name}>
 						{name}
 					</h3>
-					{plan.is_public === false || plan.is_active === false ? (
+					{plan.is_public === false || plan.is_active === false || productMode !== "full" ? (
 						<div className="mt-1.5 flex flex-wrap gap-1.5">
+							{productMode !== "full" && (
+								<SaasStatusBadge label={PLAN_PRODUCT_MODE_LABELS[productMode].title} variant="neutral" />
+							)}
 							{plan.is_public === false && <SaasStatusBadge label="Solo interno" variant="neutral" />}
 							{plan.is_active === false && <SaasStatusBadge label="Inactivo" variant="warning" />}
 						</div>

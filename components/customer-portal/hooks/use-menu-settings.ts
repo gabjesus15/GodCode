@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { CompanyMenuSettings, OrderChannelMode } from "@/lib/tenant/menu-settings";
 import { DEFAULT_MENU_SETTINGS } from "@/lib/tenant/menu-settings";
+import type { PlanProductMode } from "@/lib/plans/plan-product-mode";
 
 export type UseMenuSettingsReturn = {
 	menuSettingsLoading: boolean;
@@ -12,6 +13,8 @@ export type UseMenuSettingsReturn = {
 	menuSettingsOk: string | null;
 	menuSettings: CompanyMenuSettings;
 	planAllowsOnlineOrdering: boolean;
+	/** Qué trae el plan: con `menu_only` el canal es siempre WhatsApp. */
+	planProductMode: PlanProductMode;
 	setCartEnabled: (enabled: boolean) => void;
 	setOrderChannel: (channel: OrderChannelMode) => void;
 	saveMenuSettings: () => Promise<boolean>;
@@ -27,6 +30,7 @@ export function useMenuSettings(enabled: boolean): UseMenuSettingsReturn {
 	const [menuSettings, setMenuSettings] = useState<CompanyMenuSettings>({ ...DEFAULT_MENU_SETTINGS });
 	const [savedMenuSettings, setSavedMenuSettings] = useState<CompanyMenuSettings>({ ...DEFAULT_MENU_SETTINGS });
 	const [planAllowsOnlineOrdering, setPlanAllowsOnlineOrdering] = useState(true);
+	const [planProductMode, setPlanProductMode] = useState<PlanProductMode>("full");
 
 	const reloadMenuSettings = useCallback(async () => {
 		setMenuSettingsLoading(true);
@@ -36,6 +40,7 @@ export function useMenuSettings(enabled: boolean): UseMenuSettingsReturn {
 			const data = (await res.json().catch(() => ({}))) as {
 				menuSettings?: CompanyMenuSettings;
 				planAllowsOnlineOrdering?: boolean;
+				planProductMode?: PlanProductMode;
 				error?: string;
 			};
 			if (!res.ok) {
@@ -46,6 +51,7 @@ export function useMenuSettings(enabled: boolean): UseMenuSettingsReturn {
 			setMenuSettings(next);
 			setSavedMenuSettings(next);
 			setPlanAllowsOnlineOrdering(data.planAllowsOnlineOrdering !== false);
+			if (data.planProductMode) setPlanProductMode(data.planProductMode);
 		} catch {
 			setMenuSettingsError("No se pudo cargar la configuración del menú.");
 		} finally {
@@ -85,6 +91,7 @@ export function useMenuSettings(enabled: boolean): UseMenuSettingsReturn {
 			const data = (await res.json().catch(() => ({}))) as {
 				menuSettings?: CompanyMenuSettings;
 				planAllowsOnlineOrdering?: boolean;
+				planProductMode?: PlanProductMode;
 				error?: string;
 			};
 			if (!res.ok) {
@@ -95,6 +102,7 @@ export function useMenuSettings(enabled: boolean): UseMenuSettingsReturn {
 			setMenuSettings(next);
 			setSavedMenuSettings(next);
 			setPlanAllowsOnlineOrdering(data.planAllowsOnlineOrdering !== false);
+			if (data.planProductMode) setPlanProductMode(data.planProductMode);
 			setMenuSettingsOk("Configuración guardada.");
 			return true;
 		} catch {
@@ -112,6 +120,7 @@ export function useMenuSettings(enabled: boolean): UseMenuSettingsReturn {
 		menuSettingsOk,
 		menuSettings,
 		planAllowsOnlineOrdering,
+		planProductMode,
 		setCartEnabled,
 		setOrderChannel,
 		saveMenuSettings,
