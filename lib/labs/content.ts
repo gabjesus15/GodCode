@@ -31,9 +31,11 @@ export type LabsScreen = {
 	alt: string;
 	width: number;
 	height: number;
-	frame: "phone" | "browser";
+	frame: "phone" | "laptop" | "browser";
 	/** Texto corto bajo la captura (hero, producto). */
 	label?: string;
+	/** Dirección que muestra la barra del navegador. */
+	address?: string;
 };
 
 export type LabsProcessStep = { num: string; title: string; text: string };
@@ -135,7 +137,7 @@ export const LABS_SERVICES: LabsService[] = [
 			"Páginas rápidas, medibles y pensadas para aparecer en Google: la web de la empresa, una landing de campaña o el sitio de un producto.",
 		deliverables: ["Diseño y contenido", "SEO técnico y de contenido", "Analítica y formularios conectados", "Dominio, hosting y certificado"],
 		fit: "Empresas que hoy dependen de redes sociales o de una web que no convierte.",
-		image: { src: "/labs/capturas/gcode-pos-landing.jpg", alt: `Página de ${LANDING_PRODUCT_NAME}, diseñada y programada por el estudio`, width: 1024, height: 589, frame: "browser" },
+		image: { src: "/labs/capturas/autocareplanet-inicio.jpg", alt: "Portada de autocareplanet.com, diseñada y programada por el estudio", width: 1280, height: 800, frame: "laptop", address: "autocareplanet.com" },
 	},
 	{
 		id: "sistemas-a-medida",
@@ -144,7 +146,7 @@ export const LABS_SERVICES: LabsService[] = [
 			"Paneles internos, portales de clientes y flujos de trabajo hechos para cómo opera tu empresa, no al revés.",
 		deliverables: ["Levantamiento del proceso", "Panel con roles y permisos", "Reportes y exportaciones", "Capacitación del equipo"],
 		fit: "Operaciones que viven en planillas, WhatsApp y correos, y ya no escalan.",
-		image: { src: "/labs/capturas/gcode-pos-reportes.jpg", alt: `Reportes de ventas en el panel de ${LANDING_PRODUCT_NAME}`, width: 720, height: 1280, frame: "phone" },
+		image: { src: "/labs/capturas/midinerito-cobros.jpg", alt: "Cobros y pagos del mes en MiDinerito, con la pregunta de si ya te pagaron", width: 600, height: 1367, frame: "phone" },
 	},
 	{
 		id: "tiendas-y-pedidos",
@@ -180,9 +182,10 @@ export const LABS_SERVICES: LabsService[] = [
  */
 export const LABS_HERO_SCREENS: LabsScreen[] = [
 	{ src: "/labs/capturas/oishi-sushi-menu.jpg", alt: "Menú digital de Oishi Sushi en Gcode POS", width: 600, height: 1201, frame: "phone", label: "Menú digital" },
-	{ src: "/labs/capturas/gcode-pos-tu-pedido.jpg", alt: "Pedido online en el menú digital de Rica Pizza", width: 500, height: 980, frame: "phone", label: "Pedido online" },
+	{ src: "/labs/capturas/midinerito-inicio.jpg", alt: "Inicio de MiDinerito: saldo en dólares con su equivalente en bolívares y gasto por semana", width: 600, height: 1367, frame: "phone", label: "App de finanzas" },
+	{ src: "/labs/capturas/autocareplanet-inicio.jpg", alt: "Portada de autocareplanet.com en un portátil, con la reserva de citas", width: 1280, height: 800, frame: "laptop", label: "Sitio web con reservas" },
+	{ src: "/labs/capturas/colorin-app.jpg", alt: "Colorín, app para dibujar y colorear, en un teléfono", width: 600, height: 1367, frame: "phone", label: "App para niños" },
 	{ src: "/labs/capturas/gcode-pos-caja.jpg", alt: "Caja de Gcode POS con los pedidos entrantes del local", width: 473, height: 1024, frame: "phone", label: "Caja del local" },
-	{ src: "/labs/capturas/gcode-pos-reportes.jpg", alt: "Reportes de ventas de Gcode POS", width: 720, height: 1280, frame: "phone", label: "Reportes" },
 ];
 
 /** Las dos pantallas de la sección del producto propio. */
@@ -193,9 +196,9 @@ export const LABS_PRODUCT_SCREENS: LabsScreen[] = [
 
 /** Con qué construimos: herramientas e integraciones que usamos de verdad, por grupo. Sin logos, solo nombres. */
 export const LABS_STACK: Array<{ label: string; items: string[] }> = [
-	{ label: "Web y aplicaciones", items: ["Next.js", "React", "TypeScript"] },
+	{ label: "Web y aplicaciones", items: ["Next.js", "React", "TypeScript", "Expo"] },
 	{ label: "Datos", items: ["Supabase", "PostgreSQL", "APIs REST"] },
-	{ label: "Pagos", items: ["PayPal", "Stripe", "Mercado Pago", "Zelle", "Pago móvil", "Transferencias"] },
+	{ label: "Pagos", items: ["PayPal", "Stripe", "Mercado Pago", "Google Play", "Zelle", "Pago móvil", "Transferencias"] },
 	{ label: "Avisos", items: ["WhatsApp", "Telegram", "Correo con Resend"] },
 	{ label: "Infraestructura", items: ["Vercel", "Cloudinary", "Dominios propios", "Certificados SSL", "Respaldos"] },
 	{ label: "Calidad", items: ["Pruebas automáticas", "Análisis de código", "Revisión de seguridad"] },
@@ -234,7 +237,7 @@ export const LABS_PROJECTS: LabsProject[] = [
 		linkLabel: "Ver el producto",
 		scope: ["Plataforma multiempresa con datos aislados", "Cobros con PayPal, Mercado Pago, Zelle y pago móvil, con tasa BCV", "Dominio propio por negocio", "Alta en línea con pago y verificación"],
 		ownProduct: true,
-		image: { src: "/labs/capturas/gcode-pos-landing.jpg", alt: "Página de Gcode POS: menú digital y POS para restaurantes", width: 1024, height: 589, frame: "browser" },
+		image: { src: "/labs/capturas/gcode-pos-landing.jpg", alt: "Página de Gcode POS: menú digital y POS para restaurantes", width: 1024, height: 589, frame: "laptop" },
 	},
 	{
 		name: "Auto Care Planet",
@@ -244,6 +247,27 @@ export const LABS_PROJECTS: LabsProject[] = [
 		href: "https://autocareplanet.com",
 		linkLabel: "Ver el sitio en vivo",
 		scope: ["Catálogo de servicios con precios", "Reserva con calendario y cobro con Stripe, completo o con depósito", "Términos de reserva y cancelación", "Galería de trabajos y preguntas frecuentes"],
+		image: { src: "/labs/capturas/autocareplanet-reservar.jpg", alt: "Reserva de una cita en autocareplanet.com: servicio, fecha y pago con tarjeta por Stripe", width: 1280, height: 800, frame: "laptop" },
+	},
+	{
+		name: "MiDinerito",
+		kind: "App propia · Finanzas personales",
+		summary:
+			"App web instalable para llevar ingresos, gastos, ahorro y cobros mensuales en dólares, con su equivalente en bolívares a la tasa BCV y a la referencia de Binance P2P.",
+		href: "https://midinerito.app",
+		linkLabel: "Ver la app",
+		scope: ["Tasas BCV y Binance actualizadas a diario", "Cobros y pagos recurrentes con la pregunta «¿ya te pagó?»", "Cuentas, metas de ahorro, cuotas y gastos compartidos", "Notificaciones push y uso sin conexión"],
+		image: { src: "/labs/capturas/midinerito-escritorio.jpg", alt: "Inicio de MiDinerito en un portátil: saldo total, cobros por confirmar y metas de ahorro", width: 1280, height: 800, frame: "laptop" },
+	},
+	{
+		name: "Colorín",
+		kind: "App propia · Dibujo y coloreo para niños",
+		summary:
+			"App para dibujar y colorear en español, en la web y en Android: bote de pintura por zonas, pegatinas, retos diarios y logros, con un club de pago único y sin suscripción.",
+		href: "https://www.colorin.games",
+		linkLabel: "Ver la app",
+		scope: ["42 plantillas con los contornos siempre por encima", "Estrellas, niveles, racha diaria y logros", "Pago único del Club con PayPal en la web y Google Play en Android, verificado en el servidor", "Zona de padres y compartir con control parental"],
+		image: { src: "/labs/capturas/colorin-escritorio.jpg", alt: "Colorín en un portátil: lienzo para colorear con la paleta y las herramientas", width: 1280, height: 800, frame: "laptop" },
 	},
 ];
 

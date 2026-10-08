@@ -21,7 +21,7 @@ import {
 } from "@/lib/labs/content";
 import { cn } from "@/utils/cn";
 
-import { BrowserFrame, PhoneFrame } from "./labs-frames";
+import { BrowserFrame, LaptopFrame, PhoneFrame } from "./labs-frames";
 import { LabsHeroVisual } from "./labs-hero-visual";
 import { LABS_LOGOS, LabsLogoIcon } from "./labs-logos";
 import { LabsNavbar, type LabsNavLink } from "./labs-navbar";
@@ -352,7 +352,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 											screen={screen}
 											cut
 											sizes="(min-width: 640px) 192px, 160px"
-											className={index === 0 ? "max-h-[22rem] sm:max-h-[26rem]" : "max-h-[18rem] sm:max-h-[21rem]"}
+											screenClassName={index === 0 ? "max-h-[22rem] sm:max-h-[26rem]" : "max-h-[18rem] sm:max-h-[21rem]"}
 										/>
 									</figure>
 								))}
@@ -628,9 +628,9 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 				</section>
 			</main>
 
-			{/* Pie: un panel negro con columnas de enlaces y el nombre del estudio gigante, cortado por el borde. */}
+			{/* Pie: un panel negro con columnas de enlaces y el nombre del estudio gigante, entero a lo ancho (la letra se mide con el ancho del panel) y cortado solo por el borde inferior. */}
 			<footer className="px-4 pb-6 sm:px-6 sm:pb-8">
-				<div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] bg-[#0f0f13] px-7 pt-14 text-white sm:px-12 sm:pt-20">
+				<div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] bg-[#0f0f13] px-7 pt-14 text-white [container-type:inline-size] sm:px-12 sm:pt-20">
 					<div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_minmax(0,1.5fr)]">
 						{footerColumns.map((column) => (
 							<nav key={column.title} aria-label={column.title}>
@@ -700,7 +700,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 					</div>
 					<p
 						aria-hidden
-						className="labs-wordmark pointer-events-none -mx-7 -mb-[0.17em] mt-12 select-none whitespace-nowrap pl-1 text-[clamp(5rem,20vw,19rem)] font-bold leading-[0.85] tracking-[-0.06em] sm:-mx-12 sm:mt-16"
+						className="labs-wordmark pointer-events-none -mb-[0.14em] mt-12 select-none whitespace-nowrap text-center text-[18.2cqw] font-bold leading-[0.85] tracking-[-0.06em] sm:mt-16"
 					>
 						{LABS_HOME.footerWordmark}
 					</p>
@@ -733,8 +733,10 @@ function ServiceArt({ service, index }: { service: LabsService; index: number })
 				aria-hidden
 				className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(20,8,90,0.12)_1px,transparent_1px)] [background-size:18px_18px] [mask-image:radial-gradient(70%_70%_at_80%_20%,#000,transparent)]"
 			/>
-			{image?.frame === "browser" ? (
-				<BrowserFrame screen={image} className="absolute inset-x-8 top-8" sizes="(min-width: 640px) 288px, 240px" />
+			{image?.frame === "laptop" ? (
+				<LaptopFrame screen={image} cut className="absolute inset-x-6 top-8" sizes="(min-width: 640px) 304px, 256px" />
+			) : image?.frame === "browser" ? (
+				<BrowserFrame screen={image} className="absolute inset-x-7 top-7" sizes="(min-width: 640px) 296px, 248px" />
 			) : image ? (
 				<PhoneFrame screen={image} cut className="absolute left-1/2 top-7 w-44 -translate-x-1/2" sizes="176px" />
 			) : (
@@ -753,7 +755,7 @@ function ServiceArt({ service, index }: { service: LabsService; index: number })
 	);
 }
 
-/** Cabecera de la tarjeta de proyecto: la captura real del sitio en una ventana de navegador; sin captura, una ventana de muestra con el dominio. */
+/** Cabecera de la tarjeta de proyecto: la captura real del proyecto en un portátil (o una ventana de navegador); sin captura, una ventana de muestra con el dominio. */
 function ProjectArt({ project, index }: { project: LabsProject; index: number }) {
 	const external = project.href?.startsWith("http");
 	const address = external ? safeHostname(project.href!) : `${LANDING_PRODUCT_NAME.toLowerCase().replace(/\s+/g, "")}.app`;
@@ -761,7 +763,21 @@ function ProjectArt({ project, index }: { project: LabsProject; index: number })
 	return (
 		<div aria-hidden={!project.image} className={cn("relative h-56 overflow-hidden", gradient)}>
 			<span className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:20px_20px] [mask-image:radial-gradient(70%_70%_at_20%_20%,#000,transparent)]" />
-			{project.image ? (
+			{project.image?.frame === "laptop" ? (
+				<LaptopFrame
+					screen={project.image}
+					cut
+					className="absolute inset-x-10 top-9 transition-transform duration-500 group-hover:-translate-y-2"
+					sizes="(min-width: 1024px) 480px, 90vw"
+				/>
+			) : project.image?.frame === "phone" ? (
+				<PhoneFrame
+					screen={project.image}
+					cut
+					className="absolute left-1/2 top-9 w-48 -translate-x-1/2 transition-transform duration-500 group-hover:-translate-y-2"
+					sizes="192px"
+				/>
+			) : project.image ? (
 				<BrowserFrame
 					screen={project.image}
 					address={address}

@@ -3,32 +3,41 @@ import type { CSSProperties } from "react";
 import { LABS_HERO_SCREENS, type LabsScreen } from "@/lib/labs/content";
 import { cn } from "@/utils/cn";
 
-import { PhoneFrame } from "./labs-frames";
+import { LaptopFrame, PhoneFrame } from "./labs-frames";
 
 /**
  * El escenario del hero: un gran panel violeta, como una lámina sobre otras dos de color,
- * con formas abstractas y cuatro pantallas reales de lo que construimos (`LABS_HERO_SCREENS`:
- * el menú digital de un restaurante, un pedido online, la caja del local y los reportes de
- * Gcode POS, tal como los usan los clientes). Al hacer scroll la lámina crece y la escena se
+ * con formas abstractas y pantallas reales de lo que construimos (`LABS_HERO_SCREENS`: el menú
+ * digital de un restaurante, un pedido online, el sitio de Gcode POS en un portátil, la caja del
+ * local y los reportes, tal como los usan los clientes). Al hacer scroll la lámina crece y la escena se
  * acerca (labs.css).
  */
 
 /** Dónde va cada teléfono en escritorio; en el teléfono forman una fila que se desliza con el dedo. */
 const SCREEN_POSITIONS = [
-	"lg:left-[7%] lg:top-[10%]",
-	"lg:-bottom-[14%] lg:left-[30%]",
-	"lg:right-[30%] lg:top-[16%]",
-	"lg:-bottom-[8%] lg:right-[7%]",
+	"lg:left-[6%] lg:top-[10%]",
+	"lg:-bottom-[14%] lg:left-[19%]",
+	"lg:left-1/2 lg:z-10 lg:-translate-x-1/2 lg:-bottom-[3%]",
+	"lg:right-[6%] lg:top-[8%]",
+	"lg:-bottom-[12%] lg:right-[19%]",
 ] as const;
 
 function Screen({ order, screen, className }: { order: number; screen: LabsScreen; className?: string }) {
+	const laptop = screen.frame === "laptop";
 	return (
-		<figure className={cn("labs-rise w-40 shrink-0 snap-center lg:absolute", className)} style={{ "--labs-i": order } as CSSProperties}>
+		<figure
+			className={cn("labs-rise shrink-0 snap-center lg:absolute", laptop ? "w-72 lg:w-[27rem]" : "w-40", className)}
+			style={{ "--labs-i": order } as CSSProperties}
+		>
 			<div className="labs-float">
 				{screen.label ? (
 					<figcaption className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white/85">{screen.label}</figcaption>
 				) : null}
-				<PhoneFrame screen={screen} sizes="160px" className="max-h-[20.5rem]" />
+				{laptop ? (
+					<LaptopFrame screen={screen} sizes="(min-width: 1024px) 432px, 288px" />
+				) : (
+					<PhoneFrame screen={screen} sizes="160px" screenClassName="max-h-[20.5rem]" />
+				)}
 			</div>
 		</figure>
 	);
@@ -78,7 +87,7 @@ export function LabsHeroVisual() {
 					<Shape
 						order={3}
 						rot={12}
-						className="bottom-[6%] left-[47%] hidden h-24 w-24 rounded-2xl bg-[linear-gradient(145deg,#a9a3ff,#5a4bff)] shadow-[inset_-10px_-12px_24px_rgba(20,8,90,0.35),0_30px_50px_-30px_rgba(0,0,0,0.5)] lg:block"
+						className="left-[39%] top-[27%] hidden h-24 w-24 rounded-2xl bg-[linear-gradient(145deg,#a9a3ff,#5a4bff)] shadow-[inset_-10px_-12px_24px_rgba(20,8,90,0.35),0_30px_50px_-30px_rgba(0,0,0,0.5)] lg:block"
 					/>
 					<Shape order={4} rot={0} className="bottom-[26%] left-[4%] h-4 w-4 rounded-full bg-[#ffd33d] lg:bottom-[14%] lg:left-[24%]" />
 					<Shape order={5} rot={0} className="right-[12%] top-[46%] h-3 w-3 rounded-full bg-white/80 lg:right-[24%] lg:top-[8%]" />
