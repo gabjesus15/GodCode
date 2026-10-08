@@ -44,6 +44,34 @@
 	.labs-roll {
 		animation: labs-roll 10s cubic-bezier(0.76, 0, 0.24, 1) infinite;
 	}
+
+	/* Banda de logos bajo el hero: la fila va duplicada y se desplaza media vuelta, así el bucle no salta. Se detiene al pasar el ratón. */
+	@keyframes labs-marquee {
+		from { transform: translateX(0); }
+		to { transform: translateX(-50%); }
+	}
+	.labs-marquee {
+		animation: labs-marquee 48s linear infinite;
+	}
+	.labs-marquee-scope:hover .labs-marquee {
+		animation-play-state: paused;
+	}
+}
+
+/* Sin movimiento, la banda de logos se puede desplazar con el dedo. */
+@media (prefers-reduced-motion: reduce) {
+	.labs-marquee-scope {
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+}
+
+/* La palabra gigante del pie: se desvanece hacia abajo y la corta el borde del panel. */
+.labs-wordmark {
+	background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.18) 55%, rgba(255, 255, 255, 0) 92%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
 }
 
 /* Movimiento ligado al scroll. Solo donde el navegador lo entiende (Chrome y Edge); en el resto todo se ve fijo y completo. */

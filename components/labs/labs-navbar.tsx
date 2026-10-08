@@ -17,7 +17,7 @@ type LabsNavbarProps = {
 	ctaHref: string;
 	ctaLabel: string;
 	companyName: string;
-	/** Enlace discreto al producto propio, para quien llega buscándolo (Instagram, boca a boca). */
+	/** Enlace al producto propio, siempre visible: mucha gente llega desde Instagram buscándolo. */
 	product?: LabsNavLink;
 };
 
@@ -80,7 +80,7 @@ export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName, pr
 					{product ? (
 						<Link
 							href={product.href}
-							className="hidden items-center gap-1 text-sm font-medium text-[#6b6b76] transition-colors hover:text-[#15151a] md:inline-flex"
+							className="inline-flex items-center gap-1 rounded-full bg-[#eef0ff] px-3.5 py-2 text-sm font-semibold text-[#4f5bff] transition-colors hover:bg-[#4f5bff] hover:text-white"
 						>
 							{product.label}
 							<ArrowUpRight className="h-3.5 w-3.5" aria-hidden />

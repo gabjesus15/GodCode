@@ -1,31 +1,36 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 
+import { LABS_HERO_SCREENS, type LabsScreen } from "@/lib/labs/content";
 import { cn } from "@/utils/cn";
+
+import { PhoneFrame } from "./labs-frames";
 
 /**
  * El escenario del hero: un gran panel violeta, como una lámina sobre otras dos de color,
- * con formas abstractas y cuatro pantallas de muestra de lo que construimos (un panel de
- * operación, una tienda, un sistema de reservas y una automatización). Son ilustraciones,
- * no clientes: ningún nombre ni cifra es real, y por eso el bloque va oculto a los lectores
- * de pantalla. Al hacer scroll la lámina crece y la escena se acerca (labs.css).
+ * con formas abstractas y cuatro pantallas reales de lo que construimos (`LABS_HERO_SCREENS`:
+ * el menú digital de un restaurante, un pedido online, la caja del local y los reportes de
+ * Gcode POS, tal como los usan los clientes). Al hacer scroll la lámina crece y la escena se
+ * acerca (labs.css).
  */
 
-const BARS = [38, 54, 34, 68, 58, 82, 100];
-const DAYS = ["L", "M", "M", "J", "V", "S", "D"];
-const SLOTS = ["09:00", "10:30", "12:00"];
-const STEPS = ["Nuevo pedido recibido", "Aviso por WhatsApp al equipo", "Fila nueva en la planilla"];
+/** Dónde va cada teléfono en escritorio; en el teléfono forman una fila que se desliza con el dedo. */
+const SCREEN_POSITIONS = [
+	"lg:left-[7%] lg:top-[10%]",
+	"lg:-bottom-[14%] lg:left-[30%]",
+	"lg:right-[30%] lg:top-[16%]",
+	"lg:-bottom-[8%] lg:right-[7%]",
+] as const;
 
-function Tile({ order, label, className, children }: { order: number; label: string; className?: string; children: ReactNode }) {
+function Screen({ order, screen, className }: { order: number; screen: LabsScreen; className?: string }) {
 	return (
-		<div
-			className={cn("labs-rise w-60 shrink-0 snap-center lg:absolute", className)}
-			style={{ "--labs-i": order } as CSSProperties}
-		>
-			<div className="labs-float rounded-2xl bg-white p-4 text-[#15151a] shadow-[0_30px_60px_-24px_rgba(20,8,90,0.6)]">
-				<p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#4f5bff]">{label}</p>
-				{children}
+		<figure className={cn("labs-rise w-40 shrink-0 snap-center lg:absolute", className)} style={{ "--labs-i": order } as CSSProperties}>
+			<div className="labs-float">
+				{screen.label ? (
+					<figcaption className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white/85">{screen.label}</figcaption>
+				) : null}
+				<PhoneFrame screen={screen} sizes="160px" className="max-h-[20.5rem]" />
 			</div>
-		</div>
+		</figure>
 	);
 }
 
@@ -33,6 +38,7 @@ function Tile({ order, label, className, children }: { order: number; label: str
 function Shape({ className, rot = 0, order = 0 }: { className: string; rot?: number; order?: number }) {
 	return (
 		<span
+			aria-hidden
 			className={cn("labs-drift pointer-events-none absolute block", className)}
 			style={{ "--labs-rot": `${rot}deg`, "--labs-i": order } as CSSProperties}
 		/>
@@ -41,125 +47,47 @@ function Shape({ className, rot = 0, order = 0 }: { className: string; rot?: num
 
 export function LabsHeroVisual() {
 	return (
-		<div aria-hidden className="labs-stage relative mx-auto mt-10 max-w-6xl sm:mt-12">
+		<div className="labs-stage relative mx-auto mt-10 max-w-6xl sm:mt-12">
 			{/* Las dos láminas de atrás, amarilla y rosa, giradas: la pila de la que sale el panel. */}
-			<div className="labs-stage__back-l absolute inset-x-4 inset-y-0 hidden rounded-[3rem] bg-[#ffd33d] sm:block" />
-			<div className="labs-stage__back-r absolute inset-x-4 inset-y-0 hidden rounded-[3rem] bg-[#ff5fa8] sm:block" />
+			<div aria-hidden className="labs-stage__back-l absolute inset-x-4 inset-y-0 hidden rounded-[3rem] bg-[#ffd33d] sm:block" />
+			<div aria-hidden className="labs-stage__back-r absolute inset-x-4 inset-y-0 hidden rounded-[3rem] bg-[#ff5fa8] sm:block" />
 
 			<div className="labs-stage__card relative overflow-hidden rounded-[3rem] bg-[linear-gradient(135deg,#6a5cff_0%,#4a2fd8_55%,#36219f_100%)] shadow-[0_60px_120px_-50px_rgba(58,33,184,0.75)]">
 				<div className="labs-stage__inner relative h-[36rem] sm:h-[38rem] lg:h-[40rem]">
 					{/* Textura de puntos y órbitas finas, como las del fondo de la referencia. */}
-					<span className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.16)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(60%_60%_at_30%_80%,#000,transparent)]" />
-					<span className="pointer-events-none absolute -left-[12%] -top-[30%] h-[34rem] w-[34rem] rounded-full border border-white/15" />
-					<span className="pointer-events-none absolute -bottom-[40%] right-[6%] h-[30rem] w-[30rem] rounded-full border border-white/10" />
+					<span aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.16)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(60%_60%_at_30%_80%,#000,transparent)]" />
+					<span aria-hidden className="pointer-events-none absolute -left-[12%] -top-[30%] h-[34rem] w-[34rem] rounded-full border border-white/15" />
+					<span aria-hidden className="pointer-events-none absolute -bottom-[40%] right-[6%] h-[30rem] w-[30rem] rounded-full border border-white/10" />
 
-					{/* Formas: una esfera cálida, un anillo rosa, una píldora amarilla y un cubo violeta. */}
+					{/* Formas: una esfera cálida, un anillo rosa, una píldora amarilla y un cubo violeta, en los huecos que dejan los teléfonos. */}
 					<Shape
 						order={0}
 						rot={0}
-						className="left-[5%] top-[8%] h-28 w-28 rounded-full bg-[radial-gradient(circle_at_30%_30%,#ffe9a3,#ffb13d_55%,#e5651a)] shadow-[inset_-16px_-20px_36px_rgba(120,30,0,0.35),0_40px_60px_-30px_rgba(0,0,0,0.5)] sm:h-40 sm:w-40"
+						className="left-[5%] top-[8%] h-28 w-28 rounded-full bg-[radial-gradient(circle_at_30%_30%,#ffe9a3,#ffb13d_55%,#e5651a)] shadow-[inset_-16px_-20px_36px_rgba(120,30,0,0.35),0_40px_60px_-30px_rgba(0,0,0,0.5)] sm:h-40 sm:w-40 lg:left-[19%] lg:-top-[6%]"
 					/>
 					<Shape
 						order={1}
 						rot={-20}
-						className="right-[4%] top-[6%] h-28 w-28 rounded-full border-[18px] border-[#ff5fa8] [border-top-color:#ff8fc2] [border-bottom-color:#e23f8a] shadow-[0_30px_50px_-30px_rgba(0,0,0,0.6)] sm:h-44 sm:w-44 sm:border-[26px] lg:right-[8%] lg:top-auto lg:bottom-[8%]"
+						className="right-[4%] top-[6%] h-28 w-28 rounded-full border-[18px] border-[#ff5fa8] [border-top-color:#ff8fc2] [border-bottom-color:#e23f8a] shadow-[0_30px_50px_-30px_rgba(0,0,0,0.6)] sm:h-44 sm:w-44 sm:border-[26px] lg:right-[17%] lg:-top-[12%]"
 					/>
 					<Shape
 						order={2}
 						rot={-18}
-						className="left-[38%] top-[5%] hidden h-14 w-52 rounded-full bg-[linear-gradient(90deg,#ffd33d,#ffb13d)] shadow-[0_30px_50px_-30px_rgba(0,0,0,0.5)] sm:block"
+						className="left-[38%] top-[5%] hidden h-14 w-52 rounded-full bg-[linear-gradient(90deg,#ffd33d,#ffb13d)] shadow-[0_30px_50px_-30px_rgba(0,0,0,0.5)] sm:block lg:left-[45%] lg:top-[5%]"
 					/>
 					<Shape
 						order={3}
 						rot={12}
-						className="right-[34%] top-[12%] hidden h-24 w-24 rounded-2xl bg-[linear-gradient(145deg,#a9a3ff,#5a4bff)] shadow-[inset_-10px_-12px_24px_rgba(20,8,90,0.35),0_30px_50px_-30px_rgba(0,0,0,0.5)] lg:block"
+						className="bottom-[6%] left-[47%] hidden h-24 w-24 rounded-2xl bg-[linear-gradient(145deg,#a9a3ff,#5a4bff)] shadow-[inset_-10px_-12px_24px_rgba(20,8,90,0.35),0_30px_50px_-30px_rgba(0,0,0,0.5)] lg:block"
 					/>
-					<Shape order={4} rot={0} className="bottom-[26%] left-[4%] h-4 w-4 rounded-full bg-[#ffd33d] lg:bottom-[36%] lg:left-[10%]" />
-					<Shape order={5} rot={0} className="right-[12%] top-[46%] h-3 w-3 rounded-full bg-white/80 lg:right-[22%] lg:top-[30%]" />
+					<Shape order={4} rot={0} className="bottom-[26%] left-[4%] h-4 w-4 rounded-full bg-[#ffd33d] lg:bottom-[14%] lg:left-[24%]" />
+					<Shape order={5} rot={0} className="right-[12%] top-[46%] h-3 w-3 rounded-full bg-white/80 lg:right-[24%] lg:top-[8%]" />
 
 					{/* Las cuatro pantallas. En el teléfono van en una fila que se desliza con el dedo; en escritorio, repartidas por la escena. */}
-					<div className="absolute inset-x-0 bottom-0 flex snap-x gap-4 overflow-x-auto px-6 pb-7 pt-4 [scrollbar-width:none] lg:contents">
-						<Tile order={2} label="Panel de operación" className="lg:left-[13%] lg:top-[18%]">
-							<div className="mt-3 flex items-center justify-between">
-								<span className="text-sm text-[#6b6b76]">Ventas de la semana</span>
-								<span className="rounded-full bg-[#e3f8ee] px-2 py-0.5 text-[11px] font-semibold text-[#15804f]">+18 %</span>
-							</div>
-							<div className="mt-3 flex h-16 items-end gap-1.5">
-								{BARS.map((height, index) => (
-									<span
-										key={`${index}-${height}`}
-										className={cn("flex-1 rounded-sm", index === BARS.length - 1 ? "bg-[#4f5bff]" : "bg-[#ececf3]")}
-										style={{ height: `${height}%` }}
-									/>
-								))}
-							</div>
-							<div className="mt-3 grid grid-cols-2 gap-3 text-xs">
-								<div>
-									<p className="text-[#6b6b76]">Órdenes</p>
-									<p className="font-semibold text-[#15151a] tabular-nums">312</p>
-								</div>
-								<div>
-									<p className="text-[#6b6b76]">Por despachar</p>
-									<p className="font-semibold text-[#15151a] tabular-nums">7</p>
-								</div>
-							</div>
-						</Tile>
-
-						<Tile order={3} label="Tienda online" className="w-56 lg:right-[11%] lg:top-[10%]">
-							<div className="mt-3 flex items-center gap-3">
-								<span className="h-10 w-10 shrink-0 rounded-lg bg-gradient-to-br from-[#4f5bff] to-[#8b93ff]" />
-								<div className="min-w-0 flex-1">
-									<p className="truncate text-sm font-medium text-[#15151a]">Kit de inicio</p>
-									<p className="text-xs text-[#6b6b76]">
-										2 unidades · <span className="font-semibold text-[#15151a] tabular-nums">$ 24.990</span>
-									</p>
-								</div>
-							</div>
-							<div className="mt-3 flex items-center justify-between rounded-lg bg-[#f4f4f8] px-3 py-2 text-xs">
-								<span className="text-[#6b6b76]">Envío a domicilio</span>
-								<span className="font-medium text-[#15151a]">Mañana</span>
-							</div>
-							<span className="mt-3 block rounded-full bg-[#4f5bff] py-2 text-center text-xs font-semibold text-white">Pagar en línea</span>
-						</Tile>
-
-						<Tile order={4} label="Reservas" className="w-56 lg:bottom-[9%] lg:left-[30%]">
-							<div className="mt-3 grid grid-cols-7 gap-1 text-center text-[11px]">
-								{DAYS.map((day, index) => (
-									<span
-										key={`${index}-${day}`}
-										className={cn("rounded-md py-1", index === 3 ? "bg-[#4f5bff] font-semibold text-white" : "text-[#6b6b76]")}
-									>
-										{day}
-									</span>
-								))}
-							</div>
-							<div className="mt-3 flex gap-1.5">
-								{SLOTS.map((slot, index) => (
-									<span
-										key={slot}
-										className={cn(
-											"flex-1 rounded-full border py-1 text-center text-[11px] tabular-nums",
-											index === 1 ? "border-[#4f5bff] font-semibold text-[#4f5bff]" : "border-[#e8e8ef] text-[#6b6b76]",
-										)}
-									>
-										{slot}
-									</span>
-								))}
-							</div>
-							<p className="mt-3 text-xs text-[#6b6b76]">Depósito pagado · recordatorio enviado</p>
-						</Tile>
-
-						<Tile order={5} label="Automatización" className="lg:bottom-[12%] lg:right-[24%]">
-							<ol className="mt-3 space-y-2 text-xs">
-								{STEPS.map((step, index) => (
-									<li key={step} className="flex items-center gap-2 text-[#3a3a44]">
-										<span className={cn("h-2 w-2 shrink-0 rounded-full", index === 2 ? "bg-[#4f5bff]" : "bg-[#22c58b]")} />
-										{step}
-									</li>
-								))}
-							</ol>
-							<p className="mt-3 text-[11px] text-[#6b6b76]">Hace 2 segundos</p>
-						</Tile>
+					<div className="absolute inset-x-0 bottom-0 flex snap-x gap-5 overflow-x-auto px-6 pb-7 pt-4 [scrollbar-width:none] lg:contents">
+						{LABS_HERO_SCREENS.map((screen, index) => (
+							<Screen key={screen.src} order={index + 2} screen={screen} className={SCREEN_POSITIONS[index % SCREEN_POSITIONS.length]} />
+						))}
 					</div>
 				</div>
 			</div>

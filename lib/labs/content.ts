@@ -21,6 +21,19 @@ export type LabsService = {
 	deliverables: string[];
 	/** Para quién suele ser. */
 	fit: string;
+	/** Captura real que ilustra el servicio (en /public): una pantalla de teléfono o una ventana de navegador. */
+	image?: LabsScreen;
+};
+
+/** Una captura real de algo que construimos, con su marco: teléfono o navegador. */
+export type LabsScreen = {
+	src: string;
+	alt: string;
+	width: number;
+	height: number;
+	frame: "phone" | "browser";
+	/** Texto corto bajo la captura (hero, producto). */
+	label?: string;
 };
 
 export type LabsProcessStep = { num: string; title: string; text: string };
@@ -36,6 +49,8 @@ export type LabsProject = {
 	scope: string[];
 	/** Marca el producto propio para dibujarlo distinto. */
 	ownProduct?: boolean;
+	/** Captura real del proyecto (en /public). Sin ella, la tarjeta dibuja una ventana de muestra con el dominio. */
+	image?: LabsScreen;
 };
 
 export type LabsTeamMember = { name: string; role: string; photoUrl?: string; linkedinUrl?: string };
@@ -67,9 +82,19 @@ export const LABS_HOME = {
 		{ value: "1", unit: "interlocutor", label: "Interlocutor directo", detail: "Hablas con quien diseña y programa, no con un vendedor." },
 		{ value: "7", unit: "días", label: "Avances cada semana", detail: "Ves el proyecto funcionando en un entorno de prueba desde la primera entrega." },
 	],
+	/** La banda de logos bajo el hero: solo marcas que están en el código o en un proyecto entregado. */
+	logosTitle: "Construimos y cobramos con",
 	servicesEyebrow: "01 · Servicios",
 	servicesTitle: "Qué construimos",
 	servicesIntro: "Trabajamos con empresas que necesitan algo que un producto estándar no cubre.",
+	/** El producto propio, con su propia sección: quien llega de Instagram buscándolo lo encuentra sin salir de la home. */
+	productEyebrow: "Producto propio",
+	productTitle: `${LANDING_PRODUCT_NAME}: menú digital, pedidos y caja para restaurantes`,
+	productText:
+		`Lo construimos y lo operamos nosotros. Cada restaurante recibe su menú con QR y pedidos online bajo su propia marca, una caja para tomar pedidos en el local y un panel con ventas e inventario, por una suscripción mensual sin comisión por venta.`,
+	productPoints: ["Pedidos online y en el local, en una sola caja", "Cobros con PayPal, Mercado Pago, Zelle y pago móvil", "Restaurantes en Chile y Venezuela operando hoy"],
+	productCta: `Ver ${LANDING_PRODUCT_NAME}`,
+	productNote: "Si llegaste desde Instagram buscando el menú digital, es aquí.",
 	processEyebrow: "02 · Cómo trabajamos",
 	processTitle: "Un método sencillo, de principio a fin",
 	/** El título del método se dibuja con una palabra que rueda: «Un método [sencillo] de principio a fin». */
@@ -97,6 +122,9 @@ export const LABS_HOME = {
 	quoteText:
 		"Te respondemos en menos de dos días hábiles con una primera lectura del proyecto. Si tiene sentido, agendamos una llamada de 30 minutos y después llega la propuesta por escrito.",
 	footerNote: `${LANDING_COMPANY_NAME} (antes ${LANDING_BRAND_ALTERNATE}) · Santiago de Chile`,
+	/** La palabra gigante del pie, cortada por el borde del panel. */
+	footerWordmark: LANDING_COMPANY_NAME,
+	footerLead: "Cuéntanos qué necesitas: respondemos en menos de dos días hábiles con una primera lectura del proyecto.",
 } as const;
 
 export const LABS_SERVICES: LabsService[] = [
@@ -107,6 +135,7 @@ export const LABS_SERVICES: LabsService[] = [
 			"Páginas rápidas, medibles y pensadas para aparecer en Google: la web de la empresa, una landing de campaña o el sitio de un producto.",
 		deliverables: ["Diseño y contenido", "SEO técnico y de contenido", "Analítica y formularios conectados", "Dominio, hosting y certificado"],
 		fit: "Empresas que hoy dependen de redes sociales o de una web que no convierte.",
+		image: { src: "/labs/capturas/gcode-pos-landing.jpg", alt: `Página de ${LANDING_PRODUCT_NAME}, diseñada y programada por el estudio`, width: 1024, height: 589, frame: "browser" },
 	},
 	{
 		id: "sistemas-a-medida",
@@ -115,6 +144,7 @@ export const LABS_SERVICES: LabsService[] = [
 			"Paneles internos, portales de clientes y flujos de trabajo hechos para cómo opera tu empresa, no al revés.",
 		deliverables: ["Levantamiento del proceso", "Panel con roles y permisos", "Reportes y exportaciones", "Capacitación del equipo"],
 		fit: "Operaciones que viven en planillas, WhatsApp y correos, y ya no escalan.",
+		image: { src: "/labs/capturas/gcode-pos-reportes.jpg", alt: `Reportes de ventas en el panel de ${LANDING_PRODUCT_NAME}`, width: 720, height: 1280, frame: "phone" },
 	},
 	{
 		id: "tiendas-y-pedidos",
@@ -123,14 +153,16 @@ export const LABS_SERVICES: LabsService[] = [
 			"Catálogo, carrito, pagos y entrega en tu propio dominio, sin comisión por venta a plataformas de terceros.",
 		deliverables: ["Catálogo con variantes", "Pagos locales e internacionales", "Zonas y costos de despacho", "Avisos por WhatsApp y correo"],
 		fit: "Negocios que venden por marketplaces y quieren un canal propio.",
+		image: { src: "/labs/capturas/gcode-pos-tu-pedido.jpg", alt: `Carrito de un pedido online en el menú digital de ${LANDING_PRODUCT_NAME}`, width: 500, height: 980, frame: "phone" },
 	},
 	{
 		id: "integraciones",
 		title: "Integraciones y automatización",
 		summary:
-			"Conectamos lo que ya usas: pasarelas de pago, correo, Telegram y WhatsApp, hojas de cálculo y APIs de terceros.",
+			"Conectamos lo que ya usas: Stripe, PayPal y Mercado Pago, correo, Telegram y WhatsApp, hojas de cálculo y APIs de terceros.",
 		deliverables: ["Integración de pagos y suscripciones", "Avisos automáticos al equipo", "Sincronización de datos", "Documentación de cada conexión"],
 		fit: "Equipos que pierden horas copiando datos de un sistema a otro.",
+		image: { src: "/labs/capturas/gcode-pos-pedido-recibido.jpg", alt: `Pedido recibido en ${LANDING_PRODUCT_NAME}, con el aviso al restaurante y el contacto por WhatsApp`, width: 369, height: 732, frame: "phone" },
 	},
 	{
 		id: "mantenimiento",
@@ -142,13 +174,30 @@ export const LABS_SERVICES: LabsService[] = [
 	},
 ];
 
+/**
+ * Las pantallas del escenario del hero: capturas reales de Gcode POS tal como lo usan los
+ * restaurantes. Cuando haya capturas de otros proyectos (Auto Care Planet), se suman aquí.
+ */
+export const LABS_HERO_SCREENS: LabsScreen[] = [
+	{ src: "/labs/capturas/oishi-sushi-menu.jpg", alt: "Menú digital de Oishi Sushi en Gcode POS", width: 600, height: 1201, frame: "phone", label: "Menú digital" },
+	{ src: "/labs/capturas/gcode-pos-tu-pedido.jpg", alt: "Pedido online en el menú digital de Rica Pizza", width: 500, height: 980, frame: "phone", label: "Pedido online" },
+	{ src: "/labs/capturas/gcode-pos-caja.jpg", alt: "Caja de Gcode POS con los pedidos entrantes del local", width: 473, height: 1024, frame: "phone", label: "Caja del local" },
+	{ src: "/labs/capturas/gcode-pos-reportes.jpg", alt: "Reportes de ventas de Gcode POS", width: 720, height: 1280, frame: "phone", label: "Reportes" },
+];
+
+/** Las dos pantallas de la sección del producto propio. */
+export const LABS_PRODUCT_SCREENS: LabsScreen[] = [
+	{ src: "/labs/capturas/oishi-sushi-menu.jpg", alt: "Menú digital de Oishi Sushi en Gcode POS", width: 600, height: 1201, frame: "phone", label: "Menú con QR y pedidos" },
+	{ src: "/labs/capturas/gcode-pos-caja.jpg", alt: "Caja de Gcode POS con los pedidos entrantes del local", width: 473, height: 1024, frame: "phone", label: "Caja y cocina" },
+];
+
 /** Con qué construimos: herramientas e integraciones que usamos de verdad, por grupo. Sin logos, solo nombres. */
 export const LABS_STACK: Array<{ label: string; items: string[] }> = [
 	{ label: "Web y aplicaciones", items: ["Next.js", "React", "TypeScript"] },
 	{ label: "Datos", items: ["Supabase", "PostgreSQL", "APIs REST"] },
-	{ label: "Pagos", items: ["PayPal", "Transferencias", "Zelle", "Pago móvil"] },
-	{ label: "Avisos", items: ["WhatsApp", "Telegram", "Correo"] },
-	{ label: "Infraestructura", items: ["Vercel", "Dominios propios", "Certificados SSL", "Respaldos"] },
+	{ label: "Pagos", items: ["PayPal", "Stripe", "Mercado Pago", "Zelle", "Pago móvil", "Transferencias"] },
+	{ label: "Avisos", items: ["WhatsApp", "Telegram", "Correo con Resend"] },
+	{ label: "Infraestructura", items: ["Vercel", "Cloudinary", "Dominios propios", "Certificados SSL", "Respaldos"] },
 	{ label: "Calidad", items: ["Pruebas automáticas", "Análisis de código", "Revisión de seguridad"] },
 ];
 
@@ -183,17 +232,18 @@ export const LABS_PROJECTS: LabsProject[] = [
 			"Menú digital con QR, pedidos online, punto de venta, delivery e inventario para restaurantes, con un panel por negocio y suscripción mensual sin comisión por venta.",
 		href: "/pos",
 		linkLabel: "Ver el producto",
-		scope: ["Plataforma multiempresa con datos aislados", "Pagos en Chile y Venezuela, incluida tasa BCV", "Dominio propio por negocio", "Alta en línea con pago y verificación"],
+		scope: ["Plataforma multiempresa con datos aislados", "Cobros con PayPal, Mercado Pago, Zelle y pago móvil, con tasa BCV", "Dominio propio por negocio", "Alta en línea con pago y verificación"],
 		ownProduct: true,
+		image: { src: "/labs/capturas/gcode-pos-landing.jpg", alt: "Página de Gcode POS: menú digital y POS para restaurantes", width: 1024, height: 589, frame: "browser" },
 	},
 	{
 		name: "Auto Care Planet",
 		kind: "Sitio web con reservas · Estados Unidos",
 		summary:
-			"Detailing y protección anticorrosión en Stoughton, Wisconsin. Un sitio que presenta los paquetes con precio y permite reservar día y hora pagando en línea, completo o con depósito.",
+			"Detailing y protección anticorrosión en Stoughton, Wisconsin. Un sitio que presenta los paquetes con precio y permite reservar día y hora pagando en línea con Stripe, completo o con depósito.",
 		href: "https://autocareplanet.com",
 		linkLabel: "Ver el sitio en vivo",
-		scope: ["Catálogo de servicios con precios", "Reserva con calendario y pago o depósito en línea", "Términos de reserva y cancelación", "Galería de trabajos y preguntas frecuentes"],
+		scope: ["Catálogo de servicios con precios", "Reserva con calendario y cobro con Stripe, completo o con depósito", "Términos de reserva y cancelación", "Galería de trabajos y preguntas frecuentes"],
 	},
 ];
 
@@ -204,6 +254,7 @@ export const LABS_TEAM: LabsTeamMember[] = [
 	{
 		name: "Jesús Rodríguez Morales",
 		role: "Fundador y desarrollador",
+		photoUrl: "/labs/equipo/jesus-rodriguez.jpg",
 		linkedinUrl: "https://www.linkedin.com/in/jesus-rodriguez-morales/",
 	},
 ];
@@ -242,7 +293,7 @@ export const LABS_FAQ: LabsFaq[] = [
 	{
 		question: "¿Se conecta con lo que ya uso?",
 		answer:
-			"Casi siempre. Integramos pasarelas de pago, correo, WhatsApp y Telegram, hojas de cálculo y APIs de terceros. Si una herramienta no tiene forma de conectarse, te lo decimos antes de cotizar, no después.",
+			"Casi siempre. Integramos pasarelas de pago (Stripe, PayPal, Mercado Pago), correo, WhatsApp y Telegram, hojas de cálculo y APIs de terceros. Si una herramienta no tiene forma de conectarse, te lo decimos antes de cotizar, no después.",
 	},
 	{
 		question: "¿Qué pasa después del lanzamiento?",

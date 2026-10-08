@@ -1,24 +1,29 @@
 import { Fragment, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, ChevronDown, LayoutDashboard, Monitor, ShoppingBag, Workflow, type LucideIcon } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, ChevronDown, LayoutDashboard, Monitor, ShoppingBag, Workflow, type LucideIcon } from "lucide-react";
 
+import { LandingInstagramIcon, LandingLinkedInIcon } from "@/components/landing-v3/social-icons";
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
 import type { LandingSocialLink } from "@/lib/landing/contact";
 import {
 	LABS_FAQ,
 	LABS_HOME,
 	LABS_PROCESS,
+	LABS_PRODUCT_SCREENS,
 	LABS_PROJECTS,
 	LABS_SERVICES,
 	LABS_STACK,
 	LABS_TEAM,
 	LABS_WHATSAPP_GREETING,
 	type LabsProject,
+	type LabsService,
 } from "@/lib/labs/content";
 import { cn } from "@/utils/cn";
 
+import { BrowserFrame, PhoneFrame } from "./labs-frames";
 import { LabsHeroVisual } from "./labs-hero-visual";
+import { LABS_LOGOS, LabsLogoIcon } from "./labs-logos";
 import { LabsNavbar, type LabsNavLink } from "./labs-navbar";
 import { LabsSourceBanner } from "./labs-source-banner";
 import { QuoteForm } from "./quote-form";
@@ -33,7 +38,7 @@ type LabsHomeProps = {
 	jsonLd: string;
 };
 
-/** El producto propio no va entre las secciones: tiene su propio enlace, discreto, a la derecha, para quien llega buscándolo. */
+/** El producto propio no va entre las secciones: tiene su píldora a la derecha de la barra y su propia sección (#gcode-pos). */
 const NAV_LINKS: LabsNavLink[] = [
 	{ label: "Servicios", href: "#servicios" },
 	{ label: "Cómo trabajamos", href: "#proceso" },
@@ -55,6 +60,14 @@ const PROCESS_COLORS = [
 	"bg-[#ffd33d] text-[#15151a]",
 ] as const;
 
+/** Mantenimiento no tiene pantalla que mostrar: esto es lo que corre de verdad sobre nuestro código en cada cambio (.github/workflows). */
+const MAINTENANCE_CHECKS = [
+	"Lint, tipos y pruebas en cada cambio",
+	"Build y pruebas de punta a punta",
+	"CodeQL y revisión de dependencias",
+	"Análisis de seguridad programado",
+];
+
 /** Iconos de la frase grande: cada palabra entre llaves del texto lleva uno delante. */
 const STATEMENT_ICONS: Record<string, { Icon: LucideIcon; className: string }> = {
 	sitios: { Icon: Monitor, className: "bg-[#4f5bff] text-white" },
@@ -74,6 +87,43 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 	const linkedin = socialLinks.find((link) => link.kind === "linkedin") ?? null;
 	const instagram = socialLinks.find((link) => link.kind === "instagram") ?? null;
 	const year = new Date().getFullYear();
+
+	/** Columnas del pie: las rutas de siempre, agrupadas como en el sitio de una empresa grande. */
+	const footerColumns: Array<{ title: string; links: Array<{ label: string; href: string; external?: boolean }> }> = [
+		{
+			title: "Empresa",
+			links: [
+				{ label: "Servicios", href: "#servicios" },
+				{ label: "Cómo trabajamos", href: "#proceso" },
+				{ label: "Proyectos", href: "#proyectos" },
+				{ label: "Equipo", href: "#equipo" },
+				{ label: "Sobre nosotros", href: "/sobre-godcode" },
+			],
+		},
+		{
+			title: "Producto",
+			links: [
+				{ label: LANDING_PRODUCT_NAME, href: posPath },
+				{ label: "Producto propio", href: "#gcode-pos" },
+				{ label: "Preguntas frecuentes", href: "#preguntas" },
+			],
+		},
+		{
+			title: "Contacto",
+			links: [
+				...(whatsapp && whatsappHref ? [{ label: "WhatsApp", href: whatsappHref, external: true }] : []),
+				...(email ? [{ label: "Correo", href: email.href, external: true }] : []),
+				{ label: "Cotizar un proyecto", href: "#cotizar" },
+			],
+		},
+		{
+			title: "Legal",
+			links: [
+				{ label: "Términos", href: "/onboarding/terminos" },
+				{ label: "Privacidad", href: "/onboarding/privacidad" },
+			],
+		},
+	];
 
 	return (
 		<div className="labs-root bg-white text-[#15151a] antialiased">
@@ -147,6 +197,25 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 					<LabsHeroVisual />
 				</section>
 
+				{/* Banda de logos: con qué construimos y cobramos de verdad. Se desplaza sola y se detiene al pasar el ratón. */}
+				<section aria-label="Tecnología y pasarelas de pago con las que trabajamos" className="pb-6 pt-4 sm:pt-8">
+					<p className="labs-reveal text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8e8e93]">{LABS_HOME.logosTitle}</p>
+					<div className="labs-marquee-scope mt-7 overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_10%,#000_90%,transparent)]">
+						<ul className="labs-marquee flex w-max items-center gap-12 pr-12 sm:gap-16 sm:pr-16">
+							{[...LABS_LOGOS, ...LABS_LOGOS].map((logo, index) => (
+								<li
+									key={`${logo.slug}-${index}`}
+									aria-hidden={index >= LABS_LOGOS.length}
+									className="flex shrink-0 items-center gap-2.5 text-[#a3a3ad] transition-colors hover:text-[#15151a]"
+								>
+									<LabsLogoIcon logo={logo} className="h-6 w-6 sm:h-7 sm:w-7" />
+									<span className="text-[17px] font-semibold tracking-tight sm:text-xl">{logo.label}</span>
+								</li>
+							))}
+						</ul>
+					</div>
+				</section>
+
 				{/* La frase grande, con un icono delante de cada tipo de trabajo. */}
 				<section className="px-6 py-20 sm:py-28">
 					<p className="labs-reveal mx-auto max-w-5xl text-center text-[clamp(1.6rem,3.5vw,3rem)] font-medium leading-[1.3] tracking-[-0.02em] text-balance">
@@ -214,7 +283,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 								id={service.id}
 								className="flex w-[19rem] shrink-0 snap-start flex-col overflow-hidden rounded-[2rem] border border-black/[0.06] bg-white shadow-[0_30px_60px_-44px_rgba(20,8,90,0.35)] sm:w-[22rem]"
 							>
-								<ServiceArt id={service.id} index={index} />
+								<ServiceArt service={service} index={index} />
 								<div className="flex flex-1 flex-col p-7">
 									<span className="text-xs font-semibold text-[#4f5bff] tabular-nums">{String(index + 1).padStart(2, "0")}</span>
 									<h3 className="mt-3 text-xl font-semibold tracking-tight">{service.title}</h3>
@@ -238,6 +307,57 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 							<div className="labs-progress h-full w-full rounded-full bg-[linear-gradient(90deg,#4f5bff,#ff5fa8,#ffd33d)]" />
 						</div>
 						<p className="text-xs text-[#6b6b76]">Desliza para ver los cinco</p>
+					</div>
+				</section>
+
+				{/* El producto propio, con sus pantallas reales: la parada de quien llega desde Instagram buscándolo. */}
+				<section id="gcode-pos" className="scroll-mt-24 px-6 pb-8">
+					<div className="labs-reveal relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] bg-[#eef0ff] px-7 pt-10 sm:px-12 sm:pt-14">
+						<div className="grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16">
+							<div className="min-w-0 pb-2 lg:pb-14">
+								<Eyebrow>{LABS_HOME.productEyebrow}</Eyebrow>
+								<h2 className="mt-5 text-[clamp(2rem,3.8vw,3.25rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-balance">
+									{LABS_HOME.productTitle}
+								</h2>
+								<p className="mt-6 text-lg leading-relaxed text-[#6b6b76] text-pretty">{LABS_HOME.productText}</p>
+								<ul className="mt-6 space-y-3 text-[15px] text-[#3a3a44]">
+									{LABS_HOME.productPoints.map((point) => (
+										<li key={point} className="flex items-start gap-3">
+											<span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#4f5bff] text-white">
+												<Check className="h-3 w-3" strokeWidth={3} aria-hidden />
+											</span>
+											{point}
+										</li>
+									))}
+								</ul>
+								<div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
+									<Link
+										href={posPath}
+										className="inline-flex items-center gap-2 rounded-full bg-[#4f5bff] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_18px_40px_-16px_rgba(79,91,255,0.8)] transition-colors hover:bg-[#15151a]"
+									>
+										{LABS_HOME.productCta}
+										<ArrowRight className="h-4 w-4" aria-hidden />
+									</Link>
+									<p className="text-sm text-[#6b6b76]">{LABS_HOME.productNote}</p>
+								</div>
+							</div>
+							{/* Dos pantallas reales que salen por el borde inferior del panel: el menú de un restaurante y la caja. */}
+							<div className="flex min-w-0 items-end justify-center gap-4 self-end pt-6 sm:gap-8 lg:justify-end lg:pt-0">
+								{LABS_PRODUCT_SCREENS.map((screen, index) => (
+									<figure key={screen.src} className="w-full max-w-40 sm:max-w-48">
+										{screen.label ? (
+											<figcaption className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-[#4f5bff]">{screen.label}</figcaption>
+										) : null}
+										<PhoneFrame
+											screen={screen}
+											cut
+											sizes="(min-width: 640px) 192px, 160px"
+											className={index === 0 ? "max-h-[22rem] sm:max-h-[26rem]" : "max-h-[18rem] sm:max-h-[21rem]"}
+										/>
+									</figure>
+								))}
+							</div>
+						</div>
 					</div>
 				</section>
 
@@ -399,13 +519,20 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 									<li
 										key={member.name}
 										className={cn(
-											"labs-reveal rounded-[2rem] border border-black/[0.06] bg-white p-7 shadow-[0_30px_60px_-44px_rgba(20,8,90,0.35)]",
+											"labs-reveal rounded-[2rem] border border-black/[0.06] bg-white p-5 shadow-[0_30px_60px_-44px_rgba(20,8,90,0.35)] sm:p-6",
 											`labs-stagger-${index % 2}`,
 										)}
 									>
-										{/* Con foto real la tarjeta pesa más que con iniciales; basta con poner photoUrl en el contenido. */}
+										{/* Con foto real la tarjeta pesa más que con iniciales: va grande, en vertical, como un retrato. */}
 										{member.photoUrl ? (
-											<Image src={member.photoUrl} alt={member.name} width={112} height={112} className="h-16 w-16 rounded-full object-cover" />
+											<Image
+												src={member.photoUrl}
+												alt={member.name}
+												width={640}
+												height={800}
+												sizes="(min-width: 1024px) 300px, (min-width: 640px) 45vw, 90vw"
+												className="aspect-[4/5] w-full rounded-[1.5rem] object-cover"
+											/>
 										) : (
 											<div className="flex h-16 w-16 items-center justify-center rounded-full bg-[linear-gradient(135deg,#6a5cff,#36219f)] text-lg font-semibold text-white">
 												{initials(member.name)}
@@ -501,45 +628,82 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 				</section>
 			</main>
 
-			<footer className="px-6 pb-12">
-				<div className="mx-auto flex max-w-6xl flex-col gap-8 border-t border-[#e8e8ef] pt-10 md:flex-row md:items-start md:justify-between">
-					<div className="max-w-sm">
-						<p className="text-lg font-semibold tracking-tight">{LANDING_COMPANY_NAME}</p>
-						<p className="mt-2 text-sm leading-relaxed text-[#6b6b76]">{LABS_HOME.footerNote}</p>
+			{/* Pie: un panel negro con columnas de enlaces y el nombre del estudio gigante, cortado por el borde. */}
+			<footer className="px-4 pb-6 sm:px-6 sm:pb-8">
+				<div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] bg-[#0f0f13] px-7 pt-14 text-white sm:px-12 sm:pt-20">
+					<div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_minmax(0,1.5fr)]">
+						{footerColumns.map((column) => (
+							<nav key={column.title} aria-label={column.title}>
+								<p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/50">{column.title}</p>
+								<ul className="mt-5 space-y-3 text-sm">
+									{column.links.map((link) => (
+										<li key={link.label}>
+											{link.external ? (
+												<a
+													href={link.href}
+													target={link.href.startsWith("http") ? "_blank" : undefined}
+													rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
+													className="text-white/75 transition-colors hover:text-white"
+												>
+													{link.label}
+												</a>
+											) : (
+												<Link href={link.href} className="text-white/75 transition-colors hover:text-white">
+													{link.label}
+												</Link>
+											)}
+										</li>
+									))}
+								</ul>
+							</nav>
+						))}
+						<div className="sm:col-span-2 lg:col-span-1">
+							<p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/50">Hablemos</p>
+							<p className="mt-5 max-w-xs text-sm leading-relaxed text-white/75 text-pretty">{LABS_HOME.footerLead}</p>
+							<Link
+								href="#cotizar"
+								className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#15151a] transition-colors hover:bg-[#ffd33d]"
+							>
+								{LABS_HOME.primaryCta}
+								<ArrowRight className="h-4 w-4" aria-hidden />
+							</Link>
+							<div className="mt-6 flex items-center gap-3">
+								{linkedin ? (
+									<a
+										href={linkedin.href}
+										target="_blank"
+										rel="noopener noreferrer"
+										aria-label="LinkedIn"
+										className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white/75 transition-colors hover:border-white/40 hover:text-white"
+									>
+										<LandingLinkedInIcon size={16} />
+									</a>
+								) : null}
+								{instagram ? (
+									<a
+										href={instagram.href}
+										target="_blank"
+										rel="noopener noreferrer"
+										aria-label="Instagram"
+										className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white/75 transition-colors hover:border-white/40 hover:text-white"
+									>
+										<LandingInstagramIcon size={16} />
+									</a>
+								) : null}
+							</div>
+							<p className="mt-6 text-xs leading-relaxed text-white/45">
+								© {year} {LANDING_COMPANY_NAME}. {LANDING_PRODUCT_NAME} es un producto de {LANDING_COMPANY_NAME}.
+								<br />
+								{LABS_HOME.footerNote}
+							</p>
+						</div>
 					</div>
-					<nav aria-label="Pie de página" className="grid grid-cols-2 gap-x-12 gap-y-3 text-sm sm:grid-cols-3">
-						<Link href="#servicios" className="text-[#3a3a44] hover:text-[#15151a]">
-							Servicios
-						</Link>
-						<Link href="#proyectos" className="text-[#3a3a44] hover:text-[#15151a]">
-							Proyectos
-						</Link>
-						<Link href={posPath} className="text-[#3a3a44] hover:text-[#15151a]">
-							{LANDING_PRODUCT_NAME}
-						</Link>
-						<Link href="/sobre-godcode" className="text-[#3a3a44] hover:text-[#15151a]">
-							Sobre nosotros
-						</Link>
-						{linkedin ? (
-							<a href={linkedin.href} target="_blank" rel="noopener noreferrer" className="text-[#3a3a44] hover:text-[#15151a]">
-								LinkedIn
-							</a>
-						) : null}
-						{instagram ? (
-							<a href={instagram.href} target="_blank" rel="noopener noreferrer" className="text-[#3a3a44] hover:text-[#15151a]">
-								Instagram
-							</a>
-						) : null}
-						<Link href="/onboarding/terminos" className="text-[#3a3a44] hover:text-[#15151a]">
-							Términos
-						</Link>
-						<Link href="/onboarding/privacidad" className="text-[#3a3a44] hover:text-[#15151a]">
-							Privacidad
-						</Link>
-					</nav>
-				</div>
-				<div className="mx-auto max-w-6xl pt-8 text-xs text-[#8e8e93]">
-					© {year} {LANDING_COMPANY_NAME}. {LANDING_PRODUCT_NAME} es un producto de {LANDING_COMPANY_NAME}.
+					<p
+						aria-hidden
+						className="labs-wordmark pointer-events-none -mx-7 -mb-[0.17em] mt-12 select-none whitespace-nowrap pl-1 text-[clamp(5rem,20vw,19rem)] font-bold leading-[0.85] tracking-[-0.06em] sm:-mx-12 sm:mt-16"
+					>
+						{LABS_HOME.footerWordmark}
+					</p>
 				</div>
 			</footer>
 		</div>
@@ -556,120 +720,70 @@ function Eyebrow({ children }: { children: ReactNode }) {
 }
 
 /**
- * Pantalla de muestra de cada servicio, dibujada solo con CSS: una web, un panel, una tienda,
- * una automatización y el mantenimiento. Ilustraciones, no clientes; van ocultas a lectores de pantalla.
+ * La imagen de cada tarjeta de servicio: una captura real de algo que construimos, en un marco de
+ * teléfono o de navegador (`service.image`). Mantenimiento no tiene pantalla: muestra lo que corre
+ * de verdad sobre nuestro código en cada cambio.
  */
-function ServiceArt({ id, index }: { id: string; index: number }) {
+function ServiceArt({ service, index }: { service: LabsService; index: number }) {
 	const tint = TINTS[index % TINTS.length];
+	const image = service.image;
 	return (
-		<div aria-hidden className={cn("relative h-44 overflow-hidden", tint)}>
-			<span className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(20,8,90,0.12)_1px,transparent_1px)] [background-size:18px_18px] [mask-image:radial-gradient(70%_70%_at_80%_20%,#000,transparent)]" />
-			{id === "sitios-web" ? (
-				<div className="absolute inset-x-8 bottom-0 top-8 rounded-t-2xl bg-white p-4 shadow-[0_20px_40px_-24px_rgba(20,8,90,0.5)]">
-					<div className="flex gap-1.5">
-						<span className="h-2 w-2 rounded-full bg-[#ff7a3d]" />
-						<span className="h-2 w-2 rounded-full bg-[#ffd33d]" />
-						<span className="h-2 w-2 rounded-full bg-[#22c58b]" />
-					</div>
-					<span className="mt-4 block h-3 w-2/3 rounded-full bg-[#15151a]" />
-					<span className="mt-2 block h-2 w-5/6 rounded-full bg-[#e8e8ef]" />
-					<span className="mt-1.5 block h-2 w-1/2 rounded-full bg-[#e8e8ef]" />
-					<span className="mt-4 inline-block h-7 w-24 rounded-full bg-[#4f5bff]" />
-				</div>
-			) : null}
-			{id === "sistemas-a-medida" ? (
-				<div className="absolute inset-x-8 bottom-0 top-8 flex overflow-hidden rounded-t-2xl bg-white shadow-[0_20px_40px_-24px_rgba(20,8,90,0.5)]">
-					<div className="w-14 space-y-2 bg-[#15151a] p-3">
-						<span className="block h-2 w-full rounded-full bg-white/80" />
-						<span className="block h-2 w-full rounded-full bg-white/30" />
-						<span className="block h-2 w-full rounded-full bg-white/30" />
-						<span className="block h-2 w-full rounded-full bg-white/30" />
-					</div>
-					<div className="flex-1 space-y-2 p-4">
-						{[82, 64, 70, 48].map((width, row) => (
-							<div key={row} className="flex items-center gap-2">
-								<span className={cn("h-2 w-2 rounded-full", row === 1 ? "bg-[#ff5fa8]" : "bg-[#22c58b]")} />
-								<span className="h-2 rounded-full bg-[#e8e8ef]" style={{ width: `${width}%` }} />
-							</div>
-						))}
-					</div>
-				</div>
-			) : null}
-			{id === "tiendas-y-pedidos" ? (
-				<div className="absolute inset-x-8 bottom-0 top-8 grid grid-cols-2 gap-3 rounded-t-2xl bg-white p-4 shadow-[0_20px_40px_-24px_rgba(20,8,90,0.5)]">
-					{["#4f5bff", "#ff5fa8", "#ffd33d", "#ff7a3d"].map((color) => (
-						<div key={color} className="rounded-xl border border-[#e8e8ef] p-2">
-							<span className="block h-10 rounded-lg" style={{ background: `linear-gradient(135deg, ${color}, ${color}99)` }} />
-							<span className="mt-2 block h-2 w-3/4 rounded-full bg-[#e8e8ef]" />
-						</div>
-					))}
-					<span className="absolute right-3 top-3 inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-[#15151a] px-2 text-[11px] font-semibold text-white">
-						3
-					</span>
-				</div>
-			) : null}
-			{id === "integraciones" ? (
-				<div className="absolute inset-x-8 top-1/2 flex -translate-y-1/2 items-center justify-between">
-					{["WhatsApp", "Tu sistema", "Planilla"].map((node, position) => (
-						<Fragment key={node}>
-							{position > 0 ? <span className="h-0.5 flex-1 bg-[repeating-linear-gradient(90deg,#15151a_0_6px,transparent_6px_12px)] opacity-40" /> : null}
-							<span
-								className={cn(
-									"rounded-full px-3 py-2 text-xs font-semibold shadow-[0_14px_30px_-16px_rgba(20,8,90,0.5)]",
-									position === 1 ? "bg-[#15151a] text-white" : "bg-white text-[#15151a]",
-								)}
-							>
-								{node}
+		<div className={cn("relative h-48 overflow-hidden", tint)}>
+			<span
+				aria-hidden
+				className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(20,8,90,0.12)_1px,transparent_1px)] [background-size:18px_18px] [mask-image:radial-gradient(70%_70%_at_80%_20%,#000,transparent)]"
+			/>
+			{image?.frame === "browser" ? (
+				<BrowserFrame screen={image} className="absolute inset-x-8 top-8" sizes="(min-width: 640px) 288px, 240px" />
+			) : image ? (
+				<PhoneFrame screen={image} cut className="absolute left-1/2 top-7 w-44 -translate-x-1/2" sizes="176px" />
+			) : (
+				<ul className="absolute inset-x-8 top-8 space-y-2.5 rounded-t-2xl bg-white p-4 text-xs text-[#3a3a44] shadow-[0_20px_40px_-24px_rgba(20,8,90,0.5)]">
+					{MAINTENANCE_CHECKS.map((item) => (
+						<li key={item} className="flex items-center gap-2">
+							<span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#e3f8ee] text-[#15804f]">
+								<Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden />
 							</span>
-						</Fragment>
+							{item}
+						</li>
 					))}
-				</div>
-			) : null}
-			{id === "mantenimiento" ? (
-				<div className="absolute inset-x-8 bottom-0 top-8 rounded-t-2xl bg-white p-4 shadow-[0_20px_40px_-24px_rgba(20,8,90,0.5)]">
-					<div className="flex items-center justify-between text-xs">
-						<span className="font-semibold text-[#15151a]">Disponibilidad</span>
-						<span className="rounded-full bg-[#e3f8ee] px-2 py-0.5 font-semibold text-[#15804f]">En línea</span>
-					</div>
-					<div className="mt-3 flex gap-1">
-						{Array.from({ length: 24 }, (_, day) => (
-							<span key={day} className={cn("h-6 flex-1 rounded-sm", day === 9 ? "bg-[#ffd33d]" : "bg-[#22c58b]")} />
-						))}
-					</div>
-					<div className="mt-3 flex items-center gap-2 text-xs text-[#6b6b76]">
-						<span className="rounded-full bg-[#f4f4f8] px-2 py-0.5 font-medium text-[#15151a]">v2.4</span>
-						<ArrowRight className="h-3 w-3" />
-						<span className="rounded-full bg-[#4f5bff] px-2 py-0.5 font-medium text-white">v2.5</span>
-						<span>actualización aplicada</span>
-					</div>
-				</div>
-			) : null}
+				</ul>
+			)}
 		</div>
 	);
 }
 
-/** Cabecera de la tarjeta de proyecto: una ventana de navegador de muestra sobre un fondo de color. */
+/** Cabecera de la tarjeta de proyecto: la captura real del sitio en una ventana de navegador; sin captura, una ventana de muestra con el dominio. */
 function ProjectArt({ project, index }: { project: LabsProject; index: number }) {
 	const external = project.href?.startsWith("http");
 	const address = external ? safeHostname(project.href!) : `${LANDING_PRODUCT_NAME.toLowerCase().replace(/\s+/g, "")}.app`;
 	const gradient = index % 2 === 0 ? "bg-[linear-gradient(135deg,#6a5cff_0%,#4a2fd8_60%,#36219f_100%)]" : "bg-[linear-gradient(135deg,#ff7a3d_0%,#ff5fa8_60%,#c7368a_100%)]";
 	return (
-		<div aria-hidden className={cn("relative h-56 overflow-hidden", gradient)}>
+		<div aria-hidden={!project.image} className={cn("relative h-56 overflow-hidden", gradient)}>
 			<span className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:20px_20px] [mask-image:radial-gradient(70%_70%_at_20%_20%,#000,transparent)]" />
-			<div className="absolute inset-x-10 bottom-0 top-10 rounded-t-2xl bg-white p-5 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)] transition-transform duration-500 group-hover:-translate-y-2">
-				<div className="flex items-center gap-2">
-					<span className="h-2 w-2 rounded-full bg-[#ff7a3d]" />
-					<span className="h-2 w-2 rounded-full bg-[#ffd33d]" />
-					<span className="h-2 w-2 rounded-full bg-[#22c58b]" />
-					<span className="ml-2 flex-1 truncate rounded-full bg-[#f4f4f8] px-3 py-1 text-[11px] text-[#6b6b76]">{address}</span>
+			{project.image ? (
+				<BrowserFrame
+					screen={project.image}
+					address={address}
+					className="absolute inset-x-10 top-10 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)] transition-transform duration-500 group-hover:-translate-y-2"
+					sizes="(min-width: 1024px) 480px, 90vw"
+				/>
+			) : (
+				<div className="absolute inset-x-10 bottom-0 top-10 rounded-t-2xl bg-white p-5 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)] transition-transform duration-500 group-hover:-translate-y-2">
+					<div className="flex items-center gap-2">
+						<span className="h-2 w-2 rounded-full bg-[#ff7a3d]" />
+						<span className="h-2 w-2 rounded-full bg-[#ffd33d]" />
+						<span className="h-2 w-2 rounded-full bg-[#22c58b]" />
+						<span className="ml-2 flex-1 truncate rounded-full bg-[#f4f4f8] px-3 py-1 text-[11px] text-[#6b6b76]">{address}</span>
+					</div>
+					<p className="mt-5 text-xl font-semibold tracking-tight text-[#15151a]">{project.name}</p>
+					<span className="mt-3 block h-2 w-5/6 rounded-full bg-[#e8e8ef]" />
+					<span className="mt-1.5 block h-2 w-3/5 rounded-full bg-[#e8e8ef]" />
+					{project.linkLabel ? (
+						<span className="mt-4 inline-block rounded-full bg-[#15151a] px-3 py-1.5 text-[11px] font-semibold text-white">{project.linkLabel}</span>
+					) : null}
 				</div>
-				<p className="mt-5 text-xl font-semibold tracking-tight text-[#15151a]">{project.name}</p>
-				<span className="mt-3 block h-2 w-5/6 rounded-full bg-[#e8e8ef]" />
-				<span className="mt-1.5 block h-2 w-3/5 rounded-full bg-[#e8e8ef]" />
-				{project.linkLabel ? (
-					<span className="mt-4 inline-block rounded-full bg-[#15151a] px-3 py-1.5 text-[11px] font-semibold text-white">{project.linkLabel}</span>
-				) : null}
-			</div>
+			)}
 		</div>
 	);
 }
