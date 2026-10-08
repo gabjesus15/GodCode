@@ -630,7 +630,8 @@
           "extras": "Extras",
           "beverages": "Getränke",
           "changes": "Änderungen",
-          "generalExtra": "Extra zur Bestellung"
+          "generalExtra": "Extra zur Bestellung",
+          "bankTransferHintChat": "Sobald die Überweisung erledigt ist, schick den Beleg in diesem Chat."
         },
         "intake": {
           "paused": "Bestellungen pausiert",

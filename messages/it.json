@@ -630,7 +630,8 @@
           "extras": "Extra",
           "beverages": "Bevande",
           "changes": "Modifiche",
-          "generalExtra": "Extra dell'ordine"
+          "generalExtra": "Extra dell'ordine",
+          "bankTransferHintChat": "Completato il bonifico, invia la ricevuta in questa chat."
         },
         "intake": {
           "paused": "Ordini in pausa",

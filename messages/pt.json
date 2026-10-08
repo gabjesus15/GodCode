@@ -630,7 +630,8 @@
           "extras": "Extras",
           "beverages": "Bebidas",
           "changes": "Alterações",
-          "generalExtra": "Extra do pedido"
+          "generalExtra": "Extra do pedido",
+          "bankTransferHintChat": "Quando concluir a transferência, envie o comprovante por este chat."
         },
         "intake": {
           "paused": "Pedidos pausados",

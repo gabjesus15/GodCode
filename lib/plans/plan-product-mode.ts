@@ -90,3 +90,17 @@ export function companyPlanFeatures(company: { plans?: unknown } | null | undefi
 export function companyHasPublicMenu(company: { plans?: unknown } | null | undefined): boolean {
 	return planHasPublicMenu(companyPlanFeatures(company));
 }
+
+/**
+ * Sucursales que cuentan como abiertas antes de mirar el horario. Normalmente son las que
+ * tienen la caja abierta; con «solo menú digital» no hay caja, así que manda solo el
+ * horario de cada sucursal (si no, el menú las mostraría siempre cerradas).
+ */
+export function openBranchCandidateIds(
+	planFeatures: unknown,
+	openShiftBranchIds: string[],
+	branches: Array<{ id: string | number }>,
+): string[] {
+	if (resolvePlanProductMode(planFeatures) !== "menu_only") return openShiftBranchIds;
+	return branches.map((branch) => String(branch.id));
+}

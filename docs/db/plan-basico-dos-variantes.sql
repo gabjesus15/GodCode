@@ -88,6 +88,8 @@ select
 	(coalesce(b.features, '{}'::jsonb) - 'ceo_tabs')
 		|| jsonb_build_object(
 			'product_mode', 'panel_only',
+			-- Sin menú público, el dominio propio no tiene a dónde apuntar.
+			'blocked_addons', jsonb_build_array('custom_domain'),
 			'ceo_tabs', jsonb_build_array(
 				'orders', 'caja', 'analytics', 'local_expenses', 'categories', 'products', 'inventory',
 				'beverages', 'extras', 'menu_modifiers', 'menu_carousel', 'clients', 'users',

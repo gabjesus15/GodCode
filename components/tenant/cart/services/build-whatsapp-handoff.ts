@@ -38,6 +38,7 @@ export function resolveWhatsAppCopy(t: WsTranslate, idName: string): Partial<WsM
 		account: t("ws.account"),
 		holder: t("ws.holder"),
 		bankTransferHint: t("ws.bankTransferHint"),
+		bankTransferHintChat: t("ws.bankTransferHintChat"),
 		note: t("ws.note"),
 		taxIncluded: t("ws.taxIncluded"),
 		taxAdded: t("ws.taxAdded"),

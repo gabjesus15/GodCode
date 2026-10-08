@@ -630,7 +630,8 @@
           "extras": "Extras",
           "beverages": "Drinks",
           "changes": "Changes",
-          "generalExtra": "Order extra"
+          "generalExtra": "Order extra",
+          "bankTransferHintChat": "Once you complete the transfer, send the receipt in this chat."
         },
         "intake": {
           "paused": "Orders paused",

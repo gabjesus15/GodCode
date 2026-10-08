@@ -72,6 +72,8 @@ import { CartSuccessView } from "./cart-success-view";
 import "../../../../app/[subdomain]/styles/Cart.css";
 
 const WHATSAPP_HANDOFF_DELAY_MS = 1500;
+/** Solo WhatsApp: no hay pedido donde guardar un comprobante; se manda por el chat. */
+const NO_RECEIPT_METHODS: ReadonlySet<string> = new Set();
 
 /** Orden de los pasos: decide si un cambio se anima "hacia adelante" o "hacia atrás". */
 const STEP_ORDER = ["summary", "fulfillment", "payment:pick", "payment:detail", "payment:form", "success"];
@@ -204,7 +206,8 @@ export function CartModal({
 	);
 
 	// --- Formulario, dirección y validación ----------------------------------------
-	const requiresReceipt = paymentMethodRequiresReceipt(flow.paymentMethodKey, live.receiptRequiredMethods);
+	const receiptRequiredMethods = shouldPersistOrderToPanel(orderChannel) ? live.receiptRequiredMethods : NO_RECEIPT_METHODS;
+	const requiresReceipt = paymentMethodRequiresReceipt(flow.paymentMethodKey, receiptRequiredMethods);
 	const patchClientDraft = useCallback(
 		(draft: { name: string; phone: string; rut: string }) => flow.patchCheckoutSession({ clientDraft: draft }),
 		[flow],
@@ -653,7 +656,7 @@ export function CartModal({
 			<CartPaymentBody
 				methods={paymentMethods}
 				paymentMethodKey={paymentMethodKey}
-				receiptRequiredMethods={live.receiptRequiredMethods}
+				receiptRequiredMethods={receiptRequiredMethods}
 				stage={paymentStage}
 				onPickMethod={flow.pickPaymentMethod}
 				activeInfo={activeInfo}

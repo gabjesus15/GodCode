@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	MENU_ONLY_CEO_TABS,
+	openBranchCandidateIds,
 	companyHasPublicMenu,
 	resolvePlanOrderChannel,
 	resolvePlanProductMode,
@@ -52,5 +53,13 @@ describe("MENU_ONLY_CEO_TABS", () => {
 		for (const tab of ["orders", "caja", "analytics", "clients", "users"]) {
 			expect(MENU_ONLY_CEO_TABS).not.toContain(tab);
 		}
+	});
+});
+
+describe("openBranchCandidateIds", () => {
+	it("uses open cash shifts unless the plan is menu only", () => {
+		const branches = [{ id: "a" }, { id: 2 }];
+		expect(openBranchCandidateIds({}, ["a"], branches)).toEqual(["a"]);
+		expect(openBranchCandidateIds({ product_mode: "menu_only" }, [], branches)).toEqual(["a", "2"]);
 	});
 });

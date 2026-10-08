@@ -17,6 +17,8 @@ import { MAIN_DOMAIN_RESERVED_PATH_SEGMENTS } from "@/lib/tenant/reserved-path-s
 import { slugify } from "@/utils/slugify";
 import { normalizeBaseDomain } from "@/utils/tenant-url";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
+import { resolvePlanProductMode } from "@/lib/plans/plan-product-mode";
+import { mergeMenuSettingsIntoIntegration } from "@/lib/tenant/menu-settings";
 
 /** @service-role super-admin */
 
@@ -104,7 +106,7 @@ export async function PUT(
 
   const { data: fresh, error: freshError } = await supabaseAdmin
     .from("companies")
-    .select("id,name,theme_config,updated_at,public_slug,subscription_status,subscription_ends_at,plan_id,custom_domain")
+    .select("id,name,theme_config,integration_settings,updated_at,public_slug,subscription_status,subscription_ends_at,plan_id,custom_domain")
     .eq("id", companyId)
     .maybeSingle();
 
@@ -161,6 +163,12 @@ export async function PUT(
       const { data: planRow } = await supabaseAdmin.from("plans").select("id,name,features").eq("id", planId).maybeSingle();
       if (!planRow) return NextResponse.json({ error: "Ese plan no existe." }, { status: 400 });
       nextPanelAccess = buildCompanyPanelAccessFromPlanFeatures(planRow.features);
+      // «Solo menú digital»: el canal queda guardado en WhatsApp (ver syncCompanyPanelAccessFromPlanId).
+      if (resolvePlanProductMode(planRow.features) === "menu_only") {
+        companyUpdate.integration_settings = mergeMenuSettingsIntoIntegration(fresh.integration_settings, {
+          orderChannel: "whatsapp_only",
+        });
+      }
       planName = String(planRow.name ?? "").toLowerCase();
     } else {
       nextPanelAccess = [];

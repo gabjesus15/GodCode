@@ -630,7 +630,8 @@
           "extras": "Suppléments",
           "beverages": "Boissons",
           "changes": "Modifications",
-          "generalExtra": "Supplément de la commande"
+          "generalExtra": "Supplément de la commande",
+          "bankTransferHintChat": "Une fois le virement effectué, envoyez le justificatif dans cette conversation."
         },
         "intake": {
           "paused": "Commandes en pause",

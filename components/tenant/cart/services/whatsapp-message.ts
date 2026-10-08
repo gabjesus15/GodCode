@@ -61,6 +61,8 @@ export type WsMessageCopy = {
   account: string;
   holder: string;
   bankTransferHint: string;
+  /** Pedido solo por WhatsApp: el comprobante va por el mismo chat. */
+  bankTransferHintChat: string;
   note: string;
   couponLabel: string;
   taxLabel: string;
@@ -97,6 +99,7 @@ export const DEFAULT_WS_MESSAGE_COPY: WsMessageCopy = {
   account: "Cuenta",
   holder: "Titular",
   bankTransferHint: "Cuando completes la transferencia, adjunta el comprobante en tu pedido.",
+  bankTransferHintChat: "Cuando completes la transferencia, envía el comprobante por este chat.",
   note: "Nota",
   couponLabel: "Cupón",
   taxLabel: "Impuesto (IVA)",
@@ -234,7 +237,7 @@ export function generateWSMessage(
     if (field("tipo_cuenta")) out.push(`${c.accountType}: ${field("tipo_cuenta")}`);
     if (field("nro_cuenta")) out.push(`${c.account}: ${field("nro_cuenta")}`);
     if (field("titular")) out.push(`${c.holder}: ${field("titular")}`);
-    out.push(c.bankTransferHint);
+    out.push(meta?.webReference ? c.bankTransferHintChat : c.bankTransferHint);
   }
 
   if (note && note.trim()) {
