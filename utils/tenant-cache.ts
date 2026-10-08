@@ -1,9 +1,19 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { createSupabasePublicServerClient } from "./supabase/server";
+import { companyHasPublicMenu } from "@/lib/plans/plan-product-mode";
 
+/**
+ * Negocio de las páginas públicas (`/{slug}`, menú, mi cuenta, íconos, llms.txt…).
+ * Con el plan «solo panel CEO» no hay nada público: se trata como si no existiera.
+ */
 export const getCachedCompany = cache(async (subdomain: string) => {
-	return unstable_cache(
+	const company = await loadCachedCompany(subdomain);
+	return company && companyHasPublicMenu(company) ? company : null;
+});
+
+const loadCachedCompany = (subdomain: string) =>
+	unstable_cache(
 		async () => {
 			const supabase = createSupabasePublicServerClient();
 			const { data: company } = await supabase
@@ -20,5 +30,4 @@ export const getCachedCompany = cache(async (subdomain: string) => {
 			revalidate: 300, // 5 minutes cache
 		}
 	)();
-});
 

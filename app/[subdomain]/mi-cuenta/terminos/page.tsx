@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 
 import { getCachedCompany } from "../../../../utils/tenant-cache";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
-import { companyHasPublicMenu } from "@/lib/plans/plan-product-mode";
 import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { resolveStorefrontThemeAssets } from "@/lib/storage/storefront-branding";
@@ -33,7 +32,6 @@ export default async function TenantAccountTermsPage({ params }: TenantAccountTe
   if (!company || !isTenantSubscriptionAccessible(company)) {
     notFound();
   }
-  if (!companyHasPublicMenu(company)) notFound();
 
   const theme = await resolveStorefrontThemeAssets(
     normalizeStoreThemeConfig(company.theme_config, company.name ?? resolvedParams.subdomain),

@@ -3,7 +3,6 @@ import "server-only";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getCachedCompany } from "@/utils/tenant-cache";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
-import { companyHasPublicMenu } from "@/lib/plans/plan-product-mode";
 import { resolveCheckoutCountryCode } from "@/lib/geo/country-forms";
 
 import { menuAccountErrors } from "./errors";
@@ -31,7 +30,6 @@ export async function resolveCompanyForMenuAccount(
 	if (!company || !isTenantSubscriptionAccessible(company)) {
 		throw menuAccountErrors.companyNotFound();
 	}
-	if (!companyHasPublicMenu(company)) throw menuAccountErrors.companyNotFound();
 
 	return {
 		id: String(company.id),

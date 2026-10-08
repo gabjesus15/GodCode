@@ -18,6 +18,7 @@ import {
 	resolveOnlineOrderingEnabled,
 } from "@/lib/tenant/menu-settings";
 import { resolveSelectedMenuBranch } from "@/lib/tenant/menu/menu-helpers";
+import { resolvePlanOrderChannel } from "@/lib/plans/plan-product-mode";
 import { filterOpenBranchIdsByHours } from "@/lib/tenant/business-hours";
 import { serializeJsonLd } from "@/lib/seo/serialize-json-ld";
 import {
@@ -26,7 +27,6 @@ import {
 	resolveTenantDisplayName,
 } from "@/lib/tenant/seo-metadata";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
-import { companyHasPublicMenu, resolvePlanOrderChannel } from "@/lib/plans/plan-product-mode";
 import { groupProductSizeRows, type ProductSizeOption } from "@/lib/tenant/product-sizes";
 import { groupProductVariantRows, type ProductVariantGroup } from "@/lib/tenant/product-variants";
 
@@ -220,10 +220,6 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
   // Misma regla en todo lo público: una cancelación sigue online hasta el vencimiento y
   // un plan vencido se corta aunque el cron todavía no lo haya suspendido.
   if (!isTenantSubscriptionAccessible(company)) {
-    notFound();
-  }
-  // «Solo panel CEO»: el plan no incluye menú público.
-  if (!companyHasPublicMenu(company)) {
     notFound();
   }
 
