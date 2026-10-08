@@ -52,6 +52,13 @@ export type OnboardingPaymentCopy = {
     uploadError: string;
   };
   paymentInstructionsFallback: Record<string, string>;
+  /** «Arma y paga»: el alta viene de una tienda ya armada en vista previa. */
+  draft: {
+    reviewBody: string;
+    paidTitle: string;
+    paidBody: string;
+    backToStore: string;
+  };
   /** Paso 3 rediseñado: resumen, meses, próximos pasos y datos de transferencia. */
   ui: {
     summaryTitle: string;
@@ -153,6 +160,12 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       phone: "Teléfono",
       bank: "Banco",
       account_number: "Número de cuenta",
+    },
+    draft: {
+      reviewBody: "Te avisamos por correo apenas lo validemos y tu tienda se publica sola. Mientras tanto puedes seguir armándola.",
+      paidTitle: "Tu tienda ya está abierta",
+      paidBody: "Tus clientes ya pueden entrar con tu link y hacerte pedidos.",
+      backToStore: "Volver a mi tienda",
     },
     ui: {
       summaryTitle: "Tu pedido",
@@ -278,6 +291,12 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       bank: "Bank",
       account_number: "Account number",
     },
+    draft: {
+      reviewBody: "We'll email you as soon as we validate it, and your store will go live on its own. Meanwhile you can keep building it.",
+      paidTitle: "Your store is open",
+      paidBody: "Your customers can now visit your link and place orders.",
+      backToStore: "Back to my store",
+    },
     ui: {
       summaryTitle: "Your order",
       planLine: "Plan {name}",
@@ -401,6 +420,12 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       phone: "Telefone",
       bank: "Banco",
       account_number: "Número da conta",
+    },
+    draft: {
+      reviewBody: "Avisaremos por e-mail assim que validarmos, e sua loja será publicada automaticamente. Enquanto isso, você pode continuar montando.",
+      paidTitle: "Sua loja já está aberta",
+      paidBody: "Seus clientes já podem entrar pelo seu link e fazer pedidos.",
+      backToStore: "Voltar para minha loja",
     },
     ui: {
       summaryTitle: "Seu pedido",
@@ -526,6 +551,12 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       bank: "Banque",
       account_number: "Numéro de compte",
     },
+    draft: {
+      reviewBody: "Nous vous écrirons dès sa validation et votre boutique sera publiée automatiquement. En attendant, vous pouvez continuer à la préparer.",
+      paidTitle: "Votre boutique est ouverte",
+      paidBody: "Vos clients peuvent déjà accéder à votre lien et passer commande.",
+      backToStore: "Retour à ma boutique",
+    },
     ui: {
       summaryTitle: "Votre commande",
       planLine: "Offre {name}",
@@ -650,6 +681,12 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       bank: "Bank",
       account_number: "Kontonummer",
     },
+    draft: {
+      reviewBody: "Wir schreiben Ihnen, sobald wir ihn geprüft haben, und Ihr Shop geht automatisch online. Bis dahin können Sie ihn weiter einrichten.",
+      paidTitle: "Ihr Shop ist geöffnet",
+      paidBody: "Ihre Kunden können jetzt über Ihren Link bestellen.",
+      backToStore: "Zurück zu meinem Shop",
+    },
     ui: {
       summaryTitle: "Ihre Bestellung",
       planLine: "Plan {name}",
@@ -773,6 +810,12 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       phone: "Telefono",
       bank: "Banca",
       account_number: "Numero di conto",
+    },
+    draft: {
+      reviewBody: "Ti scriveremo appena lo convalidiamo e il tuo negozio verrà pubblicato da solo. Nel frattempo puoi continuare a prepararlo.",
+      paidTitle: "Il tuo negozio è aperto",
+      paidBody: "I tuoi clienti possono già entrare dal tuo link e fare ordini.",
+      backToStore: "Torna al mio negozio",
     },
     ui: {
       summaryTitle: "Il tuo ordine",

@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
+import { isStoreDraftPending, storeDraftHasMenuReads, withStoreDraftMenuRead } from "@/lib/tenant/store-draft";
 import { extractMenuDraft, isMenuImportEnabled, type MenuImportSource } from "@/lib/menu/ai-menu-import";
 import { xlsxToText } from "@/lib/menu/spreadsheet-to-text";
 
-/**
- * Lee una carta subida por el dueño y devuelve el borrador para revisar. No escribe nada:
+/** @service-role customer-account
+ *
+ * Lee una carta subida por el dueño y devuelve el borrador para revisar. No escribe el menú:
  * la creación va por `POST /api/customer-account/menu` con lo que el dueño confirmó.
+ *
+ * Con service role solo se toca `theme_config` de ctx.companyId: una tienda en vista previa
+ * («Arma y paga») trae una lectura gratis y aquí se cuenta. Con el plan pagado no hay tope
+ * más allá del límite por hora.
  */
 
 export const maxDuration = 60;
@@ -50,6 +57,22 @@ export async function POST(req: NextRequest) {
 	const limited = await assertCustomerAccountRateLimit(ctx.companyId, "menu_import", 15, 60 * 60_000);
 	if (limited) return limited;
 
+	const { data: company } = await supabaseAdmin
+		.from("companies")
+		.select("subscription_status,theme_config")
+		.eq("id", ctx.companyId)
+		.maybeSingle();
+	const draft = isStoreDraftPending(company);
+	if (draft && !storeDraftHasMenuReads(company?.theme_config)) {
+		return NextResponse.json(
+			{
+				error: "Ya usaste tu lectura gratis con IA. Sigue cargando tu menú a mano o publica tu tienda para leer más cartas.",
+				code: "draft_limit",
+			},
+			{ status: 402 },
+		);
+	}
+
 	const form = await req.formData().catch(() => null);
 	const file = form?.get("file");
 	if (!(file instanceof File) || file.size === 0) {
@@ -71,6 +94,17 @@ export async function POST(req: NextRequest) {
 	if (!result.ok) {
 		const status = result.code === "rate_limited" ? 429 : result.code === "unavailable" ? 502 : 422;
 		return NextResponse.json({ error: result.error, code: result.code }, { status });
+	}
+	// Se cuenta solo la lectura que salió bien, sobre el tema recién leído (la lectura tarda
+	// y el asistente pudo guardar cambios mientras tanto).
+	if (draft) {
+		const { data: fresh } = await supabaseAdmin.from("companies").select("theme_config").eq("id", ctx.companyId).maybeSingle();
+		if (fresh) {
+			await supabaseAdmin
+				.from("companies")
+				.update({ theme_config: withStoreDraftMenuRead(fresh.theme_config) })
+				.eq("id", ctx.companyId);
+		}
 	}
 	return NextResponse.json({ draft: result.draft, dropped: result.dropped, truncated: result.truncated, notes: result.notes });
 }

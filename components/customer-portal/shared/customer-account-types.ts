@@ -176,6 +176,8 @@ export type CustomerAccountClientProps = {
   /** Lo que le falta a la tienda para vender (Resumen). */
   firstSteps?: FirstStep[];
   menuSetup?: MenuSetupSummary;
+  /** «Arma y paga»: la tienda sigue en vista previa (aún no se pagó un plan). */
+  storeDraft?: { paymentInReview: boolean; storeUrl: string | null } | null;
 };
 
 /** Estado del menú para la sección «Mi menú». */

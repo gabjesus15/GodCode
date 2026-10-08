@@ -30,6 +30,8 @@ export const metadata: Metadata = {
 const COMPLETE_COPY = {
   es: {
     title: "Elige el plan de {business}",
+    draftTitle: "Elige tu plan para abrir tu tienda",
+    draftSubtitle: "{business} se abre a tus clientes apenas se confirme el pago. Puedes cambiar de plan cuando quieras.",
     subtitle: "Todos incluyen menú digital, pedidos online y caja. Puedes cambiar de plan cuando quieras.",
     backHome: "Volver al inicio",
     errorTitle: "Error de registro",
@@ -50,6 +52,8 @@ const COMPLETE_COPY = {
   },
   en: {
     title: "Choose a plan for {business}",
+    draftTitle: "Choose your plan to open your store",
+    draftSubtitle: "{business} opens to your customers as soon as the payment is confirmed. You can switch plans anytime.",
     subtitle: "Every plan includes a digital menu, online orders and POS. You can switch plans anytime.",
     backHome: "Back to start",
     errorTitle: "Registration error",
@@ -70,6 +74,8 @@ const COMPLETE_COPY = {
   },
   pt: {
     title: "Escolha o plano de {business}",
+    draftTitle: "Escolha seu plano para abrir sua loja",
+    draftSubtitle: "{business} abre para seus clientes assim que o pagamento for confirmado. Você pode trocar de plano quando quiser.",
     subtitle: "Todos incluem cardápio digital, pedidos online e caixa. Você pode trocar de plano quando quiser.",
     backHome: "Voltar ao início",
     errorTitle: "Erro de cadastro",
@@ -90,6 +96,8 @@ const COMPLETE_COPY = {
   },
   fr: {
     title: "Choisissez l’offre de {business}",
+    draftTitle: "Choisissez votre offre pour ouvrir votre boutique",
+    draftSubtitle: "{business} ouvre à vos clients dès que le paiement est confirmé. Vous pouvez changer d’offre à tout moment.",
     subtitle: "Toutes incluent menu digital, commandes en ligne et caisse. Vous pouvez changer d’offre à tout moment.",
     backHome: "Retour au début",
     errorTitle: "Erreur d’inscription",
@@ -110,6 +118,8 @@ const COMPLETE_COPY = {
   },
   de: {
     title: "Wählen Sie den Plan für {business}",
+    draftTitle: "Wählen Sie Ihren Plan, um Ihren Shop zu öffnen",
+    draftSubtitle: "{business} öffnet für Ihre Kunden, sobald die Zahlung bestätigt ist. Sie können den Plan jederzeit wechseln.",
     subtitle: "Alle enthalten digitale Speisekarte, Online-Bestellungen und Kasse. Sie können den Plan jederzeit wechseln.",
     backHome: "Zurück zum Start",
     errorTitle: "Registrierungsfehler",
@@ -130,6 +140,8 @@ const COMPLETE_COPY = {
   },
   it: {
     title: "Scegli il piano di {business}",
+    draftTitle: "Scegli il piano per aprire il tuo negozio",
+    draftSubtitle: "{business} apre ai clienti appena il pagamento è confermato. Puoi cambiare piano quando vuoi.",
     subtitle: "Tutti includono menu digitale, ordini online e cassa. Puoi cambiare piano quando vuoi.",
     backHome: "Torna all’inizio",
     errorTitle: "Errore di registrazione",
@@ -184,7 +196,7 @@ function ErrorCard({
     tone === "error" ? "bg-red-50 text-red-600" : tone === "review" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700";
   return (
     <main className="mx-auto w-full max-w-xl px-5 py-10 sm:px-8 sm:py-16">
-      <OnboardingStepBar current={2} compact />
+      <OnboardingStepBar current={3} compact />
       <div className="rounded-2xl border border-slate-200 p-6 sm:p-8" role={tone === "error" ? "alert" : "status"}>
         <span className={`flex h-11 w-11 items-center justify-center rounded-full ${iconClass}`}>
           <Icon className="h-5 w-5" aria-hidden />
@@ -286,9 +298,14 @@ export default async function OnboardingCompletePage({
     supabaseAdmin.from("plans").select("id,name,name_i18n,price,prices_by_continent,max_branches,marketing_lines,marketing_lines_i18n").eq("is_active", true).eq("is_public", true).order("price", { ascending: true }),
     supabaseAdmin.from("addons").select("id,slug,name,description,price_one_time,price_monthly,type,sort_order").eq("is_active", true).order("sort_order", { ascending: true }),
     supabaseAdmin.from("onboarding_application_addons").select("addon_id,quantity").eq("application_id", app.id),
-    // Cómo quedará el enlace de la tienda (el mismo cálculo que hace el alta al crearla).
-    resolveAvailablePublicSlug(supabaseAdmin, String(app.business_name ?? "")).catch(() => null),
+    // Cómo quedará el enlace de la tienda: el de la tienda en vista previa si ya la armó, o
+    // el mismo cálculo que hace el alta al crearla.
+    app.company_id
+      ? supabaseAdmin.from("companies").select("public_slug").eq("id", app.company_id).maybeSingle().then(({ data }) => (data?.public_slug as string | null) ?? null)
+      : resolveAvailablePublicSlug(supabaseAdmin, String(app.business_name ?? "")).catch(() => null),
   ]);
+  // «Arma y paga»: ya armó su tienda y viene a publicarla.
+  const fromDraft = Boolean(app.company_id);
 
   if (plansResult.error) {
     console.error("[ONBOARDING COMPLETE] Error al cargar planes:", plansResult.error);
@@ -317,14 +334,14 @@ export default async function OnboardingCompletePage({
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-12 lg:py-14">
-      <OnboardingStepBar current={2} />
+      <OnboardingStepBar current={3} />
 
       <div className="mb-10 max-w-2xl">
         <h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-          {copy.title.replace("{business}", businessName)}
+          {(fromDraft ? copy.draftTitle : copy.title).replace("{business}", businessName)}
         </h1>
         <p className="mt-3 text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">
-          {copy.subtitle}
+          {fromDraft ? copy.draftSubtitle.replace("{business}", businessName) : copy.subtitle}
         </p>
       </div>
 

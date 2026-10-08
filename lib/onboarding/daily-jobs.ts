@@ -4,6 +4,7 @@ import { runLifecycleEmails } from "@/lib/email/lifecycle-job";
 import { applyScheduledPlanChangesDue, suspendExpiredSubscriptions } from "./billing-activation";
 import { processDueBookingReminders } from "./booking-notifications";
 import { reconcileOnboarding, runVerificationJobs, type ReconcileSummary, type VerificationJobsSummary } from "./reconcile";
+import { runStoreDraftJobs, type StoreDraftJobsSummary } from "./store-draft-jobs";
 
 export type DailyJobsSummary = {
 	ok: boolean;
@@ -16,6 +17,7 @@ export type DailyJobsSummary = {
 	reminders: { mode: string; planned: number; sent: number; failed: number; stopped_early: boolean; errors: string[] };
 	onboarding: ReconcileSummary | { error: string };
 	verification: VerificationJobsSummary | { error: string };
+	store_drafts: StoreDraftJobsSummary | { error: string };
 };
 
 /**
@@ -49,6 +51,10 @@ export async function runDailySubscriptionJobs(params: {
 	const verification = await runVerificationJobs({ supabaseAdmin, now }).catch((e: unknown) => ({
 		error: e instanceof Error ? e.message : "Error en los recordatorios de verificación",
 	}));
+	// Tiendas en vista previa: abrir las pagadas que quedaron a medias y borrar las de 30 días.
+	const storeDrafts = await runStoreDraftJobs({ supabaseAdmin, now, deadlineMs: reconcileDeadline }).catch((e: unknown) => ({
+		error: e instanceof Error ? e.message : "Error con las tiendas en vista previa",
+	}));
 
 	let reminders: DailyJobsSummary["reminders"] = { mode: "off", planned: 0, sent: 0, failed: 0, stopped_early: false, errors: [] };
 	try {
@@ -77,5 +83,6 @@ export async function runDailySubscriptionJobs(params: {
 		reminders,
 		onboarding,
 		verification,
+		store_drafts: storeDrafts,
 	};
 }

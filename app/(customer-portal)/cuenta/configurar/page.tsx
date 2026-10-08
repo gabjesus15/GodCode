@@ -12,6 +12,7 @@ import { normalizeBusinessHours } from "@/lib/tenant/business-hours";
 import { requireCustomerPortalSession } from "@/lib/tenant/customer-portal-session";
 import { OWNER_SETUP_STEPS, type OwnerSetupStep } from "@/lib/tenant/owner-setup";
 import { resolveTenantPanelLoginUrl } from "@/lib/tenant/panel-url";
+import { isStoreDraftPending, readStoreDraft } from "@/lib/tenant/store-draft";
 import { getTenantMenuUrl } from "@/utils/tenant-url";
 
 /** @service-role tenant-session
@@ -28,14 +29,19 @@ function parseStep(raw: string | string[] | undefined): OwnerSetupStep {
 	return OWNER_SETUP_STEPS.find((step) => step === value) ?? "marca";
 }
 
-export default async function OwnerSetupPage({ searchParams }: { searchParams: Promise<{ paso?: string | string[] }> }) {
-	const initialStep = parseStep((await searchParams)?.paso);
+export default async function OwnerSetupPage({ searchParams }: { searchParams: Promise<{ paso?: string | string[]; abierta?: string | string[] }> }) {
+	const params = await searchParams;
+	const initialStep = parseStep(params?.paso);
 	const { membership } = await requireCustomerPortalSession();
 	const companyId = membership.companyId;
 
 	const [{ data: company }, { data: draft }, { data: branch }, { data: application }, menuStatus, { count: versionCount }] =
 		await Promise.all([
-			supabaseAdmin.from("companies").select("id,name,public_slug,custom_domain,country,theme_config").eq("id", companyId).maybeSingle(),
+			supabaseAdmin
+				.from("companies")
+				.select("id,name,public_slug,custom_domain,country,subscription_status,theme_config")
+				.eq("id", companyId)
+				.maybeSingle(),
 			supabaseAdmin.from("company_theme_drafts").select("theme_config").eq("company_id", companyId).maybeSingle(),
 			// La sucursal principal es la primera que se creó (la del alta).
 			supabaseAdmin
@@ -47,7 +53,7 @@ export default async function OwnerSetupPage({ searchParams }: { searchParams: P
 				.maybeSingle(),
 			supabaseAdmin
 				.from("onboarding_applications")
-				.select("sector")
+				.select("sector,payment_status,payment_reference_url")
 				.eq("company_id", companyId)
 				.order("created_at", { ascending: false })
 				.limit(1)
@@ -60,7 +66,14 @@ export default async function OwnerSetupPage({ searchParams }: { searchParams: P
 	const publicSlug = (company?.public_slug as string | null) ?? null;
 	const customDomain = (company?.custom_domain as string | null) ?? null;
 	const theme = normalizeStoreThemeConfig(draft?.theme_config ?? company?.theme_config ?? null, name);
-	const sector = (application as { sector?: string | null } | null)?.sector ?? null;
+	const app = application as { sector?: string | null; payment_status?: string | null; payment_reference_url?: string | null } | null;
+	const sector = app?.sector ?? null;
+	// «Arma y paga»: en vista previa, publicar lleva a pagar; al volver del pago, la celebración.
+	const storeDraft = isStoreDraftPending(company)
+		? { paymentInReview: app?.payment_status === "pending_validation" && Boolean(String(app?.payment_reference_url ?? "").trim()) }
+		: null;
+	const abierta = Array.isArray(params?.abierta) ? params.abierta[0] : params?.abierta;
+	const justOpened = !storeDraft && abierta === "1" && Boolean(readStoreDraft(company?.theme_config)?.openedAt);
 
 	const initial: OwnerSetupInitial = {
 		company: {
@@ -88,7 +101,9 @@ export default async function OwnerSetupPage({ searchParams }: { searchParams: P
 			: null,
 		storeUrl: publicSlug ? getTenantMenuUrl(publicSlug, customDomain) : "",
 		hasPublishedBefore: (versionCount ?? 0) > 0,
+		storeDraft,
+		justOpened,
 	};
 
-	return <OwnerSetupWizard initial={initial} initialStep={initialStep} />;
+	return <OwnerSetupWizard initial={initial} initialStep={justOpened ? "publicar" : initialStep} />;
 }

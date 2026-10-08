@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { createOwnerSetupApi, type OwnerSetupApi, type OwnerSetupLocalPatch } from "./api";
 import { computeEffectiveTheme, initialBrandColor, type BrandColorChoice } from "./effective-theme";
@@ -7,6 +7,7 @@ import { nextOwnerSetupStep, OWNER_SETUP_STEPS, ownerSetupStepIndex, previousOwn
 import type { LocalForm, OwnerSetupInitial, OwnerSetupMenuStatus } from "./types";
 
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import { trackEvent } from "@/lib/analytics/track-event";
 import { diffStoreTheme } from "@/lib/store-theme/store-theme-utils";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { businessHoursWeekFromScheduleText, hasAnyBusinessHours } from "@/lib/tenant/business-hours";
@@ -20,6 +21,9 @@ import { phoneFromWhatsappUrl, whatsappUrlFromPhone } from "@/lib/tenant/whatsap
  */
 
 export type OwnerSetupBusy = "save" | "skip" | "publish" | "finish" | null;
+
+/** Adónde va «Publicar mi tienda» con la tienda en vista previa: elegir plan y pagar. */
+export const STORE_DRAFT_PUBLISH_PATH = "/cuenta/publicar";
 
 function instagramHandle(url: string | null): string {
 	const match = /instagram\.com\/([A-Za-z0-9._]+)/i.exec(url ?? "");
@@ -53,12 +57,15 @@ export function useOwnerSetup({
 	initialStep,
 	api: apiOverride,
 	onExit,
+	onPublishDraft,
 }: {
 	initial: OwnerSetupInitial;
 	initialStep: OwnerSetupStep;
 	api?: OwnerSetupApi;
 	/** Salir del asistente (a la cuenta). */
 	onExit: () => void;
+	/** Tienda en vista previa: tras guardar el diseño, ir a elegir plan y pagar. */
+	onPublishDraft?: () => void;
 }) {
 	const api = useMemo(() => apiOverride ?? createOwnerSetupApi(), [apiOverride]);
 	const country = initial.company.country;
@@ -79,9 +86,15 @@ export function useOwnerSetup({
 	const [whatsappError, setWhatsappError] = useState<string | null>(null);
 	const [busy, setBusy] = useState<OwnerSetupBusy>(null);
 	const [error, setError] = useState<string | null>(null);
-	const [published, setPublished] = useState(false);
+	const [published, setPublished] = useState(Boolean(initial.justOpened));
+	const draft = initial.storeDraft ?? null;
 	const [savedAt, setSavedAt] = useState<number | null>(null);
 	const setupMarked = useRef<Promise<unknown> | null>(null);
+
+	// Vuelve del pago con la tienda abierta: el asistente queda terminado.
+	useEffect(() => {
+		if (initial.justOpened && !setupMarked.current) setupMarked.current = api.markSetup("finish");
+	}, [api, initial.justOpened]);
 
 	const effectiveTheme = useMemo(
 		() => computeEffectiveTheme({ theme, displayName, pickedTemplateId, brandColor }),
@@ -225,6 +238,8 @@ export function useOwnerSetup({
 	const publish = useCallback(async (): Promise<boolean> => {
 		setError(null);
 		setBusy("publish");
+		// Al ir a pagar se sale de la página: el botón sigue cargando hasta entonces.
+		let leaving = false;
 		try {
 			if (!(await saveTheme())) return false;
 			// Sin borrador guardado no hay nada que publicar: se guarda el nombre para crearlo.
@@ -238,14 +253,22 @@ export function useOwnerSetup({
 				setError(result.error);
 				return false;
 			}
+			trackEvent("setup_completed", { flow: draft ? "draft" : "classic" });
+			if (draft) {
+				// En vista previa el diseño ya quedó listo: falta el plan y el pago para abrirla.
+				trackEvent("publish_click", { flow: "draft", from: "setup" });
+				leaving = Boolean(onPublishDraft);
+				onPublishDraft?.();
+				return true;
+			}
 			setPublished(true);
 			// La celebración no espera a esto; «Ir a mi cuenta» sí.
 			setupMarked.current = api.markSetup("finish");
 			return true;
 		} finally {
-			setBusy(null);
+			if (!leaving) setBusy(null);
 		}
-	}, [api, effectiveTheme.displayName, saveTheme]);
+	}, [api, draft, effectiveTheme.displayName, onPublishDraft, saveTheme]);
 
 	const finish = useCallback(async () => {
 		setBusy("finish");

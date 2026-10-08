@@ -15,7 +15,8 @@ type SentState = { email: string; emailSent: boolean; resumed?: boolean };
 
 const fieldClass = "h-12 rounded-xl px-4 text-[15px]";
 
-export function OnboardingStep1Form() {
+/** `planId` y `country` vienen del landing (o del visitante) y se guardan en la solicitud. */
+export function OnboardingStep1Form({ planId = null, country = null }: { planId?: string | null; country?: string | null }) {
 	const t = getOnboardingUiCopy(useLocale()).form;
 	const { executeRecaptcha } = useGoogleReCaptcha();
 	const ids = { business: useId(), name: useId(), email: useId(), consent: useId(), businessHint: useId(), emailHint: useId() };
@@ -51,6 +52,8 @@ export function OnboardingStep1Form() {
 					terms_accepted: form.accepted,
 					privacy_accepted: form.accepted,
 					recaptcha_token: recaptchaToken,
+					plan_id: planId ?? undefined,
+					country: country ?? undefined,
 				}),
 			});
 			const data = (await res.json().catch(() => ({}))) as {
@@ -61,11 +64,11 @@ export function OnboardingStep1Form() {
 				resumed?: boolean;
 			};
 			if (!res.ok) throw new Error(data.error ?? t.errorSubmit);
-			if (!data.resumed) trackEvent("sign_up", { method: "email" });
+			if (!data.resumed) trackEvent("sign_up", { method: "email", flow: "draft", plan: planId ?? "" });
 			// El servicio dio el correo por verificado (ONBOARDING_SKIP_EMAIL_VERIFICATION):
-			// no hay enlace que esperar, se salta directo al paso 2.
+			// no hay enlace que esperar, se salta directo a «Crear mi tienda».
 			if (data.skippedVerification && data.token) {
-				window.location.assign(`/onboarding/complete?token=${encodeURIComponent(String(data.token))}`);
+				window.location.assign(`/onboarding/tienda?token=${encodeURIComponent(String(data.token))}`);
 				return;
 			}
 			setSent({ email: form.email.trim(), emailSent: data.emailSent !== false, resumed: data.resumed === true });

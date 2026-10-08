@@ -8,6 +8,7 @@ import {
 	type OnboardingApplication,
 } from "@/lib/onboarding/checkout-service";
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
+import { loadStoreDraftState } from "@/lib/onboarding/store-draft-service";
 import { checkCouponForApplication, findSubscriptionCouponById } from "@/lib/billing/subscription-coupon-service";
 import { toAppliedCoupon, type AppliedCoupon, type CouponProblem } from "@/lib/billing/subscription-coupons";
 
@@ -105,13 +106,15 @@ export async function GET(req: NextRequest) {
 		return NextResponse.json({ error: "Solicitud no encontrada" }, { status: 404 });
 	}
 
-	const [promoAvailable, quote, coupon] = await Promise.all([
+	const [promoAvailable, quote, coupon, draftState] = await Promise.all([
 		isFirstPaymentPromoEligible(supabaseAdmin, {
 			email: data.email,
 			excludeCompanyId: data.company_id,
 		}),
 		buildQuote(data).catch(() => null),
 		describeApplicationCoupon(data).catch(() => null),
+		// «Arma y paga»: la tienda ya existe en vista previa y se abre al confirmarse el pago.
+		data.company_id ? loadStoreDraftState(supabaseAdmin, data.company_id).catch(() => null) : Promise.resolve(null),
 	]);
 
 	return NextResponse.json({
@@ -124,5 +127,6 @@ export async function GET(req: NextRequest) {
 		promo_available: promoAvailable,
 		quote,
 		coupon,
+		store_draft: Boolean(draftState?.fromDraft),
 	});
 }

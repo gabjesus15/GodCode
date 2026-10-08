@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle2, Loader2, Lock, MailCheck } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, Loader2, Lock, MailCheck, PartyPopper } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics/track-event";
@@ -15,11 +15,16 @@ type FinalizeResponse = {
   status?: "paid" | "pending" | "not_found";
   ownerReady?: boolean;
   welcomeSent?: boolean;
+  /** «Arma y paga»: la tienda que armó en vista previa ya quedó abierta. */
+  fromDraft?: boolean;
   error?: string;
 };
 
+/** Donde lo espera la celebración con su QR (el asistente, ya con la tienda abierta). */
+const DRAFT_OPENED_PATH = "/cuenta/configurar?paso=publicar&abierta=1";
+
 /** Un pago confirmado se cuenta una sola vez aunque recarguen la página de éxito. */
-function trackPaidOnce(ref: string) {
+function trackPaidOnce(ref: string, fromDraft: boolean) {
   const key = `gc_paid_${ref}`;
   try {
     if (sessionStorage.getItem(key)) return;
@@ -27,7 +32,7 @@ function trackPaidOnce(ref: string) {
   } catch {
     // Sin sessionStorage se registra igual.
   }
-  trackEvent("subscription_paid", {});
+  trackEvent("subscription_paid", fromDraft ? { flow: "draft" } : {});
 }
 
 const MAX_PENDING_RETRIES = 5;
@@ -72,7 +77,7 @@ export function CheckoutSuccessFinalize({
         setResult(payload);
         if (payload.status === "paid") {
           setState("paid");
-          trackPaidOnce(refParam);
+          trackPaidOnce(refParam, Boolean(payload.fromDraft));
           return;
         }
         if (attempt < MAX_PENDING_RETRIES) {
@@ -94,7 +99,37 @@ export function CheckoutSuccessFinalize({
     };
   }, [refParam, captureError]);
 
+  // La tienda armada en vista previa ya está abierta: se va directo a compartirla.
+  const draftOpened = state === "paid" && Boolean(result.fromDraft);
+  useEffect(() => {
+    if (!draftOpened) return;
+    forgetOnboardingToken();
+    const timer = setTimeout(() => window.location.assign(DRAFT_OPENED_PATH), 2500);
+    return () => clearTimeout(timer);
+  }, [draftOpened]);
+
   if (!refParam) return null;
+
+  if (draftOpened) {
+    return (
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-5 text-emerald-900" role="status" aria-live="polite">
+        <div className="flex items-start gap-3">
+          <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">¡Tu tienda ya está abierta!</p>
+            <p className="mt-0.5 text-sm opacity-90">Tus clientes ya pueden entrar con tu link y hacerte pedidos. Te llevamos a compartirla.</p>
+          </div>
+        </div>
+        <a
+          href={DRAFT_OPENED_PATH}
+          className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+        >
+          Ver mi tienda abierta
+          <ArrowRight className="h-4 w-4" aria-hidden />
+        </a>
+      </div>
+    );
+  }
 
   const tone =
     state === "paid"

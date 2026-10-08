@@ -82,7 +82,7 @@ export async function notifyOnboardingReceipt(client: SupabaseClient, applicatio
 	try {
 		const { data } = await client
 			.from("onboarding_applications")
-			.select("id,email,responsible_name,business_name,payment_amount,payment_reference,subscription_payment_method,verification_token,coupon_code")
+			.select("id,email,responsible_name,business_name,payment_amount,payment_reference,subscription_payment_method,verification_token,coupon_code,company_id")
 			.eq("id", applicationId)
 			.maybeSingle();
 		const app = data as {
@@ -95,6 +95,7 @@ export async function notifyOnboardingReceipt(client: SupabaseClient, applicatio
 			subscription_payment_method: string | null;
 			verification_token: string | null;
 			coupon_code: string | null;
+			company_id: string | null;
 		} | null;
 		if (!app) return;
 		const couponCode = String(app.coupon_code ?? "").trim() || null;
@@ -120,7 +121,13 @@ export async function notifyOnboardingReceipt(client: SupabaseClient, applicatio
 							amount,
 							method: methodName,
 							reference,
-							statusUrl: app.verification_token ? `${appUrl}/onboarding/complete?token=${encodeURIComponent(app.verification_token)}` : undefined,
+							statusUrl: app.company_id
+								? `${appUrl}/cuenta/configurar`
+								: app.verification_token
+									? `${appUrl}/onboarding/complete?token=${encodeURIComponent(app.verification_token)}`
+									: undefined,
+							// Ya armó su tienda en vista previa: se publica sola al validar el pago.
+							storeDraft: Boolean(app.company_id) || undefined,
 						},
 					})
 				: Promise.resolve(null),

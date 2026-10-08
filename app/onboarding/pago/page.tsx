@@ -195,6 +195,8 @@ function PagoContent() {
 	const [referenceFile, setReferenceFile] = useState<File | null>(null);
 	const [referenceUploading, setReferenceUploading] = useState(false);
 	const [referenceSubmitted, setReferenceSubmitted] = useState(false);
+	/** «Arma y paga»: paga para abrir una tienda que ya armó (vuelve a ella, no al login). */
+	const [storeDraft, setStoreDraft] = useState(false);
 	const [planSummary, setPlanSummary] = useState<{ name: string; price: number; addons: Array<{ name: string; price: number }> } | null>(null);
 	const [promoAvailable, setPromoAvailable] = useState(false);
 	const [subscriptionMethod, setSubscriptionMethod] = useState<string>("");
@@ -254,6 +256,7 @@ function PagoContent() {
 				payment_status?: string | null;
 				receipt_uploaded?: boolean;
 				business_name?: string | null;
+				store_draft?: boolean;
 				quote?: Quote | null;
 				coupon?: CouponState | null;
 			}) => {
@@ -263,6 +266,7 @@ function PagoContent() {
 				setPaymentStatus(data.payment_status ?? null);
 				setReceiptUploaded(data.receipt_uploaded === true);
 				setBusinessName(String(data.business_name ?? "").trim());
+				setStoreDraft(data.store_draft === true);
 				setQuote(data.quote ?? null);
 				setCoupon(data.coupon ?? null);
 			})
@@ -638,6 +642,18 @@ function PagoContent() {
 
 	const alreadyPaid = paymentStatus === "paid";
 	const inReview = !manualData && paymentStatus === "pending_validation" && receiptUploaded;
+	if ((alreadyPaid || inReview) && storeDraft) {
+		return (
+			<StatusCard
+				step
+				tone={alreadyPaid ? "done" : "review"}
+				title={alreadyPaid ? copy.draft.paidTitle : copy.manualSuccessTitle}
+				body={alreadyPaid ? copy.draft.paidBody : copy.draft.reviewBody}
+				actionLabel={copy.draft.backToStore}
+				actionHref={alreadyPaid ? "/cuenta/configurar?paso=publicar&abierta=1" : "/cuenta/configurar"}
+			/>
+		);
+	}
 	if (alreadyPaid || inReview) {
 		return (
 			<StatusCard
@@ -770,7 +786,12 @@ function PagoContent() {
 									<MailCheck className="h-5 w-5" aria-hidden />
 								</span>
 								<h1 className="mt-5 text-xl font-semibold text-slate-900">{ui.submittedTitle}</h1>
-								<p className="mt-2 text-[15px] leading-relaxed text-slate-600">{ui.submittedBody}</p>
+								<p className="mt-2 text-[15px] leading-relaxed text-slate-600">{storeDraft ? copy.draft.reviewBody : ui.submittedBody}</p>
+								{storeDraft ? (
+									<Link href="/cuenta/configurar" className="onboarding-btn-primary mt-6 inline-flex h-11 items-center justify-center rounded-xl px-5 text-sm">
+										{copy.draft.backToStore}
+									</Link>
+								) : null}
 							</div>
 						) : (
 							<>

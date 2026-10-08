@@ -20,7 +20,7 @@ import { QueryProvider } from "@/components/ui/query-provider";
 import { resolveStorefrontThemeAssets } from "@/lib/storage/storefront-branding";
 import { buildTenantStorefrontDescription, resolveTenantDisplayName } from "@/lib/tenant/seo-metadata";
 import { serializeJsonLd } from "@/lib/seo/serialize-json-ld";
-import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { isTenantSubscriptionAccessible, resolveTenantPublicView } from "@/lib/plans/tenant-subscription";
 
 export const revalidate = 60; // ISR: regenera cada 60 segundos → HTML pre-renderizado para Googlebot
 
@@ -91,6 +91,17 @@ export async function generateMetadata({
   const name = resolveTenantDisplayName(company, { slug: resolvedParams.subdomain });
   const versionSeed = tenantBrandingIconVersionSeed(company);
   const icon = `/tenant-favicon?tenant=${encodeURIComponent(resolvedParams.subdomain)}&v=${encodeURIComponent(versionSeed)}`;
+
+  // Tienda en vista previa («Arma y paga»): fuera de los buscadores hasta que se pague.
+  if (resolveTenantPublicView(company) === "draft") {
+    return {
+      metadataBase,
+      title: { absolute: name, template: `%s | ${name}` },
+      description: "Esta tienda abre pronto.",
+      icons: { icon, shortcut: icon, apple: icon },
+      robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
+    };
+  }
   const description = buildTenantStorefrontDescription({
     displayName: name,
     address: company.address,

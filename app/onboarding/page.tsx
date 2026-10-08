@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { OnboardingStep1Form } from "@/components/onboarding/steps/OnboardingStep1Form";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME, LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
+import { resolveOnboardingCountry, sanitizePlanHint } from "@/lib/onboarding/onboarding-entry";
 import { getOnboardingUiCopy } from "@/lib/onboarding/onboarding-ui-copy";
 import { getAppUrl } from "@/lib/tenant/app-url";
 
@@ -40,13 +42,19 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function OnboardingPage({
 	searchParams,
 }: {
-	searchParams?: Promise<{ hl?: string }>;
+	searchParams?: Promise<{ hl?: string; plan?: string; pais?: string; country?: string }>;
 }) {
 	const resolved = searchParams ? await searchParams : undefined;
 	// Onboarding no usa ?hl=; consolidar señales SEO en la URL limpia.
 	if (resolved?.hl) {
 		redirect("/onboarding");
 	}
+
+	// El plan y el país que trae el landing llegan marcados al publicar la tienda. Sin país
+	// en el link, se usa el del visitante.
+	const planId = sanitizePlanHint(resolved?.plan);
+	const country =
+		resolveOnboardingCountry(resolved?.pais ?? resolved?.country) ?? resolveOnboardingCountry((await headers()).get("x-vercel-ip-country"));
 
 	const t = getOnboardingUiCopy(await getCurrentLocale()).start;
 
@@ -58,7 +66,7 @@ export default async function OnboardingPage({
 					<h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{t.title}</h1>
 					<p className="mt-3 max-w-lg text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">{t.subtitle}</p>
 					<div className="mt-8 sm:mt-10">
-						<OnboardingStep1Form />
+						<OnboardingStep1Form planId={planId} country={country} />
 					</div>
 				</section>
 

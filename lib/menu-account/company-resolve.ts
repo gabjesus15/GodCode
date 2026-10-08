@@ -2,7 +2,7 @@ import "server-only";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getCachedCompany } from "@/utils/tenant-cache";
-import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { isTenantPubliclyOpen } from "@/lib/plans/tenant-subscription";
 import { resolveCheckoutCountryCode } from "@/lib/geo/country-forms";
 
 import { menuAccountErrors } from "./errors";
@@ -27,7 +27,8 @@ export async function resolveCompanyForMenuAccount(
 	if (!normalizedSlug) throw menuAccountErrors.companyNotFound();
 
 	const company = await getCachedCompany(normalizedSlug);
-	if (!company || !isTenantSubscriptionAccessible(company)) {
+	// Una tienda en vista previa no toma pedidos ni abre cuentas de cliente: eso es del plan pagado.
+	if (!company || !isTenantPubliclyOpen(company)) {
 		throw menuAccountErrors.companyNotFound();
 	}
 

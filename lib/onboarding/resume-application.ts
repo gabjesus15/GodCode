@@ -20,7 +20,7 @@ type ResumeRow = {
 /** Qué correo le corresponde a una solicitud según dónde quedó. */
 export type ResumeTarget =
 	| { kind: "verify" }
-	| { kind: "continue"; step: "plan" | "payment" | "review"; path: string }
+	| { kind: "continue"; step: "store" | "plan" | "payment" | "review"; path: string }
 	| { kind: "login" }
 	| { kind: "none" };
 
@@ -29,13 +29,17 @@ export function resolveResumeTarget(app: Pick<ResumeRow, "status" | "payment_sta
 	const payment = String(app.payment_status ?? "").toLowerCase();
 	const encoded = encodeURIComponent(token);
 
+	const inReview = payment === "pending_validation" && Boolean(String(app.payment_reference_url ?? "").trim());
+
 	if (status === "pending_verification") return { kind: "verify" };
 	if (status === "active" || (payment === "paid" && app.company_id)) return { kind: "login" };
-	if (status === "email_verified") return { kind: "continue", step: "plan", path: `/onboarding/complete?token=${encoded}` };
+	// Ya creó su tienda en vista previa: tiene cuenta y contraseña, sigue desde su panel.
+	if (app.company_id) {
+		return inReview ? { kind: "continue", step: "review", path: `/onboarding/pago?token=${encoded}` } : { kind: "login" };
+	}
+	if (status === "email_verified") return { kind: "continue", step: "store", path: `/onboarding/tienda?token=${encoded}` };
 	if (status === "form_completed" || status === "payment_pending") {
-		if (payment === "pending_validation" && String(app.payment_reference_url ?? "").trim()) {
-			return { kind: "continue", step: "review", path: `/onboarding/pago?token=${encoded}` };
-		}
+		if (inReview) return { kind: "continue", step: "review", path: `/onboarding/pago?token=${encoded}` };
 		return { kind: "continue", step: "payment", path: `/onboarding/pago?token=${encoded}` };
 	}
 	return { kind: "none" };

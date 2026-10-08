@@ -8,6 +8,7 @@ import { verifyRecaptcha } from "@/lib/onboarding/recaptcha";
 import { isRateLimited } from "@/lib/onboarding/rate-limit";
 import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 import { sendOnboardingResumeLink } from "@/lib/onboarding/resume-application";
+import { resolveOnboardingCountry, sanitizePlanHint } from "@/lib/onboarding/onboarding-entry";
 import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 
 /** @service-role public
@@ -36,6 +37,10 @@ type ApplyBody = {
 	terms_accepted?: boolean;
 	privacy_accepted?: boolean;
 	recaptcha_token?: string;
+	/** Del landing (`?plan=`): llega marcado al elegir el plan. */
+	plan_id?: string;
+	/** Del landing (`?pais=`) o del visitante. */
+	country?: string;
 };
 
 function sanitize(str: string | undefined, maxLen: number): string {
@@ -85,6 +90,13 @@ export async function POST(req: NextRequest) {
 			return NextResponse.json({ error: "Verificación de seguridad fallida. Intenta de nuevo." }, { status: 400 });
 		}
 
+		// El plan del landing solo se guarda si existe y está a la venta.
+		const planHint = sanitizePlanHint(body.plan_id);
+		const { data: hintedPlan } = planHint
+			? await supabaseAdmin.from("plans").select("id").eq("id", planHint).eq("is_active", true).eq("is_public", true).maybeSingle()
+			: { data: null };
+		const country = resolveOnboardingCountry(body.country);
+
 		const verificationToken = randomUUID();
 		const ipToStore = ip || null;
 		const userAgent = req.headers.get("user-agent")?.slice(0, 500) || null;
@@ -98,6 +110,8 @@ export async function POST(req: NextRequest) {
 				phone: phone || null,
 				sector: sector || null,
 				message: message || null,
+				plan_id: (hintedPlan as { id?: string } | null)?.id ?? null,
+				country,
 				terms_accepted: true,
 				privacy_accepted: true,
 				verification_token: verificationToken,

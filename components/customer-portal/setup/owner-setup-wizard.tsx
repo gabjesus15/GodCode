@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, Rocket, Smartphone, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronLeft, Clock, Rocket, Smartphone, X } from "lucide-react";
 import { Drawer } from "vaul";
 
 import type { OwnerSetupInitial } from "./owner-setup-types";
@@ -20,8 +20,8 @@ import { useMediaQuery } from "./ui/use-media-query";
 
 import { LandingBrandMark } from "@/components/landing-v3/landing-brand-mark";
 import { setupCssVariables, SETUP_TOKENS } from "@/lib/owner-setup/design-tokens";
-import { OWNER_SETUP_STEP_META, type OwnerSetupStep } from "@/lib/owner-setup/steps";
-import { useOwnerSetup } from "@/lib/owner-setup/use-owner-setup";
+import { OWNER_SETUP_DRAFT_PUBLISH_META, OWNER_SETUP_STEP_META, type OwnerSetupStep } from "@/lib/owner-setup/steps";
+import { STORE_DRAFT_PUBLISH_PATH, useOwnerSetup } from "@/lib/owner-setup/use-owner-setup";
 import { findMenuTemplate } from "@/lib/store-theme/menu-templates";
 import { validateStoreThemeAssetFile } from "@/lib/store-theme/store-theme-utils";
 import { brandButtonColors } from "@/lib/tenant/logo-colors";
@@ -38,14 +38,14 @@ function stageBackground(accent: string): string {
 	].join(", ");
 }
 
-function LivePill() {
+function LivePill({ draft }: { draft: boolean }) {
 	return (
 		<span className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3.5 py-1.5 text-[12.5px] font-medium text-(--su-ink2) shadow-[0_1px_2px_rgba(17,17,19,0.06)] ring-1 ring-black/5 backdrop-blur">
 			<span className="relative flex h-2 w-2" aria-hidden>
-				<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60 motion-reduce:hidden" />
-				<span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+				<span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 motion-reduce:hidden ${draft ? "bg-amber-400" : "bg-emerald-400"}`} />
+				<span className={`relative inline-flex h-2 w-2 rounded-full ${draft ? "bg-amber-500" : "bg-emerald-500"}`} />
 			</span>
-			En vivo · así lo ven tus clientes
+			{draft ? "Vista previa · tus clientes todavía no la ven" : "En vivo · así lo ven tus clientes"}
 		</span>
 	);
 }
@@ -118,7 +118,9 @@ function PreviewSheet({ open, onOpenChange, background, children }: { open: bool
 export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetupInitial; initialStep: OwnerSetupStep }) {
 	const router = useRouter();
 	const exit = useCallback(() => router.push("/cuenta"), [router]);
-	const setup = useOwnerSetup({ initial, initialStep, onExit: exit });
+	const goPay = useCallback(() => window.location.assign(STORE_DRAFT_PUBLISH_PATH), []);
+	const setup = useOwnerSetup({ initial, initialStep, onExit: exit, onPublishDraft: goPay });
+	const draft = initial.storeDraft ?? null;
 	const isDesktop = useMediaQuery("(min-width: 1024px)");
 	const reduceMotion = useReducedMotion();
 	const [previewOpen, setPreviewOpen] = useState(false);
@@ -163,14 +165,25 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 	const meta = OWNER_SETUP_STEP_META[step];
 	const header = published
 		? { title: "¡Tu tienda está en línea!", description: "Comparte el enlace o imprime el QR para las mesas y el mostrador." }
-		: step === "diseno"
+		: step === "publicar" && draft
+			? draft.paymentInReview
+				? { title: OWNER_SETUP_DRAFT_PUBLISH_META.reviewTitle, description: OWNER_SETUP_DRAFT_PUBLISH_META.reviewDescription }
+				: { title: OWNER_SETUP_DRAFT_PUBLISH_META.title, description: OWNER_SETUP_DRAFT_PUBLISH_META.description }
+			: step === "diseno"
 			? { title: meta.title, description: `Primero van los que mejor quedan para ${SECTOR_NOUN[initial.sector]}. Toca uno y míralo en el teléfono con tu logo.` }
 			: meta;
 
 	const primary = published
 		? { label: "Ir a mi cuenta", onClick: () => void setup.finish(), loading: busy === "finish", variant: "primary" as const, icon: null, trailing: <ArrowRight aria-hidden /> }
 		: step === "publicar"
-			? { label: "Publicar mi tienda", onClick: () => void setup.publish(), loading: busy === "publish", variant: "accent" as const, icon: <Rocket aria-hidden />, trailing: null }
+			? {
+					label: draft?.paymentInReview ? "Ver el estado del pago" : "Publicar mi tienda",
+					onClick: () => void setup.publish(),
+					loading: busy === "publish",
+					variant: "accent" as const,
+					icon: draft?.paymentInReview ? <Clock aria-hidden /> : <Rocket aria-hidden />,
+					trailing: null,
+				}
 			: {
 					label: step === "menu" && menuStatus.productCount === 0 ? "Lo hago después" : "Continuar",
 					onClick: () => void setup.goNext(),
@@ -254,6 +267,7 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 				businessName={businessName}
 				logoUrl={setup.logoPreviewUrl}
 				accentColor={accent}
+				draft={draft}
 				onGoToStep={(target) => void setup.goTo(target)}
 				checklist={[
 					{ step: "marca", label: "Tu logo", done: setup.stepDone.marca },
@@ -369,7 +383,7 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 				{isDesktop ? (
 					<aside className="relative flex h-full flex-col overflow-hidden border-l border-(--su-line)" style={{ background: stage }} aria-label="Vista previa de tu menú">
 						<div className="flex justify-center pt-6">
-							<LivePill />
+							<LivePill draft={Boolean(draft) && !published} />
 						</div>
 						<div className="min-h-0 flex-1 px-8 pb-8 pt-5">{preview}</div>
 					</aside>

@@ -25,6 +25,13 @@ export type OwnerSetupInitial = {
 	storeUrl: string;
 	/** El dueño ya publicó alguna vez el tema desde /cuenta. */
 	hasPublishedBefore: boolean;
+	/**
+	 * «Arma y paga»: la tienda está en vista previa. «Publicar mi tienda» guarda el diseño y
+	 * lleva a elegir plan y pagar; con el comprobante en revisión, a ver el estado del pago.
+	 */
+	storeDraft?: { paymentInReview: boolean } | null;
+	/** Vuelve del pago con la tienda recién abierta: arranca en la celebración con el QR. */
+	justOpened?: boolean;
 };
 
 export type OwnerSetupMenuStatus = Pick<MenuSetupSummary, "productCount" | "sampleCount" | "categoryCount">;

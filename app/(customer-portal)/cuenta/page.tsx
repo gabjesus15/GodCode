@@ -19,6 +19,8 @@ import { getMenuStatus } from "@/lib/menu/create-menu-items";
 import { isMenuImportEnabled } from "@/lib/menu/ai-menu-import";
 import { buildFirstSteps } from "@/lib/tenant/account-first-steps";
 import { readOwnerSetup, shouldAutoOpenOwnerSetup } from "@/lib/tenant/owner-setup";
+import { isStoreDraftPending } from "@/lib/tenant/store-draft";
+import { getTenantHomeUrl } from "@/utils/tenant-url";
 
 /** @service-role tenant-session
  *
@@ -120,7 +122,7 @@ export default async function CustomerAccountPage({
     supabaseAdmin.from("orders").select("id", { count: "exact", head: true }).eq("company_id", companyId),
     supabaseAdmin
       .from("onboarding_applications")
-      .select("sector")
+      .select("sector,payment_status,payment_reference_url")
       .eq("company_id", companyId)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -185,6 +187,14 @@ export default async function CustomerAccountPage({
     redirect("/cuenta/configurar");
   }
   const ownerSetupFinished = Boolean(readOwnerSetup(companyRow?.theme_config).finishedAt);
+  // «Arma y paga»: la tienda sigue en vista previa hasta que pague un plan.
+  const draftApp = application as { payment_status?: string | null; payment_reference_url?: string | null } | null;
+  const storeDraft = isStoreDraftPending(company as { subscription_status?: string | null; theme_config?: unknown } | null)
+    ? {
+        paymentInReview: draftApp?.payment_status === "pending_validation" && Boolean(String(draftApp?.payment_reference_url ?? "").trim()),
+        storeUrl: company?.public_slug ? getTenantHomeUrl(String(company.public_slug)) : null,
+      }
+    : null;
 
   const supportEmail = LANDING_SUPPORT_EMAIL;
   const rawCountry = (company as { country?: string | null } | null)?.country ?? null;
@@ -378,6 +388,7 @@ export default async function CustomerAccountPage({
         initialBillingOptions={initialBillingOptions}
         initialSyncedAt={initialSyncedAt}
         firstSteps={firstSteps}
+        storeDraft={storeDraft}
         menuSetup={{
           ...menuStatus,
           importEnabled: isMenuImportEnabled(),

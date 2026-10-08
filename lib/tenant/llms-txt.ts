@@ -5,7 +5,7 @@ import { getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { formatLlmsTxtLink } from "@/lib/seo/llms-txt-format";
-import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { isTenantPubliclyOpen } from "@/lib/plans/tenant-subscription";
 
 interface MenuCategory {
   id: string;
@@ -48,7 +48,8 @@ export async function getLlmsTxtData(subdomain: string, isFullVersion = false) {
     return null;
   }
 
-  if (!isTenantSubscriptionAccessible(company)) {
+  // Una tienda en vista previa no se anuncia a los buscadores ni a las IA.
+  if (!isTenantPubliclyOpen(company)) {
     return null;
   }
 

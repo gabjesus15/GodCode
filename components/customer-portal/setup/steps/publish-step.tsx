@@ -2,7 +2,7 @@
 
 import { useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronRight, Copy, Download, ExternalLink, Globe, Share2 } from "lucide-react";
+import { Check, ChevronRight, Copy, Download, ExternalLink, Globe, Lock, Share2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 import { WhatsAppIcon } from "../ui/brand-icons";
@@ -103,6 +103,7 @@ export function PublishStep({
 	logoUrl,
 	accentColor,
 	checklist,
+	draft,
 	onGoToStep,
 }: {
 	storeUrl: string;
@@ -112,6 +113,8 @@ export function PublishStep({
 	/** Color de los botones de la tienda, para la celebración. */
 	accentColor: string;
 	checklist: SetupChecklistItem[];
+	/** «Arma y paga»: la tienda sigue en vista previa (publicar es elegir plan y pagar). */
+	draft?: { paymentInReview: boolean } | null;
 	onGoToStep: (step: OwnerSetupStep) => void;
 }) {
 	const [copied, setCopied] = useState(false);
@@ -142,7 +145,7 @@ export function PublishStep({
 					<div className="min-w-0 flex-1">
 						<p className="truncate text-[16px] font-semibold tracking-[-0.01em] text-(--su-ink)">{businessName}</p>
 						<p className="mt-1 inline-flex max-w-full items-center gap-1.5 rounded-full bg-(--su-surface-sunken) px-2.5 py-1 text-[12.5px] text-(--su-muted)">
-							<Globe className="h-3.5 w-3.5 shrink-0" aria-hidden />
+							{draft ? <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden /> : <Globe className="h-3.5 w-3.5 shrink-0" aria-hidden />}
 							<span className="truncate">{prettyUrl(storeUrl)}</span>
 						</p>
 					</div>
@@ -171,7 +174,15 @@ export function PublishStep({
 					))}
 				</ul>
 
-				{pending.length > 0 ? (
+				{draft ? (
+					<p className="text-[13px] leading-relaxed text-(--su-muted)">
+						{draft.paymentInReview
+							? "Recibimos tu comprobante. Te avisamos por correo apenas tu tienda quede abierta."
+							: pending.length > 0
+								? "Puedes publicar igual y completar lo que falta después. Tu link queda reservado hasta que la publiques."
+								: "Tu link queda reservado hasta que la publiques. Puedes cambiar de plan cuando quieras."}
+					</p>
+				) : pending.length > 0 ? (
 					<p className="text-[13px] leading-relaxed text-(--su-muted)">Puedes publicar igual y completar lo que falta después desde tu cuenta.</p>
 				) : null}
 			</div>

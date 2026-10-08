@@ -19,6 +19,7 @@ import { useTickets }          from "@/components/customer-portal/hooks/use-tick
 import { useUnsavedGuard }     from "@/components/customer-portal/hooks/use-unsaved-guard";
 import { useConfirmDialog }    from "@/components/customer-portal/ui/ConfirmDialog";
 import { OrderPaymentDialog }  from "@/components/customer-portal/payments/order-payment-dialog";
+import { StoreDraftAccountBanner } from "@/components/customer-portal/account/store-draft-banner";
 
 import { AccountResumenTab }    from "@/components/customer-portal/account/tabs/account-resumen-tab";
 import { AccountMenuTab }       from "@/components/customer-portal/account/tabs/account-menu-tab";
@@ -44,7 +45,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
   const {
     company, branches, businessInfo, payments, activeAddons, availablePlans, availableAddons,
     initialTickets, initialBranchEntitlements, initialBillingOptions, initialSyncedAt,
-    firstSteps, menuSetup,
+    firstSteps, menuSetup, storeDraft,
   } = props;
 
   const [mounted,       setMounted]       = useState(false);
@@ -251,11 +252,12 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
         activeTab={tab}
         onTabChange={handleTabChange}
         subscriptionStatus={snapshot.subscriptionStatus}
-        subscriptionStatusLabel={displayStatus(snapshot.subscriptionStatus, SUBSCRIPTION_STATUS_LABELS)}
+        subscriptionStatusLabel={storeDraft ? "Vista previa" : displayStatus(snapshot.subscriptionStatus, SUBSCRIPTION_STATUS_LABELS)}
         lastRealtimeSyncAt={snapshot.lastRealtimeSyncAt}
         isSyncing={snapshot.isSyncing}
         onManualRefresh={() => void snapshot.refresh("full")}
       >
+        {storeDraft ? <StoreDraftAccountBanner paymentInReview={storeDraft.paymentInReview} storeUrl={storeDraft.storeUrl} /> : null}
         {tab === "resumen" && (
           <AccountResumenTab
             company={company}

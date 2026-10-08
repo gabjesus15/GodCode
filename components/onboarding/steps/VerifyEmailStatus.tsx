@@ -11,7 +11,7 @@ import { OnboardingStepBar } from "./OnboardingStepBar";
 
 type VerifyState = { status: "loading" } | { status: "ok"; next: string } | { status: "error"; message: string };
 
-/** Confirma el correo con el token del enlace y lleva al paso 2 (elegir plan). */
+/** Confirma el correo con el token del enlace y lleva a «Crear mi tienda». */
 export function VerifyEmailStatus({ token }: { token: string | null }) {
 	const t = getOnboardingUiCopy(useLocale()).verify;
 	const [state, setState] = useState<VerifyState>(() => (token ? { status: "loading" } : { status: "error", message: t.missingToken }));
@@ -27,7 +27,7 @@ export function VerifyEmailStatus({ token }: { token: string | null }) {
 					setState({ status: "error", message: data.error || t.genericError });
 					return;
 				}
-				const next = `/onboarding/complete?token=${encodeURIComponent(data.token || token)}`;
+				const next = `/onboarding/tienda?token=${encodeURIComponent(data.token || token)}`;
 				setState({ status: "ok", next });
 				window.setTimeout(() => window.location.assign(next), 1500);
 			})

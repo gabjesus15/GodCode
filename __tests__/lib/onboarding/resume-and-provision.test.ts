@@ -10,8 +10,8 @@ describe("resolveResumeTarget", () => {
 		expect(resolveResumeTarget({ ...base, status: "pending_verification" }, "t")).toEqual({ kind: "verify" });
 		expect(resolveResumeTarget({ ...base, status: "email_verified" }, "t")).toEqual({
 			kind: "continue",
-			step: "plan",
-			path: "/onboarding/complete?token=t",
+			step: "store",
+			path: "/onboarding/tienda?token=t",
 		});
 		expect(resolveResumeTarget({ ...base, status: "payment_pending", payment_status: "pending" }, "t")).toEqual({
 			kind: "continue",
@@ -20,6 +20,14 @@ describe("resolveResumeTarget", () => {
 		});
 		expect(
 			resolveResumeTarget({ ...base, status: "payment_pending", payment_status: "pending_validation", payment_reference_url: "https://x/r.png" }, "t"),
+		).toMatchObject({ kind: "continue", step: "review" });
+	});
+
+	it("quien ya armó su tienda en vista previa entra a su cuenta", () => {
+		expect(resolveResumeTarget({ ...base, status: "email_verified", company_id: "c1" }, "t")).toEqual({ kind: "login" });
+		expect(resolveResumeTarget({ ...base, status: "form_completed", payment_status: "pending", company_id: "c1" }, "t")).toEqual({ kind: "login" });
+		expect(
+			resolveResumeTarget({ ...base, status: "payment_pending", payment_status: "pending_validation", payment_reference_url: "https://x/r.png", company_id: "c1" }, "t"),
 		).toMatchObject({ kind: "continue", step: "review" });
 	});
 

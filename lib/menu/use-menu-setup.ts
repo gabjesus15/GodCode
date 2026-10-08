@@ -134,9 +134,12 @@ export function useMenuSetup({
 					truncated?: number;
 					notes?: string;
 					error?: string;
+					code?: string;
 				};
 				if (!res.ok || !data.draft) {
-					setFeedback({ tone: "danger", title: "No pudimos leer la carta", text: data.error ?? "Intenta con otra foto o un PDF." });
+					// Tienda en vista previa: la lectura gratis ya se usó (no es un error de la carta).
+					const title = data.code === "draft_limit" ? "Ya usaste tu lectura gratis" : "No pudimos leer la carta";
+					setFeedback({ tone: data.code === "draft_limit" ? "warning" : "danger", title, text: data.error ?? "Intenta con otra foto o un PDF." });
 					return;
 				}
 				setDraft(toEditableDraft(data.draft));
