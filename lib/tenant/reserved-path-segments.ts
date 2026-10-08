@@ -21,6 +21,8 @@ export const MAIN_DOMAIN_RESERVED_PATH_SEGMENTS = new Set([
 	"tenant-hero",
 	"sobre-godcode",
 	"calculadora-comisiones",
+	// Vista previa de la home corporativa de Gcode Labs (app/labs).
+	"labs",
 	"images",
 	"post-login",
 	// Panel super admin: sin esto "/landing" se trataba como el slug de un tenant.
