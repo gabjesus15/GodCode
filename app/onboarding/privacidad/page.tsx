@@ -110,7 +110,7 @@ export default function PrivacidadPage() {
 					rows={[
 						[<>Crear la cuenta del negocio y prestar el Servicio</>, <>Ejecución del contrato</>],
 						[<>Cobrar las suscripciones y emitir los documentos tributarios</>, <>Contrato y obligación legal</>],
-						[<>Enviar avisos de la cuenta: verificación, pagos, renovación, cambios de los documentos</>, <>Ejecución del contrato</>],
+						[<>Enviar avisos de la cuenta: verificación, recordatorios para publicar tu tienda, pagos, renovación, cambios de los documentos</>, <>Ejecución del contrato y de las gestiones previas que pediste</>],
 						[<>Gestionar los pedidos y las cuentas de los comensales por cuenta de cada negocio</>, <>Contrato del comensal con el negocio (Gcode como encargado)</>],
 						[<>Seguridad, prevención de fraude y abuso (límites de intentos, reCAPTCHA, registros)</>, <>Interés legítimo y obligación legal</>],
 						[<>Medición con nuestra analítica propia y Vercel, sin cookies publicitarias</>, <>Interés legítimo en mejorar el Servicio</>],
@@ -137,6 +137,7 @@ export default function PrivacidadPage() {
 						[<>Vercel</>, <>Alojamiento del sitio y medición agregada (Analytics, Speed Insights)</>, <>Datos técnicos</>, <>Estados Unidos y otros</>],
 						[<>PayPal</>, <>Cobro de suscripciones</>, <>Correo, importe y datos que ingresas en PayPal</>, <>Estados Unidos</>],
 						[<>Resend</>, <>Envío de correos</>, <>Correo, nombre y contenido del aviso</>, <>Estados Unidos</>],
+						[<>Anthropic</>, <>Leer la carta que subes (foto, PDF o planilla) para armar tu menú, si usas esa opción</>, <>El archivo de la carta</>, <>Estados Unidos</>],
 						[<>Google (reCAPTCHA)</>, <>Protección contra bots en el registro</>, <>Datos técnicos del navegador</>, <>Estados Unidos</>],
 						[<>Google (Analytics)</>, <>Medición de uso, solo con tu consentimiento</>, <>Datos técnicos seudonimizados</>, <>Estados Unidos</>],
 						[<>Upstash</>, <>Límites de uso y caché</>, <>Dirección IP de forma temporal</>, <>Estados Unidos y Unión Europea</>],
@@ -170,6 +171,7 @@ export default function PrivacidadPage() {
 					head={["Dato", "Plazo"]}
 					rows={[
 						[<>Cuenta y contenido del negocio</>, <>Mientras la cuenta exista, más 30 días para que puedas pedir una copia (sección 13 de los Términos)</>],
+						[<>Tienda en vista previa que no publicas</>, <>Hasta que la publiques; si pasan 30 días sin publicarla, podemos borrarla, con aviso por correo 7 días antes</>],
 						[<>Registros de facturación y pagos</>, <>6 años, por las obligaciones tributarias</>],
 						[<>Comprobantes de pago</>, <>Hasta validar el pago y luego el mismo plazo que la facturación</>],
 						[<>Cuenta del comensal en un menú</>, <>Hasta que la elimines desde Mi cuenta, lo pidas o el negocio deje Gcode</>],

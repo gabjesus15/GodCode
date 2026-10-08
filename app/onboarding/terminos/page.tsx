@@ -90,6 +90,14 @@ export default function TerminosPage() {
 			<section>
 				<h2 className="font-semibold text-slate-800">5. Planes, precios y pagos</h2>
 				<p className="mt-2">
+					<Lead>Vista previa gratis.</Lead> Al registrarte, tu tienda se crea en vista previa: puedes armarla y
+					probarla con su link sin pagar, pero solo tú la ves; el resto ve un aviso de que abrirá pronto. Se publica
+					cuando contratas un plan y se confirma el pago. Si pasan 30 días desde que la creaste sin publicarla,
+					podemos eliminarla junto con su contenido y tu acceso, y su link queda libre para otro negocio. Antes te
+					avisaremos por correo con al menos 7 días de anticipación, y no la eliminamos mientras estemos validando
+					un pago tuyo.
+				</p>
+				<p className="mt-2">
 					<Lead>Precios.</Lead> Los precios de cada plan se muestran antes de contratar, en la moneda que
 					corresponde a tu país (por ejemplo, pesos chilenos o dólares estadounidenses), e indican si incluyen
 					impuestos. Si pagas en otra moneda, el tipo de cambio es el que aplica tu banco o la pasarela de pago.
@@ -186,7 +194,8 @@ export default function TerminosPage() {
 				<ul className="ml-5 mt-1 list-disc space-y-1">
 					<li>
 						Su menú y su información: precios, descripciones, fotos, ingredientes, alérgenos, disponibilidad,
-						horarios y zonas de reparto.
+						horarios y zonas de reparto. Si carga el menú con la lectura automática de su carta, debe revisarlo antes
+						de publicarlo, porque puede tener errores de lectura.
 					</li>
 					<li>
 						Cumplir la normativa sanitaria, comercial, laboral y tributaria de su negocio, incluidas las licencias

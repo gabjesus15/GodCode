@@ -42,7 +42,7 @@ export default function CookiesPage() {
 					head={["Nombre", "Para qué", "Duración"]}
 					rows={[
 						[<><code>sb-tenant-auth-token</code></>, <>Mantener la sesión en el panel del negocio</>, <>Mientras tengas la sesión iniciada</>],
-						[<><code>sb-super-admin-auth-token</code></>, <>Mantener la sesión del equipo de Gcode</>, <>Igual que la anterior</>],
+						[<><code>sb-super-admin-auth-token</code></>, <>Mantener la sesión en tu cuenta de Gcode, donde configuras tu tienda y ves su vista previa, y la del equipo de Gcode</>, <>Igual que la anterior</>],
 						[<><code>sb-menu-client-auth-token</code></>, <>Mantener la sesión de tu cuenta en el menú de un negocio</>, <>Igual que la anterior</>],
 						[<>Almacenamiento local del carrito y preferencias</>, <>Recordar tu carrito, la sucursal elegida y tu idioma</>, <>Hasta que lo borres</>],
 						[<><code>gcode-consent-analytics</code> (almacenamiento local)</>, <>Recordar si aceptaste o rechazaste la medición</>, <>12 meses</>],
