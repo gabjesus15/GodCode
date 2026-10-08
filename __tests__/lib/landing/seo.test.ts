@@ -35,6 +35,7 @@ describe("landing SEO artifacts", () => {
 					max_branches: 1,
 					max_users: 2,
 					featureBullets: ["1 sucursal"],
+					productMode: "full",
 				},
 				{
 					id: "pro",
@@ -43,6 +44,7 @@ describe("landing SEO artifacts", () => {
 					max_branches: 3,
 					max_users: 5,
 					featureBullets: ["3 sucursales"],
+					productMode: "full",
 				},
 			],
 			country: "CL",

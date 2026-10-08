@@ -5,6 +5,7 @@ import { unstable_cache } from "next/cache";
 import type { AppLocale } from "@/lib/i18n/config";
 
 import { resolvePlanMarketingLines, resolvePlanName } from "./plan-i18n";
+import { resolvePublicPlanProductMode, type PublicPlanProductMode } from "./plan-variants";
 import { queryPublicPlansLandingRows } from "./plans-db-query";
 
 export type PublicPlanForLanding = {
@@ -14,6 +15,8 @@ export type PublicPlanForLanding = {
   max_branches: number;
   max_users: number;
   featureBullets: string[];
+  /** Menú y panel, solo menú o solo panel: decide si el plan se agrupa con sus variantes en una tarjeta. */
+  productMode: PublicPlanProductMode;
 };
 
 function bulletsFromPlan(row: {
@@ -21,7 +24,7 @@ function bulletsFromPlan(row: {
   max_users: number | null;
   marketing_lines?: unknown;
   marketing_lines_i18n?: unknown;
-}, locale: AppLocale): string[] {
+}, locale: AppLocale, productMode: PublicPlanProductMode): string[] {
   const custom = resolvePlanMarketingLines({
     locale,
     marketingLines: row.marketing_lines,
@@ -72,7 +75,8 @@ function bulletsFromPlan(row: {
   if (maxB > 0) {
     base.push(copy.branches(maxB));
   }
-  if (maxU > 0) {
+  // Con solo menú digital no hay pestaña de equipo, así que el cupo de usuarios no se vende.
+  if (maxU > 0 && productMode !== "menu_only") {
     base.push(copy.users(maxU));
   }
 
@@ -98,7 +102,9 @@ async function loadPublicPlansForLanding(locale: AppLocale): Promise<PublicPlanF
 
   const rows = (data ?? []).filter((p) => p.is_active !== false);
 
-  return rows.map((p) => ({
+  return rows.map((p) => {
+    const productMode = resolvePublicPlanProductMode(p.features);
+    return {
     id: p.id,
     name: resolvePlanName({ locale, name: p.name, nameI18n: p.name_i18n }),
     pricesByContinent:
@@ -112,8 +118,10 @@ async function loadPublicPlansForLanding(locale: AppLocale): Promise<PublicPlanF
           },
     max_branches: p.max_branches ?? 0,
     max_users: p.max_users ?? 0,
-    featureBullets: bulletsFromPlan(p, locale),
-  }));
+    featureBullets: bulletsFromPlan(p, locale, productMode),
+    productMode,
+    };
+  });
 }
 
 const getPublicPlansForLandingCached = unstable_cache(

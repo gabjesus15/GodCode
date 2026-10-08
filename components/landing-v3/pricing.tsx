@@ -1,10 +1,9 @@
-import Link from "next/link";
-import { Check } from "lucide-react";
-
 import { formatLandingPrice } from "@/lib/landing/price";
 import { popularPlanIndex, type PublicPlanForLanding } from "@/lib/plans/public-plans";
 import { filterPlansWithPositiveRegionalPrice, resolveRegionalPlanPrice } from "@/lib/plans/plan-regional-pricing";
+import { groupPlanVariants } from "@/lib/plans/plan-variants";
 import { cn } from "@/utils/cn";
+import { PlanCard } from "./plan-card";
 import { SectionGlow } from "./section-light";
 
 type PricingProps = {
@@ -20,22 +19,11 @@ function gridColsFor(count: number): string {
   return "md:max-w-md md:mx-auto md:grid-cols-1";
 }
 
-function FeatureList({ id, features }: { id: string; features: string[] }) {
-  return (
-    <ul className="mt-6 flex flex-1 flex-col gap-3 border-t border-white/[0.06] pt-6">
-      {features.map((feature, fi) => (
-        <li key={`${id}-${fi}`} className="flex items-start gap-3 text-sm leading-snug text-[#a1a1aa]">
-          <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#71717a]" aria-hidden />
-          <span className="whitespace-pre-wrap">{feature}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 export function Pricing({ plans, country }: PricingProps) {
   const paidPlans = filterPlansWithPositiveRegionalPrice(plans, country);
-  const popularIdx = popularPlanIndex(paidPlans.length);
+  // Las variantes de un mismo plan (Básico con solo menú o solo panel) van en una tarjeta con selector.
+  const groups = groupPlanVariants(paidPlans);
+  const popularIdx = popularPlanIndex(groups.length);
 
   return (
     <section id="precios" className="v3-section-dark py-24 md:py-32">
@@ -51,7 +39,7 @@ export function Pricing({ plans, country }: PricingProps) {
           </p>
         </div>
 
-        {paidPlans.length === 0 ? (
+        {groups.length === 0 ? (
           <p className="rounded-2xl border border-[rgba(244,244,245,0.12)] bg-[#141414] p-10 text-center text-[#a1a1aa]">
             Estamos actualizando nuestros planes. Escríbenos y te contamos los precios al instante.
           </p>
@@ -61,54 +49,28 @@ export function Pricing({ plans, country }: PricingProps) {
           <div
             className={cn(
               "-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 pt-3 [scrollbar-width:none] sm:-mx-6 sm:px-6 md:mx-0 md:grid md:gap-5 md:overflow-visible md:p-0 [&::-webkit-scrollbar]:hidden",
-              gridColsFor(paidPlans.length),
+              gridColsFor(groups.length),
             )}
           >
-            {paidPlans.map((plan, index) => {
-              const isPopular = index === popularIdx;
-              const { price, currency } = resolveRegionalPlanPrice(plan, country);
-
-              return (
-                <div
-                  key={plan.id}
-                  className={cn(
-                    "relative flex w-[84%] max-w-[360px] shrink-0 snap-center flex-col rounded-2xl border p-6 transition-colors duration-300 md:w-auto md:max-w-none lg:p-7",
-                    isPopular
-                      ? "border-[#4f5bff]/60 bg-[#13131a]"
-                      : "border-white/[0.08] bg-[#111113] hover:border-white/[0.16]",
-                  )}
-                >
-                  {isPopular ? (
-                    // «Recomendado» y no «Más elegido»: es nuestra sugerencia, no un dato de ventas que hoy no medimos.
-                    <span className="absolute -top-2.5 left-6 rounded-full bg-[#4f5bff] px-2.5 py-0.5 text-[11px] font-semibold text-white">
-                      Recomendado
-                    </span>
-                  ) : null}
-                  <h3 className="text-sm font-medium uppercase tracking-[0.12em] text-[#a1a1aa]">{plan.name}</h3>
-                  <p className="mt-4 flex items-baseline gap-1.5">
-                    <span className="font-display text-5xl leading-none text-[#f4f4f5] tabular-nums">
-                      {formatLandingPrice(price, currency)}
-                    </span>
-                    <span className="text-sm text-[#71717a]">{currency}/mes</span>
-                  </p>
-                  <FeatureList id={plan.id} features={plan.featureBullets} />
-                  {/* El plan viaja al alta y queda marcado cuando el dueño publique su tienda. */}
-                  <Link
-                    href={`/onboarding?plan=${encodeURIComponent(plan.id)}`}
-                    aria-label={`Empezar con el plan ${plan.name}`}
-                    data-plan={plan.name}
-                    className={cn(
-                      "mt-8 inline-flex justify-center rounded-full px-6 py-3 text-sm font-semibold transition-colors duration-200",
-                      isPopular
-                        ? "bg-[#4f5bff] text-white hover:bg-[#3d47e6]"
-                        : "border border-white/15 text-[#f4f4f5] hover:border-white/35 hover:bg-white/[0.04]",
-                    )}
-                  >
-                    Empezar
-                  </Link>
-                </div>
-              );
-            })}
+            {groups.map((group, index) => (
+              <PlanCard
+                key={group.key}
+                name={group.name}
+                isPopular={index === popularIdx}
+                variants={group.variants.map(({ plan, label }) => {
+                  // El precio se formatea aquí, en el servidor, para que la tarjeta pinte igual al hidratar.
+                  const { price, currency } = resolveRegionalPlanPrice(plan, country);
+                  return {
+                    id: plan.id,
+                    name: plan.name,
+                    label,
+                    price: formatLandingPrice(price, currency),
+                    currency,
+                    bullets: plan.featureBullets,
+                  };
+                })}
+              />
+            ))}
           </div>
           </>
         )}
