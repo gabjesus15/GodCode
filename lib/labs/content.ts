@@ -54,19 +54,28 @@ export const LABS_HOME = {
 	secondaryCta: "Ver proyectos",
 	/** Tres respuestas a los miedos de quien cotiza: perder plata, quedar amarrado, no recibir respuesta. Van en una sola línea bajo el botón. */
 	assurances: ["Propuesta cerrada por escrito", "Código y dominio a tu nombre", "Respuesta en dos días hábiles"],
-	/** Credenciales, no promesas: lo que el hero ya promete no se repite aquí. */
+	/**
+	 * La frase grande entre el hero y los hechos. Las palabras entre llaves llevan un icono
+	 * delante (`components/labs/labs-home.tsx`): no se repite el inventario del intro, se concreta.
+	 */
+	statement:
+		"Lo que hacemos es fácil de explicar: {sitios} que convierten, {sistemas} que ordenan la operación, {tiendas} que venden sin intermediarios y {automatizaciones} que ahorran horas.",
+	/** Credenciales, no promesas, en cifras reales: lo que el hero ya promete no se repite aquí. */
 	facts: [
-		{ label: "Software propio en producción", detail: "Operamos nuestro propio producto todos los días, con pagos, dominios y soporte." },
-		{ label: "Clientes en tres países", detail: "Chile, Venezuela y Estados Unidos, trabajando a distancia." },
-		{ label: "Interlocutor directo", detail: "Hablas con quien diseña y programa, no con un vendedor." },
-		{ label: "Avances cada semana", detail: "Ves el proyecto funcionando en un entorno de prueba desde la primera entrega." },
+		{ value: "24/7", label: "Software propio en producción", detail: "Operamos nuestro propio producto todos los días, con pagos, dominios y soporte." },
+		{ value: "3", unit: "países", label: "Clientes en tres países", detail: "Chile, Venezuela y Estados Unidos, trabajando a distancia." },
+		{ value: "1", unit: "interlocutor", label: "Interlocutor directo", detail: "Hablas con quien diseña y programa, no con un vendedor." },
+		{ value: "7", unit: "días", label: "Avances cada semana", detail: "Ves el proyecto funcionando en un entorno de prueba desde la primera entrega." },
 	],
 	servicesEyebrow: "01 · Servicios",
 	servicesTitle: "Qué construimos",
-	servicesIntro:
-		"Trabajamos con empresas que necesitan algo que un producto estándar no cubre: una web que convierta, un sistema que ordene la operación o una tienda que venda sin intermediarios.",
+	servicesIntro: "Trabajamos con empresas que necesitan algo que un producto estándar no cubre.",
 	processEyebrow: "02 · Cómo trabajamos",
 	processTitle: "Un método sencillo, de principio a fin",
+	/** El título del método se dibuja con una palabra que rueda: «Un método [sencillo] de principio a fin». */
+	processTitleLead: "Un método",
+	processWords: ["sencillo", "por escrito", "por entregas", "sin sorpresas"],
+	processTitleTail: "de principio a fin",
 	stackEyebrow: "03 · Con qué construimos",
 	stackTitle: "Herramientas probadas, conectadas con lo que ya usas",
 	/** Solo lo que de verdad usamos y mantenemos en producción; es el inventario de `LABS_STACK`. */

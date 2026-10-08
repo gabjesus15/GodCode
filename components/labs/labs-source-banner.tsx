@@ -67,7 +67,7 @@ export function LabsSourceBanner({ href, productName }: LabsSourceBannerProps) {
 	return (
 		<div
 			role="status"
-			className="labs-rise mb-8 flex max-w-xl flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-[#4f5bff]/40 bg-[#4f5bff]/15 py-2.5 pl-4 pr-2 text-sm text-[#f4f4f5]"
+			className="labs-rise mx-auto mb-8 flex max-w-xl flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-[#4f5bff]/25 bg-[#eef0ff] py-2.5 pl-4 pr-2 text-left text-sm text-[#15151a]"
 		>
 			<p className="min-w-[12rem] flex-1">
 				¿Buscas {productName}, el menú digital para restaurantes? Tiene su propia página.
@@ -83,7 +83,7 @@ export function LabsSourceBanner({ href, productName }: LabsSourceBannerProps) {
 				type="button"
 				onClick={dismiss}
 				aria-label="Cerrar aviso"
-				className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#a1a1aa] transition-colors hover:text-white"
+				className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#6b6b76] transition-colors hover:text-[#15151a]"
 			>
 				<X className="h-4 w-4" aria-hidden />
 			</button>

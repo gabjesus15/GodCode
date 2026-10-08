@@ -1,79 +1,133 @@
-/* Movimiento de la home de Gcode Labs. Con «reducir movimiento» activado, nada se mueve. */
+/* Home de Gcode Labs: tipografía, color y movimiento. Solo afecta a `.labs-root`. */
+.labs-root {
+	font-family: var(--font-poppins), var(--font-geist-sans), system-ui, sans-serif;
+}
 
+/* Entradas al cargar (hero) y piezas que flotan. */
 @media (prefers-reduced-motion: no-preference) {
-	/* Entrada del hero: cada bloque sube y se enfoca, uno tras otro (`--labs-i` es el orden). */
 	@keyframes labs-rise {
-		from {
-			opacity: 0;
-			transform: translateY(18px);
-			filter: blur(3px);
-		}
-		to {
-			opacity: 1;
-			transform: none;
-			filter: none;
-		}
+		from { opacity: 0; transform: translateY(18px); filter: blur(3px); }
+		to { opacity: 1; transform: none; filter: none; }
 	}
-
 	.labs-rise {
 		animation: labs-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
 		animation-delay: calc(var(--labs-i, 0) * 110ms);
 	}
 
-	/* Las pantallas de muestra flotan despacio, cada una con su propio ritmo. */
 	@keyframes labs-float {
-		0%,
-		100% {
-			translate: 0 0;
-		}
-		50% {
-			translate: 0 -8px;
-		}
+		0%, 100% { translate: 0 0; }
+		50% { translate: 0 -10px; }
 	}
-
 	.labs-float {
 		animation: labs-float 7s ease-in-out infinite;
 		animation-delay: calc(var(--labs-i, 0) * -1.4s);
 	}
 
-	@keyframes labs-glow {
-		0%,
-		100% {
-			transform: translate(-50%, -50%) scale(1);
-		}
-		50% {
-			transform: translate(-54%, -46%) scale(1.08);
-		}
+	/* Formas abstractas del escenario: derivan despacio, cada una a su ritmo. */
+	@keyframes labs-drift {
+		0%, 100% { transform: rotate(var(--labs-rot, 0deg)) translate(0, 0); }
+		50% { transform: rotate(calc(var(--labs-rot, 0deg) + 7deg)) translate(8px, -16px); }
+	}
+	.labs-drift {
+		animation: labs-drift 12s ease-in-out infinite;
+		animation-delay: calc(var(--labs-i, 0) * -2.3s);
 	}
 
-	.labs-glow {
-		animation: labs-glow 14s ease-in-out infinite;
+	/* Palabra que rueda en el título del método: cuatro palabras, la primera repetida al final para que el bucle no salte. */
+	@keyframes labs-roll {
+		0%, 18% { transform: translateY(0); }
+		25%, 43% { transform: translateY(-1.2em); }
+		50%, 68% { transform: translateY(-2.4em); }
+		75%, 93% { transform: translateY(-3.6em); }
+		100% { transform: translateY(-4.8em); }
+	}
+	.labs-roll {
+		animation: labs-roll 10s cubic-bezier(0.76, 0, 0.24, 1) infinite;
 	}
 }
 
-/* Al bajar, cada bloque entra ligado al scroll. Sin soporte de scroll-timeline, ya está visible. */
+/* Movimiento ligado al scroll. Solo donde el navegador lo entiende (Chrome y Edge); en el resto todo se ve fijo y completo. */
 @supports (animation-timeline: view()) {
 	@media (prefers-reduced-motion: no-preference) {
 		@keyframes labs-reveal {
-			from {
-				opacity: 0.1;
-				transform: translateY(22px);
+			from { opacity: 0; transform: translateY(28px); }
+			to { opacity: 1; transform: none; }
+		}
+		.labs-reveal {
+			animation: labs-reveal linear both;
+			animation-timeline: view();
+			animation-range: entry 5% entry 60%;
+		}
+		/* Escalonado: cada tarjeta de una fila entra un poco después que la anterior. */
+		.labs-stagger-0 { animation-range: entry 0% entry 45%; }
+		.labs-stagger-1 { animation-range: entry 12% entry 57%; }
+		.labs-stagger-2 { animation-range: entry 24% entry 69%; }
+		.labs-stagger-3 { animation-range: entry 36% entry 81%; }
+		.labs-stagger-4 { animation-range: entry 48% entry 93%; }
+
+		/* Iconos dentro de la frase grande: saltan al entrar. */
+		@keyframes labs-pop {
+			from { opacity: 0; transform: scale(0.4) rotate(-14deg); }
+			to { opacity: 1; transform: none; }
+		}
+		.labs-pop {
+			animation: labs-pop linear both;
+			animation-timeline: view();
+			animation-range: entry 10% entry 70%;
+		}
+
+		/* El escenario del hero: al hacer scroll las láminas de atrás se alinean, la tarjeta crece y la escena se acerca. */
+		@keyframes labs-stage-card {
+			from { transform: scale(0.94); border-radius: 3rem; }
+			to { transform: scale(1); border-radius: 1.75rem; }
+		}
+		.labs-stage__card {
+			animation: labs-stage-card linear both;
+			animation-timeline: scroll(root);
+			animation-range: 0 640px;
+		}
+		@keyframes labs-stage-back-l {
+			from { transform: rotate(-7deg) translate(-2%, 5%); }
+			to { transform: rotate(-2deg) translate(-1%, 2%); }
+		}
+		.labs-stage__back-l {
+			animation: labs-stage-back-l linear both;
+			animation-timeline: scroll(root);
+			animation-range: 0 640px;
+		}
+		@keyframes labs-stage-back-r {
+			from { transform: rotate(5deg) translate(2%, 3%); }
+			to { transform: rotate(1.5deg) translate(1%, 1%); }
+		}
+		.labs-stage__back-r {
+			animation: labs-stage-back-r linear both;
+			animation-timeline: scroll(root);
+			animation-range: 0 640px;
+		}
+		@media (min-width: 1024px) {
+			@keyframes labs-stage-inner {
+				from { transform: scale(1); }
+				to { transform: scale(1.14); }
 			}
-			to {
-				opacity: 1;
-				transform: none;
+			.labs-stage__inner {
+				transform-origin: 50% 60%;
+				animation: labs-stage-inner linear both;
+				animation-timeline: scroll(root);
+				animation-range: 0 640px;
 			}
 		}
 
-		/* Propiedades largas a propósito: el minificador descarta el shorthand junto a animation-timeline. */
-		.labs-reveal {
-			animation-name: labs-reveal;
-			animation-duration: 1ms;
-			animation-timing-function: linear;
-			animation-fill-mode: both;
-			animation-timeline: view();
-			animation-range-start: entry 5%;
-			animation-range-end: entry 70%;
+		/* Barra de progreso de la tira de servicios, ligada a su desplazamiento horizontal. */
+		.labs-track-scope { timeline-scope: --labs-track; }
+		.labs-track { scroll-timeline-name: --labs-track; scroll-timeline-axis: inline; }
+		@keyframes labs-progress {
+			from { transform: scaleX(0.16); }
+			to { transform: scaleX(1); }
+		}
+		.labs-progress {
+			transform-origin: left center;
+			animation: labs-progress linear both;
+			animation-timeline: --labs-track;
 		}
 	}
 }

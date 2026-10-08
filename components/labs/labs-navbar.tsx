@@ -22,8 +22,8 @@ type LabsNavbarProps = {
 };
 
 /**
- * Barra de la home corporativa: fondo claro, enlaces de sección y un solo CTA.
- * Sobre el hero oscuro va translúcida; al hacer scroll pasa a blanco sólido.
+ * Barra de la home corporativa: logo, los enlaces de sección en una píldora centrada y
+ * un solo CTA. Sobre la página clara va transparente; al hacer scroll pasa a blanco con sombra.
  */
 export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName, product }: LabsNavbarProps) {
 	const [scrolled, setScrolled] = useState(false);
@@ -50,30 +50,25 @@ export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName, pr
 	return (
 		<header
 			className={cn(
-				"fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,border-color] duration-300",
-				solid
-					? "border-b border-black/[0.06] bg-white/95 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur"
-					: "border-b border-white/[0.06] bg-[#080808]/30 backdrop-blur-md",
+				"fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow] duration-300",
+				solid ? "bg-white/90 shadow-[0_4px_24px_-12px_rgba(20,8,90,0.2)] backdrop-blur" : "bg-transparent",
 			)}
 		>
-			<nav className="mx-auto flex h-18 max-w-6xl items-center justify-between px-6" aria-label="Principal">
+			<nav className="mx-auto flex h-18 max-w-7xl items-center justify-between px-6" aria-label="Principal">
 				<Link
 					href={homeHref}
 					aria-label={`Inicio de ${companyName}`}
 					className="relative z-50 inline-flex items-center rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4f5bff]"
 				>
-					<LandingBrandMark variant={solid ? "onLight" : "onDark"} priority />
+					<LandingBrandMark variant="onLight" priority />
 				</Link>
 
-				<ul className="hidden items-center gap-8 lg:flex">
+				<ul className="hidden items-center gap-0.5 rounded-full border border-black/[0.06] bg-[#f4f4f8] p-1 lg:flex">
 					{links.map((link) => (
 						<li key={link.href}>
 							<Link
 								href={link.href}
-								className={cn(
-									"text-sm font-medium transition-colors",
-									solid ? "text-[#3a3a3f] hover:text-[#1d1d1f]" : "text-[#d4d4d8] hover:text-white",
-								)}
+								className="block rounded-full px-4 py-2 text-sm font-medium text-[#3a3a44] transition-[background-color,color,box-shadow] hover:bg-white hover:text-[#15151a] hover:shadow-sm"
 							>
 								{link.label}
 							</Link>
@@ -85,10 +80,7 @@ export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName, pr
 					{product ? (
 						<Link
 							href={product.href}
-							className={cn(
-								"hidden items-center gap-1 text-sm font-medium transition-colors md:inline-flex",
-								solid ? "text-[#71717a] hover:text-[#1d1d1f]" : "text-[#a1a1aa] hover:text-white",
-							)}
+							className="hidden items-center gap-1 text-sm font-medium text-[#6b6b76] transition-colors hover:text-[#15151a] md:inline-flex"
 						>
 							{product.label}
 							<ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
@@ -96,7 +88,7 @@ export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName, pr
 					) : null}
 					<Link
 						href={ctaHref}
-						className="hidden items-center gap-1.5 rounded-full bg-[#1d1d1f] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4f5bff] sm:inline-flex"
+						className="hidden items-center gap-1.5 rounded-full bg-[#15151a] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4f5bff] sm:inline-flex"
 					>
 						{ctaLabel}
 						<ArrowRight className="h-3.5 w-3.5" aria-hidden />
@@ -107,10 +99,7 @@ export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName, pr
 						aria-expanded={open}
 						aria-controls="labs-mobile-menu"
 						aria-label={open ? "Cerrar menú" : "Abrir menú"}
-						className={cn(
-							"inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors lg:hidden",
-							solid ? "border-black/10 text-[#1d1d1f]" : "border-white/20 text-white",
-						)}
+						className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-[#15151a] lg:hidden"
 					>
 						{open ? <X className="h-5 w-5" aria-hidden /> : <Menu className="h-5 w-5" aria-hidden />}
 					</button>
@@ -119,14 +108,10 @@ export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName, pr
 
 			{open ? (
 				<div id="labs-mobile-menu" className="border-t border-black/[0.06] bg-white lg:hidden">
-					<ul className="mx-auto flex max-w-6xl flex-col px-6 py-4">
+					<ul className="mx-auto flex max-w-7xl flex-col px-6 py-4">
 						{links.map((link) => (
 							<li key={link.href}>
-								<Link
-									href={link.href}
-									onClick={() => setOpen(false)}
-									className="block py-3 text-base font-medium text-[#1d1d1f]"
-								>
+								<Link href={link.href} onClick={() => setOpen(false)} className="block py-3 text-base font-medium text-[#15151a]">
 									{link.label}
 								</Link>
 							</li>
@@ -136,13 +121,13 @@ export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName, pr
 								<Link
 									href={product.href}
 									onClick={() => setOpen(false)}
-									className="flex items-center justify-between py-3 text-base font-medium text-[#1d1d1f]"
+									className="flex items-center justify-between py-3 text-base font-medium text-[#15151a]"
 								>
 									<span>
 										{product.label}
-										<span className="ml-2 text-sm font-normal text-[#71717a]">para restaurantes</span>
+										<span className="ml-2 text-sm font-normal text-[#6b6b76]">para restaurantes</span>
 									</span>
-									<ArrowUpRight className="h-4 w-4 text-[#71717a]" aria-hidden />
+									<ArrowUpRight className="h-4 w-4 text-[#6b6b76]" aria-hidden />
 								</Link>
 							</li>
 						) : null}
@@ -150,7 +135,7 @@ export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName, pr
 							<Link
 								href={ctaHref}
 								onClick={() => setOpen(false)}
-								className="inline-flex items-center gap-2 rounded-full bg-[#1d1d1f] px-5 py-3 text-sm font-semibold text-white"
+								className="inline-flex items-center gap-2 rounded-full bg-[#15151a] px-5 py-3 text-sm font-semibold text-white"
 							>
 								{ctaLabel}
 								<ArrowRight className="h-4 w-4" aria-hidden />
