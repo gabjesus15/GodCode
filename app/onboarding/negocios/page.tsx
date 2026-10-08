@@ -7,7 +7,7 @@ import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-brandin
 import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { isInternalTestTenantSlug } from "@/lib/seo/internal-test-tenant";
+import { isPubliclyListedCompany } from "@/lib/seo/public-tenant-listing";
 import { getCurrentLocale } from "../../../lib/i18n/server";
 import { getTenantUrl } from "../../../utils/tenant-url";
 
@@ -71,7 +71,7 @@ async function fetchPublicCompanies(): Promise<CompanyPublic[]> {
 	try {
 		const { data, error } = await supabaseAdmin
 			.from("companies")
-			.select("id,name,public_slug,custom_domain,theme_config")
+			.select("id,name,public_slug,custom_domain,theme_config,plans:plans(features)")
 			.in("subscription_status", ["active", "trial"])
 			.not("public_slug", "is", null)
 			.order("name");
@@ -81,8 +81,8 @@ async function fetchPublicCompanies(): Promise<CompanyPublic[]> {
 		}
 
 		const mapped = data
-			// Misma regla que el sitemap: las tiendas demo/QA no se muestran como negocios reales.
-			.filter((row) => !isInternalTestTenantSlug(String(row.public_slug ?? "")))
+			// Misma regla que el sitemap: fuera tiendas demo/QA y planes «solo panel CEO» (sin menú público).
+			.filter((row) => isPubliclyListedCompany(row))
 			.map((row) => {
 				const theme = (row.theme_config as ThemeConfig) ?? null;
 				const id = row.id as string;
