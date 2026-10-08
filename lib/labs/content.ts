@@ -34,6 +34,8 @@ export type LabsScreen = {
 	frame: "phone" | "laptop" | "browser";
 	/** Texto corto bajo la captura (hero, producto). */
 	label?: string;
+	/** De qué proyecto es, para la lámina abierta del muestrario del hero. */
+	project?: string;
 	/** Dirección que muestra la barra del navegador. */
 	address?: string;
 };
@@ -155,7 +157,7 @@ export const LABS_SERVICES: LabsService[] = [
 			"Catálogo, carrito, pagos y entrega en tu propio dominio, sin comisión por venta a plataformas de terceros.",
 		deliverables: ["Catálogo con variantes", "Pagos locales e internacionales", "Zonas y costos de despacho", "Avisos por WhatsApp y correo"],
 		fit: "Negocios que venden por marketplaces y quieren un canal propio.",
-		image: { src: "/labs/capturas/gcode-pos-tu-pedido.jpg", alt: `Carrito de un pedido online en el menú digital de ${LANDING_PRODUCT_NAME}`, width: 500, height: 980, frame: "phone" },
+		image: { src: "/labs/capturas/gcode-pos-menu-escritorio.jpg", alt: `Menú digital de Rica Pizza en ${LANDING_PRODUCT_NAME}, visto en un portátil`, width: 1280, height: 800, frame: "laptop" },
 	},
 	{
 		id: "integraciones",
@@ -164,7 +166,7 @@ export const LABS_SERVICES: LabsService[] = [
 			"Conectamos lo que ya usas: Stripe, PayPal y Mercado Pago, correo, Telegram y WhatsApp, hojas de cálculo y APIs de terceros.",
 		deliverables: ["Integración de pagos y suscripciones", "Avisos automáticos al equipo", "Sincronización de datos", "Documentación de cada conexión"],
 		fit: "Equipos que pierden horas copiando datos de un sistema a otro.",
-		image: { src: "/labs/capturas/gcode-pos-pedido-recibido.jpg", alt: `Pedido recibido en ${LANDING_PRODUCT_NAME}, con el aviso al restaurante y el contacto por WhatsApp`, width: 369, height: 732, frame: "phone" },
+		image: { src: "/labs/capturas/gcode-pos-metodos-de-pago.jpg", alt: `Métodos de pago de un pedido en ${LANDING_PRODUCT_NAME}: efectivo, tarjeta, Pago Móvil y Zelle`, width: 600, height: 1085, frame: "phone" },
 	},
 	{
 		id: "mantenimiento",
@@ -181,17 +183,17 @@ export const LABS_SERVICES: LabsService[] = [
  * restaurantes. Cuando haya capturas de otros proyectos (Auto Care Planet), se suman aquí.
  */
 export const LABS_HERO_SCREENS: LabsScreen[] = [
-	{ src: "/labs/capturas/oishi-sushi-menu.jpg", alt: "Menú digital de Oishi Sushi en Gcode POS", width: 600, height: 1201, frame: "phone", label: "Menú digital" },
-	{ src: "/labs/capturas/midinerito-inicio.jpg", alt: "Inicio de MiDinerito: saldo en dólares con su equivalente en bolívares y gasto por semana", width: 600, height: 1367, frame: "phone", label: "App de finanzas" },
-	{ src: "/labs/capturas/autocareplanet-inicio.jpg", alt: "Portada de autocareplanet.com en un portátil, con la reserva de citas", width: 1280, height: 800, frame: "laptop", label: "Sitio web con reservas" },
-	{ src: "/labs/capturas/colorin-app.jpg", alt: "Colorín, app para dibujar y colorear, en un teléfono", width: 600, height: 1367, frame: "phone", label: "App para niños" },
-	{ src: "/labs/capturas/gcode-pos-caja.jpg", alt: "Caja de Gcode POS con los pedidos entrantes del local", width: 473, height: 1024, frame: "phone", label: "Caja del local" },
+	{ src: "/labs/capturas/gcode-pos-menu.jpg", alt: "Menú digital de Rica Pizza en Gcode POS: fotos de las pizzas, precios y una oferta", width: 600, height: 1368, frame: "phone", label: "Menú digital con pedidos", project: "Gcode POS · Rica Pizza" },
+	{ src: "/labs/capturas/midinerito-inicio.jpg", alt: "Inicio de MiDinerito: saldo en dólares con su equivalente en bolívares y gasto por semana", width: 600, height: 1367, frame: "phone", label: "App de finanzas", project: "MiDinerito" },
+	{ src: "/labs/capturas/autocareplanet-inicio.jpg", alt: "Portada de autocareplanet.com en un portátil, con la reserva de citas", width: 1280, height: 800, frame: "laptop", label: "Sitio web con reservas", project: "Auto Care Planet" },
+	{ src: "/labs/capturas/colorin-app.jpg", alt: "Colorín, app para dibujar y colorear, en un teléfono", width: 600, height: 1367, frame: "phone", label: "App para niños", project: "Colorín" },
+	{ src: "/labs/capturas/gcode-pos-pedido-recibido.jpg", alt: "Pedido recibido en el menú de Rica Pizza, con el aviso de contacto por WhatsApp y el local de retiro", width: 600, height: 1368, frame: "phone", label: "Pedido confirmado", project: "Gcode POS · Rica Pizza" },
 ];
 
 /** Las dos pantallas de la sección del producto propio. */
 export const LABS_PRODUCT_SCREENS: LabsScreen[] = [
-	{ src: "/labs/capturas/oishi-sushi-menu.jpg", alt: "Menú digital de Oishi Sushi en Gcode POS", width: 600, height: 1201, frame: "phone", label: "Menú con QR y pedidos" },
-	{ src: "/labs/capturas/gcode-pos-caja.jpg", alt: "Caja de Gcode POS con los pedidos entrantes del local", width: 473, height: 1024, frame: "phone", label: "Caja y cocina" },
+	{ src: "/labs/capturas/gcode-pos-menu-portada.jpg", alt: "Menú digital de Rica Pizza en Gcode POS, con su logo, la portada de la marca y las pizzas", width: 600, height: 1368, frame: "phone", label: "Menú con tu marca y QR" },
+	{ src: "/labs/capturas/gcode-pos-pedido.jpg", alt: "Carrito de un pedido en el menú de Rica Pizza, con el total en dólares y en bolívares", width: 600, height: 1368, frame: "phone", label: "Pedido y pago desde el teléfono" },
 ];
 
 /** Con qué construimos: herramientas e integraciones que usamos de verdad, por grupo. Sin logos, solo nombres. */
