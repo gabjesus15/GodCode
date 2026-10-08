@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
 
 /** Manifest PWA para instalar el panel super-admin (escritorio y móvil). */
-export async function GET(req: Request) {
-	let origin = "";
-	try {
-		origin = new URL(req.url).origin;
-	} catch {
-		origin = "";
-	}
-
-	const png192 = origin ? `${origin}/saas-admin/icon-192.png` : "/saas-admin/icon-192.png";
-	const png512 = origin ? `${origin}/saas-admin/icon-512.png` : "/saas-admin/icon-512.png";
+export async function GET() {
+	// Rutas relativas: el navegador las resuelve contra la URL del manifest. Con req.url,
+	// detrás del proxy de Coolify el origen salía como http://0.0.0.0:3000 y el icono fallaba.
+	const png192 = "/saas-admin/icon-192.png";
+	const png512 = "/saas-admin/icon-512.png";
 
 	const manifest = {
 		id: "/dashboard",
