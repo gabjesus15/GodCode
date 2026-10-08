@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { OwnerSetupWizard } from "@/components/customer-portal/setup/owner-setup-wizard";
 import type { OwnerSetupInitial } from "@/components/customer-portal/setup/owner-setup-types";
@@ -6,6 +7,7 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isMenuImportEnabled } from "@/lib/menu/ai-menu-import";
 import { getMenuStatus } from "@/lib/menu/create-menu-items";
 import { resolveBusinessSector } from "@/lib/onboarding/business-sectors";
+import { companyHasPublicMenu } from "@/lib/plans/plan-product-mode";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
 import { normalizeBusinessHours } from "@/lib/tenant/business-hours";
@@ -39,7 +41,7 @@ export default async function OwnerSetupPage({ searchParams }: { searchParams: P
 		await Promise.all([
 			supabaseAdmin
 				.from("companies")
-				.select("id,name,public_slug,custom_domain,country,subscription_status,theme_config")
+				.select("id,name,public_slug,custom_domain,country,subscription_status,theme_config,plan:plans(features)")
 				.eq("id", companyId)
 				.maybeSingle(),
 			supabaseAdmin.from("company_theme_drafts").select("theme_config").eq("company_id", companyId).maybeSingle(),
@@ -61,6 +63,9 @@ export default async function OwnerSetupPage({ searchParams }: { searchParams: P
 			getMenuStatus(supabaseAdmin, companyId),
 			supabaseAdmin.from("company_theme_versions").select("id", { count: "exact", head: true }).eq("company_id", companyId),
 		]);
+
+	// «Solo panel CEO» no tiene tienda pública que armar: su cuenta es el resumen y el panel.
+	if (company && !companyHasPublicMenu({ plans: company.plan })) redirect("/cuenta");
 
 	const name = String(company?.name ?? "Mi tienda");
 	const publicSlug = (company?.public_slug as string | null) ?? null;

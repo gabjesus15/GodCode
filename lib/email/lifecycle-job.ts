@@ -5,6 +5,7 @@ import { classifyPortalPaymentReference, describePortalOrder, isOrderAwaitingPay
 import { formatUsd } from "@/lib/billing/portal-pricing";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { loadPendingStoreDrafts, storeDraftPurgeMode } from "@/lib/onboarding/store-draft-jobs";
+import { loadPanelOnlyPlanIds } from "@/lib/onboarding/store-draft-service";
 import { readStoreDraft, storeDraftPurgeDate } from "@/lib/tenant/store-draft";
 import { getTenantHomeUrl } from "../../utils/tenant-url";
 
@@ -64,7 +65,7 @@ export async function loadLifecycleSnapshot(client: SupabaseClient, now: Date): 
 	const until = new Date(now.getTime() + 8 * DAY_MS).toISOString();
 	const recent = new Date(now.getTime() - 8 * DAY_MS).toISOString();
 
-	const [companies, orders, applications, drafts] = await Promise.all([
+	const [companies, orders, applications, drafts, panelOnlyPlans] = await Promise.all([
 		client
 			.from("companies")
 			.select("id,country,subscription_status,subscription_ends_at")
@@ -78,11 +79,12 @@ export async function loadLifecycleSnapshot(client: SupabaseClient, now: Date): 
 			.limit(2000),
 		client
 			.from("onboarding_applications")
-			.select("id,company_id,status,payment_status,payment_reference_url,updated_at,country")
+			.select("id,company_id,plan_id,status,payment_status,payment_reference_url,updated_at,country")
 			.in("status", ["email_verified", "form_completed", "payment_pending"])
 			.gte("updated_at", recent)
 			.limit(2000),
 		loadPendingStoreDrafts(client),
+		loadPanelOnlyPlanIds(client),
 	]);
 
 	const errors = [companies.error, orders.error, applications.error].filter(Boolean).map((error) => String(error?.message));
@@ -107,6 +109,7 @@ export async function loadLifecycleSnapshot(client: SupabaseClient, now: Date): 
 			applications: ((applications.data ?? []) as Array<Record<string, string | null>>).map((row) => ({
 				id: String(row.id),
 				companyId: row.company_id ?? null,
+				panelOnly: Boolean(row.plan_id && panelOnlyPlans.has(row.plan_id)),
 				status: row.status ?? null,
 				paymentStatus: row.payment_status ?? null,
 				receiptUrl: row.payment_reference_url ?? null,

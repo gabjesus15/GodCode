@@ -23,6 +23,14 @@ describe("resolveResumeTarget", () => {
 		).toMatchObject({ kind: "continue", step: "review" });
 	});
 
+	it("con «solo panel CEO» no hay tienda que crear: lo lleva a elegir el plan", () => {
+		expect(resolveResumeTarget({ ...base, status: "email_verified" }, "t", { panelOnly: true })).toEqual({
+			kind: "continue",
+			step: "plan",
+			path: "/onboarding/complete?token=t",
+		});
+	});
+
 	it("quien ya armó su tienda en vista previa entra a su cuenta", () => {
 		expect(resolveResumeTarget({ ...base, status: "email_verified", company_id: "c1" }, "t")).toEqual({ kind: "login" });
 		expect(resolveResumeTarget({ ...base, status: "form_completed", payment_status: "pending", company_id: "c1" }, "t")).toEqual({ kind: "login" });

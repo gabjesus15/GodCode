@@ -237,6 +237,13 @@ describe("tiendas en vista previa («Arma y paga»)", () => {
 		expect(planDrafts([draft("review", 2, { paymentInReview: true }), draft("review23", 24, { paymentInReview: true })], true)).toEqual([]);
 	});
 
+	it("con «solo panel CEO» el aviso de alta a medias lleva a elegir el plan", () => {
+		const result = plan({
+			applications: [{ id: "panel", panelOnly: true, status: "email_verified", paymentStatus: null, receiptUrl: null, lastActivityAt: daysAgo(1), country: "CL" }],
+		});
+		expect(result).toEqual([{ kind: "onboarding_resume", applicationId: "panel", dedupeKey: "resume:panel:1", step: "plan", attempt: 1 }]);
+	});
+
 	it("quien ya armó su tienda no recibe los avisos de alta a medias", () => {
 		const result = plan({
 			applications: [

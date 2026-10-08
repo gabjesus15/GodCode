@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createPasswordSetupLink } from "@/lib/auth/password-setup-link";
 import { sendEmail, type SendEmailResult } from "@/lib/email/send";
 import { getAppUrl } from "@/lib/tenant/app-url";
+import { isPanelOnlyPlan } from "./store-draft-service";
 import { normalizeEmail } from "./trial-eligibility";
 
 type ResumeRow = {
@@ -11,6 +12,7 @@ type ResumeRow = {
 	payment_status: string | null;
 	payment_reference_url: string | null;
 	company_id: string | null;
+	plan_id: string | null;
 	business_name: string | null;
 	responsible_name: string | null;
 	email: string;
@@ -24,7 +26,12 @@ export type ResumeTarget =
 	| { kind: "login" }
 	| { kind: "none" };
 
-export function resolveResumeTarget(app: Pick<ResumeRow, "status" | "payment_status" | "payment_reference_url" | "company_id">, token: string): ResumeTarget {
+/** `panelOnly`: eligió «solo panel CEO», que no arma tienda y sigue con el plan y el pago. */
+export function resolveResumeTarget(
+	app: Pick<ResumeRow, "status" | "payment_status" | "payment_reference_url" | "company_id">,
+	token: string,
+	options: { panelOnly?: boolean } = {},
+): ResumeTarget {
 	const status = String(app.status ?? "").toLowerCase();
 	const payment = String(app.payment_status ?? "").toLowerCase();
 	const encoded = encodeURIComponent(token);
@@ -37,7 +44,11 @@ export function resolveResumeTarget(app: Pick<ResumeRow, "status" | "payment_sta
 	if (app.company_id) {
 		return inReview ? { kind: "continue", step: "review", path: `/onboarding/pago?token=${encoded}` } : { kind: "login" };
 	}
-	if (status === "email_verified") return { kind: "continue", step: "store", path: `/onboarding/tienda?token=${encoded}` };
+	if (status === "email_verified") {
+		return options.panelOnly
+			? { kind: "continue", step: "plan", path: `/onboarding/complete?token=${encoded}` }
+			: { kind: "continue", step: "store", path: `/onboarding/tienda?token=${encoded}` };
+	}
 	if (status === "form_completed" || status === "payment_pending") {
 		if (inReview) return { kind: "continue", step: "review", path: `/onboarding/pago?token=${encoded}` };
 		return { kind: "continue", step: "payment", path: `/onboarding/pago?token=${encoded}` };
@@ -61,7 +72,7 @@ export async function sendOnboardingResumeLink(supabaseAdmin: SupabaseClient, ra
 
 	const { data } = await supabaseAdmin
 		.from("onboarding_applications")
-		.select("id,status,payment_status,payment_reference_url,company_id,business_name,responsible_name,email,verification_token")
+		.select("id,status,payment_status,payment_reference_url,company_id,plan_id,business_name,responsible_name,email,verification_token")
 		.eq("email", email)
 		.order("created_at", { ascending: false })
 		.limit(1)
@@ -72,7 +83,9 @@ export async function sendOnboardingResumeLink(supabaseAdmin: SupabaseClient, ra
 	const appUrl = getAppUrl();
 	const name = app.responsible_name ?? "";
 	const businessName = app.business_name ?? "";
-	const target = resolveResumeTarget(app, app.verification_token);
+	const target = resolveResumeTarget(app, app.verification_token, {
+		panelOnly: app.status === "email_verified" && !app.company_id && (await isPanelOnlyPlan(supabaseAdmin, app.plan_id)),
+	});
 
 	switch (target.kind) {
 		case "verify": {

@@ -10,7 +10,7 @@ import { getCurrentLocale } from "@/lib/i18n/server";
 import { resolveBusinessSector } from "@/lib/onboarding/business-sectors";
 import { getOnboardingUiCopy } from "@/lib/onboarding/onboarding-ui-copy";
 import { getStoreStartCopy } from "@/lib/onboarding/store-start-copy";
-import { suggestStoreSlug } from "@/lib/onboarding/store-draft-service";
+import { isPanelOnlyPlan, suggestStoreSlug } from "@/lib/onboarding/store-draft-service";
 import { getTenantHomeUrl } from "@/utils/tenant-url";
 
 /** @service-role capability-token
@@ -34,6 +34,7 @@ type AppRow = {
 	company_id: string | null;
 	business_name: string | null;
 	sector: string | null;
+	plan_id: string | null;
 };
 
 function readToken(raw: string | string[] | undefined): string | null {
@@ -70,7 +71,7 @@ export default async function OnboardingStorePage({ searchParams }: { searchPara
 
 	const { data } = await supabaseAdmin
 		.from("onboarding_applications")
-		.select("id,email,status,payment_status,company_id,business_name,sector")
+		.select("id,email,status,payment_status,company_id,business_name,sector,plan_id")
 		.eq("verification_token", token)
 		.maybeSingle();
 	const app = data as AppRow | null;
@@ -84,6 +85,8 @@ export default async function OnboardingStorePage({ searchParams }: { searchPara
 	}
 	// Quien empezó con el alta de antes (plan y pago primero) sigue por ahí.
 	if (app.status === "form_completed" || app.status === "payment_pending") redirect(`/onboarding/pago?token=${encodeURIComponent(token)}`);
+	// «Solo panel CEO»: no hay tienda que armar, sigue directo a elegir el plan y pagar.
+	if (await isPanelOnlyPlan(supabaseAdmin, app.plan_id)) redirect(`/onboarding/complete?token=${encodeURIComponent(token)}`);
 
 	const businessName = String(app.business_name ?? "").trim();
 	const initialSlug = await suggestStoreSlug(supabaseAdmin, businessName);

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { resolvePlanProductMode } from "@/lib/plans/plan-product-mode";
 import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { MAIN_DOMAIN_RESERVED_PATH_SEGMENTS } from "@/lib/tenant/reserved-path-segments";
@@ -59,6 +60,27 @@ async function resolveCompanyCreatorId(supabaseAdmin: SupabaseClient): Promise<s
 		.limit(1)
 		.maybeSingle();
 	return (data?.created_by as string | undefined) ?? null;
+}
+
+/**
+ * Con «solo panel CEO» no hay tienda que armar en vista previa: ese plan sigue con el alta
+ * de siempre (elegir plan y pagar) y al pagar entra a su cuenta y al panel.
+ */
+export async function isPanelOnlyPlan(supabaseAdmin: SupabaseClient, planId: string | null | undefined): Promise<boolean> {
+	const id = String(planId ?? "").trim();
+	if (!id || id === "custom") return false;
+	const { data } = await supabaseAdmin.from("plans").select("features").eq("id", id).maybeSingle();
+	return resolvePlanProductMode(data?.features) === "panel_only";
+}
+
+/** Ids de los planes «solo panel CEO», para decidir de una vez el paso de muchas altas. */
+export async function loadPanelOnlyPlanIds(supabaseAdmin: SupabaseClient): Promise<Set<string>> {
+	const { data } = await supabaseAdmin.from("plans").select("id,features");
+	const ids = new Set<string>();
+	for (const plan of (data ?? []) as Array<{ id: string; features?: unknown }>) {
+		if (resolvePlanProductMode(plan.features) === "panel_only") ids.add(String(plan.id));
+	}
+	return ids;
 }
 
 export type StoreDraftApplication = {

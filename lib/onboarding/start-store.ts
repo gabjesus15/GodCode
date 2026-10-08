@@ -5,6 +5,7 @@ import { MAX_OWNER_PASSWORD_LENGTH, MIN_OWNER_PASSWORD_LENGTH } from "./owner-pa
 import {
 	createStoreDraftCompany,
 	discardStoreDraftCompany,
+	isPanelOnlyPlan,
 	isStoreSlugTaken,
 	normalizeStoreSlug,
 	storeSlugProblem,
@@ -19,7 +20,8 @@ import { normalizeEmail } from "./trial-eligibility";
  * la fila `users` (rol `ceo`). Si algo falla, deshace lo creado para que pueda reintentar.
  *
  * Un correo que ya tiene cuenta en Gcode (dueño de otro local) no pasa por aquí: no se le
- * cambia la contraseña y sigue con el alta de siempre (plan y pago primero).
+ * cambia la contraseña y sigue con el alta de siempre (plan y pago primero). Tampoco el
+ * plan «solo panel CEO», que no tiene tienda que armar.
  */
 
 export type StartStoreInput = {
@@ -36,7 +38,7 @@ export type StartStoreResult =
 	| {
 			ok: false;
 			status: number;
-			code: "invalid" | "not_found" | "not_ready" | "already_created" | "slug_taken" | "slug_invalid" | "existing_account" | "error";
+			code: "invalid" | "not_found" | "not_ready" | "already_created" | "slug_taken" | "slug_invalid" | "existing_account" | "panel_only" | "error";
 			error: string;
 	  };
 
@@ -85,6 +87,10 @@ export async function startStoreFromApplication(supabaseAdmin: SupabaseClient, i
 	if (app.company_id) return { ok: false, status: 409, code: "already_created", error: "Tu tienda ya está creada. Entra con tu correo y tu contraseña." };
 	if (app.status !== "email_verified" || app.payment_status === "paid") {
 		return { ok: false, status: 409, code: "not_ready", error: "Primero confirma tu correo con el enlace que te enviamos." };
+	}
+
+	if (await isPanelOnlyPlan(supabaseAdmin, app.plan_id)) {
+		return { ok: false, status: 409, code: "panel_only", error: "Tu plan no incluye tienda: sigue eligiendo tu plan y pagando." };
 	}
 
 	if (await isStoreSlugTaken(supabaseAdmin, slug)) {

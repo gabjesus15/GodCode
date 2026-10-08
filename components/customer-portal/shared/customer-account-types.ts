@@ -151,6 +151,8 @@ export type CompanySnapshot = {
   timezone: string;
   /** Cambio a un plan menor programado para el vencimiento. */
   scheduledPlanChange: ScheduledPlanChange | null;
+  /** `false` con «solo panel CEO»: sin menú ni página pública, sus secciones no se muestran. */
+  hasPublicMenu?: boolean;
 };
 
 export type ScheduledPlanChange = {

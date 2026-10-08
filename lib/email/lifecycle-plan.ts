@@ -19,6 +19,7 @@ import { calendarDay, calendarDaysUntil, timeZoneForCountry } from "./format";
  * - Pedido de /cuenta sin pagar: al día siguiente (hasta el 3.º) y a los 4 días (hasta el 6.º).
  * - Alta a medias (correo confirmado, falta crear la tienda, el plan o el pago): al día
  *   siguiente y a los 3 días. Quien ya armó su tienda en vista previa no recibe estos.
+ *   Con «solo panel CEO» no hay tienda que crear: lo que falta es el plan.
  * - Tienda armada en vista previa sin publicar («Arma y paga»): a los 2 y 7 días; a los 23,
  *   el aviso de que se borra (solo con el borrado encendido). Callada si el pago está en revisión.
  * Las ventanas acotadas evitan que, al activar esto, les llegue un aviso viejo a todos.
@@ -45,6 +46,8 @@ export type LifecycleApplication = {
 	id: string;
 	/** Con empresa: ya armó su tienda en vista previa (tiene sus propios avisos). */
 	companyId?: string | null;
+	/** Eligió «solo panel CEO»: no arma tienda, le falta elegir el plan y pagar. */
+	panelOnly?: boolean;
 	status: string | null;
 	paymentStatus: string | null;
 	receiptUrl: string | null;
@@ -173,7 +176,7 @@ export function planLifecycleEmails(snapshot: LifecycleSnapshot, now: Date): Pla
 		// Ya armó su tienda en vista previa: le tocan los avisos de la tienda, no estos.
 		if (app.companyId && paymentStatus !== "paid") continue;
 		let step: "store" | "plan" | "payment" | null = null;
-		if (status === "email_verified") step = "store";
+		if (status === "email_verified") step = app.panelOnly ? "plan" : "store";
 		// Con el formulario del paso 2 hecho ya eligió plan: lo que falta es pagar.
 		else if ((status === "form_completed" || status === "payment_pending") && paymentStatus !== "paid" && !String(app.receiptUrl ?? "").trim()) {
 			step = "payment";

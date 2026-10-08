@@ -19,6 +19,8 @@ type Plan = {
   max_branches: number | null;
   /** Qué incluye, ya en el idioma de la página (líneas de marketing del plan). */
   features?: string[];
+  /** `false` con «solo panel CEO»: no hay tienda pública ni link que mostrar. */
+  hasPublicMenu?: boolean;
 };
 
 type PaymentMethodOption = {
@@ -642,7 +644,7 @@ export function OnboardingStep2Form({
 
         <section className="space-y-5">
           <SectionHeading title={profileCopy.section} hint={profileCopy.sectionHint} />
-          {storeUrl ? (
+          {storeUrl && selectedPlan?.hasPublicMenu !== false ? (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3">
               <p className="text-sm text-slate-600">
                 {profileCopy.storeLink}{" "}

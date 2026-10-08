@@ -10,7 +10,7 @@ import type {
   TicketSummary,
 } from "../../shared/customer-account-types";
 import { displayStatus, fmtDate, fmtDay, fmtUsd } from "../../shared/customer-account-format";
-import { SUBSCRIPTION_STATUS_LABELS } from "../../shared/customer-account-constants";
+import { PUBLIC_MENU_TABS, SUBSCRIPTION_STATUS_LABELS } from "../../shared/customer-account-constants";
 import { Alert } from "../../ui/Alert";
 import { Badge, subscriptionStatusVariant } from "../../ui/Badge";
 import { Card } from "../../ui/Card";
@@ -99,7 +99,10 @@ export function AccountResumenTab({
   onNavigate,
   firstSteps = [],
 }: AccountResumenTabProps) {
-  const menuUrl = company.publicSlug ? getTenantMenuUrl(company.publicSlug, company.customDomain) : "";
+  // «Solo panel CEO»: sin menú público, ni su enlace ni sus secciones.
+  const hasPublicMenu = company.hasPublicMenu !== false;
+  const menuUrl = hasPublicMenu && company.publicSlug ? getTenantMenuUrl(company.publicSlug, company.customDomain) : "";
+  const shortcuts = hasPublicMenu ? quickActions : quickActions.filter((action) => !PUBLIC_MENU_TABS.includes(action.tab));
   // Panel de ventas (caja): el mismo destino que el botón de la página de inicio del negocio.
   const salesPanelUrl = resolveCajaUrl(company);
 
@@ -202,7 +205,7 @@ export function AccountResumenTab({
           <Card compact noPadding>
             <p className="px-4 pt-4 text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Accesos rápidos</p>
             <nav className="mt-2 divide-y divide-[#f5f5f7]">
-              {quickActions.map(({ tab, label, sub, icon: Icon }) => (
+              {shortcuts.map(({ tab, label, sub, icon: Icon }) => (
                 <button
                   key={tab}
                   type="button"

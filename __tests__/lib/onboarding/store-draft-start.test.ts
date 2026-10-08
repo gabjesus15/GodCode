@@ -117,6 +117,17 @@ describe("crear la tienda en vista previa", () => {
 		expect(await startStoreFromApplication(taken.client, { token: "t", slug: "ok-link", password: "secreta123" })).toMatchObject({ code: "slug_taken" });
 		expect(taken.auth.admin.createUser).not.toHaveBeenCalled();
 	});
+
+	it("con «solo panel CEO» no crea tienda: sigue con el plan y el pago", async () => {
+		const { client, calls, auth } = fakeSupabase((table) => {
+			if (table === "onboarding_applications") return { data: APP };
+			if (table === "plans") return { data: { features: { product_mode: "panel_only" } } };
+			return { data: null };
+		});
+		expect(await startStoreFromApplication(client, { token: "t", slug: "rica-pizza", password: "secreta123" })).toMatchObject({ code: "panel_only" });
+		expect(auth.admin.createUser).not.toHaveBeenCalled();
+		expect(calls.some((call) => call.table === "companies")).toBe(false);
+	});
 });
 
 describe("link de la tienda", () => {

@@ -131,6 +131,8 @@ export function StoreStartForm({
 			if (!res.ok || !data.email) {
 				if (data.code === "existing_account") return setOutcome({ kind: "existing" });
 				if (data.code === "already_created") return setOutcome({ kind: "created" });
+				// «Solo panel CEO»: sin tienda que armar, sigue a elegir el plan y pagar.
+				if (data.code === "panel_only") return window.location.assign(`/onboarding/complete?token=${encodeURIComponent(token)}`);
 				if (data.code === "slug_taken") setSlugState({ kind: "taken", suggestion: null });
 				throw new Error(data.error || copy.errorGeneric);
 			}

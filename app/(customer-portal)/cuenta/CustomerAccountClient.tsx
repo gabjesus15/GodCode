@@ -6,7 +6,7 @@ import { describePortalOrder } from "@/lib/billing/portal-orders";
 import { resolveSubscriptionPhase } from "@/lib/billing/portal-pricing";
 import { CustomerAccountShell } from "@/components/customer-portal/shell/CustomerAccountShell";
 import { CustomerAccountShellSkeleton } from "@/components/customer-portal/shell/CustomerAccountShellSkeleton";
-import { SUBSCRIPTION_STATUS_LABELS, PAYMENT_STATUS_LABELS, TICKET_CATEGORY_LABELS, TICKET_STATUS_LABELS } from "@/components/customer-portal/shared/customer-account-constants";
+import { SUBSCRIPTION_STATUS_LABELS, PAYMENT_STATUS_LABELS, TICKET_CATEGORY_LABELS, TICKET_STATUS_LABELS, visiblePortalTabs } from "@/components/customer-portal/shared/customer-account-constants";
 import { displayStatus, fmtDay, fmtUsd, branchEntitlementStatusLabel } from "@/components/customer-portal/shared/customer-account-format";
 
 import { useAccountSnapshot }  from "@/components/customer-portal/hooks/use-account-snapshot";
@@ -51,7 +51,10 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
   } = props;
 
   const [mounted,       setMounted]       = useState(false);
-  const [tab,           setTab]           = useState<PortalTab>(props.initialTab ?? "resumen");
+  const [selectedTab,   setTab]           = useState<PortalTab>(props.initialTab ?? "resumen");
+  // «Solo panel CEO» no tiene menú público: sin Mi menú, Página de inicio ni Tienda.
+  const visibleTabs = useMemo(() => visiblePortalTabs(company.hasPublicMenu !== false), [company.hasPublicMenu]);
+  const tab: PortalTab = visibleTabs.includes(selectedTab) ? selectedTab : "resumen";
   const [activityFilter, setActivityFilter] = useState<"all" | "pago" | "ticket" | "extra">("all");
   const [billingOptions, setBillingOptions] = useState<BillingOptionsResponse | null>(initialBillingOptions ?? null);
   const [billingLoading, setBillingLoading] = useState(false);
@@ -254,6 +257,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
       <CustomerAccountShell
         companyName={company.name}
         activeTab={tab}
+        tabs={visibleTabs}
         onTabChange={handleTabChange}
         subscriptionStatus={snapshot.subscriptionStatus}
         subscriptionStatusLabel={storeDraft ? "Vista previa" : displayStatus(snapshot.subscriptionStatus, SUBSCRIPTION_STATUS_LABELS)}

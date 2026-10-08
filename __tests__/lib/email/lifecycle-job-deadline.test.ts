@@ -21,6 +21,7 @@ function client() {
 		tables: {
 			companies: [{ data: [], error: null }],
 			payments_history: [{ data: [], error: null }],
+			plans: [{ data: [], error: null }],
 			onboarding_applications: [
 				{ data: [], error: null },
 				{ data: { email: "ana@example.com", verification_token: "tok", business_name: "Ana" }, error: null },

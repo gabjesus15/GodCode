@@ -8,6 +8,7 @@ import { getCurrentLocale } from "@/lib/i18n/server";
 import { resolveAvailablePublicSlug } from "@/lib/onboarding/checkout-service";
 import { getTenantHomeUrl } from "@/utils/tenant-url";
 import { resolvePlanMarketingLines, resolvePlanName } from "@/lib/plans/plan-i18n";
+import { planHasPublicMenu } from "@/lib/plans/plan-product-mode";
 import { OnboardingStep2Form } from "@/components/onboarding/steps/OnboardingStep2Form";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
 
@@ -295,7 +296,7 @@ export default async function OnboardingCompletePage({
 
   const [plansResult, addonsResult, applicationAddonsResult, storeSlug] = await Promise.all([
     // Solo planes a la venta: los internos (dev, promos) no se contratan desde aquí.
-    supabaseAdmin.from("plans").select("id,name,name_i18n,price,prices_by_continent,max_branches,marketing_lines,marketing_lines_i18n").eq("is_active", true).eq("is_public", true).order("price", { ascending: true }),
+    supabaseAdmin.from("plans").select("id,name,name_i18n,price,prices_by_continent,max_branches,features,marketing_lines,marketing_lines_i18n").eq("is_active", true).eq("is_public", true).order("price", { ascending: true }),
     supabaseAdmin.from("addons").select("id,slug,name,description,price_one_time,price_monthly,type,sort_order").eq("is_active", true).order("sort_order", { ascending: true }),
     supabaseAdmin.from("onboarding_application_addons").select("addon_id,quantity").eq("application_id", app.id),
     // Cómo quedará el enlace de la tienda: el de la tienda en vista previa si ya la armó, o
@@ -312,7 +313,9 @@ export default async function OnboardingCompletePage({
     return <ErrorCard title={copy.plansErrorTitle} text={copy.plansErrorText} backHome={copy.backHome} />;
   }
 
-  const plans = (plansResult.data ?? []).map((plan) => {
+  // Quien ya armó su tienda viene a publicarla: «solo panel CEO» no tiene tienda pública.
+  const salePlans = (plansResult.data ?? []).filter((plan) => !fromDraft || planHasPublicMenu(plan.features));
+  const plans = salePlans.map((plan) => {
     const row = plan as typeof plan & { name_i18n?: unknown; marketing_lines?: unknown; marketing_lines_i18n?: unknown };
     return {
       id: row.id,
@@ -321,6 +324,7 @@ export default async function OnboardingCompletePage({
       max_branches: row.max_branches,
       name: resolvePlanName({ locale, name: row.name, nameI18n: row.name_i18n }),
       features: resolvePlanMarketingLines({ locale, marketingLines: row.marketing_lines, marketingLinesI18n: row.marketing_lines_i18n }),
+      hasPublicMenu: planHasPublicMenu(row.features),
     };
   });
   const addons = addonsResult.data ?? [];

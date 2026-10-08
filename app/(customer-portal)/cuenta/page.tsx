@@ -5,6 +5,7 @@ import { CustomerAccountClient } from "./CustomerAccountClient";
 import { requireCustomerPortalSession } from "@/lib/tenant/customer-portal-session";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { resolvePlanName } from "@/lib/plans/plan-i18n";
+import { companyHasPublicMenu } from "@/lib/plans/plan-product-mode";
 import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 import { resolveRegionalPlanPrice } from "@/lib/plans/plan-regional-pricing";
 import { BranchSummary, BusinessInfoSummary, type PortalTab } from "@/components/customer-portal/shared/customer-account-types";
@@ -180,10 +181,12 @@ export default async function CustomerAccountPage({
       .maybeSingle(),
   ]);
 
+  // «Solo panel CEO»: sin menú público, no hay tienda que configurar ni secciones de la tienda.
+  const hasPublicMenu = companyHasPublicMenu({ plans: company?.plan });
   // Negocio recién creado que no terminó ni saltó «Configura tu tienda»: entra directo ahí.
   // Con `?tab=` (los enlaces de los correos) se respeta la sección pedida.
   const companyRow = company as { theme_config?: unknown; created_at?: string | null } | null;
-  if (!hasTabParam && shouldAutoOpenOwnerSetup({ themeConfig: companyRow?.theme_config, companyCreatedAt: companyRow?.created_at ?? null })) {
+  if (!hasTabParam && hasPublicMenu && shouldAutoOpenOwnerSetup({ themeConfig: companyRow?.theme_config, companyCreatedAt: companyRow?.created_at ?? null })) {
     redirect("/cuenta/configurar");
   }
   const ownerSetupFinished = Boolean(readOwnerSetup(companyRow?.theme_config).finishedAt);
@@ -247,6 +250,7 @@ export default async function CustomerAccountPage({
           effectiveAt: scheduleRow.effective_at,
         }
       : null,
+    hasPublicMenu,
   };
 
   const activeAddons = (companyAddons ?? []).map((row) => {
@@ -330,7 +334,7 @@ export default async function CustomerAccountPage({
   const initialBillingOptions = billingCtx ? buildBillingOptionsResponse(companyId, billingCtx) : null;
 
   const themeConfig = (company as { theme_config?: { logoUrl?: unknown; templateId?: unknown } | null } | null)?.theme_config;
-  const firstSteps = buildFirstSteps({
+  const firstSteps = !hasPublicMenu ? [] : buildFirstSteps({
     productCount: menuStatus.productCount,
     sampleCount: menuStatus.sampleCount,
     branches: (branches ?? []) as Array<{ whatsapp_url?: string | null; business_hours?: unknown; schedule?: string | null }>,

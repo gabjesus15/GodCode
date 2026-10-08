@@ -34,6 +34,13 @@ export const PORTAL_TAB_ORDER: PortalTab[] = [
   "seguridad",
 ];
 
+/** Secciones del menú público. Con «solo panel CEO» no hay menú, así que no se muestran. */
+export const PUBLIC_MENU_TABS: PortalTab[] = ["menu", "perfil", "tienda"];
+
+export function visiblePortalTabs(hasPublicMenu: boolean): PortalTab[] {
+  return hasPublicMenu ? PORTAL_TAB_ORDER : PORTAL_TAB_ORDER.filter((tab) => !PUBLIC_MENU_TABS.includes(tab));
+}
+
 export const PORTAL_TAB_LABELS: Record<PortalTab, string> = {
   resumen: "Resumen",
   menu: "Mi menú",
