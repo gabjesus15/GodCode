@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { formatLandingPrice } from "@/lib/landing/price";
 import type { LandingV3PhoneSlide } from "@/lib/landing/v3-config";
@@ -105,23 +105,27 @@ export function Hero({
 						</Link>
 					</div>
 
-					{/* Los tres miedos del dueño antes de pagar: cuánto me va a costar, si quedo amarrado y si lo voy a saber armar. */}
-					<ul className="v3-hero-copy mt-8 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-[#a1a1aa] lg:justify-start">
+					{/* Las tres dudas de antes de pagar (si la sabré armar, cuánto cuesta, si quedo amarrado), en una línea como las demás de la página. */}
+					<p className="v3-hero-copy mt-8 text-sm leading-relaxed text-[#a1a1aa]">
+						{/* Cada frase va entera con su punto: en el teléfono la línea se parte solo entre frases. */}
+						<span className="whitespace-nowrap">Gratis hasta que la publiques</span>{" "}
 						{fromPrice ? (
-							<li className="inline-flex items-center gap-1.5">
-								<Check className="h-3.5 w-3.5 shrink-0 text-[#4f5bff]" aria-hidden />
-								Plan fijo desde {formatLandingPrice(fromPrice.price, fromPrice.currency)} {fromPrice.currency}/mes
-							</li>
+							<>
+								<span className="whitespace-nowrap">
+									<span aria-hidden className="ml-1 mr-2">
+										·
+									</span>
+									Desde {formatLandingPrice(fromPrice.price, fromPrice.currency)} {fromPrice.currency}/mes
+								</span>{" "}
+							</>
 						) : null}
-						<li className="inline-flex items-center gap-1.5">
-							<Check className="h-3.5 w-3.5 shrink-0 text-[#4f5bff]" aria-hidden />
+						<span className="whitespace-nowrap">
+							<span aria-hidden className="ml-1 mr-2">
+								·
+							</span>
 							Sin permanencia
-						</li>
-						<li className="inline-flex items-center gap-1.5">
-							<Check className="h-3.5 w-3.5 shrink-0 text-[#4f5bff]" aria-hidden />
-							Te ayudamos a dejarlo listo
-						</li>
-					</ul>
+						</span>
+					</p>
 				</div>
 
 				<div className="v3-hero-phones relative z-10 flex w-full items-center justify-center">

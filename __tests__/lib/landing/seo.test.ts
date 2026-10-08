@@ -84,8 +84,8 @@ describe("landing SEO artifacts", () => {
 		expect(faqPage.mainEntity[0]?.name).toBe(LANDING_FAQ[0]?.question);
 	});
 
-	it("FAQ has seven entries and opens with the brand question", () => {
-		expect(LANDING_FAQ.length).toBe(7);
+	it("FAQ has eight entries and opens with the brand question", () => {
+		expect(LANDING_FAQ.length).toBe(8);
 		expect(LANDING_FAQ[0]?.question).toContain(LANDING_PRODUCT_NAME);
 		expect(LANDING_FAQ[0]?.answer).toContain(LANDING_COMPANY_NAME);
 		expect(LANDING_FAQ[0]?.answer).toContain(LANDING_BRAND_ALTERNATE);

@@ -47,7 +47,7 @@ export function Pricing({ plans, country }: PricingProps) {
         <div data-reveal className="mb-14 md:mb-16">
           <h2 className="font-display text-5xl leading-[0.95] text-[#f4f4f5] md:text-6xl">Planes</h2>
           <p className="mt-5 text-lg text-[#a1a1aa]">
-            Pagas un plan fijo al mes, no un porcentaje de tus ventas. En tu primer pago, 2 meses al precio de 1.
+            Eliges tu plan cuando publicas tu tienda: un monto fijo al mes, no un porcentaje de tus ventas. En tu primer pago, 2 meses al precio de 1.
           </p>
         </div>
 
@@ -92,8 +92,9 @@ export function Pricing({ plans, country }: PricingProps) {
                     <span className="text-sm text-[#71717a]">{currency}/mes</span>
                   </p>
                   <FeatureList id={plan.id} features={plan.featureBullets} />
+                  {/* El plan viaja al alta y queda marcado cuando el dueño publique su tienda. */}
                   <Link
-                    href="/onboarding"
+                    href={`/onboarding?plan=${encodeURIComponent(plan.id)}`}
                     aria-label={`Empezar con el plan ${plan.name}`}
                     data-plan={plan.name}
                     className={cn(
