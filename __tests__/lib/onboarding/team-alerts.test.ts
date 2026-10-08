@@ -48,6 +48,23 @@ describe("formatOnboardingAlert", () => {
 		expect(active).toContain(`<a href="${APP}/juni/menu">Ver su menú</a>`);
 	});
 
+	it("todos los avisos llevan nombre, correo y teléfono para escribirle", () => {
+		const contact = { responsibleName: "Nelli", email: "nelli@example.com", phone: "+58 412 555 0000" };
+		const alerts = [
+			{ kind: "email_verified", businessName: "Juni", ...contact },
+			{ kind: "plan_chosen", businessName: "Juni", ...contact, planName: "Básico" },
+			{ kind: "receipt_uploaded", businessName: "Juni", ...contact, amount: "$57.00" },
+			{ kind: "activated", businessName: "Juni", ...contact, via: "manual" },
+		] as const;
+		for (const alert of alerts) {
+			const text = formatOnboardingAlert(alert, APP);
+			expect(text).toContain("Nelli · nelli@example.com");
+			expect(text).toContain("Teléfono: +58 412 555 0000");
+		}
+		// Sin teléfono no queda una línea vacía.
+		expect(formatOnboardingAlert({ kind: "email_verified", businessName: "Juni", email: "n@x.com" }, APP)).not.toContain("Teléfono");
+	});
+
 	it("escapa el HTML que viene del formulario", () => {
 		const text = formatOnboardingAlert(
 			{ kind: "application_created", businessName: "<b>Pizza</b> & Co", email: "a@b.com" },

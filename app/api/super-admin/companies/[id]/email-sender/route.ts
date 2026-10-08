@@ -1,42 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { deleteCompanySender, getCompanySender, saveCompanySender } from "@/lib/email/company-sender";
-import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import {
+	deleteCompanySender,
+	getCompanyEffectiveDomain,
+	getCompanySender,
+	saveCompanySender,
+} from "@/lib/email/company-sender";
 import { logAdminAudit } from "@/lib/super-admin/admin-audit";
-import { getEffectiveCustomDomain } from "@/lib/tenant/tenant-effective-custom-domain";
 import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
 
 /** @service-role super-admin */
 
 /**
- * Resend propio de la empresa para los cupones por correo. El dueño lo configura
- * desde el panel (pestaña Cupones); esta ruta es para cuando nos pide que lo hagamos
- * nosotros. Sin dominio propio vigente los cupones salen por el Resend de GodCode y
- * aquí no hay nada que configurar.
+ * Resend propio de la empresa para los cupones por correo. Lo normal es que el CEO lo
+ * configure desde su cuenta (/cuenta › Correo de cupones); esta ruta es para cuando nos
+ * lo pide por Soporte. Sin dominio propio vigente los cupones salen por el Resend de
+ * GodCode y aquí no hay nada que configurar.
  */
 
 type Context = { params: Promise<{ id: string }> };
-
-async function loadCompanyDomain(companyId: string) {
-	const { data } = await supabaseAdmin
-		.from("companies")
-		.select("custom_domain, subscription_status, subscription_ends_at")
-		.eq("id", companyId)
-		.maybeSingle();
-	if (!data) return { found: false as const, customDomain: null };
-	const row = data as { custom_domain: string | null; subscription_status: string | null; subscription_ends_at: string | null };
-	return {
-		found: true as const,
-		customDomain: getEffectiveCustomDomain(row.custom_domain, row.subscription_ends_at, row.subscription_status),
-	};
-}
 
 export async function GET(_req: NextRequest, context: Context) {
 	const permission = await validateAdminRolesOnServer([...SAAS_READ_ROLES]);
 	if (!permission.ok) return NextResponse.json({ error: permission.error ?? "No autorizado" }, { status: permission.status });
 	const { id: companyId } = await context.params;
 
-	const company = await loadCompanyDomain(companyId);
+	const company = await getCompanyEffectiveDomain(companyId);
 	if (!company.found) return NextResponse.json({ error: "Empresa no encontrada" }, { status: 404 });
 	try {
 		const sender = await getCompanySender(companyId);
@@ -58,7 +47,7 @@ export async function PUT(req: NextRequest, context: Context) {
 		return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
 	}
 
-	const company = await loadCompanyDomain(companyId);
+	const company = await getCompanyEffectiveDomain(companyId);
 	if (!company.found) return NextResponse.json({ error: "Empresa no encontrada" }, { status: 404 });
 	if (!company.customDomain) {
 		return NextResponse.json(

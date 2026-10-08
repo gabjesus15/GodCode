@@ -20,9 +20,9 @@ const emptyForm = (sender: CompanySenderStatus | null) => ({
 });
 
 /**
- * Resend propio para los cupones por correo. Lo normal es que lo configure el dueño
- * desde su panel (pestaña Cupones); esto es para cuando nos pide que lo hagamos.
- * Al guardar se manda una prueba al correo del super admin y solo se guarda si sale.
+ * Resend propio para los cupones por correo. Lo normal es que lo configure el CEO
+ * desde su cuenta (/cuenta › Correo de cupones); esto es para cuando nos lo pide por
+ * Soporte. Al guardar se manda una prueba al correo del super admin y solo se guarda si sale.
  */
 export function CompanyEmailSenderSection({ companyId }: { companyId: string }) {
 	const { readOnly } = useAdminRole();

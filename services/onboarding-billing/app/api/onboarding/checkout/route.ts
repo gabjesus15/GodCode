@@ -41,6 +41,8 @@ type CheckoutApplication = {
 	subscription_payment_method: string | null;
 	payment_status: string | null;
 	business_name: string;
+	responsible_name: string | null;
+	phone: string | null;
 	coupon_id: string | null;
 	coupon_code: string | null;
 };
@@ -57,7 +59,7 @@ export async function POST(req: NextRequest) {
 
 		const { data, error: appError } = await supabaseAdmin
 			.from("onboarding_applications")
-			.select("id,email,plan_id,country,currency,company_id,subscription_payment_method,payment_status,business_name,coupon_id,coupon_code")
+			.select("id,email,plan_id,country,currency,company_id,subscription_payment_method,payment_status,business_name,responsible_name,phone,coupon_id,coupon_code")
 			.eq("verification_token", token)
 			.in("status", ["form_completed", "payment_pending"])
 			.maybeSingle();
@@ -145,7 +147,9 @@ export async function POST(req: NextRequest) {
 			await alertOnboardingTeam({
 				kind: "plan_chosen",
 				businessName: app.business_name,
+				responsibleName: app.responsible_name,
 				email: app.email,
+				phone: app.phone,
 				planName: plan.name,
 				months: grant.chargedMonths,
 				amount: `$${amountUsd.toFixed(2)} USD`,

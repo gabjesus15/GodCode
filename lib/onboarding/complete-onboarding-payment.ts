@@ -51,6 +51,7 @@ export type CompleteOnboardingPaymentResult =
 type ApplicationRow = OnboardingApplication & {
 	status: string;
 	responsible_name: string | null;
+	phone?: string | null;
 	welcome_email_sent_at: string | null;
 	updated_at: string;
 	currency?: string | null;
@@ -61,7 +62,7 @@ type ApplicationRow = OnboardingApplication & {
 };
 
 const APPLICATION_COLUMNS =
-	"id,status,payment_status,payment_reference,company_id,plan_id,business_name,responsible_name,email,billing_rut,fiscal_address,logo_url,social_instagram,subscription_payment_method,welcome_email_sent_at,updated_at,country,currency,coupon_id,coupon_code,coupon_discount_usd,coupon_free_months";
+	"id,status,payment_status,payment_reference,company_id,plan_id,business_name,responsible_name,email,phone,billing_rut,fiscal_address,logo_url,social_instagram,subscription_payment_method,welcome_email_sent_at,updated_at,country,currency,coupon_id,coupon_code,coupon_discount_usd,coupon_free_months";
 
 /**
  * Cierra el alta de una solicitud cuyo pago ya está confirmado (PayPal capturado o
@@ -218,7 +219,9 @@ export async function completeOnboardingPayment(
 	await alertOnboardingTeam({
 		kind: "activated",
 		businessName: app.business_name ?? "",
+		responsibleName: app.responsible_name,
 		email: app.email ?? null,
+		phone: app.phone ?? null,
 		via: input.methodSlug === "coupon" ? "coupon" : input.isManualPayment ? "manual" : "paypal",
 		months: input.grantedMonths,
 		coupon: app.coupon_code ?? null,

@@ -13,6 +13,7 @@ import { useAccountSnapshot }  from "@/components/customer-portal/hooks/use-acco
 import { useAddonPurchase, useSubscriptionBilling } from "@/components/customer-portal/hooks/use-subscription-billing";
 import { useStoreTheme }       from "@/components/customer-portal/hooks/use-store-theme";
 import { useMenuSettings }     from "@/components/customer-portal/hooks/use-menu-settings";
+import { useEmailSender }      from "@/components/customer-portal/hooks/use-email-sender";
 import { useBranchFlow }       from "@/components/customer-portal/hooks/use-branch-flow";
 import { useBillingFilters }   from "@/components/customer-portal/hooks/use-billing-filters";
 import { useTickets }          from "@/components/customer-portal/hooks/use-tickets";
@@ -27,6 +28,7 @@ import { AccountPlanTab }       from "@/components/customer-portal/account/tabs/
 import { AccountSucursalesTab } from "@/components/customer-portal/account/tabs/account-sucursales-tab";
 import { AccountFacturacionTab } from "@/components/customer-portal/account/tabs/account-facturacion-tab";
 import { AccountSoporteTab }    from "@/components/customer-portal/account/tabs/account-soporte-tab";
+import { AccountCorreoTab }     from "@/components/customer-portal/account/tabs/account-correo-tab";
 import { AccountSeguridadTab }  from "@/components/customer-portal/account/tabs/account-seguridad-tab";
 
 import type {
@@ -63,7 +65,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
     payments, initialTickets, initialBranchEntitlements, activeAddons,
     company.subscriptionStatus, company.subscriptionEndsAt,
     {
-      enablePolling: tab !== "tienda" && tab !== "seguridad",
+      enablePolling: tab !== "tienda" && tab !== "correo" && tab !== "seguridad",
       companyId: company.id,
       initialSyncedAt,
       initialScheduledPlanChange: company.scheduledPlanChange,
@@ -120,6 +122,8 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
   );
 
   const menuSettings = useMenuSettings(tab === "tienda");
+
+  const emailSender = useEmailSender(tab === "correo");
 
   const tickets = useTickets(snapshot.tickets, company);
 
@@ -412,6 +416,14 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             ticketFeedbackError={tickets.ticketFeedbackError}
             ticketFeedbackOk={tickets.ticketFeedbackOk}
             clearTicketFeedback={tickets.clearTicketFeedback}
+          />
+        )}
+
+        {tab === "correo" && (
+          <AccountCorreoTab
+            emailSender={emailSender}
+            timezone={company.timezone}
+            onAskSupport={tickets.handleOpenCouponEmailSupport}
           />
         )}
 

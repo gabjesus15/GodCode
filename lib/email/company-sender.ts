@@ -3,17 +3,18 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { getEffectiveCustomDomain } from "@/lib/tenant/tenant-effective-custom-domain";
 
 import { createSecretBox, secretLast4 } from "./secret-box";
 
 /**
  * Resend propio de una empresa con dominio propio, para los cupones que manda a sus
- * clientes desde el panel (Edge Function `coupon-emails` en GodCode-Panel).
+ * clientes desde el panel (Edge Function `coupon-emails` en GodCode-Panel, que solo lo lee).
  *
  * Vive en `company_email_senders` (RLS sin políticas, solo service role). La API key
  * se guarda sellada con `secret-box` y `EMAIL_SENDER_SECRET_KEY`, la misma llave que
- * tiene la Edge Function. Aquí la usa el super admin cuando el dueño no sabe
- * configurarlo: se guarda solo si el correo de prueba sale.
+ * tiene la Edge Function. Lo configura el CEO desde su cuenta (/cuenta › Correo de
+ * cupones) o el super admin cuando nos lo piden: se guarda solo si el correo de prueba sale.
  */
 
 const TABLE = "company_email_senders";
@@ -56,6 +57,28 @@ export function isValidSenderEmail(value: unknown): value is string {
 /** El nombre va entre comillas en el encabezado «De:»: sin comillas, saltos ni `<>`. */
 export function cleanSenderName(value: string): string {
 	return value.replace(/["<>\\\r\n\t]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+}
+
+/**
+ * Dominio propio vigente de la empresa (misma regla que el menú público). Sin él los
+ * cupones salen por el Resend de GodCode y no hay remitente propio que configurar.
+ */
+export async function getCompanyEffectiveDomain(
+	companyId: string,
+	client?: SupabaseClient,
+): Promise<{ found: false; customDomain: null } | { found: true; customDomain: string | null }> {
+	const { data, error } = await db(client)
+		.from("companies")
+		.select("custom_domain, subscription_status, subscription_ends_at")
+		.eq("id", companyId)
+		.maybeSingle();
+	if (error) throw new Error(error.message);
+	if (!data) return { found: false, customDomain: null };
+	const row = data as { custom_domain: string | null; subscription_status: string | null; subscription_ends_at: string | null };
+	return {
+		found: true,
+		customDomain: getEffectiveCustomDomain(row.custom_domain, row.subscription_ends_at, row.subscription_status),
+	};
 }
 
 export async function getCompanySender(companyId: string, client?: SupabaseClient): Promise<CompanySenderStatus | null> {

@@ -4,6 +4,7 @@ import {
   Home,
   LayoutDashboard,
   LifeBuoy,
+  Mail,
   Palette,
   Shield,
   Store,
@@ -27,6 +28,7 @@ export const PORTAL_TAB_ORDER: PortalTab[] = [
   "sucursales",
   "facturacion",
   "soporte",
+  "correo",
   "seguridad",
 ];
 
@@ -38,6 +40,7 @@ export const PORTAL_TAB_LABELS: Record<PortalTab, string> = {
   sucursales: "Sucursales",
   facturacion: "Facturación",
   soporte: "Soporte",
+  correo: "Correo de cupones",
   seguridad: "Seguridad",
 };
 
@@ -50,6 +53,7 @@ export const PORTAL_TAB_MOBILE_LABELS: Record<PortalTab, string> = {
   sucursales: "Locales",
   facturacion: "Pagos",
   soporte: "Ayuda",
+  correo: "Correo",
   seguridad: "Seguridad",
 };
 
@@ -61,6 +65,7 @@ export const PORTAL_TAB_ICONS: Record<PortalTab, LucideIcon> = {
   sucursales: Store,
   facturacion: FileText,
   soporte: LifeBuoy,
+  correo: Mail,
   seguridad: Shield,
 };
 

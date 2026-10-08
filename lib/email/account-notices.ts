@@ -82,13 +82,14 @@ export async function notifyOnboardingReceipt(client: SupabaseClient, applicatio
 	try {
 		const { data } = await client
 			.from("onboarding_applications")
-			.select("id,email,responsible_name,business_name,payment_amount,payment_reference,subscription_payment_method,verification_token,coupon_code")
+			.select("id,email,responsible_name,phone,business_name,payment_amount,payment_reference,subscription_payment_method,verification_token,coupon_code")
 			.eq("id", applicationId)
 			.maybeSingle();
 		const app = data as {
 			id: string;
 			email: string | null;
 			responsible_name: string | null;
+			phone: string | null;
 			business_name: string | null;
 			payment_amount: number | null;
 			payment_reference: string | null;
@@ -144,7 +145,9 @@ export async function notifyOnboardingReceipt(client: SupabaseClient, applicatio
 		await alertOnboardingTeam({
 			kind: "receipt_uploaded",
 			businessName,
+			responsibleName: app.responsible_name,
 			email: app.email,
+			phone: app.phone,
 			amount,
 			method: methodName,
 			reference,
