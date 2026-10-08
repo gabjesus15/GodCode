@@ -81,7 +81,8 @@ describe("páginas de país del landing", () => {
 	it("sitemap y pie de página enlazan las dos páginas", () => {
 		const sitemap = readFileSync(join(process.cwd(), "app", "sitemap.ts"), "utf8");
 		expect(sitemap).toContain("LANDING_COUNTRY_SLUGS");
-		expect(sitemap).toContain("isInternalTestTenantSlug");
+		// La regla de tiendas de prueba vive ahora en isPubliclyListedCompany (junto con «solo panel»).
+		expect(sitemap).toContain("isPubliclyListedCompany");
 		const footer = readFileSync(join(process.cwd(), "components", "landing-v3", "footer.tsx"), "utf8");
 		expect(footer).toContain('href: "/chile"');
 		expect(footer).toContain('href: "/venezuela"');
