@@ -35,6 +35,11 @@ export const PLAN_PRODUCT_MODE_LABELS: Record<PlanProductMode, { title: string; 
 /**
  * Pestañas del panel CEO con «solo menú digital»: el catálogo (productos, categorías,
  * bebidas, extras y cambios por producto) y los banners del carrusel.
+ *
+ * Espejo de `MENU_ONLY_PANEL_TABS` en GodCode-Panel (`src/lib/tenant/menu-settings.js`),
+ * que usa los ids del panel (`menu_beverages`, `menu_extras`; `normalizeStoredNavTabId`
+ * traduce `beverages` y `extras`). Si cambias esta lista, cambia esa y la copia del test
+ * «contrato con GodCode» en `tests/lib/tenant/menu-settings.test.js` del panel.
  */
 export const MENU_ONLY_CEO_TABS: TenantAdminTabId[] = [
 	"categories",
