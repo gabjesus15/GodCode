@@ -39,7 +39,7 @@ describe("progreso", () => {
 	it("sale de los datos reales", () => {
 		expect(ownerSetupStepDone(empty)).toEqual({ marca: false, diseno: false, menu: false, local: false, publicar: false });
 		expect(
-			ownerSetupStepDone({ logoUrl: "logos/a.png", templateId: "sushi-night", productCount: 3, whatsappUrl: "https://wa.me/56912345678", address: "Av. Siempre Viva 742", published: true }),
+			ownerSetupStepDone({ logoUrl: "logos/a.png", templateId: "nori", productCount: 3, whatsappUrl: "https://wa.me/56912345678", address: "Av. Siempre Viva 742", published: true }),
 		).toEqual({ marca: true, diseno: true, menu: true, local: true, publicar: true });
 	});
 

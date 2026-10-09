@@ -64,7 +64,7 @@ function TemplateMiniMenu({
 	const card = light ? "#ffffff" : "rgba(255,255,255,0.07)";
 	const line = light ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.12)";
 	const price = t.priceColor || accent;
-	const list = t.productCardStyle === "layout-clean" || t.productCardStyle === "layout-horizontal";
+	const list = t.productCardStyle === "layout-carta" || t.productCardStyle === "glass-row";
 	const prices = ["$12", "$14"];
 
 	return (

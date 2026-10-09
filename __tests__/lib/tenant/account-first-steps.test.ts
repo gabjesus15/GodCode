@@ -42,7 +42,7 @@ describe("buildFirstSteps", () => {
 	it("el diseño queda listo al elegir plantilla o al terminar «Configura tu tienda», y abre el asistente", () => {
 		const design = (input: Partial<Parameters<typeof buildFirstSteps>[0]>) => buildFirstSteps({ ...base, ...input }).find((s) => s.id === "design")!;
 		expect(design({})).toMatchObject({ done: false, target: "setup", setupStep: "diseno" });
-		expect(design({ templateId: "sushi-night" }).done).toBe(true);
+		expect(design({ templateId: "nori" }).done).toBe(true);
 		expect(design({ setupFinished: true }).done).toBe(true);
 	});
 });
