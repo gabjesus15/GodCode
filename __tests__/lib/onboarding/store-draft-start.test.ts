@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { resolveAvailablePublicSlug } from "@/lib/onboarding/checkout-service";
 import { resolveOnboardingCountry, sanitizePlanHint } from "@/lib/onboarding/onboarding-entry";
 import { startStoreFromApplication } from "@/lib/onboarding/start-store";
-import { normalizeStoreSlug, storeSlugProblem } from "@/lib/onboarding/store-draft-service";
+import { normalizeStoreSlug, STORE_SLUG_MAX, storeSlugProblem, suggestStoreSlug } from "@/lib/onboarding/store-draft-service";
+import { storeSlugCandidate, storeSlugRoot } from "@/lib/onboarding/store-slug";
 import { readStoreDraft } from "@/lib/tenant/store-draft";
 
 type Op = { method: string; args: unknown[] };
@@ -57,7 +59,7 @@ describe("crear la tienda en vista previa", () => {
 		const { client, calls, auth } = fakeSupabase((table, ops) => {
 			const insert = ops.find((op) => op.method === "insert");
 			if (insert) inserts[table] = insert.args[0];
-			if (table === "onboarding_applications" && has(ops, "update")) return {};
+			if (table === "onboarding_applications" && has(ops, "update")) return { data: { id: "app-1" } };
 			if (table === "onboarding_applications") return { data: APP };
 			if (table === "companies" && insert) return { data: { id: "company-1" } };
 			if (table === "companies" && has(ops, "order")) return { data: { created_by: "admin-1" } };
@@ -104,6 +106,61 @@ describe("crear la tienda en vista previa", () => {
 		expect(auth.admin.deleteUser).toHaveBeenCalledWith("auth-1");
 	});
 
+	it("si falla la sucursal, no deja una tienda sin sucursal: borra todo y avisa", async () => {
+		const { client, calls, auth } = fakeSupabase((table, ops) => {
+			if (table === "onboarding_applications") return { data: APP };
+			if (table === "companies" && has(ops, "insert")) return { data: { id: "company-1" } };
+			if (table === "companies" && has(ops, "order")) return { data: { created_by: "admin-1" } };
+			if (table === "branches" && has(ops, "insert")) return { error: { message: "boom" } };
+			return { data: null };
+		});
+
+		const result = await startStoreFromApplication(client, { token: "tok", slug: "rica-pizza", password: "secreta123" });
+
+		expect(result).toMatchObject({ ok: false, code: "error", status: 500 });
+		expect(calls.some((call) => call.table === "business_info" && has(call.ops, "insert"))).toBe(false);
+		expect(calls.some((call) => call.table === "users" && has(call.ops, "insert"))).toBe(false);
+		expect(calls.some((call) => call.table === "companies" && has(call.ops, "delete"))).toBe(true);
+		expect(auth.admin.deleteUser).toHaveBeenCalledWith("auth-1");
+	});
+
+	it("si falla business_info, también se deshace", async () => {
+		const { client, calls, auth } = fakeSupabase((table, ops) => {
+			if (table === "onboarding_applications") return { data: APP };
+			if (table === "companies" && has(ops, "insert")) return { data: { id: "company-1" } };
+			if (table === "companies" && has(ops, "order")) return { data: { created_by: "admin-1" } };
+			if (table === "business_info" && has(ops, "insert")) return { error: { message: "boom" } };
+			return { data: null };
+		});
+
+		const result = await startStoreFromApplication(client, { token: "tok", slug: "rica-pizza", password: "secreta123" });
+
+		expect(result).toMatchObject({ ok: false, code: "error" });
+		expect(calls.some((call) => call.table === "branches" && has(call.ops, "delete"))).toBe(true);
+		expect(calls.some((call) => call.table === "companies" && has(call.ops, "delete"))).toBe(true);
+		expect(auth.admin.deleteUser).toHaveBeenCalledWith("auth-1");
+	});
+
+	it("si no se puede atar la solicitud a la tienda, borra la fila del dueño, la tienda y la cuenta", async () => {
+		const { client, calls, auth } = fakeSupabase((table, ops) => {
+			if (table === "onboarding_applications" && has(ops, "update")) return { error: { message: "timeout" } };
+			if (table === "onboarding_applications") return { data: APP };
+			if (table === "companies" && has(ops, "insert")) return { data: { id: "company-1" } };
+			if (table === "companies" && has(ops, "order")) return { data: { created_by: "admin-1" } };
+			return { data: null };
+		});
+
+		const result = await startStoreFromApplication(client, { token: "tok", slug: "rica-pizza", password: "secreta123" });
+
+		expect(result).toMatchObject({ ok: false, code: "error", status: 500 });
+		const update = calls.find((call) => call.table === "onboarding_applications" && has(call.ops, "update"));
+		// Solo se ata si la solicitud sigue sin empresa (otra pestaña pudo crearla).
+		expect(update?.ops).toContainEqual({ method: "is", args: ["company_id", null] });
+		expect(calls.some((call) => call.table === "users" && has(call.ops, "delete"))).toBe(true);
+		expect(calls.some((call) => call.table === "companies" && has(call.ops, "delete"))).toBe(true);
+		expect(auth.admin.deleteUser).toHaveBeenCalledWith("auth-1");
+	});
+
 	it("rechaza sin tocar la base: contraseña corta, link reservado, tienda ya creada o link ocupado", async () => {
 		const { client } = fakeSupabase(() => ({ data: null }));
 		expect(await startStoreFromApplication(client, { token: "t", slug: "rica", password: "corta" })).toMatchObject({ code: "invalid" });
@@ -136,6 +193,24 @@ describe("link de la tienda", () => {
 		expect(storeSlugProblem("ab")).toBe("short");
 		expect(storeSlugProblem("onboarding")).toBe("reserved");
 		expect(storeSlugProblem("rica-pizza")).toBeNull();
+	});
+
+	it("una sola regla: como mucho 48 y el sufijo desde -2, también para el alta pagada", async () => {
+		const long = "a".repeat(70);
+		expect(normalizeStoreSlug(long)).toHaveLength(STORE_SLUG_MAX);
+		expect(storeSlugCandidate("rica-pizza", 1)).toBe("rica-pizza");
+		expect(storeSlugCandidate("rica-pizza", 2)).toBe("rica-pizza-2");
+		expect(storeSlugCandidate("a".repeat(48), 12)).toBe(`${"a".repeat(45)}-12`);
+		expect(storeSlugRoot("")).toBe("mi-tienda");
+		expect(storeSlugRoot("Yo")).toBe("yo-tienda");
+
+		const taken = new Set(["rica-pizza", "rica-pizza-2"]);
+		const { client } = fakeSupabase((table, ops) => {
+			const slug = ops.find((op) => op.method === "eq")?.args[1];
+			return table === "companies" && taken.has(String(slug)) ? { data: { id: "x" } } : { data: null };
+		});
+		expect(await suggestStoreSlug(client, "Rica Pizza")).toBe("rica-pizza-3");
+		expect(await resolveAvailablePublicSlug(client, "Rica Pizza")).toBe("rica-pizza-3");
 	});
 });
 

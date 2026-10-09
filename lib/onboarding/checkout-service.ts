@@ -4,17 +4,13 @@ import { resolveBusinessSector } from "@/lib/onboarding/business-sectors";
 import { templatesForSector } from "@/lib/store-theme/menu-templates";
 import { isMercadoPagoConfigured, parseUsdClpRate } from "@/lib/payments/mercadopago";
 import { isPaymentMethodAvailableForCountry } from "@/lib/payments/payment-method-countries";
-import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
+import { buildPlanProductModePatch } from "@/lib/super-admin/sync-company-panel-access";
 import { socialInputToUrl } from "@/lib/tenant/home-page/home-page-config";
 import { whatsappUrlFromPhone } from "@/lib/tenant/whatsapp-url";
-import { slugify as slugifyBase } from "../../utils/slugify";
 import { isSingleInstanceAddon, resolveAddonUnitPrice } from "../plans/addon-pricing";
 import { resolveAddonOfferForPlan, type PlanOfferSnapshot } from "../plans/plan-offer-rules";
 import { resolveRegionalPlanPrice } from "../plans/plan-regional-pricing";
-
-function slugifyCompanyPublicSlug(value: string): string {
-	return slugifyBase(value, { maxLength: 80, emptyFallback: "negocio" });
-}
+import { findAvailableStoreSlug } from "./store-slug";
 
 export type OnboardingApplication = {
 	id: string;
@@ -234,7 +230,12 @@ function resolveCompanyInsertErrorMessage(err: { code?: string; message?: string
 	return { error: "Error al crear la empresa", status: 500 };
 }
 
-async function resolveCompanyCreatorId(supabaseAdmin: SupabaseClient): Promise<string | null> {
+/**
+ * `companies.created_by` es obligatorio y apunta a un usuario interno: se usa el de la
+ * empresa más antigua y, si no hay, el usuario activo más antiguo. Lo comparten el alta
+ * pagada y «Crear mi tienda».
+ */
+export async function resolveCompanyCreatorId(supabaseAdmin: SupabaseClient): Promise<string | null> {
 	const { data: existingCompany } = await supabaseAdmin
 		.from("companies")
 		.select("created_by")
@@ -257,23 +258,12 @@ async function resolveCompanyCreatorId(supabaseAdmin: SupabaseClient): Promise<s
 }
 
 /**
- * Primer enlace libre para el nombre del negocio (`rica-pizza`, `rica-pizza-1`…). Lo usa
+ * Primer enlace libre para el nombre del negocio (`rica-pizza`, `rica-pizza-2`…). Lo usa
  * el alta al crear la empresa y el paso 2 para mostrar cómo quedará el enlace de la tienda.
+ * Misma regla que «Crear mi tienda» (`lib/onboarding/store-slug.ts`).
  */
 export async function resolveAvailablePublicSlug(supabaseAdmin: SupabaseClient, businessName: string): Promise<string> {
-	const baseSlug = slugifyCompanyPublicSlug(businessName);
-	let publicSlug = baseSlug;
-	let suffix = 0;
-	while (true) {
-		const { data: existing } = await supabaseAdmin
-			.from("companies")
-			.select("id")
-			.eq("public_slug", publicSlug)
-			.maybeSingle();
-		if (!existing) return publicSlug;
-		suffix += 1;
-		publicSlug = `${baseSlug}-${suffix}`;
-	}
+	return findAvailableStoreSlug(supabaseAdmin, businessName);
 }
 
 export { whatsappUrlFromPhone };
@@ -322,7 +312,9 @@ export async function provisionCompanyFromApplication(
 		planFeatures = planRow?.features ?? null;
 	}
 
-	const panelAccess = buildCompanyPanelAccessFromPlanFeatures(planFeatures);
+	// Acceso al panel y, con «solo menú digital», el canal WhatsApp: lo mismo que deja el
+	// super admin al asignar ese plan.
+	const productMode = buildPlanProductModePatch({ theme_config: initialStoreTheme(app), integration_settings: null }, planFeatures);
 
 	const companyPayload = {
 		name: app.business_name,
@@ -335,7 +327,8 @@ export async function provisionCompanyFromApplication(
 		plan_id: app.plan_id,
 		subscription_status: isManualPayment ? "payment_pending" : "trial",
 		custom_domain: app.custom_domain ?? null,
-		theme_config: { ...initialStoreTheme(app), panelAccess },
+		theme_config: productMode.theme_config,
+		...(productMode.integration_settings ? { integration_settings: productMode.integration_settings } : {}),
 	};
 
 	const { data: inserted, error: companyError } = await supabaseAdmin

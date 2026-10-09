@@ -4,7 +4,7 @@ import { buildInitialsIconSvg, fetchTenantLogo, TENANT_ICON_SECURITY_HEADERS } f
 import { resolveTenantDisplayName } from "@/lib/tenant/seo-metadata";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
 import { resolveStorefrontAssetPublicUrl } from "@/lib/storage/storefront-branding";
-import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { isTenantPubliclyOpen } from "@/lib/plans/tenant-subscription";
 
 export const dynamic = "force-dynamic";
 
@@ -21,25 +21,30 @@ export async function GET(
     .eq("public_slug", subdomain)
     .maybeSingle();
 
-  const theme = company?.theme_config as Record<string, unknown> | null | undefined;
-  const name = resolveTenantDisplayName(company, { slug: subdomain });
-  const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
-  const logoUrl = company?.id
-    ? resolveStorefrontAssetPublicUrl(storedLogoUrl, String(company.id))
-    : storedLogoUrl;
-  if (logoUrl && isTenantSubscriptionAccessible(company)) {
-    const logo = await fetchTenantLogo(String(logoUrl));
-    if (logo) {
-      return new NextResponse(new Uint8Array(logo.buf), {
-        headers: {
-          ...TENANT_ICON_SECURITY_HEADERS,
-          "Content-Type": logo.contentType,
-          "Cache-Control": "public, max-age=300, s-maxage=120",
-        },
-      });
+  // Solo una tienda abierta al público usa su logo, su nombre y su color: la suspendida, la
+  // vencida y la que sigue en vista previa llevan el ícono genérico de Gcode.
+  const isOpen = Boolean(company) && isTenantPubliclyOpen(company);
+  if (isOpen && company) {
+    const storedLogoUrl = parseThemeLogoUrl(company.theme_config);
+    const logoUrl = company.id
+      ? resolveStorefrontAssetPublicUrl(storedLogoUrl, String(company.id))
+      : storedLogoUrl;
+    if (logoUrl) {
+      const logo = await fetchTenantLogo(String(logoUrl));
+      if (logo) {
+        return new NextResponse(new Uint8Array(logo.buf), {
+          headers: {
+            ...TENANT_ICON_SECURITY_HEADERS,
+            "Content-Type": logo.contentType,
+            "Cache-Control": "public, max-age=300, s-maxage=120",
+          },
+        });
+      }
     }
   }
 
+  const theme = isOpen ? (company?.theme_config as Record<string, unknown> | null | undefined) : null;
+  const name = isOpen ? resolveTenantDisplayName(company, { slug: subdomain }) : "Gcode";
   return new NextResponse(buildInitialsIconSvg(name, theme?.primaryColor), {
     headers: {
       ...TENANT_ICON_SECURITY_HEADERS,

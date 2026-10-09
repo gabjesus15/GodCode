@@ -1,6 +1,6 @@
 import { getCachedCompany } from "../../utils/tenant-cache";
 import { resolveStorefrontAssetPublicUrl } from "@/lib/storage/storefront-branding";
-import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { isTenantPubliclyOpen } from "@/lib/plans/tenant-subscription";
 import { sanitizeHexColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { readThemeConfigObject } from "@/lib/store-theme/merge-theme-config";
 import { escapeXml, fetchTenantLogo, iconInitials, TENANT_ICON_SECURITY_HEADERS } from "@/lib/tenant/favicon-icon";
@@ -23,8 +23,10 @@ export default async function Icon(props: { params: Promise<{ subdomain: string 
 
 	const company = await getCachedCompany(subdomain);
 
-	const theme = readThemeConfigObject(company?.theme_config);
-	const isUnavailable = !isTenantSubscriptionAccessible(company);
+	// Solo una tienda abierta al público muestra su logo, su nombre y sus colores: la
+	// suspendida, la vencida y la que sigue en vista previa llevan el ícono genérico.
+	const isUnavailable = !company || !isTenantPubliclyOpen(company);
+	const theme: Record<string, unknown> = isUnavailable ? {} : readThemeConfigObject(company?.theme_config);
 
 	// Logo del tema: solo imágenes de mapa de bits desde https público o nuestro Storage.
 	const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);

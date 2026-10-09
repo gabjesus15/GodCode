@@ -26,7 +26,7 @@ import {
 	buildTenantMenuTitle,
 	resolveTenantDisplayName,
 } from "@/lib/tenant/seo-metadata";
-import { isTenantSubscriptionAccessible, resolveTenantPublicView } from "@/lib/plans/tenant-subscription";
+import { isTenantPubliclyOpen, resolveTenantPublicView } from "@/lib/plans/tenant-subscription";
 import { StoreComingSoon } from "@/components/tenant/store-draft/store-coming-soon";
 import { StorePreviewBanner } from "@/components/tenant/store-draft/store-preview-banner";
 import { resolveStorefrontAccess, storeDraftPublishHref } from "@/lib/tenant/store-draft-viewer";
@@ -81,8 +81,10 @@ export async function generateMetadata({
   // propio del local si tiene uno, igual que en la home.
   const customDomain = typeof company?.custom_domain === "string" ? company.custom_domain.trim() : "";
   const canonical = customDomain ? `https://${customDomain}/menu` : `${baseOrigin}${pathPrefix}/menu`;
+  // La tarjeta al compartir solo para una tienda abierta al público: la de una vista previa
+  // o una cerrada sería su marca en WhatsApp antes de tiempo (og-image la daría genérica).
   const shareImage =
-    company && isTenantSubscriptionAccessible(company)
+    company && isTenantPubliclyOpen(company)
       ? buildTenantShareImage({ pathPrefix, versionSeed: String(iconVersionSeed), name: displayName })
       : null;
 

@@ -5,17 +5,37 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { createRequestContext, logger } from "@/lib/infra/logger";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { sendEmail, teamInbox } from "@/lib/email/send";
+import { isMissingColumnError } from "@/lib/onboarding/db-compat";
 import { verifyRecaptcha } from "@/lib/onboarding/recaptcha";
 import { isRateLimited } from "@/lib/onboarding/rate-limit";
 import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 import { sendOnboardingResumeLink } from "@/lib/onboarding/resume-application";
 import { resolveOnboardingCountry, sanitizePlanHint } from "@/lib/onboarding/onboarding-entry";
 import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
+import { resolvePlanProductMode } from "@/lib/plans/plan-product-mode";
 
 /** @service-role public
  *
  * Formulario de alta: reCAPTCHA y rate limit por IP y correo.
+ *
+ * Un correo que ya tenía alta recibe la misma respuesta que uno nuevo (y en su bandeja, el
+ * enlace para seguir o el aviso de que ya tiene cuenta): el formulario no sirve para
+ * averiguar qué correos están registrados en Gcode.
  */
+
+const SENT_RESPONSE = { ok: true, emailSent: true, message: "Solicitud enviada. Revisa tu correo para seguir." } as const;
+const NOT_SENT_RESPONSE = {
+	ok: true,
+	emailSent: false,
+	message: "Guardamos tu solicitud, pero el correo no salió. Pulsa «Reenviar correo» en unos minutos.",
+} as const;
+
+/** Versión de los Términos que aceptó (`LEGAL_DOCUMENTS_VERSION` del paso 1): texto corto o nada. */
+function readLegalVersion(raw: unknown): string | null {
+	if (typeof raw !== "string") return null;
+	const value = raw.trim().slice(0, 32);
+	return /^[A-Za-z0-9._-]+$/.test(value) ? value : null;
+}
 
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY ?? "";
 
@@ -42,6 +62,8 @@ type ApplyBody = {
 	plan_id?: string;
 	/** Del landing (`?pais=`) o del visitante. */
 	country?: string;
+	/** `LEGAL_DOCUMENTS_VERSION` que vio al aceptar (lib/legal/legal-documents.ts). */
+	legal_version?: string;
 };
 
 function sanitize(str: string | undefined, maxLen: number): string {
@@ -96,53 +118,66 @@ export async function POST(req: NextRequest) {
 		// El plan del landing solo se guarda si existe y está a la venta.
 		const planHint = sanitizePlanHint(body.plan_id);
 		const { data: hintedPlan } = planHint
-			? await supabaseAdmin.from("plans").select("id").eq("id", planHint).eq("is_active", true).eq("is_public", true).maybeSingle()
+			? await supabaseAdmin.from("plans").select("id,features").eq("id", planHint).eq("is_active", true).eq("is_public", true).maybeSingle()
 			: { data: null };
+		const hinted = hintedPlan as { id?: string; features?: unknown } | null;
+		// «Solo panel CEO» no arma tienda: el correo de verificación no promete armarla gratis.
+		const panelOnly = Boolean(hinted?.id) && resolvePlanProductMode(hinted?.features) === "panel_only";
 		const country = resolveOnboardingCountry(body.country);
+		const legalVersion = readLegalVersion(body.legal_version);
 
 		const verificationToken = randomUUID();
 		const ipToStore = ip || null;
 		const userAgent = req.headers.get("user-agent")?.slice(0, 500) || null;
 
-		const { data: inserted, error: insertError } = await supabaseAdmin
-			.from("onboarding_applications")
-			.insert({
-				business_name: businessName,
-				responsible_name: responsibleName,
-				email: emailRaw,
-				phone: phone || null,
-				sector: sector || null,
-				message: message || null,
-				plan_id: (hintedPlan as { id?: string } | null)?.id ?? null,
-				country,
-				terms_accepted: true,
-				privacy_accepted: true,
-				verification_token: verificationToken,
-				status: SKIP_EMAIL_VERIFICATION ? "email_verified" : "pending_verification",
-				email_verified_at: SKIP_EMAIL_VERIFICATION ? new Date().toISOString() : null,
-				ip_address: ipToStore,
-				user_agent: userAgent,
-			})
-			.select("id")
-			.single();
+		const row: Record<string, unknown> = {
+			business_name: businessName,
+			responsible_name: responsibleName,
+			email: emailRaw,
+			phone: phone || null,
+			sector: sector || null,
+			message: message || null,
+			plan_id: hinted?.id ?? null,
+			country,
+			terms_accepted: true,
+			privacy_accepted: true,
+			...(legalVersion ? { legal_version: legalVersion } : {}),
+			verification_token: verificationToken,
+			status: SKIP_EMAIL_VERIFICATION ? "email_verified" : "pending_verification",
+			email_verified_at: SKIP_EMAIL_VERIFICATION ? new Date().toISOString() : null,
+			ip_address: ipToStore,
+			user_agent: userAgent,
+		};
+		const insertApplication = (values: Record<string, unknown>) =>
+			supabaseAdmin.from("onboarding_applications").insert(values).select("id").single();
+
+		let { data: inserted, error: insertError } = await insertApplication(row);
+		if (insertError && "legal_version" in row && isMissingColumnError(insertError, "legal_version")) {
+			// La migración 20261010_onboarding_legal_version.sql todavía no corrió: el alta sigue
+			// sin guardar la versión aceptada (los booleanos de aceptación sí quedan).
+			logger.warn("onboarding_legal_version_column_missing", createRequestContext("/api/onboarding/apply", "POST", "onboarding-billing"), {
+				legalVersion,
+			});
+			const withoutVersion = { ...row };
+			delete withoutVersion.legal_version;
+			({ data: inserted, error: insertError } = await insertApplication(withoutVersion));
+		}
 
 		if (insertError) {
 			if (insertError.code === "23505") {
-				// Ya hay un alta con este correo: en vez de un error sin salida, se le manda el
-				// enlace para seguir donde quedó. La respuesta no dice en qué paso va.
+				// Ya hay un alta con este correo: en vez de un error sin salida, a ese correo le
+				// llega el enlace para seguir donde quedó (o el aviso de que ya tiene cuenta). La
+				// respuesta es la misma que la de un alta nueva.
 				const resumed = await sendOnboardingResumeLink(supabaseAdmin, emailRaw);
-				if (resumed.found && resumed.email) {
-					return NextResponse.json({
-						ok: true,
-						resumed: true,
-						emailSent: resumed.email.status === "sent" || resumed.email.status === "duplicate",
-						message: "Ya tenías un alta con este correo. Te enviamos un enlace para seguir donde quedaste.",
-					});
+				if (!resumed.found || !resumed.email) {
+					// Sin enlace que mandar (solicitud sin token o rechazada): queda en el log para el
+					// equipo y la respuesta sigue siendo la de siempre.
+					console.error("onboarding apply: alta repetida sin correo para retomar", { target: resumed.found ? resumed.target : "not_found" });
+					return NextResponse.json(SENT_RESPONSE);
 				}
-				return NextResponse.json(
-					{ error: "Ya existe una solicitud con este email. Revisa tu bandeja o espera unos minutos." },
-					{ status: 409 }
-				);
+				const delivered = resumed.email.status === "sent" || resumed.email.status === "duplicate";
+				if (!delivered) console.error("onboarding apply: correo para retomar", resumed.email);
+				return NextResponse.json(delivered ? SENT_RESPONSE : NOT_SENT_RESPONSE);
 			}
 			console.error("onboarding apply insert:", insertError);
 			return NextResponse.json({ error: "Error al registrar la solicitud" }, { status: 500 });
@@ -179,7 +214,7 @@ export async function POST(req: NextRequest) {
 			kind: "verify_email",
 			to: emailRaw,
 			applicationId,
-			data: { name: responsibleName, businessName, verifyUrl },
+			data: { name: responsibleName, businessName, verifyUrl, ...(panelOnly ? { panelOnly: true } : {}) },
 		});
 		const team = teamInbox();
 		if (team && team !== emailRaw) {
@@ -196,18 +231,10 @@ export async function POST(req: NextRequest) {
 			// La solicitud ya existe: se sigue a la pantalla de «revisa tu correo», desde donde se
 			// puede reenviar. Antes se devolvía un 502 con el nombre de las variables de entorno.
 			console.error("onboarding apply: verification email", verification);
-			return NextResponse.json({
-				ok: true,
-				emailSent: false,
-				message: "Guardamos tu solicitud, pero el correo no salió. Pulsa «Reenviar correo» en unos minutos.",
-			});
+			return NextResponse.json(NOT_SENT_RESPONSE);
 		}
 
-		return NextResponse.json({
-			ok: true,
-			emailSent: true,
-			message: "Solicitud enviada. Revisa tu correo para verificar tu email.",
-		});
+		return NextResponse.json(SENT_RESPONSE);
 	} catch (err) {
 		console.error("onboarding apply error:", err);
 		return NextResponse.json({ error: "Error interno. Intenta más tarde." }, { status: 500 });

@@ -1,8 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createPasswordSetupLink } from "@/lib/auth/password-setup-link";
+import { formatUsd } from "@/lib/billing/portal-pricing";
 import { redeemSubscriptionCoupon } from "@/lib/billing/subscription-coupon-service";
+import { formatEmailDate, timeZoneForCountry } from "@/lib/email/format";
 import { sendEmail } from "@/lib/email/send";
+import { resolvePlanProductMode } from "@/lib/plans/plan-product-mode";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { getTenantHomeUrl } from "../../utils/tenant-url";
 import { activateCompanyAddonsFromApplication, activateCompanySubscription } from "./billing-activation";
@@ -68,7 +71,51 @@ type ApplicationRow = OnboardingApplication & {
 };
 
 const APPLICATION_COLUMNS =
-	"id,status,payment_status,payment_reference,company_id,plan_id,business_name,responsible_name,email,phone,sector,billing_rut,fiscal_address,logo_url,social_instagram,subscription_payment_method,welcome_email_sent_at,updated_at,country,currency,coupon_id,coupon_code,coupon_discount_usd,coupon_free_months";
+	"id,status,payment_status,payment_reference,company_id,plan_id,custom_plan_name,business_name,responsible_name,email,phone,sector,billing_rut,fiscal_address,logo_url,social_instagram,subscription_payment_method,welcome_email_sent_at,updated_at,country,currency,coupon_id,coupon_code,coupon_discount_usd,coupon_free_months";
+
+/** Lo cobrado en este pago, para la bienvenida. */
+type PaidSummary = { amountPaid: number; chargedMonths: number; grantedMonths: number };
+
+function monthsLabel(months: number): string {
+	return months === 1 ? "1 mes" : `${months} meses`;
+}
+
+/**
+ * Lo contratado, para la bienvenida: los Términos (sección 2) prometen que la confirmación
+ * del primer pago trae plan, precio, período y próxima renovación. Si falta un dato no se
+ * inventa: la bienvenida sale sin ese bloque. Sin el detalle del cierre (cuando la manda la
+ * página de éxito o el barrido) se lee el pago registrado, sin el mes de regalo.
+ */
+async function resolveWelcomePurchase(
+	supabaseAdmin: SupabaseClient,
+	params: { app: ApplicationRow; planName: string | null; endsAt: string | null; timeZone: string; paid?: PaidSummary },
+): Promise<{ planName: string; amount: string; period: string; renewsAt: string } | undefined> {
+	let paid = params.paid;
+	if (!paid && params.app.payment_reference) {
+		const { data } = await supabaseAdmin
+			.from("payments_history")
+			.select("amount_paid,months_paid")
+			.eq("payment_reference", params.app.payment_reference)
+			.eq("status", "paid")
+			.limit(1)
+			.maybeSingle();
+		const row = data as { amount_paid?: number | string | null; months_paid?: number | null } | null;
+		if (row) {
+			const months = Math.max(0, Number(row.months_paid) || 0);
+			paid = { amountPaid: Number(row.amount_paid) || 0, chargedMonths: months, grantedMonths: months };
+		}
+	}
+	const renewsAt = formatEmailDate(params.endsAt, params.timeZone);
+	const granted = paid ? Math.max(paid.grantedMonths, paid.chargedMonths) : 0;
+	if (!params.planName || !paid || granted <= 0 || !renewsAt) return undefined;
+	const period =
+		paid.chargedMonths <= 0
+			? `${monthsLabel(granted)} sin costo`
+			: granted > paid.chargedMonths
+				? `${monthsLabel(granted)} (pagaste ${paid.chargedMonths})`
+				: monthsLabel(granted);
+	return { planName: params.planName, amount: formatUsd(paid.amountPaid), period, renewsAt };
+}
 
 /**
  * Cierra el alta de una solicitud cuyo pago ya está confirmado (PayPal capturado o
@@ -245,7 +292,14 @@ export async function completeOnboardingPayment(
 		coupon: app.coupon_code ?? null,
 	});
 
-	return finishOwnerAccess({ supabaseAdmin, app, companyId, alreadyCompleted: false, now });
+	return finishOwnerAccess({
+		supabaseAdmin,
+		app,
+		companyId,
+		alreadyCompleted: false,
+		now,
+		paid: { amountPaid: paymentFields.amount_paid, chargedMonths: input.chargedMonths, grantedMonths: input.grantedMonths },
+	});
 }
 
 export type OnboardingPaymentStatus =
@@ -291,12 +345,14 @@ async function finishOwnerAccess(params: {
 	companyId: string;
 	alreadyCompleted: boolean;
 	now: Date;
+	/** Lo cobrado, cuando llega desde el cierre del pago (incluye el mes de regalo). */
+	paid?: PaidSummary;
 }): Promise<CompleteOnboardingPaymentResult> {
 	const { supabaseAdmin, app, companyId, alreadyCompleted, now } = params;
 
 	const { data: company } = await supabaseAdmin
 		.from("companies")
-		.select("public_slug,custom_domain,theme_config")
+		.select("public_slug,custom_domain,theme_config,subscription_ends_at,country")
 		.eq("id", companyId)
 		.maybeSingle();
 	const draft = readStoreDraft(company?.theme_config);
@@ -339,6 +395,21 @@ async function finishOwnerAccess(params: {
 	const storeUrl = company?.public_slug ? getTenantHomeUrl(String(company.public_slug), company.custom_domain) : "";
 	const loginUrl = `${getAppUrl()}/login`;
 
+	// El plan decide el tono (con «solo panel CEO» no hay menú que cargar) y va en el resumen.
+	const isCustomPlan = !app.plan_id || app.plan_id === "custom";
+	const { data: planRow } = isCustomPlan
+		? { data: null }
+		: await supabaseAdmin.from("plans").select("name,features").eq("id", app.plan_id).maybeSingle();
+	const plan = planRow as { name?: string | null; features?: unknown } | null;
+	const panelOnly = resolvePlanProductMode(plan?.features) === "panel_only";
+	const purchase = await resolveWelcomePurchase(supabaseAdmin, {
+		app,
+		planName: String((isCustomPlan ? app.custom_plan_name : plan?.name) ?? "").trim() || null,
+		endsAt: (company?.subscription_ends_at as string | null | undefined) ?? null,
+		timeZone: timeZoneForCountry(app.country ?? (company?.country as string | null | undefined) ?? null),
+		paid: params.paid,
+	});
+
 	const result = await sendEmail({
 		kind: "welcome",
 		to: app.email,
@@ -353,10 +424,12 @@ async function finishOwnerAccess(params: {
 			// Sin enlace, el dueño tiene una contraseña aleatoria: que pida uno con su correo.
 			setPasswordUrl: fromDraft ? undefined : (setupLink ?? `${getAppUrl()}/login/recuperar`),
 			storeOpened: fromDraft || undefined,
+			panelOnly: panelOnly || undefined,
 			loginUrl,
 			storeUrl: storeUrl || undefined,
 			menuUrl: `${getAppUrl()}/cuenta?tab=menu`,
 			contactDate,
+			purchase,
 		},
 	});
 	const sent = { ok: result.status === "sent" || result.status === "duplicate" };

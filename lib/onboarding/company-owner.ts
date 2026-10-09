@@ -7,7 +7,8 @@ export type EnsureCompanyOwnerResult =
 	| { ok: true; authUserId: string; created: boolean }
 	| { ok: false; error: string };
 
-function isAlreadyRegisteredError(message: string | undefined): boolean {
+/** Supabase Auth no da un código estable para «ese correo ya tiene cuenta»: se mira el texto. */
+export function isAlreadyRegisteredError(message: string | undefined): boolean {
 	const text = String(message ?? "").toLowerCase();
 	return text.includes("already") || text.includes("registered") || text.includes("exists");
 }

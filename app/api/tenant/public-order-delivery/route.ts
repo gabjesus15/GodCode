@@ -25,12 +25,21 @@ import { logger } from "@/lib/infra/logger";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isMenuAccountClient, sealOrderDeliveryAddress } from "@/lib/menu-account/order-address";
 import { fetchUberDeliveryEstimate } from "@/lib/delivery/uber-direct";
+import {
+	resolveStorefrontAccessFromRow,
+	STORE_NOT_OPEN_CODE,
+	STORE_NOT_OPEN_MESSAGE,
+	STOREFRONT_ACCESS_COLUMNS,
+	storefrontTakesOrders,
+	type StorefrontAccessRow,
+} from "@/lib/tenant/store-draft-viewer";
 
 /** @service-role public
  *
  * Cierre del pedido público; el pedido se ata por client_request_id y edad máxima.
  * Los id de pedido son correlativos: el client_request_id (uuid que generó el
  * navegador al crear el pedido) es la credencial, y sin él no se toca nada.
+ * Un pedido de una tienda en vista previa o cerrada se cancela (403 `store_not_open`).
  */
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -223,11 +232,23 @@ export async function POST(req: NextRequest) {
 		let currencyCode = "CLP";
 		let companyIntegration: unknown = null;
 		if (branch.company_id) {
-			const { data: comp } = await supabaseAdmin
+			const { data: comp, error: compErr } = await supabaseAdmin
 				.from("companies")
-				.select("currency, integration_settings")
+				.select(`currency, integration_settings, ${STOREFRONT_ACCESS_COLUMNS}`)
 				.eq("id", branch.company_id)
 				.maybeSingle();
+			if (compErr) {
+				logger.error("public_order_delivery_company_read_failed", { orderId, message: compErr.message });
+				return await rechazarYCancelar({ error: GENERIC_FAILURE }, 500);
+			}
+			// Tienda en vista previa («abre pronto») o cerrada: no toma pedidos. La barrera real
+			// está en la base (migración 20261010_public_order_requires_open_store); si igual
+			// quedó un pedido (p. ej. antes de correrla), aquí se cancela. Su dueño en la vista
+			// previa pasa.
+			const access = comp ? await resolveStorefrontAccessFromRow(comp as StorefrontAccessRow) : null;
+			if (!storefrontTakesOrders(access)) {
+				return await rechazarYCancelar({ error: STORE_NOT_OPEN_MESSAGE, code: STORE_NOT_OPEN_CODE }, 403);
+			}
 			const c = typeof comp?.currency === "string" ? comp.currency.trim() : "";
 			if (c) currencyCode = c.toUpperCase().slice(0, 8);
 			companyIntegration = comp?.integration_settings ?? null;

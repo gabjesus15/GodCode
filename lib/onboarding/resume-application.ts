@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { createPasswordSetupLink } from "@/lib/auth/password-setup-link";
 import { sendEmail, type SendEmailResult } from "@/lib/email/send";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { isPanelOnlyPlan } from "./store-draft-service";
@@ -60,9 +59,14 @@ export type ResumeResult = { found: false } | { found: true; target: ResumeTarge
 
 /**
  * «Retomar mi registro»: manda a ese correo el enlace que le sirve según dónde quedó el
- * alta (confirmar el correo, elegir plan, pagar, ver el comprobante o entrar a su cuenta).
+ * alta (confirmar el correo, crear su tienda, elegir plan, pagar o ver el comprobante).
  * Antes, quien perdía el enlace del correo no tenía forma de volver: registrarse otra vez
  * daba «ya existe una solicitud» y reenviar solo funcionaba si aún no había verificado.
+ *
+ * A una cuenta que ya existe (ya pagó o ya armó su tienda) no le llega ningún enlace con
+ * token: solo un aviso neutro con el login y la recuperación de contraseña
+ * (`onboarding_existing_account`). Antes recibía un enlace para cambiar la contraseña que
+ * cualquiera podía disparar escribiendo su correo en el alta.
  *
  * No dice a quien llama dónde quedó el alta: eso solo lo ve el dueño del correo.
  */
@@ -83,9 +87,12 @@ export async function sendOnboardingResumeLink(supabaseAdmin: SupabaseClient, ra
 	const appUrl = getAppUrl();
 	const name = app.responsible_name ?? "";
 	const businessName = app.business_name ?? "";
-	const target = resolveResumeTarget(app, app.verification_token, {
-		panelOnly: app.status === "email_verified" && !app.company_id && (await isPanelOnlyPlan(supabaseAdmin, app.plan_id)),
-	});
+	// «Solo panel CEO» cambia el paso siguiente (sin tienda que armar) y el texto del correo
+	// de verificación: solo se consulta cuando importa.
+	const status = String(app.status ?? "").toLowerCase();
+	const needsPlanMode = status === "pending_verification" || (status === "email_verified" && !app.company_id);
+	const panelOnly = needsPlanMode ? await isPanelOnlyPlan(supabaseAdmin, app.plan_id) : false;
+	const target = resolveResumeTarget(app, app.verification_token, { panelOnly });
 
 	switch (target.kind) {
 		case "verify": {
@@ -93,7 +100,12 @@ export async function sendOnboardingResumeLink(supabaseAdmin: SupabaseClient, ra
 				kind: "verify_email",
 				to: app.email,
 				applicationId: app.id,
-				data: { name, businessName, verifyUrl: `${appUrl}/onboarding/verify/${app.verification_token}` },
+				data: {
+					name,
+					businessName,
+					verifyUrl: `${appUrl}/onboarding/verify/${app.verification_token}`,
+					...(panelOnly ? { panelOnly: true } : {}),
+				},
 			});
 			return { found: true, target: target.kind, email: sent };
 		}
@@ -107,14 +119,17 @@ export async function sendOnboardingResumeLink(supabaseAdmin: SupabaseClient, ra
 			return { found: true, target: target.kind, email: sent };
 		}
 		case "login": {
-			// Ya tiene cuenta: el enlace para crear (o cambiar) la contraseña le sirve para entrar.
-			const resetUrl = await createPasswordSetupLink(supabaseAdmin, app.email);
+			// Ya tiene cuenta: aviso neutro, sin token. Si no recuerda la contraseña, la pide él
+			// desde la recuperación, que manda el enlace a este mismo correo. Cualquiera puede
+			// dispararlo escribiendo el correo en el alta: como mucho uno por día.
 			const sent = await sendEmail({
-				kind: "password_reset",
+				kind: "onboarding_existing_account",
 				to: app.email,
 				applicationId: app.id,
 				companyId: app.company_id ?? undefined,
-				data: { name, resetUrl: resetUrl ?? `${appUrl}/login/recuperar` },
+				dedupeKey: `existing-account:${app.id}:${new Date().toISOString().slice(0, 10)}`,
+				client: supabaseAdmin,
+				data: { name: name || undefined, loginUrl: `${appUrl}/login`, recoverUrl: `${appUrl}/login/recuperar` },
 			});
 			return { found: true, target: target.kind, email: sent };
 		}

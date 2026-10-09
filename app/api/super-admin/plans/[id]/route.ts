@@ -1,13 +1,12 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { logAdminAudit } from "@/lib/super-admin/admin-audit";
-import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
+import { applyPlanProductModeToCompany, type PlanProductModeCompany } from "@/lib/super-admin/sync-company-panel-access";
 import { normalizePlanFeaturesPayload } from "@/lib/plans/plan-features";
 import { buildPlanMarketingLinesI18nPayload, buildPlanNameI18nPayload } from "@/lib/plans/plan-i18n";
 import { normalizeMarketingLines } from "@/lib/plans/plan-marketing-lines";
 import { adminUpdatePlanById } from "@/lib/plans/plans-db-query";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { asThemeConfigObject } from "@/lib/store-theme/merge-theme-config";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
 /** @service-role super-admin */
@@ -26,11 +25,15 @@ type PatchBody = {
 	marketing_lines_i18n?: unknown;
 };
 
-async function syncPlanPanelAccessToCompanies(planId: string, planFeatures: unknown): Promise<{ synced: number }> {
-	const panelAccess = buildCompanyPanelAccessFromPlanFeatures(planFeatures);
+/**
+ * Las empresas del plan reciben lo que trae el plan editado: pestañas del panel y, con «solo
+ * menú digital», el canal WhatsApp (`applyPlanProductModeToCompany`; las tiendas en vista
+ * previa siguen sin panel hasta pagar). Sigue con las demás si una falla y las cuenta.
+ */
+async function syncPlanProductModeToCompanies(planId: string, planFeatures: unknown): Promise<{ synced: number; failed: number }> {
 	const { data: companies, error: companiesError } = await supabaseAdmin
 		.from("companies")
-		.select("id,theme_config")
+		.select("id,theme_config,integration_settings,subscription_status")
 		.eq("plan_id", planId);
 
 	if (companiesError) {
@@ -38,24 +41,18 @@ async function syncPlanPanelAccessToCompanies(planId: string, planFeatures: unkn
 	}
 
 	let synced = 0;
-	for (const company of companies ?? []) {
-		const nextThemeConfig = {
-			...asThemeConfigObject(company.theme_config),
-			panelAccess,
-		};
-
-		const { error: updateError } = await supabaseAdmin
-			.from("companies")
-			.update({ theme_config: nextThemeConfig })
-			.eq("id", company.id);
-
-		if (updateError) {
-			throw new Error(updateError.message);
+	let failed = 0;
+	for (const company of (companies ?? []) as Array<PlanProductModeCompany & { id: string }>) {
+		const result = await applyPlanProductModeToCompany(company.id, planFeatures, { company });
+		if (result.ok) {
+			synced += 1;
+		} else {
+			failed += 1;
+			console.error("[plans/update] plan sync error:", { companyId: company.id, error: result.error });
 		}
-		synced += 1;
 	}
 
-	return { synced };
+	return { synced, failed };
 }
 
 export async function PATCH(
@@ -135,15 +132,15 @@ export async function PATCH(
 	let syncWarning: string | null = null;
 	if (updates.features !== undefined) {
 		try {
-			const { synced } = await syncPlanPanelAccessToCompanies(id, updates.features);
-			if (synced > 0) {
-				syncWarning = null;
+			const { failed } = await syncPlanProductModeToCompanies(id, updates.features);
+			if (failed > 0) {
+				syncWarning = `El plan se guardó, pero ${failed} empresa(s) de este plan no recibieron el acceso al panel. Vuelve a guardar el plan o revisa los logs.`;
 			}
 		} catch (syncError) {
 			const reason = syncError instanceof Error ? syncError.message : "Error desconocido";
-			console.error("[plans/update] panelAccess sync error:", reason);
+			console.error("[plans/update] plan sync error:", reason);
 			syncWarning =
-				"El plan se guardó, pero no se pudo sincronizar panelAccess en todas las empresas de este plan. Reintenta o revisa logs.";
+				"El plan se guardó, pero no se pudo sincronizar el acceso al panel de las empresas de este plan. Vuelve a guardarlo o revisa los logs.";
 		}
 	}
 

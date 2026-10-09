@@ -10,7 +10,7 @@ import { resolveTenantDisplayName } from "@/lib/tenant/seo-metadata";
 import { resolveStorefrontAssetPublicUrl } from "@/lib/storage/storefront-branding";
 import { resolveTenantSlugFromCustomDomainHost } from "@/lib/tenant/custom-domain-resolve";
 import { getCachedCompany } from "@/utils/tenant-cache";
-import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { isTenantPubliclyOpen } from "@/lib/plans/tenant-subscription";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -83,6 +83,28 @@ function resolveSlugFromHost(hostHeader: string | null): string | null {
   return null;
 }
 
+/**
+ * El ícono de Gcode: sin tienda, o con una que no está abierta al público. En el segundo
+ * caso la caché es corta: al abrirse o reactivarse, su logo aparece en minutos aunque la URL
+ * (con la misma versión) ya esté en la CDN.
+ */
+async function genericIconResponse(size: number, options: { shortCache?: boolean } = {}): Promise<NextResponse> {
+  try {
+    const buf = await readFile(path.join(process.cwd(), "public", "logo.png"));
+    const response = await toIconResponse(buf, size, "image/png");
+    if (options.shortCache) response.headers.set("Cache-Control", "public, max-age=300, s-maxage=120");
+    return response;
+  } catch {
+    return new NextResponse(buildInitialsIconSvg("Gcode", "#111827", size), {
+      headers: {
+        ...TENANT_ICON_SECURITY_HEADERS,
+        "Content-Type": "image/svg+xml; charset=utf-8",
+        "Cache-Control": "public, max-age=300",
+      },
+    });
+  }
+}
+
 export async function GET(req: NextRequest) {
   const hostHeader = req.headers.get("host");
   const { searchParams } = new URL(req.url);
@@ -92,35 +114,27 @@ export async function GET(req: NextRequest) {
   const hostSlug = resolveSlugFromHost(hostHeader);
   const tenantSlug = querySlug || customDomainSlug || hostSlug;
 
-  if (!tenantSlug) {
-    try {
-      const buf = await readFile(path.join(process.cwd(), "public", "logo.png"));
-      return await toIconResponse(buf, size, "image/png");
-    } catch {
-      return new NextResponse(buildInitialsIconSvg("Gcode", "#111827", size), {
-        headers: {
-          ...TENANT_ICON_SECURITY_HEADERS,
-          "Content-Type": "image/svg+xml; charset=utf-8",
-          "Cache-Control": "public, max-age=300",
-        },
-      });
-    }
-  }
+  if (!tenantSlug) return genericIconResponse(size);
 
   const company = await getCachedCompany(tenantSlug);
-  const theme = company?.theme_config as Record<string, unknown> | null | undefined;
+  // Solo una tienda abierta al público usa su logo y sus iniciales: la suspendida, la vencida
+  // y la que sigue en vista previa llevan el ícono de Gcode. Esta URL se cachea en la CDN
+  // para todos, así que no depende de quién la pida.
+  if (!company || !isTenantPubliclyOpen(company)) return genericIconResponse(size, { shortCache: true });
+
+  const theme = company.theme_config as Record<string, unknown> | null | undefined;
   const name = resolveTenantDisplayName(company, { slug: tenantSlug });
-  const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
-  const logoUrl = company?.id
+  const storedLogoUrl = parseThemeLogoUrl(company.theme_config);
+  const logoUrl = company.id
     ? resolveStorefrontAssetPublicUrl(storedLogoUrl, String(company.id))
     : storedLogoUrl;
-  if (logoUrl && isTenantSubscriptionAccessible(company)) {
+  if (logoUrl) {
     const logo = await fetchTenantLogo(String(logoUrl));
     if (logo) return await toIconResponse(logo.buf, size, logo.contentType);
   }
 
   const svg = buildInitialsIconSvg(name, theme?.primaryColor, size);
-  const versionSeed = company ? tenantBrandingIconVersionSeed(company) : tenantSlug;
+  const versionSeed = tenantBrandingIconVersionSeed(company);
 
   return new NextResponse(svg, {
     headers: {

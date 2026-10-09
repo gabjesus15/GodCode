@@ -90,12 +90,12 @@ describe("formatOnboardingAlert", () => {
 });
 
 describe("alertOnboardingTeam", () => {
-	it("manda el mensaje formateado y nunca lanza", async () => {
+	it("manda el mensaje formateado, dice cómo salió y nunca lanza", async () => {
 		vi.stubEnv("NEXT_PUBLIC_APP_URL", APP);
-		await alertOnboardingTeam({ kind: "email_verified", businessName: "Juni", email: "n@x.com" });
+		await expect(alertOnboardingTeam({ kind: "email_verified", businessName: "Juni", email: "n@x.com" })).resolves.toBe("sent");
 		expect(sendTelegramMessage).toHaveBeenCalledTimes(1);
 		expect(String(sendTelegramMessage.mock.calls[0][0])).toContain("Correo verificado: Juni");
 		sendTelegramMessage.mockRejectedValueOnce(new Error("boom"));
-		await expect(alertOnboardingTeam({ kind: "email_verified", businessName: "Juni", email: "n@x.com" })).resolves.toBeUndefined();
+		await expect(alertOnboardingTeam({ kind: "email_verified", businessName: "Juni", email: "n@x.com" })).resolves.toBe("failed");
 	});
 });

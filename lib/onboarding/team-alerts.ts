@@ -1,4 +1,4 @@
-import { escapeTelegramHtml, sendTelegramMessage } from "@/lib/infra/telegram";
+import { escapeTelegramHtml, sendTelegramMessage, type TelegramSendResult } from "@/lib/infra/telegram";
 import { getAppUrl } from "@/lib/tenant/app-url";
 
 /**
@@ -193,11 +193,16 @@ export function formatOnboardingAlert(alert: OnboardingAlert, appUrl: string = g
 	}
 }
 
-/** Manda el aviso y se traga cualquier fallo: el alta sigue igual con o sin Telegram. */
-export async function alertOnboardingTeam(alert: OnboardingAlert): Promise<void> {
+/**
+ * Manda el aviso y se traga cualquier fallo: el alta sigue igual con o sin Telegram. Dice
+ * cómo salió (`skipped` sin Telegram configurado) para quien quiera reintentar un aviso que
+ * no llegó, como el barrido de altas a medias.
+ */
+export async function alertOnboardingTeam(alert: OnboardingAlert): Promise<TelegramSendResult> {
 	try {
-		await sendTelegramMessage(formatOnboardingAlert(alert));
+		return await sendTelegramMessage(formatOnboardingAlert(alert));
 	} catch {
 		// sendTelegramMessage ya no lanza; esto cubre un formateo roto por datos raros.
+		return "failed";
 	}
 }

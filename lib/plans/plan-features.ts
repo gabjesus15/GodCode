@@ -1,4 +1,6 @@
+import { MENU_ONLY_CEO_TABS, resolvePlanProductMode } from "./plan-product-mode";
 import { normalizePlanToken } from "./plan-tokens";
+import { extractCeoTabsFromPlanFeatures, upsertPlanFeaturesCeoTabs } from "./tenant-plan-features";
 
 export type PlanFeaturesPayload = Record<string, unknown>;
 
@@ -54,5 +56,21 @@ export function normalizePlanFeaturesPayload(raw: unknown): PlanFeaturesPayload 
   if (blocked.length > 0) next.blocked_addons = blocked;
   if (allowed.length > 0) next.allowed_addons = allowed;
 
-  return next;
+  return restrictMenuOnlyCeoTabs(next);
+}
+
+const MENU_ONLY_TAB_SET = new Set<string>(MENU_ONLY_CEO_TABS);
+
+/**
+ * Con «solo menú digital» el panel CEO es solo catálogo y banners. El editor de planes ya
+ * apaga el resto, pero la regla vale en el servidor: unas features armadas a mano (o un
+ * editor viejo) no pueden darle caja ni pedidos a ese plan. Las pestañas que no son del
+ * catálogo se quitan y los indicadores viejos (`menu`, `cash`, `crm`) se recalculan con
+ * ellas; sin `ceo_tabs` ni indicadores, quedan las del catálogo.
+ */
+function restrictMenuOnlyCeoTabs(features: PlanFeaturesPayload): PlanFeaturesPayload {
+  if (resolvePlanProductMode(features) !== "menu_only") return features;
+  const current = extractCeoTabsFromPlanFeatures(features);
+  const tabs = current === null ? [...MENU_ONLY_CEO_TABS] : current.filter((tab) => MENU_ONLY_TAB_SET.has(tab));
+  return upsertPlanFeaturesCeoTabs(features, tabs);
 }

@@ -4,7 +4,7 @@ import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 import { logAdminAudit } from "@/lib/super-admin/admin-audit";
-import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
+import { buildPlanProductModePatch } from "@/lib/super-admin/sync-company-panel-access";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import {
   buildStorefrontBrandingFolder,
@@ -17,8 +17,6 @@ import { MAIN_DOMAIN_RESERVED_PATH_SEGMENTS } from "@/lib/tenant/reserved-path-s
 import { slugify } from "@/utils/slugify";
 import { normalizeBaseDomain } from "@/utils/tenant-url";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
-import { resolvePlanProductMode } from "@/lib/plans/plan-product-mode";
-import { mergeMenuSettingsIntoIntegration } from "@/lib/tenant/menu-settings";
 
 /** @service-role super-admin */
 
@@ -154,25 +152,31 @@ export async function PUT(
   let nextEndsAt: string | null = fresh.subscription_ends_at ?? null;
   let nextPanelAccess: string[] | null = null;
   const planChanged = has(input, "plan_id") && (textOrNull(input?.plan_id) ?? null) !== (fresh.plan_id ?? null);
+  // Estado con el que queda la empresa: decide si una tienda en vista previa recibe panel.
+  const nextStatus = has(input, "subscription_status")
+    ? String(input?.subscription_status ?? "").trim().toLowerCase()
+    : fresh.subscription_status;
 
   if (planChanged) {
     const planId = textOrNull(input?.plan_id);
     companyUpdate.plan_id = planId;
     let planName = "";
+    let planFeatures: unknown = null;
     if (planId) {
-      const { data: planRow } = await supabaseAdmin.from("plans").select("id,name,features").eq("id", planId).maybeSingle();
+      const { data: planRow, error: planError } = await supabaseAdmin.from("plans").select("id,name,features").eq("id", planId).maybeSingle();
+      if (planError) return NextResponse.json({ error: "No se pudo leer el plan." }, { status: 500 });
       if (!planRow) return NextResponse.json({ error: "Ese plan no existe." }, { status: 400 });
-      nextPanelAccess = buildCompanyPanelAccessFromPlanFeatures(planRow.features);
-      // «Solo menú digital»: el canal queda guardado en WhatsApp (ver syncCompanyPanelAccessFromPlanId).
-      if (resolvePlanProductMode(planRow.features) === "menu_only") {
-        companyUpdate.integration_settings = mergeMenuSettingsIntoIntegration(fresh.integration_settings, {
-          orderChannel: "whatsapp_only",
-        });
-      }
+      planFeatures = planRow.features;
       planName = String(planRow.name ?? "").toLowerCase();
-    } else {
-      nextPanelAccess = [];
     }
+    // Lo que trae el plan (panel y, con «solo menú digital», canal WhatsApp) en la misma
+    // escritura que el cambio de plan: misma regla que applyPlanProductModeToCompany.
+    const productMode = buildPlanProductModePatch(
+      { theme_config: fresh.theme_config, integration_settings: fresh.integration_settings, subscription_status: nextStatus },
+      planFeatures,
+    );
+    nextPanelAccess = productMode.panelAccess;
+    if (productMode.integration_settings) companyUpdate.integration_settings = productMode.integration_settings;
     // Planes internos: "dev" no vence; "beta" dura 30 días si no tenía fecha.
     if (planName.includes("dev")) {
       companyUpdate.subscription_ends_at = null;

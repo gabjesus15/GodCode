@@ -7,7 +7,10 @@ import { NextResponse } from "next/server";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 import { tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedCompany } from "../../../../utils/tenant-cache";
-import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { isTenantPubliclyOpen } from "@/lib/plans/tenant-subscription";
+
+/** Seed del ícono cuando la tienda no está abierta: cambia de URL al abrirse. */
+const GENERIC_ICON_SEED = "gcode";
 
 type RouteContext = {
 	params: Promise<{ subdomain: string }>;
@@ -27,14 +30,16 @@ export async function GET(_req: Request, context: RouteContext) {
 	const startUrl = `${pathPrefix}/menu`;
 	const scope = pathPrefix ? `${pathPrefix}/` : "/";
 
-	const isUnavailable = !isTenantSubscriptionAccessible(company);
+	// Solo una tienda abierta al público pone su nombre, sus colores y su logo: la suspendida,
+	// la vencida y la que sigue en vista previa salen con lo genérico de Gcode.
+	const isUnavailable = !company || !isTenantPubliclyOpen(company);
 
-	const theme = readThemeConfigObject(company?.theme_config);
+	const theme: Record<string, unknown> = isUnavailable ? {} : readThemeConfigObject(company?.theme_config);
 	// `??` no cubría el nombre vacío: el manifest salía con name y short_name "".
 	const name = isUnavailable ? "Gcode Menu" : resolveTenantDisplayName(company, { slug: subdomain, fallback: "Gcode Menu" });
 
 	const iconVersion = encodeURIComponent(
-		company ? tenantBrandingIconVersionSeed(company) : String(name),
+		isUnavailable || !company ? GENERIC_ICON_SEED : tenantBrandingIconVersionSeed(company),
 	);
 	const tenantIcon = `/tenant-favicon?tenant=${encodeURIComponent(subdomain)}&v=${iconVersion}`;
 

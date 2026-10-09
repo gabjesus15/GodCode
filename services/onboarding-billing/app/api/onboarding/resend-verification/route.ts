@@ -7,7 +7,9 @@ import { sendOnboardingResumeLink } from "@/lib/onboarding/resume-application";
 
 /** @service-role public
  *
- * «Reenviar correo» y «retomar mi registro»: manda el enlace del paso donde quedó el alta.
+ * «Reenviar correo» y «retomar mi registro»: manda el enlace del paso donde quedó el alta
+ * (`sendOnboardingResumeLink`: el de verificación sale sin la promesa de la tienda si el
+ * plan sugerido es «solo panel CEO»; una cuenta que ya existe recibe un aviso sin token).
  * Rate limit por IP y correo; no revela si la cuenta existe ni en qué paso va.
  */
 

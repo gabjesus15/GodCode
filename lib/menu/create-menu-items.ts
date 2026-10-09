@@ -10,6 +10,31 @@ import { isSampleProduct, SAMPLE_CATEGORY_NAMES } from "./sample-menus";
  *
  * - `userClient`: cliente con la sesión del dueño (para las RPC y los borrados).
  * - `adminClient`: solo para leer lo que ya existe, filtrado por `companyId`.
+ *
+ * Contrato con la base. Estas RPC no están en migrations/ de este repo: viven en el repo del
+ * Panel (Caja). Firmas que este archivo asume, según types/supabase-database.ts (tipos
+ * generados el 19-09-2026). Si el Panel cambia una, la carga de la carta falla con el error
+ * de PostgREST en `errors`, no en silencio:
+ *
+ *   admin_create_category_with_overrides(
+ *     p_name text, p_branch_id uuid,
+ *     p_order integer (opcional; aquí null), p_is_active boolean (opcional)
+ *   ) → id de la categoría (texto). No se usa: se vuelve a leer por nombre.
+ *
+ *   admin_upsert_product_with_branch(
+ *     p_product_id uuid (null para crear),
+ *     p_name text, p_description text, p_image_url text,
+ *     p_category_id uuid, p_branch_id uuid,
+ *     p_price numeric (aquí va como texto, «12.5»: PostgREST lo convierte),
+ *     p_has_discount boolean, p_discount_price numeric,
+ *     p_is_active boolean, p_is_special boolean,
+ *     p_apply_to_all_branches boolean (opcional)
+ *   ) → id del producto (texto).
+ *
+ *   admin_delete_product_with_branch(p_product_id uuid) → nada.
+ *
+ * Se llaman con la sesión del dueño porque se asume que validan los permisos con
+ * `auth.uid()`, como en la Caja; con la service role esa validación no tendría a quién mirar.
  */
 
 type Clients = { userClient: SupabaseClient; adminClient: SupabaseClient; companyId: string };

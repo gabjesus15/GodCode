@@ -1,65 +1,31 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { resolvePlanProductMode } from "@/lib/plans/plan-product-mode";
-import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
+import { buildPlanProductModePatch } from "@/lib/super-admin/sync-company-panel-access";
 import { getAppUrl } from "@/lib/tenant/app-url";
-import { MAIN_DOMAIN_RESERVED_PATH_SEGMENTS } from "@/lib/tenant/reserved-path-segments";
 import { isStoreDraftPending, readStoreDraft, withStoreDraft, withStoreDraftOpened } from "@/lib/tenant/store-draft";
-import { slugify } from "../../utils/slugify";
-import { initialStoreTheme } from "./checkout-service";
+import { initialStoreTheme, resolveCompanyCreatorId } from "./checkout-service";
+import { findAvailableStoreSlug } from "./store-slug";
 
 /**
  * Lado servidor de «Arma y paga»: crear la tienda en vista previa al registrarse y
  * abrirla al público cuando se confirma el pago. Lo usan el servicio de alta y el cron.
  */
 
-export const STORE_SLUG_MIN = 3;
-export const STORE_SLUG_MAX = 48;
-
-/** Además de las rutas del sitio: nombres que confundirían si fueran una tienda. */
-const EXTRA_RESERVED_SLUGS = new Set(["www", "app", "admin", "menu", "mi-cuenta", "soporte", "ayuda", "gcode", "godcode", "super-admin", "negocios", "precios", "demo", "blog"]);
-
-export function normalizeStoreSlug(raw: string | null | undefined): string {
-	return slugify(String(raw ?? ""), { maxLength: STORE_SLUG_MAX }).replace(/^-+|-+$/g, "");
-}
-
-export function isReservedStoreSlug(slug: string): boolean {
-	return MAIN_DOMAIN_RESERVED_PATH_SEGMENTS.has(slug) || EXTRA_RESERVED_SLUGS.has(slug);
-}
-
-/** Motivo por el que el link no sirve (sin mirar la base), o `null` si el formato está bien. */
-export function storeSlugProblem(slug: string): "short" | "reserved" | null {
-	if (slug.length < STORE_SLUG_MIN) return "short";
-	if (isReservedStoreSlug(slug)) return "reserved";
-	return null;
-}
-
-export async function isStoreSlugTaken(supabaseAdmin: SupabaseClient, slug: string): Promise<boolean> {
-	const { data } = await supabaseAdmin.from("companies").select("id").eq("public_slug", slug).maybeSingle();
-	return Boolean(data);
-}
+// La regla del link vive en store-slug.ts (sin imports de servidor, la usa también el
+// formulario); se reexporta para quien ya la importaba desde aquí.
+export {
+	isReservedStoreSlug,
+	isStoreSlugTaken,
+	normalizeStoreSlug,
+	STORE_SLUG_MAX,
+	STORE_SLUG_MIN,
+	storeSlugProblem,
+} from "./store-slug";
 
 /** Primer link libre a partir de un nombre (`rica-pizza`, `rica-pizza-2`…). */
 export async function suggestStoreSlug(supabaseAdmin: SupabaseClient, name: string): Promise<string> {
-	const base = normalizeStoreSlug(name) || "mi-tienda";
-	const root = base.length < STORE_SLUG_MIN ? `${base}-tienda` : base;
-	for (let n = 1; n < 50; n += 1) {
-		const candidate = n === 1 ? root : `${root.slice(0, STORE_SLUG_MAX - 4)}-${n}`;
-		if (isReservedStoreSlug(candidate)) continue;
-		if (!(await isStoreSlugTaken(supabaseAdmin, candidate))) return candidate;
-	}
-	return `${root.slice(0, STORE_SLUG_MAX - 7)}-${Date.now().toString(36).slice(-6)}`;
-}
-
-async function resolveCompanyCreatorId(supabaseAdmin: SupabaseClient): Promise<string | null> {
-	const { data } = await supabaseAdmin
-		.from("companies")
-		.select("created_by")
-		.not("created_by", "is", null)
-		.order("created_at", { ascending: true })
-		.limit(1)
-		.maybeSingle();
-	return (data?.created_by as string | undefined) ?? null;
+	return findAvailableStoreSlug(supabaseAdmin, name);
 }
 
 /**
@@ -97,10 +63,17 @@ export type CreateStoreDraftResult =
 	| { ok: true; companyId: string; slug: string }
 	| { ok: false; status: number; code: "slug_taken" | "error"; error: string };
 
+/** Lo que ve el dueño si la tienda no se pudo crear entera: no quedó nada, puede reintentar. */
+export const STORE_DRAFT_CREATE_FAILED = "No pudimos crear tu tienda. Intenta de nuevo en un momento.";
+
 /**
  * Crea la empresa en vista previa: `trial` sin vencimiento (la RLS pública deja leer su
  * menú, así la vista previa es la tienda real) y `storeDraft` en el tema, que la oculta a
  * todos menos al dueño. Sin acceso al panel de caja: eso llega con el plan pagado.
+ *
+ * La sucursal «Principal» y `business_info` son parte de la tienda: sin sucursal el menú no
+ * tiene dónde cargar productos. Si alguna falla se borra lo creado y se devuelve el error,
+ * para que el dueño reintente con el mismo link en vez de quedar con una tienda rota.
  */
 export async function createStoreDraftCompany(
 	supabaseAdmin: SupabaseClient,
@@ -108,7 +81,10 @@ export async function createStoreDraftCompany(
 ): Promise<CreateStoreDraftResult> {
 	const { app, businessName, slug, sector } = params;
 	const createdBy = await resolveCompanyCreatorId(supabaseAdmin);
-	if (!createdBy) return { ok: false, status: 503, code: "error", error: "No pudimos crear tu tienda. Intenta en unos minutos." };
+	if (!createdBy) {
+		console.error("store draft: no hay usuario interno para companies.created_by");
+		return { ok: false, status: 503, code: "error", error: STORE_DRAFT_CREATE_FAILED };
+	}
 
 	const theme = withStoreDraft(
 		{ ...initialStoreTheme({ business_name: businessName, logo_url: app.logo_url ?? null, sector }), panelAccess: [] },
@@ -133,7 +109,7 @@ export async function createStoreDraftCompany(
 	if (error || !inserted) {
 		if (error?.code === "23505") return { ok: false, status: 409, code: "slug_taken", error: "Ese link ya lo tiene otra tienda. Prueba con otro." };
 		console.error("store draft company insert:", error);
-		return { ok: false, status: 500, code: "error", error: "No pudimos crear tu tienda. Intenta de nuevo." };
+		return { ok: false, status: 500, code: "error", error: STORE_DRAFT_CREATE_FAILED };
 	}
 
 	const companyId = String(inserted.id);
@@ -143,27 +119,44 @@ export async function createStoreDraftCompany(
 		slug: "principal",
 		is_active: true,
 	});
-	if (branchError) console.error("store draft branch insert:", branchError);
+	const { error: infoError } = branchError
+		? { error: null }
+		: await supabaseAdmin.from("business_info").insert({ company_id: companyId, name: businessName, schedule: null });
 
-	const { error: infoError } = await supabaseAdmin.from("business_info").insert({ company_id: companyId, name: businessName, schedule: null });
-	if (infoError) console.error("store draft business_info insert:", infoError);
+	if (branchError || infoError) {
+		console.error("store draft incompleta, se deshace:", { companyId, branch: branchError?.message, businessInfo: infoError?.message });
+		await discardStoreDraftCompany(supabaseAdmin, companyId);
+		return { ok: false, status: 500, code: "error", error: STORE_DRAFT_CREATE_FAILED };
+	}
 
 	return { ok: true, companyId, slug };
 }
 
-/** Borra una tienda en vista previa recién creada cuando el resto del alta falló. */
-export async function discardStoreDraftCompany(supabaseAdmin: SupabaseClient, companyId: string): Promise<void> {
-	await supabaseAdmin.from("business_info").delete().eq("company_id", companyId);
-	await supabaseAdmin.from("branches").delete().eq("company_id", companyId);
-	await supabaseAdmin.from("companies").delete().eq("id", companyId);
+/**
+ * Borra una tienda en vista previa recién creada cuando el resto de «Crear mi tienda»
+ * falló: la fila del dueño, `business_info`, la sucursal y la empresa, en ese orden (hijos
+ * primero, por si las claves no borran en cascada). Sigue aunque un paso falle y devuelve
+ * `false` si la empresa quedó: el error queda en el log para limpiarla a mano.
+ */
+export async function discardStoreDraftCompany(supabaseAdmin: SupabaseClient, companyId: string): Promise<boolean> {
+	const problems: string[] = [];
+	for (const table of ["users", "business_info", "branches"] as const) {
+		const { error } = await supabaseAdmin.from(table).delete().eq("company_id", companyId);
+		if (error) problems.push(`${table}: ${error.message}`);
+	}
+	const { error: companyError } = await supabaseAdmin.from("companies").delete().eq("id", companyId);
+	if (companyError) problems.push(`companies: ${companyError.message}`);
+	if (problems.length > 0) console.error("store draft discard:", { companyId, problems });
+	return !companyError;
 }
 
 export type OpenStoreDraftResult = { opened: boolean; slug: string | null };
 
 /**
  * Pago confirmado: la tienda en vista previa pasa a ser pública. Fija el plan pagado, le da
- * el acceso al panel que trae ese plan y cierra la marca con `openedAt`. Idempotente: si la
- * tienda no venía de un borrador o ya estaba abierta, no toca nada.
+ * lo que trae ese plan (acceso al panel y, con «solo menú digital», el canal WhatsApp: ver
+ * `buildPlanProductModePatch`) y cierra la marca con `openedAt`, todo en una escritura.
+ * Idempotente: si la tienda no venía de un borrador o ya estaba abierta, no toca nada.
  *
  * La suscripción (`active` y vencimiento) la activa quien llama, antes de esto.
  */
@@ -173,7 +166,7 @@ export async function openStoreDraft(
 ): Promise<OpenStoreDraftResult> {
 	const { data: company } = await supabaseAdmin
 		.from("companies")
-		.select("id,public_slug,theme_config")
+		.select("id,public_slug,theme_config,integration_settings,subscription_status")
 		.eq("id", params.companyId)
 		.maybeSingle();
 	if (!company) return { opened: false, slug: null };
@@ -183,17 +176,30 @@ export async function openStoreDraft(
 
 	let planFeatures: unknown = null;
 	if (params.planId && params.planId !== "custom") {
-		const { data: plan } = await supabaseAdmin.from("plans").select("features").eq("id", params.planId).maybeSingle();
+		const { data: plan, error: planError } = await supabaseAdmin.from("plans").select("features").eq("id", params.planId).maybeSingle();
+		if (planError) {
+			// Sin las features no se sabe qué panel darle: se reintenta (cierre del alta o el cron).
+			console.error("open store draft: plan", { companyId: params.companyId, planId: params.planId, error: planError.message });
+			return { opened: false, slug };
+		}
 		planFeatures = plan?.features ?? null;
 	}
 
-	const theme = withStoreDraftOpened(company.theme_config, params.now);
-	theme.panelAccess = buildCompanyPanelAccessFromPlanFeatures(planFeatures);
+	// Con `openedAt` puesto la tienda ya no cuenta como vista previa y recibe el panel del plan.
+	const productMode = buildPlanProductModePatch(
+		{
+			theme_config: withStoreDraftOpened(company.theme_config, params.now),
+			integration_settings: company.integration_settings,
+			subscription_status: company.subscription_status as string | null,
+		},
+		planFeatures,
+	);
 
 	const { error } = await supabaseAdmin
 		.from("companies")
 		.update({
-			theme_config: theme,
+			theme_config: productMode.theme_config,
+			...(productMode.integration_settings ? { integration_settings: productMode.integration_settings } : {}),
 			...(params.planId ? { plan_id: params.planId } : {}),
 			updated_at: (params.now ?? new Date()).toISOString(),
 		})

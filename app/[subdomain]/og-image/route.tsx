@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
 
-import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { isTenantPubliclyOpen } from "@/lib/plans/tenant-subscription";
 import { readThemeConfigObject } from "@/lib/store-theme/merge-theme-config";
 import { STORE_THEME_FONTS, normalizeFontFamily } from "@/lib/store-theme/theme-config";
 import { loadHomeBrandInput } from "@/lib/tenant/home-page/load-home-page";
@@ -79,8 +79,10 @@ function ctaRadius(shape: HomeViewModel["buttonShape"]): number {
 export async function GET(_request: Request, { params }: { params: Promise<{ subdomain: string }> }) {
 	const { subdomain } = await params;
 	const found = await getCachedCompany(subdomain);
-	// Una tienda suspendida o vencida no publica su marca (igual que el favicon y el manifest).
-	const company = found && isTenantSubscriptionAccessible(found) ? found : null;
+	// Solo una tienda abierta al público publica su marca (igual que el favicon y el manifest):
+	// ni la suspendida o vencida, ni la que sigue en vista previa. La imagen la piden los
+	// buscadores y las apps al compartir el link, nunca con la sesión del dueño.
+	const company = found && isTenantPubliclyOpen(found) ? found : null;
 
 	if (!company) {
 		const name = formatBusinessNameFromSlug(subdomain) || "Menú digital";

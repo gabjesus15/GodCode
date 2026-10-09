@@ -12,9 +12,10 @@ import { BUSINESS_SECTOR_OPTIONS, type BusinessSectorLocale } from "@/lib/onboar
 import { resolveOnboardingLocale } from "@/lib/onboarding/onboarding-ui-copy";
 import { MAX_OWNER_PASSWORD_LENGTH, MIN_OWNER_PASSWORD_LENGTH } from "@/lib/onboarding/owner-password-rules";
 import type { StoreStartCopy } from "@/lib/onboarding/store-start-copy";
+// La misma regla del link que el servidor (sin imports de servidor): lo que se ve aquí es lo que se crea.
+import { normalizeStoreSlug, STORE_SLUG_MAX, STORE_SLUG_MIN } from "@/lib/onboarding/store-slug";
 import { cn } from "@/utils/cn";
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
-import { slugify } from "@/utils/slugify";
 
 type SlugState =
 	| { kind: "idle" }
@@ -27,11 +28,6 @@ type SlugState =
 type Outcome = { kind: "existing" } | { kind: "created" } | null;
 
 const fieldClass = "h-12 rounded-xl px-4 text-[15px]";
-const SLUG_MAX = 48;
-
-function toSlug(value: string): string {
-	return slugify(value, { maxLength: SLUG_MAX }).replace(/^-+|-+$/g, "");
-}
 
 function fill(text: string, values: Record<string, string>): string {
 	return text.replace(/\{(\w+)\}/g, (_, key: string) => values[key] ?? "");
@@ -81,7 +77,7 @@ export function StoreStartForm({
 
 	// Mientras el dueño no toque el link, sigue al nombre.
 	useEffect(() => {
-		if (!slugTouched) setSlug(toSlug(name));
+		if (!slugTouched) setSlug(normalizeStoreSlug(name));
 	}, [name, slugTouched]);
 
 	useEffect(() => {
@@ -89,7 +85,7 @@ export function StoreStartForm({
 			setSlugState({ kind: "available" });
 			return undefined;
 		}
-		if (slug.length < 3) {
+		if (slug.length < STORE_SLUG_MIN) {
 			setSlugState(slug ? { kind: "short" } : { kind: "idle" });
 			return undefined;
 		}
@@ -134,7 +130,11 @@ export function StoreStartForm({
 				// «Solo panel CEO»: sin tienda que armar, sigue a elegir el plan y pagar.
 				if (data.code === "panel_only") return window.location.assign(`/onboarding/complete?token=${encodeURIComponent(token)}`);
 				if (data.code === "slug_taken") setSlugState({ kind: "taken", suggestion: null });
-				throw new Error(data.error || copy.errorGeneric);
+				// Si falló al crearla, el servidor ya deshizo todo: se avisa en el idioma de la
+				// página y el formulario queda listo para reintentar. Los rechazos con motivo
+				// (link, contraseña, demasiados intentos) traen su propio texto.
+				setError(data.code === "error" || res.status >= 500 || !data.error ? copy.errorGeneric : data.error);
+				return;
 			}
 			trackEvent("store_created", { flow: "draft", sector: sector ?? "" });
 
@@ -147,8 +147,9 @@ export function StoreStartForm({
 				return;
 			}
 			window.location.assign("/cuenta/configurar");
-		} catch (err) {
-			setError(err instanceof Error && err.message ? err.message : copy.errorGeneric);
+		} catch {
+			// Sin conexión o respuesta ilegible: el texto técnico del navegador no ayuda.
+			setError(copy.errorGeneric);
 		} finally {
 			setLoading(false);
 		}
@@ -218,9 +219,9 @@ export function StoreStartForm({
 						value={slug}
 						onChange={(event) => {
 							setSlugTouched(true);
-							setSlug(toSlug(event.target.value.replace(/\s/g, "-")) + (/[\s-]$/.test(event.target.value) ? "-" : ""));
+							setSlug(normalizeStoreSlug(event.target.value.replace(/\s/g, "-")) + (/[\s-]$/.test(event.target.value) ? "-" : ""));
 						}}
-						onBlur={() => setSlug((value) => toSlug(value))}
+						onBlur={() => setSlug((value) => normalizeStoreSlug(value))}
 						aria-describedby={ids.slugHint}
 						aria-invalid={slugBlocked || undefined}
 						autoCapitalize="none"
@@ -228,7 +229,7 @@ export function StoreStartForm({
 						spellCheck={false}
 						inputMode="url"
 						required
-						maxLength={SLUG_MAX}
+						maxLength={STORE_SLUG_MAX}
 					/>
 				</div>
 				<p id={ids.slugHint} className="flex min-h-5 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs" aria-live="polite">
