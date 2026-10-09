@@ -760,9 +760,9 @@ function ServiceArt({ service, index }: { service: LabsService; index: number })
 }
 
 /**
- * La imagen de cada caso: un fondo de tinta apagada, la captura de escritorio en una ventana de
- * navegador que sale por el borde inferior y, si la hay, la de teléfono superpuesta en la esquina.
- * Al pasar el ratón la escena crece apenas. Sin captura, una ventana de muestra con el dominio.
+ * La imagen de cada caso: un fondo de tinta apagada, la captura de escritorio en un MacBook y, si la
+ * hay, la de teléfono en un iPhone delante, como en las fotos de producto de Apple. Al pasar el ratón
+ * la escena crece apenas. Sin captura, una ventana de muestra con el dominio.
  */
 function ProjectArt({ project, index }: { project: LabsProject; index: number }) {
 	const external = project.href?.startsWith("http");
@@ -771,19 +771,18 @@ function ProjectArt({ project, index }: { project: LabsProject; index: number })
 		<div className={cn("relative aspect-[4/3] overflow-hidden rounded-[1.5rem] border border-black/[0.06]", PROJECT_TINTS[index % PROJECT_TINTS.length])}>
 			<div className="absolute inset-0 transition-transform duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover:scale-[1.025]">
 				{project.image ? (
-					<BrowserFrame
+					<LaptopFrame
 						screen={project.image}
 						address={address}
-						cut
-						className={cn("absolute -bottom-[4%] left-1/2 w-[92%] -translate-x-1/2", project.phone && "left-[4%] w-full translate-x-0")}
-						sizes="(min-width: 1024px) 500px, 92vw"
+						className={cn("absolute", project.phone ? "left-[3%] top-[10%] w-[82%]" : "left-1/2 top-[8%] w-[88%] -translate-x-1/2")}
+						sizes="(min-width: 1024px) 480px, 88vw"
 					/>
 				) : (
 					<div className="absolute inset-x-[8%] bottom-0 top-[12%] rounded-t-xl bg-white p-5 shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_30px_60px_-30px_rgba(0,0,0,0.45)]">
 						<div className="flex items-center gap-1.5">
-							<span className="h-2.5 w-2.5 rounded-full bg-[#d6d6dc]" />
-							<span className="h-2.5 w-2.5 rounded-full bg-[#d6d6dc]" />
-							<span className="h-2.5 w-2.5 rounded-full bg-[#d6d6dc]" />
+							<span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+							<span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+							<span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
 							<span className="ml-2 flex-1 truncate rounded-md bg-[#f6f6f8] px-3 py-1 text-[11px] text-[#6b6b76]">{address}</span>
 						</div>
 						<p className="mt-5 text-xl font-semibold tracking-tight text-[#15151a]">{project.name}</p>
@@ -792,13 +791,7 @@ function ProjectArt({ project, index }: { project: LabsProject; index: number })
 					</div>
 				)}
 				{project.phone ? (
-					<PhoneFrame
-						screen={project.phone}
-						cut
-						className="absolute bottom-0 right-[6%] w-[30%] max-w-[11rem]"
-						sizes="(min-width: 1024px) 176px, 30vw"
-						screenClassName="max-h-[13rem] sm:max-h-[16rem]"
-					/>
+					<PhoneFrame screen={project.phone} className="absolute bottom-[5%] right-[4%] w-[26%]" sizes="(min-width: 1024px) 150px, 26vw" />
 				) : null}
 			</div>
 		</div>

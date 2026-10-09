@@ -162,7 +162,7 @@ export const LABS_SERVICES: LabsService[] = [
 			"Paneles internos, portales de clientes y flujos de trabajo hechos para cómo opera tu empresa, no al revés.",
 		deliverables: ["Levantamiento del proceso", "Panel con roles y permisos", "Reportes y exportaciones", "Capacitación del equipo"],
 		fit: "Operaciones que viven en planillas, WhatsApp y correos, y ya no escalan.",
-		image: { src: "/labs/capturas/midinerito-cobros.jpg", alt: "Cobros y pagos del mes en MiDinerito, con la pregunta de si ya te pagaron", width: 600, height: 1367, frame: "phone" },
+		image: { src: "/labs/capturas/midinerito-cobros.jpg", alt: "Cobros y pagos del mes en MiDinerito, con la pregunta de si ya te pagaron", width: 600, height: 1386, frame: "phone" },
 	},
 	{
 		id: "tiendas-y-pedidos",
@@ -180,7 +180,7 @@ export const LABS_SERVICES: LabsService[] = [
 			"Conectamos lo que ya usas: Stripe, PayPal y Mercado Pago, correo, Telegram y WhatsApp, hojas de cálculo y APIs de terceros.",
 		deliverables: ["Integración de pagos y suscripciones", "Avisos automáticos al equipo", "Sincronización de datos", "Documentación de cada conexión"],
 		fit: "Equipos que pierden horas copiando datos de un sistema a otro.",
-		image: { src: "/labs/capturas/gcode-pos-metodos-de-pago.jpg", alt: `Métodos de pago de un pedido en ${LANDING_PRODUCT_NAME}: efectivo, tarjeta, Pago Móvil y Zelle`, width: 600, height: 1085, frame: "phone" },
+		image: { src: "/labs/capturas/gcode-pos-metodos-de-pago.jpg", alt: `Métodos de pago de un pedido en ${LANDING_PRODUCT_NAME}: efectivo, tarjeta, Pago Móvil y Zelle`, width: 600, height: 1103, frame: "phone" },
 	},
 	{
 		id: "mantenimiento",
@@ -197,8 +197,8 @@ export const LABS_SHOWCASE: LabsShowcaseItem[] = [
 	{
 		name: LANDING_PRODUCT_NAME,
 		caption: "Menú digital con pedidos · Rica Pizza",
-		desktop: { src: "/labs/capturas/gcode-pos-menu-escritorio.jpg", alt: "Menú digital de Rica Pizza en Gcode POS, en el navegador: fotos de las pizzas, precios y una oferta", width: 1280, height: 800, frame: "browser", address: "Rica Pizza · Menú digital" },
-		phone: { src: "/labs/capturas/gcode-pos-menu.jpg", alt: "El mismo menú de Rica Pizza en el teléfono", width: 600, height: 1368, frame: "phone" },
+		desktop: { src: "/labs/capturas/gcode-pos-menu-escritorio.jpg", alt: "Menú digital de Rica Pizza en Gcode POS, en el navegador: fotos de las pizzas, precios y una oferta", width: 1280, height: 800, frame: "browser", address: "Menú de Rica Pizza" },
+		phone: { src: "/labs/capturas/gcode-pos-menu-portada.jpg", alt: "El menú de Rica Pizza en el teléfono: logo, portada de la marca y las primeras pizzas con una oferta", width: 600, height: 1386, frame: "phone" },
 	},
 	{
 		name: "Auto Care Planet",
@@ -209,20 +209,20 @@ export const LABS_SHOWCASE: LabsShowcaseItem[] = [
 		name: "MiDinerito",
 		caption: "App de finanzas personales",
 		desktop: { src: "/labs/capturas/midinerito-escritorio.jpg", alt: "Inicio de MiDinerito en el navegador: saldo total, cobros por confirmar y metas de ahorro", width: 1280, height: 800, frame: "browser", address: "midinerito.app" },
-		phone: { src: "/labs/capturas/midinerito-inicio.jpg", alt: "Inicio de MiDinerito en el teléfono: saldo en dólares con su equivalente en bolívares", width: 600, height: 1367, frame: "phone" },
+		phone: { src: "/labs/capturas/midinerito-inicio.jpg", alt: "Inicio de MiDinerito en el teléfono: saldo en dólares con su equivalente en bolívares", width: 600, height: 1386, frame: "phone" },
 	},
 	{
 		name: "Colorín",
 		caption: "App para dibujar y colorear",
 		desktop: { src: "/labs/capturas/colorin-escritorio.jpg", alt: "Colorín en el navegador: lienzo para colorear con la paleta y las herramientas", width: 1280, height: 800, frame: "browser", address: "colorin.games" },
-		phone: { src: "/labs/capturas/colorin-app.jpg", alt: "Colorín en el teléfono, con un dinosaurio a medio colorear", width: 600, height: 1367, frame: "phone" },
+		phone: { src: "/labs/capturas/colorin-app.jpg", alt: "Colorín en el teléfono, con un dinosaurio a medio colorear", width: 600, height: 1386, frame: "phone" },
 	},
 ];
 
 /** Las dos pantallas de la sección del producto propio. */
 export const LABS_PRODUCT_SCREENS: LabsScreen[] = [
-	{ src: "/labs/capturas/gcode-pos-menu-portada.jpg", alt: "Menú digital de Rica Pizza en Gcode POS, con su logo, la portada de la marca y las pizzas", width: 600, height: 1368, frame: "phone", label: "Menú con tu marca y QR" },
-	{ src: "/labs/capturas/gcode-pos-pedido.jpg", alt: "Carrito de un pedido en el menú de Rica Pizza, con el total en dólares y en bolívares", width: 600, height: 1368, frame: "phone", label: "Pedido y pago desde el teléfono" },
+	{ src: "/labs/capturas/gcode-pos-menu.jpg", alt: "Menú digital de Rica Pizza en Gcode POS: las pizzas con foto, precio y una oferta", width: 600, height: 1386, frame: "phone", label: "Menú con tu marca y QR" },
+	{ src: "/labs/capturas/gcode-pos-pedido.jpg", alt: "Carrito de un pedido en el menú de Rica Pizza, con el total en dólares y en bolívares", width: 600, height: 1386, frame: "phone", label: "Pedido y pago desde el teléfono" },
 ];
 
 /** Con qué construimos: herramientas e integraciones que usamos de verdad, por grupo. Sin logos, solo nombres. */
@@ -269,7 +269,7 @@ export const LABS_PROJECTS: LabsProject[] = [
 		scope: ["Plataforma multiempresa con datos aislados", "Cobros con PayPal, Mercado Pago, Zelle y pago móvil, con tasa BCV", "Dominio propio por negocio", "Alta en línea con pago y verificación"],
 		ownProduct: true,
 		image: { src: "/labs/capturas/gcode-pos-landing.jpg", alt: "Página de Gcode POS: menú digital y POS para restaurantes", width: 1024, height: 589, frame: "browser", address: "godcode.me/pos" },
-		phone: { src: "/labs/capturas/gcode-pos-pedido.jpg", alt: "Carrito de un pedido en el menú de Rica Pizza, con el total en dólares y en bolívares", width: 600, height: 1368, frame: "phone" },
+		phone: { src: "/labs/capturas/gcode-pos-pedido.jpg", alt: "Carrito de un pedido en el menú de Rica Pizza, con el total en dólares y en bolívares", width: 600, height: 1386, frame: "phone" },
 	},
 	{
 		name: "Auto Care Planet",
@@ -290,7 +290,7 @@ export const LABS_PROJECTS: LabsProject[] = [
 		linkLabel: "Ver la app",
 		scope: ["Tasas BCV y Binance actualizadas a diario", "Cobros y pagos recurrentes con la pregunta «¿ya te pagó?»", "Cuentas, metas de ahorro, cuotas y gastos compartidos", "Notificaciones push y uso sin conexión"],
 		image: { src: "/labs/capturas/midinerito-escritorio.jpg", alt: "Inicio de MiDinerito en el navegador: saldo total, cobros por confirmar y metas de ahorro", width: 1280, height: 800, frame: "browser", address: "midinerito.app" },
-		phone: { src: "/labs/capturas/midinerito-cobros.jpg", alt: "Cobros y pagos del mes en MiDinerito, en el teléfono", width: 600, height: 1367, frame: "phone" },
+		phone: { src: "/labs/capturas/midinerito-cobros.jpg", alt: "Cobros y pagos del mes en MiDinerito, en el teléfono", width: 600, height: 1386, frame: "phone" },
 	},
 	{
 		name: "Colorín",
@@ -301,7 +301,7 @@ export const LABS_PROJECTS: LabsProject[] = [
 		linkLabel: "Ver la app",
 		scope: ["42 plantillas con los contornos siempre por encima", "Estrellas, niveles, racha diaria y logros", "Pago único del Club con PayPal en la web y Google Play en Android, verificado en el servidor", "Zona de padres y compartir con control parental"],
 		image: { src: "/labs/capturas/colorin-escritorio.jpg", alt: "Colorín en el navegador: lienzo para colorear con la paleta y las herramientas", width: 1280, height: 800, frame: "browser", address: "colorin.games" },
-		phone: { src: "/labs/capturas/colorin-app.jpg", alt: "Colorín en el teléfono, con un dinosaurio a medio colorear", width: 600, height: 1367, frame: "phone" },
+		phone: { src: "/labs/capturas/colorin-app.jpg", alt: "Colorín en el teléfono, con un dinosaurio a medio colorear", width: 600, height: 1386, frame: "phone" },
 	},
 ];
 

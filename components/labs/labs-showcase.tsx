@@ -5,12 +5,12 @@ import { useEffect, useId, useState, useSyncExternalStore, type FocusEvent, type
 import type { LabsShowcaseItem } from "@/lib/labs/content";
 import { cn } from "@/utils/cn";
 
-import { BrowserFrame, PhoneFrame } from "./labs-frames";
+import { LaptopFrame, PhoneFrame } from "./labs-frames";
 
 /**
  * La vitrina del hero: un solo proyecto a la vez, grande y en calma, como presentan su producto las
- * páginas de Apple, Stripe o Linear. Un panel gris claro con la pantalla de escritorio en una ventana
- * de navegador y, cuando la hay, la de teléfono superpuesta; debajo, una fila de pestañas con los
+ * páginas de Apple, Stripe o Linear. Un panel gris claro con la pantalla de escritorio en un MacBook y,
+ * cuando la hay, la de teléfono en un iPhone delante; debajo, una fila de pestañas con los
  * cuatro proyectos. Pasa de uno a otro cada seis segundos (una línea bajo la pestaña activa marca el
  * tiempo) hasta que la persona elige uno, y se detiene mientras el cursor está encima o el foco está
  * dentro. Con «reducir movimiento» no pasa sola. En el teléfono solo se ve la pantalla de móvil.
@@ -90,24 +90,23 @@ export function LabsShowcase({ items }: { items: LabsShowcaseItem[] }) {
 								isActive ? "opacity-100" : "pointer-events-none translate-y-3 opacity-0",
 							)}
 						>
-							<BrowserFrame
+							{/* El MacBook con la pantalla de escritorio y, delante, el iPhone; en el teléfono solo el iPhone (o el MacBook, si el proyecto no tiene pantalla móvil). */}
+							<LaptopFrame
 								screen={item.desktop}
-								cut
+								address={item.desktop.address}
 								className={cn(
-									"absolute sm:top-[8%]",
+									"absolute",
 									item.phone
-										? "left-1/2 hidden w-[84%] -translate-x-1/2 sm:block lg:left-[6%] lg:w-[76%] lg:translate-x-0"
-										: "-bottom-[3%] left-[5%] w-[135%] sm:bottom-auto sm:left-1/2 sm:w-[84%] sm:-translate-x-1/2",
+										? "left-[9%] top-[7%] hidden w-[66%] sm:block sm:left-[6%] sm:w-[70%] lg:left-[9%] lg:w-[66%]"
+										: "left-1/2 top-1/2 w-[92%] -translate-x-1/2 -translate-y-1/2 sm:top-[7%] sm:w-[78%] sm:translate-y-0",
 								)}
-								sizes="(min-width: 1024px) 880px, (min-width: 640px) 84vw, 150vw"
+								sizes="(min-width: 1024px) 760px, (min-width: 640px) 70vw, 92vw"
 							/>
 							{item.phone ? (
 								<PhoneFrame
 									screen={item.phone}
-									cut
-									className="absolute bottom-0 left-1/2 w-[11.5rem] -translate-x-1/2 sm:left-auto sm:right-[6%] sm:w-[12rem] sm:translate-x-0 lg:w-[13.5rem]"
-									sizes="(min-width: 1024px) 216px, 192px"
-									screenClassName="max-h-[21rem] sm:max-h-[19rem] lg:max-h-[24rem]"
+									className="absolute bottom-[1.6rem] left-1/2 w-[9.5rem] -translate-x-1/2 sm:bottom-[5%] sm:left-auto sm:right-[8%] sm:w-[10rem] sm:translate-x-0 lg:right-[13%] lg:w-[13rem]"
+									sizes="(min-width: 1024px) 208px, 160px"
 								/>
 							) : null}
 						</div>
