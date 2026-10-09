@@ -32,7 +32,7 @@ const copy = {
       { label: "Sin comisión", detail: "Cada venta es tuya al 100%." },
       { label: "Tu dominio", detail: "Tu marca vive en tu propia URL." },
       { label: "Multisucursal", detail: "Escala a todas tus ubicaciones." },
-      { label: "En minutos", detail: "Sin necesidad de programar." },
+      { label: "Lista en una tarde", detail: "Sin programar nada." },
     ],
       sectionOneEyebrow: "01 · Qué resuelve",
     sectionOneTitle: "Menú digital y pedidos online, sin ceder margen.",
@@ -43,7 +43,7 @@ const copy = {
     sectionTwoTitle: "Menos pasos, más pedidos.",
     sectionTwoText:
       `Priorizamos una experiencia simple para el negocio y clara para el cliente: menos pantallas, menos fricción y una ruta directa desde el menú digital hasta el pago. Como estudio, ${LANDING_COMPANY_NAME} también desarrolla páginas web y sistemas a medida cuando un negocio necesita algo que un producto estándar no cubre.`,
-    sectionTwoFeatures: ["Onboarding guiado en minutos", "Panel de control centralizado", "Notificaciones en tiempo real", "Soporte humano cuando lo necesitas"],
+    sectionTwoFeatures: ["Te guiamos paso a paso", "Panel de control centralizado", "Notificaciones en tiempo real", "Soporte humano cuando lo necesitas"],
     pullQuote: "Cada pedido que llega por tu propia web es tuyo al 100%.",
       sectionThreeEyebrow: "03 · Por qué importa",
     sectionThreeTitle: "Construye autoridad en tu propio dominio.",
@@ -59,7 +59,7 @@ const copy = {
     ],
     closingEyebrow: "Empieza hoy",
     closingTitle: "Tu tienda online, en tu propio dominio.",
-    closingText: "Crea tu cuenta, configura tu menú digital y empieza a recibir pedidos online. Sin comisiones, sin contratos.",
+    closingText: "Arma tu tienda gratis, publícala cuando esté lista y empieza a recibir pedidos online. Sin comisiones. Sin permanencia.",
   },
   en: {
     eyebrow: `About ${LANDING_COMPANY_NAME} · formerly ${LANDING_BRAND_ALTERNATE}`,
@@ -72,7 +72,7 @@ const copy = {
       { label: "Zero commission", detail: "Every sale is 100% yours." },
       { label: "Your own domain", detail: "Your brand lives on your own URL." },
       { label: "Multi-branch", detail: "Scale across all your locations." },
-      { label: "Ready in minutes", detail: "No coding required." },
+      { label: "Ready in an afternoon", detail: "No coding required." },
     ],
     sectionOneEyebrow: "01 · What it solves",
     sectionOneTitle: "Digital menu and online orders, without giving up margin.",
@@ -83,7 +83,7 @@ const copy = {
     sectionTwoTitle: "Fewer steps, more orders.",
     sectionTwoText:
       `We prioritize a simple experience for the business and a clear one for the customer: fewer screens, less friction and a direct path from the digital menu to payment. As a studio, ${LANDING_COMPANY_NAME} also builds websites and custom systems when a business needs something an off-the-shelf product does not cover.`,
-    sectionTwoFeatures: ["Guided onboarding in minutes", "Centralized control panel", "Real-time notifications", "Human support when you need it"],
+    sectionTwoFeatures: ["We guide you step by step", "Centralized control panel", "Real-time notifications", "Human support when you need it"],
     pullQuote: "Every order that arrives through your own website is 100% yours.",
     sectionThreeEyebrow: "03 · Why it matters",
     sectionThreeTitle: "Build authority on your own domain.",
@@ -99,7 +99,7 @@ const copy = {
     ],
     closingEyebrow: "Get started",
     closingTitle: "Your online store, on your own domain.",
-    closingText: "Create your account, set up your digital menu and start receiving online orders. No commissions, no contracts.",
+    closingText: "Build your store for free, publish it when it is ready and start receiving online orders. No commissions. No lock-in.",
   },
 } as const;
 

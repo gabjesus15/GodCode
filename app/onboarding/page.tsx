@@ -14,9 +14,10 @@ import { getAppUrl } from "@/lib/tenant/app-url";
 
 export async function generateMetadata(): Promise<Metadata> {
 	const base = getAppUrl();
-	// La plantilla del layout raíz añade "· Gcode Labs" al final.
-	const title = `Crea tu tienda online en minutos con ${LANDING_PRODUCT_NAME}`;
-	const description = `Registra tu negocio en ${LANDING_PRODUCT_NAME}, de ${LANDING_COMPANY_NAME}, y crea tu menú digital, pedidos online, caja, inventario y delivery. Sin comisiones por venta y listo en minutos.`;
+	// «Arma y paga»: la tienda se arma gratis y se paga al publicarla. La plantilla del layout raíz
+	// añade « · Gcode Labs» al título (63 caracteres en total); el producto va en la descripción.
+	const title = "Crea tu tienda online gratis y pagas al publicarla";
+	const description = `Arma gratis tu tienda con ${LANDING_PRODUCT_NAME}: menú digital, pedidos online, caja, inventario y delivery, sin comisiones por venta. Pagas cuando la publicas.`;
 	return {
 		title,
 		description,

@@ -1,6 +1,15 @@
 import { LANDING_BRAND_ALTERNATE, LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
 
 /**
+ * Ruta del landing de Gcode POS. Hoy vive en la raíz del dominio; cuando la home
+ * corporativa pase a «/», el producto se mueve a «/pos» y basta con cambiar esto
+ * (y `POS_ADDRESS`): lo usan la página /labs, sus enlaces y su JSON-LD (`owns.url`).
+ */
+export const POS_PATH = "/";
+/** La dirección del landing del producto tal como se lee en la barra del navegador de la captura. */
+export const POS_ADDRESS = "godcode.me";
+
+/**
  * Contenido de la home corporativa de Gcode Labs (el estudio).
  *
  * La raíz del dominio presenta a la empresa: qué construye, cómo trabaja y qué
@@ -80,20 +89,26 @@ export const LABS_HOME = {
 	title: "Sitios web y sistemas a medida para negocios que venden todos los días.",
 	/** El estudio y su amplitud, sin nombrar un producto: la persona tiene que sentir que construimos de todo. */
 	intro:
-		`Somos ${LANDING_COMPANY_NAME}, un estudio de desarrollo en Santiago de Chile. Diseñamos y programamos sitios, sistemas internos, tiendas y automatizaciones para empresas de Chile y Venezuela: lo dejamos a tu nombre y te acompañamos después del lanzamiento.`,
+		`Somos ${LANDING_COMPANY_NAME}, un estudio de desarrollo en Santiago de Chile. Diseñamos y programamos sitios, sistemas internos, tiendas y automatizaciones para empresas de Chile, Venezuela y Estados Unidos: lo dejamos a tu nombre y te acompañamos después del lanzamiento.`,
 	primaryCta: "Cotizar un proyecto",
 	secondaryCta: "Ver proyectos",
 	/** Tres respuestas a los miedos de quien cotiza: perder plata, quedar amarrado, no recibir respuesta. Van en una sola línea bajo el botón. */
 	assurances: ["Propuesta cerrada por escrito", "Código y dominio a tu nombre", "Respuesta en dos días hábiles"],
 	/**
 	 * La frase grande entre el hero y los hechos. Las palabras entre llaves llevan un icono
-	 * delante (`components/labs/labs-home.tsx`): no se repite el inventario del intro, se concreta.
+	 * delante (`components/labs/labs-home.tsx`). Sin adjetivos de venta: cada pieza es algo
+	 * que ya está en producción (las reservas de Auto Care Planet, la caja de Gcode POS, el
+	 * dominio propio de cada tienda, los avisos al equipo).
 	 */
 	statement:
-		"Lo que hacemos es fácil de explicar: {sitios} que convierten, {sistemas} que ordenan la operación, {tiendas} que venden sin intermediarios y {automatizaciones} que ahorran horas.",
-	/** Credenciales, no promesas, en cifras reales: lo que el hero ya promete no se repite aquí. */
+		"Hacemos {sitios} con reservas y pago en línea, {sistemas} de caja e inventario, {tiendas} con dominio propio y {automatizaciones} que avisan al equipo por Telegram o por correo.",
+	/**
+	 * Hechos, no promesas: cada cifra se comprueba en esta misma página. Los productos son los
+	 * de «Proyectos» y los países, los mismos del intro, de las preguntas frecuentes y de los
+	 * metadatos (`lib/labs/metadata.ts`).
+	 */
 	facts: [
-		{ value: "24/7", label: "Software propio en producción", detail: "Operamos nuestro propio producto todos los días, con pagos, dominios y soporte." },
+		{ value: "3", unit: "productos", label: "Software propio en producción", detail: `${LANDING_PRODUCT_NAME}, MiDinerito y Colorín: los diseñamos, los programamos y los mantenemos nosotros.` },
 		{ value: "3", unit: "países", label: "Clientes en tres países", detail: "Chile, Venezuela y Estados Unidos, trabajando a distancia." },
 		{ value: "1", unit: "interlocutor", label: "Interlocutor directo", detail: "Hablas con quien diseña y programa, no con un vendedor." },
 		{ value: "7", unit: "días", label: "Avances cada semana", detail: "Ves el proyecto funcionando en un entorno de prueba desde la primera entrega." },
@@ -264,11 +279,11 @@ export const LABS_PROJECTS: LabsProject[] = [
 		kind: "Producto propio · SaaS para restaurantes",
 		summary:
 			"Menú digital con QR, pedidos online, punto de venta, delivery e inventario para restaurantes, con un panel por negocio y suscripción mensual sin comisión por venta.",
-		href: "/pos",
+		href: POS_PATH,
 		linkLabel: "Ver el producto",
 		scope: ["Plataforma multiempresa con datos aislados", "Cobros con PayPal, Mercado Pago, Zelle y pago móvil, con tasa BCV", "Dominio propio por negocio", "Alta en línea con pago y verificación"],
 		ownProduct: true,
-		image: { src: "/labs/capturas/gcode-pos-landing.jpg", alt: "Página de Gcode POS: menú digital y POS para restaurantes", width: 1024, height: 589, frame: "browser", address: "godcode.me/pos" },
+		image: { src: "/labs/capturas/gcode-pos-landing.jpg", alt: "Página de Gcode POS: menú digital y POS para restaurantes", width: 1024, height: 589, frame: "browser", address: POS_ADDRESS },
 		phone: { src: "/labs/capturas/gcode-pos-pedido.jpg", alt: "Carrito de un pedido en el menú de Rica Pizza, con el total en dólares y en bolívares", width: 600, height: 1386, frame: "phone" },
 	},
 	{
@@ -336,7 +351,7 @@ export const LABS_FAQ: LabsFaq[] = [
 	{
 		question: "¿Trabajan fuera de Santiago?",
 		answer:
-			"Sí. El estudio está en Santiago de Chile y trabajamos a distancia con empresas de todo Chile y de Venezuela. Las reuniones son por videollamada y los avances se ven en un entorno de prueba en línea.",
+			"Sí. El estudio está en Santiago de Chile y trabajamos a distancia con empresas de todo Chile, de Venezuela y de Estados Unidos. Las reuniones son por videollamada y los avances se ven en un entorno de prueba en línea.",
 	},
 	{
 		question: `¿Qué relación tiene ${LANDING_PRODUCT_NAME} con el estudio?`,

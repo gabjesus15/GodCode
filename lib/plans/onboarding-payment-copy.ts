@@ -52,12 +52,29 @@ export type OnboardingPaymentCopy = {
     uploadError: string;
   };
   paymentInstructionsFallback: Record<string, string>;
-  /** «Arma y paga»: el alta viene de una tienda ya armada en vista previa. */
+  /**
+   * «Arma y paga»: el alta viene de una tienda ya armada en vista previa (`store_draft`).
+   * Reemplaza los textos que hablan de activar una cuenta o de crear la contraseña:
+   * la cuenta ya existe y lo que se paga es publicar la tienda.
+   */
   draft: {
+    /** Título de la página de pago. */
+    title: string;
     reviewBody: string;
     paidTitle: string;
     paidBody: string;
     backToStore: string;
+    /** «Qué pasa después» cuando lo que se publica es la tienda ya armada: no hay contraseña que crear. */
+    nextSteps: [string, string, string];
+    /** PayPal o Mercado Pago: la tienda se publica sola al confirmarse el pago. */
+    instantActivation: string;
+    /** Transferencia, pago móvil, Zelle: se publica cuando el equipo valida el comprobante. */
+    manualActivation: string;
+    /** Bloque de Mercado Pago (en lugar de `mercadoPago.blockHint`). */
+    mercadoPagoHint: string;
+    /** Cupón que deja el total en cero (en lugar de `coupon.freeCheckout` y `coupon.freeButton`). */
+    freeCheckout: string;
+    freeButton: string;
   };
   /** Paso 3 rediseñado: resumen, meses, próximos pasos y datos de transferencia. */
   ui: {
@@ -65,7 +82,11 @@ export type OnboardingPaymentCopy = {
     planLine: string;
     perMonth: string;
     totalLabel: string;
-    freeMonth: string;
+    /**
+     * Bajo cada opción de meses, cuando con ella recibes más de lo que pagas (promo o cupón):
+     * «Recibes 4 meses» al pagar 3. La promo se nombra solo en `promoTitle`; aquí van los meses.
+     */
+    promoMonths: string;
     coverage: string;
     changeLink: string;
     payWith: string;
@@ -158,8 +179,8 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
     uploadHint: "Sube una foto o captura del comprobante (JPG, PNG o WebP).",
     monthSummaryLabel: "meses",
     supportHint: "Si el problema persiste, revisa tu método de pago o contacta soporte.",
-    promoTitle: "+1 mes gratis en tu primer pago",
-    promoDescription: "Paga {paid} y recibes {granted}.",
+    promoTitle: "2 meses al precio de 1 en tu primer pago",
+    promoDescription: "Pagas {paid} y recibes {granted}.",
     promoBadge: "Promo activa",
     alreadyPaidTitle: "Tu pago ya está registrado",
     alreadyPaidBody: "Revisa tu correo: te enviamos el enlace para crear tu contraseña y entrar a tu cuenta.",
@@ -183,17 +204,24 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       account_number: "Número de cuenta",
     },
     draft: {
+      title: "Paga y publica tu tienda",
       reviewBody: "Te avisamos por correo apenas lo validemos y tu tienda se publica sola. Mientras tanto puedes seguir armándola.",
       paidTitle: "Tu tienda ya está abierta",
       paidBody: "Tus clientes ya pueden entrar con tu link y hacerte pedidos.",
       backToStore: "Volver a mi tienda",
+      nextSteps: ["Validamos el pago", "Tu tienda se publica sola, con todo lo que armaste", "Compartes tu link"],
+      instantActivation: "Tu tienda se publica en cuanto se confirma el pago.",
+      manualActivation: "Publicamos tu tienda cuando validamos el comprobante. Te avisamos por correo.",
+      mercadoPagoHint: "Te llevamos a Mercado Pago para pagar de forma segura. Al terminar vuelves aquí y tu tienda se publica.",
+      freeCheckout: "Con este cupón no pagas nada: tu tienda se publica al confirmar.",
+      freeButton: "Publicar mi tienda",
     },
     ui: {
       summaryTitle: "Tu pedido",
       planLine: "Plan {name}",
       perMonth: "/mes",
       totalLabel: "Total a pagar",
-      freeMonth: "+1 mes gratis",
+      promoMonths: "Recibes {months}",
       coverage: "Cubre {months} de servicio",
       changeLink: "Cambiar plan o método de pago",
       payWith: "Pagas con {method}",
@@ -225,7 +253,7 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       summaryLine: "Cupón {code}",
       freeMonthsBadge: "+{months} gratis",
       minMonths: "Este cupón vale pagando al menos {months}. Con menos meses no se aplica.",
-      replacesPromo: "Este cupón reemplaza la promo de +1 mes gratis.",
+      replacesPromo: "Este cupón reemplaza la promo de 2 meses al precio de 1 en tu primer pago.",
       freeCheckout: "Con este cupón no pagas nada: tu cuenta se activa al confirmar.",
       freeButton: "Activar mi cuenta",
       problems: {
@@ -298,8 +326,8 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
     uploadHint: "Upload a photo or screenshot of the receipt (JPG, PNG or WebP).",
     monthSummaryLabel: "months",
     supportHint: "If the issue persists, review your payment method or contact support.",
-    promoTitle: "+1 month free on your first payment",
-    promoDescription: "Pay {paid} and get {granted}.",
+    promoTitle: "2 months for the price of 1 on your first payment",
+    promoDescription: "You pay {paid} and get {granted}.",
     promoBadge: "Active promo",
     alreadyPaidTitle: "Your payment is already registered",
     alreadyPaidBody: "Check your email: we sent you the link to create your password and sign in.",
@@ -323,17 +351,24 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       account_number: "Account number",
     },
     draft: {
+      title: "Pay and publish your store",
       reviewBody: "We'll email you as soon as we validate it, and your store will go live on its own. Meanwhile you can keep building it.",
       paidTitle: "Your store is open",
       paidBody: "Your customers can now visit your link and place orders.",
       backToStore: "Back to my store",
+      nextSteps: ["We validate your payment", "Your store goes live on its own, with everything you built", "You share your link"],
+      instantActivation: "Your store goes live as soon as the payment is confirmed.",
+      manualActivation: "We publish your store once we validate the receipt. We will let you know by email.",
+      mercadoPagoHint: "We'll take you to Mercado Pago to pay securely. When you're done you come back here and your store goes live.",
+      freeCheckout: "With this coupon you pay nothing: your store goes live when you confirm.",
+      freeButton: "Publish my store",
     },
     ui: {
       summaryTitle: "Your order",
       planLine: "Plan {name}",
       perMonth: "/month",
       totalLabel: "Total to pay",
-      freeMonth: "+1 month free",
+      promoMonths: "You get {months}",
       coverage: "Covers {months} of service",
       changeLink: "Change plan or payment method",
       payWith: "You pay with {method}",
@@ -365,7 +400,7 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       summaryLine: "Coupon {code}",
       freeMonthsBadge: "+{months} free",
       minMonths: "This coupon requires paying at least {months}. With fewer months it doesn't apply.",
-      replacesPromo: "This coupon replaces the +1 free month promo.",
+      replacesPromo: "This coupon replaces the promo: 2 months for the price of 1 on your first payment.",
       freeCheckout: "With this coupon you pay nothing: your account is activated when you confirm.",
       freeButton: "Activate my account",
       problems: {
@@ -438,8 +473,8 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
     uploadHint: "Envie uma foto ou captura do comprovante (JPG, PNG ou WebP).",
     monthSummaryLabel: "meses",
     supportHint: "Se o problema persistir, revise seu método de pagamento ou contate o suporte.",
-    promoTitle: "+1 mês grátis no seu primeiro pagamento",
-    promoDescription: "Pague {paid} e receba {granted}.",
+    promoTitle: "2 meses pelo preço de 1 no seu primeiro pagamento",
+    promoDescription: "Você paga {paid} e recebe {granted}.",
     promoBadge: "Promo ativa",
     alreadyPaidTitle: "Seu pagamento já está registrado",
     alreadyPaidBody: "Confira seu e-mail: enviamos o link para criar sua senha e entrar na conta.",
@@ -463,17 +498,24 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       account_number: "Número da conta",
     },
     draft: {
+      title: "Pague e publique sua loja",
       reviewBody: "Avisaremos por e-mail assim que validarmos, e sua loja será publicada automaticamente. Enquanto isso, você pode continuar montando.",
       paidTitle: "Sua loja já está aberta",
       paidBody: "Seus clientes já podem entrar pelo seu link e fazer pedidos.",
       backToStore: "Voltar para minha loja",
+      nextSteps: ["Validamos o pagamento", "Sua loja é publicada sozinha, com tudo o que você montou", "Você compartilha seu link"],
+      instantActivation: "Sua loja é publicada assim que o pagamento for confirmado.",
+      manualActivation: "Publicamos sua loja quando validamos o comprovante. Avisamos por e-mail.",
+      mercadoPagoHint: "Levamos você ao Mercado Pago para pagar com segurança. Ao terminar, você volta aqui e sua loja é publicada.",
+      freeCheckout: "Com este cupom você não paga nada: sua loja é publicada ao confirmar.",
+      freeButton: "Publicar minha loja",
     },
     ui: {
       summaryTitle: "Seu pedido",
       planLine: "Plano {name}",
       perMonth: "/mês",
       totalLabel: "Total a pagar",
-      freeMonth: "+1 mês grátis",
+      promoMonths: "Você recebe {months}",
       coverage: "Cobre {months} de serviço",
       changeLink: "Mudar plano ou método de pagamento",
       payWith: "Você paga com {method}",
@@ -505,7 +547,7 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       summaryLine: "Cupom {code}",
       freeMonthsBadge: "+{months} grátis",
       minMonths: "Este cupom vale pagando pelo menos {months}. Com menos meses não se aplica.",
-      replacesPromo: "Este cupom substitui a promo de +1 mês grátis.",
+      replacesPromo: "Este cupom substitui a promo de 2 meses pelo preço de 1 no seu primeiro pagamento.",
       freeCheckout: "Com este cupom você não paga nada: sua conta é ativada ao confirmar.",
       freeButton: "Ativar minha conta",
       problems: {
@@ -578,8 +620,8 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
     uploadHint: "Envoyez une photo ou une capture du justificatif (JPG, PNG ou WebP).",
     monthSummaryLabel: "mois",
     supportHint: "Si le problème persiste, vérifiez votre moyen de paiement ou contactez le support.",
-    promoTitle: "+1 mois gratuit lors de votre premier paiement",
-    promoDescription: "Payez {paid} et recevez {granted}.",
+    promoTitle: "2 mois pour le prix d'1 lors de votre premier paiement",
+    promoDescription: "Vous payez {paid} et recevez {granted}.",
     promoBadge: "Promo active",
     alreadyPaidTitle: "Votre paiement est déjà enregistré",
     alreadyPaidBody: "Consultez votre e-mail : nous vous avons envoyé le lien pour créer votre mot de passe.",
@@ -603,17 +645,24 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       account_number: "Numéro de compte",
     },
     draft: {
+      title: "Payez et publiez votre boutique",
       reviewBody: "Nous vous écrirons dès sa validation et votre boutique sera publiée automatiquement. En attendant, vous pouvez continuer à la préparer.",
       paidTitle: "Votre boutique est ouverte",
       paidBody: "Vos clients peuvent déjà accéder à votre lien et passer commande.",
       backToStore: "Retour à ma boutique",
+      nextSteps: ["Nous validons le paiement", "Votre boutique est publiée automatiquement, avec tout ce que vous avez préparé", "Vous partagez votre lien"],
+      instantActivation: "Votre boutique est publiée dès que le paiement est confirmé.",
+      manualActivation: "Nous publions votre boutique après validation du justificatif. Nous vous prévenons par e-mail.",
+      mercadoPagoHint: "Nous vous redirigeons vers Mercado Pago pour payer en toute sécurité. Ensuite vous revenez ici et votre boutique est publiée.",
+      freeCheckout: "Avec ce code, vous ne payez rien : votre boutique est publiée dès la confirmation.",
+      freeButton: "Publier ma boutique",
     },
     ui: {
       summaryTitle: "Votre commande",
       planLine: "Offre {name}",
       perMonth: "/mois",
       totalLabel: "Total à payer",
-      freeMonth: "+1 mois offert",
+      promoMonths: "Vous recevez {months}",
       coverage: "Couvre {months} de service",
       changeLink: "Changer d’offre ou de moyen de paiement",
       payWith: "Vous payez par {method}",
@@ -645,7 +694,7 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       summaryLine: "Code {code}",
       freeMonthsBadge: "+{months} offerts",
       minMonths: "Ce code est valable à partir de {months} payés. Avec moins de mois, il ne s'applique pas.",
-      replacesPromo: "Ce code remplace la promo +1 mois offert.",
+      replacesPromo: "Ce code remplace la promo 2 mois pour le prix d'1 lors de votre premier paiement.",
       freeCheckout: "Avec ce code, vous ne payez rien : votre compte est activé dès la confirmation.",
       freeButton: "Activer mon compte",
       problems: {
@@ -718,8 +767,8 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
     uploadHint: "Laden Sie ein Foto oder einen Screenshot des Belegs hoch (JPG, PNG oder WebP).",
     monthSummaryLabel: "Monate",
     supportHint: "Wenn das Problem weiterhin besteht, prüfe Sie Ihre Zahlungsmethode oder kontaktieren Sie den Support.",
-    promoTitle: "+1 Monat gratis bei Ihrer ersten Zahlung",
-    promoDescription: "Zahlen Sie {paid} und erhalten Sie {granted}.",
+    promoTitle: "2 Monate zum Preis von 1 bei Ihrer ersten Zahlung",
+    promoDescription: "Sie zahlen {paid} und erhalten {granted}.",
     promoBadge: "Aktive Promo",
     alreadyPaidTitle: "Ihre Zahlung ist bereits erfasst",
     alreadyPaidBody: "Prüfen Sie Ihre E-Mails: Wir haben Ihnen den Link zum Erstellen Ihres Passworts geschickt.",
@@ -743,17 +792,24 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       account_number: "Kontonummer",
     },
     draft: {
+      title: "Bezahlen und Shop veröffentlichen",
       reviewBody: "Wir schreiben Ihnen, sobald wir ihn geprüft haben, und Ihr Shop geht automatisch online. Bis dahin können Sie ihn weiter einrichten.",
       paidTitle: "Ihr Shop ist geöffnet",
       paidBody: "Ihre Kunden können jetzt über Ihren Link bestellen.",
       backToStore: "Zurück zu meinem Shop",
+      nextSteps: ["Wir prüfen die Zahlung", "Ihr Shop geht automatisch online, mit allem, was Sie eingerichtet haben", "Sie teilen Ihren Link"],
+      instantActivation: "Ihr Shop geht online, sobald die Zahlung bestätigt ist.",
+      manualActivation: "Wir veröffentlichen Ihren Shop, sobald wir den Beleg geprüft haben. Wir informieren Sie per E-Mail.",
+      mercadoPagoHint: "Wir leiten Sie zu Mercado Pago weiter, um sicher zu bezahlen. Danach kommen Sie hierher zurück und Ihr Shop geht online.",
+      freeCheckout: "Mit diesem Gutschein zahlen Sie nichts: Ihr Shop geht bei der Bestätigung online.",
+      freeButton: "Meinen Shop veröffentlichen",
     },
     ui: {
       summaryTitle: "Ihre Bestellung",
       planLine: "Plan {name}",
       perMonth: "/Monat",
       totalLabel: "Zu zahlen",
-      freeMonth: "+1 Monat gratis",
+      promoMonths: "Sie erhalten {months}",
       coverage: "Deckt {months} Service ab",
       changeLink: "Plan oder Zahlungsmethode ändern",
       payWith: "Sie zahlen mit {method}",
@@ -785,7 +841,7 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       summaryLine: "Gutschein {code}",
       freeMonthsBadge: "+{months} gratis",
       minMonths: "Dieser Gutschein gilt ab {months}. Bei weniger Monaten wird er nicht angewendet.",
-      replacesPromo: "Dieser Gutschein ersetzt die Aktion „+1 Monat gratis“.",
+      replacesPromo: "Dieser Gutschein ersetzt die Aktion „2 Monate zum Preis von 1 bei Ihrer ersten Zahlung“.",
       freeCheckout: "Mit diesem Gutschein zahlen Sie nichts: Ihr Konto wird bei der Bestätigung aktiviert.",
       freeButton: "Mein Konto aktivieren",
       problems: {
@@ -858,8 +914,8 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
     uploadHint: "Carica una foto o uno screenshot della ricevuta (JPG, PNG o WebP).",
     monthSummaryLabel: "mesi",
     supportHint: "Se il problema persiste, controlla il metodo di pagamento o contatta il supporto.",
-    promoTitle: "+1 mese gratis sul tuo primo pagamento",
-    promoDescription: "Paga {paid} e ricevi {granted}.",
+    promoTitle: "2 mesi al prezzo di 1 sul tuo primo pagamento",
+    promoDescription: "Paghi {paid} e ricevi {granted}.",
     promoBadge: "Promo attiva",
     alreadyPaidTitle: "Il tuo pagamento è già registrato",
     alreadyPaidBody: "Controlla la tua email: ti abbiamo inviato il link per creare la password ed entrare.",
@@ -883,17 +939,24 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       account_number: "Numero di conto",
     },
     draft: {
+      title: "Paga e pubblica il tuo negozio",
       reviewBody: "Ti scriveremo appena lo convalidiamo e il tuo negozio verrà pubblicato da solo. Nel frattempo puoi continuare a prepararlo.",
       paidTitle: "Il tuo negozio è aperto",
       paidBody: "I tuoi clienti possono già entrare dal tuo link e fare ordini.",
       backToStore: "Torna al mio negozio",
+      nextSteps: ["Convalidiamo il pagamento", "Il tuo negozio viene pubblicato da solo, con tutto quello che hai preparato", "Condividi il tuo link"],
+      instantActivation: "Il tuo negozio viene pubblicato appena il pagamento è confermato.",
+      manualActivation: "Pubblichiamo il tuo negozio quando convalidiamo la ricevuta. Ti avvisiamo via email.",
+      mercadoPagoHint: "Ti portiamo su Mercado Pago per pagare in modo sicuro. Al termine torni qui e il tuo negozio viene pubblicato.",
+      freeCheckout: "Con questo coupon non paghi nulla: il tuo negozio viene pubblicato alla conferma.",
+      freeButton: "Pubblica il mio negozio",
     },
     ui: {
       summaryTitle: "Il tuo ordine",
       planLine: "Piano {name}",
       perMonth: "/mese",
       totalLabel: "Totale da pagare",
-      freeMonth: "+1 mese gratis",
+      promoMonths: "Ricevi {months}",
       coverage: "Copre {months} di servizio",
       changeLink: "Cambia piano o metodo di pagamento",
       payWith: "Paghi con {method}",
@@ -925,7 +988,7 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       summaryLine: "Coupon {code}",
       freeMonthsBadge: "+{months} gratis",
       minMonths: "Questo coupon vale pagando almeno {months}. Con meno mesi non si applica.",
-      replacesPromo: "Questo coupon sostituisce la promo +1 mese gratis.",
+      replacesPromo: "Questo coupon sostituisce la promo 2 mesi al prezzo di 1 sul tuo primo pagamento.",
       freeCheckout: "Con questo coupon non paghi nulla: il tuo account si attiva alla conferma.",
       freeButton: "Attiva il mio account",
       problems: {

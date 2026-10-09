@@ -103,7 +103,7 @@ export function Trust({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 							</li>
 						))}
 					</ul>
-					<p className="mt-8 text-sm text-[#71717a]">— Equipo {LANDING_COMPANY_NAME}, Santiago de Chile</p>
+					<p className="mt-8 text-sm text-[#71717a]">Equipo {LANDING_COMPANY_NAME}, Santiago de Chile</p>
 				</div>
 			</div>
 		</section>

@@ -33,6 +33,8 @@ export default function robots(): MetadataRoute.Robots {
           "/onboarding/complete",
           "/onboarding/verify",
           "/onboarding/pago",
+          // «Arma y paga»: la tienda en construcción ya es noindex; que tampoco gaste rastreo.
+          "/onboarding/tienda",
         ],
       },
     ],

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, LayoutDashboard, Monitor, ShoppingBag, Workflow, type LucideIcon } from "lucide-react";
 
 import { LandingInstagramIcon, LandingLinkedInIcon } from "@/components/landing-v3/social-icons";
+import { CookieSettingsLink } from "@/components/legal/cookie-consent";
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
 import type { LandingSocialLink } from "@/lib/landing/contact";
 import {
@@ -15,7 +16,6 @@ import {
 	LABS_SERVICES,
 	LABS_STACK,
 	LABS_TEAM,
-	LABS_WHATSAPP_GREETING,
 	type LabsProject,
 	type LabsService,
 } from "@/lib/labs/content";
@@ -34,6 +34,7 @@ type LabsHomeProps = {
 	path: string;
 	/** Ruta del landing de Gcode POS. */
 	posPath: string;
+	/** Con el WhatsApp ya saludando como el estudio (`landingSocialLinksWithGreeting` en app/labs/page.tsx). */
 	socialLinks: LandingSocialLink[];
 	jsonLd: string;
 };
@@ -85,14 +86,19 @@ const STATEMENT_ICONS: Record<string, { Icon: LucideIcon; className: string }> =
  */
 export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) {
 	const whatsapp = socialLinks.find((link) => link.kind === "whatsapp") ?? null;
-	const whatsappHref = whatsapp ? withWhatsAppText(whatsapp.href, LABS_WHATSAPP_GREETING) : null;
+	const whatsappHref = whatsapp?.href ?? null;
 	const email = socialLinks.find((link) => link.kind === "email") ?? null;
 	const linkedin = socialLinks.find((link) => link.kind === "linkedin") ?? null;
 	const instagram = socialLinks.find((link) => link.kind === "instagram") ?? null;
 	const year = new Date().getFullYear();
 
 	/** Columnas del pie: las rutas de siempre, agrupadas como en el sitio de una empresa grande. */
-	const footerColumns: Array<{ title: string; links: Array<{ label: string; href: string; external?: boolean }> }> = [
+	const footerColumns: Array<{
+		title: string;
+		links: Array<{ label: string; href: string; external?: boolean }>;
+		/** Un último elemento que no es un enlace (el botón que reabre el aviso de cookies). */
+		trailing?: ReactNode;
+	}> = [
 		{
 			title: "Empresa",
 			links: [
@@ -124,7 +130,10 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 			links: [
 				{ label: "Términos", href: "/onboarding/terminos" },
 				{ label: "Privacidad", href: "/onboarding/privacidad" },
+				{ label: "Cookies", href: "/onboarding/cookies" },
 			],
+			// El mismo botón que llevan los pies del landing y del alta: reabre el aviso de cookies.
+			trailing: <CookieSettingsLink label="Preferencias de cookies" className="text-white/75 transition-colors hover:text-white" />,
 		},
 	];
 
@@ -490,7 +499,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 													{body}
 												</a>
 											) : (
-												<Link href={project.href === "/pos" ? posPath : project.href} className={className}>
+												<Link href={project.ownProduct ? posPath : project.href} className={className}>
 													{body}
 												</Link>
 											)
@@ -622,7 +631,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 									) : null}
 									<li>
 										<span className="block text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Dónde</span>
-										<span className="mt-1 inline-block font-semibold">Santiago de Chile · trabajo a distancia en Chile y Venezuela</span>
+										<span className="mt-1 inline-block font-semibold">Santiago de Chile · a distancia en Chile, Venezuela y Estados Unidos</span>
 									</li>
 								</ul>
 							</div>
@@ -658,6 +667,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 											)}
 										</li>
 									))}
+									{column.trailing ? <li>{column.trailing}</li> : null}
 								</ul>
 							</nav>
 						))}
@@ -806,7 +816,7 @@ function safeHostname(href: string): string {
 	}
 }
 
-/** Parte la frase grande en texto y palabras con icono: «{sitios} que convierten» → icono + «sitios que convierten». */
+/** Parte la frase grande en texto y palabras con icono: «{sitios} con reservas» → icono + «sitios con reservas». */
 function statementParts(text: string): Array<{ text: string; icon?: string }> {
 	const parts: Array<{ text: string; icon?: string }> = [];
 	const pattern = /\{(\w+)\}/g;
@@ -819,17 +829,6 @@ function statementParts(text: string): Array<{ text: string; icon?: string }> {
 	}
 	if (last < text.length) parts.push({ text: text.slice(last) });
 	return parts;
-}
-
-/** Añade el saludo al enlace de WhatsApp (wa.me acepta `text`). */
-function withWhatsAppText(href: string, text: string): string {
-	try {
-		const url = new URL(href);
-		url.searchParams.set("text", text);
-		return url.toString();
-	} catch {
-		return href;
-	}
 }
 
 function initials(name: string): string {

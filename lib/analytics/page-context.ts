@@ -1,3 +1,4 @@
+import { isMainDomainMarketingPath } from "@/lib/landing/marketing-paths";
 import { getSubdomainFromHost, isMainDomain } from "@/lib/tenant/main-domain-host";
 import { resolveTenantSlugFromPathname } from "@/lib/tenant/reserved-path-segments";
 
@@ -34,9 +35,6 @@ const INTERNAL_FIRST_SEGMENTS = new Set([
 	"saas-admin",
 ]);
 
-/** Páginas públicas de marketing del dominio principal (no son tiendas ni paneles). */
-const MARKETING_PATHS = new Set(["/", "/sobre-godcode", "/calculadora-comisiones"]);
-
 export function isInternalAnalyticsPath(pathname: string): boolean {
 	const segments = (pathname.split("?")[0] || "/").split("/").filter(Boolean).map((s) => s.toLowerCase());
 	if (segments.length === 0) return false;
@@ -62,7 +60,9 @@ export function resolveAnalyticsPageContext(input: {
 		if (slugFromPath) {
 			return { pageType: "tenant", tenantSlug: slugFromPath };
 		}
-		if (MARKETING_PATHS.has(pathOnly.replace(/\/+$/, "") || "/")) {
+		// Home, /labs, «Sobre», la calculadora y las páginas de país: la lista única de
+		// `lib/landing/marketing-paths` (al añadir una página de marketing, va ahí).
+		if (isMainDomainMarketingPath(pathOnly)) {
 			return { pageType: "landing", tenantSlug: null };
 		}
 		return { pageType: "saas", tenantSlug: null };

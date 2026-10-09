@@ -1,10 +1,33 @@
 import { ImageResponse } from "next/og";
 
+import { LABS_HOME } from "@/lib/labs/content";
+import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
+
 export const runtime = "edge";
 
+/**
+ * Tarjeta para compartir (WhatsApp, LinkedIn, Facebook). Por defecto, la de Gcode POS;
+ * con `?v=labs`, la del estudio (`lib/labs/metadata.ts`), para que un enlace a la home
+ * de Gcode Labs no se vea como el anuncio del producto.
+ */
+const CARDS = {
+	pos: {
+		title: LANDING_PRODUCT_NAME,
+		lead: "Arma tu tienda online gratis. Pagas cuando la publiques.",
+		detail: `Menú digital · Carrito · Delivery · Caja · Inventario · por ${LANDING_COMPANY_NAME}`,
+	},
+	labs: {
+		title: LANDING_COMPANY_NAME,
+		lead: LABS_HOME.title,
+		detail: "Estudio de desarrollo · Santiago de Chile",
+	},
+} as const;
+
 export async function GET(req: Request) {
-	const origin = new URL(req.url).origin;
+	const url = new URL(req.url);
+	const origin = url.origin;
 	const logoUrl = new URL("/logo.png", origin).toString();
+	const card = url.searchParams.get("v") === "labs" ? CARDS.labs : CARDS.pos;
 
 	return new ImageResponse(
 		(
@@ -39,7 +62,7 @@ export async function GET(req: Request) {
 							letterSpacing: "-0.02em",
 						}}
 					>
-						Gcode POS
+						{card.title}
 					</div>
 				</div>
 				<div
@@ -50,7 +73,7 @@ export async function GET(req: Request) {
 						maxWidth: 900,
 					}}
 				>
-					Crea tu tienda online en minutos.
+					{card.lead}
 				</div>
 				<div
 					style={{
@@ -60,7 +83,7 @@ export async function GET(req: Request) {
 						textAlign: "center",
 					}}
 				>
-					Menú digital · Carrito · Delivery · Caja · Inventario · por Gcode Labs
+					{card.detail}
 				</div>
 			</div>
 		),

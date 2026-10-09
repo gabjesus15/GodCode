@@ -10,6 +10,7 @@ import {
 } from "@/components/legal/legal-page";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
+import { getLegalBackHref } from "@/lib/legal/legal-back-href-server";
 
 export const metadata: Metadata = {
 	title: "Política de privacidad",
@@ -23,9 +24,9 @@ export const metadata: Metadata = {
 	},
 };
 
-export default function PrivacidadPage() {
+export default async function PrivacidadPage() {
 	return (
-		<LegalPage title="Política de privacidad">
+		<LegalPage title="Política de privacidad" backHref={await getLegalBackHref()}>
 			<p>
 				Esta Política explica qué datos personales trata Gcode, para qué, con quién los comparte y qué derechos
 				tienes. Se aplica a los negocios que usan la plataforma (&quot;el Cliente&quot;), a las personas que
@@ -73,9 +74,13 @@ export default function PrivacidadPage() {
 						razón social y dirección fiscal cuando los entregas, redes sociales y logo.
 					</li>
 					<li>
+						<Lead>Cotizaciones a Gcode Labs:</Lead> nombre, empresa, correo, WhatsApp si lo das y lo que nos cuentas
+						del proyecto. Solo los usamos para responderte.
+					</li>
+					<li>
 						<Lead>Facturación:</Lead> plan, cupones usados, historial de pagos, referencia y comprobante de cada pago
 						con comprobante (guardado en almacenamiento privado, solo lo ve nuestro equipo para validarlo). Los datos
-						de tarjeta los ingresas directamente en PayPal; Gcode no los recibe.
+						de tarjeta los ingresas directamente en PayPal o en Mercado Pago; Gcode no los recibe.
 					</li>
 					<li>
 						<Lead>Contenido del negocio:</Lead> menú, precios, fotos, sucursales, horarios, configuración, pedidos,
@@ -111,6 +116,7 @@ export default function PrivacidadPage() {
 						[<>Crear la cuenta del negocio y prestar el Servicio</>, <>Ejecución del contrato</>],
 						[<>Cobrar las suscripciones y emitir los documentos tributarios</>, <>Contrato y obligación legal</>],
 						[<>Enviar avisos de la cuenta: verificación, recordatorios para publicar tu tienda, pagos, renovación, cambios de los documentos</>, <>Ejecución del contrato y de las gestiones previas que pediste</>],
+						[<>Responder las solicitudes de cotización de Gcode Labs</>, <>Gestiones previas a un contrato que pediste</>],
 						[<>Gestionar los pedidos y las cuentas de los comensales por cuenta de cada negocio</>, <>Contrato del comensal con el negocio (Gcode como encargado)</>],
 						[<>Seguridad, prevención de fraude y abuso (límites de intentos, reCAPTCHA, registros)</>, <>Interés legítimo y obligación legal</>],
 						[<>Medición con nuestra analítica propia y Vercel, sin cookies publicitarias</>, <>Interés legítimo en mejorar el Servicio</>],
@@ -136,12 +142,13 @@ export default function PrivacidadPage() {
 						[<>Supabase</>, <>Base de datos, archivos y autenticación</>, <>Todos los datos del Servicio</>, <>Servidores contratados por Gcode</>],
 						[<>Vercel</>, <>Alojamiento del sitio y medición agregada (Analytics, Speed Insights)</>, <>Datos técnicos</>, <>Estados Unidos y otros</>],
 						[<>PayPal</>, <>Cobro de suscripciones</>, <>Correo, importe y datos que ingresas en PayPal</>, <>Estados Unidos</>],
+						[<>Mercado Pago</>, <>Cobro del plan en pesos chilenos, si eliges ese medio en Chile</>, <>Correo, importe y datos que ingresas en Mercado Pago</>, <>Según las condiciones de Mercado Pago</>],
 						[<>Resend</>, <>Envío de correos</>, <>Correo, nombre y contenido del aviso</>, <>Estados Unidos</>],
 						[<>Anthropic</>, <>Leer la carta que subes (foto, PDF o planilla) para armar tu menú, si usas esa opción</>, <>El archivo de la carta</>, <>Estados Unidos</>],
-						[<>Google (reCAPTCHA)</>, <>Protección contra bots en el registro</>, <>Datos técnicos del navegador</>, <>Estados Unidos</>],
+						[<>Google (reCAPTCHA)</>, <>Protección contra bots en el registro y en el formulario de cotización de Gcode Labs</>, <>Datos técnicos del navegador</>, <>Estados Unidos</>],
 						[<>Google (Analytics)</>, <>Medición de uso, solo con tu consentimiento</>, <>Datos técnicos seudonimizados</>, <>Estados Unidos</>],
 						[<>Upstash</>, <>Límites de uso y caché</>, <>Dirección IP de forma temporal</>, <>Estados Unidos y Unión Europea</>],
-						[<>Telegram</>, <>Avisos internos a nuestro equipo cuando un negocio se registra o paga</>, <>Nombre del negocio y del responsable, correo y teléfono</>, <>Fuera de Chile</>],
+						[<>Telegram</>, <>Avisos internos a nuestro equipo cuando un negocio se registra, paga o pide una cotización en Gcode Labs</>, <>Nombre del negocio o empresa y del responsable, correo, teléfono y, en las cotizaciones, lo que nos cuentas del proyecto</>, <>Fuera de Chile</>],
 						[<>OpenStreetMap (Nominatim)</>, <>Ubicar direcciones y calcular el envío</>, <>La dirección que escribes</>, <>Unión Europea</>],
 						[<>Uber Direct</>, <>Reparto con repartidores externos, si el negocio lo activa</>, <>Nombre, teléfono y dirección de entrega</>, <>Estados Unidos y país de entrega</>],
 						[<>WhatsApp (Meta)</>, <>Confirmar pedidos por WhatsApp, si el negocio lo usa</>, <>Lo envías tú desde tu WhatsApp al negocio</>, <>Según las condiciones de WhatsApp</>],
@@ -160,9 +167,9 @@ export default function PrivacidadPage() {
 				<h2 className="font-semibold text-slate-800">7. Cookies</h2>
 				<p className="mt-2">
 					Usamos cookies esenciales para iniciar sesión y mantener la seguridad, y, solo si aceptas, cookies de
-					Google Analytics para medir el uso del sitio. Al entrar al menú de un negocio no te preguntamos ni
-					instalamos cookies de medición de Google, salvo que ya las hayas aceptado en el sitio de Gcode. El detalle
-					está en la <LegalLink href="/onboarding/cookies">Política de cookies</LegalLink>.
+					Google Analytics para medir el uso del sitio. En los menús de los negocios nunca se activan: Google
+					Analytics mide sin cookies. El detalle está en la{" "}
+					<LegalLink href="/onboarding/cookies">Política de cookies</LegalLink>.
 				</p>
 			</section>
 			<section>

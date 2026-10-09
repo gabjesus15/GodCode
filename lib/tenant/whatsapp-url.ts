@@ -2,6 +2,9 @@
  * WhatsApp escrito a mano → enlace `wa.me`. Sin código de país, se completa con el del
  * país del negocio cuando es inequívoco (Chile: 9 dígitos que empiezan en 9; Venezuela: 11
  * que empiezan en 0, como 0412…).
+ *
+ * El WhatsApp de ventas del landing (`normalizeWhatsAppUrl` en `lib/landing/contact.ts`) usa
+ * esta misma regla, sin país: si cambia aquí, cambia allí.
  */
 export function whatsappUrlFromPhone(raw: string | null | undefined, country: string | null | undefined): string | null {
 	const value = String(raw ?? "").trim();

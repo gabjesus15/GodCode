@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest";
 import { LANDING_COMPANY_NAME } from "@/lib/landing/brand";
 import { LANDING_COUNTRIES, LANDING_COUNTRY_SLUGS, getLandingCountry } from "@/lib/landing/countries";
 import { buildLandingCountryJsonLd, buildLandingCountryMetadata } from "@/lib/landing/country-page";
-import { isInternalTestTenantSlug } from "@/lib/seo/internal-test-tenant";
+import { LEGAL_MERCADO_PAGO_CLP, LEGAL_OTHER_CURRENCY, LEGAL_PRICES_IN_USD } from "@/lib/legal/legal-documents";
+import { INTERNAL_TEST_TENANT_SLUGS, isInternalTestTenantSlug } from "@/lib/seo/internal-test-tenant";
 import { MAIN_DOMAIN_RESERVED_PATH_SEGMENTS, resolveTenantSlugFromPathname } from "@/lib/tenant/reserved-path-segments";
 
 const BASE = "https://www.godcode.me";
@@ -37,20 +38,38 @@ describe("páginas de país del landing", () => {
 		for (const f of LANDING_COUNTRIES.venezuela.faq) expect(chileQuestions.has(f.question)).toBe(false);
 	});
 
-	it("Venezuela habla de bolívares, pago móvil y tasa BCV; Chile de Mercado Pago y no promete pesos", () => {
+	it("Venezuela habla de bolívares, pago móvil y tasa BCV; Chile de Mercado Pago, con el precio en dólares", () => {
 		const ve = JSON.stringify(LANDING_COUNTRIES.venezuela).toLowerCase();
 		expect(ve).toContain("bolívares");
 		expect(ve).toContain("pago móvil");
 		expect(ve).toContain("tasa bcv");
 		expect(ve).toContain("zelle");
-		const cl = JSON.stringify(LANDING_COUNTRIES.chile).toLowerCase();
-		// La suscripción se cobra en USD (CL resuelve a «Latinoamérica» en country-registry):
-		// prometer pesos al lado de «Desde $19 USD/mes» sería publicidad engañosa.
-		expect(cl).not.toContain("pesos chilenos");
-		expect(cl).not.toContain(" clp");
+		const chile = LANDING_COUNTRIES.chile;
+		const cl = JSON.stringify(chile).toLowerCase();
 		expect(cl).toContain("dólares");
 		expect(cl).toContain("mercado pago");
 		expect(cl).toContain("santiago");
+		expect(cl).not.toContain(" clp");
+		// El plan está en USD (CL resuelve a «Latinoamérica» en country-registry). Los pesos solo
+		// aparecen en la frase de Mercado Pago, que es la misma de los Términos: nunca como precio.
+		expect(chile.currencyNote).toBe(`${LEGAL_PRICES_IN_USD} ${LEGAL_MERCADO_PAGO_CLP} ${LEGAL_OTHER_CURRENCY}`);
+		const pesoMentions = cl.split("pesos chilenos").length - 1;
+		const mercadoPagoSentences = cl.split(LEGAL_MERCADO_PAGO_CLP.toLowerCase()).length - 1;
+		expect(pesoMentions).toBeGreaterThan(0);
+		expect(pesoMentions).toBe(mercadoPagoSentences);
+		// Sin cifras de venta inventadas: el ahorro se calcula con la calculadora, no con un ejemplo sin fuente.
+		expect(cl).not.toMatch(/\$ ?\d/);
+		expect(cl).toContain("entre un 20 y un 30 % en comisiones; calcúlalo con tu propia venta");
+	});
+
+	it("los Términos dicen lo mismo que /chile sobre la moneda", () => {
+		const terms = readFileSync(join(process.cwd(), "app", "onboarding", "terminos", "page.tsx"), "utf8");
+		for (const constant of ["LEGAL_PRICES_IN_USD", "LEGAL_MERCADO_PAGO_CLP", "LEGAL_OTHER_CURRENCY"]) {
+			expect(terms).toContain(`{${constant}}`);
+		}
+		// Nada de precios «en la moneda de tu país»: el texto de moneda sale solo de las constantes.
+		expect(terms).not.toContain("pesos chilenos");
+		expect(terms).not.toContain("moneda que corresponde a tu país");
 	});
 
 	it("metadata: canónica propia, locale del país y sin hreflang inventado", () => {
@@ -62,11 +81,18 @@ describe("páginas de país del landing", () => {
 		expect(meta.robots).toMatchObject({ index: true, follow: true });
 	});
 
-	it("JSON-LD: Service con areaServed del país, miga de pan y FAQ igual al texto visible", () => {
+	it("JSON-LD: Service con areaServed del país, miga de pan, FAQ igual al texto visible y la Organization referenciada", () => {
 		const country = LANDING_COUNTRIES.venezuela;
 		const ld = buildLandingCountryJsonLd(BASE, country);
 		const types = ld.map((n) => n["@type"]);
-		expect(types).toEqual(["WebPage", "Service", "BreadcrumbList", "FAQPage"]);
+		expect(types).toEqual(["WebPage", "Service", "BreadcrumbList", "FAQPage", "Organization"]);
+
+		// `publisher` y `provider` apuntan a #organization: el nodo tiene que ir en la misma página.
+		const organization = ld[4] as { "@id": string; name: string };
+		expect(organization["@id"]).toBe(`${BASE}/#organization`);
+		expect(organization.name).toBe(LANDING_COMPANY_NAME);
+		const webPage = ld[0] as { publisher: { "@id": string } };
+		expect(webPage.publisher["@id"]).toBe(organization["@id"]);
 
 		const service = ld[1] as { areaServed: { "@type": string; name: string }[]; provider: { "@id": string } };
 		expect(service.areaServed[0]).toMatchObject({ "@type": "Country", name: "Venezuela", identifier: "VE" });
@@ -90,14 +116,17 @@ describe("páginas de país del landing", () => {
 });
 
 describe("tiendas de prueba fuera del sitemap", () => {
-	it("detecta slugs de demo/QA y respeta los nombres reales", () => {
+	it("el marcador va al inicio del slug o el slug está en la lista fija", () => {
+		for (const slug of ["demo", "demo-pizzeria", "qa-cafe", "test-sushi", "prueba", "pruebas-2", "staging-rica", "QA-Cafe"]) {
+			expect(isInternalTestTenantSlug(slug)).toBe(true);
+		}
+		expect(INTERNAL_TEST_TENANT_SLUGS.has("pizzeria-demo-qa")).toBe(true);
 		expect(isInternalTestTenantSlug("pizzeria-demo-qa")).toBe(true);
-		expect(isInternalTestTenantSlug("demo")).toBe(true);
-		expect(isInternalTestTenantSlug("test-sushi")).toBe(true);
-		expect(isInternalTestTenantSlug("rica-pizza")).toBe(false);
-		expect(isInternalTestTenantSlug("la-parada")).toBe(false);
-		// «demo» dentro de una palabra no cuenta (p. ej. un local llamado Demócrata).
-		expect(isInternalTestTenantSlug("democrata-cafe")).toBe(false);
-		expect(isInternalTestTenantSlug("contest-bar")).toBe(false);
+	});
+
+	it("respeta los nombres reales aunque lleven la palabra dentro o al final", () => {
+		for (const slug of ["rica-pizza", "la-parada", "la-prueba", "sushi-demo", "democrata-cafe", "contest-bar", "testarossa"]) {
+			expect(isInternalTestTenantSlug(slug)).toBe(false);
+		}
 	});
 });

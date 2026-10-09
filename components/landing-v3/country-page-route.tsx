@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { CountryLanding } from "@/components/landing-v3/country-landing";
 import { DEFAULT_LOCALE } from "@/lib/i18n/config";
+import { landingSocialLinksWithGreeting } from "@/lib/landing/contact";
 import { getLandingSocialLinks } from "@/lib/landing/contact-server";
 import { LANDING_COUNTRIES, type LandingCountrySlug } from "@/lib/landing/countries";
 import { buildLandingCountryJsonLd, buildLandingCountryMetadata } from "@/lib/landing/country-page";
@@ -28,7 +29,9 @@ export async function LandingCountryPage({ slug }: { slug: LandingCountrySlug })
 	if (!isMainDomain(hdrs.get("host") || "")) notFound();
 
 	const country = LANDING_COUNTRIES[slug];
-	const [plans, socialLinks] = await Promise.all([getPublicPlansForLanding(DEFAULT_LOCALE), getLandingSocialLinks()]);
+	const [plans, rawSocialLinks] = await Promise.all([getPublicPlansForLanding(DEFAULT_LOCALE), getLandingSocialLinks()]);
+	// El mismo WhatsApp de ventas que la home, con el saludo ya escrito.
+	const socialLinks = landingSocialLinksWithGreeting(rawSocialLinks);
 	// El precio se resuelve para el país de la página, no para el del visitante:
 	// la página habla de Chile aunque la lea alguien desde otro sitio.
 	const fromPrice = resolveLowestPlanPrice(plans, country.code);

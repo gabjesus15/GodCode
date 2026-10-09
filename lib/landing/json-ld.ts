@@ -133,7 +133,7 @@ export function buildLandingJsonLd({ base, faq, plans, country }: BuildLandingJs
 			name: LANDING_COMPANY_NAME,
 			alternateName: [...LANDING_BRAND_ALTERNATE_NAMES],
 			url: base,
-			description: `${LANDING_PRODUCT_NAME} por ${LANDING_COMPANY_NAME}: crea tu tienda online en minutos`,
+			description: `${LANDING_PRODUCT_NAME} por ${LANDING_COMPANY_NAME}: arma tu tienda online gratis y pagas cuando la publiques`,
 			publisher: organizationRef,
 		},
 		buildOrganizationJsonLd(base),

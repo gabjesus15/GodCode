@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "./brand";
 import { type LandingCountry, type LandingCountrySlug, LANDING_COUNTRIES } from "./countries";
-import { getOrganizationId } from "./json-ld";
+import { buildOrganizationJsonLd, getOrganizationId } from "./json-ld";
 
 export function getLandingCountryPath(slug: LandingCountrySlug): string {
 	return `/${slug}`;
@@ -47,7 +47,8 @@ export function buildLandingCountryMetadata(base: string, country: LandingCountr
 
 /**
  * JSON-LD de una página de país: el servicio con su zona de cobertura, la miga
- * de pan y las preguntas frecuentes (mismo texto que el visible).
+ * de pan, las preguntas frecuentes (mismo texto que el visible) y la organización
+ * a la que apuntan `publisher` y `provider` (mismo `@id` que la home).
  */
 export function buildLandingCountryJsonLd(base: string, country: LandingCountry): Record<string, unknown>[] {
 	const url = `${base}${getLandingCountryPath(country.slug)}`;
@@ -102,6 +103,8 @@ export function buildLandingCountryJsonLd(base: string, country: LandingCountry)
 				acceptedAnswer: { "@type": "Answer", text: item.answer },
 			})),
 		},
+		// Sin este nodo, las referencias a #organization de arriba quedan colgando.
+		buildOrganizationJsonLd(base),
 	];
 }
 

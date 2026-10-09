@@ -9,6 +9,7 @@ import {
 } from "@/components/legal/legal-page";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
+import { getLegalBackHref } from "@/lib/legal/legal-back-href-server";
 
 import { CookieSettingsButton } from "@/components/legal/cookie-consent";
 
@@ -24,9 +25,9 @@ export const metadata: Metadata = {
 	},
 };
 
-export default function CookiesPage() {
+export default async function CookiesPage() {
 	return (
-		<LegalPage title="Política de cookies">
+		<LegalPage title="Política de cookies" backHref={await getLegalBackHref()}>
 			<p>
 				Las cookies son pequeños archivos que un sitio guarda en tu navegador. También usamos el almacenamiento
 				local del navegador, que funciona de forma parecida. Esta Política explica cuáles usamos y cómo
@@ -36,7 +37,8 @@ export default function CookiesPage() {
 			<section>
 				<h2 className="font-semibold text-slate-800">1. Cookies esenciales (siempre activas)</h2>
 				<p className="mt-2">
-					Sin ellas no podrías iniciar sesión ni usar el carrito. No requieren consentimiento.
+					Sin ellas no podrías iniciar sesión, usar el carrito ni enviar los formularios protegidos contra bots. No
+					requieren consentimiento.
 				</p>
 				<LegalTable
 					head={["Nombre", "Para qué", "Duración"]}
@@ -46,6 +48,7 @@ export default function CookiesPage() {
 						[<><code>sb-menu-client-auth-token</code></>, <>Mantener la sesión de tu cuenta en el menú de un negocio</>, <>Igual que la anterior</>],
 						[<>Almacenamiento local del carrito y preferencias</>, <>Recordar tu carrito, la sucursal elegida y tu idioma</>, <>Hasta que lo borres</>],
 						[<><code>gcode-consent-analytics</code> (almacenamiento local)</>, <>Recordar si aceptaste o rechazaste la medición</>, <>12 meses</>],
+						[<><code>_GRECAPTCHA</code> (de Google)</>, <>reCAPTCHA: distinguir personas de bots en el registro y en el formulario de cotización de Gcode Labs</>, <>6 meses</>],
 					]}
 				/>
 				<p className="mt-2">
@@ -79,8 +82,8 @@ export default function CookiesPage() {
 				/>
 				<p className="mt-2">
 					En las páginas de Gcode (sitio, registro y panel) te preguntamos antes de activarlas. Si las rechazas o no
-					respondes, Google Analytics funciona sin cookies y sin identificarte. Al entrar al menú de un negocio no
-					te preguntamos ni se activan, salvo que ya las hayas aceptado en el sitio de Gcode.
+					respondes, Google Analytics funciona sin cookies y sin identificarte. En los menús de los negocios nunca
+					se activan: Google Analytics mide sin cookies.
 				</p>
 				<p className="mt-2">
 					No usamos cookies publicitarias ni de redes sociales.
@@ -90,7 +93,7 @@ export default function CookiesPage() {
 				<h2 className="font-semibold text-slate-800">4. Cómo cambiar tu decisión</h2>
 				<CookieSettingsButton />
 				<p className="mt-2">
-					Puedes cambiar tu elección cuando quieras desde el enlace &quot;Cookies&quot; al pie del sitio. También
+					Puedes cambiar tu elección cuando quieras con este botón o desde el pie de cada página del sitio. También
 					puedes borrar o bloquear las cookies desde tu navegador; si bloqueas las esenciales, no podrás iniciar
 					sesión.
 				</p>

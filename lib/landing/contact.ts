@@ -1,3 +1,5 @@
+import { whatsappUrlFromPhone } from "@/lib/tenant/whatsapp-url";
+
 import { LANDING_SUPPORT_EMAIL } from "./brand";
 
 /** Contacto público de la landing (sobrescribible con env en Vercel). */
@@ -35,13 +37,16 @@ function normalizeLinkedInUrl(raw: string | undefined): string | null {
 	return `https://www.linkedin.com/company/${slug}/`;
 }
 
+/**
+ * Un enlace completo se respeta tal cual; un número se convierte en `wa.me` con la misma
+ * regla que el WhatsApp de cada negocio (`lib/tenant/whatsapp-url`): solo dígitos, entre 8 y
+ * 15. Sin país: el número de ventas se escribe siempre con su código.
+ */
 function normalizeWhatsAppUrl(raw: string | undefined): string | null {
 	const value = raw?.trim();
 	if (!value) return null;
 	if (/^https?:\/\//i.test(value)) return value;
-	const digits = value.replace(/\D/g, "");
-	if (digits.length < 8) return null;
-	return `https://wa.me/${digits}`;
+	return whatsappUrlFromPhone(value, null);
 }
 
 /**
@@ -60,6 +65,17 @@ export function withWhatsAppText(url: string, text: string): string {
 	} catch {
 		return url;
 	}
+}
+
+/**
+ * Los enlaces de contacto con el WhatsApp ya saludando: lo usan la home y las páginas de país
+ * (mismo número de ventas, mismo saludo). La home de Gcode Labs pasa su propio saludo.
+ */
+export function landingSocialLinksWithGreeting(
+	links: LandingSocialLink[],
+	greeting: string = LANDING_POS_WHATSAPP_GREETING,
+): LandingSocialLink[] {
+	return links.map((link) => (link.kind === "whatsapp" ? { ...link, href: withWhatsAppText(link.href, greeting) } : link));
 }
 
 function instagramDisplay(url: string): string {

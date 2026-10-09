@@ -1,4 +1,7 @@
+import { LEGAL_MERCADO_PAGO_CLP, LEGAL_OTHER_CURRENCY, LEGAL_PRICES_IN_USD } from "@/lib/legal/legal-documents";
+
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "./brand";
+import type { LANDING_COUNTRY_SLUG_LIST } from "./marketing-paths";
 
 /**
  * Páginas de país del landing (/chile, /venezuela).
@@ -15,7 +18,12 @@ import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "./brand";
  *   lo demás es compartido para no duplicar contenido entre las dos páginas.
  */
 
-export type LandingCountrySlug = "chile" | "venezuela";
+/**
+ * Los slugs salen de la lista única de `marketing-paths.ts` (la que usa la analítica):
+ * `LANDING_COUNTRIES` se tipa con ellos, así que un país nuevo se añade en los dos sitios
+ * o no compila.
+ */
+export type LandingCountrySlug = (typeof LANDING_COUNTRY_SLUG_LIST)[number];
 
 export type LandingCountryFaq = { question: string; answer: string };
 
@@ -45,6 +53,11 @@ export type LandingCountry = {
 	paymentMethods: string[];
 	/** Cómo cobra la suscripción allí. */
 	billingNote: string;
+	/**
+	 * En qué moneda se paga, con las mismas frases que los Términos (`lib/legal/legal-documents.ts`).
+	 * Va bajo `billingNote`, en el bloque «Cuánto cuesta».
+	 */
+	currencyNote?: string;
 	/** Bloques «Pensado para {país}». */
 	localFeatures: LandingCountryFeature[];
 	faq: LandingCountryFaq[];
@@ -105,12 +118,14 @@ const CHILE: LandingCountry = {
 		"Hecho en Santiago. Tus clientes piden desde tu link o tu QR, pagas un plan fijo al mes y no cedes comisión en ningún pedido.",
 	deliveryApps: ["PedidosYa", "Rappi", "Uber Eats"],
 	paymentMethods: ["Efectivo", "Tarjeta en el local", "Transferencia", "Mercado Pago"],
-	// El cobro de la suscripción es en dólares (PayPal o transferencia); no prometer CLP hasta que exista.
-	billingNote: "Armas tu tienda gratis y eliges tu plan cuando la publicas. Es un monto fijo en dólares al mes, sin UF, sin comisión por venta ni reajustes sorpresa.",
+	// El precio del plan está en dólares; con Mercado Pago se cobra el equivalente en pesos. Las frases de
+	// moneda son las de los Términos (sección 5): no se reescriben aquí con otras palabras.
+	billingNote: "Armas tu tienda gratis y eliges tu plan cuando la publicas. Es un monto fijo al mes, sin UF ni comisión por venta.",
+	currencyNote: `${LEGAL_PRICES_IN_USD} ${LEGAL_MERCADO_PAGO_CLP} ${LEGAL_OTHER_CURRENCY}`,
 	localFeatures: [
 		{
 			title: "Un plan fijo, sin comisión",
-			text: "Pagas un plan mensual en dólares y nada más: ni UF ni porcentaje por pedido. Un local que vende $2.000.000 al mes por apps de delivery puede dejar ahí entre $400.000 y $600.000 solo en comisiones.",
+			text: "Pagas un plan mensual en dólares y nada más: ni UF ni porcentaje por pedido. Un local que vende por apps de delivery puede dejar ahí entre un 20 y un 30 % en comisiones; calcúlalo con tu propia venta.",
 		},
 		{
 			title: "Cobra como ya cobras",
@@ -129,7 +144,7 @@ const CHILE: LandingCountry = {
 		{
 			question: `¿Cuánto cuesta ${LANDING_PRODUCT_NAME} en Chile?`,
 			answer:
-				"Armar tu tienda no cuesta nada. Pagas cuando la publicas, con un plan mensual fijo en dólares que ves en la sección de planes de la home y se paga con PayPal o transferencia. No hay comisión por venta ni por pedido, ni reajuste por UF, y en tu primer pago llevas 2 meses al precio de 1.",
+				`Armar tu tienda no cuesta nada. Pagas cuando la publicas, con un plan mensual fijo que ves en la sección de planes de la home, por PayPal, Mercado Pago o transferencia. ${LEGAL_PRICES_IN_USD} ${LEGAL_MERCADO_PAGO_CLP} No hay comisión por venta ni por pedido, ni reajuste por UF, y en tu primer pago llevas 2 meses al precio de 1.`,
 		},
 		{
 			question: "¿Sirve para dejar PedidosYa, Rappi o Uber Eats?",

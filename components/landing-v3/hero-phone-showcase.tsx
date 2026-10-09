@@ -7,9 +7,10 @@ import type { LandingV3PhoneSlide } from "@/lib/landing/v3-config";
 
 const DEFAULT_PHONES: LandingV3PhoneSlide[] = [
 	{
+		// La captura es la página de enlaces de Rica Pizza (igual que el valor por defecto de `v3-config`).
 		src: "/rica-pizza-bio.png",
-		alt: "Oishi Sushi en Gcode — página de enlaces y menú digital",
-		label: "Oishi Sushi",
+		alt: "Rica Pizza en Gcode: página de enlaces y menú digital",
+		label: "Rica Pizza",
 		priority: false,
 	},
 	{

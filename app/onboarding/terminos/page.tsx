@@ -9,6 +9,8 @@ import {
 } from "@/components/legal/legal-page";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
+import { getLegalBackHref } from "@/lib/legal/legal-back-href-server";
+import { LEGAL_MERCADO_PAGO_CLP, LEGAL_OTHER_CURRENCY, LEGAL_PRICES_IN_USD } from "@/lib/legal/legal-documents";
 
 export const metadata: Metadata = {
 	title: "Términos y Condiciones",
@@ -22,9 +24,9 @@ export const metadata: Metadata = {
 	},
 };
 
-export default function TerminosPage() {
+export default async function TerminosPage() {
 	return (
-		<LegalPage title="Términos y Condiciones">
+		<LegalPage title="Términos y Condiciones" backHref={await getLegalBackHref()}>
 			<p>
 				Estos Términos y Condiciones (&quot;Términos&quot;) regulan la contratación y el uso de Gcode, la
 				plataforma de menú digital, pedidos en línea y punto de venta ofrecida como software como servicio
@@ -97,10 +99,13 @@ export default function TerminosPage() {
 					avisaremos por correo con al menos 7 días de anticipación, y no la eliminamos mientras estemos validando
 					un pago tuyo.
 				</p>
+				{/* Las frases de moneda son las mismas de la página /chile (`lib/legal/legal-documents.ts`). */}
 				<p className="mt-2">
-					<Lead>Precios.</Lead> Los precios de cada plan se muestran antes de contratar, en la moneda que
-					corresponde a tu país (por ejemplo, pesos chilenos o dólares estadounidenses), e indican si incluyen
-					impuestos. Si pagas en otra moneda, el tipo de cambio es el que aplica tu banco o la pasarela de pago.
+					<Lead>Precios.</Lead> Antes de contratar ves el precio de cada plan y si incluye impuestos.{" "}
+					{LEGAL_PRICES_IN_USD} {LEGAL_OTHER_CURRENCY}
+				</p>
+				<p className="mt-2">
+					<Lead>Clientes en Chile.</Lead> {LEGAL_MERCADO_PAGO_CLP}
 				</p>
 				<p className="mt-2">
 					<Lead>Clientes en Venezuela.</Lead> Los planes se expresan en dólares estadounidenses. Si pagas en
@@ -109,15 +114,17 @@ export default function TerminosPage() {
 					tu pago, como el IGTF cuando corresponda, son de tu cargo.
 				</p>
 				<p className="mt-2">
-					<Lead>Medios de pago.</Lead> Puedes pagar con PayPal (tarjeta o saldo) o con los medios con comprobante
-					que muestre la plataforma (transferencia, Pago Móvil, Zelle u otros). Con comprobante, el plan se activa o
-					renueva cuando validamos el pago, normalmente dentro de un día hábil. Si el comprobante es ilegible,
-					incompleto o por otro monto, te lo devolveremos para que lo corrijas.
+					<Lead>Medios de pago.</Lead> Puedes pagar con PayPal (tarjeta o saldo), con Mercado Pago en Chile cuando
+					la plataforma lo ofrezca (tarjeta o dinero en cuenta) o con los medios con comprobante que muestre la
+					plataforma (transferencia, Pago Móvil, Zelle u otros). Con PayPal o Mercado Pago, el plan se activa en
+					cuanto se confirma el pago. Con comprobante, el plan se activa o renueva cuando validamos el pago,
+					normalmente dentro de un día hábil. Si el comprobante es ilegible, incompleto o por otro monto, te lo
+					devolveremos para que lo corrijas.
 				</p>
 				<p className="mt-2">
-					<Lead>Promociones y cupones.</Lead> Las promociones (por ejemplo, meses gratis en el primer pago) y los
-					cupones tienen las condiciones que se muestran al usarlos: vigencia, planes a los que aplican y si se
-					pueden combinar. No son canjeables por dinero.
+					<Lead>Promociones y cupones.</Lead> Las promociones (por ejemplo, 2 meses al precio de 1 en tu primer
+					pago) y los cupones tienen las condiciones que se muestran al usarlos: vigencia, planes a los que
+					aplican y si se pueden combinar. No son canjeables por dinero.
 				</p>
 				<p className="mt-2">
 					<Lead>Pago por período y renovación.</Lead> Cada período (mensual o por varios meses) se paga por

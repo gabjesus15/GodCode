@@ -25,8 +25,14 @@ function TickerRun({ hidden }: { hidden?: boolean }) {
 	);
 }
 
+type TickerProps = {
+	socialLinks: LandingSocialLink[];
+	/** A dónde lleva «Crear mi tienda»: las páginas de país pasan `/onboarding?pais=CL|VE`, como su hero. */
+	onboardingHref?: string;
+};
+
 /** Cierre de la página: la última oportunidad de decidir, con la salida a WhatsApp para quien aún duda. */
-export function Ticker({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
+export function Ticker({ socialLinks, onboardingHref = "/onboarding" }: TickerProps) {
 	const whatsapp = socialLinks.find((link) => link.kind === "whatsapp");
 
 	return (
@@ -46,7 +52,7 @@ export function Ticker({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 					<p className="mt-6 text-lg text-[#a1a1aa]">Ármala en una tarde. Pagas cuando la publiques.</p>
 					<div className="mt-10 flex flex-col items-center gap-5 sm:flex-row sm:gap-7">
 						<Link
-							href="/onboarding"
+							href={onboardingHref}
 							className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#4f5bff] px-8 py-4 text-[15px] font-semibold text-white transition-[background-color,transform] duration-200 hover:bg-[#3d47e6] active:scale-[0.98]"
 						>
 							Crear mi tienda
@@ -68,7 +74,7 @@ export function Ticker({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 			</div>
 
 			<Link
-				href="/onboarding"
+				href={onboardingHref}
 				aria-label="Crear mi tienda"
 				data-track-zone="cinta"
 				className="group block overflow-hidden bg-[#4f5bff] py-5 transition-colors duration-300 hover:bg-[#5d68ff]"

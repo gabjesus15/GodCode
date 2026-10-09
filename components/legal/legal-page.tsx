@@ -3,6 +3,9 @@
  *
  * Los textos viven en las páginas; aquí solo va el marco visual y los datos del
  * proveedor, para que las tres páginas digan lo mismo sobre quién es Gcode.
+ *
+ * Este archivo lo importan también componentes de cliente (`ProviderIdentity` en los
+ * términos de la cuenta del menú): nada de `next/headers` ni de código solo de servidor.
  */
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -73,17 +76,22 @@ export function LegalTable({ head, rows }: { head: string[]; rows: ReactNode[][]
 	);
 }
 
-export function LegalPage({ title, children }: { title: string; children: ReactNode }) {
+/**
+ * Marco de las páginas legales. `backHref` es el destino de «Volver»: cada página lo
+ * calcula con `getLegalBackHref()` (`lib/legal/legal-back-href-server`), que lleva a la
+ * pantalla del alta o a la página del sitio de la que venía la persona, o a la home.
+ */
+export function LegalPage({ title, backHref = "/", children }: { title: string; backHref?: string; children: ReactNode }) {
 	return (
 		<div className="mx-auto max-w-2xl px-5 py-10 sm:px-6 sm:py-16">
 			<div className="onboarding-card p-6 sm:p-8">
 				<h1 className="text-xl font-bold text-slate-900 sm:text-2xl">{title}</h1>
-				<p className="mt-2 text-xs text-slate-400">Última actualización: {LEGAL_UPDATED_AT_LABEL}</p>
+				<p className="mt-2 text-xs text-slate-500">Última actualización: {LEGAL_UPDATED_AT_LABEL}</p>
 
 				<div className="mt-6 space-y-5 text-sm leading-relaxed text-slate-600">{children}</div>
 
-				<Link href="/onboarding" className="mt-6 inline-block text-sm font-medium text-indigo-600 hover:underline">
-					← Volver al registro
+				<Link href={backHref} className="mt-6 inline-block text-sm font-medium text-indigo-600 hover:underline">
+					Volver
 				</Link>
 			</div>
 		</div>

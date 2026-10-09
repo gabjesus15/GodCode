@@ -1,6 +1,6 @@
 import type { PublicPlanForLanding } from "@/lib/plans/public-plans";
 import { resolveLowestPlanPrice } from "@/lib/landing/price";
-import { LANDING_POS_WHATSAPP_GREETING, withWhatsAppText, type LandingSocialLink } from "@/lib/landing/contact";
+import { landingSocialLinksWithGreeting, type LandingSocialLink } from "@/lib/landing/contact";
 import type { LandingV3Config } from "@/lib/landing/v3-config";
 
 import { Navbar } from "./navbar";
@@ -28,9 +28,7 @@ type LandingV3ShellProps = {
 export function LandingV3Shell({ plans, country, v3Config, socialLinks: rawSocialLinks }: LandingV3ShellProps) {
   const fromPrice = resolveLowestPlanPrice(plans, country);
   // El WhatsApp de esta página es el de ventas de Gcode POS: abre con el saludo ya escrito.
-  const socialLinks = rawSocialLinks.map((link) =>
-    link.kind === "whatsapp" ? { ...link, href: withWhatsAppText(link.href, LANDING_POS_WHATSAPP_GREETING) } : link,
-  );
+  const socialLinks = landingSocialLinksWithGreeting(rawSocialLinks);
   const floatingSocialLinks = socialLinks.filter(
     (link) => link.kind === "instagram" || link.kind === "whatsapp",
   );

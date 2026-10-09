@@ -9,6 +9,7 @@ import { AlertCircle, Check, Clock, Copy, MailCheck, TicketPercent, Upload, X } 
 import { Button } from "../../../components/ui/button";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
 import { randomId } from "@/lib/analytics/random-id";
+import { isVenezuelaCountry } from "@/lib/geo/venezuela";
 import { rememberOnboardingToken } from "@/lib/onboarding/onboarding-token-storage";
 import { uploadImage } from "@/lib/storage/upload-image-client";
 import { getOnboardingPaymentCopy } from "@/lib/plans/onboarding-payment-copy";
@@ -222,15 +223,18 @@ function PagoContent() {
 	const mpNotice = searchParams?.get("mp") === "pending" ? "pending" : searchParams?.get("mp") === "failure" ? "failure" : null;
 	const paypalContainerId = "onboarding-paypal-buttons";
 
-	const isVenezuela = manualData?.country === "Venezuela" || manualData?.country === "VE";
+	const isVenezuela = isVenezuelaCountry(manualData?.country);
 	const isPaypalSelected = subscriptionMethod === "paypal";
 	// Mercado Pago se elige en el paso 2; `mpOffer` trae la tasa (null si se apagó o falta la tasa).
 	const useMercadoPago = subscriptionMethod === "mercadopago";
-	// Un cupón puede reemplazar la promo de +1 mes; y solo cuenta si se pagan sus meses mínimos.
+	// Un cupón puede reemplazar la promo del primer pago (un mes más); y solo cuenta si se pagan sus meses mínimos.
 	const promoEffective = promoAvailable && (coupon ? coupon.keepsPromo : true);
+	/** Meses que se reciben pagando `paid`: la promo suma uno y el cupón, sus meses si se alcanza su mínimo. */
+	const grantedFor = (paid: number) =>
+		(promoEffective ? paid + 1 : paid) + (coupon && !coupon.problem && paid >= coupon.minMonths ? couponFreeMonths(coupon) : 0);
 	const couponFits = Boolean(coupon && !coupon.problem && months >= coupon.minMonths);
 	const couponFree = coupon && couponFits ? couponFreeMonths(coupon) : 0;
-	const grantedMonths = (promoEffective ? months + 1 : months) + couponFree;
+	const grantedMonths = grantedFor(months);
 
 	function formatPromoDescription(paid: number, granted: number): string {
 		const paidText = `${paid} ${paid === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural}`;
@@ -697,6 +701,19 @@ function PagoContent() {
 	// Mismo redondeo que el checkout (`toClp`): lo que se ve es lo que cobra Mercado Pago.
 	const totalClp = useMercadoPago && mpOffer && total != null && total > 0 ? Math.round(total * mpOffer.rate) : null;
 
+	// «Arma y paga»: si lo que se paga es una tienda ya armada, la barra lateral habla de publicarla,
+	// no de activar una cuenta ni de crear una contraseña (eso ya pasó al armarla).
+	const activationNote = storeDraft
+		? useMercadoPago || isPaypalSelected
+			? copy.draft.instantActivation
+			: copy.draft.manualActivation
+		: useMercadoPago
+			? copy.mercadoPago.activation
+			: isPaypalSelected
+				? copy.ui.paypalActivation
+				: copy.ui.manualActivation;
+	const nextSteps = storeDraft ? copy.draft.nextSteps : copy.ui.nextSteps;
+
 	const summary = (
 		<aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
 			<div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-20px_rgba(15,23,42,0.25)] sm:p-6">
@@ -769,9 +786,7 @@ function PagoContent() {
 				{methodName ? (
 					<div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm">
 						<p className="font-medium text-slate-900">{ui.payWith.replace("{method}", methodName)}</p>
-						<p className="mt-0.5 text-slate-500">
-							{useMercadoPago ? copy.mercadoPago.activation : isPaypalSelected ? ui.paypalActivation : ui.manualActivation}
-						</p>
+						<p className="mt-0.5 text-slate-500">{activationNote}</p>
 					</div>
 				) : null}
 				<Link href={changeMethodHref} className="onboarding-link mt-4 inline-block text-sm font-medium">
@@ -782,7 +797,7 @@ function PagoContent() {
 			<div className="mt-6 px-1">
 				<h2 className="text-sm font-semibold text-slate-900">{ui.nextTitle}</h2>
 				<ol className="mt-3 space-y-2.5">
-					{ui.nextSteps.map((stepText, index) => (
+					{nextSteps.map((stepText, index) => (
 						<li key={stepText} className="flex gap-3 text-sm text-slate-600">
 							<span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-300 text-[11px] font-semibold text-slate-600">
 								{index + 1}
@@ -911,7 +926,9 @@ function PagoContent() {
 			<OnboardingStepBar current={3} />
 			<div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
 				<section className="min-w-0 max-w-2xl">
-					<h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{copy.title}</h1>
+					<h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+						{storeDraft ? copy.draft.title : copy.title}
+					</h1>
 					<p className="mt-3 text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">{copy.subtitle}</p>
 
 					{promoEffective ? (
@@ -926,6 +943,7 @@ function PagoContent() {
 						<div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
 							{[1, 3, 6, 12].map((m) => {
 								const optionTotal = totalFor(m);
+								const optionGranted = grantedFor(m);
 								const selected = months === m;
 								return (
 									<label
@@ -936,7 +954,12 @@ function PagoContent() {
 										<input type="radio" name="months" value={m} checked={selected} onChange={() => setMonths(m)} className="sr-only" />
 										<span className="text-sm font-semibold text-slate-900">{monthsText(m)}</span>
 										<span className="mt-1 text-sm text-slate-600">{optionTotal != null ? usd(optionTotal) : "—"}</span>
-										{promoEffective ? <span className="mt-2 text-xs font-medium text-[#3640C9]">{ui.freeMonth}</span> : null}
+										{/* Lo que recibe con esta opción («Recibes 4 meses» al pagar 3): la promo solo se nombra arriba. */}
+										{optionGranted > m ? (
+											<span className="mt-2 text-xs font-medium text-[#3640C9]">
+												{ui.promoMonths.replace("{months}", monthsText(optionGranted))}
+											</span>
+										) : null}
 									</label>
 								);
 							})}
@@ -1052,16 +1075,18 @@ function PagoContent() {
 						{!appLoaded ? <div className="h-12 w-full animate-pulse rounded-xl bg-slate-100 sm:w-72" aria-hidden /> : null}
 						{appLoaded && isFree ? (
 							<div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:p-6">
-								<p className="text-sm text-slate-700">{copy.coupon.freeCheckout}</p>
+								<p className="text-sm text-slate-700">{storeDraft ? copy.draft.freeCheckout : copy.coupon.freeCheckout}</p>
 								<Button onClick={() => void handlePay()} loading={loading} size="lg" className="onboarding-btn-primary mt-4 h-12 w-full rounded-xl text-[15px] sm:w-auto sm:px-8">
-									{copy.coupon.freeButton}
+									{storeDraft ? copy.draft.freeButton : copy.coupon.freeButton}
 								</Button>
 							</div>
 						) : null}
 						{appLoaded && !isFree && useMercadoPago ? (
 							<div className="rounded-2xl border border-slate-200 p-5 sm:p-6">
 								<p className="text-sm font-semibold text-slate-900">{copy.mercadoPago.blockTitle}</p>
-								<p className="mt-1 text-sm text-slate-500">{mpOffer ? copy.mercadoPago.blockHint : copy.mercadoPago.unavailable}</p>
+								<p className="mt-1 text-sm text-slate-500">
+									{!mpOffer ? copy.mercadoPago.unavailable : storeDraft ? copy.draft.mercadoPagoHint : copy.mercadoPago.blockHint}
+								</p>
 								<Button
 									onClick={() => void handlePay("mercadopago")}
 									loading={loading}

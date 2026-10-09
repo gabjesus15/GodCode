@@ -14,7 +14,7 @@ describe("resolveAnalyticsPageContext", () => {
 	});
 
 	it("clasifica las páginas de marketing como landing", () => {
-		for (const pathname of ["/sobre-godcode", "/calculadora-comisiones"]) {
+		for (const pathname of ["/sobre-godcode", "/calculadora-comisiones", "/chile", "/venezuela", "/labs", "/chile/"]) {
 			expect(resolveAnalyticsPageContext({ pathname, host: "godcode.me" })).toEqual({
 				pageType: "landing",
 				tenantSlug: null,

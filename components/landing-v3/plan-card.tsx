@@ -63,23 +63,24 @@ export function PlanCard({ name, isPopular, variants }: PlanCardProps) {
 			<h3 className="text-sm font-medium uppercase tracking-[0.12em] text-[#a1a1aa]">{name}</h3>
 
 			{variants.length > 1 ? (
+				// Botones con aria-pressed, no un radiogroup: cada uno se tabula y se activa con Enter o
+				// espacio, sin tener que implementar el teclado de flechas que un radio exige.
 				<div
-					role="radiogroup"
+					role="group"
 					aria-label={`Qué incluye el plan ${name}`}
 					className="mt-4 inline-flex self-start rounded-full border border-white/10 bg-black/20 p-0.5"
 				>
 					{variants.map((item, index) => {
-						const checked = index === selected;
+						const pressed = index === selected;
 						return (
 							<button
 								key={item.id}
 								type="button"
-								role="radio"
-								aria-checked={checked}
+								aria-pressed={pressed}
 								onClick={() => setSelected(index)}
 								className={cn(
-									"rounded-full px-3.5 py-1 text-xs font-semibold transition-colors duration-200",
-									checked ? "bg-[#f4f4f5] text-[#0d0d0d]" : "text-[#a1a1aa] hover:text-[#f4f4f5]",
+									"rounded-full px-3.5 py-1 text-xs font-semibold transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4f5bff]",
+									pressed ? "bg-[#f4f4f5] text-[#0d0d0d]" : "text-[#a1a1aa] hover:text-[#f4f4f5]",
 								)}
 							>
 								{item.label}
@@ -89,7 +90,8 @@ export function PlanCard({ name, isPopular, variants }: PlanCardProps) {
 				</div>
 			) : null}
 
-			<p className="mt-4 flex items-baseline gap-1.5">
+			{/* Al cambiar de variante, el lector de pantalla dice el precio nuevo. */}
+			<p className="mt-4 flex items-baseline gap-1.5" aria-live={variants.length > 1 ? "polite" : undefined}>
 				<span className="font-display text-5xl leading-none text-[#f4f4f5] tabular-nums">{variant.price}</span>
 				<span className="text-sm text-[#71717a]">{variant.currency}/mes</span>
 			</p>

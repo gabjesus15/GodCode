@@ -1,15 +1,11 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-import { formatLandingPrice } from "@/lib/landing/price";
+import { buildHeroAssurances, type HeroFromPrice } from "@/lib/landing/hero-assurances";
 import type { LandingV3PhoneSlide } from "@/lib/landing/v3-config";
 
+import { HeroAssurances } from "./hero-assurances";
 import { HeroPhoneShowcase } from "./hero-phone-showcase";
-
-type HeroFromPrice = {
-	price: number;
-	currency: string;
-} | null;
 
 function HeroBackground() {
 	return (
@@ -105,27 +101,8 @@ export function Hero({
 						</Link>
 					</div>
 
-					{/* Las tres dudas de antes de pagar (si la sabré armar, cuánto cuesta, si quedo amarrado), en una línea como las demás de la página. */}
-					<p className="v3-hero-copy mt-8 text-sm leading-relaxed text-[#a1a1aa]">
-						{/* Cada frase va entera con su punto: en el teléfono la línea se parte solo entre frases. */}
-						<span className="whitespace-nowrap">Gratis hasta que la publiques</span>{" "}
-						{fromPrice ? (
-							<>
-								<span className="whitespace-nowrap">
-									<span aria-hidden className="ml-1 mr-2">
-										·
-									</span>
-									Desde {formatLandingPrice(fromPrice.price, fromPrice.currency)} {fromPrice.currency}/mes
-								</span>{" "}
-							</>
-						) : null}
-						<span className="whitespace-nowrap">
-							<span aria-hidden className="ml-1 mr-2">
-								·
-							</span>
-							Sin permanencia
-						</span>
-					</p>
+					{/* Las tres dudas de antes de pagar (si la sabré armar, cuánto cuesta, si quedo amarrado): la misma línea que en las páginas de país. */}
+					<HeroAssurances items={buildHeroAssurances(fromPrice)} className="v3-hero-copy mt-8 text-sm leading-relaxed text-[#a1a1aa]" />
 				</div>
 
 				<div className="v3-hero-phones relative z-10 flex w-full items-center justify-center">

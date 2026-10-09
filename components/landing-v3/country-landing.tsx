@@ -4,10 +4,12 @@ import { ArrowRight, Check } from "lucide-react";
 import { LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
 import type { LandingSocialLink } from "@/lib/landing/contact";
 import { LANDING_COUNTRY_SHARED_FEATURES, type LandingCountry } from "@/lib/landing/countries";
+import { buildHeroAssurances, HERO_ASSURANCE_FIRST_PAYMENT_PROMO } from "@/lib/landing/hero-assurances";
 import { formatLandingPrice } from "@/lib/landing/price";
 
 import { FloatingSocialDock } from "./floating-social-dock";
 import { Footer } from "./footer";
+import { HeroAssurances } from "./hero-assurances";
 import { LandingConversionTracker } from "./landing-conversion-tracker";
 import { Navbar } from "./navbar";
 import { SectionGlow } from "./section-light";
@@ -76,17 +78,11 @@ export function CountryLanding({ country, fromPrice, socialLinks, jsonLd }: Coun
 							</Link>
 						</div>
 
-						<p className="mt-8 text-sm text-[#71717a]">
-							{fromPrice ? (
-								<>
-									Desde {formatLandingPrice(fromPrice.price, fromPrice.currency)} {fromPrice.currency}/mes
-									<span aria-hidden className="mx-2">
-										·
-									</span>
-								</>
-							) : null}
-							Sin comisión por venta · 2 meses al precio de 1 en tu primer pago
-						</p>
+						{/* Las mismas tres garantías que el hero de la home; el país añade la promo del primer pago. */}
+						<HeroAssurances
+							items={buildHeroAssurances(fromPrice, [HERO_ASSURANCE_FIRST_PAYMENT_PROMO])}
+							className="mt-8 text-sm leading-relaxed text-[#a1a1aa]"
+						/>
 					</div>
 				</section>
 
@@ -158,6 +154,10 @@ export function CountryLanding({ country, fromPrice, socialLinks, jsonLd }: Coun
 									Cuánto cuesta en {country.name}
 								</h2>
 								<p className="mt-5 text-lg leading-relaxed text-[#a1a1aa] text-pretty">{country.billingNote}</p>
+								{/* La moneda, con las mismas frases que los Términos: no se resume ni se reescribe aquí. */}
+								{country.currencyNote ? (
+									<p className="mt-3 text-sm leading-relaxed text-[#a1a1aa] text-pretty">{country.currencyNote}</p>
+								) : null}
 								<p className="mt-3 text-sm text-[#71717a]">
 									Sin permanencia: cancelas cuando quieras y sin penalidad.
 								</p>
@@ -206,7 +206,7 @@ export function CountryLanding({ country, fromPrice, socialLinks, jsonLd }: Coun
 					</div>
 				</section>
 
-				<Ticker socialLinks={socialLinks} />
+				<Ticker socialLinks={socialLinks} onboardingHref={`/onboarding?pais=${country.code}`} />
 			</main>
 			<Footer socialLinks={socialLinks} />
 			<FloatingSocialDock links={floatingSocialLinks} />

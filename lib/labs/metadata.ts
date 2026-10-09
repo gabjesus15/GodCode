@@ -8,7 +8,7 @@ import {
 } from "@/lib/landing/brand";
 import { buildOrganizationJsonLd, getOrganizationId } from "@/lib/landing/json-ld";
 
-import { LABS_FAQ, LABS_HOME, LABS_SERVICES } from "./content";
+import { LABS_FAQ, LABS_HOME, LABS_SERVICES, POS_PATH } from "./content";
 
 /**
  * SEO de la home corporativa. Compite por la marca («Gcode Labs») y por
@@ -16,12 +16,14 @@ import { LABS_FAQ, LABS_HOME, LABS_SERVICES } from "./content";
  * Chile. El título termina en el nombre de la empresa, que es el nombre del sitio.
  */
 export const LABS_TITLE = `${LANDING_COMPANY_NAME}: desarrollo web y software a medida en Chile`;
+// Los países son los mismos que nombran el intro, las preguntas frecuentes y los hechos de `content.ts`.
 export const LABS_DESCRIPTION =
-	`Estudio de desarrollo en Santiago de Chile. Sitios web, sistemas a medida, tiendas online e integraciones para empresas de Chile y Venezuela. Creadores de ${LANDING_PRODUCT_NAME}.`;
+	`Estudio de desarrollo en Santiago. Sitios web, sistemas a medida, tiendas e integraciones para empresas de Chile, Venezuela y Estados Unidos. Creadores de ${LANDING_PRODUCT_NAME}.`;
 
 export function buildLabsMetadata(base: string, path: string, options: { index: boolean }): Metadata {
 	const url = `${base}${path}`;
-	const ogImage = { url: `${base}/api/system/og`, width: 1200, height: 630, type: "image/png", alt: LABS_TITLE };
+	// La tarjeta del estudio, no la del producto (`app/api/system/og`, variante `labs`).
+	const ogImage = { url: `${base}/api/system/og?v=labs`, width: 1200, height: 630, type: "image/png", alt: LABS_TITLE };
 
 	return {
 		metadataBase: new URL(base),
@@ -73,6 +75,7 @@ export function buildLabsJsonLd(base: string, path: string): Record<string, unkn
 		areaServed: [
 			{ "@type": "Country", name: "Chile", identifier: "CL" },
 			{ "@type": "Country", name: "Venezuela", identifier: "VE" },
+			{ "@type": "Country", name: "Estados Unidos", identifier: "US" },
 		],
 		hasOfferCatalog: {
 			"@type": "OfferCatalog",
@@ -91,7 +94,7 @@ export function buildLabsJsonLd(base: string, path: string): Record<string, unkn
 		owns: {
 			"@type": "SoftwareApplication",
 			name: LANDING_PRODUCT_NAME,
-			url: `${base}/pos`,
+			url: `${base}${POS_PATH}`,
 			applicationCategory: "BusinessApplication",
 			operatingSystem: "Web",
 		},

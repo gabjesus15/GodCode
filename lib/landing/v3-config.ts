@@ -38,7 +38,7 @@ export function defaultLandingV3AssetsRows(): LandingMediaAssetRow[] {
 		{
 			key: "v3.hero.phone.0",
 			src: "/rica-pizza-bio.png",
-			alt: "Rica Pizza en Gcode — página de enlaces y menú digital",
+			alt: "Rica Pizza en Gcode: página de enlaces y menú digital",
 			label: "Rica Pizza",
 			sub: null,
 			sort_order: 10,

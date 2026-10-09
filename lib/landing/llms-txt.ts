@@ -57,10 +57,10 @@ export async function getMainDomainLlmsTxt(isFullVersion = false): Promise<strin
 
 	markdown += `## Enlaces principales\n`;
 	markdown += `${formatLlmsTxtLink("Sitio principal", `${base}/`, "Página de inicio")}\n`;
-	markdown += `${formatLlmsTxtLink("Registro y onboarding", `${base}/onboarding`, "Crear cuenta nueva")}\n`;
+	markdown += `${formatLlmsTxtLink("Registro y onboarding", `${base}/onboarding`, "Arma tu tienda gratis y paga al publicarla")}\n`;
 	markdown += `${formatLlmsTxtLink(`Sobre ${LANDING_COMPANY_NAME}`, `${base}/sobre-godcode`, "Información institucional: estudio web y creadores de Gcode POS")}\n`;
 	markdown += `${formatLlmsTxtLink("Calculadora de comisiones", `${base}/calculadora-comisiones`, "Cuánto cobran las apps de delivery y cuánto se ahorra con tienda propia")}\n`;
-	markdown += `${formatLlmsTxtLink(`${LANDING_PRODUCT_NAME} en Chile`, `${base}/chile`, "Menú digital y POS para restaurantes en Chile: precios en pesos, Mercado Pago, soporte desde Santiago")}\n`;
+	markdown += `${formatLlmsTxtLink(`${LANDING_PRODUCT_NAME} en Chile`, `${base}/chile`, "Menú digital y POS para restaurantes en Chile: plan fijo en dólares que con Mercado Pago se paga en pesos, soporte desde Santiago")}\n`;
 	markdown += `${formatLlmsTxtLink(`${LANDING_PRODUCT_NAME} en Venezuela`, `${base}/venezuela`, "Menú digital y caja para restaurantes en Venezuela: bolívares y dólares, pago móvil, Zelle, tasa BCV")}\n`;
 	if (isFullVersion) {
 		markdown += `${formatLlmsTxtLink("Resumen IA (llms.txt)", `${base}/llms.txt`, "Versión resumida para LLMs")}\n`;
@@ -87,7 +87,7 @@ export async function getMainDomainLlmsTxt(isFullVersion = false): Promise<strin
 	markdown += `- Delivery e inventario\n`;
 	markdown += `- Dominio propio por negocio (subdominio o dominio custom)\n`;
 	markdown += `- **Sin comisiones por venta** (modelo de suscripción mensual)\n`;
-	markdown += `- Promoción de primer pago: 2 meses al precio de 1\n\n`;
+	markdown += `- Promoción: 2 meses al precio de 1 en tu primer pago\n\n`;
 
 	if (plans.length > 0) {
 		markdown += `## Planes y precios (referencia ${country})\n`;
