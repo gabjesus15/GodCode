@@ -12,6 +12,7 @@ import { Ticker } from "@/components/landing-v3/ticker";
 import { getCountryFromHeaders } from "@/lib/geo/landing-geo-plans";
 import { DEFAULT_LOCALE } from "@/lib/i18n/config";
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
+import { landingSocialLinksWithGreeting } from "@/lib/landing/contact";
 import { getLandingSocialLinks } from "@/lib/landing/contact-server";
 import { getOrganizationId } from "@/lib/landing/json-ld";
 import { resolveLowestPlanPrice } from "@/lib/landing/price";
@@ -76,7 +77,9 @@ export default async function CalculadoraComisionesPage() {
 	if (!isMainDomain(hdrs.get("host") || "")) notFound();
 
 	const country = getCountryFromHeaders(hdrs);
-	const [plans, socialLinks] = await Promise.all([getPublicPlansForLanding(DEFAULT_LOCALE), getLandingSocialLinks()]);
+	const [plans, rawSocialLinks] = await Promise.all([getPublicPlansForLanding(DEFAULT_LOCALE), getLandingSocialLinks()]);
+	// Mismo saludo de WhatsApp que la home y las páginas de país: el chat no abre vacío.
+	const socialLinks = landingSocialLinksWithGreeting(rawSocialLinks);
 	const plan = resolveLowestPlanPrice(plans, country);
 	const floatingSocialLinks = socialLinks.filter((link) => link.kind === "instagram" || link.kind === "whatsapp");
 
