@@ -14,6 +14,11 @@ import {
 } from "@/lib/menu-account/route-helpers";
 import { requireMenuAccount } from "@/lib/menu-account/session";
 import { orphanCancelNote } from "@/lib/orders/orphan-cancel";
+import {
+	resolveCompanyStorefrontAccess,
+	STORE_NOT_OPEN_CODE,
+	STORE_NOT_OPEN_MESSAGE,
+} from "@/lib/tenant/store-draft-viewer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -93,6 +98,14 @@ export async function POST(req: NextRequest) {
 			.maybeSingle();
 		if (!branch?.company_id) return jsonError(404, "Sucursal no encontrada.", { code: "branch_not_found" });
 		const companyId = String(branch.company_id);
+
+		// Solo tiendas abiertas al público: ni vista previa sin pagar, ni suspendida o vencida.
+		// La base lo vuelve a comprobar (create_order_transaction llamada con service role no
+		// se salta la barrera), pero así la cuenta recibe el mismo 403 que el resto del carrito.
+		const access = await resolveCompanyStorefrontAccess(companyId);
+		if (access !== "open") {
+			return jsonError(403, STORE_NOT_OPEN_MESSAGE, { code: STORE_NOT_OPEN_CODE });
+		}
 
 		const { account } = await requireMenuAccount(companyId);
 		const clientId = await ensureMenuAccountClient(account);

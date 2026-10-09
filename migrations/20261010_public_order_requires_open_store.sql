@@ -31,13 +31,13 @@
 -- `p_company_id` si llega: en `create_public_order_v1`, si llegan las dos y no coinciden, se
 -- rechaza (`branch_company_mismatch`); el carrito manda la empresa de la misma sucursal.
 --
--- En `create_order_transaction` la comprobación se salta para el personal del propio negocio
--- (`users.auth_user_id = auth.uid()` de esa empresa) y para el servidor (`service_role`): la
--- caja del Panel crea pedidos manuales por ahí y hoy no mira la suscripción, así que cortarla
--- aquí la dejaría sin vender en pleno servicio el día que vence el plan, con un error crudo.
--- La barrera es para clientes y anónimos, que son quienes podían saltarse las páginas
--- públicas. Bloquear también la caja con el plan vencido es otra decisión, y si se toma va
--- con su mensaje en el Panel.
+-- En `create_order_transaction` la comprobación se salta solo para el personal del propio
+-- negocio (`users.auth_user_id = auth.uid()` de esa empresa): la caja del Panel crea pedidos
+-- manuales por ahí y hoy no mira la suscripción, así que cortarla aquí la dejaría sin vender en
+-- pleno servicio el día que vence el plan, con un error crudo. Bloquear también la caja con el
+-- plan vencido es otra decisión, y si se toma va con su mensaje en el Panel. El servidor
+-- (service role, sin `auth.uid()`) sí pasa por la comprobación: la ruta de pedidos de las
+-- cuentas del menú (`app/api/menu-account/order`) llama a esta función con service role.
 --
 -- Correr DESPUÉS de migrations/20261001_public_order_client_request_id.sql y de
 -- 20260930_branch_business_hours.sql. Idempotente: `create or replace` y el parche de
@@ -201,10 +201,9 @@ begin
     v_anchor || $p$
 
   -- Tienda abierta al público: ni vista previa sin pagar, ni suspendida o vencida. No aplica
-  -- al personal del propio negocio (la caja) ni al servidor: ver la cabecera de
+  -- al personal del propio negocio (la caja): ver la cabecera de
   -- 20261010_public_order_requires_open_store.sql.
-  if coalesce(auth.role(), '') <> 'service_role'
-     and not exists (
+  if not exists (
        select 1 from public.users u
        where u.auth_user_id = auth.uid()
          and u.company_id = v_company_id

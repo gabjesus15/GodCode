@@ -32,6 +32,13 @@ vi.mock("@/lib/menu-account/client-link", () => ({
 	ensureMenuAccountClient: vi.fn(async () => "ficha-de-la-sesion"),
 }));
 
+// Acceso a la tienda: abierta salvo que un caso diga otra cosa.
+const accessHolder: { current: "open" | "preview" | "coming-soon" | "closed" | null } = { current: "open" };
+vi.mock("@/lib/tenant/store-draft-viewer", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@/lib/tenant/store-draft-viewer")>();
+	return { ...actual, resolveCompanyStorefrontAccess: vi.fn(async () => accessHolder.current) };
+});
+
 import { POST } from "@/app/api/menu-account/order/route";
 
 const BRANCH = "11111111-1111-4111-8111-111111111111";
@@ -82,6 +89,7 @@ function mockDb(
  */
 describe("POST /api/menu-account/order", () => {
 	beforeEach(() => {
+		accessHolder.current = "open";
 		sessionHolder.current = { account: { id: "cuenta-ana", full_name: "Ana Pérez" } };
 	});
 
@@ -179,4 +187,22 @@ describe("POST /api/menu-account/order", () => {
 		expect(abandon.eq).toHaveBeenCalledWith("status", "pending");
 		expect(abandon.eq).toHaveBeenCalledWith("client_id", "ficha-de-la-sesion");
 	});
+});
+
+describe("POST /api/menu-account/order con la tienda cerrada", () => {
+	beforeEach(() => {
+		sessionHolder.current = { account: { id: "acc-1", full_name: "Ana Pérez" } };
+	});
+
+	for (const access of ["preview", "coming-soon", "closed", null] as const) {
+		it(`responde 403 store_not_open y no crea el pedido (${String(access)})`, async () => {
+			const admin = mockDb({ data: { id: 1 }, error: null });
+			accessHolder.current = access;
+			const res = await post(body());
+			expect(res.status).toBe(403);
+			const json = (await res.json()) as { code?: string };
+			expect(json.code).toBe("store_not_open");
+			expect(admin.rpc).not.toHaveBeenCalled();
+		});
+	}
 });
