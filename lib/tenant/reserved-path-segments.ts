@@ -24,6 +24,8 @@ export const MAIN_DOMAIN_RESERVED_PATH_SEGMENTS = new Set([
 	// Páginas de país del landing (app/(landing-v3)/{chile,venezuela}).
 	"chile",
 	"venezuela",
+	// Vista previa de la home corporativa de Gcode Labs (app/labs).
+	"labs",
 	"images",
 	"post-login",
 	// Panel super admin: sin esto "/landing" se trataba como el slug de un tenant.

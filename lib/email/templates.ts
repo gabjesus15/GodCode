@@ -135,6 +135,15 @@ export type EmailTemplates = {
 		adminUrl: string;
 	};
 	team_onboarding_followup: { businessName: string; name: string; email: string; contactDate: string; adminUrl: string };
+	team_labs_quote: {
+		name: string;
+		company: string;
+		email: string;
+		phone?: string;
+		projectType: string;
+		budget: string;
+		message: string;
+	};
 };
 
 export type EmailKind = keyof EmailTemplates;
@@ -784,6 +793,29 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 			},
 		],
 		cta: { label: "Abrir el panel", url: d.adminUrl },
+	}),
+	team_labs_quote: (d) => ({
+		audience: "team",
+		tone: "brand",
+		subject: `Cotización Gcode Labs: ${d.company}`,
+		preheader: `${d.name} · ${d.projectType}`,
+		title: `Nueva cotización: ${d.company}`,
+		intro: "Llegó una solicitud desde el formulario de Gcode Labs. Responder en menos de dos días hábiles.",
+		blocks: [
+			{
+				type: "summary",
+				rows: [
+					{ label: "Empresa", value: d.company },
+					{ label: "Contacto", value: d.name },
+					{ label: "Correo", value: d.email },
+					...(d.phone ? [{ label: "WhatsApp", value: d.phone }] : []),
+					{ label: "Proyecto", value: d.projectType },
+					{ label: "Presupuesto", value: d.budget },
+				],
+			},
+			{ type: "text", text: d.message },
+		],
+		cta: { label: "Responder por correo", url: `mailto:${d.email}` },
 	}),
 };
 
