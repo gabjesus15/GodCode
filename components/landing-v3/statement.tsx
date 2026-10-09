@@ -12,12 +12,11 @@ export function Statement() {
 				intensity={0.13}
 			/>
 			<div className="v3-container flex flex-col items-center">
-				<blockquote data-reveal className="max-w-4xl text-balance text-center text-2xl font-medium leading-snug text-[#f4f4f5] md:text-4xl lg:text-5xl">
-					<span className="text-[#4f5bff]">&ldquo;</span>
+				{/* Sin comillas: es nuestra frase, no la de un cliente. Entre comillas se lee como testimonio. */}
+				<p data-reveal className="max-w-4xl text-balance text-center text-2xl font-medium leading-snug text-[#f4f4f5] md:text-4xl lg:text-5xl">
 					{plain}
 					<span className="text-[#4f5bff]">{accent}</span>
-					<span className="text-[#4f5bff]">&rdquo;</span>
-				</blockquote>
+				</p>
 			</div>
 		</section>
 	);

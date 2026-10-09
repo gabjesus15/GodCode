@@ -25,7 +25,12 @@ export const LANDING_FAQ: LandingFaqItem[] = [
 	{
 		question: "¿Cuánto cuesta realmente?",
 		answer:
-			"Los precios están en la sección de planes. No hay costos ocultos, comisiones por venta ni cargos sorpresa. En tu primer pago: 2 meses al precio de 1.",
+			"Armar tu tienda no cuesta nada. Al publicarla eliges un plan de la sección de planes y pagas ese monto fijo cada mes, sin comisiones por venta ni cargos sorpresa. En tu primer pago llevas 2 meses al precio de 1.",
+	},
+	{
+		question: "¿Tengo que pagar para probarlo?",
+		answer:
+			"No. Te registras, subes tu carta, pones tu logo y tus colores, y ves tu tienda en vista previa con tu propio link. Pagas solo cuando decides publicarla y recibir pedidos.",
 	},
 	{
 		question: "¿Puedo cancelar cuando quiera?",
@@ -39,7 +44,7 @@ export const LANDING_FAQ: LandingFaqItem[] = [
 	{
 		question: "¿Cuánto tardo en tener mi tienda lista?",
 		answer:
-			"Si ya tienes tus productos y fotos, menos de una hora. El registro toma unos 5 minutos.",
+			"En una tarde la tienes funcionando. El registro toma unos 5 minutos y, si ya tienes tus productos y fotos a mano, cargar el menú lleva menos de una hora.",
 	},
 	{
 		question: "¿Puedo tener más de una sucursal?",

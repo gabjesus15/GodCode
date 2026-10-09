@@ -1,7 +1,7 @@
 const STEPS = [
-	{ title: "Crea tu cuenta", text: "Elige tu plan y registra tu negocio en unos minutos." },
-	{ title: "Sube tu carta", text: "Productos, fotos y precios. Sin saber de tecnología." },
-	{ title: "Comparte tu link", text: "En Instagram, en la mesa o por WhatsApp. Los pedidos llegan a tu caja." },
+	{ title: "Crea tu cuenta", text: "Solo tu correo y el nombre de tu negocio." },
+	{ title: "Arma tu tienda", text: "Carta, fotos y precios. La ves en vista previa antes de pagar." },
+	{ title: "Publícala y vende", text: "Eliges tu plan, compartes tu link en Instagram o en la mesa, y los pedidos llegan a tu caja." },
 ] as const;
 
 export function HowItWorks() {

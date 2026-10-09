@@ -105,16 +105,26 @@ export function Hero({
 						</Link>
 					</div>
 
-					<p className="v3-hero-copy mt-8 text-sm text-[#71717a]">
+					{/* Las tres dudas de antes de pagar (si la sabré armar, cuánto cuesta, si quedo amarrado), en una línea como las demás de la página. */}
+					<p className="v3-hero-copy mt-8 text-sm leading-relaxed text-[#a1a1aa]">
+						{/* Cada frase va entera con su punto: en el teléfono la línea se parte solo entre frases. */}
+						<span className="whitespace-nowrap">Gratis hasta que la publiques</span>{" "}
 						{fromPrice ? (
 							<>
-								Desde {formatLandingPrice(fromPrice.price, fromPrice.currency)} {fromPrice.currency}/mes
-								<span aria-hidden className="mx-2">
-									·
-								</span>
+								<span className="whitespace-nowrap">
+									<span aria-hidden className="ml-1 mr-2">
+										·
+									</span>
+									Desde {formatLandingPrice(fromPrice.price, fromPrice.currency)} {fromPrice.currency}/mes
+								</span>{" "}
 							</>
 						) : null}
-						2 meses al precio de 1 en tu primer pago
+						<span className="whitespace-nowrap">
+							<span aria-hidden className="ml-1 mr-2">
+								·
+							</span>
+							Sin permanencia
+						</span>
 					</p>
 				</div>
 

@@ -44,6 +44,24 @@ function normalizeWhatsAppUrl(raw: string | undefined): string | null {
 	return `https://wa.me/${digits}`;
 }
 
+/**
+ * Primer mensaje del chat de ventas de Gcode POS. Con el texto escrito, quien duda solo tiene que
+ * tocar «Enviar» (empezar una conversación en blanco es justo lo que frena), y sabemos que viene de la web.
+ */
+export const LANDING_POS_WHATSAPP_GREETING = "Hola, vi Gcode POS en la web y quiero saber si me sirve para mi restaurante.";
+
+/** Deja el chat abierto con `text` ya escrito. Solo enlaces wa.me / api.whatsapp.com y sin texto propio. */
+export function withWhatsAppText(url: string, text: string): string {
+	try {
+		const parsed = new URL(url);
+		const host = parsed.hostname.toLowerCase();
+		if ((host !== "wa.me" && host !== "api.whatsapp.com") || parsed.searchParams.has("text")) return url;
+		return `${url}${parsed.search ? "&" : "?"}text=${encodeURIComponent(text)}`;
+	} catch {
+		return url;
+	}
+}
+
 function instagramDisplay(url: string): string {
 	try {
 		const handle = new URL(url).pathname.replace(/\//g, "").trim();
