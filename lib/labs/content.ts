@@ -34,10 +34,20 @@ export type LabsScreen = {
 	frame: "phone" | "laptop" | "browser";
 	/** Texto corto bajo la captura (hero, producto). */
 	label?: string;
-	/** De qué proyecto es, para la lámina abierta del muestrario del hero. */
-	project?: string;
 	/** Dirección que muestra la barra del navegador. */
 	address?: string;
+};
+
+/** Un proyecto en la vitrina del hero: su pantalla de escritorio y, si la hay, la de teléfono. */
+export type LabsShowcaseItem = {
+	/** Nombre del proyecto, en la pestaña. */
+	name: string;
+	/** Qué es, en tres o cuatro palabras, bajo el nombre. */
+	caption: string;
+	/** La pantalla de escritorio, en una ventana de navegador. */
+	desktop: LabsScreen;
+	/** La de teléfono: en escritorio se superpone a la ventana; en el teléfono es la única que se ve. */
+	phone?: LabsScreen;
 };
 
 export type LabsProcessStep = { num: string; title: string; text: string };
@@ -53,8 +63,10 @@ export type LabsProject = {
 	scope: string[];
 	/** Marca el producto propio para dibujarlo distinto. */
 	ownProduct?: boolean;
-	/** Captura real del proyecto (en /public). Sin ella, la tarjeta dibuja una ventana de muestra con el dominio. */
+	/** Captura real del proyecto (en /public), en una ventana de navegador. Sin ella, la tarjeta dibuja una ventana de muestra con el dominio. */
 	image?: LabsScreen;
+	/** Captura de teléfono, superpuesta a la ventana en la esquina de la tarjeta. */
+	phone?: LabsScreen;
 };
 
 export type LabsTeamMember = { name: string; role: string; photoUrl?: string; linkedinUrl?: string };
@@ -112,6 +124,8 @@ export const LABS_HOME = {
 		"No reinventamos la base de cada proyecto. Trabajamos con tecnología que mantenemos en producción todos los días y la conectamos con los sistemas que tu empresa ya tiene.",
 	projectsEyebrow: "04 · Proyectos",
 	projectsTitle: "Trabajo reciente",
+	/** Solo lo que está en producción: sin cifras ni promesas. */
+	projectsIntro: "Lo que está en producción hoy: nuestro producto, dos apps propias y un sitio con reservas para un cliente en Estados Unidos.",
 	teamEyebrow: "05 · Equipo",
 	teamTitle: "Quiénes somos",
 	teamIntro:
@@ -178,16 +192,31 @@ export const LABS_SERVICES: LabsService[] = [
 	},
 ];
 
-/**
- * Las pantallas del escenario del hero: capturas reales de Gcode POS tal como lo usan los
- * restaurantes. Cuando haya capturas de otros proyectos (Auto Care Planet), se suman aquí.
- */
-export const LABS_HERO_SCREENS: LabsScreen[] = [
-	{ src: "/labs/capturas/gcode-pos-menu.jpg", alt: "Menú digital de Rica Pizza en Gcode POS: fotos de las pizzas, precios y una oferta", width: 600, height: 1368, frame: "phone", label: "Menú digital con pedidos", project: "Gcode POS · Rica Pizza" },
-	{ src: "/labs/capturas/midinerito-inicio.jpg", alt: "Inicio de MiDinerito: saldo en dólares con su equivalente en bolívares y gasto por semana", width: 600, height: 1367, frame: "phone", label: "App de finanzas", project: "MiDinerito" },
-	{ src: "/labs/capturas/autocareplanet-inicio.jpg", alt: "Portada de autocareplanet.com en un portátil, con la reserva de citas", width: 1280, height: 800, frame: "laptop", label: "Sitio web con reservas", project: "Auto Care Planet" },
-	{ src: "/labs/capturas/colorin-app.jpg", alt: "Colorín, app para dibujar y colorear, en un teléfono", width: 600, height: 1367, frame: "phone", label: "App para niños", project: "Colorín" },
-	{ src: "/labs/capturas/gcode-pos-pedido-recibido.jpg", alt: "Pedido recibido en el menú de Rica Pizza, con el aviso de contacto por WhatsApp y el local de retiro", width: 600, height: 1368, frame: "phone", label: "Pedido confirmado", project: "Gcode POS · Rica Pizza" },
+/** La vitrina del hero: cuatro proyectos reales, uno a la vez. Primero el producto propio; luego los tres de la cuadrícula de proyectos. */
+export const LABS_SHOWCASE: LabsShowcaseItem[] = [
+	{
+		name: LANDING_PRODUCT_NAME,
+		caption: "Menú digital con pedidos · Rica Pizza",
+		desktop: { src: "/labs/capturas/gcode-pos-menu-escritorio.jpg", alt: "Menú digital de Rica Pizza en Gcode POS, en el navegador: fotos de las pizzas, precios y una oferta", width: 1280, height: 800, frame: "browser", address: "Rica Pizza · Menú digital" },
+		phone: { src: "/labs/capturas/gcode-pos-menu.jpg", alt: "El mismo menú de Rica Pizza en el teléfono", width: 600, height: 1368, frame: "phone" },
+	},
+	{
+		name: "Auto Care Planet",
+		caption: "Sitio web con reservas y pago",
+		desktop: { src: "/labs/capturas/autocareplanet-inicio.jpg", alt: "Portada de autocareplanet.com con el buscador de citas", width: 1280, height: 800, frame: "browser", address: "autocareplanet.com" },
+	},
+	{
+		name: "MiDinerito",
+		caption: "App de finanzas personales",
+		desktop: { src: "/labs/capturas/midinerito-escritorio.jpg", alt: "Inicio de MiDinerito en el navegador: saldo total, cobros por confirmar y metas de ahorro", width: 1280, height: 800, frame: "browser", address: "midinerito.app" },
+		phone: { src: "/labs/capturas/midinerito-inicio.jpg", alt: "Inicio de MiDinerito en el teléfono: saldo en dólares con su equivalente en bolívares", width: 600, height: 1367, frame: "phone" },
+	},
+	{
+		name: "Colorín",
+		caption: "App para dibujar y colorear",
+		desktop: { src: "/labs/capturas/colorin-escritorio.jpg", alt: "Colorín en el navegador: lienzo para colorear con la paleta y las herramientas", width: 1280, height: 800, frame: "browser", address: "colorin.games" },
+		phone: { src: "/labs/capturas/colorin-app.jpg", alt: "Colorín en el teléfono, con un dinosaurio a medio colorear", width: 600, height: 1367, frame: "phone" },
+	},
 ];
 
 /** Las dos pantallas de la sección del producto propio. */
@@ -239,7 +268,8 @@ export const LABS_PROJECTS: LabsProject[] = [
 		linkLabel: "Ver el producto",
 		scope: ["Plataforma multiempresa con datos aislados", "Cobros con PayPal, Mercado Pago, Zelle y pago móvil, con tasa BCV", "Dominio propio por negocio", "Alta en línea con pago y verificación"],
 		ownProduct: true,
-		image: { src: "/labs/capturas/gcode-pos-landing.jpg", alt: "Página de Gcode POS: menú digital y POS para restaurantes", width: 1024, height: 589, frame: "laptop" },
+		image: { src: "/labs/capturas/gcode-pos-landing.jpg", alt: "Página de Gcode POS: menú digital y POS para restaurantes", width: 1024, height: 589, frame: "browser", address: "godcode.me/pos" },
+		phone: { src: "/labs/capturas/gcode-pos-pedido.jpg", alt: "Carrito de un pedido en el menú de Rica Pizza, con el total en dólares y en bolívares", width: 600, height: 1368, frame: "phone" },
 	},
 	{
 		name: "Auto Care Planet",
@@ -249,7 +279,7 @@ export const LABS_PROJECTS: LabsProject[] = [
 		href: "https://autocareplanet.com",
 		linkLabel: "Ver el sitio en vivo",
 		scope: ["Catálogo de servicios con precios", "Reserva con calendario y cobro con Stripe, completo o con depósito", "Términos de reserva y cancelación", "Galería de trabajos y preguntas frecuentes"],
-		image: { src: "/labs/capturas/autocareplanet-reservar.jpg", alt: "Reserva de una cita en autocareplanet.com: servicio, fecha y pago con tarjeta por Stripe", width: 1280, height: 800, frame: "laptop" },
+		image: { src: "/labs/capturas/autocareplanet-reservar.jpg", alt: "Reserva de una cita en autocareplanet.com: servicio, fecha y pago con tarjeta por Stripe", width: 1280, height: 800, frame: "browser", address: "autocareplanet.com" },
 	},
 	{
 		name: "MiDinerito",
@@ -259,7 +289,8 @@ export const LABS_PROJECTS: LabsProject[] = [
 		href: "https://midinerito.app",
 		linkLabel: "Ver la app",
 		scope: ["Tasas BCV y Binance actualizadas a diario", "Cobros y pagos recurrentes con la pregunta «¿ya te pagó?»", "Cuentas, metas de ahorro, cuotas y gastos compartidos", "Notificaciones push y uso sin conexión"],
-		image: { src: "/labs/capturas/midinerito-escritorio.jpg", alt: "Inicio de MiDinerito en un portátil: saldo total, cobros por confirmar y metas de ahorro", width: 1280, height: 800, frame: "laptop" },
+		image: { src: "/labs/capturas/midinerito-escritorio.jpg", alt: "Inicio de MiDinerito en el navegador: saldo total, cobros por confirmar y metas de ahorro", width: 1280, height: 800, frame: "browser", address: "midinerito.app" },
+		phone: { src: "/labs/capturas/midinerito-cobros.jpg", alt: "Cobros y pagos del mes en MiDinerito, en el teléfono", width: 600, height: 1367, frame: "phone" },
 	},
 	{
 		name: "Colorín",
@@ -269,7 +300,8 @@ export const LABS_PROJECTS: LabsProject[] = [
 		href: "https://www.colorin.games",
 		linkLabel: "Ver la app",
 		scope: ["42 plantillas con los contornos siempre por encima", "Estrellas, niveles, racha diaria y logros", "Pago único del Club con PayPal en la web y Google Play en Android, verificado en el servidor", "Zona de padres y compartir con control parental"],
-		image: { src: "/labs/capturas/colorin-escritorio.jpg", alt: "Colorín en un portátil: lienzo para colorear con la paleta y las herramientas", width: 1280, height: 800, frame: "laptop" },
+		image: { src: "/labs/capturas/colorin-escritorio.jpg", alt: "Colorín en el navegador: lienzo para colorear con la paleta y las herramientas", width: 1280, height: 800, frame: "browser", address: "colorin.games" },
+		phone: { src: "/labs/capturas/colorin-app.jpg", alt: "Colorín en el teléfono, con un dinosaurio a medio colorear", width: 600, height: 1367, frame: "phone" },
 	},
 ];
 

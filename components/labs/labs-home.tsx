@@ -52,6 +52,9 @@ const rise = (order: number) => ({ "--labs-i": order }) as CSSProperties;
 /** Fondos suaves que se van alternando en tarjetas y grupos: violeta, rosa, amarillo y naranja. */
 const TINTS = ["bg-[#eef0ff]", "bg-[#fff0f6]", "bg-[#fff8db]", "bg-[#fff1e8]"] as const;
 
+/** Fondos de las tarjetas de proyecto: tintas apagadas, una por proyecto, para que el color lo ponga la captura. */
+const PROJECT_TINTS = ["bg-[#eef0ff]", "bg-[#edf1f6]", "bg-[#ecf4ef]", "bg-[#fbf1ea]"] as const;
+
 /** Las tarjetas del método, de color pleno como las de la referencia. */
 const PROCESS_COLORS = [
 	"bg-[#ff7a3d] text-white",
@@ -441,43 +444,44 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 				{/* Proyectos */}
 				<section id="proyectos" className="scroll-mt-24 px-6 py-24 sm:py-32">
 					<div className="mx-auto max-w-6xl">
-						<div className="labs-reveal text-center">
+						<div className="labs-reveal mx-auto max-w-2xl text-center">
 							<Eyebrow>{LABS_HOME.projectsEyebrow}</Eyebrow>
 							<h2 className="mt-5 text-[clamp(2.2rem,4.6vw,3.75rem)] font-semibold leading-[1.05] tracking-[-0.03em]">
 								{LABS_HOME.projectsTitle}
 							</h2>
+							<p className="mt-5 text-[17px] leading-relaxed text-[#6b6b76] text-pretty">{LABS_HOME.projectsIntro}</p>
 						</div>
-						<ul className="mt-14 grid gap-6 lg:grid-cols-2">
+						{/* Cuadrícula de casos, como en los estudios grandes: la captura manda, el texto va debajo y la tarjeta no lleva borde ni sombra. */}
+						<ul className="mt-14 grid gap-x-8 gap-y-14 lg:grid-cols-2">
 							{LABS_PROJECTS.map((project, index) => {
 								const external = project.href?.startsWith("http");
 								const body = (
 									<>
 										<ProjectArt project={project} index={index} />
-										<div className="p-8">
-											<p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#15151a]/60">{project.kind}</p>
-											<h3 className="mt-3 flex items-center gap-2 text-2xl font-semibold tracking-tight">
-												{project.name}
-												{project.href ? (
-													<ArrowUpRight
-														className="h-5 w-5 text-[#6b6b76] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-														aria-hidden
-													/>
-												) : null}
-											</h3>
-											<p className="mt-3 leading-relaxed text-[#6b6b76] text-pretty">{project.summary}</p>
-											<p className="mt-5 text-sm leading-relaxed text-[#6b6b76]">{dotted(project.scope)}</p>
+										<div className="mt-6 flex items-start justify-between gap-6">
+											<div className="min-w-0">
+												<h3 className="flex items-center gap-2 text-[1.35rem] font-semibold tracking-tight">
+													{project.name}
+													{project.href ? (
+														<ArrowUpRight
+															className="h-5 w-5 text-[#6b6b76] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+															aria-hidden
+														/>
+													) : null}
+												</h3>
+												<p className="mt-1 text-sm text-[#6b6b76]">{project.kind}</p>
+											</div>
 											{project.href && project.linkLabel ? (
-												<p className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[#15151a] underline decoration-black/20 underline-offset-4 group-hover:decoration-black/60">
+												<span className="mt-0.5 shrink-0 rounded-full border border-black/10 px-3.5 py-1.5 text-xs font-semibold text-[#15151a] transition-colors group-hover:border-black/40">
 													{project.linkLabel}
-												</p>
+												</span>
 											) : null}
 										</div>
+										<p className="mt-4 leading-relaxed text-[#6b6b76] text-pretty">{project.summary}</p>
+										<p className="mt-4 text-sm leading-relaxed text-[#8a8a94]">{dotted(project.scope)}</p>
 									</>
 								);
-								const className = cn(
-									"labs-reveal group block h-full overflow-hidden rounded-[2rem] border border-black/[0.06] bg-white shadow-[0_30px_60px_-44px_rgba(20,8,90,0.35)] transition-transform duration-300 hover:-translate-y-1",
-									`labs-stagger-${index % 2}`,
-								);
+								const className = cn("labs-reveal group block h-full", `labs-stagger-${index % 2}`);
 								return (
 									<li key={project.name}>
 										{project.href ? (
@@ -755,51 +759,48 @@ function ServiceArt({ service, index }: { service: LabsService; index: number })
 	);
 }
 
-/** Cabecera de la tarjeta de proyecto: la captura real del proyecto en un portátil (o una ventana de navegador); sin captura, una ventana de muestra con el dominio. */
+/**
+ * La imagen de cada caso: un fondo de tinta apagada, la captura de escritorio en una ventana de
+ * navegador que sale por el borde inferior y, si la hay, la de teléfono superpuesta en la esquina.
+ * Al pasar el ratón la escena crece apenas. Sin captura, una ventana de muestra con el dominio.
+ */
 function ProjectArt({ project, index }: { project: LabsProject; index: number }) {
 	const external = project.href?.startsWith("http");
-	const address = external ? safeHostname(project.href!) : `${LANDING_PRODUCT_NAME.toLowerCase().replace(/\s+/g, "")}.app`;
-	const gradient = index % 2 === 0 ? "bg-[linear-gradient(135deg,#6a5cff_0%,#4a2fd8_60%,#36219f_100%)]" : "bg-[linear-gradient(135deg,#ff7a3d_0%,#ff5fa8_60%,#c7368a_100%)]";
+	const address = project.image?.address ?? (external ? safeHostname(project.href!) : undefined);
 	return (
-		<div aria-hidden={!project.image} className={cn("relative h-56 overflow-hidden", gradient)}>
-			<span className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:20px_20px] [mask-image:radial-gradient(70%_70%_at_20%_20%,#000,transparent)]" />
-			{project.image?.frame === "laptop" ? (
-				<LaptopFrame
-					screen={project.image}
-					cut
-					className="absolute inset-x-10 top-9 transition-transform duration-500 group-hover:-translate-y-2"
-					sizes="(min-width: 1024px) 480px, 90vw"
-				/>
-			) : project.image?.frame === "phone" ? (
-				<PhoneFrame
-					screen={project.image}
-					cut
-					className="absolute left-1/2 top-9 w-48 -translate-x-1/2 transition-transform duration-500 group-hover:-translate-y-2"
-					sizes="192px"
-				/>
-			) : project.image ? (
-				<BrowserFrame
-					screen={project.image}
-					address={address}
-					className="absolute inset-x-10 top-10 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)] transition-transform duration-500 group-hover:-translate-y-2"
-					sizes="(min-width: 1024px) 480px, 90vw"
-				/>
-			) : (
-				<div className="absolute inset-x-10 bottom-0 top-10 rounded-t-2xl bg-white p-5 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.6)] transition-transform duration-500 group-hover:-translate-y-2">
-					<div className="flex items-center gap-2">
-						<span className="h-2 w-2 rounded-full bg-[#ff7a3d]" />
-						<span className="h-2 w-2 rounded-full bg-[#ffd33d]" />
-						<span className="h-2 w-2 rounded-full bg-[#22c58b]" />
-						<span className="ml-2 flex-1 truncate rounded-full bg-[#f4f4f8] px-3 py-1 text-[11px] text-[#6b6b76]">{address}</span>
+		<div className={cn("relative aspect-[4/3] overflow-hidden rounded-[1.5rem] border border-black/[0.06]", PROJECT_TINTS[index % PROJECT_TINTS.length])}>
+			<div className="absolute inset-0 transition-transform duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] group-hover:scale-[1.025]">
+				{project.image ? (
+					<BrowserFrame
+						screen={project.image}
+						address={address}
+						cut
+						className={cn("absolute -bottom-[4%] left-1/2 w-[92%] -translate-x-1/2", project.phone && "left-[4%] w-full translate-x-0")}
+						sizes="(min-width: 1024px) 500px, 92vw"
+					/>
+				) : (
+					<div className="absolute inset-x-[8%] bottom-0 top-[12%] rounded-t-xl bg-white p-5 shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_30px_60px_-30px_rgba(0,0,0,0.45)]">
+						<div className="flex items-center gap-1.5">
+							<span className="h-2.5 w-2.5 rounded-full bg-[#d6d6dc]" />
+							<span className="h-2.5 w-2.5 rounded-full bg-[#d6d6dc]" />
+							<span className="h-2.5 w-2.5 rounded-full bg-[#d6d6dc]" />
+							<span className="ml-2 flex-1 truncate rounded-md bg-[#f6f6f8] px-3 py-1 text-[11px] text-[#6b6b76]">{address}</span>
+						</div>
+						<p className="mt-5 text-xl font-semibold tracking-tight text-[#15151a]">{project.name}</p>
+						<span className="mt-3 block h-2 w-5/6 rounded-full bg-[#ececf1]" />
+						<span className="mt-1.5 block h-2 w-3/5 rounded-full bg-[#ececf1]" />
 					</div>
-					<p className="mt-5 text-xl font-semibold tracking-tight text-[#15151a]">{project.name}</p>
-					<span className="mt-3 block h-2 w-5/6 rounded-full bg-[#e8e8ef]" />
-					<span className="mt-1.5 block h-2 w-3/5 rounded-full bg-[#e8e8ef]" />
-					{project.linkLabel ? (
-						<span className="mt-4 inline-block rounded-full bg-[#15151a] px-3 py-1.5 text-[11px] font-semibold text-white">{project.linkLabel}</span>
-					) : null}
-				</div>
-			)}
+				)}
+				{project.phone ? (
+					<PhoneFrame
+						screen={project.phone}
+						cut
+						className="absolute bottom-0 right-[6%] w-[30%] max-w-[11rem]"
+						sizes="(min-width: 1024px) 176px, 30vw"
+						screenClassName="max-h-[13rem] sm:max-h-[16rem]"
+					/>
+				) : null}
+			</div>
 		</div>
 	);
 }
