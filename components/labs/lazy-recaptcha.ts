@@ -7,8 +7,11 @@
  * cuando la persona empieza a escribir, y el token se pide al enviar.
  *
  * Sin `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` no carga nada y el token sale vacío: la ruta
- * solo lo exige cuando el sitio tiene las dos claves (`app/api/labs/cotizar`).
+ * solo lo exige cuando el sitio tiene las dos claves (`app/api/labs/cotizar`), y entonces
+ * exige también la acción con que se pidió (`RECAPTCHA_ACTIONS`).
  */
+
+import type { RecaptchaAction } from "@/lib/onboarding/recaptcha";
 
 type Grecaptcha = {
 	ready(callback: () => void): void;
@@ -49,7 +52,7 @@ function after<T>(ms: number, value: T): Promise<T> {
 }
 
 /** Token para `action`, o cadena vacía si no hay clave, el script no cargó o Google no respondió a tiempo. */
-export async function getRecaptchaToken(action: string): Promise<string> {
+export async function getRecaptchaToken(action: RecaptchaAction): Promise<string> {
 	if (!RECAPTCHA_SITE_KEY) return "";
 	try {
 		const grecaptcha = await Promise.race([preloadRecaptcha(), after(WAIT_MS, null)]);

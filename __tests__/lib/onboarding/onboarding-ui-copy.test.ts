@@ -33,6 +33,21 @@ describe("textos del alta", () => {
 		}
 	});
 
+	it("al confirmar el correo con «solo panel CEO» lleva a elegir el plan", () => {
+		const verify = getOnboardingUiCopy("es", { panelOnly: true }).verify;
+		expect(verify.okBody).toBe("Ahora elige tu plan. Te llevamos en un momento.");
+		expect(verify.continue).toBe("Elegir mi plan");
+	});
+
+	it("la confirmación del correo tiene texto para una falla del servidor en los seis idiomas", () => {
+		for (const locale of LOCALES) {
+			const verify = getOnboardingUiCopy(locale).verify;
+			expect(verify.serverError.trim(), locale).not.toBe("");
+			expect(verify.retry.trim(), locale).not.toBe("");
+			expect(verify.serverError, locale).not.toBe(verify.genericError);
+		}
+	});
+
 	it("el aviso de analítica dice que Google Analytics depende del aviso de cookies", () => {
 		expect(getOnboardingUiCopy("es").form.analyticsNotice).toBe(
 			"Gcode mide el uso de la plataforma (tu panel CEO y tu menú público) con analítica propia y, si lo aceptas en el aviso de cookies, Google Analytics.",

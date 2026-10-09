@@ -5,19 +5,22 @@ import { fillCopy, getOnboardingUiCopy } from "@/lib/onboarding/onboarding-ui-co
 import { cn } from "@/utils/cn";
 
 /**
- * Registro → Plan → Pago. En móvil, «Paso 2 de 3» con una barra; en escritorio, los tres.
+ * Registro → Tu tienda → Publicar. En móvil, «Paso 2 de 3» con una barra; en escritorio, los tres.
  * `compact` quita la descripción de cada paso (páginas angostas).
+ * `panelOnly`: el plan es «solo panel CEO», sin tienda que armar: Registro → Tu correo → Tu plan.
  */
 export function OnboardingStepBar({
 	current,
 	className,
 	compact = false,
+	panelOnly = false,
 }: {
 	current: 1 | 2 | 3;
 	className?: string;
 	compact?: boolean;
+	panelOnly?: boolean;
 }) {
-	const t = getOnboardingUiCopy(useLocale()).steps;
+	const t = getOnboardingUiCopy(useLocale(), { panelOnly }).steps;
 
 	return (
 		<nav aria-label={t.aria} className={cn("mb-8 sm:mb-10", className)}>

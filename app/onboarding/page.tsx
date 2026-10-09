@@ -6,11 +6,40 @@ import { redirect } from "next/navigation";
 
 import { OnboardingStep1Form } from "@/components/onboarding/steps/OnboardingStep1Form";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
+import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME, LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
 import { resolveOnboardingCountry, sanitizePlanHint } from "@/lib/onboarding/onboarding-entry";
 import { getOnboardingUiCopy } from "@/lib/onboarding/onboarding-ui-copy";
+import { resolvePlanProductMode } from "@/lib/plans/plan-product-mode";
 import { getAppUrl } from "@/lib/tenant/app-url";
+
+/** @service-role public-read
+ *
+ * Solo lee `plans.features` del plan que trae el landing (`?plan=`) para saber si es «solo
+ * panel CEO». El catálogo de planes ya es público; esta página no escribe nada.
+ */
+
+/**
+ * ¿El plan del landing es «solo panel CEO»? Con el mismo filtro que el alta (activo y
+ * público): un plan fuera de venta se descarta al registrarse y el alta sigue con tienda,
+ * así que tampoco cambia los textos. Ante cualquier error, los textos de siempre.
+ */
+async function isPanelOnlyPlanHint(planId: string | null): Promise<boolean> {
+	if (!planId) return false;
+	try {
+		const { data } = await supabaseAdmin
+			.from("plans")
+			.select("features")
+			.eq("id", planId)
+			.eq("is_active", true)
+			.eq("is_public", true)
+			.maybeSingle();
+		return resolvePlanProductMode(data?.features) === "panel_only";
+	} catch {
+		return false;
+	}
+}
 
 export async function generateMetadata(): Promise<Metadata> {
 	const base = getAppUrl();
@@ -57,17 +86,19 @@ export default async function OnboardingPage({
 	const country =
 		resolveOnboardingCountry(resolved?.pais ?? resolved?.country) ?? resolveOnboardingCountry((await headers()).get("x-vercel-ip-country"));
 
-	const t = getOnboardingUiCopy(await getCurrentLocale()).start;
+	// «Solo panel CEO» no arma tienda: la página, la barra de pasos y el formulario lo dicen.
+	const [locale, panelOnly] = await Promise.all([getCurrentLocale(), isPanelOnlyPlanHint(planId)]);
+	const t = getOnboardingUiCopy(locale, { panelOnly }).start;
 
 	return (
 		<main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-12 lg:py-16">
 			<div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:gap-20">
 				<section className="min-w-0 max-w-xl">
-					<OnboardingStepBar current={1} />
+					<OnboardingStepBar current={1} panelOnly={panelOnly} />
 					<h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{t.title}</h1>
 					<p className="mt-3 max-w-lg text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">{t.subtitle}</p>
 					<div className="mt-8 sm:mt-10">
-						<OnboardingStep1Form planId={planId} country={country} />
+						<OnboardingStep1Form planId={planId} country={country} panelOnly={panelOnly} />
 					</div>
 				</section>
 

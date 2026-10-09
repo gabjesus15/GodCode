@@ -6,8 +6,8 @@ import { AlertCircle, ArrowRight, CheckCircle2, Loader2, Lock, MailCheck, PartyP
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics/track-event";
 import { forgetOnboardingToken, readOnboardingToken } from "@/lib/onboarding/onboarding-token-storage";
-import { MIN_OWNER_PASSWORD_LENGTH } from "@/lib/onboarding/owner-password-rules";
-import type { CheckoutFinalizeCopy } from "@/lib/plans/checkout-copy";
+import { MAX_OWNER_PASSWORD_LENGTH, MIN_OWNER_PASSWORD_LENGTH } from "@/lib/onboarding/owner-password-rules";
+import { isSpentPasswordLinkCode, resolveSetPasswordErrorCode, type CheckoutFinalizeCopy } from "@/lib/plans/checkout-copy";
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 
 type FinalizeState = "loading" | "paid" | "pending" | "error";
@@ -20,6 +20,12 @@ type FinalizeResponse = {
   fromDraft?: boolean;
   error?: string;
 };
+
+/**
+ * Cómo quedó «Crea tu contraseña»: el formulario sigue, el enlace ya no sirve (se usó o
+ * venció) o la contraseña se guardó pero la sesión no se pudo abrir aquí.
+ */
+type PasswordStage = "form" | "spent" | "saved";
 
 /** Donde lo espera la celebración con su QR (el asistente, ya con la tienda abierta). */
 const DRAFT_OPENED_PATH = "/cuenta/configurar?paso=publicar&abierta=1";
@@ -59,6 +65,7 @@ export function CheckoutSuccessFinalize({
   const [message, setMessage] = useState<string | null>(captureError ?? null);
   // Token de la solicitud guardado al pagar en esta pestaña: con él se crea la contraseña aquí.
   const [token, setToken] = useState<string | null>(null);
+  const [passwordStage, setPasswordStage] = useState<PasswordStage>("form");
 
   useEffect(() => {
     setToken(readOnboardingToken());
@@ -153,7 +160,7 @@ export function CheckoutSuccessFinalize({
           ? copy.pendingTitle
           : copy.errorTitle;
 
-  const canSetPasswordHere = state === "paid" && result.ownerReady !== false && Boolean(token);
+  const canSetPasswordHere = state === "paid" && result.ownerReady !== false && Boolean(token) && passwordStage === "form";
 
   const detail =
     state === "loading"
@@ -161,12 +168,27 @@ export function CheckoutSuccessFinalize({
       : state === "paid"
         ? result.ownerReady === false
           ? copy.ownerPendingText
-          : canSetPasswordHere
-            ? copy.setPasswordHereText
-            : copy.checkEmailText
+          : passwordStage === "spent"
+            ? copy.linkSpentText
+            : passwordStage === "saved"
+              ? copy.passwordSavedSignIn
+              : canSetPasswordHere
+                ? copy.setPasswordHereText
+                : copy.checkEmailText
         : state === "pending"
           ? copy.pendingText
           : message;
+
+  // El enlace ya no sirve: se crea una contraseña nueva desde la recuperación. Guardada sin
+  // sesión: se entra desde el login.
+  const action =
+    state !== "paid" || result.ownerReady === false
+      ? null
+      : passwordStage === "spent"
+        ? { href: "/login/recuperar", label: copy.linkSpentButton }
+        : passwordStage === "saved"
+          ? { href: "/login", label: copy.loginButton }
+          : null;
 
   const Icon = state === "loading" ? Loader2 : state === "paid" ? (result.ownerReady === false ? CheckCircle2 : MailCheck) : AlertCircle;
 
@@ -177,15 +199,61 @@ export function CheckoutSuccessFinalize({
         <div className="min-w-0">
           <p className="text-sm font-semibold">{title}</p>
           {detail ? <p className="mt-0.5 text-sm opacity-90">{detail}</p> : null}
+          {action ? (
+            <a
+              href={action.href}
+              className="mt-3 inline-flex h-10 items-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              {action.label}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </a>
+          ) : null}
         </div>
       </div>
-      {canSetPasswordHere && token ? <FirstPasswordForm refParam={refParam} token={token} copy={copy} /> : null}
+      {canSetPasswordHere && token ? (
+        <FirstPasswordForm
+          refParam={refParam}
+          token={token}
+          copy={copy}
+          onSpent={() => setPasswordStage("spent")}
+          onSavedWithoutSession={() => setPasswordStage("saved")}
+        />
+      ) : null}
     </div>
   );
 }
 
+type SetPasswordResponse = { ok?: boolean; email?: string; code?: string; error?: string };
+
+/** `null` si no hubo respuesta (sin red): no se sabe si se guardó, así que se puede reintentar. */
+async function postFirstPassword(body: { ref: string; token: string; password: string }) {
+  try {
+    const res = await fetch("/api/onboarding/set-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = (await res.json().catch(() => ({}))) as SetPasswordResponse;
+    return { ok: res.ok, status: res.status, data };
+  } catch {
+    return null;
+  }
+}
+
 /** Crear la contraseña sin salir de la página de éxito y entrar directo a /cuenta. */
-function FirstPasswordForm({ refParam, token, copy }: { refParam: string; token: string; copy: CheckoutFinalizeCopy }) {
+function FirstPasswordForm({
+  refParam,
+  token,
+  copy,
+  onSpent,
+  onSavedWithoutSession,
+}: {
+  refParam: string;
+  token: string;
+  copy: CheckoutFinalizeCopy;
+  onSpent: () => void;
+  onSavedWithoutSession: () => void;
+}) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -203,27 +271,46 @@ function FirstPasswordForm({ refParam, token, copy }: { refParam: string; token:
       return;
     }
     setLoading(true);
-    try {
-      const res = await fetch("/api/onboarding/set-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ref: refParam, token, password }),
-      });
-      const data = (await res.json().catch(() => ({}))) as { email?: string; error?: string };
-      if (!res.ok || !data.email) throw new Error(data.error || copy.passwordSaveError);
 
+    const response = await postFirstPassword({ ref: refParam, token, password });
+    if (!response) {
+      setError(copy.passwordErrors.server_error);
+      setLoading(false);
+      return;
+    }
+    if (!response.ok) {
+      const code = resolveSetPasswordErrorCode(response.data.code, response.status);
+      if (isSpentPasswordLinkCode(code)) {
+        // Ese token ya no sirve (se usó, venció o no corresponde): reintentar no tiene salida.
+        forgetOnboardingToken();
+        onSpent();
+        return;
+      }
+      setError(
+        copy.passwordErrors[code]
+          .replace("{min}", String(MIN_OWNER_PASSWORD_LENGTH))
+          .replace("{max}", String(MAX_OWNER_PASSWORD_LENGTH)),
+      );
+      setLoading(false);
+      return;
+    }
+
+    // La contraseña quedó guardada y el token se gastó (es de un solo uso): se olvida ya,
+    // aunque abrir la sesión falle después.
+    forgetOnboardingToken();
+    try {
+      const email = response.data.email;
+      if (!email) throw new Error("set-password sin correo");
       const supabase = createSupabaseBrowserClient("super-admin");
       await supabase.auth.signOut({ scope: "local" });
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email: data.email, password });
-      if (signInError) throw new Error(copy.passwordSavedSignIn);
-
-      forgetOnboardingToken();
-      trackEvent("first_login", { method: "checkout_success" });
-      window.location.assign("/post-login");
-    } catch (err) {
-      setError(err instanceof Error && err.message ? err.message : copy.passwordSaveError);
-      setLoading(false);
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) throw signInError;
+    } catch {
+      onSavedWithoutSession();
+      return;
     }
+    trackEvent("first_login", { method: "checkout_success" });
+    window.location.assign("/post-login");
   };
 
   const inputClass =
@@ -245,6 +332,7 @@ function FirstPasswordForm({ refParam, token, copy }: { refParam: string; token:
             onChange={(event) => setPassword(event.target.value)}
             className={inputClass}
             minLength={MIN_OWNER_PASSWORD_LENGTH}
+            maxLength={MAX_OWNER_PASSWORD_LENGTH}
             required
           />
         </label>
@@ -257,6 +345,7 @@ function FirstPasswordForm({ refParam, token, copy }: { refParam: string; token:
             onChange={(event) => setConfirm(event.target.value)}
             className={inputClass}
             minLength={MIN_OWNER_PASSWORD_LENGTH}
+            maxLength={MAX_OWNER_PASSWORD_LENGTH}
             required
           />
         </label>

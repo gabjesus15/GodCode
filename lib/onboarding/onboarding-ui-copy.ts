@@ -51,8 +51,6 @@ export type OnboardingUiCopy = {
 		errorUnexpected: string;
 		sentTitle: string;
 		sentBody: string;
-		/** Volvió a registrarse con un correo que ya tenía un alta en curso. */
-		resumedBody: string;
 		sentTips: string[];
 		notSentTitle: string;
 		notSentBody: string;
@@ -60,7 +58,6 @@ export type OnboardingUiCopy = {
 		resending: string;
 		resendWait: string;
 		resendSuccess: string;
-		resendAlready: string;
 		resendError: string;
 		wrongEmail: string;
 		startOver: string;
@@ -74,6 +71,9 @@ export type OnboardingUiCopy = {
 		missingToken: string;
 		genericError: string;
 		connectionError: string;
+		/** Falla del servidor (o límite de intentos): el enlace puede estar bien, se reintenta. */
+		serverError: string;
+		retry: string;
 		startOver: string;
 		help: string;
 	};
@@ -130,7 +130,6 @@ const es: OnboardingUiCopy = {
 		errorUnexpected: "Algo salió mal. Intenta de nuevo.",
 		sentTitle: "Revisa tu correo",
 		sentBody: "Enviamos un enlace a {email}. Ábrelo para crear tu tienda.",
-		resumedBody: "Ya tenías un alta con {email}. Te enviamos un enlace para seguir donde quedaste.",
 		sentTips: ["Llega en menos de un minuto. Si no lo ves, revisa spam o promociones.", "El enlace vale 7 días."],
 		notSentTitle: "Guardamos tu solicitud",
 		notSentBody: "Pero el correo a {email} no salió. Pulsa «Reenviar correo» en unos minutos.",
@@ -138,7 +137,6 @@ const es: OnboardingUiCopy = {
 		resending: "Reenviando…",
 		resendWait: "Puedes reenviarlo en {seconds} s",
 		resendSuccess: "Listo, te lo enviamos de nuevo.",
-		resendAlready: "Tu correo ya está confirmado. Abre el enlace que te enviamos para seguir.",
 		resendError: "No pudimos reenviar el correo.",
 		wrongEmail: "¿Escribiste mal el correo?",
 		startOver: "Volver a empezar",
@@ -152,6 +150,8 @@ const es: OnboardingUiCopy = {
 		missingToken: "El enlace está incompleto. Ábrelo de nuevo desde el correo.",
 		genericError: "El enlace no es válido o ya venció.",
 		connectionError: "No hay conexión. Revisa tu internet e intenta de nuevo.",
+		serverError: "Tuvimos un problema al confirmarlo. Intenta de nuevo en unos minutos.",
+		retry: "Intentar de nuevo",
 		startOver: "Volver a registrarme",
 		help: "¿El problema sigue? Escríbenos:",
 	},
@@ -203,7 +203,6 @@ const en: OnboardingUiCopy = {
 		errorUnexpected: "Something went wrong. Please try again.",
 		sentTitle: "Check your email",
 		sentBody: "We sent a link to {email}. Open it to create your store.",
-		resumedBody: "You had already started with {email}. We sent you a link to pick up where you left off.",
 		sentTips: ["It arrives in under a minute. If you don't see it, check spam or promotions.", "The link is valid for 7 days."],
 		notSentTitle: "We saved your request",
 		notSentBody: "But the email to {email} did not go out. Tap “Resend email” in a few minutes.",
@@ -211,7 +210,6 @@ const en: OnboardingUiCopy = {
 		resending: "Resending…",
 		resendWait: "You can resend in {seconds} s",
 		resendSuccess: "Done, we sent it again.",
-		resendAlready: "Your email is already confirmed. Open the link we sent you to continue.",
 		resendError: "We could not resend the email.",
 		wrongEmail: "Typed the wrong email?",
 		startOver: "Start over",
@@ -225,6 +223,8 @@ const en: OnboardingUiCopy = {
 		missingToken: "The link is incomplete. Open it again from the email.",
 		genericError: "The link is not valid or has expired.",
 		connectionError: "No connection. Check your internet and try again.",
+		serverError: "Something went wrong on our side. Try again in a few minutes.",
+		retry: "Try again",
 		startOver: "Sign up again",
 		help: "Still stuck? Write to us:",
 	},
@@ -276,7 +276,6 @@ const pt: OnboardingUiCopy = {
 		errorUnexpected: "Algo deu errado. Tente novamente.",
 		sentTitle: "Confira seu e-mail",
 		sentBody: "Enviamos um link para {email}. Abra-o para criar sua loja.",
-		resumedBody: "Você já tinha um cadastro com {email}. Enviamos um link para continuar de onde parou.",
 		sentTips: ["Chega em menos de um minuto. Se não aparecer, veja o spam ou promoções.", "O link vale por 7 dias."],
 		notSentTitle: "Guardamos sua solicitação",
 		notSentBody: "Mas o e-mail para {email} não saiu. Toque em “Reenviar e-mail” em alguns minutos.",
@@ -284,7 +283,6 @@ const pt: OnboardingUiCopy = {
 		resending: "Reenviando…",
 		resendWait: "Você pode reenviar em {seconds} s",
 		resendSuccess: "Pronto, enviamos de novo.",
-		resendAlready: "Seu e-mail já está confirmado. Abra o link que enviamos para continuar.",
 		resendError: "Não conseguimos reenviar o e-mail.",
 		wrongEmail: "Digitou o e-mail errado?",
 		startOver: "Começar de novo",
@@ -298,6 +296,8 @@ const pt: OnboardingUiCopy = {
 		missingToken: "O link está incompleto. Abra-o novamente pelo e-mail.",
 		genericError: "O link não é válido ou já expirou.",
 		connectionError: "Sem conexão. Verifique sua internet e tente novamente.",
+		serverError: "Tivemos um problema ao confirmá-lo. Tente novamente em alguns minutos.",
+		retry: "Tentar novamente",
 		startOver: "Cadastrar novamente",
 		help: "O problema continua? Escreva para nós:",
 	},
@@ -349,7 +349,6 @@ const fr: OnboardingUiCopy = {
 		errorUnexpected: "Une erreur s’est produite. Réessayez.",
 		sentTitle: "Consultez votre e-mail",
 		sentBody: "Nous avons envoyé un lien à {email}. Ouvrez-le pour créer votre boutique.",
-		resumedBody: "Vous aviez déjà commencé avec {email}. Nous vous avons envoyé un lien pour reprendre là où vous en étiez.",
 		sentTips: ["Il arrive en moins d’une minute. Sinon, vérifiez les spams ou les promotions.", "Le lien est valable 7 jours."],
 		notSentTitle: "Nous avons enregistré votre demande",
 		notSentBody: "Mais l’e-mail à {email} n’est pas parti. Appuyez sur « Renvoyer l’e-mail » dans quelques minutes.",
@@ -357,7 +356,6 @@ const fr: OnboardingUiCopy = {
 		resending: "Envoi…",
 		resendWait: "Vous pourrez le renvoyer dans {seconds} s",
 		resendSuccess: "C’est fait, nous l’avons renvoyé.",
-		resendAlready: "Votre e-mail est déjà confirmé. Ouvrez le lien reçu pour continuer.",
 		resendError: "Nous n’avons pas pu renvoyer l’e-mail.",
 		wrongEmail: "Erreur dans l’e-mail ?",
 		startOver: "Recommencer",
@@ -371,6 +369,8 @@ const fr: OnboardingUiCopy = {
 		missingToken: "Le lien est incomplet. Ouvrez-le à nouveau depuis l’e-mail.",
 		genericError: "Le lien n’est pas valide ou a expiré.",
 		connectionError: "Pas de connexion. Vérifiez votre internet et réessayez.",
+		serverError: "Un problème est survenu de notre côté. Réessayez dans quelques minutes.",
+		retry: "Réessayer",
 		startOver: "M’inscrire à nouveau",
 		help: "Le problème persiste ? Écrivez-nous :",
 	},
@@ -422,7 +422,6 @@ const de: OnboardingUiCopy = {
 		errorUnexpected: "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
 		sentTitle: "Prüfen Sie Ihr Postfach",
 		sentBody: "Wir haben einen Link an {email} gesendet. Öffnen Sie ihn, um Ihren Shop zu erstellen.",
-		resumedBody: "Sie hatten mit {email} bereits begonnen. Wir haben Ihnen einen Link gesendet, um dort weiterzumachen, wo Sie aufgehört haben.",
 		sentTips: ["Er kommt in weniger als einer Minute. Sonst prüfen Sie Spam oder Werbung.", "Der Link ist 7 Tage gültig."],
 		notSentTitle: "Wir haben Ihre Anfrage gespeichert",
 		notSentBody: "Aber die E-Mail an {email} wurde nicht gesendet. Tippen Sie in ein paar Minuten auf „E-Mail erneut senden“.",
@@ -430,7 +429,6 @@ const de: OnboardingUiCopy = {
 		resending: "Wird gesendet…",
 		resendWait: "Erneut senden in {seconds} s",
 		resendSuccess: "Erledigt, wir haben sie erneut gesendet.",
-		resendAlready: "Ihre E-Mail ist bereits bestätigt. Öffnen Sie den gesendeten Link, um fortzufahren.",
 		resendError: "Die E-Mail konnte nicht erneut gesendet werden.",
 		wrongEmail: "Falsche E-Mail eingegeben?",
 		startOver: "Neu beginnen",
@@ -444,6 +442,8 @@ const de: OnboardingUiCopy = {
 		missingToken: "Der Link ist unvollständig. Öffnen Sie ihn erneut aus der E-Mail.",
 		genericError: "Der Link ist ungültig oder abgelaufen.",
 		connectionError: "Keine Verbindung. Prüfen Sie Ihr Internet und versuchen Sie es erneut.",
+		serverError: "Bei uns ist ein Fehler aufgetreten. Versuchen Sie es in ein paar Minuten erneut.",
+		retry: "Erneut versuchen",
 		startOver: "Erneut registrieren",
 		help: "Das Problem bleibt? Schreiben Sie uns:",
 	},
@@ -495,7 +495,6 @@ const it: OnboardingUiCopy = {
 		errorUnexpected: "Qualcosa è andato storto. Riprova.",
 		sentTitle: "Controlla la tua email",
 		sentBody: "Abbiamo inviato un link a {email}. Aprilo per creare il tuo negozio.",
-		resumedBody: "Avevi già iniziato con {email}. Ti abbiamo inviato un link per riprendere da dove avevi lasciato.",
 		sentTips: ["Arriva in meno di un minuto. Se non lo vedi, controlla spam o promozioni.", "Il link è valido 7 giorni."],
 		notSentTitle: "Abbiamo salvato la tua richiesta",
 		notSentBody: "Ma l’email a {email} non è partita. Tocca «Invia di nuovo» tra qualche minuto.",
@@ -503,7 +502,6 @@ const it: OnboardingUiCopy = {
 		resending: "Invio…",
 		resendWait: "Puoi reinviarla tra {seconds} s",
 		resendSuccess: "Fatto, te l’abbiamo inviata di nuovo.",
-		resendAlready: "La tua email è già confermata. Apri il link ricevuto per continuare.",
 		resendError: "Non siamo riusciti a reinviare l’email.",
 		wrongEmail: "Hai sbagliato email?",
 		startOver: "Ricomincia",
@@ -517,6 +515,8 @@ const it: OnboardingUiCopy = {
 		missingToken: "Il link è incompleto. Aprilo di nuovo dall’email.",
 		genericError: "Il link non è valido o è scaduto.",
 		connectionError: "Nessuna connessione. Controlla internet e riprova.",
+		serverError: "Abbiamo avuto un problema nel confermarla. Riprova tra qualche minuto.",
+		retry: "Riprova",
 		startOver: "Registrati di nuovo",
 		help: "Il problema continua? Scrivici:",
 	},

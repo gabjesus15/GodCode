@@ -7,6 +7,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { trackEvent } from "@/lib/analytics/track-event";
 import { LABS_QUOTE_BUDGETS, LABS_QUOTE_PROJECT_TYPES } from "@/lib/labs/content";
 import { LABS_QUOTE_LIMITS, parseQuoteRequest, type LabsQuoteRequest } from "@/lib/labs/quote-request";
+import { RECAPTCHA_ACTIONS } from "@/lib/onboarding/recaptcha";
 import { cn } from "@/utils/cn";
 
 import { RECAPTCHA_SITE_KEY, getRecaptchaToken, preloadRecaptcha } from "./lazy-recaptcha";
@@ -72,7 +73,8 @@ export function QuoteForm({ whatsappHref }: { whatsappHref: string | null }) {
 
 		setStatus({ kind: "sending" });
 		try {
-			const recaptchaToken = await getRecaptchaToken("labs_quote");
+			// La ruta exige esta misma acción: un token pedido por otro formulario no sirve.
+			const recaptchaToken = await getRecaptchaToken(RECAPTCHA_ACTIONS.labsQuote);
 			if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
 				setStatus({ kind: "error", message: RECAPTCHA_UNAVAILABLE });
 				return;

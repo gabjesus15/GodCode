@@ -6,7 +6,7 @@ import { createRequestContext, logger } from "@/lib/infra/logger";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { sendEmail, teamInbox } from "@/lib/email/send";
 import { isMissingColumnError } from "@/lib/onboarding/db-compat";
-import { verifyRecaptcha } from "@/lib/onboarding/recaptcha";
+import { RECAPTCHA_ACTIONS, verifyRecaptcha } from "@/lib/onboarding/recaptcha";
 import { isRateLimited } from "@/lib/onboarding/rate-limit";
 import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 import { sendOnboardingResumeLink } from "@/lib/onboarding/resume-application";
@@ -108,10 +108,15 @@ export async function POST(req: NextRequest) {
 			return NextResponse.json({ error: "Debes aceptar los términos y la política de privacidad" }, { status: 400 });
 		}
 
-		const recaptcha = await verifyRecaptcha(body.recaptcha_token, RECAPTCHA_SECRET);
+		// La acción es la que pide el paso 1 al enviar (`OnboardingStep1Form`).
+		const recaptcha = await verifyRecaptcha(body.recaptcha_token, RECAPTCHA_SECRET, { expectedAction: RECAPTCHA_ACTIONS.onboardingApply });
 		if (!recaptcha.ok) {
-			// El código de Google (p. ej. invalid-input-response) solo queda en el log, no se le muestra al cliente.
-			logger.warn("recaptcha_failed", createRequestContext("/api/onboarding/apply", "POST", "onboarding-billing"), { reason: recaptcha.error });
+			// El motivo (código de Google, puntaje bajo u otra acción) solo queda en el log, no se le muestra al cliente.
+			logger.warn("recaptcha_failed", createRequestContext("/api/onboarding/apply", "POST", "onboarding-billing"), {
+				reason: recaptcha.error,
+				score: recaptcha.score,
+				action: recaptcha.action,
+			});
 			return NextResponse.json({ error: "Verificación de seguridad fallida. Intenta de nuevo." }, { status: 400 });
 		}
 

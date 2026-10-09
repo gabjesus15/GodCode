@@ -6,6 +6,7 @@ import { AlertCircle, Clock, MailCheck } from "lucide-react";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { resolveAvailablePublicSlug } from "@/lib/onboarding/checkout-service";
+import { isPanelOnlyPlan } from "@/lib/onboarding/store-draft-service";
 import { instagramHandle } from "@/lib/owner-setup/local-form";
 import { phoneFromWhatsappUrl } from "@/lib/tenant/whatsapp-url";
 import { getTenantHomeUrl } from "@/utils/tenant-url";
@@ -187,19 +188,21 @@ function ErrorCard({
   backHome,
   tone = "error",
   href = "/onboarding",
+  panelOnly = false,
 }: {
   title: string;
   text: string;
   backHome: string;
   tone?: "error" | "info" | "review";
   href?: string;
+  panelOnly?: boolean;
 }) {
   const Icon = tone === "error" ? AlertCircle : tone === "review" ? Clock : MailCheck;
   const iconClass =
     tone === "error" ? "bg-red-50 text-red-600" : tone === "review" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700";
   return (
     <main className="mx-auto w-full max-w-xl px-5 py-10 sm:px-8 sm:py-16">
-      <OnboardingStepBar current={3} compact />
+      <OnboardingStepBar current={3} panelOnly={panelOnly} compact />
       <div className="rounded-2xl border border-slate-200 p-6 sm:p-8" role={tone === "error" ? "alert" : "status"}>
         <span className={`flex h-11 w-11 items-center justify-center rounded-full ${iconClass}`}>
           <Icon className="h-5 w-5" aria-hidden />
@@ -316,18 +319,22 @@ export default async function OnboardingCompletePage({
     app = retry.app;
   }
 
+  // «Solo panel CEO»: la barra de pasos dice «Tu plan» en vez de «Publicar». Se pide ya y se
+  // espera junto con los planes; si falla, la barra de siempre.
+  const panelOnlyPlan = isPanelOnlyPlan(supabaseAdmin, app.plan_id).catch(() => false);
+
   const step = resolveApplicationStep(app);
   if (step === "unverified") {
-    return <ErrorCard title={copy.emailTitle} text={copy.emailText} backHome={copy.backHome} />;
+    return <ErrorCard title={copy.emailTitle} text={copy.emailText} backHome={copy.backHome} panelOnly={await panelOnlyPlan} />;
   }
   if (step === "paid") {
-    return <ErrorCard tone="info" title={copy.paidTitle} text={copy.paidText} backHome={copy.loginLabel} href="/login" />;
+    return <ErrorCard tone="info" title={copy.paidTitle} text={copy.paidText} backHome={copy.loginLabel} href="/login" panelOnly={await panelOnlyPlan} />;
   }
   if (step === "review") {
-    return <ErrorCard tone="review" title={copy.reviewTitle} text={copy.reviewText} backHome={copy.backHome} />;
+    return <ErrorCard tone="review" title={copy.reviewTitle} text={copy.reviewText} backHome={copy.backHome} panelOnly={await panelOnlyPlan} />;
   }
 
-  const [plansResult, addonsResult, applicationAddonsResult, storeSlug, storeContact] = await Promise.all([
+  const [plansResult, addonsResult, applicationAddonsResult, storeSlug, storeContact, panelOnlyHint] = await Promise.all([
     // Solo planes a la venta: los internos (dev, promos) no se contratan desde aquí.
     supabaseAdmin.from("plans").select("id,name,name_i18n,price,prices_by_continent,max_branches,features,marketing_lines,marketing_lines_i18n").eq("is_active", true).eq("is_public", true).order("price", { ascending: true }),
     supabaseAdmin.from("addons").select("id,slug,name,description,price_one_time,price_monthly,type,sort_order").eq("is_active", true).order("sort_order", { ascending: true }),
@@ -338,13 +345,16 @@ export default async function OnboardingCompletePage({
       ? supabaseAdmin.from("companies").select("public_slug").eq("id", app.company_id).maybeSingle().then(({ data }) => (data?.public_slug as string | null) ?? null)
       : resolveAvailablePublicSlug(supabaseAdmin, String(app.business_name ?? "")).catch(() => null),
     app.company_id ? loadStoreContact(String(app.company_id)).catch(() => null) : Promise.resolve(null),
+    panelOnlyPlan,
   ]);
   // «Arma y paga»: ya armó su tienda y viene a publicarla.
   const fromDraft = Boolean(app.company_id);
+  // Con una tienda armada sí hay algo que publicar, aunque el plan guardado diga otra cosa.
+  const panelOnly = panelOnlyHint && !fromDraft;
 
   if (plansResult.error) {
     console.error("[ONBOARDING COMPLETE] Error al cargar planes:", plansResult.error);
-    return <ErrorCard title={copy.plansErrorTitle} text={copy.plansErrorText} backHome={copy.backHome} />;
+    return <ErrorCard title={copy.plansErrorTitle} text={copy.plansErrorText} backHome={copy.backHome} panelOnly={panelOnly} />;
   }
 
   // Quien ya armó su tienda viene a publicarla: «solo panel CEO» no tiene tienda pública.
@@ -365,14 +375,14 @@ export default async function OnboardingCompletePage({
   const applicationAddons = applicationAddonsResult.data ?? [];
 
   if (plans.length === 0) {
-    return <ErrorCard title={copy.noPlansTitle} text={copy.noPlansText} backHome={copy.backHome} />;
+    return <ErrorCard title={copy.noPlansTitle} text={copy.noPlansText} backHome={copy.backHome} panelOnly={panelOnly} />;
   }
 
   const businessName = String(app.business_name ?? "").trim();
 
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-12 lg:py-14">
-      <OnboardingStepBar current={3} />
+      <OnboardingStepBar current={3} panelOnly={panelOnly} />
 
       <div className="mb-10 max-w-2xl">
         <h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">

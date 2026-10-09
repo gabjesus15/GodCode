@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { isPanelOnlyPlan } from "@/lib/onboarding/store-draft-service";
 import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 
-/** @service-role capability-token */
+/** @service-role capability-token
+ *
+ * El verification_token del correo confirma el correo. La respuesta dice además si el plan
+ * es «solo panel CEO», para que la página no prometa armar una tienda («Ahora elige tu plan»).
+ */
 
 export async function GET(req: NextRequest) {
 	const token = req.nextUrl.searchParams.get("token");
@@ -13,7 +18,7 @@ export async function GET(req: NextRequest) {
 
 	const { data, error } = await supabaseAdmin
 		.from("onboarding_applications")
-		.select("id, status, email_verified_at, business_name, responsible_name, email, phone")
+		.select("id, status, email_verified_at, business_name, responsible_name, email, phone, plan_id")
 		.eq("verification_token", token)
 		.maybeSingle();
 
@@ -59,10 +64,15 @@ export async function GET(req: NextRequest) {
 		}
 	}
 
+	// El mismo criterio que usa «Crear mi tienda» para mandarlo a elegir el plan. Si la
+	// consulta falla, el correo igual queda confirmado y la página muestra los textos de siempre.
+	const panelOnly = await isPanelOnlyPlan(supabaseAdmin, data.plan_id).catch(() => false);
+
 	return NextResponse.json({
 		ok: true,
 		token,
 		alreadyVerified: !shouldPromoteStatus,
+		panelOnly,
 		message: "Email verificado. Puedes continuar con el formulario.",
 	});
 }

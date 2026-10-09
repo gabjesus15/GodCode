@@ -1,6 +1,7 @@
 /**
  * Textos de las páginas de vuelta del pago (`/checkout/success` y `/checkout/cancel`) y del
- * recuadro que confirma el pago, en los seis idiomas del sitio. `{n}` se reemplaza al usarlo.
+ * recuadro que confirma el pago, en los seis idiomas del sitio. `{n}`, `{min}` y `{max}` se
+ * reemplazan al usarlos. Al final, los códigos de error de «Crea tu contraseña».
  */
 
 export type CheckoutLocale = "es" | "en" | "pt" | "fr" | "de" | "it";
@@ -61,9 +62,15 @@ export type CheckoutFinalizeCopy = {
   passwordRepeatLabel: string;
   passwordTooShort: string;
   passwordMismatch: string;
-  passwordSaveError: string;
+  /** Por código de `/api/onboarding/set-password`; `invalid_password` lleva `{min}` y `{max}`. */
+  passwordErrors: Record<SetPasswordFormErrorCode, string>;
+  /** Se guardó la contraseña pero no se pudo abrir la sesión aquí. */
   passwordSavedSignIn: string;
   passwordSubmit: string;
+  /** El enlace ya se usó o venció: en vez del formulario, el camino de «¿Olvidaste tu contraseña?». */
+  linkSpentText: string;
+  linkSpentButton: string;
+  loginButton: string;
 };
 
 export type CheckoutStatusCopy = {
@@ -95,10 +102,8 @@ export type CheckoutCancelCopy = {
   summaryTitlePaid: string;
   summaryTitleFallback: string;
   detailTitle: string;
-  companyLabel: string;
   planLabel: string;
-  monthsLabel: string;
-  methodLabel: string;
+  amountLabel: string;
   referenceLabel: string;
   actionTitle: string;
   actionText: string;
@@ -169,9 +174,18 @@ const COPY: Record<CheckoutLocale, CheckoutCopy> = {
       passwordRepeatLabel: "Repítela",
       passwordTooShort: "Usa al menos {n} caracteres.",
       passwordMismatch: "Las contraseñas no coinciden.",
-      passwordSaveError: "No pudimos guardar la contraseña. Intenta de nuevo.",
       passwordSavedSignIn: "Tu contraseña quedó guardada. Entra desde el login con tu correo.",
       passwordSubmit: "Entrar a mi cuenta",
+      passwordErrors: {
+        missing_link: "No encontramos el enlace de tu alta. Crea tu contraseña con el enlace del correo de bienvenida.",
+        invalid_password: "Usa entre {min} y {max} caracteres.",
+        password_rejected: "No pudimos guardar esa contraseña. Prueba con otra.",
+        rate_limited: "Demasiados intentos. Espera un rato o crea tu contraseña con el enlace del correo de bienvenida.",
+        server_error: "No pudimos guardar la contraseña. Intenta de nuevo en un momento.",
+      },
+      linkSpentText: "Este enlace ya se usó o venció. Crea una contraseña nueva desde «¿Olvidaste tu contraseña?».",
+      linkSpentButton: "Crear una contraseña nueva",
+      loginButton: "Iniciar sesión",
     },
     status: { paid: "Pagado", pending: "Pendiente", review: "En revisión", rejected: "Rechazado", cancelled: "Cancelado" },
     cancel: {
@@ -195,10 +209,8 @@ const COPY: Record<CheckoutLocale, CheckoutCopy> = {
       summaryTitlePaid: "Pago sin aplicar",
       summaryTitleFallback: "Intento no encontrado",
       detailTitle: "Detalle del pago",
-      companyLabel: "Negocio",
       planLabel: "Plan",
-      monthsLabel: "Meses",
-      methodLabel: "Método",
+      amountLabel: "Monto",
       referenceLabel: "Referencia",
       actionTitle: "Qué hacer",
       actionText: "Intenta pagar de nuevo o entra a tu cuenta para ver si el pago ya quedó.",
@@ -261,9 +273,18 @@ const COPY: Record<CheckoutLocale, CheckoutCopy> = {
       passwordRepeatLabel: "Repeat it",
       passwordTooShort: "Use at least {n} characters.",
       passwordMismatch: "The passwords do not match.",
-      passwordSaveError: "We could not save the password. Please try again.",
       passwordSavedSignIn: "Your password was saved. Sign in from the login page with your email.",
       passwordSubmit: "Sign in to my account",
+      passwordErrors: {
+        missing_link: "We could not find your sign-up link. Create your password with the link in the welcome email.",
+        invalid_password: "Use between {min} and {max} characters.",
+        password_rejected: "We could not save that password. Try a different one.",
+        rate_limited: "Too many attempts. Wait a while or create your password with the link in the welcome email.",
+        server_error: "We could not save the password. Try again in a moment.",
+      },
+      linkSpentText: "This link was already used or has expired. Create a new password from “Forgot your password?”.",
+      linkSpentButton: "Create a new password",
+      loginButton: "Sign in",
     },
     status: { paid: "Paid", pending: "Pending", review: "In review", rejected: "Rejected", cancelled: "Cancelled" },
     cancel: {
@@ -287,10 +308,8 @@ const COPY: Record<CheckoutLocale, CheckoutCopy> = {
       summaryTitlePaid: "Payment not applied",
       summaryTitleFallback: "Attempt not found",
       detailTitle: "Payment details",
-      companyLabel: "Business",
       planLabel: "Plan",
-      monthsLabel: "Months",
-      methodLabel: "Method",
+      amountLabel: "Amount",
       referenceLabel: "Reference",
       actionTitle: "What to do",
       actionText: "Try paying again, or open your account to check whether the payment went through.",
@@ -353,9 +372,18 @@ const COPY: Record<CheckoutLocale, CheckoutCopy> = {
       passwordRepeatLabel: "Repita a senha",
       passwordTooShort: "Use pelo menos {n} caracteres.",
       passwordMismatch: "As senhas não coincidem.",
-      passwordSaveError: "Não conseguimos salvar a senha. Tente novamente.",
       passwordSavedSignIn: "Sua senha foi salva. Entre pelo login com seu e-mail.",
       passwordSubmit: "Entrar na minha conta",
+      passwordErrors: {
+        missing_link: "Não encontramos o link do seu cadastro. Crie sua senha com o link do e-mail de boas-vindas.",
+        invalid_password: "Use entre {min} e {max} caracteres.",
+        password_rejected: "Não conseguimos salvar essa senha. Tente outra.",
+        rate_limited: "Muitas tentativas. Espere um pouco ou crie sua senha com o link do e-mail de boas-vindas.",
+        server_error: "Não conseguimos salvar a senha. Tente novamente em um instante.",
+      },
+      linkSpentText: "Este link já foi usado ou expirou. Crie uma senha nova em “Esqueceu sua senha?”.",
+      linkSpentButton: "Criar uma senha nova",
+      loginButton: "Entrar",
     },
     status: { paid: "Pago", pending: "Pendente", review: "Em análise", rejected: "Recusado", cancelled: "Cancelado" },
     cancel: {
@@ -379,10 +407,8 @@ const COPY: Record<CheckoutLocale, CheckoutCopy> = {
       summaryTitlePaid: "Pagamento não aplicado",
       summaryTitleFallback: "Tentativa não encontrada",
       detailTitle: "Detalhes do pagamento",
-      companyLabel: "Negócio",
       planLabel: "Plano",
-      monthsLabel: "Meses",
-      methodLabel: "Método",
+      amountLabel: "Valor",
       referenceLabel: "Referência",
       actionTitle: "O que fazer",
       actionText: "Tente pagar de novo ou entre na sua conta para ver se o pagamento foi concluído.",
@@ -445,9 +471,18 @@ const COPY: Record<CheckoutLocale, CheckoutCopy> = {
       passwordRepeatLabel: "Répétez-le",
       passwordTooShort: "Utilisez au moins {n} caractères.",
       passwordMismatch: "Les mots de passe ne correspondent pas.",
-      passwordSaveError: "Nous n’avons pas pu enregistrer le mot de passe. Réessayez.",
       passwordSavedSignIn: "Votre mot de passe est enregistré. Connectez-vous avec votre e-mail.",
       passwordSubmit: "Accéder à mon compte",
+      passwordErrors: {
+        missing_link: "Nous ne trouvons pas le lien de votre inscription. Créez votre mot de passe avec le lien de l’e-mail de bienvenue.",
+        invalid_password: "Utilisez entre {min} et {max} caractères.",
+        password_rejected: "Nous n’avons pas pu enregistrer ce mot de passe. Essayez-en un autre.",
+        rate_limited: "Trop de tentatives. Patientez un peu ou créez votre mot de passe avec le lien de l’e-mail de bienvenue.",
+        server_error: "Nous n’avons pas pu enregistrer le mot de passe. Réessayez dans un instant.",
+      },
+      linkSpentText: "Ce lien a déjà été utilisé ou a expiré. Créez un nouveau mot de passe depuis « Mot de passe oublié ? ».",
+      linkSpentButton: "Créer un nouveau mot de passe",
+      loginButton: "Se connecter",
     },
     status: { paid: "Payé", pending: "En attente", review: "En cours de vérification", rejected: "Refusé", cancelled: "Annulé" },
     cancel: {
@@ -471,10 +506,8 @@ const COPY: Record<CheckoutLocale, CheckoutCopy> = {
       summaryTitlePaid: "Paiement non appliqué",
       summaryTitleFallback: "Tentative introuvable",
       detailTitle: "Détails du paiement",
-      companyLabel: "Établissement",
       planLabel: "Offre",
-      monthsLabel: "Mois",
-      methodLabel: "Moyen de paiement",
+      amountLabel: "Montant",
       referenceLabel: "Référence",
       actionTitle: "Que faire",
       actionText: "Réessayez le paiement ou ouvrez votre compte pour vérifier s’il a abouti.",
@@ -537,9 +570,18 @@ const COPY: Record<CheckoutLocale, CheckoutCopy> = {
       passwordRepeatLabel: "Passwort wiederholen",
       passwordTooShort: "Verwenden Sie mindestens {n} Zeichen.",
       passwordMismatch: "Die Passwörter stimmen nicht überein.",
-      passwordSaveError: "Das Passwort konnte nicht gespeichert werden. Bitte erneut versuchen.",
       passwordSavedSignIn: "Ihr Passwort ist gespeichert. Melden Sie sich mit Ihrer E-Mail an.",
       passwordSubmit: "Bei meinem Konto anmelden",
+      passwordErrors: {
+        missing_link: "Wir finden den Link zu Ihrer Registrierung nicht. Erstellen Sie Ihr Passwort über den Link in der Willkommens-E-Mail.",
+        invalid_password: "Verwenden Sie zwischen {min} und {max} Zeichen.",
+        password_rejected: "Dieses Passwort konnten wir nicht speichern. Versuchen Sie ein anderes.",
+        rate_limited: "Zu viele Versuche. Warten Sie etwas oder erstellen Sie Ihr Passwort über den Link in der Willkommens-E-Mail.",
+        server_error: "Das Passwort konnte nicht gespeichert werden. Versuchen Sie es gleich noch einmal.",
+      },
+      linkSpentText: "Dieser Link wurde bereits verwendet oder ist abgelaufen. Erstellen Sie ein neues Passwort über „Passwort vergessen?“.",
+      linkSpentButton: "Neues Passwort erstellen",
+      loginButton: "Anmelden",
     },
     status: { paid: "Bezahlt", pending: "Ausstehend", review: "In Prüfung", rejected: "Abgelehnt", cancelled: "Storniert" },
     cancel: {
@@ -563,10 +605,8 @@ const COPY: Record<CheckoutLocale, CheckoutCopy> = {
       summaryTitlePaid: "Zahlung nicht angewendet",
       summaryTitleFallback: "Versuch nicht gefunden",
       detailTitle: "Zahlungsdetails",
-      companyLabel: "Geschäft",
       planLabel: "Plan",
-      monthsLabel: "Monate",
-      methodLabel: "Zahlungsart",
+      amountLabel: "Betrag",
       referenceLabel: "Referenz",
       actionTitle: "Was tun",
       actionText: "Versuchen Sie die Zahlung erneut oder öffnen Sie Ihr Konto, um zu prüfen, ob sie durchgegangen ist.",
@@ -629,9 +669,18 @@ const COPY: Record<CheckoutLocale, CheckoutCopy> = {
       passwordRepeatLabel: "Ripetila",
       passwordTooShort: "Usa almeno {n} caratteri.",
       passwordMismatch: "Le password non coincidono.",
-      passwordSaveError: "Non siamo riusciti a salvare la password. Riprova.",
       passwordSavedSignIn: "La password è salvata. Accedi dal login con la tua email.",
       passwordSubmit: "Entra nel mio account",
+      passwordErrors: {
+        missing_link: "Non troviamo il link della tua registrazione. Crea la password con il link dell’email di benvenuto.",
+        invalid_password: "Usa tra {min} e {max} caratteri.",
+        password_rejected: "Non siamo riusciti a salvare questa password. Provane un’altra.",
+        rate_limited: "Troppi tentativi. Aspetta un po’ o crea la password con il link dell’email di benvenuto.",
+        server_error: "Non siamo riusciti a salvare la password. Riprova tra un momento.",
+      },
+      linkSpentText: "Questo link è già stato usato o è scaduto. Crea una nuova password da «Password dimenticata?».",
+      linkSpentButton: "Crea una nuova password",
+      loginButton: "Accedi",
     },
     status: { paid: "Pagato", pending: "In sospeso", review: "In verifica", rejected: "Rifiutato", cancelled: "Annullato" },
     cancel: {
@@ -655,10 +704,8 @@ const COPY: Record<CheckoutLocale, CheckoutCopy> = {
       summaryTitlePaid: "Pagamento non applicato",
       summaryTitleFallback: "Tentativo non trovato",
       detailTitle: "Dettagli del pagamento",
-      companyLabel: "Attività",
       planLabel: "Piano",
-      monthsLabel: "Mesi",
-      methodLabel: "Metodo",
+      amountLabel: "Importo",
       referenceLabel: "Riferimento",
       actionTitle: "Cosa fare",
       actionText: "Riprova il pagamento o entra nel tuo account per vedere se è andato a buon fine.",
@@ -710,4 +757,60 @@ export function checkoutStatusLabel(status: string | null | undefined, labels: C
 export function isCheckoutPaidStatus(status: string | null | undefined): boolean {
   const value = String(status ?? "").trim().toLowerCase();
   return value === "paid" || value === "approved";
+}
+
+/**
+ * Códigos de error de `/api/onboarding/set-password` (servicio de alta). El servicio los
+ * responde junto a su texto en español fijo, que ya no se muestra: aquí se traducen.
+ */
+export const SET_PASSWORD_ERROR_CODES = [
+  "missing_link",
+  "invalid_password",
+  "password_rejected",
+  "not_found",
+  "already_used",
+  "expired",
+  "rate_limited",
+  "server_error",
+] as const;
+
+export type SetPasswordErrorCode = (typeof SET_PASSWORD_ERROR_CODES)[number];
+
+/** El token ya no sirve (se usó, venció o no corresponde): reintentar en el formulario no tiene salida. */
+export type SpentPasswordLinkCode = Extract<SetPasswordErrorCode, "not_found" | "already_used" | "expired">;
+
+/** Los errores con los que el formulario sigue a la vista para corregir o reintentar. */
+export type SetPasswordFormErrorCode = Exclude<SetPasswordErrorCode, SpentPasswordLinkCode>;
+
+export function isSpentPasswordLinkCode(code: SetPasswordErrorCode): code is SpentPasswordLinkCode {
+  return code === "not_found" || code === "already_used" || code === "expired";
+}
+
+/**
+ * El código que corresponde a un status HTTP. Lo usan el servicio, con los status de
+ * `setOwnerFirstPassword`, y la página cuando la respuesta no trae código (límite de la
+ * app, servicio caído o una versión del servicio anterior a los códigos).
+ */
+export function setPasswordErrorCodeForStatus(status: number): SetPasswordErrorCode {
+  switch (status) {
+    case 400:
+      return "password_rejected";
+    case 404:
+      return "not_found";
+    case 409:
+      return "already_used";
+    case 410:
+      return "expired";
+    case 429:
+      return "rate_limited";
+    default:
+      return "server_error";
+  }
+}
+
+/** El código de la respuesta si es uno conocido; si no, el que sale del status. */
+export function resolveSetPasswordErrorCode(code: unknown, status: number): SetPasswordErrorCode {
+  return typeof code === "string" && (SET_PASSWORD_ERROR_CODES as readonly string[]).includes(code)
+    ? (code as SetPasswordErrorCode)
+    : setPasswordErrorCodeForStatus(status);
 }

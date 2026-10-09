@@ -23,7 +23,11 @@ vi.mock("@/lib/infra/supabase-admin", () => ({
 		},
 	},
 }));
-vi.mock("@/lib/onboarding/recaptcha", () => ({ verifyRecaptcha: async () => ({ ok: true }) }));
+const verifyRecaptcha = vi.fn(async (..._args: unknown[]): Promise<{ ok: boolean; error?: string; score?: number; action?: string }> => ({ ok: true }));
+vi.mock("@/lib/onboarding/recaptcha", async (importOriginal) => ({
+	...(await importOriginal<typeof import("@/lib/onboarding/recaptcha")>()),
+	verifyRecaptcha: (...args: unknown[]) => verifyRecaptcha(...args),
+}));
 vi.mock("@/lib/onboarding/rate-limit", () => ({ isRateLimited: async () => false }));
 vi.mock("@/lib/onboarding/team-alerts", () => ({ alertOnboardingTeam: async () => undefined }));
 const sendEmail = vi.fn(async (_input: unknown) => ({ status: "sent" as const }));
@@ -33,6 +37,7 @@ vi.mock("@/lib/onboarding/resume-application", () => ({
 	sendOnboardingResumeLink: (...args: unknown[]) => sendOnboardingResumeLink(...args),
 }));
 
+import { logger } from "@/lib/infra/logger";
 import { POST } from "@/services/onboarding-billing/app/api/onboarding/apply/route";
 
 function apply(extra: Record<string, unknown> = {}) {
@@ -59,6 +64,8 @@ beforeEach(() => {
 	db.insertedRows = [];
 	sendEmail.mockClear();
 	sendOnboardingResumeLink.mockReset();
+	verifyRecaptcha.mockReset();
+	verifyRecaptcha.mockResolvedValue({ ok: true });
 });
 
 describe("POST /api/onboarding/apply", () => {
@@ -112,6 +119,22 @@ describe("POST /api/onboarding/apply", () => {
 		await apply({ plan_id: "plan-panel" });
 		const verify = sendEmail.mock.calls.map(([input]) => input as { kind: string; data: Record<string, unknown> }).find((input) => input.kind === "verify_email");
 		expect(verify?.data).toMatchObject({ panelOnly: true });
+	});
+
+	it("exige al token de reCAPTCHA la acción del paso 1", async () => {
+		await apply({ recaptcha_token: "token-del-paso-1" });
+		expect(verifyRecaptcha).toHaveBeenCalledWith("token-del-paso-1", expect.any(String), { expectedAction: "onboarding_apply" });
+	});
+
+	it("si reCAPTCHA rechaza, no guarda nada y deja el motivo en el log", async () => {
+		const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+		verifyRecaptcha.mockResolvedValue({ ok: false, error: "low-score", score: 0.1, action: "onboarding_apply" });
+		const res = await apply();
+		expect(res.status).toBe(400);
+		expect(await res.json()).not.toHaveProperty("score");
+		expect(db.insertedRows).toHaveLength(0);
+		expect(warn).toHaveBeenCalledWith("recaptcha_failed", expect.anything(), { reason: "low-score", score: 0.1, action: "onboarding_apply" });
+		warn.mockRestore();
 	});
 
 	it("con un plan con tienda, el correo de verificación va como siempre", async () => {

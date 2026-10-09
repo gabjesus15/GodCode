@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { checkoutStatusLabel, getCheckoutCopy, isCheckoutPaidStatus } from "@/lib/plans/checkout-copy";
+import {
+	checkoutStatusLabel,
+	getCheckoutCopy,
+	isCheckoutPaidStatus,
+	isSpentPasswordLinkCode,
+	resolveSetPasswordErrorCode,
+	SET_PASSWORD_ERROR_CODES,
+	setPasswordErrorCodeForStatus,
+} from "@/lib/plans/checkout-copy";
 
 const LOCALES = ["es", "en", "pt", "fr", "de", "it"] as const;
 
@@ -21,6 +29,7 @@ describe("textos de la vuelta del pago", () => {
 				expect(String(value).trim(), `${locale}.${key}`).not.toBe("");
 			}
 			expect(copy.finalize.passwordTooShort, locale).toContain("{n}");
+			expect(copy.finalize.passwordErrors.invalid_password, locale).toMatch(/\{min\}.*\{max\}/);
 		}
 	});
 
@@ -44,5 +53,34 @@ describe("textos de la vuelta del pago", () => {
 		expect(checkoutStatusLabel(null, labels)).toBeNull();
 		expect(isCheckoutPaidStatus("paid")).toBe(true);
 		expect(isCheckoutPaidStatus("pending_validation")).toBe(false);
+	});
+});
+
+describe("códigos de «Crea tu contraseña»", () => {
+	it("cada código tiene texto en los seis idiomas: en el formulario o en el aviso del enlace gastado", () => {
+		for (const locale of LOCALES) {
+			const copy = getCheckoutCopy(locale).finalize;
+			for (const code of SET_PASSWORD_ERROR_CODES) {
+				const text = isSpentPasswordLinkCode(code) ? copy.linkSpentText : copy.passwordErrors[code];
+				expect(text?.trim(), `${locale}.${code}`).toBeTruthy();
+			}
+		}
+		expect(getCheckoutCopy("es").finalize.linkSpentText).toBe(
+			"Este enlace ya se usó o venció. Crea una contraseña nueva desde «¿Olvidaste tu contraseña?».",
+		);
+	});
+
+	it("un enlace que no existe, ya usado o vencido no deja reintentar", () => {
+		expect(SET_PASSWORD_ERROR_CODES.filter(isSpentPasswordLinkCode)).toEqual(["not_found", "already_used", "expired"]);
+	});
+
+	it("usa el código de la respuesta y, si falta o es desconocido, el del status", () => {
+		expect(resolveSetPasswordErrorCode("expired", 500)).toBe("expired");
+		expect(resolveSetPasswordErrorCode(undefined, 429)).toBe("rate_limited");
+		expect(resolveSetPasswordErrorCode("otro", 404)).toBe("not_found");
+		expect(resolveSetPasswordErrorCode(null, 409)).toBe("already_used");
+		expect(resolveSetPasswordErrorCode(undefined, 503)).toBe("server_error");
+		expect(setPasswordErrorCodeForStatus(400)).toBe("password_rejected");
+		expect(setPasswordErrorCodeForStatus(410)).toBe("expired");
 	});
 });

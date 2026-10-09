@@ -11,8 +11,9 @@ import { Input } from "@/components/ui/input";
 import { trackEvent } from "@/lib/analytics/track-event";
 import { LEGAL_DOCUMENTS_VERSION, LEGAL_PRIVACY_PATH, LEGAL_TERMS_PATH } from "@/lib/legal/legal-documents";
 import { fillCopy, getOnboardingUiCopy } from "@/lib/onboarding/onboarding-ui-copy";
+import { RECAPTCHA_ACTIONS } from "@/lib/onboarding/recaptcha";
 
-type SentState = { email: string; emailSent: boolean; resumed?: boolean };
+type SentState = { email: string; emailSent: boolean };
 
 const fieldClass = "h-12 rounded-xl px-4 text-[15px]";
 
@@ -52,7 +53,8 @@ export function OnboardingStep1Form({
 		setLoading(true);
 		setError(null);
 		try {
-			const recaptchaToken = executeRecaptcha ? await executeRecaptcha("onboarding_apply") : "";
+			// El servicio exige esta misma acción (y un puntaje mínimo) al verificar el token.
+			const recaptchaToken = executeRecaptcha ? await executeRecaptcha(RECAPTCHA_ACTIONS.onboardingApply) : "";
 			const res = await fetch("/api/onboarding/apply", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -75,17 +77,19 @@ export function OnboardingStep1Form({
 				skippedVerification?: boolean;
 				token?: string;
 				emailSent?: boolean;
-				resumed?: boolean;
 			};
 			if (!res.ok) throw new Error(data.error ?? t.errorSubmit);
-			if (!data.resumed) trackEvent("sign_up", { method: "email", flow: panelOnly ? "panel_only" : "draft", plan: planId ?? "" });
+			// También cuenta cuando el correo ya tenía un alta: el servicio responde igual a
+			// propósito para no delatar qué correos están registrados, así que aquí no se distingue.
+			trackEvent("sign_up", { method: "email", flow: panelOnly ? "panel_only" : "draft", plan: planId ?? "" });
 			// El servicio dio el correo por verificado (ONBOARDING_SKIP_EMAIL_VERIFICATION):
-			// no hay enlace que esperar, se salta directo a «Crear mi tienda».
+			// no hay enlace que esperar, se salta directo a «Crear mi tienda» (que con «solo
+			// panel CEO» sigue a elegir el plan).
 			if (data.skippedVerification && data.token) {
 				window.location.assign(`/onboarding/tienda?token=${encodeURIComponent(String(data.token))}`);
 				return;
 			}
-			setSent({ email: form.email.trim(), emailSent: data.emailSent !== false, resumed: data.resumed === true });
+			setSent({ email: form.email.trim(), emailSent: data.emailSent !== false });
 			// Si el correo no salió, se puede reenviar enseguida.
 			setResendCooldown(data.emailSent === false ? 0 : 30);
 		} catch (err) {
@@ -105,9 +109,10 @@ export function OnboardingStep1Form({
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ email: sent.email }),
 			});
-			const data = (await res.json().catch(() => ({}))) as { error?: string; alreadyVerified?: boolean };
+			const data = (await res.json().catch(() => ({}))) as { error?: string };
 			if (!res.ok) throw new Error(data.error ?? t.resendError);
-			setResendMessage(data.alreadyVerified ? t.resendAlready : t.resendSuccess);
+			// El servicio no dice en qué paso va el alta (manda a ese correo el enlace que toca).
+			setResendMessage(t.resendSuccess);
 			setSent((prev) => (prev ? { ...prev, emailSent: true } : prev));
 			setResendCooldown(45);
 		} catch (err) {
@@ -119,7 +124,7 @@ export function OnboardingStep1Form({
 
 	if (sent) {
 		const Icon = sent.emailSent ? MailCheck : MailWarning;
-		const [before, after] = (sent.emailSent ? (sent.resumed ? t.resumedBody : t.sentBody) : t.notSentBody).split("{email}");
+		const [before, after] = (sent.emailSent ? t.sentBody : t.notSentBody).split("{email}");
 		return (
 			<div role="status" className="rounded-2xl border border-slate-200 p-6 sm:p-8">
 				<span

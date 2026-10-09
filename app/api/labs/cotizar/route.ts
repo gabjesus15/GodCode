@@ -7,7 +7,7 @@ import { logger } from "@/lib/infra/logger";
 import { assertJsonRateLimit } from "@/lib/infra/public-rate-limit";
 import { escapeTelegramHtml, sendTelegramMessage } from "@/lib/infra/telegram";
 import { labelForBudget, labelForProjectType, parseQuoteRequest } from "@/lib/labs/quote-request";
-import { verifyRecaptcha } from "@/lib/onboarding/recaptcha";
+import { RECAPTCHA_ACTIONS, verifyRecaptcha } from "@/lib/onboarding/recaptcha";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,9 +54,10 @@ export async function POST(req: NextRequest) {
 	}
 	const quote = parsed.value;
 
-	const recaptcha = await verifyRecaptcha(readRecaptchaToken(body), recaptchaSecret());
+	// La acción es la que pide el formulario al enviar (`components/labs/quote-form.tsx`).
+	const recaptcha = await verifyRecaptcha(readRecaptchaToken(body), recaptchaSecret(), { expectedAction: RECAPTCHA_ACTIONS.labsQuote });
 	if (!recaptcha.ok) {
-		logger.warn("labs_quote_recaptcha_failed", { reason: recaptcha.error });
+		logger.warn("labs_quote_recaptcha_failed", { reason: recaptcha.error, score: recaptcha.score, action: recaptcha.action });
 		return NextResponse.json(
 			{ ok: false, error: "No pudimos comprobar que eres una persona. Recarga la página e inténtalo de nuevo." },
 			{ status: 400 },
