@@ -32,6 +32,8 @@ interface SupabaseWebhookPayload {
 interface DirectPayload {
   companyId?: string;
   table?: string;
+  /** Con `table: "companies"`, también se borra la caché de la empresa por su link. */
+  slug?: string;
 }
 
 function extractCompanyId(body: SupabaseWebhookPayload | DirectPayload): string | null {
@@ -98,9 +100,12 @@ export async function POST(req: NextRequest) {
   
   // Invalidate company config cache if companies table is modified
   let companySlugRevalidated = null;
-  if (table === "companies" && "record" in body) {
+  if (table === "companies") {
     const webhook = body as SupabaseWebhookPayload;
-    const slug = (webhook.record?.public_slug as string | undefined) ?? (webhook.old_record?.public_slug as string | undefined);
+    const slug =
+      ("record" in body
+        ? ((webhook.record?.public_slug as string | undefined) ?? (webhook.old_record?.public_slug as string | undefined))
+        : (body as DirectPayload).slug)?.trim();
     if (slug) {
       companySlugRevalidated = `company-slug:${slug}`;
       revalidateTag(companySlugRevalidated, "max");

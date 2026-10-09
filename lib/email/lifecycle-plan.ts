@@ -1,6 +1,8 @@
 import { classifyPortalPaymentReference, isOrderAwaitingPayment, isSubscriptionOrderKind } from "@/lib/billing/portal-orders";
 import { resolveSubscriptionPhase } from "@/lib/billing/portal-pricing";
 
+import { STORE_DRAFT_NOTICE_DAY, STORE_DRAFT_PURGE_DAY, STORE_DRAFT_REMINDER_DAYS } from "@/lib/tenant/store-draft";
+
 import { calendarDay, calendarDaysUntil, timeZoneForCountry } from "./format";
 
 /**
@@ -15,7 +17,11 @@ import { calendarDay, calendarDaysUntil, timeZoneForCountry } from "./format";
  * - Plan vencido sin renovar: el día que vence (hasta 2 días después) y a los 3 y 10 días.
  *   Un plan cancelado que llega a su fin recibe «terminó» en lugar de esos avisos.
  * - Pedido de /cuenta sin pagar: al día siguiente (hasta el 3.º) y a los 4 días (hasta el 6.º).
- * - Alta a medias (correo confirmado, falta plan o pago): al día siguiente y a los 3 días.
+ * - Alta a medias (correo confirmado, falta crear la tienda, el plan o el pago): al día
+ *   siguiente y a los 3 días. Quien ya armó su tienda en vista previa no recibe estos.
+ *   Con «solo panel CEO» no hay tienda que crear: lo que falta es el plan.
+ * - Tienda armada en vista previa sin publicar («Arma y paga»): a los 2 y 7 días; a los 23,
+ *   el aviso de que se borra (solo con el borrado encendido). Callada si el pago está en revisión.
  * Las ventanas acotadas evitan que, al activar esto, les llegue un aviso viejo a todos.
  * Si hay un pago en revisión, no se recuerda nada de esa suscripción.
  */
@@ -38,11 +44,24 @@ export type LifecycleOrder = {
 
 export type LifecycleApplication = {
 	id: string;
+	/** Con empresa: ya armó su tienda en vista previa (tiene sus propios avisos). */
+	companyId?: string | null;
+	/** Eligió «solo panel CEO»: no arma tienda, le falta elegir el plan y pagar. */
+	panelOnly?: boolean;
 	status: string | null;
 	paymentStatus: string | null;
 	receiptUrl: string | null;
 	lastActivityAt: string | null;
 	country: string | null;
+};
+
+export type LifecycleStoreDraft = {
+	companyId: string;
+	/** Cuándo se creó la tienda en vista previa. */
+	since: string;
+	country: string | null;
+	/** Comprobante del alta en revisión: no se le recuerda publicar. */
+	paymentInReview: boolean;
 };
 
 export type PlannedEmail =
@@ -51,12 +70,17 @@ export type PlannedEmail =
 	| { kind: "subscription_expired"; companyId: string; dedupeKey: string; followup: 0 | 1 | 2 }
 	| { kind: "subscription_ended"; companyId: string; dedupeKey: string }
 	| { kind: "order_pending"; companyId: string; orderId: string; dedupeKey: string; attempt: 1 | 2 }
-	| { kind: "onboarding_resume"; applicationId: string; dedupeKey: string; step: "plan" | "payment"; attempt: 1 | 2 };
+	| { kind: "onboarding_resume"; applicationId: string; dedupeKey: string; step: "store" | "plan" | "payment"; attempt: 1 | 2 }
+	| { kind: "store_draft_reminder"; companyId: string; dedupeKey: string; attempt: 1 | 2 }
+	| { kind: "store_draft_expiring"; companyId: string; dedupeKey: string };
 
 export type LifecycleSnapshot = {
 	companies: LifecycleCompany[];
 	orders: LifecycleOrder[];
 	applications: LifecycleApplication[];
+	drafts?: LifecycleStoreDraft[];
+	/** El borrado de borradores está encendido: recién ahí sale el aviso de los 23 días. */
+	draftPurge?: boolean;
 };
 
 function renewalBucket(daysLeft: number): 1 | 3 | 7 | null {
@@ -149,8 +173,10 @@ export function planLifecycleEmails(snapshot: LifecycleSnapshot, now: Date): Pla
 		if (!app.lastActivityAt) continue;
 		const status = String(app.status ?? "").toLowerCase();
 		const paymentStatus = String(app.paymentStatus ?? "").toLowerCase();
-		let step: "plan" | "payment" | null = null;
-		if (status === "email_verified") step = "plan";
+		// Ya armó su tienda en vista previa: le tocan los avisos de la tienda, no estos.
+		if (app.companyId && paymentStatus !== "paid") continue;
+		let step: "store" | "plan" | "payment" | null = null;
+		if (status === "email_verified") step = app.panelOnly ? "plan" : "store";
 		// Con el formulario del paso 2 hecho ya eligió plan: lo que falta es pagar.
 		else if ((status === "form_completed" || status === "payment_pending") && paymentStatus !== "paid" && !String(app.receiptUrl ?? "").trim()) {
 			step = "payment";
@@ -160,6 +186,19 @@ export function planLifecycleEmails(snapshot: LifecycleSnapshot, now: Date): Pla
 		const attempt = reminderAttempt(age, 1, 3, 6);
 		if (attempt == null) continue;
 		planned.push({ kind: "onboarding_resume", applicationId: app.id, dedupeKey: `resume:${app.id}:${attempt}`, step, attempt });
+	}
+
+	const [firstReminder, secondReminder] = STORE_DRAFT_REMINDER_DAYS;
+	for (const draft of snapshot.drafts ?? []) {
+		if (draft.paymentInReview) continue;
+		const age = -calendarDaysUntil(draft.since, now, timeZoneForCountry(draft.country));
+		if (snapshot.draftPurge && age >= STORE_DRAFT_NOTICE_DAY && age < STORE_DRAFT_PURGE_DAY) {
+			planned.push({ kind: "store_draft_expiring", companyId: draft.companyId, dedupeKey: `draft-expiring:${draft.companyId}` });
+			continue;
+		}
+		const attempt = reminderAttempt(age, firstReminder, secondReminder, secondReminder + 2);
+		if (attempt == null) continue;
+		planned.push({ kind: "store_draft_reminder", companyId: draft.companyId, dedupeKey: `draft:${draft.companyId}:${attempt}`, attempt });
 	}
 
 	return planned;

@@ -343,3 +343,23 @@ body {
         animation: none;
     }
 }
+
+/*
+ * Vista previa del dueño («Arma y paga»): la barra fija de arriba ocupa su alto y la
+ * tienda baja lo mismo. La capa de navegación y carrito es `fixed` y TenantShell le pone
+ * `top: 0` en línea, por eso el `!important`; el `transform` la vuelve el bloque contenedor
+ * de sus hijos fijos, así la barra de navegación y el carrito bajan con ella.
+ */
+html[data-store-preview] {
+    --store-preview-h: 48px;
+}
+
+html[data-store-preview] #app-content-layer {
+    padding-top: var(--store-preview-h);
+}
+
+html[data-store-preview] #app-ui-layer {
+    top: var(--store-preview-h) !important;
+    height: calc(100% - var(--store-preview-h)) !important;
+    transform: translateZ(0);
+}

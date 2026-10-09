@@ -15,9 +15,16 @@ export type EmailTemplates = {
 		name: string;
 		businessName: string;
 		resumeUrl: string;
-		step: "plan" | "payment";
+		/** `store`: confirmó el correo y todavía no creó su tienda («Arma y paga»). */
+		step: "store" | "plan" | "payment";
 		attempt: 1 | 2;
 		planName?: string;
+	};
+	onboarding_continue: {
+		name: string;
+		businessName: string;
+		continueUrl: string;
+		step: "store" | "plan" | "payment" | "review";
 	};
 	onboarding_receipt_received: {
 		name: string;
@@ -26,15 +33,26 @@ export type EmailTemplates = {
 		method?: string;
 		reference: string;
 		statusUrl?: string;
+		/** «Arma y paga»: la tienda ya está armada y se publica sola al validar el pago. */
+		storeDraft?: boolean;
 	};
 	welcome: {
 		name: string;
 		businessName: string;
-		setPasswordUrl: string;
+		/** Falta cuando el dueño ya eligió su contraseña (armó la tienda antes de pagar). */
+		setPasswordUrl?: string;
+		/** «Arma y paga»: la tienda ya estaba armada en vista previa y ahora se abrió al público. */
+		storeOpened?: boolean;
 		loginUrl: string;
 		storeUrl?: string;
+		/** `/cuenta?tab=menu`: cargar la carta desde una foto o empezar con un ejemplo. */
+		menuUrl?: string;
 		contactDate?: string;
 	};
+	/** «Arma y paga»: tienda armada en vista previa que todavía no se publicó (a los 2 y 7 días). */
+	store_draft_reminder: { name?: string; businessName: string; continueUrl: string; storeUrl?: string; attempt: 1 | 2 };
+	/** Aviso antes de borrar un borrador sin publicar (a los 23 días). */
+	store_draft_expiring: { name?: string; businessName: string; continueUrl: string; deleteDate: string };
 	password_reset: { name?: string; resetUrl: string };
 	payment_received: {
 		name?: string;
@@ -139,18 +157,42 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 			audience: "prospect",
 			tone: "brand",
 			subject: `Confirma tu correo para crear ${d.businessName} en ${product}`,
-			preheader: "Un clic y sigues con el alta. El enlace vence en 24 horas.",
+			preheader: "Un clic y empiezas a armar tu tienda. El enlace vale 7 días.",
 			title: "Confirma tu correo",
 			greeting: greet(d.name),
-			intro: `Recibimos la solicitud para crear **${d.businessName}** en ${product}. Confirma que este correo es tuyo y sigue con la elección de tu plan.`,
+			intro: `Recibimos la solicitud para crear **${d.businessName}** en ${product}. Confirma que este correo es tuyo y crea tu tienda: la armas gratis y pagas recién al publicarla.`,
 			cta: { label: "Confirmar mi correo", url: d.verifyUrl, showUrl: true },
 			ctaFirst: true,
 			blocks: [],
-			reason: `Recibes este correo porque se registró ${d.businessName} con esta dirección. Si no fuiste tú, ignóralo: no se creará nada. El enlace vence en 24 horas.`,
+			reason: `Recibes este correo porque se registró ${d.businessName} con esta dirección. Si no fuiste tú, ignóralo: no se creará nada. El enlace vale 7 días.`,
 		};
 	},
 
 	onboarding_resume: (d) => {
+		if (d.step === "store") {
+			return {
+				audience: "prospect",
+				tone: "brand",
+				subject: d.attempt === 1 ? `${d.businessName} te está esperando` : `¿Creamos la tienda de ${d.businessName}?`,
+				preheader: "Ármala gratis con tu menú, tu logo y tus colores. Pagas cuando la publiques.",
+				title: "Crea tu tienda",
+				greeting: greet(d.name),
+				intro: `Confirmaste tu correo, pero todavía no creaste la tienda de **${d.businessName}**. Ármala gratis y pruébala con su link; pagas recién cuando quieras abrirla a tus clientes.`,
+				blocks: [
+					{
+						type: "steps",
+						title: "Así de simple",
+						items: [
+							{ title: "Elige el link de tu tienda", text: "Y crea tu contraseña para volver cuando quieras." },
+							{ title: "Arma tu menú, tu logo y tus colores", text: "La ves en vista previa: tus clientes todavía no." },
+							{ title: "Publícala cuando quieras", text: "Eliges tu plan, pagas y queda abierta." },
+						],
+					},
+				],
+				cta: { label: "Crear mi tienda", url: d.resumeUrl },
+				reason: `Recibes este correo porque empezaste el alta de ${d.businessName}.${d.attempt === 2 ? " Es el último recordatorio: no te escribiremos más sobre esto." : ""}`,
+			};
+		}
 		const payment = d.step === "payment";
 		const blocks: EmailBlock[] = [
 			{
@@ -180,6 +222,29 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 		};
 	},
 
+	onboarding_continue: (d) => {
+		const copies = {
+			store: { title: "Crea tu tienda", intro: `Aquí tienes el enlace para crear la tienda de **${d.businessName}**. La armas gratis y pagas recién cuando quieras publicarla.`, cta: "Crear mi tienda" },
+			plan: { title: "Sigue con el alta", intro: `Aquí tienes el enlace para seguir con el alta de **${d.businessName}**. Tus datos están guardados: solo falta elegir el plan y pagar.`, cta: "Elegir mi plan" },
+			payment: { title: "Sigue con el pago", intro: `Aquí tienes el enlace para terminar el alta de **${d.businessName}**. Ya elegiste tu plan: solo falta el pago.`, cta: "Ir al pago" },
+			review: { title: "Tu comprobante está en revisión", intro: `Ya recibimos el comprobante de **${d.businessName}**. Te escribimos apenas lo validemos; desde este enlace puedes ver el estado o subir otro si te lo pedimos.`, cta: "Ver el estado" },
+		};
+		const copy = copies[d.step];
+		return {
+			audience: "prospect",
+			tone: "brand",
+			subject: `Tu enlace para seguir con ${d.businessName}`,
+			preheader: "Pediste retomar el alta desde la web.",
+			title: copy.title,
+			greeting: greet(d.name),
+			intro: copy.intro,
+			cta: { label: copy.cta, url: d.continueUrl, showUrl: true },
+			ctaFirst: true,
+			blocks: [],
+			reason: "Recibes este correo porque alguien pidió retomar el alta con esta dirección. Si no fuiste tú, ignóralo.",
+		};
+	},
+
 	onboarding_receipt_received: (d) => ({
 		audience: "prospect",
 		tone: "brand",
@@ -200,23 +265,65 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 			{
 				type: "steps",
 				title: "Qué sigue",
-				items: [
-					{ title: "Validamos el pago" },
-					{ title: "Activamos tu cuenta", text: "Te llega un correo para crear tu contraseña." },
-					{ title: "Te ayudamos a dejar tu menú listo" },
-				],
+				items: d.storeDraft
+					? [
+							{ title: "Validamos el pago" },
+							{ title: "Tu tienda se publica sola", text: "Con todo lo que ya armaste. Te avisamos por correo." },
+							{ title: "Compartes tu link", text: "Mientras tanto puedes seguir ajustándola." },
+						]
+					: [
+							{ title: "Validamos el pago" },
+							{ title: "Activamos tu cuenta", text: "Te llega un correo para crear tu contraseña." },
+							{ title: "Te ayudamos a dejar tu menú listo" },
+						],
 			},
 			{ type: "note", text: "No hace falta que vuelvas a pagar." },
 		],
-		secondary: d.statusUrl ? { label: "Ver el estado de mi alta", url: d.statusUrl } : undefined,
+		secondary: d.statusUrl ? { label: d.storeDraft ? "Seguir armando mi tienda" : "Ver el estado de mi alta", url: d.statusUrl } : undefined,
 		reason: `Recibes este correo por el alta de ${d.businessName}.`,
 	}),
 
 	welcome: (d) => {
 		const { product } = getEmailBrand();
+		if (d.storeOpened || !d.setPasswordUrl) {
+			return {
+				audience: "customer",
+				tone: "success",
+				subject: `${d.businessName} ya está abierta en ${product}`,
+				preheader: "Tus clientes ya pueden verla y pedir. Comparte tu link.",
+				title: "Tu tienda está abierta",
+				greeting: greet(d.name),
+				intro: `El pago quedó registrado y **${d.businessName}** ya es pública: tus clientes pueden entrar con tu link y hacer pedidos.`,
+				cta: d.storeUrl ? { label: "Ver mi tienda", url: d.storeUrl, showUrl: true } : { label: "Entrar a mi cuenta", url: d.loginUrl },
+				ctaFirst: true,
+				blocks: [
+					{
+						type: "summary",
+						title: "Guarda estos enlaces",
+						rows: [
+							{ label: "Tu tienda", value: d.storeUrl ?? "" },
+							{ label: "Tu cuenta", value: d.loginUrl },
+						],
+					},
+					{
+						type: "steps",
+						title: "Primeros pasos",
+						items: [
+							{ title: "Comparte tu link", text: "En tu Instagram, tu WhatsApp y con un QR en el local." },
+							{ title: "Abre la caja para recibir pedidos", text: "Desde el panel de tu local, con tu correo y tu contraseña." },
+							...(d.contactDate ? [{ title: `Te escribimos el ${d.contactDate}`, text: "Para ayudarte con lo que necesites." }] : []),
+						],
+					},
+				],
+				reason: `Recibes este correo porque ${d.businessName} se activó con esta dirección.`,
+			};
+		}
 		const steps = [
 			{ title: "Crea tu contraseña", text: "El enlace de arriba sirve una sola vez." },
-			{ title: "Carga tu menú", text: "Productos, fotos, precios y horarios desde tu panel." },
+			{
+				title: "Carga tu menú",
+				text: "En tu cuenta, en «Mi menú»: súbelo desde una foto o un Excel, o empieza con un menú de ejemplo.",
+			},
 			...(d.contactDate ? [{ title: `Te escribimos el ${d.contactDate}`, text: "Para ayudarte a dejar tu página lista." }] : []),
 		];
 		return {
@@ -235,6 +342,7 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 					title: "Guarda estos enlaces",
 					rows: [
 						{ label: "Tu panel", value: d.loginUrl },
+						...(d.menuUrl ? [{ label: "Cargar tu menú", value: d.menuUrl }] : []),
 						{ label: "Tu menú público", value: d.storeUrl ?? "" },
 					],
 				},
@@ -242,6 +350,51 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 				{ type: "note", text: "Si el enlace vence, entra a tu panel y usa «¿Olvidaste tu contraseña?»: te enviamos otro." },
 			],
 			reason: `Recibes este correo porque ${d.businessName} se activó con esta dirección.`,
+		};
+	},
+
+	store_draft_reminder: (d) => {
+		const { product } = getEmailBrand();
+		return {
+			audience: "prospect",
+			tone: "brand",
+			subject: d.attempt === 1 ? "Tu tienda está lista para publicar" : `${d.businessName} sigue lista para publicar`,
+			preheader: "Elige tu plan y ábrela a tus clientes. Todo lo que armaste sigue guardado.",
+			title: "Tu tienda está lista para publicar",
+			greeting: greet(d.name),
+			intro: `Armaste **${d.businessName}** y solo falta publicarla. Cuando lo hagas, tus clientes podrán entrar con tu link y hacerte pedidos.`,
+			cta: { label: "Publicar mi tienda", url: d.continueUrl },
+			blocks: [
+				{
+					type: "steps",
+					title: "Lo que falta",
+					items: [
+						{ title: "Elige tu plan", text: "El que marcaste o el que prefieras. Lo puedes cambiar después." },
+						{ title: "Paga con PayPal o transferencia", text: "Con transferencia, subes el comprobante y lo validamos." },
+						{ title: "Tu tienda se abre", text: "Con tu link y tu QR, listos para compartir." },
+					],
+				},
+				{ type: "note", text: "¿Te falta algo antes de publicar? Responde este correo y te ayudamos." },
+			],
+			secondary: d.storeUrl ? { label: "Ver mi vista previa", url: d.storeUrl } : undefined,
+			reason: `Recibes este correo porque armaste ${d.businessName} en ${product} y todavía no la publicaste.`,
+		};
+	},
+
+	store_draft_expiring: (d) => {
+		const { product } = getEmailBrand();
+		return {
+			audience: "prospect",
+			tone: "warning",
+			subject: `${d.businessName} se borra el ${d.deleteDate}`,
+			preheader: "Publícala antes de esa fecha para no perder lo que armaste.",
+			title: "Tu tienda sin publicar se borra pronto",
+			greeting: greet(d.name),
+			intro: `Hace casi un mes que armaste **${d.businessName}** y todavía no está publicada. Si no la publicas, el ${d.deleteDate} la borramos y su link queda libre para otro negocio.`,
+			cta: { label: "Publicar mi tienda", url: d.continueUrl },
+			ctaFirst: true,
+			blocks: [{ type: "note", text: "Si ya no la necesitas, no tienes que hacer nada." }],
+			reason: `Recibes este correo porque armaste ${d.businessName} en ${product}. Es el único aviso antes de borrarla.`,
 		};
 	},
 
@@ -676,6 +829,14 @@ export const EMAIL_CATALOG: EmailCatalogEntry[] = [
 		sample: { name: SAMPLE_NAME, businessName: SAMPLE_BUSINESS, resumeUrl: "https://example.com/onboarding/pago?token=demo", step: "payment", attempt: 1, planName: "Pro" },
 	}),
 	entry({
+		kind: "onboarding_continue",
+		group: "Alta",
+		label: "Retomar el alta",
+		trigger: "Cuando alguien vuelve a registrarse con un correo que ya tiene un alta en curso, o pide reenviar el enlace.",
+		automatic: false,
+		sample: { name: SAMPLE_NAME, businessName: SAMPLE_BUSINESS, continueUrl: "https://example.com/onboarding/pago?token=demo", step: "payment" },
+	}),
+	entry({
 		kind: "onboarding_receipt_received",
 		group: "Alta",
 		label: "Comprobante del alta recibido",
@@ -695,7 +856,35 @@ export const EMAIL_CATALOG: EmailCatalogEntry[] = [
 			setPasswordUrl: "https://example.com/login/nueva-clave?code=demo",
 			loginUrl: "https://example.com/login",
 			storeUrl: "https://la-parada.example.com",
+			menuUrl: "https://example.com/cuenta?tab=menu",
 			contactDate: "viernes, 26 de septiembre de 2026",
+		},
+	}),
+	entry({
+		kind: "store_draft_reminder",
+		group: "Alta",
+		label: "Tienda lista para publicar",
+		trigger: "Automático: si la tienda armada en vista previa no se publica, a los 2 y a los 7 días.",
+		automatic: true,
+		sample: {
+			name: SAMPLE_NAME,
+			businessName: SAMPLE_BUSINESS,
+			continueUrl: "https://example.com/cuenta/publicar",
+			storeUrl: "https://example.com/la-parada-criolla",
+			attempt: 1,
+		},
+	}),
+	entry({
+		kind: "store_draft_expiring",
+		group: "Alta",
+		label: "Tienda sin publicar por borrarse",
+		trigger: "Automático: a los 23 días sin publicar, solo con el borrado de borradores encendido (STORE_DRAFT_PURGE=on).",
+		automatic: true,
+		sample: {
+			name: SAMPLE_NAME,
+			businessName: SAMPLE_BUSINESS,
+			continueUrl: "https://example.com/cuenta/publicar",
+			deleteDate: "jueves, 5 de noviembre de 2026",
 		},
 	}),
 	entry({

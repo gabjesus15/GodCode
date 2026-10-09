@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, FileText, Home, LifeBuoy, Store, CalendarClock, ArrowRight, ExternalLink } from "lucide-react";
+import { CreditCard, FileText, Home, LifeBuoy, Store, CalendarClock, ArrowRight, ExternalLink, UtensilsCrossed } from "lucide-react";
 import type {
   AccountActivityItem,
   BranchSummary,
@@ -10,7 +10,7 @@ import type {
   TicketSummary,
 } from "../../shared/customer-account-types";
 import { displayStatus, fmtDate, fmtDay, fmtUsd } from "../../shared/customer-account-format";
-import { SUBSCRIPTION_STATUS_LABELS } from "../../shared/customer-account-constants";
+import { PUBLIC_MENU_TABS, SUBSCRIPTION_STATUS_LABELS } from "../../shared/customer-account-constants";
 import { Alert } from "../../ui/Alert";
 import { Badge, subscriptionStatusVariant } from "../../ui/Badge";
 import { Card } from "../../ui/Card";
@@ -20,6 +20,9 @@ import { StatCard } from "../../ui/StatCard";
 import { EmptyState } from "../../ui/EmptyState";
 
 import { getTenantMenuUrl } from "@/utils/tenant-url";
+import type { FirstStep } from "@/lib/tenant/account-first-steps";
+import { AccountFirstSteps } from "../account-first-steps";
+import { resolveCajaUrl } from "../../shared/caja-url";
 
 export type AccountAlert = {
   id: string;
@@ -48,6 +51,7 @@ export type AccountResumenTabProps = {
   activityFilter: "all" | "pago" | "ticket" | "extra";
   setActivityFilter: (v: "all" | "pago" | "ticket" | "extra") => void;
   onNavigate: (tab: PortalTab) => void;
+  firstSteps?: FirstStep[];
 };
 
 const toneToVariant = (tone: AccountAlert["tone"]) =>
@@ -67,6 +71,7 @@ const typeIcon: Record<AccountActivityItem["type"], React.ReactNode> = {
 };
 
 const quickActions: Array<{ tab: PortalTab; label: string; sub: string; icon: React.ElementType }> = [
+  { tab: "menu",       label: "Mi menú",                 sub: "Cargar productos desde una foto o un ejemplo", icon: UtensilsCrossed },
   { tab: "perfil",       label: "Página de inicio",        sub: "WhatsApp, Instagram, horarios", icon: Home         },
   { tab: "plan",       label: "Plan y extras",           sub: "Renovar, cambiar de plan, extras", icon: CreditCard    },
   { tab: "facturacion",label: "Facturación",             sub: "Pagos y comprobantes",           icon: FileText      },
@@ -92,10 +97,14 @@ export function AccountResumenTab({
   activityFilter,
   setActivityFilter,
   onNavigate,
+  firstSteps = [],
 }: AccountResumenTabProps) {
-  const menuUrl = company.publicSlug ? getTenantMenuUrl(company.publicSlug, company.customDomain) : "";
+  // «Solo panel CEO»: sin menú público, ni su enlace ni sus secciones.
+  const hasPublicMenu = company.hasPublicMenu !== false;
+  const menuUrl = hasPublicMenu && company.publicSlug ? getTenantMenuUrl(company.publicSlug, company.customDomain) : "";
+  const shortcuts = hasPublicMenu ? quickActions : quickActions.filter((action) => !PUBLIC_MENU_TABS.includes(action.tab));
   // Panel de ventas (caja): el mismo destino que el botón de la página de inicio del negocio.
-  const salesPanelUrl = (process.env.NEXT_PUBLIC_TENANT_PANEL_URL ?? "").trim().replace(/\/$/, "") || company.tenantAdminUrl;
+  const salesPanelUrl = resolveCajaUrl(company);
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -104,6 +113,8 @@ export function AccountResumenTab({
         title="Resumen"
         description="Estado actual de tu cuenta, plan y actividad reciente."
       />
+
+      <AccountFirstSteps steps={firstSteps} storeUrl={menuUrl} onNavigate={onNavigate} />
 
       {/* ── KPI row ── */}
       <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
@@ -194,7 +205,7 @@ export function AccountResumenTab({
           <Card compact noPadding>
             <p className="px-4 pt-4 text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Accesos rápidos</p>
             <nav className="mt-2 divide-y divide-[#f5f5f7]">
-              {quickActions.map(({ tab, label, sub, icon: Icon }) => (
+              {shortcuts.map(({ tab, label, sub, icon: Icon }) => (
                 <button
                   key={tab}
                   type="button"

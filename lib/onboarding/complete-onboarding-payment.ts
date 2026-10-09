@@ -7,8 +7,11 @@ import { getAppUrl } from "@/lib/tenant/app-url";
 import { getTenantHomeUrl } from "../../utils/tenant-url";
 import { activateCompanyAddonsFromApplication, activateCompanySubscription } from "./billing-activation";
 import { formatContactDate, getBookingContactDate, queueBookingReminder } from "./booking-notifications";
-import { provisionCompanyFromApplication, type OnboardingApplication } from "./checkout-service";
+import { provisionCompanyFromApplication, whatsappUrlFromPhone, type OnboardingApplication } from "./checkout-service";
+import { socialInputToUrl } from "@/lib/tenant/home-page/home-page-config";
 import { ensureCompanyOwner } from "./company-owner";
+import { openStoreDraft } from "./store-draft-service";
+import { readStoreDraft } from "@/lib/tenant/store-draft";
 import { alertOnboardingTeam } from "./team-alerts";
 
 /** Tras este tiempo, un cierre que quedó a medias se puede retomar. */
@@ -44,9 +47,12 @@ export type CompleteOnboardingPaymentResult =
 			alreadyCompleted: boolean;
 			ownerReady: boolean;
 			welcomeSent: boolean;
+			/** La tienda venía armada en vista previa («Arma y paga»): el dueño ya tiene contraseña. */
+			fromDraft?: boolean;
 			ownerError?: string;
 	  }
-	| { ok: false; error: string; status: number };
+	/** `inProgress`: otra llamada está cerrando este mismo pago ahora mismo (no es un fallo). */
+	| { ok: false; error: string; status: number; inProgress?: boolean };
 
 type ApplicationRow = OnboardingApplication & {
 	status: string;
@@ -62,7 +68,7 @@ type ApplicationRow = OnboardingApplication & {
 };
 
 const APPLICATION_COLUMNS =
-	"id,status,payment_status,payment_reference,company_id,plan_id,business_name,responsible_name,email,phone,billing_rut,fiscal_address,logo_url,social_instagram,subscription_payment_method,welcome_email_sent_at,updated_at,country,currency,coupon_id,coupon_code,coupon_discount_usd,coupon_free_months";
+	"id,status,payment_status,payment_reference,company_id,plan_id,business_name,responsible_name,email,phone,sector,billing_rut,fiscal_address,logo_url,social_instagram,subscription_payment_method,welcome_email_sent_at,updated_at,country,currency,coupon_id,coupon_code,coupon_discount_usd,coupon_free_months";
 
 /**
  * Cierra el alta de una solicitud cuyo pago ya está confirmado (PayPal capturado o
@@ -116,7 +122,7 @@ export async function completeOnboardingPayment(
 			return finishOwnerAccess({ supabaseAdmin, app, companyId: String(app.company_id), alreadyCompleted: true, now });
 		}
 		if (!stale) {
-			return { ok: false, error: "Estamos procesando este pago. Intenta de nuevo en un minuto.", status: 409 };
+			return { ok: false, error: "Estamos procesando este pago. Intenta de nuevo en un minuto.", status: 409, inProgress: true };
 		}
 		// Un cierre anterior quedó a medias (se cayó tras reclamar): se retoma entero.
 	}
@@ -184,8 +190,20 @@ export async function completeOnboardingPayment(
 	if (input.promoApplied) companyPatch.first_payment_promo_used_at = now.toISOString();
 	if (app.country) companyPatch.country = app.country;
 	if (app.currency) companyPatch.currency = app.currency;
+	// La tienda armada en vista previa nació sin los datos del paso del plan: se completan.
+	const draftCompany = Boolean(app.company_id);
+	if (draftCompany) {
+		if (app.phone) companyPatch.phone = app.phone;
+		if (app.fiscal_address) companyPatch.address = app.fiscal_address;
+		if (app.billing_rut) companyPatch.legal_rut = app.billing_rut;
+	}
 	if (Object.keys(companyPatch).length > 0) {
 		await supabaseAdmin.from("companies").update(companyPatch).eq("id", companyId);
+	}
+	// «Arma y paga»: la tienda en vista previa se abre al público con el plan pagado.
+	if (draftCompany) {
+		await openStoreDraft(supabaseAdmin, { companyId, planId: app.plan_id, now });
+		await fillDraftBranchContact(supabaseAdmin, companyId, app);
 	}
 
 	await activateCompanyAddonsFromApplication({
@@ -231,7 +249,7 @@ export async function completeOnboardingPayment(
 }
 
 export type OnboardingPaymentStatus =
-	| { status: "paid"; companyId: string; ownerReady: boolean; welcomeSent: boolean }
+	| { status: "paid"; companyId: string; ownerReady: boolean; welcomeSent: boolean; fromDraft: boolean }
 	| { status: "pending" }
 	| { status: "not_found" };
 
@@ -262,7 +280,7 @@ export async function ensureOnboardingOwnerAccess(params: {
 		now: params.now ?? new Date(),
 	});
 	return result.ok
-		? { status: "paid", companyId: result.companyId, ownerReady: result.ownerReady, welcomeSent: result.welcomeSent }
+		? { status: "paid", companyId: result.companyId, ownerReady: result.ownerReady, welcomeSent: result.welcomeSent, fromDraft: Boolean(result.fromDraft) }
 		: { status: "pending" };
 }
 
@@ -276,17 +294,29 @@ async function finishOwnerAccess(params: {
 }): Promise<CompleteOnboardingPaymentResult> {
 	const { supabaseAdmin, app, companyId, alreadyCompleted, now } = params;
 
+	const { data: company } = await supabaseAdmin
+		.from("companies")
+		.select("public_slug,custom_domain,theme_config")
+		.eq("id", companyId)
+		.maybeSingle();
+	const draft = readStoreDraft(company?.theme_config);
+	const fromDraft = Boolean(draft);
+	// Un cierre anterior pudo cobrar y activar sin llegar a abrir la tienda: se completa aquí.
+	if (draft && !draft.openedAt && app.payment_status === "paid") {
+		await openStoreDraft(supabaseAdmin, { companyId, planId: app.plan_id, now });
+	}
+
 	const owner = await ensureCompanyOwner(supabaseAdmin, {
 		companyId,
 		email: app.email,
 		fullName: app.responsible_name,
 	});
 	if (!owner.ok) {
-		return { ok: true, companyId, alreadyCompleted, ownerReady: false, welcomeSent: false, ownerError: owner.error };
+		return { ok: true, companyId, alreadyCompleted, ownerReady: false, welcomeSent: false, fromDraft, ownerError: owner.error };
 	}
 
 	if (app.welcome_email_sent_at) {
-		return { ok: true, companyId, alreadyCompleted, ownerReady: true, welcomeSent: false };
+		return { ok: true, companyId, alreadyCompleted, ownerReady: true, welcomeSent: false, fromDraft };
 	}
 
 	// Seguimiento interno del equipo (tickets de entrega); su fecha va en la bienvenida.
@@ -304,12 +334,8 @@ async function finishOwnerAccess(params: {
 		console.error("onboarding booking reminder:", error);
 	}
 
-	const setupLink = await createPasswordSetupLink(supabaseAdmin, app.email);
-	const { data: company } = await supabaseAdmin
-		.from("companies")
-		.select("public_slug,custom_domain")
-		.eq("id", companyId)
-		.maybeSingle();
+	// Quien armó su tienda en vista previa ya eligió su contraseña al registrarse.
+	const setupLink = fromDraft ? null : await createPasswordSetupLink(supabaseAdmin, app.email);
 	const storeUrl = company?.public_slug ? getTenantHomeUrl(String(company.public_slug), company.custom_domain) : "";
 	const loginUrl = `${getAppUrl()}/login`;
 
@@ -324,9 +350,12 @@ async function finishOwnerAccess(params: {
 		data: {
 			name: app.responsible_name ?? "",
 			businessName: app.business_name,
-			setPasswordUrl: setupLink ?? loginUrl,
+			// Sin enlace, el dueño tiene una contraseña aleatoria: que pida uno con su correo.
+			setPasswordUrl: fromDraft ? undefined : (setupLink ?? `${getAppUrl()}/login/recuperar`),
+			storeOpened: fromDraft || undefined,
 			loginUrl,
 			storeUrl: storeUrl || undefined,
+			menuUrl: `${getAppUrl()}/cuenta?tab=menu`,
 			contactDate,
 		},
 	});
@@ -339,5 +368,27 @@ async function finishOwnerAccess(params: {
 			.eq("id", app.id);
 	}
 
-	return { ok: true, companyId, alreadyCompleted, ownerReady: true, welcomeSent: sent.ok };
+	return { ok: true, companyId, alreadyCompleted, ownerReady: true, welcomeSent: sent.ok, fromDraft };
+}
+
+/**
+ * La sucursal de una tienda armada en vista previa nace vacía: al pagar se le pasan el
+ * WhatsApp, Instagram y la dirección del paso del plan, sin pisar lo que el dueño ya cargó
+ * en «Configura tu tienda».
+ */
+async function fillDraftBranchContact(supabaseAdmin: SupabaseClient, companyId: string, app: ApplicationRow): Promise<void> {
+	const { data: branch } = await supabaseAdmin
+		.from("branches")
+		.select("id,address,phone,whatsapp_url,instagram_url")
+		.eq("company_id", companyId)
+		.order("created_at", { ascending: true })
+		.limit(1)
+		.maybeSingle();
+	if (!branch) return;
+	const patch: Record<string, unknown> = {};
+	if (!branch.address && app.fiscal_address) patch.address = app.fiscal_address;
+	if (!branch.phone && app.phone) patch.phone = app.phone;
+	if (!branch.whatsapp_url && app.phone) patch.whatsapp_url = whatsappUrlFromPhone(app.phone, app.country);
+	if (!branch.instagram_url && app.social_instagram) patch.instagram_url = socialInputToUrl("instagram", app.social_instagram) || null;
+	if (Object.keys(patch).length > 0) await supabaseAdmin.from("branches").update(patch).eq("id", branch.id);
 }

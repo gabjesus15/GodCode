@@ -1,9 +1,11 @@
 import { unstable_cache } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { CustomerAccountClient } from "./CustomerAccountClient";
 import { requireCustomerPortalSession } from "@/lib/tenant/customer-portal-session";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { resolvePlanName } from "@/lib/plans/plan-i18n";
+import { companyHasPublicMenu } from "@/lib/plans/plan-product-mode";
 import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 import { resolveRegionalPlanPrice } from "@/lib/plans/plan-regional-pricing";
 import { BranchSummary, BusinessInfoSummary, type PortalTab } from "@/components/customer-portal/shared/customer-account-types";
@@ -14,6 +16,12 @@ import { resolveTenantPanelLoginUrl } from "@/lib/tenant/panel-url";
 import { buildBillingOptionsResponse, getCustomerAccountBillingContext } from "@/lib/tenant/customer-account-billing";
 import { getCountryConfig } from "@/lib/geo/country-registry";
 import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
+import { getMenuStatus } from "@/lib/menu/create-menu-items";
+import { isMenuImportEnabled } from "@/lib/menu/ai-menu-import";
+import { buildFirstSteps } from "@/lib/tenant/account-first-steps";
+import { readOwnerSetup, shouldAutoOpenOwnerSetup } from "@/lib/tenant/owner-setup";
+import { isStoreDraftPending } from "@/lib/tenant/store-draft";
+import { getTenantHomeUrl } from "@/utils/tenant-url";
 
 /** @service-role tenant-session
  *
@@ -99,22 +107,33 @@ export default async function CustomerAccountPage({
 }: {
   searchParams: Promise<{ tab?: string | string[] }>;
 }) {
-  const initialTab = parseInitialTab((await searchParams)?.tab);
+  const rawTab = (await searchParams)?.tab;
+  const initialTab = parseInitialTab(rawTab);
+  const hasTabParam = rawTab != null && rawTab !== "";
   const locale = await getCurrentLocale();
   const { membership } = await requireCustomerPortalSession();
   const companyId = membership.companyId;
   const initialSyncedAt = new Date().toISOString();
 
-  const [plans, addons, billingCtx] = await Promise.all([
+  const [plans, addons, billingCtx, menuStatus, { count: orderCount }, { data: application }] = await Promise.all([
     getCachedActivePlans(),
     getCachedActiveAddons(),
     getCustomerAccountBillingContext(companyId),
+    getMenuStatus(supabaseAdmin, companyId),
+    supabaseAdmin.from("orders").select("id", { count: "exact", head: true }).eq("company_id", companyId),
+    supabaseAdmin
+      .from("onboarding_applications")
+      .select("sector,payment_status,payment_reference_url")
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const [{ data: company }, { data: branches }, { data: businessInfoRaw }, { data: payments }, { data: companyAddons }, { data: tickets }, { data: branchEntitlements }, { data: schedule }] = await Promise.all([
     supabaseAdmin
       .from("companies")
-      .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,plan:plans(id,name,name_i18n,price,prices_by_continent,max_branches,max_users,features)")
+      .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,theme_config,created_at,plan:plans(id,name,name_i18n,price,prices_by_continent,max_branches,max_users,features)")
       .eq("id", companyId)
       .maybeSingle(),
     supabaseAdmin
@@ -161,6 +180,24 @@ export default async function CustomerAccountPage({
       .eq("status", "scheduled")
       .maybeSingle(),
   ]);
+
+  // «Solo panel CEO»: sin menú público, no hay tienda que configurar ni secciones de la tienda.
+  const hasPublicMenu = companyHasPublicMenu({ plans: company?.plan });
+  // Negocio recién creado que no terminó ni saltó «Configura tu tienda»: entra directo ahí.
+  // Con `?tab=` (los enlaces de los correos) se respeta la sección pedida.
+  const companyRow = company as { theme_config?: unknown; created_at?: string | null } | null;
+  if (!hasTabParam && hasPublicMenu && shouldAutoOpenOwnerSetup({ themeConfig: companyRow?.theme_config, companyCreatedAt: companyRow?.created_at ?? null })) {
+    redirect("/cuenta/configurar");
+  }
+  const ownerSetupFinished = Boolean(readOwnerSetup(companyRow?.theme_config).finishedAt);
+  // «Arma y paga»: la tienda sigue en vista previa hasta que pague un plan.
+  const draftApp = application as { payment_status?: string | null; payment_reference_url?: string | null } | null;
+  const storeDraft = isStoreDraftPending(company as { subscription_status?: string | null; theme_config?: unknown } | null)
+    ? {
+        paymentInReview: draftApp?.payment_status === "pending_validation" && Boolean(String(draftApp?.payment_reference_url ?? "").trim()),
+        storeUrl: company?.public_slug ? getTenantHomeUrl(String(company.public_slug)) : null,
+      }
+    : null;
 
   const supportEmail = LANDING_SUPPORT_EMAIL;
   const rawCountry = (company as { country?: string | null } | null)?.country ?? null;
@@ -213,6 +250,7 @@ export default async function CustomerAccountPage({
           effectiveAt: scheduleRow.effective_at,
         }
       : null,
+    hasPublicMenu,
   };
 
   const activeAddons = (companyAddons ?? []).map((row) => {
@@ -295,6 +333,17 @@ export default async function CustomerAccountPage({
 
   const initialBillingOptions = billingCtx ? buildBillingOptionsResponse(companyId, billingCtx) : null;
 
+  const themeConfig = (company as { theme_config?: { logoUrl?: unknown; templateId?: unknown } | null } | null)?.theme_config;
+  const firstSteps = !hasPublicMenu ? [] : buildFirstSteps({
+    productCount: menuStatus.productCount,
+    sampleCount: menuStatus.sampleCount,
+    branches: (branches ?? []) as Array<{ whatsapp_url?: string | null; business_hours?: unknown; schedule?: string | null }>,
+    logoUrl: typeof themeConfig?.logoUrl === "string" ? themeConfig.logoUrl : null,
+    orderCount: orderCount ?? 0,
+    templateId: typeof themeConfig?.templateId === "string" ? themeConfig.templateId : null,
+    setupFinished: ownerSetupFinished,
+  });
+
   const businessInfo: BusinessInfoSummary | null = businessInfoRaw
     ? {
         name: (businessInfoRaw as { name?: string | null }).name ?? null,
@@ -342,6 +391,13 @@ export default async function CustomerAccountPage({
         initialBranchEntitlements={initialBranchEntitlements}
         initialBillingOptions={initialBillingOptions}
         initialSyncedAt={initialSyncedAt}
+        firstSteps={firstSteps}
+        storeDraft={storeDraft}
+        menuSetup={{
+          ...menuStatus,
+          importEnabled: isMenuImportEnabled(),
+          sector: ((application as { sector?: string | null } | null)?.sector ?? null) as string | null,
+        }}
       />
   );
 }

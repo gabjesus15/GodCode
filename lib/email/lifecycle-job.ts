@@ -4,6 +4,10 @@ import { resolveCompanyContact } from "@/lib/billing/company-contact";
 import { classifyPortalPaymentReference, describePortalOrder, isOrderAwaitingPayment } from "@/lib/billing/portal-orders";
 import { formatUsd } from "@/lib/billing/portal-pricing";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { loadPendingStoreDrafts, storeDraftPurgeMode } from "@/lib/onboarding/store-draft-jobs";
+import { loadPanelOnlyPlanIds } from "@/lib/onboarding/store-draft-service";
+import { readStoreDraft, storeDraftPurgeDate } from "@/lib/tenant/store-draft";
+import { getTenantHomeUrl } from "../../utils/tenant-url";
 
 import { loadRenewalFacts } from "./billing-facts";
 import { getEmailBrand } from "./brand";
@@ -61,7 +65,7 @@ export async function loadLifecycleSnapshot(client: SupabaseClient, now: Date): 
 	const until = new Date(now.getTime() + 8 * DAY_MS).toISOString();
 	const recent = new Date(now.getTime() - 8 * DAY_MS).toISOString();
 
-	const [companies, orders, applications] = await Promise.all([
+	const [companies, orders, applications, drafts, panelOnlyPlans] = await Promise.all([
 		client
 			.from("companies")
 			.select("id,country,subscription_status,subscription_ends_at")
@@ -75,13 +79,16 @@ export async function loadLifecycleSnapshot(client: SupabaseClient, now: Date): 
 			.limit(2000),
 		client
 			.from("onboarding_applications")
-			.select("id,status,payment_status,payment_reference_url,updated_at,country")
+			.select("id,company_id,plan_id,status,payment_status,payment_reference_url,updated_at,country")
 			.in("status", ["email_verified", "form_completed", "payment_pending"])
 			.gte("updated_at", recent)
 			.limit(2000),
+		loadPendingStoreDrafts(client),
+		loadPanelOnlyPlanIds(client),
 	]);
 
 	const errors = [companies.error, orders.error, applications.error].filter(Boolean).map((error) => String(error?.message));
+	if (drafts.error) errors.push(drafts.error);
 	return {
 		errors,
 		snapshot: {
@@ -101,12 +108,18 @@ export async function loadLifecycleSnapshot(client: SupabaseClient, now: Date): 
 			})),
 			applications: ((applications.data ?? []) as Array<Record<string, string | null>>).map((row) => ({
 				id: String(row.id),
+				companyId: row.company_id ?? null,
+				panelOnly: Boolean(row.plan_id && panelOnlyPlans.has(row.plan_id)),
 				status: row.status ?? null,
 				paymentStatus: row.payment_status ?? null,
 				receiptUrl: row.payment_reference_url ?? null,
 				lastActivityAt: row.updated_at ?? null,
 				country: row.country ?? null,
 			})),
+			drafts: drafts.drafts
+				.filter((draft) => draft.since)
+				.map((draft) => ({ companyId: draft.companyId, since: draft.since, country: draft.country, paymentInReview: draft.paymentInReview })),
+			draftPurge: storeDraftPurgeMode() === "on",
 		},
 	};
 }
@@ -143,7 +156,12 @@ async function buildPlanned(item: PlannedEmail, client: SupabaseClient, now: Dat
 				step: item.step,
 				attempt: item.attempt,
 				planName: (plan as { name?: string } | null)?.name ?? undefined,
-				resumeUrl: item.step === "plan" ? `${appUrl}/onboarding/complete?token=${token}` : `${appUrl}/onboarding/pago?token=${token}`,
+				resumeUrl:
+					item.step === "store"
+						? `${appUrl}/onboarding/tienda?token=${token}`
+						: item.step === "plan"
+							? `${appUrl}/onboarding/complete?token=${token}`
+							: `${appUrl}/onboarding/pago?token=${token}`,
 			},
 		};
 	}
@@ -152,6 +170,35 @@ async function buildPlanned(item: PlannedEmail, client: SupabaseClient, now: Dat
 	if (!contact.email) return { skip: "El negocio no tiene correo" };
 	const base = { to: contact.email, companyId: item.companyId, businessName: contact.businessName };
 	const name = contact.responsibleName || undefined;
+
+	if (item.kind === "store_draft_reminder" || item.kind === "store_draft_expiring") {
+		const { data: company } = await client
+			.from("companies")
+			.select("public_slug,country,subscription_status,theme_config")
+			.eq("id", item.companyId)
+			.maybeSingle();
+		const draft = readStoreDraft(company?.theme_config);
+		if (!company || !draft || draft.openedAt || String(company.subscription_status ?? "") !== "trial") return { skip: "La tienda ya no está en vista previa" };
+		const continueUrl = `${getEmailBrand().appUrl}/cuenta/publicar`;
+		if (item.kind === "store_draft_expiring") {
+			return {
+				...base,
+				kind: "store_draft_expiring",
+				data: {
+					name,
+					businessName: contact.businessName,
+					continueUrl,
+					deleteDate: formatEmailDate(storeDraftPurgeDate(draft).toISOString(), timeZoneForCountry(company.country as string | null)),
+				},
+			};
+		}
+		const slug = (company.public_slug as string | null) ?? null;
+		return {
+			...base,
+			kind: "store_draft_reminder",
+			data: { name, businessName: contact.businessName, continueUrl, storeUrl: slug ? getTenantHomeUrl(slug) : undefined, attempt: item.attempt },
+		};
+	}
 
 	if (item.kind === "order_pending") {
 		const { data: order } = await client

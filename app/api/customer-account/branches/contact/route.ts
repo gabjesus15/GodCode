@@ -4,6 +4,12 @@ import { revalidateTag } from "next/cache";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import {
+	formatBusinessHoursSummary,
+	hasAnyBusinessHours,
+	normalizeBusinessHours,
+	resolveBusinessTimeZone,
+} from "@/lib/tenant/business-hours";
 import { parseBranchContactUrlInput } from "@/lib/tenant/home-page/home-page-config";
 
 const CONTACT_URL_FIELDS = [
@@ -41,7 +47,7 @@ export async function PATCH(req: NextRequest) {
 
 	const { data: branch, error: fetchError } = await supabaseAdmin
 		.from("branches")
-		.select("company_id")
+		.select("company_id, country")
 		.eq("id", id)
 		.maybeSingle();
 
@@ -59,7 +65,7 @@ export async function PATCH(req: NextRequest) {
 		return trimmed ? trimmed : null;
 	};
 
-	const updates: Record<string, string | null> = {};
+	const updates: Record<string, unknown> = {};
 	const phone = trimOrNull(payload.phone);
 	const address = trimOrNull(payload.address);
 	const schedule = trimOrNull(payload.schedule);
@@ -78,6 +84,26 @@ export async function PATCH(req: NextRequest) {
 			);
 		}
 		if (parsed.value !== undefined) updates[field] = parsed.value;
+	}
+
+	// Horario por días (lo usa «Configura tu tienda»): mismas reglas que el editor de sucursales.
+	if (Object.prototype.hasOwnProperty.call(payload, "business_hours")) {
+		const businessHours = normalizeBusinessHours(payload.business_hours);
+		if (businessHours?.enabled && !hasAnyBusinessHours(businessHours)) {
+			return NextResponse.json(
+				{ error: "Agrega al menos un día con horario o desactiva la pausa automática.", field: "business_hours" },
+				{ status: 400 },
+			);
+		}
+		let country = (branch as { country?: string | null }).country ?? null;
+		if (!country) {
+			const { data: company } = await supabaseAdmin.from("companies").select("country").eq("id", ctx.companyId).maybeSingle();
+			country = company?.country ?? null;
+		}
+		const withZone =
+			businessHours && hasAnyBusinessHours(businessHours) ? { ...businessHours, timezone: resolveBusinessTimeZone(country) } : null;
+		updates.business_hours = withZone;
+		if (withZone) updates.schedule = formatBusinessHoursSummary(withZone.week);
 	}
 
 	if (Object.keys(updates).length === 0) {

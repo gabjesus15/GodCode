@@ -6,7 +6,7 @@ import { describePortalOrder } from "@/lib/billing/portal-orders";
 import { resolveSubscriptionPhase } from "@/lib/billing/portal-pricing";
 import { CustomerAccountShell } from "@/components/customer-portal/shell/CustomerAccountShell";
 import { CustomerAccountShellSkeleton } from "@/components/customer-portal/shell/CustomerAccountShellSkeleton";
-import { SUBSCRIPTION_STATUS_LABELS, PAYMENT_STATUS_LABELS, TICKET_CATEGORY_LABELS, TICKET_STATUS_LABELS } from "@/components/customer-portal/shared/customer-account-constants";
+import { SUBSCRIPTION_STATUS_LABELS, PAYMENT_STATUS_LABELS, TICKET_CATEGORY_LABELS, TICKET_STATUS_LABELS, visiblePortalTabs } from "@/components/customer-portal/shared/customer-account-constants";
 import { displayStatus, fmtDay, fmtUsd, branchEntitlementStatusLabel } from "@/components/customer-portal/shared/customer-account-format";
 
 import { useAccountSnapshot }  from "@/components/customer-portal/hooks/use-account-snapshot";
@@ -20,8 +20,10 @@ import { useTickets }          from "@/components/customer-portal/hooks/use-tick
 import { useUnsavedGuard }     from "@/components/customer-portal/hooks/use-unsaved-guard";
 import { useConfirmDialog }    from "@/components/customer-portal/ui/ConfirmDialog";
 import { OrderPaymentDialog }  from "@/components/customer-portal/payments/order-payment-dialog";
+import { StoreDraftAccountBanner } from "@/components/customer-portal/account/store-draft-banner";
 
 import { AccountResumenTab }    from "@/components/customer-portal/account/tabs/account-resumen-tab";
+import { AccountMenuTab }       from "@/components/customer-portal/account/tabs/account-menu-tab";
 import { AccountPerfilPublicoTab } from "@/components/customer-portal/account/tabs/account-perfil-publico-tab";
 import { AccountTiendaTab }     from "@/components/customer-portal/account/tabs/account-tienda-tab";
 import { AccountPlanTab }       from "@/components/customer-portal/account/tabs/account-plan-tab";
@@ -45,10 +47,14 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
   const {
     company, branches, businessInfo, payments, activeAddons, availablePlans, availableAddons,
     initialTickets, initialBranchEntitlements, initialBillingOptions, initialSyncedAt,
+    firstSteps, menuSetup, storeDraft,
   } = props;
 
   const [mounted,       setMounted]       = useState(false);
-  const [tab,           setTab]           = useState<PortalTab>(props.initialTab ?? "resumen");
+  const [selectedTab,   setTab]           = useState<PortalTab>(props.initialTab ?? "resumen");
+  // «Solo panel CEO» no tiene menú público: sin Mi menú, Página de inicio ni Tienda.
+  const visibleTabs = useMemo(() => visiblePortalTabs(company.hasPublicMenu !== false), [company.hasPublicMenu]);
+  const tab: PortalTab = visibleTabs.includes(selectedTab) ? selectedTab : "resumen";
   const [activityFilter, setActivityFilter] = useState<"all" | "pago" | "ticket" | "extra">("all");
   const [billingOptions, setBillingOptions] = useState<BillingOptionsResponse | null>(initialBillingOptions ?? null);
   const [billingLoading, setBillingLoading] = useState(false);
@@ -251,13 +257,15 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
       <CustomerAccountShell
         companyName={company.name}
         activeTab={tab}
+        tabs={visibleTabs}
         onTabChange={handleTabChange}
         subscriptionStatus={snapshot.subscriptionStatus}
-        subscriptionStatusLabel={displayStatus(snapshot.subscriptionStatus, SUBSCRIPTION_STATUS_LABELS)}
+        subscriptionStatusLabel={storeDraft ? "Vista previa" : displayStatus(snapshot.subscriptionStatus, SUBSCRIPTION_STATUS_LABELS)}
         lastRealtimeSyncAt={snapshot.lastRealtimeSyncAt}
         isSyncing={snapshot.isSyncing}
         onManualRefresh={() => void snapshot.refresh("full")}
       >
+        {storeDraft ? <StoreDraftAccountBanner paymentInReview={storeDraft.paymentInReview} storeUrl={storeDraft.storeUrl} /> : null}
         {tab === "resumen" && (
           <AccountResumenTab
             company={company}
@@ -277,6 +285,14 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             activityFilter={activityFilter}
             setActivityFilter={setActivityFilter}
             onNavigate={handleTabChange}
+            firstSteps={firstSteps}
+          />
+        )}
+
+        {tab === "menu" && (
+          <AccountMenuTab
+            company={company}
+            menuSetup={menuSetup ?? { productCount: 0, sampleCount: 0, categoryCount: 0, importEnabled: false, sector: null }}
           />
         )}
 

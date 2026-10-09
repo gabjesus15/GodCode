@@ -98,3 +98,9 @@ export function captureEventOrderId(event: unknown): string | null {
 	const orderId = resource?.supplementary_data?.related_ids?.order_id;
 	return typeof orderId === "string" && orderId.trim() ? orderId.trim() : null;
 }
+
+/** Orden aprobada por el comprador (`CHECKOUT.ORDER.APPROVED`): el recurso es la orden. */
+export function approvedEventOrderId(event: unknown): string | null {
+	const id = (event as { resource?: { id?: unknown } })?.resource?.id;
+	return typeof id === "string" && /^[A-Za-z0-9-]{1,64}$/.test(id.trim()) ? id.trim() : null;
+}

@@ -25,7 +25,10 @@ import {
 	buildTenantMenuTitle,
 	resolveTenantDisplayName,
 } from "@/lib/tenant/seo-metadata";
-import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { isTenantSubscriptionAccessible, resolveTenantPublicView } from "@/lib/plans/tenant-subscription";
+import { StoreComingSoon } from "@/components/tenant/store-draft/store-coming-soon";
+import { StorePreviewBanner } from "@/components/tenant/store-draft/store-preview-banner";
+import { resolveStorefrontAccess, storeDraftPublishHref } from "@/lib/tenant/store-draft-viewer";
 import { groupProductSizeRows, type ProductSizeOption } from "@/lib/tenant/product-sizes";
 import { groupProductVariantRows, type ProductVariantGroup } from "@/lib/tenant/product-variants";
 
@@ -114,8 +117,11 @@ export async function generateMetadata({
 			statusBarStyle: "default",
 			title: displayName,
 		},
-    // Solo se desindexa la copia en godcode.me/{slug} cuando el local tiene dominio propio.
-    robots: onApexPathTenant && customDomain
+    // Solo se desindexa la copia en godcode.me/{slug} cuando el local tiene dominio propio,
+    // y la tienda en vista previa (nadie más que su dueño la ve).
+    robots: company && resolveTenantPublicView(company) === "draft"
+      ? { index: false, follow: false }
+      : onApexPathTenant && customDomain
       ? {
           index: false,
           follow: true,
@@ -216,9 +222,14 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
   const orderChannel = menuSettings.orderChannel;
 
   // Misma regla en todo lo público: una cancelación sigue online hasta el vencimiento y
-  // un plan vencido se corta aunque el cron todavía no lo haya suspendido.
-  if (!isTenantSubscriptionAccessible(company)) {
+  // un plan vencido se corta aunque el cron todavía no lo haya suspendido. Una tienda en
+  // vista previa solo la ve su dueño; el resto ve «Esta tienda abre pronto».
+  const access = await resolveStorefrontAccess(company);
+  if (access === "closed") {
     notFound();
+  }
+  if (access === "coming-soon") {
+    return <StoreComingSoon company={company} />;
   }
 
   // --- B. Datos cacheados (branches + business_info) + cash_shifts en tiempo real ---
@@ -504,6 +515,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
           // biome-ignore lint/security/noDangerouslySetInnerHtml: structured data JSON-LD must be inline for Googlebot
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(menuJsonLd) }}
         />
+        {access === "preview" ? <StorePreviewBanner publishHref={storeDraftPublishHref()} /> : null}
         <MenuClient
           name={name}
           logoUrl={logoUrl}

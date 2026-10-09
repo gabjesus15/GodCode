@@ -6,6 +6,7 @@ import {
 	type LifecycleApplication,
 	type LifecycleCompany,
 	type LifecycleOrder,
+	type LifecycleStoreDraft,
 	type PlannedEmail,
 } from "@/lib/email/lifecycle-plan";
 
@@ -177,11 +178,11 @@ describe("altas a medias", () => {
 		...extra,
 	});
 
-	it("con el correo confirmado falta el plan; con el formulario hecho, el pago", () => {
+	it("con el correo confirmado falta crear la tienda; con el formulario hecho, el pago", () => {
 		const result = plan({ applications: [app("a1", "email_verified", 1), app("a2", "form_completed", 3), app("a3", "payment_pending", 2)] });
 
 		expect(result).toEqual([
-			{ kind: "onboarding_resume", applicationId: "a1", dedupeKey: "resume:a1:1", step: "plan", attempt: 1 },
+			{ kind: "onboarding_resume", applicationId: "a1", dedupeKey: "resume:a1:1", step: "store", attempt: 1 },
 			{ kind: "onboarding_resume", applicationId: "a2", dedupeKey: "resume:a2:2", step: "payment", attempt: 2 },
 			{ kind: "onboarding_resume", applicationId: "a3", dedupeKey: "resume:a3:1", step: "payment", attempt: 1 },
 		]);
@@ -198,6 +199,58 @@ describe("altas a medias", () => {
 			],
 		});
 
+		expect(result).toEqual([]);
+	});
+});
+
+describe("tiendas en vista previa («Arma y paga»)", () => {
+	const draft = (companyId: string, age: number, extra: Partial<LifecycleStoreDraft> = {}): LifecycleStoreDraft => ({
+		companyId,
+		since: daysAgo(age),
+		country: "CL",
+		paymentInReview: false,
+		...extra,
+	});
+	const planDrafts = (drafts: LifecycleStoreDraft[], draftPurge = false) =>
+		planLifecycleEmails({ companies: [], orders: [], applications: [], drafts, draftPurge }, NOW);
+
+	it("recuerda publicar a los 2 y a los 7 días, y nada antes ni entre medio de los avisos", () => {
+		const result = planDrafts([draft("d1", 1), draft("d2", 2), draft("d5", 5), draft("d7", 7), draft("d9", 9), draft("d12", 12)]);
+
+		expect(result).toEqual([
+			{ kind: "store_draft_reminder", companyId: "d2", dedupeKey: "draft:d2:1", attempt: 1 },
+			{ kind: "store_draft_reminder", companyId: "d5", dedupeKey: "draft:d5:1", attempt: 1 },
+			{ kind: "store_draft_reminder", companyId: "d7", dedupeKey: "draft:d7:2", attempt: 2 },
+			{ kind: "store_draft_reminder", companyId: "d9", dedupeKey: "draft:d9:2", attempt: 2 },
+		]);
+	});
+
+	it("avisa del borrado a los 23 días solo con el borrado encendido", () => {
+		expect(planDrafts([draft("d23", 23), draft("d29", 29), draft("d30", 30)])).toEqual([]);
+		expect(planDrafts([draft("d22", 22), draft("d23", 23), draft("d29", 29), draft("d30", 30)], true)).toEqual([
+			{ kind: "store_draft_expiring", companyId: "d23", dedupeKey: "draft-expiring:d23" },
+			{ kind: "store_draft_expiring", companyId: "d29", dedupeKey: "draft-expiring:d29" },
+		]);
+	});
+
+	it("no le recuerda pagar a quien ya mandó el comprobante", () => {
+		expect(planDrafts([draft("review", 2, { paymentInReview: true }), draft("review23", 24, { paymentInReview: true })], true)).toEqual([]);
+	});
+
+	it("con «solo panel CEO» el aviso de alta a medias lleva a elegir el plan", () => {
+		const result = plan({
+			applications: [{ id: "panel", panelOnly: true, status: "email_verified", paymentStatus: null, receiptUrl: null, lastActivityAt: daysAgo(1), country: "CL" }],
+		});
+		expect(result).toEqual([{ kind: "onboarding_resume", applicationId: "panel", dedupeKey: "resume:panel:1", step: "plan", attempt: 1 }]);
+	});
+
+	it("quien ya armó su tienda no recibe los avisos de alta a medias", () => {
+		const result = plan({
+			applications: [
+				{ id: "with-store", companyId: "c1", status: "email_verified", paymentStatus: null, receiptUrl: null, lastActivityAt: daysAgo(1), country: "CL" },
+				{ id: "with-plan", companyId: "c2", status: "form_completed", paymentStatus: "pending", receiptUrl: null, lastActivityAt: daysAgo(1), country: "CL" },
+			],
+		});
 		expect(result).toEqual([]);
 	});
 });

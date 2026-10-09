@@ -177,7 +177,11 @@ export default async function CheckoutSuccessPage({
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href={accountHref}
-                className="inline-flex h-11 items-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className={
+                  hasPayment
+                    ? "inline-flex h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+                    : "inline-flex h-11 items-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                }
               >
                 {hasPayment ? copy.accountButtonPaid : copy.accountButtonFallback}
                 <ArrowRight className="h-4 w-4" aria-hidden />

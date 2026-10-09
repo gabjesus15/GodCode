@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getAppUrl } from "@/lib/tenant/app-url";
-import { sendEmail } from "@/lib/email/send";
 import { isRateLimited } from "@/lib/onboarding/rate-limit";
 import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { sendOnboardingResumeLink } from "@/lib/onboarding/resume-application";
 
 /** @service-role public
  *
- * Rate limit por IP y correo; no revela si la cuenta existe.
+ * «Reenviar correo» y «retomar mi registro»: manda el enlace del paso donde quedó el alta.
+ * Rate limit por IP y correo; no revela si la cuenta existe ni en qué paso va.
  */
 
 type Body = {
@@ -40,40 +40,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Ya se enviaron varios correos. Intenta de nuevo en unos minutos." }, { status: 429 });
     }
 
-    const { data: app, error } = await supabaseAdmin
-      .from("onboarding_applications")
-      .select("id,business_name,responsible_name,email,verification_token,status")
-      .eq("email", email)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      return NextResponse.json({ error: "Error buscando solicitud" }, { status: 500 });
+    // Sirve en cualquier paso: confirma el correo, sigue con el plan o el pago, o entra.
+    const resumed = await sendOnboardingResumeLink(supabaseAdmin, email);
+    if (resumed.found && resumed.email && resumed.email.status !== "sent" && resumed.email.status !== "duplicate") {
+      console.error("resend onboarding link", resumed.email);
+      return NextResponse.json({ error: "No se pudo reenviar el correo. Intenta de nuevo en unos minutos." }, { status: 502 });
     }
 
-    if (!app) {
-      return NextResponse.json({ ok: true, message: "Si el correo existe, te enviaremos un nuevo enlace." });
-    }
-
-    if (app.status !== "pending_verification") {
-      return NextResponse.json({ ok: true, alreadyVerified: true, status: app.status });
-    }
-
-    const verifyUrl = `${getAppUrl()}/onboarding/verify/${app.verification_token}`;
-    const sent = await sendEmail({
-      kind: "verify_email",
-      to: app.email,
-      applicationId: app.id,
-      data: { name: app.responsible_name, businessName: app.business_name, verifyUrl },
-    });
-
-    if (sent.status !== "sent") {
-      console.error("resend verification email", sent);
-      return NextResponse.json({ error: "No se pudo reenviar el correo de verificación" }, { status: 502 });
-    }
-
-    return NextResponse.json({ ok: true, message: "Correo de verificación reenviado." });
+    return NextResponse.json({ ok: true, message: "Si hay un alta con ese correo, te enviamos un enlace para seguir." });
   } catch {
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }

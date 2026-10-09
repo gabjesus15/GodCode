@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { resolveBusinessSector } from "@/lib/onboarding/business-sectors";
+import { templatesForSector } from "@/lib/store-theme/menu-templates";
 import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
+import { socialInputToUrl } from "@/lib/tenant/home-page/home-page-config";
+import { whatsappUrlFromPhone } from "@/lib/tenant/whatsapp-url";
 import { slugify as slugifyBase } from "../../utils/slugify";
 import { isSingleInstanceAddon, resolveAddonUnitPrice } from "../plans/addon-pricing";
 import { resolveAddonOfferForPlan, type PlanOfferSnapshot } from "../plans/plan-offer-rules";
@@ -20,6 +24,9 @@ export type OnboardingApplication = {
 	fiscal_address?: string | null;
 	logo_url?: string | null;
 	social_instagram?: string | null;
+	/** WhatsApp del local (del paso 2); va a la empresa y a la sucursal principal. */
+	phone?: string | null;
+	sector?: string | null;
 	custom_domain?: string | null;
 	custom_plan_name?: string | null;
 	custom_plan_price?: number | string | null;
@@ -239,6 +246,41 @@ async function resolveCompanyCreatorId(supabaseAdmin: SupabaseClient): Promise<s
 	return activeUser?.id ?? null;
 }
 
+/**
+ * Primer enlace libre para el nombre del negocio (`rica-pizza`, `rica-pizza-1`…). Lo usa
+ * el alta al crear la empresa y el paso 2 para mostrar cómo quedará el enlace de la tienda.
+ */
+export async function resolveAvailablePublicSlug(supabaseAdmin: SupabaseClient, businessName: string): Promise<string> {
+	const baseSlug = slugifyCompanyPublicSlug(businessName);
+	let publicSlug = baseSlug;
+	let suffix = 0;
+	while (true) {
+		const { data: existing } = await supabaseAdmin
+			.from("companies")
+			.select("id")
+			.eq("public_slug", publicSlug)
+			.maybeSingle();
+		if (!existing) return publicSlug;
+		suffix += 1;
+		publicSlug = `${baseSlug}-${suffix}`;
+	}
+}
+
+export { whatsappUrlFromPhone };
+
+/**
+ * Tema con el que nace la tienda: el diseño recomendado para su tipo de negocio, con su
+ * nombre y el logo del alta. En «Configura tu tienda» el dueño lo ajusta y lo publica.
+ */
+export function initialStoreTheme(app: Pick<OnboardingApplication, "business_name" | "logo_url" | "sector">): Record<string, unknown> {
+	const template = templatesForSector(resolveBusinessSector(app.sector))[0];
+	return {
+		...(template ? { ...template.theme, templateId: template.id } : {}),
+		displayName: app.business_name,
+		logoUrl: app.logo_url ?? null,
+	};
+}
+
 export async function provisionCompanyFromApplication(
 	supabaseAdmin: SupabaseClient,
 	app: OnboardingApplication,
@@ -253,19 +295,7 @@ export async function provisionCompanyFromApplication(
 		if (existing) return { ok: true, company: existing };
 	}
 
-	const baseSlug = slugifyCompanyPublicSlug(app.business_name);
-	let publicSlug = baseSlug;
-	let suffix = 0;
-	while (true) {
-		const { data: existing } = await supabaseAdmin
-			.from("companies")
-			.select("id")
-			.eq("public_slug", publicSlug)
-			.maybeSingle();
-		if (!existing) break;
-		suffix += 1;
-		publicSlug = `${baseSlug}-${suffix}`;
-	}
+	const publicSlug = await resolveAvailablePublicSlug(supabaseAdmin, app.business_name);
 
 	const createdBy = await resolveCompanyCreatorId(supabaseAdmin);
 	if (!createdBy) {
@@ -289,19 +319,13 @@ export async function provisionCompanyFromApplication(
 		created_by: createdBy,
 		legal_rut: app.billing_rut ?? null,
 		email: app.email,
-		phone: null,
+		phone: app.phone ?? null,
 		address: app.fiscal_address ?? null,
 		public_slug: publicSlug,
 		plan_id: app.plan_id,
 		subscription_status: isManualPayment ? "payment_pending" : "trial",
 		custom_domain: app.custom_domain ?? null,
-		theme_config: {
-			displayName: app.business_name,
-			logoUrl: app.logo_url ?? null,
-			primaryColor: "#111827",
-			secondaryColor: "#111827",
-			panelAccess,
-		},
+		theme_config: { ...initialStoreTheme(app), panelAccess },
 	};
 
 	const { data: inserted, error: companyError } = await supabaseAdmin
@@ -316,11 +340,16 @@ export async function provisionCompanyFromApplication(
 		return { ok: false, error: mapped.error, status: mapped.status };
 	}
 
+	// Lo que dio en el paso 2 (WhatsApp, Instagram, dirección) va a la sucursal principal:
+	// la página de inicio del negocio sale con sus botones de contacto desde el primer día.
 	const { error: branchError } = await supabaseAdmin.from("branches").insert({
 		company_id: inserted.id,
 		name: "Principal",
 		slug: "principal",
 		address: app.fiscal_address ?? null,
+		phone: app.phone ?? null,
+		whatsapp_url: whatsappUrlFromPhone(app.phone, app.country),
+		instagram_url: app.social_instagram ? socialInputToUrl("instagram", app.social_instagram) || null : null,
 		is_active: true,
 	});
 	if (branchError) console.error("onboarding checkout branch insert:", branchError);
@@ -329,6 +358,7 @@ export async function provisionCompanyFromApplication(
 		company_id: inserted.id,
 		name: app.business_name,
 		address: app.fiscal_address ?? null,
+		phone: app.phone ?? null,
 		instagram: app.social_instagram ?? null,
 		schedule: null,
 	}).then(() => {});

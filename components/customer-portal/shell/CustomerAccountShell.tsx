@@ -19,6 +19,8 @@ import type { PortalTab } from "../shared/customer-account-types";
 export type CustomerAccountShellProps = {
   companyName: string;
   activeTab: PortalTab;
+  /** Secciones que se muestran; por defecto, todas. */
+  tabs?: PortalTab[];
   onTabChange: (tab: PortalTab) => void;
   subscriptionStatus: string | null;
   subscriptionStatusLabel: string;
@@ -30,12 +32,12 @@ export type CustomerAccountShellProps = {
 };
 
 /** En móvil caben 4 secciones y «Más»; antes eran 8 en una barra que había que deslizar. */
-const MOBILE_PRIMARY_TABS: PortalTab[] = ["resumen", "plan", "facturacion", "soporte"];
-const MOBILE_MORE_TABS: PortalTab[] = PORTAL_TAB_ORDER.filter((tab) => !MOBILE_PRIMARY_TABS.includes(tab));
+const MOBILE_PRIMARY_TABS: PortalTab[] = ["resumen", "menu", "plan", "soporte"];
 
 export function CustomerAccountShell({
   companyName,
   activeTab,
+  tabs = PORTAL_TAB_ORDER,
   onTabChange,
   subscriptionStatus,
   subscriptionStatusLabel,
@@ -47,7 +49,9 @@ export function CustomerAccountShell({
   const badgeVariant = subscriptionStatusVariant(subscriptionStatus);
   const [loggingOut, setLoggingOut] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const activeInMore = MOBILE_MORE_TABS.includes(activeTab);
+  const mobilePrimaryTabs = MOBILE_PRIMARY_TABS.filter((tab) => tabs.includes(tab));
+  const mobileMoreTabs = tabs.filter((tab) => !MOBILE_PRIMARY_TABS.includes(tab));
+  const activeInMore = mobileMoreTabs.includes(activeTab);
 
   const handleSignOut = async () => {
     if (loggingOut) return;
@@ -81,7 +85,7 @@ export function CustomerAccountShell({
             </div>
 
             <nav className="flex flex-col gap-0.5" aria-label="Secciones del portal">
-              {PORTAL_TAB_ORDER.map((key) => {
+              {tabs.map((key) => {
                 const Icon = PORTAL_TAB_ICONS[key];
                 const active = activeTab === key;
                 return (
@@ -208,7 +212,7 @@ export function CustomerAccountShell({
               </button>
             </div>
             <ul>
-              {MOBILE_MORE_TABS.map((key) => {
+              {mobileMoreTabs.map((key) => {
                 const Icon = PORTAL_TAB_ICONS[key];
                 const active = activeTab === key;
                 return (
@@ -250,8 +254,11 @@ export function CustomerAccountShell({
         className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#ececf0] bg-white/[0.97] pb-[env(safe-area-inset-bottom,0px)] pt-0.5 shadow-[0_-1px_0_rgba(0,0,0,0.04),0_-16px_48px_rgba(15,23,42,0.06)] backdrop-blur-lg backdrop-saturate-150 md:hidden"
         aria-label="Secciones del portal"
       >
-        <div className="grid grid-cols-5 gap-1 px-2 py-1">
-          {MOBILE_PRIMARY_TABS.map((key) => {
+        <div
+          className="grid gap-1 px-2 py-1"
+          style={{ gridTemplateColumns: `repeat(${mobilePrimaryTabs.length + 1}, minmax(0, 1fr))` }}
+        >
+          {mobilePrimaryTabs.map((key) => {
             const Icon = PORTAL_TAB_ICONS[key];
             const active = activeTab === key;
             return (

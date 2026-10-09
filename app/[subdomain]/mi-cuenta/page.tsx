@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 
 import { getCachedCompany } from "../../../utils/tenant-cache";
-import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { isTenantPubliclyOpen, isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
+import { StoreComingSoon } from "@/components/tenant/store-draft/store-coming-soon";
 import { resolveCheckoutCountryCode } from "@/lib/geo/country-forms";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
 import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
@@ -37,6 +38,10 @@ export default async function TenantAccountPage({
 
   if (!company || !isTenantSubscriptionAccessible(company)) {
     notFound();
+  }
+  // Las cuentas de cliente son del plan pagado: una tienda en vista previa todavía no las tiene.
+  if (!isTenantPubliclyOpen(company)) {
+    return <StoreComingSoon company={company} />;
   }
 
   const companyId = String(company.id);

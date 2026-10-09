@@ -229,6 +229,7 @@ const CSRF_EXEMPT_API_PATHS = new Set([
   "/api/revalidate-menu",                 // REVALIDATION_SECRET (webhook de Supabase)
   "/api/payments/paypal/webhook",         // firma de PayPal (verify-webhook-signature)
   "/api/system/cron/subscription-status", // CRON_SECRET
+  "/api/system/cron/onboarding-reconcile", // CRON_SECRET
   "/api/system/health",                   // HEALTH_CHECK_SECRET
   "/api/email/unsubscribe",               // firma HMAC; el one-click de Gmail llega sin Origin
 ]);

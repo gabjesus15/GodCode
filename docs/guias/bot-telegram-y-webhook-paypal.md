@@ -80,6 +80,11 @@ En los logs de la app, un fallo aparece como `telegram_send_failed` con el códi
 
 Con esto, los pagos de PayPal que PayPal termina de cobrar **después** de que la persona volvió a tu página (o cerró la pestaña) se aplican solos en `/cuenta`. Hoy, sin el webhook, esos pocos casos quedan cobrados en PayPal y hay que aplicarlos a mano desde el super admin. El cobro normal, el que se captura al volver de PayPal, no depende de esto.
 
+En el **alta** el webhook hace dos cosas más:
+
+- Si alguien aprueba el pago en PayPal y cierra la pestaña antes de volver, la orden se cobra igual y la cuenta se crea sola.
+- Si PayPal cobró pero el alta no se pudo cerrar, llega un aviso «⚠️ Revisar alta» al Telegram del equipo. El barrido de altas (Parte 3) lo sigue reintentando.
+
 ### 1. Registrar el webhook en PayPal
 
 1. Entra a developer.paypal.com y ve a **Apps & Credentials**.
@@ -92,7 +97,7 @@ Con esto, los pagos de PayPal que PayPal termina de cobrar **después** de que l
 https://www.godcode.me/api/payments/paypal/webhook
 ```
 
-6. En **Event types** marca solo `PAYMENT.CAPTURE.COMPLETED`. Es el único que la ruta procesa; cualquier otro responde 200 y se ignora.
+6. En **Event types** marca `PAYMENT.CAPTURE.COMPLETED` y `CHECKOUT.ORDER.APPROVED`. Son los únicos que la ruta procesa; cualquier otro responde 200 y se ignora.
 7. Guarda. En la lista de webhooks aparece la columna **Webhook ID**, una cadena como `8PT597110X687430LKGECATA`. Ese es el valor que necesitas.
 
 ### 2. Poner la variable
@@ -121,3 +126,26 @@ Revisa que `PAYPAL_ENVIRONMENT` coincida con el entorno del webhook: `production
 | `200` | Todo bien. Si no había nada que aplicar, lo dice en `outcome` |
 
 PayPal reintenta cualquier respuesta que no sea 2xx durante varias horas, así que un despliegue en curso no pierde eventos.
+
+---
+
+## Parte 3 · Barrido de altas a medias
+
+El cron diario (`/api/system/cron/subscription-status`) ahora también:
+
+- cobra y cierra las órdenes de PayPal del alta que quedaron aprobadas sin cerrar;
+- reintenta el alta del dueño y el correo de bienvenida de las empresas ya pagadas que no los tienen;
+- manda el recordatorio de confirmar el correo (día 1 y día 3) y borra las solicitudes sin confirmar de más de 7 días.
+
+Lo que sigue trabado después de reintentar llega como «⚠️ Revisar alta» al Telegram del equipo.
+
+Para que el barrido corra **cada hora** (recomendado), programa esta ruta con el mismo `CRON_SECRET`:
+
+```
+GET https://www.godcode.me/api/system/cron/onboarding-reconcile
+Authorization: Bearer <CRON_SECRET>
+```
+
+- En Vercel Pro basta con añadirla a `vercel.json` con `"schedule": "0 * * * *"`.
+- En el plan Hobby, Vercel solo permite crons diarios. Usa un cron externo gratuito (por ejemplo cron-job.org) con esa URL y la cabecera.
+

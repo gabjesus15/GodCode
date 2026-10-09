@@ -17,6 +17,9 @@ type CompleteBody = {
 	social_instagram?: string;
 	social_facebook?: string;
 	social_twitter?: string;
+	/** WhatsApp del local. */
+	phone?: string;
+	sector?: string;
 	description?: string;
 	plan_id?: string;
 	country?: string;
@@ -96,6 +99,8 @@ export async function POST(req: NextRequest) {
 			social_instagram: sanitize(body.social_instagram, 200),
 			social_facebook: sanitize(body.social_facebook, 200),
 			social_twitter: sanitize(body.social_twitter, 200),
+			phone: sanitize(body.phone, 50),
+			sector: sanitize(body.sector, 100),
 			description: sanitize(body.description, 2000),
 			plan_id: plan.id,
 			country: sanitize(body.country, 100),

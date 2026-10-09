@@ -54,6 +54,14 @@ type OnboardingStep =
 			via: "paypal" | "manual" | "promo" | "coupon" | string;
 			menuUrl?: string | null;
 			coupon?: string | null;
+	  }
+	| {
+			/** Algo del alta se trabó y no se arregla solo (p. ej. PayPal cobró y no hay cuenta). */
+			kind: "needs_attention";
+			businessName: string;
+			email?: string | null;
+			problem: string;
+			detail?: string | null;
 	  };
 
 export type OnboardingAlert = AlertContact & OnboardingStep;
@@ -168,6 +176,16 @@ export function formatOnboardingAlert(alert: OnboardingAlert, appUrl: string = g
 				.filter(Boolean)
 				.join("\n");
 		}
+		case "needs_attention":
+			return [
+				`⚠️ <b>Revisar alta: ${name}</b>`,
+				line("", alert.email),
+				escapeTelegramHtml(alert.problem),
+				line("", alert.detail),
+				panel,
+			]
+				.filter(Boolean)
+				.join("\n");
 		default:
 			return "";
 	}

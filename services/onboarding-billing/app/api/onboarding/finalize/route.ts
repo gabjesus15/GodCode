@@ -36,6 +36,8 @@ export async function POST(req: NextRequest) {
 			status: "paid",
 			ownerReady: result.ownerReady,
 			welcomeSent: result.welcomeSent,
+			// Tienda armada en vista previa: ya tiene contraseña y vuelve a su asistente.
+			fromDraft: result.fromDraft,
 		});
 	} catch (error) {
 		logger.error("finalize error", ctx, { error: String(error) });
