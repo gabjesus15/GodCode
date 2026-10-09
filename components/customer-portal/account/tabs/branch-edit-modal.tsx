@@ -21,6 +21,15 @@ import {
   CalendarClock,
 } from "lucide-react";
 import {
+  DEFAULT_EXCHANGE_RATE_SOURCE,
+  EXCHANGE_RATE_SOURCE_LABELS,
+  EXCHANGE_RATE_SOURCES,
+  isExchangeRateSource,
+  type ExchangeRateSource,
+} from "@/lib/exchange-rates/sources";
+import { isVenezuelaCountry } from "@/lib/geo/venezuela";
+import { BINANCE_PAY_ID_ERROR, isValidBinancePayId } from "@/lib/payments/branch-payment-config";
+import {
   businessHoursWeekFromScheduleText,
   emptyBusinessHoursWeek,
   formatBusinessHoursSummary,
@@ -31,11 +40,19 @@ import {
 import type { BranchSummary } from "../../shared/customer-account-types";
 import { BranchHoursEditor } from "./branch-hours-editor";
 
+/** La fila de `/cuenta` trae además el país y la fuente de tasa (no están en `BranchSummary`). */
+type BranchEditTarget = BranchSummary & {
+  country?: string | null;
+  exchange_rate_source?: string | null;
+};
+
 type BranchEditModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  branch: BranchSummary | null;
+  branch: BranchEditTarget | null;
   onSaveSuccess: () => void;
+  /** País del negocio: respaldo cuando la sucursal no tiene el suyo guardado. */
+  companyCountry?: string | null;
 };
 
 const ALL_PAYMENT_METHODS = [
@@ -62,9 +79,14 @@ const parseJsonField = (field: unknown): Record<string, string> => {
   return {};
 };
 
-export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: BranchEditModalProps) {
+export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess, companyCountry = null }: BranchEditModalProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"general" | "hours" | "payments">("general");
+
+  // Tasa de cambio: solo en Venezuela (o si la sucursal ya tiene fuente, que es lo mismo).
+  const [exchangeRateSource, setExchangeRateSource] = useState<ExchangeRateSource>(DEFAULT_EXCHANGE_RATE_SOURCE);
+  const showsExchangeRate =
+    isVenezuelaCountry(branch?.country ?? companyCountry) || isExchangeRateSource(branch?.exchange_rate_source);
 
   // General fields
   const [name, setName] = useState("");
@@ -148,6 +170,9 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
       setOriginLng(branch.origin_lng != null ? String(branch.origin_lng) : "");
       setOrderIntakePaused(branch.order_intake_paused === true);
       setOrderIntakePauseMessage(branch.order_intake_pause_message || "");
+      setExchangeRateSource(
+        isExchangeRateSource(branch.exchange_rate_source) ? branch.exchange_rate_source : DEFAULT_EXCHANGE_RATE_SOURCE,
+      );
 
       // Load payments
       setActiveMethods(branch.payment_methods || []);
@@ -222,6 +247,12 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
       setError("Agrega al menos un día con horario o desactiva la pausa automática.");
       return;
     }
+    // Mismo chequeo que hace el servidor: así el aviso sale en la pestaña del campo.
+    if (activeMethods.includes("binance_pay") && bpPayId.trim() && !isValidBinancePayId(bpPayId)) {
+      setActiveTab("payments");
+      setError(BINANCE_PAY_ID_ERROR);
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -243,6 +274,7 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
         payment_methods: activeMethods,
         order_intake_paused: orderIntakePaused,
         order_intake_pause_message: orderIntakePaused ? (orderIntakePauseMessage.trim() || null) : null,
+        ...(showsExchangeRate ? { exchange_rate_source: exchangeRateSource } : {}),
         pago_movil: activeMethods.includes("pago_movil")
           ? {
               banco: pmBanco.trim() || null,
@@ -438,6 +470,33 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
                   <span className="shrink-0 text-xs font-medium text-indigo-600">Editar</span>
                 </button>
               </div>
+
+              {showsExchangeRate && (
+                <div>
+                  <label htmlFor="branch-exchange-rate-source" className="mb-1 block text-xs font-medium text-[#6e6e73]">
+                    Tasa de cambio
+                  </label>
+                  <select
+                    id="branch-exchange-rate-source"
+                    value={exchangeRateSource}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      if (isExchangeRateSource(next)) setExchangeRateSource(next);
+                    }}
+                    className={inputClass}
+                    disabled={loading}
+                  >
+                    {EXCHANGE_RATE_SOURCES.map((source) => (
+                      <option key={source} value={source}>
+                        {EXCHANGE_RATE_SOURCE_LABELS[source]}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-[10px] text-[#8e8e93]">
+                    Se actualiza sola con la tasa oficial del BCV. Los precios siguen en dólares.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Col 2: Social Media, Map, Geolocation */}
@@ -728,7 +787,7 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
                         <div className="border-t border-[#e5e5ea] bg-white p-4.5 grid grid-cols-1 gap-3.5 sm:grid-cols-3">
                           <div>
                             <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Pay ID</label>
-                            <input value={bpPayId} onChange={(e) => setBpPayId(e.target.value)} placeholder="Ej. 123456789" className={inputClass} />
+                            <input value={bpPayId} onChange={(e) => setBpPayId(e.target.value)} placeholder="Solo números, ej. 123456789" inputMode="numeric" className={inputClass} />
                           </div>
                           <div>
                             <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Correo Binance</label>

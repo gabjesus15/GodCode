@@ -36,12 +36,13 @@ const nextConfig: NextConfig = {
   // otro host y la página no se hidrata. `127.0.0.1` permite tener abiertas a la vez dos
   // sesiones (las cookies van por host); `*.localhost` es el storefront de un tenant.
   allowedDevOrigins: ["127.0.0.1", "*.localhost"],
-  // Quita console.log/info/debug del build, pero deja error y warn: `true` los
+  // Quita console.info/debug del build, pero deja error, warn y log: `true` los
   // borraba también en el servidor y `lib/infra/logger.ts` no escribía nada en
-  // los logs de producción.
+  // los logs de producción. `log` se queda porque es lo que usa el logger para
+  // info y debug (sin él, en producción solo llegaban avisos y errores).
   compiler: isProduction
     ? {
-        removeConsole: { exclude: ["error", "warn"] },
+        removeConsole: { exclude: ["error", "warn", "log"] },
       }
     : undefined,
   // Turbopack en dev y build (default de Next 16). `root` evita que infiera `app/`
@@ -151,6 +152,18 @@ const nextConfig: NextConfig = {
           },
         ],
       })),
+      // Tasa de cambio de Venezuela (BCV): dato público que el menú pide en cada
+      // visita y que cambia una vez al día. Va después de "/(.*)" por lo mismo que
+      // las anteriores; `proxy.ts` también exceptúa esta ruta de su `no-store`.
+      {
+        source: "/api/tenant/exchange-rates",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+          },
+        ],
+      },
       {
         source: "/:path*.map",
         headers: [

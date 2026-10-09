@@ -1,3 +1,5 @@
+import { isVenezuelaCountry } from "@/lib/geo/venezuela";
+
 import { formatCartAmountPlain, formatCartMoney } from "./format-cart-money";
 
 /** Métodos locales en Venezuela: el cliente paga en bolívares. */
@@ -17,11 +19,6 @@ export const VENEZUELA_USD_PAYMENT_METHODS = new Set([
 	"mercadopago",
 ]);
 
-export function isVenezuelaCountry(country: string | null | undefined): boolean {
-	const normalized = String(country ?? "").trim();
-	return normalized === "VE" || normalized === "Venezuela";
-}
-
 export function paymentMethodUsesBolivaresInVenezuela(methodKey: string): boolean {
 	return VENEZUELA_VES_PAYMENT_METHODS.has(methodKey);
 }
@@ -30,18 +27,24 @@ export function paymentMethodUsesUsdInVenezuela(methodKey: string): boolean {
 	return VENEZUELA_USD_PAYMENT_METHODS.has(methodKey);
 }
 
+/**
+ * Total que se muestra en el paso de pago. En Venezuela va en dólares y bolívares
+ * («$ / Bs»), salvo con un método que se cobra solo en dólares (Zelle, Binance Pay,
+ * PayPal): ahí los bolívares sobran y confunden, así que se muestra solo el monto en USD.
+ */
 export function resolvePaymentAmountDisplay(params: {
 	cartTotal: number;
 	currency: string;
 	exchangeRate: number | null | undefined;
 	country: string | null | undefined;
+	methodKey?: string | null;
 }): string {
-	const { cartTotal, currency, exchangeRate, country } = params;
+	const { cartTotal, currency, exchangeRate, country, methodKey } = params;
 	const primaryTotal = formatCartMoney(cartTotal, currency);
 
-	if (!isVenezuelaCountry(country) || exchangeRate == null || exchangeRate <= 0) {
-		return primaryTotal;
-	}
+	if (!isVenezuelaCountry(country)) return primaryTotal;
+	if (methodKey && paymentMethodUsesUsdInVenezuela(methodKey)) return formatCartMoney(cartTotal, "USD");
+	if (exchangeRate == null || exchangeRate <= 0) return primaryTotal;
 
 	const secondaryCurrency = currency === "USD" ? "VES" : "USD";
 	const secondaryTotal = formatCartMoney(cartTotal * exchangeRate, secondaryCurrency);

@@ -13,6 +13,12 @@ import {
 	effectiveDeliveryPricingMode,
 	normalizeDeliverySettings,
 } from "@/lib/delivery/delivery-settings";
+import {
+	EXCHANGE_RATE_SOURCE_LABELS,
+	EXCHANGE_RATE_SOURCES,
+	isExchangeRateSource,
+} from "@/lib/exchange-rates/sources";
+import { isVenezuelaCountry } from "@/lib/geo/venezuela";
 
 import { ChevronDown, ChevronRight, MapPin, Phone } from "lucide-react";
 
@@ -62,6 +68,8 @@ export type Branch = {
     is_active: boolean;
     company_id: string;
     delivery_settings?: unknown;
+    /** Fuente de la tasa de cambio (solo Venezuela): `bcv_usd` o `bcv_eur`. */
+    exchange_rate_source?: string | null;
     [key: string]: unknown;
 };
 
@@ -89,6 +97,8 @@ const branchFormSchema = z.object({
     uberShowFeeAmount: z.boolean(),
     uberDisplayText: z.string().optional(),
     is_active: z.boolean(),
+    // Vacío = sin elegir (la base pone el dólar BCV a las sucursales de Venezuela).
+    exchange_rate_source: z.string().optional(),
 }).refine(
     (d) =>
         !d.uberExternalEnabled ||
@@ -154,7 +164,7 @@ const getPaymentMethodFields = (method: string, country: string): { key: string;
             return [
                 { key: "banco", label: "Banco" },
                 { key: "telefono", label: "Teléfono" },
-                { key: "identificacion", label: country === "VE" ? "Cédula" : "Identificación" }
+                { key: "identificacion", label: isVenezuelaCountry(country) ? "Cédula" : "Identificación" }
             ];
         case "zelle":
             return [
@@ -169,7 +179,7 @@ const getPaymentMethodFields = (method: string, country: string): { key: string;
                 { key: "name", label: "Nombre en Binance" }
             ];
         case "transferencia_bancaria":
-            const idLabel = country === "CL" ? "RUT" : (country === "VE" ? "Cédula/RIF" : "Documento ID");
+            const idLabel = country === "CL" ? "RUT" : (isVenezuelaCountry(country) ? "Cédula/RIF" : "Documento ID");
             const fields = [
                 { key: "banco", label: "Banco" },
                 { key: "tipo_cuenta", label: "Tipo de Cuenta" },
@@ -365,6 +375,7 @@ function BranchEditForm({ branch, onCancel }: { branch: Branch, onCancel: () => 
             uberShowFeeAmount: ds.showExternalDeliveryFeeAmount,
             uberDisplayText: ds.externalDeliveryDisplayText ?? "",
             is_active: branch.is_active !== false,
+            exchange_rate_source: isExchangeRateSource(branch.exchange_rate_source) ? branch.exchange_rate_source : "",
     };
 
     // Parsear JSON strings a objetos si es necesario
@@ -426,9 +437,16 @@ function BranchEditForm({ branch, onCancel }: { branch: Branch, onCancel: () => 
             uberStoreId,
             uberShowFeeAmount,
             uberDisplayText,
+            exchange_rate_source,
             ...restData
         } = data;
-        const cleanForm = { ...restData };
+        // La fuente de tasa solo viaja elegida y en Venezuela; fuera de ahí no se toca.
+        const cleanForm = {
+            ...restData,
+            ...(isVenezuelaCountry(restData.country) && isExchangeRateSource(exchange_rate_source)
+                ? { exchange_rate_source }
+                : {}),
+        };
 
         const delivery_settings_patch = uberOn
             ? {
@@ -489,7 +507,7 @@ function BranchEditForm({ branch, onCancel }: { branch: Branch, onCancel: () => 
                                         register("country").onChange(e);
                                         const val = e.target.value;
                                         if (val === "CL" && currentCurrency === branch.currency) setValue("currency", "CLP");
-                                        if (val === "VE" && currentCurrency === branch.currency) setValue("currency", "VES");
+                                        if (isVenezuelaCountry(val) && currentCurrency === branch.currency) setValue("currency", "VES");
                                         if (val === "US" && currentCurrency === branch.currency) setValue("currency", "USD");
                                     }}
                                     className={inputSelectClass}
@@ -520,6 +538,22 @@ function BranchEditForm({ branch, onCancel }: { branch: Branch, onCancel: () => 
                             )}
                         </div>
                     ))}
+                    {isVenezuelaCountry(currentCountry) ? (
+                        <div className="min-w-0">
+                            <label htmlFor="exchange_rate_source" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                Tasa de cambio
+                            </label>
+                            <select id="exchange_rate_source" {...register("exchange_rate_source")} className={inputSelectClass}>
+                                <option value="">Sin elegir (dólar BCV)</option>
+                                {EXCHANGE_RATE_SOURCES.map((source) => (
+                                    <option key={source} value={source}>{EXCHANGE_RATE_SOURCE_LABELS[source]}</option>
+                                ))}
+                            </select>
+                            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                Se actualiza sola con la tasa oficial del BCV. Los precios siguen en dólares.
+                            </p>
+                        </div>
+                    ) : null}
                 </div>
 
                 <div className="border-t border-zinc-200 pt-4 dark:border-zinc-700">

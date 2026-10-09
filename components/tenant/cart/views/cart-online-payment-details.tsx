@@ -4,16 +4,13 @@ import { useState } from "react";
 import clsx from "clsx";
 import { useTranslations } from "next-intl";
 
+import { isVenezuelaCountry, isVenezuelaCurrency } from "@/lib/geo/venezuela";
 import { BRANCH_PAYMENT_PUBLIC_FIELDS } from "@/lib/payments/branch-payment-config";
 
 import type { ActiveSessionInfo, BranchInfo } from "../cart-modal-types";
 import { resolvePaymentMethodLabel } from "../constants";
 import { useCart } from "../use-cart";
-import {
-	isVenezuelaCountry,
-	resolvePaymentAmountCopyValue,
-	resolvePaymentAmountDisplay,
-} from "../utils/venezuela-payment-copy";
+import { resolvePaymentAmountCopyValue, resolvePaymentAmountDisplay } from "../utils/venezuela-payment-copy";
 import { copyToClipboard } from "../utils/clipboard";
 
 type TransferenciaBancariaConfig = NonNullable<BranchInfo["transferencia_bancaria"]>;
@@ -119,7 +116,7 @@ export function CartOnlinePaymentDetails({
 		push("zelleEmail", labels.zelleEmail, data.email);
 		push("holder", labels.holder, data.name);
 	} else if (methodKey === "binance_pay") {
-		// USDT 1 a 1 con el dólar: el monto es el total en dólares, sin tasa.
+		// Se cobra en USDT, 1 a 1 con el dólar: el monto de abajo sale solo en dólares.
 		const data = methodData as BinancePayConfig;
 		push("binancePayId", labels.binancePayId, data.pay_id);
 		push("binanceEmail", labels.binanceEmail, data.email);
@@ -142,14 +139,15 @@ export function CartOnlinePaymentDetails({
 		return renderEmpty(`${t("payment.followInstructions")} ${resolvePaymentMethodLabel(methodKey, t)}.`);
 	}
 
-	const amountArgs = { cartTotal, currency, exchangeRate, country };
+	// Con el método se decide si el monto va en «$ / Bs» o solo en dólares (Zelle, Binance Pay, PayPal).
+	const amountArgs = { methodKey, cartTotal, currency, exchangeRate, country };
 	fields.push({
 		key: "total",
-		label: isVenezuelaCountry(country) || currency === "VES" ? t("payment.amount") : t("summary.total"),
+		label: isVenezuelaCountry(country) || isVenezuelaCurrency(currency) ? t("payment.amount") : t("summary.total"),
 		value: resolvePaymentAmountDisplay(amountArgs),
 	});
 	const copyValue = (field: PaymentDetailField) =>
-		field.key === "total" ? resolvePaymentAmountCopyValue({ methodKey, ...amountArgs }) : field.value;
+		field.key === "total" ? resolvePaymentAmountCopyValue(amountArgs) : field.value;
 
 	const flash = (key: string) => {
 		setCopiedKey(key);
@@ -184,6 +182,7 @@ export function CartOnlinePaymentDetails({
 					);
 				})}
 			</ul>
+			{methodKey === "binance_pay" ? <p className="cart-hint">{t("payment.binanceUsdtHint")}</p> : null}
 			<button
 				type="button"
 				className={clsx("cart-secondary-btn", copiedKey === "__all" && "is-copied")}

@@ -12,13 +12,18 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
  *
  * - `?branchId=<uuid>`: la tasa de la fuente que eligió esa sucursal (la usan el menú y el
  *   carrito). Responde `rate: null` si la sucursal no tiene fuente (fuera de Venezuela).
- * - Sin parámetros: las tres fuentes (la usa el Panel para que el local elija).
+ * - Sin parámetros: las dos fuentes (la usa el Panel para que el local elija).
  *
  * Son datos públicos y no se mandan cookies, así que se permite cualquier origen: el
  * Panel vive en otro dominio. El service role solo se usa para registrar una tasa nueva
  * cuando la guardada venció.
+ *
+ * La caché de 60 s que pone `json()` la respetan `proxy.ts` (que excluye esta ruta del
+ * `no-store` de `/api/*`) y `next.config.ts` (regla propia después de la general).
  */
 
+// `*` a propósito y no `jsonWithPublicCors`: esa lista (`PUBLIC_API_CORS_ORIGINS`) es para
+// APIs que atienden al menú embebido; esto es dato público sin cookies y lo pide el Panel.
 const CORS_HEADERS = {
 	"Access-Control-Allow-Origin": "*",
 	"Access-Control-Allow-Methods": "GET, OPTIONS",
@@ -66,7 +71,7 @@ export async function GET(req: NextRequest) {
 		if (error) throw error;
 		if (!branch) return json({ ok: false as const, error: "not_found" }, 404);
 
-		const source = (branch as { exchange_rate_source?: unknown }).exchange_rate_source;
+		const source = branch.exchange_rate_source;
 		if (!isExchangeRateSource(source)) {
 			return json({ ok: true as const, source: null, rate: null }, 200, 300);
 		}
@@ -74,6 +79,6 @@ export async function GET(req: NextRequest) {
 		const current = await getCurrentExchangeRate(supabaseAdmin, source);
 		return json({ ok: true as const, source, rate: current }, 200, 60);
 	} catch {
-		return json({ ok: false as const, error: "No se pudo obtener la tasa de cambio." }, 500);
+		return json({ ok: false as const, error: "exchange_rate_unavailable" }, 500);
 	}
 }

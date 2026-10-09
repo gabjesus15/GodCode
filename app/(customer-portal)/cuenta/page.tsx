@@ -139,7 +139,8 @@ export default async function CustomerAccountPage({
     supabaseAdmin
       .from("branches")
       .select(
-        "id,name,address,is_active,phone,schedule,business_hours,instagram_url,whatsapp_url,map_url,origin_lat,origin_lng,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,paypal,order_intake_paused,order_intake_pause_message,order_intake_paused_at,order_intake_paused_by",
+        // `country` y `exchange_rate_source`: el modal de sucursal muestra el selector de tasa solo en Venezuela.
+        "id,name,address,is_active,phone,schedule,business_hours,instagram_url,whatsapp_url,map_url,origin_lat,origin_lng,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,paypal,order_intake_paused,order_intake_pause_message,order_intake_paused_at,order_intake_paused_by,country,exchange_rate_source",
       )
       .eq("company_id", companyId)
       .order("created_at", { ascending: false }),

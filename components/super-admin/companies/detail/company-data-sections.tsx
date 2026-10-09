@@ -3,6 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { SaasSelect } from "@/components/super-admin/shared/saas-select";
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
+import { isVenezuelaCountry } from "@/lib/geo/venezuela";
 import { COUNTRY_OPTIONS, CURRENCY_OPTIONS } from "@/lib/super-admin/form-options";
 import { slugify } from "@/utils/slugify";
 import { getTenantBaseDomainStatic } from "@/utils/tenant-url";
@@ -18,7 +19,7 @@ function withCurrent(options: Array<{ value: string; label: string }>, current: 
 function taxIdLabel(country: string): string {
   const c = country.toUpperCase();
   if (c === "CL" || c === "CHILE") return "RUT";
-  if (c === "VE" || c === "VENEZUELA") return "RIF o cédula";
+  if (isVenezuelaCountry(country)) return "RIF o cédula";
   return "Identificación fiscal";
 }
 

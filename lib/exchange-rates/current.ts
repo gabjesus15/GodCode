@@ -21,6 +21,20 @@ export type StoredExchangeRate = {
 
 type Row = { id: number; source: string; rate: number | string; published_at: string; checked_at: string };
 
+/**
+ * Tras un fallo de la fuente no se vuelve a consultar durante este tiempo: cada visita
+ * al menú con la tasa vencida pedía a dolarapi otra vez y esperaba el timeout completo.
+ */
+export const EXCHANGE_RATE_FETCH_BACKOFF_MS = 5 * 60 * 1000;
+
+/** Último fallo por fuente (ms desde epoch). Vive en memoria: por instancia del servidor. */
+const lastFailureAt = new Map<ExchangeRateSource, number>();
+
+/** Solo para tests: olvida los fallos memorizados. */
+export function __resetExchangeRateBackoff() {
+	lastFailureAt.clear();
+}
+
 function toStored(row: Row, stale: boolean): StoredExchangeRate {
 	return {
 		source: row.source as ExchangeRateSource,
@@ -47,7 +61,8 @@ async function latestRow(supabase: SupabaseClient, source: ExchangeRateSource): 
 /**
  * Tasa vigente de una fuente. Si la guardada tiene más que su TTL, consulta la fuente y
  * la registra (una fila nueva solo si el valor cambió). Si la fuente no responde,
- * devuelve la última guardada marcada como `stale`.
+ * devuelve la última guardada marcada como `stale` y no la vuelve a consultar hasta
+ * pasados `EXCHANGE_RATE_FETCH_BACKOFF_MS`.
  */
 export async function getCurrentExchangeRate(
 	supabase: SupabaseClient,
@@ -60,8 +75,17 @@ export async function getCurrentExchangeRate(
 		return toStored(last, false);
 	}
 
+	const failedAt = lastFailureAt.get(source);
+	if (failedAt != null && now - failedAt < EXCHANGE_RATE_FETCH_BACKOFF_MS) {
+		return last ? toStored(last, true) : null;
+	}
+
 	const fetched = await fetchExchangeRate(source, options.fetchImpl);
-	if (!fetched) return last ? toStored(last, true) : null;
+	if (!fetched) {
+		lastFailureAt.set(source, now);
+		return last ? toStored(last, true) : null;
+	}
+	lastFailureAt.delete(source);
 
 	const { data, error } = await supabase.rpc("record_exchange_rate", {
 		p_source: source,

@@ -32,7 +32,9 @@ export type FetchedRate = { rate: number; publishedAt: string };
 const DOLARAPI_BCV_USD = "https://ve.dolarapi.com/v1/dolares/oficial";
 const DOLARAPI_BCV_EUR = "https://ve.dolarapi.com/v1/euros/oficial";
 
-const FETCH_TIMEOUT_MS = 5000;
+// 4 s: dolarapi responde en menos de un segundo; si tarda más, mejor servir la tasa
+// guardada (`current.ts` la marca `stale`) que dejar al menú esperando.
+const FETCH_TIMEOUT_MS = 4000;
 
 function positiveNumber(value: unknown): number | null {
 	const n = typeof value === "string" ? Number(value) : value;

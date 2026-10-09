@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-	isVenezuelaCountry,
 	paymentMethodUsesBolivaresInVenezuela,
 	paymentMethodUsesUsdInVenezuela,
 	resolvePaymentAmountCopyValue,
@@ -10,12 +9,6 @@ import {
 } from "@/components/tenant/cart/utils/venezuela-payment-copy";
 
 describe("venezuela-payment-copy", () => {
-	it("detects Venezuela country codes", () => {
-		expect(isVenezuelaCountry("VE")).toBe(true);
-		expect(isVenezuelaCountry("Venezuela")).toBe(true);
-		expect(isVenezuelaCountry("CL")).toBe(false);
-	});
-
 	it("classifies local vs foreign payment methods", () => {
 		expect(paymentMethodUsesBolivaresInVenezuela("pago_movil")).toBe(true);
 		expect(paymentMethodUsesBolivaresInVenezuela("transferencia_bancaria")).toBe(true);
@@ -34,6 +27,32 @@ describe("venezuela-payment-copy", () => {
 				country: "VE",
 			}),
 		).toContain("/");
+	});
+
+	it("shows only dollars for methods charged in USD (Zelle, Binance Pay, PayPal)", () => {
+		for (const methodKey of ["zelle", "binance_pay", "paypal"]) {
+			const display = resolvePaymentAmountDisplay({
+				cartTotal: 12.5,
+				currency: "USD",
+				exchangeRate: 639.703,
+				country: "VE",
+				methodKey,
+			});
+			expect(display, methodKey).toBe("$12.50");
+			expect(display, methodKey).not.toContain("/");
+		}
+	});
+
+	it("keeps dollars and bolivares for methods paid in VES", () => {
+		expect(
+			resolvePaymentAmountDisplay({ cartTotal: 12.5, currency: "USD", exchangeRate: 639.703, country: "VE", methodKey: "pago_movil" }),
+		).toContain("/");
+	});
+
+	it("accepts the country in any spelling (same rule as lib/geo)", () => {
+		expect(
+			resolvePaymentAmountDisplay({ cartTotal: 12.5, currency: "USD", exchangeRate: 639.703, country: "venezuela" }),
+		).toContain("Bs.");
 	});
 
 	it("copies bolivares for pago movil in Venezuela", () => {

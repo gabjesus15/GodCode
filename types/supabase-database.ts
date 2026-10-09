@@ -208,6 +208,49 @@ export type Database = {
           },
         ]
       }
+      branch_exchange_rate_source_changes: {
+        Row: {
+          branch_id: string
+          changed_at: string
+          changed_by: string | null
+          company_id: string
+          id: number
+          new_source: string
+          old_source: string | null
+        }
+        Insert: {
+          branch_id: string
+          changed_at?: string
+          changed_by?: string | null
+          company_id: string
+          id?: never
+          new_source: string
+          old_source?: string | null
+        }
+        Update: {
+          branch_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          company_id?: string
+          id?: never
+          new_source?: string
+          old_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branch_exchange_rate_source_changes_branch_id_fkey"
+            columns: ["branch_id"]
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branch_exchange_rate_source_changes_company_id_fkey"
+            columns: ["company_id"]
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branch_payment_methods: {
         Row: {
           branch_id: string
@@ -320,6 +363,7 @@ export type Database = {
           currency: string | null
           delivery_settings: Json | null
           efectivo: string | null
+          exchange_rate_source: string | null
           id: string
           instagram: string | null
           instagram_url: string | null
@@ -363,6 +407,7 @@ export type Database = {
           currency?: string | null
           delivery_settings?: Json | null
           efectivo?: string | null
+          exchange_rate_source?: string | null
           id?: string
           instagram?: string | null
           instagram_url?: string | null
@@ -406,6 +451,7 @@ export type Database = {
           currency?: string | null
           delivery_settings?: Json | null
           efectivo?: string | null
+          exchange_rate_source?: string | null
           id?: string
           instagram?: string | null
           instagram_url?: string | null
@@ -1463,6 +1509,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      exchange_rates: {
+        Row: {
+          checked_at: string
+          fetched_at: string
+          id: number
+          published_at: string
+          rate: number
+          source: string
+        }
+        Insert: {
+          checked_at?: string
+          fetched_at?: string
+          id?: never
+          published_at: string
+          rate: number
+          source: string
+        }
+        Update: {
+          checked_at?: string
+          fetched_at?: string
+          id?: never
+          published_at?: string
+          rate?: number
+          source?: string
+        }
+        Relationships: []
       }
       hero_banners: {
         Row: {
@@ -4404,6 +4477,16 @@ export type Database = {
         }
         Returns: Json
       }
+      branch_exchange_rate: {
+        Args: { p_branch_id: string }
+        Returns: {
+          checked_at: string
+          published_at: string
+          rate: number
+          rate_id: number
+          source: string
+        }[]
+      }
       branch_inventory_enforce_on_sale: {
         Args: { p_branch_id: string }
         Returns: boolean
@@ -4795,6 +4878,17 @@ export type Database = {
         }
         Returns: Json
       }
+      record_exchange_rate: {
+        Args: { p_published_at: string; p_rate: number; p_source: string }
+        Returns: {
+          checked_at: string
+          fetched_at: string
+          id: number
+          published_at: string
+          rate: number
+          source: string
+        }
+      }
       redeem_subscription_coupon: {
         Args: {
           p_application_id?: string | null
@@ -4908,6 +5002,10 @@ export type Database = {
           p_patch: Json
         }
         Returns: Json
+      }
+      set_branch_exchange_rate_source: {
+        Args: { p_branch_id: string; p_source: string }
+        Returns: string
       }
       update_order_transaction: {
         Args: {

@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useCartStore } from "../cart/cart-store";
 import { getTenantScopedPath, getTenantPrefixFromPathname } from "../utils/tenant-route";
 import { normalizeDeliverySettings } from "@/lib/delivery/delivery-settings";
+import { isVenezuelaCountry } from "@/lib/geo/venezuela";
 import { mergeMenuPathQuery } from "@/utils/tenant-url";
 import { readEmbeddedPreviewFromLocation } from "@/lib/store-theme/preview-theme-messaging";
 import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
@@ -42,7 +43,6 @@ import { useTenantMounted } from "@/lib/tenant/hooks/use-tenant-mounted";
 import { useLowEndDevice } from "@/lib/tenant/hooks/use-low-end-device";
 import { resolveEffectiveNavigationMode } from "@/lib/tenant/menu/resolve-effective-navigation-mode";
 import { normalizeMenuLayout, type MenuLayoutConfig } from "@/lib/store-theme/theme-config";
-import { isVenezuelaCountry } from "@/components/tenant/cart/utils/venezuela-payment-copy";
 import { useBranchExchangeRate } from "./use-branch-exchange-rate";
 
 export function useMenuClientController(props: MenuClientProps) {

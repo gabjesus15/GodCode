@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	BINANCE_PAY_ID_ERROR,
+	isValidBinancePayId,
 	pickPublicPaymentConfig,
 	sanitizeBranchPaymentConfig,
 	sanitizeBranchPaymentMethods,
+	validatePublicPaymentConfig,
 } from "@/lib/payments/branch-payment-config";
 
 describe("pickPublicPaymentConfig", () => {
@@ -57,5 +60,36 @@ describe("sanitizeBranchPaymentMethods", () => {
 	it("devuelve null si no hay lista", () => {
 		expect(sanitizeBranchPaymentMethods(null)).toBeNull();
 		expect(sanitizeBranchPaymentMethods(["stripe", " zelle "])).toEqual(["zelle"]);
+	});
+});
+
+describe("validatePublicPaymentConfig", () => {
+	it("acepta un Pay ID de Binance de 6 a 12 cifras, con espacios alrededor", () => {
+		expect(isValidBinancePayId("123456")).toBe(true);
+		expect(isValidBinancePayId(" 123456789012 ")).toBe(true);
+		expect(validatePublicPaymentConfig("binance_pay", { pay_id: "123456789", email: "b@x.com" })).toBeNull();
+		expect(validatePublicPaymentConfig("binance_pay", JSON.stringify({ pay_id: " 987654321 " }))).toBeNull();
+	});
+
+	it("rechaza letras, espacios internos y largos fuera de rango con error de campo", () => {
+		for (const payId of ["12345", "1234567890123", "12 345 678", "pagos@x.com", "ABC123456"]) {
+			expect(isValidBinancePayId(payId), payId).toBe(false);
+			expect(validatePublicPaymentConfig("binance_pay", { pay_id: payId }), payId).toEqual({
+				field: "binance_pay.pay_id",
+				message: BINANCE_PAY_ID_ERROR,
+			});
+		}
+	});
+
+	it("un Pay ID vacío o ausente no es error: el método puede guardarse a medias", () => {
+		expect(validatePublicPaymentConfig("binance_pay", { pay_id: "", email: "b@x.com" })).toBeNull();
+		expect(validatePublicPaymentConfig("binance_pay", { email: "b@x.com" })).toBeNull();
+		expect(validatePublicPaymentConfig("binance_pay", null)).toBeNull();
+		expect(validatePublicPaymentConfig("binance_pay", "no es json")).toBeNull();
+	});
+
+	it("los demás métodos no tienen formato fijo que revisar", () => {
+		expect(validatePublicPaymentConfig("zelle", { email: "lo que sea" })).toBeNull();
+		expect(validatePublicPaymentConfig("pago_movil", { telefono: "abc" })).toBeNull();
 	});
 });

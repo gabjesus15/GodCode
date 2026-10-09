@@ -9,6 +9,7 @@ import {
 	stripStaffOnlyDeliverySettings,
 } from "@/lib/delivery/delivery-settings";
 import { haversineKm, isValidLatLng } from "@/lib/geo/geo";
+import { isVenezuelaCountry } from "@/lib/geo/venezuela";
 import { createSupabaseBrowserClient } from "../../../../utils/supabase/client";
 import CartContext, {
 	isUpsellBeverageLineId,
@@ -24,7 +25,8 @@ import { calculateCartTotals } from "../utils/cart-pricing";
 import { resolveDeliveryQuoteState } from "../utils/delivery-quote-state";
 import { parseManualKm } from "../utils/fulfillment-validation";
 import { joinAddressLine } from "../utils/street-number";
-import { isVenezuelaCountry } from "../utils/venezuela-payment-copy";
+// Cruce carrito → menú asumido: el hook vive en el menú porque ahí se pide primero y
+// comparte caché con el carrito; moverlo a lib tocaría más de lo que vale.
 import { useBranchExchangeRate } from "../../menu/use-branch-exchange-rate";
 
 export { useTenantCartStore } from "../cart-store";

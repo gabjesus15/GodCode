@@ -276,6 +276,12 @@ function rejectCrossOriginApiRequest(req: NextRequest): NextResponse | null {
 }
 
 /**
+ * Rutas /api cuya respuesta sí puede cachearse: datos públicos sin sesión ni cookies.
+ * Cada una pone su propio `Cache-Control` (y `next.config.ts` tiene su regla).
+ */
+const CACHEABLE_API_PATHS = new Set(["/api/tenant/exchange-rates"]);
+
+/**
  * Las rutas /api no necesitan resolucion de tenant ni refresco de sesion: se
  * atienden con un camino corto que solo aplica CSRF, cabeceras de seguridad y
  * `no-store`. Antes quedaban fuera del matcher por completo, asi que no recibian
@@ -293,7 +299,7 @@ function handleApiRequest(req: NextRequest): NextResponse {
   const res = rejected ?? NextResponse.next();
 
   applySecurityHeaders(res);
-  res.headers.set("Cache-Control", "no-store");
+  if (!CACHEABLE_API_PATHS.has(req.nextUrl.pathname)) res.headers.set("Cache-Control", "no-store");
   return attachPublicDeliveryApiCors(req, res);
 }
 

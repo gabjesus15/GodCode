@@ -3,12 +3,15 @@ import { revalidateTag } from "next/cache";
 
 import { logAdminAudit } from "@/lib/super-admin/admin-audit";
 import { mergeDeliverySettingsJson } from "@/lib/delivery/delivery-settings";
+import { isExchangeRateSource } from "@/lib/exchange-rates/sources";
 import { mergePaymentJsonField } from "@/lib/payments/merge-payment-json-field";
 import {
   BRANCH_PAYMENT_PUBLIC_FIELDS,
   mergePublicPaymentConfig,
   sanitizeBranchPaymentMethods,
+  validatePublicPaymentConfig,
 } from "@/lib/payments/branch-payment-config";
+import { logger } from "@/lib/infra/logger";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
 
@@ -46,10 +49,23 @@ export async function PUT(
 
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
+  // Datos de cobro con formato fijo (hoy el Pay ID de Binance): el cliente los copia tal cual.
+  for (const field of PAYMENT_JSON_FIELDS) {
+    const invalid = Object.prototype.hasOwnProperty.call(body, field) ? validatePublicPaymentConfig(field, body[field]) : null;
+    if (invalid) return NextResponse.json({ error: invalid.message, field: invalid.field }, { status: 400 });
+  }
+
+  // Fuente de la tasa de cambio (Venezuela): una del BCV o `null` para quitarla.
+  const hasExchangeRateSource = Object.prototype.hasOwnProperty.call(body, "exchange_rate_source");
+  const nextExchangeRateSource = hasExchangeRateSource ? body.exchange_rate_source : undefined;
+  if (hasExchangeRateSource && nextExchangeRateSource !== null && !isExchangeRateSource(nextExchangeRateSource)) {
+    return NextResponse.json({ error: "La tasa de cambio elegida no existe.", field: "exchange_rate_source" }, { status: 400 });
+  }
+
   const { data: existing, error: existingError } = await supabaseAdmin
     .from("branches")
     .select(
-      "id,company_id,name,delivery_settings,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta",
+      "id,company_id,name,delivery_settings,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta,exchange_rate_source",
     )
     .eq("id", branchId)
     .maybeSingle();
@@ -96,6 +112,11 @@ export async function PUT(
   // Stripe ya no es método de sucursal: cualquier guardado limpia lo que quedara.
   update.stripe = null;
 
+  const previousExchangeRateSource: string | null = (existing.exchange_rate_source as string | null) ?? null;
+  const exchangeRateSourceChanged =
+    hasExchangeRateSource && (nextExchangeRateSource ?? null) !== previousExchangeRateSource;
+  if (exchangeRateSourceChanged) update.exchange_rate_source = nextExchangeRateSource ?? null;
+
   if (Object.prototype.hasOwnProperty.call(body, "delivery_settings_patch")) {
     update.delivery_settings = mergeDeliverySettingsJson(
       existing.delivery_settings,
@@ -117,6 +138,21 @@ export async function PUT(
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
+  // Mismo registro que deja la RPC `set_branch_exchange_rate_source` (que aquí no sirve:
+  // exige `auth.uid()`). Quién lo cambió queda en la auditoría de abajo, por correo.
+  if (exchangeRateSourceChanged && typeof nextExchangeRateSource === "string") {
+    const { error: changeError } = await supabaseAdmin.from("branch_exchange_rate_source_changes").insert({
+      company_id: existing.company_id,
+      branch_id: branchId,
+      old_source: previousExchangeRateSource,
+      new_source: nextExchangeRateSource,
+      changed_by: null,
+    });
+    if (changeError) {
+      logger.warn("branch_exchange_rate_source_change_not_logged", { branchId, error: changeError.message });
+    }
+  }
+
   revalidateTag(`menu:${existing.company_id}`, "max");
 
   await logAdminAudit({
@@ -125,7 +161,13 @@ export async function PUT(
     action: "branch.update",
     resourceType: "branch",
     resourceId: branchId,
-    metadata: { company_id: existing.company_id, via: "api.super-admin.branches.put" },
+    metadata: {
+      company_id: existing.company_id,
+      via: "api.super-admin.branches.put",
+      ...(exchangeRateSourceChanged
+        ? { exchange_rate_source: { from: previousExchangeRateSource, to: nextExchangeRateSource ?? null } }
+        : {}),
+    },
   });
 
   return NextResponse.json({ ok: true });

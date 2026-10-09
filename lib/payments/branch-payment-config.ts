@@ -47,6 +47,34 @@ function parseConfig(value: unknown): Record<string, unknown> | null {
 	return typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
 }
 
+/**
+ * El Pay ID de Binance es un número de 6 a 12 cifras (hoy casi todos tienen 9 o 10). Un
+ * valor con letras o espacios es un correo, un alias o un error de tipeo, y al cliente le
+ * fallaría el pago al copiarlo.
+ */
+export const BINANCE_PAY_ID_PATTERN = /^\d{6,12}$/;
+
+export const BINANCE_PAY_ID_ERROR = "El Pay ID de Binance lleva solo números, de 6 a 12 cifras.";
+
+export function isValidBinancePayId(value: unknown): boolean {
+	return typeof value === "string" && BINANCE_PAY_ID_PATTERN.test(value.trim());
+}
+
+export type PaymentConfigFieldError = { field: string; message: string };
+
+/**
+ * Error de campo de los datos de cobro que manda un formulario, o `null` si están bien.
+ * Solo revisa lo que tiene formato fijo (por ahora el Pay ID de Binance); un campo vacío
+ * nunca es error, porque el método puede guardarse a medias.
+ */
+export function validatePublicPaymentConfig(column: string, incoming: unknown): PaymentConfigFieldError | null {
+	if (column !== "binance_pay") return null;
+	const parsed = parseConfig(incoming);
+	const payId = parsed?.pay_id;
+	if (typeof payId !== "string" || !payId.trim()) return null;
+	return isValidBinancePayId(payId) ? null : { field: "binance_pay.pay_id", message: BINANCE_PAY_ID_ERROR };
+}
+
 /** Solo los campos públicos del método con valor; `null` si no queda ninguno. */
 export function pickPublicPaymentConfig(column: string, value: unknown): Record<string, string> | null {
 	const allowed: readonly string[] | undefined = BRANCH_PAYMENT_PUBLIC_FIELDS[column as BranchPaymentConfigColumn];

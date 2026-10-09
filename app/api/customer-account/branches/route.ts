@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
+import { isExchangeRateSource } from "@/lib/exchange-rates/sources";
+import { isVenezuelaCountry } from "@/lib/geo/venezuela";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
+import { logger } from "@/lib/infra/logger";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { mergePublicPaymentConfig, sanitizeBranchPaymentMethods } from "@/lib/payments/branch-payment-config";
+import {
+  mergePublicPaymentConfig,
+  sanitizeBranchPaymentMethods,
+  validatePublicPaymentConfig,
+} from "@/lib/payments/branch-payment-config";
 import {
   formatBusinessHoursSummary,
   hasAnyBusinessHours,
@@ -86,6 +93,7 @@ export async function PUT(req: NextRequest) {
     paypal,
     order_intake_paused,
     order_intake_pause_message,
+    exchange_rate_source,
   } = payload;
 
   if (!id) {
@@ -113,6 +121,26 @@ export async function PUT(req: NextRequest) {
     contactUrls[field] = parsed.value ?? null;
   }
 
+  // Datos de cobro con formato fijo (hoy el Pay ID de Binance): el cliente los copia
+  // tal cual para pagar, así que un valor inválido no se guarda.
+  for (const [column, incoming] of [
+    ["binance_pay", binance_pay],
+    ["pago_movil", pago_movil],
+    ["zelle", zelle],
+    ["transferencia_bancaria", transferencia_bancaria],
+    ["mercadopago", mercadopago],
+    ["paypal", paypal],
+  ] as const) {
+    const invalid = validatePublicPaymentConfig(column, incoming);
+    if (invalid) return NextResponse.json({ error: invalid.message, field: invalid.field }, { status: 400 });
+  }
+
+  // Fuente de la tasa de cambio: solo las del BCV. Se aplica más abajo, solo en Venezuela.
+  const hasExchangeRateSourceField = Object.prototype.hasOwnProperty.call(payload, "exchange_rate_source");
+  if (hasExchangeRateSourceField && !isExchangeRateSource(exchange_rate_source)) {
+    return NextResponse.json({ error: "La tasa de cambio elegida no existe.", field: "exchange_rate_source" }, { status: 400 });
+  }
+
   const toCoordinate = (value: unknown): number | null => {
     if (value == null || value === "") return null;
     const n = Number(value);
@@ -134,7 +162,7 @@ export async function PUT(req: NextRequest) {
   const { data: branch, error: fetchError } = await supabaseAdmin
     .from("branches")
     .select(
-      "company_id, country, order_intake_paused, pago_movil, zelle, binance_pay, transferencia_bancaria, mercadopago, paypal",
+      "company_id, country, exchange_rate_source, order_intake_paused, pago_movil, zelle, binance_pay, transferencia_bancaria, mercadopago, paypal",
     )
     .eq("id", id)
     .maybeSingle();
@@ -150,14 +178,24 @@ export async function PUT(req: NextRequest) {
     );
   }
 
+  // El país de la sucursal, o el del negocio si la sucursal no tiene el suyo guardado.
+  // Se consulta una sola vez y solo si hace falta (horario o tasa de cambio).
+  let resolvedCountry: string | null | undefined;
+  const resolveBranchCountry = async (): Promise<string | null> => {
+    if (resolvedCountry !== undefined) return resolvedCountry;
+    let country: string | null = (branch.country as string | null) ?? null;
+    if (!country) {
+      const { data: company } = await supabaseAdmin.from("companies").select("country").eq("id", ctx.companyId).maybeSingle();
+      country = (company?.country as string | null | undefined) ?? null;
+    }
+    resolvedCountry = country;
+    return country;
+  };
+
   // La zona la fija el servidor: es la del país del local, no la del navegador de quien edita.
   let businessHoursPatch: { business_hours: typeof businessHours; schedule?: string | null } | null = null;
   if (hasBusinessHoursField) {
-    let country = branch.country;
-    if (!country) {
-      const { data: company } = await supabaseAdmin.from("companies").select("country").eq("id", ctx.companyId).maybeSingle();
-      country = company?.country ?? null;
-    }
+    const country = await resolveBranchCountry();
     const withZone =
       businessHours && hasAnyBusinessHours(businessHours)
         ? { ...businessHours, timezone: resolveBusinessTimeZone(country) }
@@ -168,6 +206,16 @@ export async function PUT(req: NextRequest) {
       ...(withZone ? { schedule: formatBusinessHoursSummary(withZone.week) } : {}),
     };
   }
+
+  // Solo una sucursal de Venezuela tiene tasa que elegir; fuera de ahí el campo se ignora
+  // (el modal no lo muestra). El cambio queda registrado, como hace la RPC
+  // `set_branch_exchange_rate_source`, que aquí no sirve porque exige `auth.uid()`.
+  const previousSource: string | null = (branch.exchange_rate_source as string | null) ?? null;
+  const nextSource =
+    hasExchangeRateSourceField && isExchangeRateSource(exchange_rate_source) && isVenezuelaCountry(await resolveBranchCountry())
+      ? exchange_rate_source
+      : null;
+  const exchangeRateSourceChanged = nextSource != null && nextSource !== previousSource;
 
   const parsedPaused = !!order_intake_paused;
   const wasPaused = !!branch.order_intake_paused;
@@ -214,11 +262,26 @@ export async function PUT(req: NextRequest) {
       order_intake_pause_message: parsedPaused ? (order_intake_pause_message ? order_intake_pause_message.trim() : null) : null,
       ...(finalPausedAt !== undefined ? { order_intake_paused_at: finalPausedAt } : {}),
       ...(finalPausedBy !== undefined ? { order_intake_paused_by: finalPausedBy } : {}),
+      ...(exchangeRateSourceChanged ? { exchange_rate_source: nextSource } : {}),
     })
     .eq("id", id);
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  if (exchangeRateSourceChanged) {
+    const { error: changeError } = await supabaseAdmin.from("branch_exchange_rate_source_changes").insert({
+      company_id: ctx.companyId,
+      branch_id: id,
+      old_source: previousSource,
+      new_source: nextSource,
+      changed_by: ctx.authUserId,
+    });
+    // La sucursal ya quedó con la fuente nueva: el historial no debe deshacer eso.
+    if (changeError) {
+      logger.warn("branch_exchange_rate_source_change_not_logged", { branchId: String(id), error: changeError.message });
+    }
   }
 
   const activePaymentMethods = Array.isArray(payment_methods)

@@ -1,3 +1,5 @@
+import { isVenezuelaCountry } from "@/lib/geo/venezuela";
+
 import type { ActiveSessionInfo, BranchInfo, BusinessInfo } from "../cart-modal-types";
 
 /** Datos de contacto y cobro: la sucursal pisa al negocio campo a campo, sin borrar con vacíos. */
@@ -24,8 +26,5 @@ export function mergeActiveSessionInfo(
 
 /** Zona horaria con la que se explica el horario de cierre al cliente. */
 export function resolveCheckoutTimeZone(country: string | null | undefined): string {
-	const normalized = String(country ?? "").trim();
-	return normalized === "VE" || normalized === "Venezuela"
-		? "America/Caracas"
-		: "America/Santiago";
+	return isVenezuelaCountry(country) ? "America/Caracas" : "America/Santiago";
 }

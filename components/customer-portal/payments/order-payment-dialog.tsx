@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, CheckCircle2, Clock, Copy, ExternalLink, ImageUp, Loader2 } from "lucide-react";
 
 import { isOrderAwaitingPayment } from "@/lib/billing/portal-orders";
+import { isVenezuelaCountry, isVenezuelaCurrency } from "@/lib/geo/venezuela";
 import { uploadImage } from "@/lib/storage/upload-image-client";
 import { fmtDay, fmtUsd, formatPaymentConfigKey, paymentStatusLabel } from "../shared/customer-account-format";
 import type { BillingOptionsResponse, CompanySnapshot, PaymentSummary } from "../shared/customer-account-types";
@@ -97,8 +98,10 @@ export function OrderPaymentDialog({
   }, [previewUrl]);
 
   // En Venezuela se muestra el monto aproximado en bolívares (misma tasa que el alta).
+  // Por país y no solo por moneda: el registro de países da USD a Venezuela.
+  const showsBolivares = isVenezuelaCountry(company.country) || isVenezuelaCurrency(company.currency);
   useEffect(() => {
-    if (!open || company.currency !== "VES" || vesRate != null) return;
+    if (!open || !showsBolivares || vesRate != null) return;
     let cancelled = false;
     fetch("/api/onboarding/bcv-rate")
       .then((res) => res.json())
@@ -109,7 +112,7 @@ export function OrderPaymentDialog({
     return () => {
       cancelled = true;
     };
-  }, [open, company.currency, vesRate]);
+  }, [open, showsBolivares, vesRate]);
 
   const selectedManual = manualMethods.find((m) => m.slug === method) ?? null;
 
