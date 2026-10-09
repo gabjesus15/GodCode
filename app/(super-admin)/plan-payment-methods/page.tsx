@@ -46,6 +46,13 @@ const METHOD_FIELDS: Record<string, { key: string; label: string; placeholder?: 
 		{ key: "titular", label: "Nombre del titular", placeholder: "Ej: Tu empresa SpA" },
 		{ key: "email", label: "Correo (opcional)", placeholder: "Para confirmación" },
 	],
+	// Un enlace de suscripción por plan; la clave sale del nombre del plan (`planLinkConfigKey`).
+	mercadopago: [
+		{ key: "link_basico", label: "Enlace plan Básico", placeholder: "Ej: https://mpago.la/..." },
+		{ key: "link_avanzado", label: "Enlace plan Avanzado", placeholder: "Ej: https://mpago.la/..." },
+		{ key: "link_business", label: "Enlace plan Business", placeholder: "Ej: https://mpago.la/..." },
+		{ key: "link_personalizado", label: "Enlace plan Personalizado", placeholder: "Ej: https://mpago.la/..." },
+	],
 	transferencia_bancaria: [
 		{ key: "banco", label: "Banco", placeholder: "Ej: Banco de Chile" },
 		{ key: "tipo_cuenta", label: "Tipo de cuenta", placeholder: "Ej: Cuenta corriente" },

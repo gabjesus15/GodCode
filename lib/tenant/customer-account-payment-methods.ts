@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isPaymentMethodAvailableForCountry } from "@/lib/payments/payment-method-countries";
 import { isPayPalConfigured } from "@/lib/payments/paypal";
+import { isLinkMethod } from "@/lib/payments/plan-payment-links";
 
 /** Método de pago del SaaS que un dueño puede usar desde /cuenta, con sus datos de cobro. */
 export type PortalPaymentMethod = {
@@ -36,7 +37,8 @@ export async function listPortalPaymentMethods(country: string | null): Promise<
 		.order("sort_order", { ascending: true });
 
 	const available = ((methods ?? []) as MethodRow[]).filter(
-		(method) => !method.auto_verify && isPaymentMethodAvailableForCountry(method.countries, country),
+		// Los métodos por enlace (Mercado Pago) cobran una suscripción del plan: solo sirven en el alta.
+		(method) => !method.auto_verify && !isLinkMethod(method.slug) && isPaymentMethodAvailableForCountry(method.countries, country),
 	);
 	if (available.length === 0) return [];
 

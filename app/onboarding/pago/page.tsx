@@ -4,13 +4,14 @@ import { Suspense, useCallback, useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLocale } from "next-intl";
-import { AlertCircle, Check, Clock, Copy, MailCheck, TicketPercent, Upload, X } from "lucide-react";
+import { AlertCircle, Check, Clock, Copy, ExternalLink, MailCheck, TicketPercent, Upload, X } from "lucide-react";
 
 import { Button } from "../../../components/ui/button";
 import { OnboardingStepBar } from "@/components/onboarding/steps/OnboardingStepBar";
 import { randomId } from "@/lib/analytics/random-id";
 import { uploadImage } from "@/lib/storage/upload-image-client";
 import { getOnboardingPaymentCopy } from "@/lib/plans/onboarding-payment-copy";
+import { isLinkMethod } from "@/lib/payments/plan-payment-links";
 import { computeCouponPricing, couponFreeMonths, formatPercent, type AppliedCoupon, type CouponProblem } from "@/lib/billing/subscription-coupons";
 
 function getConfigLabel(key: string, labels: Record<string, string>): string {
@@ -32,6 +33,8 @@ type ManualData = {
 	method_slug: string;
 	method_config: Record<string, string>;
 	payment_reference: string;
+	/** Enlace del plan en la plataforma (Mercado Pago); `null` en transferencias. */
+	payment_link?: string | null;
 };
 
 type PayPalWindow = Window & {
@@ -214,6 +217,8 @@ function PagoContent() {
 
 	const isVenezuela = manualData?.country === "Venezuela" || manualData?.country === "VE";
 	const isPaypalSelected = subscriptionMethod === "paypal";
+	// Enlace fijo por plan (Mercado Pago): siempre un mes y sin cupones.
+	const isLinkSelected = isLinkMethod(subscriptionMethod);
 	// Un cupón puede reemplazar la promo de +1 mes; y solo cuenta si se pagan sus meses mínimos.
 	const promoEffective = promoAvailable && (coupon ? coupon.keepsPromo : true);
 	const couponFits = Boolean(coupon && !coupon.problem && months >= coupon.minMonths);
@@ -225,6 +230,10 @@ function PagoContent() {
 		const grantedText = `${granted} ${granted === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural}`;
 		return copy.promoDescription.replace("{paid}", paidText).replace("{granted}", grantedText);
 	}
+
+	useEffect(() => {
+		if (isLinkSelected) setMonths(1);
+	}, [isLinkSelected]);
 
 	useEffect(() => {
 		if (!isVenezuela) return;
@@ -455,6 +464,7 @@ function PagoContent() {
 				free?: boolean;
 				ref?: string;
 				payment_reference?: string;
+				payment_link?: string | null;
 				amount_usd?: number;
 				base_amount_usd?: number;
 				months?: number;
@@ -515,6 +525,7 @@ function PagoContent() {
 					method_slug: data.method_slug ?? "",
 					method_config: data.method_config ?? {},
 					payment_reference: data.payment_reference,
+					payment_link: typeof data.payment_link === "string" && data.payment_link ? data.payment_link : null,
 				});
 				return;
 			}
@@ -608,6 +619,7 @@ function PagoContent() {
 	}, [token, copy]);
 
 	const ui = copy.ui;
+	const linkCopy = copy.linkPayment;
 	const monthsText = (n: number) => `${n} ${n === 1 ? copy.monthsLabelSingular : copy.monthsLabelPlural}`;
 	const describeCoupon = (c: AppliedCoupon) =>
 		c.kind === "percent"
@@ -646,7 +658,8 @@ function PagoContent() {
 		);
 	}
 
-	const methodName = quote?.method?.name ?? (isPaypalSelected ? "PayPal" : "");
+	const methodName = quote?.method?.name ?? (isPaypalSelected ? "PayPal" : isLinkSelected ? "Mercado Pago" : "");
+	const withMethod = (text: string) => text.replace(/\{method\}/g, methodName || "Mercado Pago");
 	const chargedMonths = manualData ? manualData.months : months;
 	const coveredMonths = manualData ? manualData.granted_months ?? manualData.months : grantedMonths;
 	const baseTotal = manualData ? (manualData.base_amount_usd ?? manualData.amount_usd) : totalFor(months);
@@ -727,7 +740,9 @@ function PagoContent() {
 				{methodName ? (
 					<div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm">
 						<p className="font-medium text-slate-900">{ui.payWith.replace("{method}", methodName)}</p>
-						<p className="mt-0.5 text-slate-500">{isPaypalSelected ? ui.paypalActivation : ui.manualActivation}</p>
+						<p className="mt-0.5 text-slate-500">
+								{isPaypalSelected ? ui.paypalActivation : isLinkSelected ? withMethod(linkCopy.activation) : ui.manualActivation}
+							</p>
 					</div>
 				) : null}
 				<Link href={changeMethodHref} className="onboarding-link mt-4 inline-block text-sm font-medium">
@@ -754,6 +769,7 @@ function PagoContent() {
 	/* ── Pago manual: datos para transferir y comprobante ── */
 	if (manualData) {
 		const configEntries = Object.entries(manualData.method_config).filter(([, value]) => Boolean(value));
+		const paymentLink = manualData.payment_link ?? null;
 		return (
 			<main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-12 lg:py-14">
 				<OnboardingStepBar current={3} />
@@ -769,17 +785,43 @@ function PagoContent() {
 							</div>
 						) : (
 							<>
-								<h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{methodName || copy.manualTitle}</h1>
+								<h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+									{paymentLink ? withMethod(linkCopy.title) : methodName || copy.manualTitle}
+								</h1>
 								<p className="mt-3 text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">
-									{copy.paymentInstructionsFallback[manualData.method_slug] ?? copy.supportHint}
+									{paymentLink ? withMethod(linkCopy.intro) : copy.paymentInstructionsFallback[manualData.method_slug] ?? copy.supportHint}
 								</p>
 
 								<ol className="mt-10 space-y-10">
 									<li>
 										<h2 className="flex items-center gap-3 text-base font-semibold text-slate-900">
 											<span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">1</span>
-											{ui.transferStep}
+											{paymentLink ? withMethod(linkCopy.payStep) : ui.transferStep}
 										</h2>
+										{paymentLink ? (
+											<div className="mt-4 rounded-2xl border border-slate-200 p-5 sm:p-6">
+												<a
+													href={paymentLink}
+													target="_blank"
+													rel="noopener noreferrer"
+													onClick={() => trackAnalyticsEvent("onboarding_link_payment_open", { method: manualData.method_slug })}
+													className="onboarding-btn-primary inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-8 text-[15px] sm:w-auto"
+												>
+													{withMethod(linkCopy.payButton)}
+													<ExternalLink className="h-4 w-4" aria-hidden />
+												</a>
+												<p className="mt-3 text-sm text-slate-500">{linkCopy.payHint}</p>
+												<dl className="mt-5 border-t border-slate-100">
+													<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3">
+														<dt className="text-sm text-slate-500">{ui.referenceLabel}</dt>
+														<dd className="flex min-w-0 items-center gap-2 font-mono text-sm text-slate-900">
+															<span className="break-all">{manualData.payment_reference}</span>
+															<CopyValue value={manualData.payment_reference} copyLabel={ui.copy} copiedLabel={ui.copied} />
+														</dd>
+													</div>
+												</dl>
+											</div>
+										) : (
 										<div className="mt-4 rounded-2xl border border-slate-200 p-5 sm:p-6">
 											<p className="text-sm text-slate-500">{copy.amountLabel}</p>
 											<p className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">{usd(manualData.amount_usd)}</p>
@@ -808,6 +850,7 @@ function PagoContent() {
 												</div>
 											</dl>
 										</div>
+										)}
 									</li>
 									<li>
 										<h2 className="flex items-center gap-3 text-base font-semibold text-slate-900">
@@ -872,6 +915,9 @@ function PagoContent() {
 						</div>
 					) : null}
 
+					{isLinkSelected ? (
+						<p className="mt-8 text-sm text-slate-600">{withMethod(linkCopy.monthsNote)}</p>
+					) : (
 					<fieldset className="mt-8">
 						<legend className="text-base font-semibold text-slate-900">{copy.monthsPrompt}</legend>
 						<div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -893,6 +939,7 @@ function PagoContent() {
 							})}
 						</div>
 					</fieldset>
+					)}
 
 					<div className="mt-6">
 						{coupon ? (
@@ -970,6 +1017,11 @@ function PagoContent() {
 									</p>
 								) : null}
 							</form>
+						) : isLinkSelected ? (
+							<p className="inline-flex items-center gap-1.5 text-sm text-slate-500">
+								<TicketPercent className="h-4 w-4" aria-hidden />
+								{withMethod(linkCopy.noCoupons)}
+							</p>
 						) : (
 							<button type="button" onClick={() => setCouponOpen(true)} className="onboarding-link inline-flex items-center gap-1.5 text-sm font-medium">
 								<TicketPercent className="h-4 w-4" aria-hidden />
@@ -1002,7 +1054,7 @@ function PagoContent() {
 						) : null}
 						{appLoaded && !isFree && !isPaypalSelected ? (
 							<Button onClick={handlePay} loading={loading} size="lg" className="onboarding-btn-primary h-12 w-full rounded-xl text-[15px] sm:w-auto sm:px-8">
-								{ui.showBankDetails}
+								{isLinkSelected ? withMethod(linkCopy.startButton) : ui.showBankDetails}
 							</Button>
 						) : null}
 						{isPaypalSelected && !isFree ? (
