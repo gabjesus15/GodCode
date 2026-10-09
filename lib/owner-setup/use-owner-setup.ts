@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { createOwnerSetupApi, type OwnerSetupApi, type OwnerSetupLocalPatch } from "./api";
+import { createOwnerSetupApi, type OwnerSetupApi } from "./api";
 import { computeEffectiveTheme, initialBrandColor, type BrandColorChoice } from "./effective-theme";
+import { buildLocalPatch, initialLocalForm, localFormAfterSave, whatsappExample } from "./local-form";
 import { ownerSetupCompletion, ownerSetupStepDone } from "./progress";
 import { nextOwnerSetupStep, OWNER_SETUP_STEPS, ownerSetupStepIndex, previousOwnerSetupStep, type OwnerSetupStep } from "./steps";
 import type { LocalForm, OwnerSetupInitial, OwnerSetupMenuStatus } from "./types";
@@ -10,9 +11,7 @@ import type { StoreThemeConfig } from "@/components/customer-portal/shared/custo
 import { trackEvent } from "@/lib/analytics/track-event";
 import { diffStoreTheme } from "@/lib/store-theme/store-theme-utils";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
-import { businessHoursWeekFromScheduleText, hasAnyBusinessHours } from "@/lib/tenant/business-hours";
-import { socialInputToUrl } from "@/lib/tenant/home-page/home-page-config";
-import { phoneFromWhatsappUrl, whatsappUrlFromPhone } from "@/lib/tenant/whatsapp-url";
+import { whatsappUrlFromPhone } from "@/lib/tenant/whatsapp-url";
 
 /**
  * Todo el estado y las acciones de «Configura tu tienda», sin nada del navegador: la
@@ -24,33 +23,6 @@ export type OwnerSetupBusy = "save" | "skip" | "publish" | "finish" | null;
 
 /** Adónde va «Publicar mi tienda» con la tienda en vista previa: elegir plan y pagar. */
 export const STORE_DRAFT_PUBLISH_PATH = "/cuenta/publicar";
-
-function instagramHandle(url: string | null): string {
-	const match = /instagram\.com\/([A-Za-z0-9._]+)/i.exec(url ?? "");
-	return match ? `@${match[1]}` : (url ?? "");
-}
-
-export function initialLocalForm(initial: OwnerSetupInitial): LocalForm {
-	const branch = initial.branch;
-	const stored = branch?.businessHours ?? null;
-	const hasStored = hasAnyBusinessHours(stored);
-	const legacyWeek = hasStored ? null : businessHoursWeekFromScheduleText(branch?.schedule);
-	return {
-		whatsapp: phoneFromWhatsappUrl(branch?.whatsappUrl),
-		instagram: instagramHandle(branch?.instagramUrl ?? null),
-		address: branch?.address ?? "",
-		hoursWeek: hasStored ? stored!.week : legacyWeek!,
-		hoursEnabled: hasStored ? stored!.enabled : true,
-		hoursStored: hasStored,
-		legacySchedule: branch?.schedule?.trim() || null,
-		legacyParsed: legacyWeek != null && Object.values(legacyWeek).some((intervals) => intervals.length > 0),
-		timeZone: stored?.timezone ?? null,
-	};
-}
-
-export function isVenezuela(country: string | null | undefined): boolean {
-	return /venezuela|^ve$/i.test(country ?? "");
-}
 
 export function useOwnerSetup({
 	initial,
@@ -83,6 +55,8 @@ export function useOwnerSetup({
 	const [reloadKey, setReloadKey] = useState(0);
 	const [local, setLocal] = useState<LocalForm>(() => initialLocalForm(initial));
 	const [localDirty, setLocalDirty] = useState(false);
+	/** El dueño tocó el horario: solo entonces un horario vacío se guarda como borrado. */
+	const [hoursTouched, setHoursTouched] = useState(false);
 	const [whatsappError, setWhatsappError] = useState<string | null>(null);
 	const [busy, setBusy] = useState<OwnerSetupBusy>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -134,30 +108,23 @@ export function useOwnerSetup({
 	const saveLocal = useCallback(async (): Promise<boolean> => {
 		if (!localDirty || !initial.branch) return true;
 		if (local.whatsapp.trim() && !whatsappUrl) {
-			const example = isVenezuela(country) ? "+58 412 123 4567" : "+56 9 1234 5678";
-			setWhatsappError(`Escribe el número completo, con el código de país (por ejemplo ${example}).`);
+			setWhatsappError(`Escribe el número completo, con el código de país (por ejemplo ${whatsappExample(country)}).`);
 			return false;
 		}
 		setWhatsappError(null);
-		const patch: OwnerSetupLocalPatch = {
-			id: initial.branch.id,
-			whatsapp_url: whatsappUrl ?? "",
-			instagram_url: local.instagram.trim() ? socialInputToUrl("instagram", local.instagram) : "",
-			address: local.address,
-		};
-		if (Object.values(local.hoursWeek).some((intervals) => intervals.length > 0)) {
-			patch.business_hours = { enabled: local.hoursEnabled, timezone: local.timeZone, week: local.hoursWeek };
-		}
+		const patch = buildLocalPatch({ branchId: initial.branch.id, form: local, whatsappUrl, hoursTouched });
 		const result = await api.saveLocal(patch);
 		if (!result.ok) {
 			setError(result.error);
 			return false;
 		}
+		setLocal((prev) => localFormAfterSave(prev, patch));
 		setLocalDirty(false);
+		setHoursTouched(false);
 		setReloadKey((key) => key + 1);
 		setSavedAt(Date.now());
 		return true;
-	}, [api, country, initial.branch, local, localDirty, whatsappUrl]);
+	}, [api, country, hoursTouched, initial.branch, local, localDirty, whatsappUrl]);
 
 	/** Guarda lo del paso actual antes de moverse. */
 	const saveCurrent = useCallback(async (): Promise<boolean> => {
@@ -216,6 +183,7 @@ export function useOwnerSetup({
 	const updateLocal = useCallback((patch: Partial<LocalForm>) => {
 		setLocal((prev) => ({ ...prev, ...patch }));
 		setLocalDirty(true);
+		if ("hoursWeek" in patch || "hoursEnabled" in patch) setHoursTouched(true);
 		if ("whatsapp" in patch) setWhatsappError(null);
 	}, []);
 

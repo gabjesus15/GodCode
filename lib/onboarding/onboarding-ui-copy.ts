@@ -3,6 +3,9 @@
  * idiomas del sitio. «Crear mi tienda» está en `store-start-copy.ts`; el plan y el pago
  * tienen los suyos junto a su formulario.
  * `{email}`, `{n}` y `{seconds}` se reemplazan al usarlos.
+ *
+ * Quien llega con un plan «solo panel CEO» (sin menú público) no arma tienda: con
+ * `getOnboardingUiCopy(locale, { panelOnly: true })` los textos dejan de prometerla.
  */
 
 export type OnboardingLocale = "es" | "en" | "pt" | "fr" | "de" | "it";
@@ -121,7 +124,7 @@ const es: OnboardingUiCopy = {
 		consentJoin: "y la",
 		privacyLink: "política de privacidad",
 		analyticsNotice:
-			"Gcode mide el uso de la plataforma (tu panel y tu menú público) con analítica propia y Google Analytics, como explica la política de privacidad.",
+			"Gcode mide el uso de la plataforma (tu panel CEO y tu menú público) con analítica propia y, si lo aceptas en el aviso de cookies, Google Analytics.",
 		submit: "Crear mi tienda",
 		errorSubmit: "No pudimos enviar tu solicitud. Intenta de nuevo.",
 		errorUnexpected: "Algo salió mal. Intenta de nuevo.",
@@ -194,7 +197,7 @@ const en: OnboardingUiCopy = {
 		consentJoin: "and the",
 		privacyLink: "privacy policy",
 		analyticsNotice:
-			"Gcode measures platform usage (your panel and your public menu) with its own analytics and Google Analytics, as described in the privacy policy.",
+			"Gcode measures platform usage (your CEO panel and your public menu) with its own analytics and, if you accept it in the cookie notice, Google Analytics.",
 		submit: "Create my store",
 		errorSubmit: "We could not send your request. Please try again.",
 		errorUnexpected: "Something went wrong. Please try again.",
@@ -267,7 +270,7 @@ const pt: OnboardingUiCopy = {
 		consentJoin: "e a",
 		privacyLink: "política de privacidade",
 		analyticsNotice:
-			"A Gcode mede o uso da plataforma (seu painel e seu cardápio público) com análise própria e Google Analytics, como explica a política de privacidade.",
+			"A Gcode mede o uso da plataforma (seu painel CEO e seu cardápio público) com análise própria e, se você aceitar no aviso de cookies, Google Analytics.",
 		submit: "Criar minha loja",
 		errorSubmit: "Não conseguimos enviar sua solicitação. Tente novamente.",
 		errorUnexpected: "Algo deu errado. Tente novamente.",
@@ -340,7 +343,7 @@ const fr: OnboardingUiCopy = {
 		consentJoin: "et la",
 		privacyLink: "politique de confidentialité",
 		analyticsNotice:
-			"Gcode mesure l’utilisation de la plateforme (votre panneau et votre menu public) avec ses propres statistiques et Google Analytics, comme l’explique la politique de confidentialité.",
+			"Gcode mesure l’utilisation de la plateforme (votre panneau CEO et votre menu public) avec ses propres statistiques et, si vous l’acceptez dans le bandeau des cookies, Google Analytics.",
 		submit: "Créer ma boutique",
 		errorSubmit: "Nous n’avons pas pu envoyer votre demande. Réessayez.",
 		errorUnexpected: "Une erreur s’est produite. Réessayez.",
@@ -413,7 +416,7 @@ const de: OnboardingUiCopy = {
 		consentJoin: "und die",
 		privacyLink: "Datenschutzerklärung",
 		analyticsNotice:
-			"Gcode misst die Nutzung der Plattform (Ihr Panel und Ihre öffentliche Speisekarte) mit eigener Analyse und Google Analytics, wie in der Datenschutzerklärung beschrieben.",
+			"Gcode misst die Nutzung der Plattform (Ihr CEO-Panel und Ihre öffentliche Speisekarte) mit eigener Analyse und, wenn Sie es im Cookie-Hinweis erlauben, mit Google Analytics.",
 		submit: "Meinen Shop erstellen",
 		errorSubmit: "Wir konnten Ihre Anfrage nicht senden. Bitte erneut versuchen.",
 		errorUnexpected: "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
@@ -486,7 +489,7 @@ const it: OnboardingUiCopy = {
 		consentJoin: "e la",
 		privacyLink: "politica sulla privacy",
 		analyticsNotice:
-			"Gcode misura l’uso della piattaforma (il tuo pannello e il tuo menu pubblico) con analisi proprie e Google Analytics, come spiega l’informativa sulla privacy.",
+			"Gcode misura l’uso della piattaforma (il tuo pannello CEO e il tuo menu pubblico) con analisi proprie e, se lo accetti nell’avviso sui cookie, Google Analytics.",
 		submit: "Crea il mio negozio",
 		errorSubmit: "Non siamo riusciti a inviare la richiesta. Riprova.",
 		errorUnexpected: "Qualcosa è andato storto. Riprova.",
@@ -521,8 +524,177 @@ const it: OnboardingUiCopy = {
 
 const COPY: Record<OnboardingLocale, OnboardingUiCopy> = { es, en, pt, fr, de, it };
 
-export function getOnboardingUiCopy(locale: string | null | undefined): OnboardingUiCopy {
-	return COPY[resolveOnboardingLocale(locale)];
+/** Lo que cambia con «solo panel CEO»: sin tienda que armar, el alta es registro, correo y plan. */
+type PanelOnlyCopy = {
+	steps: [StepItem, StepItem, StepItem];
+	start: Pick<OnboardingUiCopy["start"], "title" | "subtitle" | "includesTitle" | "includes" | "next">;
+	form: Pick<OnboardingUiCopy["form"], "businessHint" | "submit" | "sentBody">;
+	verify: Pick<OnboardingUiCopy["verify"], "okBody" | "continue">;
+};
+
+const PANEL_ONLY: Record<OnboardingLocale, PanelOnlyCopy> = {
+	es: {
+		steps: [
+			{ title: "Registro", hint: "Tus datos" },
+			{ title: "Tu correo", hint: "Confírmalo" },
+			{ title: "Tu plan", hint: "Plan y pago" },
+		],
+		start: {
+			title: "Crea tu cuenta y elige tu plan",
+			subtitle: "El panel CEO para llevar la caja, los pedidos y los reportes de tu local. Pagas tu plan y empiezas a usarlo.",
+			includesTitle: "El panel CEO incluye",
+			includes: ["Caja para cobrar en tu local", "Pedidos y reportes en un solo lugar", "Sin comisiones por venta"],
+			next: [
+				{ title: "Confirma tu correo", text: "Te enviamos un enlace ahora mismo." },
+				{ title: "Elige tu plan", text: "Puedes sumar extras ahora o más adelante." },
+				{ title: "Paga y entra al panel CEO", text: "Te enviamos el acceso por correo apenas se confirme el pago." },
+			],
+		},
+		form: {
+			businessHint: "Así aparecerá en tu panel CEO. Puedes cambiarlo después.",
+			submit: "Crear mi cuenta",
+			sentBody: "Enviamos un enlace a {email}. Ábrelo para elegir tu plan.",
+		},
+		verify: { okBody: "Ahora elige tu plan. Te llevamos en un momento.", continue: "Elegir mi plan" },
+	},
+	en: {
+		steps: [
+			{ title: "Sign up", hint: "Your details" },
+			{ title: "Your email", hint: "Confirm it" },
+			{ title: "Your plan", hint: "Plan and payment" },
+		],
+		start: {
+			title: "Create your account and choose your plan",
+			subtitle: "The CEO panel to run your register, orders and reports. Pay for your plan and start using it.",
+			includesTitle: "The CEO panel includes",
+			includes: ["A POS to take payments at your venue", "Orders and reports in one place", "No commission on sales"],
+			next: [
+				{ title: "Confirm your email", text: "We are sending you a link right now." },
+				{ title: "Choose your plan", text: "You can add extras now or later." },
+				{ title: "Pay and open the CEO panel", text: "We email you access as soon as the payment is confirmed." },
+			],
+		},
+		form: {
+			businessHint: "This is how it will appear in your CEO panel. You can change it later.",
+			submit: "Create my account",
+			sentBody: "We sent a link to {email}. Open it to choose your plan.",
+		},
+		verify: { okBody: "Now choose your plan. Taking you there in a moment.", continue: "Choose my plan" },
+	},
+	pt: {
+		steps: [
+			{ title: "Cadastro", hint: "Seus dados" },
+			{ title: "Seu e-mail", hint: "Confirme-o" },
+			{ title: "Seu plano", hint: "Plano e pagamento" },
+		],
+		start: {
+			title: "Crie sua conta e escolha seu plano",
+			subtitle: "O painel CEO para cuidar do caixa, dos pedidos e dos relatórios do seu local. Você paga seu plano e começa a usar.",
+			includesTitle: "O painel CEO inclui",
+			includes: ["Caixa para cobrar no seu local", "Pedidos e relatórios em um só lugar", "Sem comissão por venda"],
+			next: [
+				{ title: "Confirme seu e-mail", text: "Enviamos um link agora mesmo." },
+				{ title: "Escolha seu plano", text: "Você pode adicionar extras agora ou depois." },
+				{ title: "Pague e entre no painel CEO", text: "Enviamos o acesso por e-mail assim que o pagamento for confirmado." },
+			],
+		},
+		form: {
+			businessHint: "É assim que aparecerá no seu painel CEO. Você pode mudar depois.",
+			submit: "Criar minha conta",
+			sentBody: "Enviamos um link para {email}. Abra-o para escolher seu plano.",
+		},
+		verify: { okBody: "Agora escolha seu plano. Levamos você em um instante.", continue: "Escolher meu plano" },
+	},
+	fr: {
+		steps: [
+			{ title: "Inscription", hint: "Vos informations" },
+			{ title: "Votre e-mail", hint: "Confirmez-le" },
+			{ title: "Votre offre", hint: "Offre et paiement" },
+		],
+		start: {
+			title: "Créez votre compte et choisissez votre offre",
+			subtitle: "Le panneau CEO pour gérer la caisse, les commandes et les rapports de votre établissement. Vous payez votre offre et vous commencez.",
+			includesTitle: "Le panneau CEO comprend",
+			includes: ["Une caisse pour encaisser sur place", "Commandes et rapports au même endroit", "Sans commission sur les ventes"],
+			next: [
+				{ title: "Confirmez votre e-mail", text: "Nous vous envoyons un lien tout de suite." },
+				{ title: "Choisissez votre offre", text: "Vous pouvez ajouter des options maintenant ou plus tard." },
+				{ title: "Payez et accédez au panneau CEO", text: "Nous vous envoyons l’accès par e-mail dès que le paiement est confirmé." },
+			],
+		},
+		form: {
+			businessHint: "C’est ainsi qu’il apparaîtra dans votre panneau CEO. Vous pourrez le modifier.",
+			submit: "Créer mon compte",
+			sentBody: "Nous avons envoyé un lien à {email}. Ouvrez-le pour choisir votre offre.",
+		},
+		verify: { okBody: "Choisissez maintenant votre offre. Nous vous y emmenons.", continue: "Choisir mon offre" },
+	},
+	de: {
+		steps: [
+			{ title: "Registrierung", hint: "Ihre Daten" },
+			{ title: "Ihre E-Mail", hint: "Bestätigen" },
+			{ title: "Ihr Plan", hint: "Plan und Zahlung" },
+		],
+		start: {
+			title: "Erstellen Sie Ihr Konto und wählen Sie Ihren Plan",
+			subtitle: "Das CEO-Panel für Kasse, Bestellungen und Berichte Ihres Geschäfts. Sie zahlen Ihren Plan und legen los.",
+			includesTitle: "Das CEO-Panel enthält",
+			includes: ["Kasse für Zahlungen vor Ort", "Bestellungen und Berichte an einem Ort", "Keine Provision pro Verkauf"],
+			next: [
+				{ title: "E-Mail bestätigen", text: "Wir senden Ihnen sofort einen Link." },
+				{ title: "Plan wählen", text: "Extras können Sie jetzt oder später hinzufügen." },
+				{ title: "Bezahlen und ins CEO-Panel", text: "Den Zugang schicken wir per E-Mail, sobald die Zahlung bestätigt ist." },
+			],
+		},
+		form: {
+			businessHint: "So erscheint es in Ihrem CEO-Panel. Sie können es später ändern.",
+			submit: "Mein Konto erstellen",
+			sentBody: "Wir haben einen Link an {email} gesendet. Öffnen Sie ihn, um Ihren Plan zu wählen.",
+		},
+		verify: { okBody: "Wählen Sie jetzt Ihren Plan. Wir leiten Sie gleich weiter.", continue: "Plan wählen" },
+	},
+	it: {
+		steps: [
+			{ title: "Registrazione", hint: "I tuoi dati" },
+			{ title: "La tua email", hint: "Confermala" },
+			{ title: "Il tuo piano", hint: "Piano e pagamento" },
+		],
+		start: {
+			title: "Crea il tuo account e scegli il piano",
+			subtitle: "Il pannello CEO per gestire cassa, ordini e report del tuo locale. Paghi il piano e inizi a usarlo.",
+			includesTitle: "Il pannello CEO include",
+			includes: ["Cassa per incassare nel tuo locale", "Ordini e report in un unico posto", "Nessuna commissione sulle vendite"],
+			next: [
+				{ title: "Conferma la tua email", text: "Ti inviamo subito un link." },
+				{ title: "Scegli il piano", text: "Puoi aggiungere extra ora o più avanti." },
+				{ title: "Paga ed entra nel pannello CEO", text: "Ti inviamo l’accesso via email appena il pagamento è confermato." },
+			],
+		},
+		form: {
+			businessHint: "Apparirà così nel tuo pannello CEO. Puoi cambiarlo in seguito.",
+			submit: "Crea il mio account",
+			sentBody: "Abbiamo inviato un link a {email}. Aprilo per scegliere il piano.",
+		},
+		verify: { okBody: "Ora scegli il piano. Ti portiamo lì tra un attimo.", continue: "Scegli il mio piano" },
+	},
+};
+
+/**
+ * Los textos del alta en el idioma pedido. Con `panelOnly` (el plan que trae el landing es
+ * «solo panel CEO»), los que prometen armar la tienda gratis cambian por los de elegir plan.
+ */
+export function getOnboardingUiCopy(locale: string | null | undefined, options: { panelOnly?: boolean } = {}): OnboardingUiCopy {
+	const lang = resolveOnboardingLocale(locale);
+	const copy = COPY[lang];
+	if (!options.panelOnly) return copy;
+	const variant = PANEL_ONLY[lang];
+	return {
+		...copy,
+		steps: { ...copy.steps, items: variant.steps },
+		start: { ...copy.start, ...variant.start },
+		form: { ...copy.form, ...variant.form },
+		verify: { ...copy.verify, ...variant.verify },
+	};
 }
 
 /** Reemplaza `{clave}` por su valor. */

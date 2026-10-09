@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
-import { ChevronDown, ExternalLink, FileUp, Sparkles, Trash2, UtensilsCrossed } from "lucide-react";
+import { ChevronDown, ExternalLink, FileUp, Lock, Sparkles, Trash2, UtensilsCrossed } from "lucide-react";
 
 import { MenuImportReview } from "../../account/tabs/menu-import-review";
 import type { CompanySnapshot, MenuSetupSummary } from "../../shared/customer-account-types";
-import { resolveCajaUrl } from "../../shared/caja-url";
 import { shrinkImage } from "../../shared/shrink-image";
 import { SetupButton, SetupLinkButton } from "../ui/setup-button";
 import { SetupNotice } from "../ui/setup-notice";
 
 import { SAMPLE_MENU_SECTORS } from "@/lib/menu/sample-menus";
 import { pluralize, useMenuSetup, type MenuStatus } from "@/lib/menu/use-menu-setup";
+import { resolveSalesPanelUrl } from "@/lib/tenant/panel-url";
 import { cn } from "@/utils/cn";
 
 const MENU_FILE_TYPES = "image/*,application/pdf,.pdf,.xlsx,.csv";
@@ -45,10 +45,13 @@ function OptionRow({ icon, iconClass, title, description, children }: { icon: Re
 export function MenuStep({
 	company,
 	menuSetup,
+	storeDraft = false,
 	onStatusChange,
 }: {
-	company: Pick<CompanySnapshot, "tenantAdminUrl">;
+	company: Pick<CompanySnapshot, "publicSlug">;
 	menuSetup: MenuSetupSummary;
+	/** «Arma y paga»: la tienda sigue en vista previa y el panel CEO se habilita al publicarla. */
+	storeDraft?: boolean;
 	onStatusChange: (status: MenuStatus) => void;
 }) {
 	const menu = useMenuSetup({ menuSetup, onStatusChange, prepareFile: shrinkImage });
@@ -63,7 +66,8 @@ export function MenuStep({
 		return () => clearTimeout(timer);
 	}, [confirmDelete]);
 
-	const cajaUrl = resolveCajaUrl(company, "products");
+	// En vista previa no hay acceso al panel CEO: se muestra cuándo llega en vez del enlace.
+	const panelUrl = storeDraft ? "" : resolveSalesPanelUrl(company.publicSlug, { tab: "products" });
 	const readFile = (file: File) => {
 		void menu.readMenuFile(file).finally(() => {
 			if (fileInput.current) fileInput.current.value = "";
@@ -113,7 +117,9 @@ export function MenuStep({
 						</SetupButton>
 					}
 				>
-					Tus clientes los ven en la tienda. Cámbialos en la Caja o bórralos cuando cargues los tuyos.
+					{storeDraft
+						? "Salen en tu vista previa. Bórralos cuando cargues los tuyos."
+						: "Tus clientes los ven en tu tienda. Cámbialos en el panel CEO o bórralos cuando cargues los tuyos."}
 				</SetupNotice>
 			) : null}
 
@@ -209,16 +215,23 @@ export function MenuStep({
 								Cargar
 							</SetupButton>
 						</OptionRow>
-						{cajaUrl ? (
+						{storeDraft || panelUrl ? (
 							<OptionRow
 								icon={<UtensilsCrossed aria-hidden />}
 								iconClass="bg-[#e7f7ee] text-[#15803d]"
 								title="Créalos uno por uno"
-								description="En la Caja agregas fotos, variantes y precios por sucursal."
+								description="En el panel CEO agregas fotos, variantes y precios por sucursal."
 							>
-								<SetupLinkButton href={cajaUrl} target="_blank" rel="noopener noreferrer" variant="secondary" size="sm" trailingIcon={<ExternalLink aria-hidden />}>
-									Abrir la Caja
-								</SetupLinkButton>
+								{panelUrl ? (
+									<SetupLinkButton href={panelUrl} target="_blank" rel="noopener noreferrer" variant="secondary" size="sm" trailingIcon={<ExternalLink aria-hidden />}>
+										Abrir el panel CEO
+									</SetupLinkButton>
+								) : (
+									<span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-(--su-muted)">
+										<Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+										Disponible cuando publiques tu tienda
+									</span>
+								)}
 							</OptionRow>
 						) : null}
 					</div>

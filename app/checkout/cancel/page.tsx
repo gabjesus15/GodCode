@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, AlertTriangle, Clock3, ExternalLink, ShieldAlert } from "lucide-react";
 
 import { Badge } from "../../../components/ui/badge";
-import { getCheckoutCopy } from "@/lib/plans/checkout-copy";
+import { checkoutStatusLabel, getCheckoutCopy } from "@/lib/plans/checkout-copy";
 import { getCurrentLocale } from "../../../lib/i18n/server";
 import { createSupabaseServerClient } from "../../../utils/supabase/server";
 
@@ -69,8 +69,8 @@ async function getPayment(ref?: string) {
       months_paid: app.payment_months ?? 1,
       status: app.payment_status ?? "pending",
       payment_method: app.subscription_payment_method ?? null,
-      companyName: company?.name ?? app.business_name ?? "--",
-      planName: plan?.name ?? "--",
+      companyName: company?.name ?? app.business_name ?? null,
+      planName: plan?.name ?? null,
       onboardingToken: app.verification_token ?? null,
     };
   }
@@ -96,8 +96,8 @@ async function getPayment(ref?: string) {
 
   return {
     ...data,
-    companyName: company?.name ?? "--",
-    planName: plan?.name ?? "--",
+    companyName: company?.name ?? null,
+    planName: plan?.name ?? null,
     onboardingToken: application?.verification_token ?? null,
   };
 }
@@ -108,7 +108,8 @@ export default async function CheckoutCancelPage({
   searchParams: Promise<SearchParams>;
 }) {
   const locale = await getCurrentLocale();
-  const copy = getCheckoutCopy(locale).cancel;
+  const checkout = getCheckoutCopy(locale);
+  const copy = checkout.cancel;
   const resolvedParams = await searchParams;
   const ref = Array.isArray(resolvedParams.ref)
     ? resolvedParams.ref[0]
@@ -121,6 +122,8 @@ export default async function CheckoutCancelPage({
   const recoveryHref = payment?.company_id ? "/cuenta" : "/login";
   const hasReference = Boolean(ref);
   const hasPayment = Boolean(payment);
+  // El estado en palabras del idioma del visitante; un código desconocido no se muestra.
+  const statusText = payment ? checkoutStatusLabel(payment.status, checkout.status) : null;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_#fef9c3_0%,_#ffffff_45%,_#f8fafc_100%)]">
@@ -205,26 +208,32 @@ export default async function CheckoutCancelPage({
                 <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-zinc-700">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-xs uppercase tracking-[0.2em] text-zinc-500">{copy.detailTitle}</span>
-                    <Badge variant={statusBadge[payment.status ?? "neutral"] ?? "neutral"}>{payment.status ?? "--"}</Badge>
+                    {statusText ? <Badge variant={statusBadge[String(payment.status ?? "").toLowerCase()] ?? "neutral"}>{statusText}</Badge> : null}
                   </div>
                   <div className="mt-4 grid gap-3">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.companyLabel}</p>
-                      <p className="mt-1 font-semibold text-zinc-900">{payment.companyName}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.planLabel}</p>
-                      <p className="mt-1 font-semibold text-zinc-900">{payment.planName}</p>
-                    </div>
+                    {payment.companyName ? (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.companyLabel}</p>
+                        <p className="mt-1 font-semibold text-zinc-900">{payment.companyName}</p>
+                      </div>
+                    ) : null}
+                    {payment.planName ? (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.planLabel}</p>
+                        <p className="mt-1 font-semibold text-zinc-900">{payment.planName}</p>
+                      </div>
+                    ) : null}
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
                         <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.monthsLabel}</p>
                         <p className="mt-1 font-semibold text-zinc-900">{payment.months_paid ?? 1}</p>
                       </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.methodLabel}</p>
-                        <p className="mt-1 font-semibold text-zinc-900">{payment.payment_method ?? "--"}</p>
-                      </div>
+                      {payment.payment_method ? (
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.methodLabel}</p>
+                          <p className="mt-1 font-semibold text-zinc-900">{payment.payment_method}</p>
+                        </div>
+                      ) : null}
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.referenceLabel}</p>

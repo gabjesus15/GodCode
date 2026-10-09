@@ -21,10 +21,13 @@ import { getTenantHomeUrl } from "@/utils/tenant-url";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-	title: "Crea tu tienda",
-	robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
-};
+/** El título de la pestaña va en el idioma del visitante, como el resto de la página. */
+export async function generateMetadata(): Promise<Metadata> {
+	return {
+		title: getStoreStartCopy(await getCurrentLocale()).title,
+		robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
+	};
+}
 
 type AppRow = {
 	id: string;

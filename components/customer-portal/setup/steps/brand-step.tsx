@@ -8,15 +8,31 @@ import { SetupButton } from "../ui/setup-button";
 import { SetupField, SetupInput } from "../ui/setup-field";
 
 import type { BrandColorChoice } from "@/lib/owner-setup/effective-theme";
+import { sanitizeHexColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { contrastRatio } from "@/lib/store-theme/store-theme-utils";
 import { brandButtonColors, pickBrandColors, pickButtonColor } from "@/lib/tenant/logo-colors";
 import { cn } from "@/utils/cn";
 
 const NAME_MAX = 60;
 const LOGO_TYPES = "image/png,image/jpeg,image/webp";
+/** Color de respaldo si alguna vez llegara algo que no es un hex. */
+const INK = "#111113";
+
+/**
+ * Solo se leen imágenes del archivo que eligió el dueño (`blob:`) o del logo ya subido
+ * (URL firmada del almacenamiento): nunca otro esquema.
+ */
+function isReadableImageUrl(src: string): boolean {
+	try {
+		return ["blob:", "https:", "http:"].includes(new URL(src, window.location.href).protocol);
+	} catch {
+		return false;
+	}
+}
 
 /** Lee los píxeles de una imagen (achicada) para sacar sus colores. */
 async function colorsFromImage(src: string): Promise<string[]> {
+	if (!isReadableImageUrl(src)) return [];
 	const img = new Image();
 	img.crossOrigin = "anonymous";
 	img.decoding = "async";
@@ -40,12 +56,14 @@ function inkOn(hex: string): string {
 }
 
 function Swatch({ color, selected, onSelect, label }: { color: string; selected: boolean; onSelect: () => void; label: string }) {
+	// Lo que llega a `style` es siempre un hex validado, venga del logo o del selector de color.
+	const safeColor = sanitizeHexColor(color, INK);
 	return (
 		<button
 			type="button"
 			aria-pressed={selected}
 			aria-label={label}
-			title={color.toUpperCase()}
+			title={safeColor.toUpperCase()}
 			onClick={onSelect}
 			className={cn(
 				"relative h-11 w-11 shrink-0 rounded-full transition-[transform,box-shadow] duration-150 hover:scale-[1.06] active:scale-95",
@@ -54,11 +72,11 @@ function Swatch({ color, selected, onSelect, label }: { color: string; selected:
 					? "shadow-[0_0_0_2px_var(--su-surface),0_0_0_4px_var(--su-ink)]"
 					: "shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]",
 			)}
-			style={{ background: color }}
+			style={{ background: safeColor }}
 		>
 			{selected ? (
 				<motion.span initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="absolute inset-0 flex items-center justify-center">
-					<Check className="h-5 w-5" strokeWidth={2.75} style={{ color: inkOn(color) }} aria-hidden />
+					<Check className="h-5 w-5" strokeWidth={2.75} style={{ color: inkOn(safeColor) }} aria-hidden />
 				</motion.span>
 			) : null}
 		</button>
@@ -249,7 +267,7 @@ export function BrandStep({
 	}, [logoColorUrl]);
 
 	const customColor = brandColor && !suggested.includes(brandColor) ? brandColor : null;
-	const buttonColor = (brandColor ? brandButtonColors(brandColor)?.primaryColor : null) ?? templateColor ?? "#111113";
+	const buttonColor = sanitizeHexColor((brandColor ? brandButtonColors(brandColor)?.primaryColor : null) ?? templateColor ?? INK, INK);
 
 	return (
 		<div className="space-y-9">
@@ -312,8 +330,12 @@ export function BrandStep({
 						</span>
 						<input
 							type="color"
-							value={brandColor ?? buttonColor}
-							onChange={(event) => onBrandColorChange(event.target.value)}
+							value={sanitizeHexColor(brandColor ?? buttonColor, INK)}
+							onChange={(event) => {
+								// El selector siempre da un hex; se valida igual antes de que llegue a un `style`.
+								const color = sanitizeHexColor(event.target.value, "");
+								if (color) onBrandColorChange(color);
+							}}
 							aria-label="Elegir otro color"
 							className="absolute inset-0 cursor-pointer opacity-0"
 						/>
@@ -331,7 +353,7 @@ export function BrandStep({
 								: "bg-(--su-surface) text-(--su-ink) ring-1 ring-inset ring-(--su-line-strong) hover:bg-(--su-surface-sunken)",
 						)}
 					>
-						<span className="h-7 w-7 rounded-full ring-2 ring-white/80" style={{ background: templateColor ?? "#111113" }} aria-hidden />
+						<span className="h-7 w-7 rounded-full ring-2 ring-white/80" style={{ background: sanitizeHexColor(templateColor ?? INK, INK) }} aria-hidden />
 						Los del diseño
 					</button>
 				</div>

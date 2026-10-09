@@ -6,7 +6,8 @@ import { Badge } from "../../../components/ui/badge";
 import { CheckoutSuccessFinalize } from "@/components/onboarding/payments/CheckoutSuccessFinalize";
 import { LandingLogo } from "@/components/ui/logo/landing-logo";
 import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
-import { getCheckoutCopy } from "@/lib/plans/checkout-copy";
+import { checkoutStatusLabel, getCheckoutCopy, isCheckoutPaidStatus } from "@/lib/plans/checkout-copy";
+import { readStoreDraft } from "@/lib/tenant/store-draft";
 import { getCurrentLocale } from "../../../lib/i18n/server";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
@@ -35,15 +36,6 @@ const statusBadge: Record<string, "success" | "warning" | "destructive" | "neutr
   pending_validation: "warning",
   rejected: "destructive",
   cancelled: "destructive",
-};
-
-const statusLabel: Record<string, string> = {
-  paid: "Pagado",
-  approved: "Pagado",
-  pending: "Pendiente",
-  pending_validation: "En revisión",
-  rejected: "Rechazado",
-  cancelled: "Cancelado",
 };
 
 function isSafeReference(ref: string | undefined): ref is string {
@@ -76,8 +68,8 @@ async function getPayment(ref?: string) {
 
     const [{ data: company }, { data: plan }] = await Promise.all([
       app.company_id
-        ? supabase.from("companies").select("name").eq("id", app.company_id).maybeSingle()
-        : Promise.resolve({ data: null as { name?: string | null } | null }),
+        ? supabase.from("companies").select("name,theme_config").eq("id", app.company_id).maybeSingle()
+        : Promise.resolve({ data: null as { name?: string | null; theme_config?: unknown } | null }),
       supabase.from("plans").select("name").eq("id", app.plan_id).maybeSingle(),
     ]);
 
@@ -89,15 +81,16 @@ async function getPayment(ref?: string) {
       months_paid: app.payment_months ?? 1,
       status: app.payment_status ?? "pending",
       payment_method: app.subscription_payment_method ?? null,
-      companyName: company?.name ?? app.business_name ?? "--",
-      planName: plan?.name ?? "--",
+      companyName: company?.name ?? app.business_name ?? null,
+      planName: plan?.name ?? null,
+      fromDraft: Boolean(readStoreDraft(company?.theme_config)),
     };
   }
 
   const [{ data: company }, { data: plan }] = await Promise.all([
     supabase
       .from("companies")
-      .select("name")
+      .select("name,theme_config")
       .eq("id", data.company_id)
       .maybeSingle(),
     supabase
@@ -109,8 +102,10 @@ async function getPayment(ref?: string) {
 
   return {
     ...data,
-    companyName: company?.name ?? "--",
-    planName: plan?.name ?? "--",
+    companyName: company?.name ?? null,
+    planName: plan?.name ?? null,
+    // «Arma y paga»: el pago abrió la tienda que armó en vista previa (ya tiene contraseña).
+    fromDraft: Boolean(readStoreDraft(company?.theme_config)),
   };
 }
 
@@ -120,7 +115,8 @@ export default async function CheckoutSuccessPage({
   searchParams: Promise<SearchParams>;
 }) {
   const locale = await getCurrentLocale();
-  const copy = getCheckoutCopy(locale).success;
+  const checkout = getCheckoutCopy(locale);
+  const copy = checkout.success;
   const resolvedParams = await searchParams;
   const ref = Array.isArray(resolvedParams.ref)
     ? resolvedParams.ref[0]
@@ -132,14 +128,26 @@ export default async function CheckoutSuccessPage({
   const accountHref = payment?.company_id ? "/cuenta" : "/login";
   const hasReference = Boolean(ref);
   const hasPayment = Boolean(payment);
+  // El título no promete una cuenta activa si el pago no figura como cobrado (o la captura falló).
+  const confirmed = Boolean(payment) && !captureError && isCheckoutPaidStatus(payment?.status);
+  const fromDraft = confirmed && Boolean(payment?.fromDraft);
+  const heading = !payment
+    ? { title: copy.titleFallback, lead: copy.leadFallback }
+    : !confirmed
+      ? { title: copy.titlePending, lead: copy.leadPending }
+      : fromDraft
+        ? { title: copy.titleDraft, lead: copy.leadDraft }
+        : { title: copy.titlePaid, lead: copy.leadPaid };
+  const statusText = payment ? checkoutStatusLabel(payment.status, checkout.status) : null;
 
+  // Sin dato no se muestra la fila: mejor eso que una raya.
   const rows = payment
     ? [
         { label: copy.companyLabel, value: payment.companyName },
         { label: copy.planLabel, value: payment.planName },
         { label: copy.monthsLabel, value: String(payment.months_paid ?? 1) },
-        { label: copy.methodLabel, value: payment.payment_method ?? "—" },
-      ]
+        { label: copy.methodLabel, value: payment.payment_method },
+      ].filter((row): row is { label: string; value: string } => Boolean(row.value?.trim()))
     : [];
 
   return (
@@ -159,19 +167,15 @@ export default async function CheckoutSuccessPage({
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-14">
           <section className="min-w-0 max-w-2xl">
             <span
-              className={`flex h-12 w-12 items-center justify-center rounded-full ${hasPayment ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
+              className={`flex h-12 w-12 items-center justify-center rounded-full ${confirmed ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
             >
-              {hasPayment ? <CheckCircle className="h-6 w-6" aria-hidden /> : <AlertTriangle className="h-6 w-6" aria-hidden />}
+              {confirmed ? <CheckCircle className="h-6 w-6" aria-hidden /> : <AlertTriangle className="h-6 w-6" aria-hidden />}
             </span>
-            <h1 className="mt-6 text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-              {hasPayment ? copy.titlePaid : copy.titleFallback}
-            </h1>
-            <p className="mt-3 text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">
-              {hasPayment ? copy.leadPaid : copy.leadFallback}
-            </p>
+            <h1 className="mt-6 text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{heading.title}</h1>
+            <p className="mt-3 text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">{heading.lead}</p>
 
             <div className="mt-6">
-              <CheckoutSuccessFinalize refParam={ref} captureError={captureError} />
+              <CheckoutSuccessFinalize refParam={ref} captureError={captureError} copy={checkout.finalize} />
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -208,7 +212,7 @@ export default async function CheckoutSuccessPage({
 
             <div className="mt-12 border-t border-slate-200 pt-8">
               <h2 className="text-base font-semibold text-slate-900">{copy.stepLabel}</h2>
-              <p className="mt-1 text-[15px] text-slate-600">{copy.stepText}</p>
+              <p className="mt-1 text-[15px] text-slate-600">{fromDraft ? copy.stepTextDraft : copy.stepText}</p>
               <dl className="mt-6 grid gap-6 sm:grid-cols-2">
                 <div>
                   <dt className="text-sm font-semibold text-slate-900">{copy.validationTitle}</dt>
@@ -227,8 +231,8 @@ export default async function CheckoutSuccessPage({
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-20px_rgba(15,23,42,0.25)] sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-base font-semibold text-slate-900">{hasPayment ? copy.detailTitle : copy.noPaymentTitle}</h2>
-                {payment ? (
-                  <Badge variant={statusBadge[payment.status ?? "neutral"] ?? "neutral"}>{statusLabel[payment.status ?? ""] ?? payment.status ?? "—"}</Badge>
+                {payment && statusText ? (
+                  <Badge variant={statusBadge[String(payment.status ?? "").toLowerCase()] ?? "neutral"}>{statusText}</Badge>
                 ) : null}
               </div>
               {payment ? (

@@ -13,7 +13,6 @@ import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-brandin
 import { normalizeBusinessHours } from "@/lib/tenant/business-hours";
 import { requireCustomerPortalSession } from "@/lib/tenant/customer-portal-session";
 import { OWNER_SETUP_STEPS, type OwnerSetupStep } from "@/lib/tenant/owner-setup";
-import { resolveTenantPanelLoginUrl } from "@/lib/tenant/panel-url";
 import { isStoreDraftPending, readStoreDraft } from "@/lib/tenant/store-draft";
 import { getTenantMenuUrl } from "@/utils/tenant-url";
 
@@ -87,7 +86,6 @@ export default async function OwnerSetupPage({ searchParams }: { searchParams: P
 			publicSlug,
 			customDomain,
 			country: (company?.country as string | null) ?? null,
-			tenantAdminUrl: publicSlug ? resolveTenantPanelLoginUrl(publicSlug) : null,
 		},
 		sector: resolveBusinessSector(sector),
 		theme,

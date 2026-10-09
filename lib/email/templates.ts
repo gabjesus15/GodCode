@@ -1,3 +1,5 @@
+import { LEGAL_TERMS_PATH, LEGAL_UPDATED_AT_LABEL } from "@/lib/legal/legal-documents";
+
 import { accountUrl, getEmailBrand } from "./brand";
 import { relativeDays } from "./format";
 import type { EmailBlock, EmailContent } from "./render";
@@ -10,7 +12,18 @@ import type { EmailBlock, EmailContent } from "./render";
  */
 
 export type EmailTemplates = {
-	verify_email: { name: string; businessName: string; verifyUrl: string };
+	verify_email: {
+		name: string;
+		businessName: string;
+		verifyUrl: string;
+		/** Plan «solo panel CEO» (sin menú público): no hay tienda que armar gratis. */
+		panelOnly?: boolean;
+	};
+	/**
+	 * Alguien intentó registrarse con un correo que ya tiene cuenta. Aviso neutro: sin token
+	 * ni enlace que entre solo, para que no sirva a quien pruebe correos ajenos.
+	 */
+	onboarding_existing_account: { name?: string; loginUrl: string; recoverUrl: string };
 	onboarding_resume: {
 		name: string;
 		businessName: string;
@@ -43,11 +56,18 @@ export type EmailTemplates = {
 		setPasswordUrl?: string;
 		/** «Arma y paga»: la tienda ya estaba armada en vista previa y ahora se abrió al público. */
 		storeOpened?: boolean;
+		/** Plan «solo panel CEO»: sin menú público, la bienvenida no habla de cargar el menú. */
+		panelOnly?: boolean;
 		loginUrl: string;
 		storeUrl?: string;
 		/** `/cuenta?tab=menu`: cargar la carta desde una foto o empezar con un ejemplo. */
 		menuUrl?: string;
 		contactDate?: string;
+		/**
+		 * Lo contratado, ya formateado. Los Términos (sección 2) prometen que la confirmación del
+		 * primer pago trae plan, precio, período y renovación junto con el enlace a los Términos.
+		 */
+		purchase?: { planName: string; amount: string; period: string; renewsAt: string };
 	};
 	/** «Arma y paga»: tienda armada en vista previa que todavía no se publicó (a los 2 y 7 días). */
 	store_draft_reminder: { name?: string; businessName: string; continueUrl: string; storeUrl?: string; attempt: 1 | 2 };
@@ -159,21 +179,64 @@ function greet(name: string | null | undefined): string {
 
 const PAUSE_EFFECT = "Tu menú público y los pedidos online se pausan hasta que renueves. Tu información queda guardada.";
 
+/** La promo del primer pago con las mismas palabras que el landing (`lib/landing/hero-assurances`). */
+const FIRST_PAYMENT_PROMO = "2 meses al precio de 1 en tu primer pago";
+
+/**
+ * Enlace a los Términos vigentes, con su versión. La confirmación de un pago lo lleva, como
+ * prometen los Términos (sección 2). URL absoluta, como el resto de enlaces de los correos.
+ */
+function termsNote(): EmailBlock {
+	return {
+		type: "note",
+		text: "Tu plan se rige por los {link}.",
+		link: { label: `Términos de servicio, versión del ${LEGAL_UPDATED_AT_LABEL}`, url: `${getEmailBrand().appUrl}${LEGAL_TERMS_PATH}` },
+	};
+}
+
 const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } = {
 	verify_email: (d) => {
 		const { product } = getEmailBrand();
+		// «Solo panel CEO» no tiene tienda que armar: confirma el correo y sigue a elegir el plan.
+		const next = d.panelOnly
+			? {
+					preheader: "Confirma tu correo para elegir tu plan y empezar a usar el panel CEO.",
+					intro: `Confirma tu correo para elegir tu plan y empezar a usar el panel CEO, con ${FIRST_PAYMENT_PROMO}.`,
+				}
+			: {
+					preheader: "Un clic y empiezas a armar tu tienda. El enlace vale 7 días.",
+					intro: `Confirma que este correo es tuyo y crea tu tienda: la armas gratis y pagas recién al publicarla, con ${FIRST_PAYMENT_PROMO}.`,
+				};
 		return {
 			audience: "prospect",
 			tone: "brand",
 			subject: `Confirma tu correo para crear ${d.businessName} en ${product}`,
-			preheader: "Un clic y empiezas a armar tu tienda. El enlace vale 7 días.",
+			preheader: next.preheader,
 			title: "Confirma tu correo",
 			greeting: greet(d.name),
-			intro: `Recibimos la solicitud para crear **${d.businessName}** en ${product}. Confirma que este correo es tuyo y crea tu tienda: la armas gratis y pagas recién al publicarla.`,
+			intro: `Recibimos la solicitud para crear **${d.businessName}** en ${product}. ${next.intro}`,
 			cta: { label: "Confirmar mi correo", url: d.verifyUrl, showUrl: true },
 			ctaFirst: true,
 			blocks: [],
 			reason: `Recibes este correo porque se registró ${d.businessName} con esta dirección. Si no fuiste tú, ignóralo: no se creará nada. El enlace vale 7 días.`,
+		};
+	},
+
+	onboarding_existing_account: (d) => {
+		const { product } = getEmailBrand();
+		return {
+			audience: "customer",
+			tone: "brand",
+			subject: `Ya tienes una cuenta en ${product}`,
+			preheader: "Entra con tu contraseña. Si no la recuerdas, crea una nueva.",
+			title: "Ya tienes una cuenta",
+			greeting: greet(d.name),
+			intro: "Alguien (seguramente tú) intentó registrarse con este correo. Ya tienes una cuenta: entra con tu contraseña. Si no la recuerdas, puedes crear una nueva.",
+			cta: { label: "Entrar", url: d.loginUrl },
+			ctaFirst: true,
+			blocks: [],
+			secondary: { label: "Crear una contraseña nueva", url: d.recoverUrl },
+			reason: "Recibes este correo porque alguien intentó registrarse con esta dirección. Si no fuiste tú, ignóralo: tu cuenta sigue igual.",
 		};
 	},
 
@@ -194,7 +257,7 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 						items: [
 							{ title: "Elige el link de tu tienda", text: "Y crea tu contraseña para volver cuando quieras." },
 							{ title: "Arma tu menú, tu logo y tus colores", text: "La ves en vista previa: tus clientes todavía no." },
-							{ title: "Publícala cuando quieras", text: "Eliges tu plan, pagas y queda abierta." },
+							{ title: "Publícala cuando quieras", text: `Eliges tu plan, pagas y queda abierta, con ${FIRST_PAYMENT_PROMO}.` },
 						],
 					},
 				],
@@ -209,8 +272,9 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 				title: "Lo que falta",
 				items: [
 					...(payment ? [] : [{ title: "Elige tu plan", text: "Puedes sumar extras ahora o más adelante." }]),
-					{ title: "Paga con PayPal o transferencia", text: "Con transferencia, subes el comprobante y lo validamos." },
-					{ title: "Te enviamos el acceso a tu panel", text: "Y te ayudamos a dejar tu menú listo." },
+					{ title: "Paga en línea o con transferencia", text: `Llevas ${FIRST_PAYMENT_PROMO}. Con transferencia, subes el comprobante y lo validamos.` },
+					// Puede ser «solo panel CEO» (sin menú): el último paso no promete armar el menú.
+					{ title: "Te enviamos el acceso por correo", text: "Creas tu contraseña y entras a tu cuenta." },
 				],
 			},
 			{ type: "note", text: "¿Tienes dudas antes de pagar? Responde este correo y te ayudamos." },
@@ -233,9 +297,21 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 
 	onboarding_continue: (d) => {
 		const copies = {
-			store: { title: "Crea tu tienda", intro: `Aquí tienes el enlace para crear la tienda de **${d.businessName}**. La armas gratis y pagas recién cuando quieras publicarla.`, cta: "Crear mi tienda" },
-			plan: { title: "Sigue con el alta", intro: `Aquí tienes el enlace para seguir con el alta de **${d.businessName}**. Tus datos están guardados: solo falta elegir el plan y pagar.`, cta: "Elegir mi plan" },
-			payment: { title: "Sigue con el pago", intro: `Aquí tienes el enlace para terminar el alta de **${d.businessName}**. Ya elegiste tu plan: solo falta el pago.`, cta: "Ir al pago" },
+			store: {
+				title: "Crea tu tienda",
+				intro: `Aquí tienes el enlace para crear la tienda de **${d.businessName}**. La armas gratis y pagas recién cuando quieras publicarla, con ${FIRST_PAYMENT_PROMO}.`,
+				cta: "Crear mi tienda",
+			},
+			plan: {
+				title: "Sigue con el alta",
+				intro: `Aquí tienes el enlace para seguir con el alta de **${d.businessName}**. Tus datos están guardados: solo falta elegir el plan y pagar. Llevas ${FIRST_PAYMENT_PROMO}.`,
+				cta: "Elegir mi plan",
+			},
+			payment: {
+				title: "Sigue con el pago",
+				intro: `Aquí tienes el enlace para terminar el alta de **${d.businessName}**. Ya elegiste tu plan: solo falta el pago. Llevas ${FIRST_PAYMENT_PROMO}.`,
+				cta: "Ir al pago",
+			},
 			review: { title: "Tu comprobante está en revisión", intro: `Ya recibimos el comprobante de **${d.businessName}**. Te escribimos apenas lo validemos; desde este enlace puedes ver el estado o subir otro si te lo pedimos.`, cta: "Ver el estado" },
 		};
 		const copy = copies[d.step];
@@ -283,7 +359,8 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 					: [
 							{ title: "Validamos el pago" },
 							{ title: "Activamos tu cuenta", text: "Te llega un correo para crear tu contraseña." },
-							{ title: "Te ayudamos a dejar tu menú listo" },
+							// También para «solo panel CEO», que no tiene menú que dejar listo.
+							{ title: "Te ayudamos a dejarlo todo listo" },
 						],
 			},
 			{ type: "note", text: "No hace falta que vuelvas a pagar." },
@@ -294,6 +371,25 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 
 	welcome: (d) => {
 		const { product } = getEmailBrand();
+		// La confirmación del primer pago: lo contratado (si llega) y el enlace a los Términos.
+		const purchase: EmailBlock[] = d.purchase
+			? [
+					{
+						type: "summary",
+						title: "Tu plan",
+						rows: [
+							{ label: "Plan", value: d.purchase.planName },
+							{ label: "Pagaste", value: d.purchase.amount, emphasis: true },
+							{ label: "Período", value: d.purchase.period },
+							{ label: "Próxima renovación", value: d.purchase.renewsAt },
+						],
+					},
+				]
+			: [];
+		const panelStep = {
+			title: "Entra al panel CEO para recibir pedidos",
+			text: "Lo abres desde tu cuenta con tu correo y tu contraseña. Ahí está la caja y llegan los pedidos.",
+		};
 		if (d.storeOpened || !d.setPasswordUrl) {
 			return {
 				audience: "customer",
@@ -314,32 +410,39 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 							{ label: "Tu cuenta", value: d.loginUrl },
 						],
 					},
+					...purchase,
 					{
 						type: "steps",
 						title: "Primeros pasos",
 						items: [
 							{ title: "Comparte tu link", text: "En tu Instagram, tu WhatsApp y con un QR en el local." },
-							{ title: "Abre la caja para recibir pedidos", text: "Desde el panel de tu local, con tu correo y tu contraseña." },
+							panelStep,
 							...(d.contactDate ? [{ title: `Te escribimos el ${d.contactDate}`, text: "Para ayudarte con lo que necesites." }] : []),
 						],
 					},
+					termsNote(),
 				],
 				reason: `Recibes este correo porque ${d.businessName} se activó con esta dirección.`,
 			};
 		}
+		// «Solo panel CEO» no tiene menú público: ni cargarlo ni su enlace.
 		const steps = [
 			{ title: "Crea tu contraseña", text: "El enlace de arriba sirve una sola vez." },
-			{
-				title: "Carga tu menú",
-				text: "En tu cuenta, en «Mi menú»: súbelo desde una foto o un Excel, o empieza con un menú de ejemplo.",
-			},
-			...(d.contactDate ? [{ title: `Te escribimos el ${d.contactDate}`, text: "Para ayudarte a dejar tu página lista." }] : []),
+			d.panelOnly
+				? panelStep
+				: {
+						title: "Carga tu menú",
+						text: "En tu cuenta, en «Mi menú»: súbelo desde una foto o un Excel, o empieza con un menú de ejemplo.",
+					},
+			...(d.contactDate
+				? [{ title: `Te escribimos el ${d.contactDate}`, text: d.panelOnly ? "Para ayudarte con lo que necesites." : "Para ayudarte a dejar tu página lista." }]
+				: []),
 		];
 		return {
 			audience: "customer",
 			tone: "success",
 			subject: `${d.businessName} ya está activo en ${product}`,
-			preheader: "Crea tu contraseña para entrar a tu panel.",
+			preheader: "Crea tu contraseña para entrar a tu cuenta.",
 			title: `Te damos la bienvenida a ${product}`,
 			greeting: greet(d.name),
 			intro: `El pago quedó registrado y **${d.businessName}** ya tiene su cuenta activa. Empieza por crear tu contraseña.`,
@@ -350,13 +453,15 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 					type: "summary",
 					title: "Guarda estos enlaces",
 					rows: [
-						{ label: "Tu panel", value: d.loginUrl },
-						...(d.menuUrl ? [{ label: "Cargar tu menú", value: d.menuUrl }] : []),
-						{ label: "Tu menú público", value: d.storeUrl ?? "" },
+						{ label: "Tu cuenta", value: d.loginUrl },
+						...(d.menuUrl && !d.panelOnly ? [{ label: "Cargar tu menú", value: d.menuUrl }] : []),
+						{ label: "Tu menú público", value: d.panelOnly ? "" : (d.storeUrl ?? "") },
 					],
 				},
+				...purchase,
 				{ type: "steps", title: "Primeros pasos", items: steps },
-				{ type: "note", text: "Si el enlace vence, entra a tu panel y usa «¿Olvidaste tu contraseña?»: te enviamos otro." },
+				{ type: "note", text: "Si el enlace vence, en la página para entrar usa «¿Olvidaste tu contraseña?»: te enviamos otro." },
+				termsNote(),
 			],
 			reason: `Recibes este correo porque ${d.businessName} se activó con esta dirección.`,
 		};
@@ -379,7 +484,7 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 					title: "Lo que falta",
 					items: [
 						{ title: "Elige tu plan", text: "El que marcaste o el que prefieras. Lo puedes cambiar después." },
-						{ title: "Paga con PayPal o transferencia", text: "Con transferencia, subes el comprobante y lo validamos." },
+						{ title: "Paga en línea o con transferencia", text: `Llevas ${FIRST_PAYMENT_PROMO}. Con transferencia, subes el comprobante y lo validamos.` },
 						{ title: "Tu tienda se abre", text: "Con tu link y tu QR, listos para compartir." },
 					],
 				},
@@ -402,7 +507,10 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 			intro: `Hace casi un mes que armaste **${d.businessName}** y todavía no está publicada. Si no la publicas, el ${d.deleteDate} la borramos y su link queda libre para otro negocio.`,
 			cta: { label: "Publicar mi tienda", url: d.continueUrl },
 			ctaFirst: true,
-			blocks: [{ type: "note", text: "Si ya no la necesitas, no tienes que hacer nada." }],
+			blocks: [
+				{ type: "text", text: `Al publicarla eliges tu plan y pagas, con ${FIRST_PAYMENT_PROMO}.` },
+				{ type: "note", text: "Si ya no la necesitas, no tienes que hacer nada." },
+			],
 			reason: `Recibes este correo porque armaste ${d.businessName} en ${product}. Es el único aviso antes de borrarla.`,
 		};
 	},
@@ -446,6 +554,7 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 			},
 			...(d.detail ? [{ type: "text" as const, text: d.detail }] : []),
 			{ type: "note", text: "Guarda este correo como comprobante de tu pago." },
+			termsNote(),
 		],
 		cta: { label: "Ver mi cuenta", url: accountUrl("facturacion") },
 		reason: `Recibes este correo porque se registró un pago de ${d.businessName}.`,
@@ -711,12 +820,13 @@ const builders: { [K in EmailKind]: (data: EmailTemplates[K]) => EmailContent } 
 				title: "Para sacarle provecho",
 				items: [
 					{ title: "Comparte el enlace", text: "En tu Instagram, tu WhatsApp y en un QR en las mesas." },
-					{ title: "Mantén tu menú al día", text: "Precios, fotos y productos agotados desde tu panel." },
+					{ title: "Mantén tu menú al día", text: "Precios, fotos y productos agotados desde el panel CEO." },
 				],
 			},
 		],
 		cta: { label: "Ver mi página", url: d.storeUrl },
-		secondary: { label: "Entrar a mi panel", url: `${getEmailBrand().appUrl}/login` },
+		// El login lleva a «Mi cuenta» (no al panel CEO): el enlace dice eso.
+		secondary: { label: "Entrar a mi cuenta", url: `${getEmailBrand().appUrl}/login` },
 		reason: `Recibes este correo porque eres quien administra ${d.businessName}.`,
 	}),
 
@@ -869,6 +979,14 @@ export const EMAIL_CATALOG: EmailCatalogEntry[] = [
 		sample: { name: SAMPLE_NAME, businessName: SAMPLE_BUSINESS, continueUrl: "https://example.com/onboarding/pago?token=demo", step: "payment" },
 	}),
 	entry({
+		kind: "onboarding_existing_account",
+		group: "Alta",
+		label: "Ya tiene cuenta",
+		trigger: "Cuando alguien intenta registrarse con un correo que ya tiene cuenta. Sin enlace que entre solo: lleva al login y a crear una contraseña nueva.",
+		automatic: false,
+		sample: { name: SAMPLE_NAME, loginUrl: "https://example.com/login", recoverUrl: "https://example.com/login/recuperar" },
+	}),
+	entry({
 		kind: "onboarding_receipt_received",
 		group: "Alta",
 		label: "Comprobante del alta recibido",
@@ -890,6 +1008,7 @@ export const EMAIL_CATALOG: EmailCatalogEntry[] = [
 			storeUrl: "https://la-parada.example.com",
 			menuUrl: "https://example.com/cuenta?tab=menu",
 			contactDate: "viernes, 26 de septiembre de 2026",
+			purchase: { planName: "Pro", amount: "US$ 29,00", period: "2 meses (pagaste 1)", renewsAt: "23 de noviembre de 2026" },
 		},
 	}),
 	entry({

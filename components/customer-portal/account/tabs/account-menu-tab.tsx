@@ -1,10 +1,9 @@
 "use client";
 
 import { useRef } from "react";
-import { ExternalLink, FileUp, Sparkles, Trash2, UtensilsCrossed } from "lucide-react";
+import { ExternalLink, FileUp, Lock, Sparkles, Trash2, UtensilsCrossed } from "lucide-react";
 
 import type { CompanySnapshot, MenuSetupSummary } from "../../shared/customer-account-types";
-import { resolveCajaUrl } from "../../shared/caja-url";
 import { Alert } from "../../ui/Alert";
 import { Button } from "../../ui/Button";
 import { Card } from "../../ui/Card";
@@ -14,6 +13,7 @@ import { MenuImportReview } from "./menu-import-review";
 
 import { pluralize as plural, useMenuSetup, type MenuStatus } from "@/lib/menu/use-menu-setup";
 import { SAMPLE_MENU_SECTORS } from "@/lib/menu/sample-menus";
+import { resolveSalesPanelUrl } from "@/lib/tenant/panel-url";
 import { getTenantMenuUrl } from "@/utils/tenant-url";
 
 export type { MenuStatus };
@@ -21,18 +21,21 @@ export type { MenuStatus };
 export const DELETE_SAMPLES_CONFIRM = "Se borran los productos de ejemplo que no hayas cambiado. ¿Continuar?";
 
 export type AccountMenuTabProps = {
-	company: Pick<CompanySnapshot, "tenantAdminUrl" | "publicSlug" | "customDomain">;
+	company: Pick<CompanySnapshot, "publicSlug" | "customDomain">;
 	menuSetup: MenuSetupSummary;
+	/** «Arma y paga»: la tienda sigue en vista previa y el panel CEO se habilita al publicarla. */
+	storeDraft?: boolean;
 	/** Avisa cuántos productos hay después de cada cambio. */
 	onStatusChange?: (status: MenuStatus) => void;
 };
 
-export function AccountMenuTab({ company, menuSetup, onStatusChange }: AccountMenuTabProps) {
+export function AccountMenuTab({ company, menuSetup, storeDraft = false, onStatusChange }: AccountMenuTabProps) {
 	const menu = useMenuSetup({ menuSetup, onStatusChange, prepareFile: shrinkImage });
 	const { status, sector, setSector, busy, feedback, draft, draftNote, realProducts } = menu;
 	const fileInput = useRef<HTMLInputElement>(null);
 
-	const cajaUrl = resolveCajaUrl(company, "products");
+	// En vista previa no hay acceso al panel CEO: se muestra cuándo llega en vez del enlace.
+	const panelUrl = storeDraft ? "" : resolveSalesPanelUrl(company.publicSlug, { tab: "products" });
 	const storeUrl = company.publicSlug ? getTenantMenuUrl(company.publicSlug, company.customDomain) : "";
 
 	async function deleteSamples() {
@@ -49,16 +52,20 @@ export function AccountMenuTab({ company, menuSetup, onStatusChange }: AccountMe
 		<div className="space-y-5 sm:space-y-6">
 			<PageHeader
 				title="Mi menú"
-				description="Carga tus productos de una vez. Después cambias fotos, precios y variantes cuando quieras en la Caja."
+				description={
+					storeDraft
+						? "Carga tus productos de una vez. Cuando publiques tu tienda, cambias fotos, precios y variantes en el panel CEO."
+						: "Carga tus productos de una vez. Después cambias fotos, precios y variantes cuando quieras en el panel CEO."
+				}
 				aside={
-					cajaUrl ? (
+					panelUrl ? (
 						<a
-							href={cajaUrl}
+							href={panelUrl}
 							target="_blank"
 							rel="noopener noreferrer"
 							className="inline-flex h-9 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700"
 						>
-							Abrir la Caja
+							Abrir el panel CEO
 							<ExternalLink className="h-4 w-4" aria-hidden />
 						</a>
 					) : null
@@ -80,7 +87,7 @@ export function AccountMenuTab({ company, menuSetup, onStatusChange }: AccountMe
 					)}
 					{storeUrl && status.productCount > 0 && (
 						<a href={storeUrl} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-1 font-medium text-indigo-600 hover:underline">
-							Ver mi tienda
+							{storeDraft ? "Ver la vista previa" : "Ver mi tienda"}
 							<ExternalLink className="h-3.5 w-3.5" aria-hidden />
 						</a>
 					)}
@@ -103,7 +110,9 @@ export function AccountMenuTab({ company, menuSetup, onStatusChange }: AccountMe
 						</Button>
 					}
 				>
-					Tus clientes los ven en la tienda. Cámbiales nombre, foto y precio en la Caja, o bórralos cuando cargues los tuyos.
+					{storeDraft
+						? "Salen en tu vista previa. Bórralos cuando cargues los tuyos."
+						: "Tus clientes los ven en tu tienda. Cámbiales nombre, foto y precio en el panel CEO, o bórralos cuando cargues los tuyos."}
 				</Alert>
 			)}
 
@@ -182,20 +191,25 @@ export function AccountMenuTab({ company, menuSetup, onStatusChange }: AccountMe
 						<div>
 							<p className="text-sm font-semibold text-[#1d1d1f]">Crea tus productos uno por uno</p>
 							<p className="mt-1 text-[13px] leading-relaxed text-[#6e6e73]">
-								En la Caja agregas fotos, descripciones, variantes y precios por sucursal.
+								En el panel CEO agregas fotos, descripciones, variantes y precios por sucursal.
 							</p>
 						</div>
-						{cajaUrl && (
+						{storeDraft ? (
+							<p className="mt-auto inline-flex items-center gap-1.5 self-start text-[13px] font-medium text-[#6e6e73]">
+								<Lock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+								Disponible cuando publiques tu tienda
+							</p>
+						) : panelUrl ? (
 							<a
-								href={cajaUrl}
+								href={panelUrl}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="mt-auto inline-flex h-9 items-center gap-2 self-start rounded-xl border border-[#d2d2d7] bg-white px-4 text-sm font-medium text-[#1d1d1f] transition hover:bg-[#f5f5f7]"
 							>
-								Abrir la Caja
+								Abrir el panel CEO
 								<ExternalLink className="h-4 w-4" aria-hidden />
 							</a>
-						)}
+						) : null}
 					</Card>
 				</div>
 			)}

@@ -41,7 +41,9 @@ export const MAX_INTERVALS_PER_DAY = 2;
 export const DEFAULT_BUSINESS_TIME_ZONE = "America/Santiago";
 
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
-const SHORT_DAY: Record<Weekday, string> = { 0: "Dom", 1: "Lun", 2: "Mar", 3: "Mié", 4: "Jue", 5: "Vie", 6: "Sáb" };
+/** Nombre de cada día; los editores de horario y los resúmenes salen de aquí. */
+export const WEEKDAY_NAME: Record<Weekday, string> = { 0: "Domingo", 1: "Lunes", 2: "Martes", 3: "Miércoles", 4: "Jueves", 5: "Viernes", 6: "Sábado" };
+export const WEEKDAY_SHORT: Record<Weekday, string> = { 0: "Dom", 1: "Lun", 2: "Mar", 3: "Mié", 4: "Jue", 5: "Vie", 6: "Sáb" };
 const WEEKDAY_BY_SHORT_EN: Record<string, Weekday> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
 export function emptyBusinessHoursWeek(): BusinessHoursWeek {
@@ -212,8 +214,8 @@ export function formatBusinessHoursSummary(week: BusinessHoursWeek): string {
 			end += 1;
 		}
 		if (label) {
-			const first = SHORT_DAY[day];
-			const last = SHORT_DAY[WEEKDAYS_FROM_MONDAY[end]];
+			const first = WEEKDAY_SHORT[day];
+			const last = WEEKDAY_SHORT[WEEKDAYS_FROM_MONDAY[end]];
 			const days = end === start ? first : end === start + 1 ? `${first} y ${last}` : `${first} a ${last}`;
 			lines.push(`${days}: ${label}`);
 		}

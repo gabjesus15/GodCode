@@ -164,7 +164,7 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 
 	const meta = OWNER_SETUP_STEP_META[step];
 	const header = published
-		? { title: "¡Tu tienda está en línea!", description: "Comparte el enlace o imprime el QR para las mesas y el mostrador." }
+		? { title: "Tu tienda está en línea", description: "Comparte el enlace o imprime el QR para las mesas y el mostrador." }
 		: step === "publicar" && draft
 			? draft.paymentInReview
 				? { title: OWNER_SETUP_DRAFT_PUBLISH_META.reviewTitle, description: OWNER_SETUP_DRAFT_PUBLISH_META.reviewDescription }
@@ -250,7 +250,14 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 			/>
 		);
 	} else if (step === "menu") {
-		content = <MenuStep company={initial.company} menuSetup={{ ...initial.menuSetup, ...menuStatus }} onStatusChange={setup.setMenuStatus} />;
+		content = (
+			<MenuStep
+				company={initial.company}
+				menuSetup={{ ...initial.menuSetup, ...menuStatus }}
+				storeDraft={Boolean(draft)}
+				onStatusChange={setup.setMenuStatus}
+			/>
+		);
 	} else if (step === "local") {
 		content = initial.branch ? (
 			<LocalStep form={setup.local} onChange={setup.updateLocal} whatsappError={setup.whatsappError} disabled={busy != null} country={initial.company.country} />

@@ -9,15 +9,27 @@ import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trackEvent } from "@/lib/analytics/track-event";
+import { LEGAL_DOCUMENTS_VERSION, LEGAL_PRIVACY_PATH, LEGAL_TERMS_PATH } from "@/lib/legal/legal-documents";
 import { fillCopy, getOnboardingUiCopy } from "@/lib/onboarding/onboarding-ui-copy";
 
 type SentState = { email: string; emailSent: boolean; resumed?: boolean };
 
 const fieldClass = "h-12 rounded-xl px-4 text-[15px]";
 
-/** `planId` y `country` vienen del landing (o del visitante) y se guardan en la solicitud. */
-export function OnboardingStep1Form({ planId = null, country = null }: { planId?: string | null; country?: string | null }) {
-	const t = getOnboardingUiCopy(useLocale()).form;
+/**
+ * `planId` y `country` vienen del landing (o del visitante) y se guardan en la solicitud.
+ * `panelOnly`: ese plan es «solo panel CEO», así que los textos no prometen armar una tienda.
+ */
+export function OnboardingStep1Form({
+	planId = null,
+	country = null,
+	panelOnly = false,
+}: {
+	planId?: string | null;
+	country?: string | null;
+	panelOnly?: boolean;
+}) {
+	const t = getOnboardingUiCopy(useLocale(), { panelOnly }).form;
 	const { executeRecaptcha } = useGoogleReCaptcha();
 	const ids = { business: useId(), name: useId(), email: useId(), consent: useId(), businessHint: useId(), emailHint: useId() };
 
@@ -48,9 +60,11 @@ export function OnboardingStep1Form({ planId = null, country = null }: { planId?
 					business_name: form.business_name,
 					responsible_name: form.responsible_name,
 					email: form.email,
-					// Una sola casilla cubre términos y privacidad.
+					// Una sola casilla cubre términos y privacidad. La versión que leyó queda como
+					// prueba de qué texto aceptó (Términos, sección 2).
 					terms_accepted: form.accepted,
 					privacy_accepted: form.accepted,
+					legal_version: LEGAL_DOCUMENTS_VERSION,
 					recaptcha_token: recaptchaToken,
 					plan_id: planId ?? undefined,
 					country: country ?? undefined,
@@ -64,7 +78,7 @@ export function OnboardingStep1Form({ planId = null, country = null }: { planId?
 				resumed?: boolean;
 			};
 			if (!res.ok) throw new Error(data.error ?? t.errorSubmit);
-			if (!data.resumed) trackEvent("sign_up", { method: "email", flow: "draft", plan: planId ?? "" });
+			if (!data.resumed) trackEvent("sign_up", { method: "email", flow: panelOnly ? "panel_only" : "draft", plan: planId ?? "" });
 			// El servicio dio el correo por verificado (ONBOARDING_SKIP_EMAIL_VERIFICATION):
 			// no hay enlace que esperar, se salta directo a «Crear mi tienda».
 			if (data.skippedVerification && data.token) {
@@ -230,11 +244,11 @@ export function OnboardingStep1Form({ planId = null, country = null }: { planId?
 					/>
 					<span>
 						{t.consentPrefix}{" "}
-						<Link href="/onboarding/terminos" target="_blank" className="onboarding-link-brand">
+						<Link href={LEGAL_TERMS_PATH} target="_blank" className="onboarding-link-brand">
 							{t.termsLink}
 						</Link>{" "}
 						{t.consentJoin}{" "}
-						<Link href="/onboarding/privacidad" target="_blank" className="onboarding-link-brand">
+						<Link href={LEGAL_PRIVACY_PATH} target="_blank" className="onboarding-link-brand">
 							{t.privacyLink}
 						</Link>
 						.

@@ -1,5 +1,7 @@
 import {
 	emptyBusinessHoursWeek,
+	WEEKDAY_NAME,
+	WEEKDAY_SHORT,
 	WEEKDAYS_FROM_MONDAY,
 	type BusinessHoursInterval,
 	type BusinessHoursWeek,
@@ -46,11 +48,10 @@ export function sameUniformHours(a: UniformHours | null, b: UniformHours): boole
 	return days(a.days) === days(b.days) && a.interval.open === b.interval.open && a.interval.close === b.interval.close;
 }
 
-const DAY_NAME: Record<Weekday, string> = { 1: "lunes", 2: "martes", 3: "miércoles", 4: "jueves", 5: "viernes", 6: "sábado", 0: "domingo" };
-const DAY_SHORT: Record<Weekday, string> = { 1: "lun", 2: "mar", 3: "mié", 4: "jue", 5: "vie", 6: "sáb", 0: "dom" };
 /** Letra de cada día para los botones redondos (X es miércoles, como en los calendarios). */
 export const DAY_LETTER: Record<Weekday, string> = { 1: "L", 2: "M", 3: "X", 4: "J", 5: "V", 6: "S", 0: "D" };
-export const DAY_LABEL: Record<Weekday, string> = { 1: "Lunes", 2: "Martes", 3: "Miércoles", 4: "Jueves", 5: "Viernes", 6: "Sábado", 0: "Domingo" };
+/** Los nombres de los días son los de `business-hours`: una sola tabla para toda la app. */
+export const DAY_LABEL = WEEKDAY_NAME;
 
 /** «Todos los días», «Lunes a viernes» o «Lun, mié y vie». */
 export function describeDays(days: readonly Weekday[]): string {
@@ -59,11 +60,12 @@ export function describeDays(days: readonly Weekday[]): string {
 	if (ordered.length === 7) return "Todos los días";
 	const first = WEEKDAYS_FROM_MONDAY.indexOf(ordered[0]);
 	const consecutive = ordered.every((day, index) => WEEKDAYS_FROM_MONDAY[first + index] === day);
-	const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
-	if (ordered.length === 1) return capital(DAY_NAME[ordered[0]]);
-	if (consecutive && ordered.length >= 3) return `${capital(DAY_NAME[ordered[0]])} a ${DAY_NAME[ordered[ordered.length - 1]]}`;
-	const names = ordered.map((day) => DAY_SHORT[day]);
-	return capital(`${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`);
+	const lower = (text: string) => text.toLowerCase();
+	if (ordered.length === 1) return WEEKDAY_NAME[ordered[0]];
+	if (consecutive && ordered.length >= 3) return `${WEEKDAY_NAME[ordered[0]]} a ${lower(WEEKDAY_NAME[ordered[ordered.length - 1]])}`;
+	const names = ordered.map((day) => lower(WEEKDAY_SHORT[day]));
+	const text = `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+	return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /** «Lunes a sábado, de 09:00 a 18:00», o `null` si el horario cambia según el día. */

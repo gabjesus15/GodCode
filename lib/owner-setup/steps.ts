@@ -41,7 +41,8 @@ export const OWNER_SETUP_STEP_META: Record<OwnerSetupStep, OwnerSetupStepMeta> =
 /** El paso «Publicar» de una tienda en vista previa («Arma y paga»): publicar es pagar. */
 export const OWNER_SETUP_DRAFT_PUBLISH_META = {
 	title: "Elige tu plan para abrir tu tienda",
-	description: "Tu tienda ya está armada y solo tú la ves. Al publicar eliges tu plan y pagas; se abre a tus clientes apenas se confirme el pago.",
+	description:
+		"Tu tienda ya está armada y solo tú la ves. Al publicar eliges tu plan y pagas, con 2 meses al precio de 1 en tu primer pago. Se abre a tus clientes apenas se confirme el pago.",
 	reviewTitle: "Validando tu pago",
 	reviewDescription: "Tu tienda se publica sola apenas confirmemos el pago. Mientras tanto puedes seguir ajustándola.",
 } as const;

@@ -20,8 +20,8 @@ import {
 	weekFromUniform,
 	type UniformHours,
 } from "@/lib/owner-setup/hours";
+import { whatsappExample } from "@/lib/owner-setup/local-form";
 import type { LocalForm } from "@/lib/owner-setup/types";
-import { isVenezuela } from "@/lib/owner-setup/use-owner-setup";
 import { WEEKDAYS_FROM_MONDAY, type BusinessHoursWeek, type Weekday } from "@/lib/tenant/business-hours";
 import { cn } from "@/utils/cn";
 
@@ -58,8 +58,10 @@ function SimpleHours({ hours, onChange, disabled }: { hours: UniformHours; onCha
 								<span className="sm:hidden">{preset.short}</span>
 								<span className="hidden sm:inline">{preset.label}</span>
 							</span>
-							<span className={cn("text-[12px] tabular-nums", selected ? "text-(--su-accent)/75" : "text-(--su-subtle)")}>
-								{preset.hours.interval.open}–{preset.hours.interval.close}
+							<span className={cn("text-[12px] leading-tight tabular-nums", selected ? "text-(--su-accent)/75" : "text-(--su-subtle)")}>
+								{/* En botones angostos corta en «de 12:00 / a 23:00», nunca dentro de una hora. */}
+								<span className="whitespace-nowrap">de {preset.hours.interval.open}</span>{" "}
+								<span className="whitespace-nowrap">a {preset.hours.interval.close}</span>
 							</span>
 						</button>
 					);
@@ -140,7 +142,7 @@ export function LocalStep({
 	disabled: boolean;
 	country: string | null;
 }) {
-	const phonePlaceholder = isVenezuela(country) ? "+58 412 123 4567" : "+56 9 1234 5678";
+	const phonePlaceholder = whatsappExample(country);
 	const uniform = uniformHours(form.hoursWeek);
 	const [advanced, setAdvanced] = useState(() => uniform === null);
 	const summary = describeUniformHours(uniform);

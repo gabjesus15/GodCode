@@ -14,7 +14,7 @@ export type OwnerSetupBranch = {
 
 /** Lo que la página del servidor le pasa al asistente. */
 export type OwnerSetupInitial = {
-	company: Pick<CompanySnapshot, "id" | "name" | "publicSlug" | "customDomain" | "country" | "tenantAdminUrl">;
+	company: Pick<CompanySnapshot, "id" | "name" | "publicSlug" | "customDomain" | "country">;
 	sector: BusinessSector;
 	/** Borrador del tema (o lo publicado si no hay borrador). */
 	theme: StoreThemeConfig;

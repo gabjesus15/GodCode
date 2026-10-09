@@ -17,7 +17,8 @@ export type EmailBlock =
 	| { type: "callout"; tone: EmailTone; title?: string; text: string }
 	| { type: "steps"; title?: string; items: Array<{ title: string; text?: string }> }
 	| { type: "code"; label: string; value: string }
-	| { type: "note"; text: string };
+	/** Con `link`, `{link}` en el texto marca dónde va el enlace (si falta, va al final). */
+	| { type: "note"; text: string; link?: { label: string; url: string } };
 
 /** Quién lo lee: cambia el pie (un aviso interno no lleva «responde a este correo»). */
 export type EmailAudience = "customer" | "prospect" | "team";
@@ -101,12 +102,33 @@ function paragraph(html: string, style = ""): string {
 	return `<p class="body" style="margin:0 0 16px;font-family:${FONT};font-size:15px;line-height:24px;color:${BODY};${style}">${html}</p>`;
 }
 
+const LINK_SLOT = "{link}";
+
+/** Las dos mitades del texto alrededor del enlace (sin `{link}`, el enlace va al final). */
+function splitAtLink(text: string): [string, string] {
+	const at = text.indexOf(LINK_SLOT);
+	return at === -1 ? [text.endsWith(" ") ? text : `${text} `, ""] : [text.slice(0, at), text.slice(at + LINK_SLOT.length)];
+}
+
+function noteHtml(block: Extract<EmailBlock, { type: "note" }>): string {
+	if (!block.link) return rich(block.text);
+	const [before, after] = splitAtLink(block.text);
+	const anchor = `<a href="${escapeHtml(safeUrl(block.link.url))}" target="_blank" style="color:${TONES.brand.accent};text-decoration:underline;">${escapeHtml(block.link.label)}</a>`;
+	return `${rich(before)}${anchor}${rich(after)}`;
+}
+
+function noteText(block: Extract<EmailBlock, { type: "note" }>): string {
+	if (!block.link) return plain(block.text);
+	const [before, after] = splitAtLink(block.text);
+	return `${plain(before)}${block.link.label} (${safeUrl(block.link.url)})${plain(after)}`;
+}
+
 function renderBlock(block: EmailBlock): string {
 	switch (block.type) {
 		case "text":
 			return paragraph(rich(block.text));
 		case "note":
-			return `<p class="muted" style="margin:0 0 16px;font-family:${FONT};font-size:13px;line-height:20px;color:${MUTED};">${rich(block.text)}</p>`;
+			return `<p class="muted" style="margin:0 0 16px;font-family:${FONT};font-size:13px;line-height:20px;color:${MUTED};">${noteHtml(block)}</p>`;
 		case "summary": {
 			const rows = block.rows
 				.filter((row) => row.value.trim())
@@ -254,8 +276,10 @@ function renderText(content: EmailContent, brand: EmailBrand): string {
 	for (const block of content.blocks ?? []) {
 		switch (block.type) {
 			case "text":
-			case "note":
 				out.push(plain(block.text), "");
+				break;
+			case "note":
+				out.push(noteText(block), "");
 				break;
 			case "summary":
 				if (block.title) out.push(block.title.toUpperCase());

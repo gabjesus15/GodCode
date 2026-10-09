@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, FileText, Home, LifeBuoy, Store, CalendarClock, ArrowRight, ExternalLink, UtensilsCrossed } from "lucide-react";
+import { CreditCard, FileText, Home, LifeBuoy, Lock, Store, CalendarClock, ArrowRight, ExternalLink, UtensilsCrossed } from "lucide-react";
 import type {
   AccountActivityItem,
   BranchSummary,
@@ -21,8 +21,8 @@ import { EmptyState } from "../../ui/EmptyState";
 
 import { getTenantMenuUrl } from "@/utils/tenant-url";
 import type { FirstStep } from "@/lib/tenant/account-first-steps";
+import { resolveSalesPanelUrl } from "@/lib/tenant/panel-url";
 import { AccountFirstSteps } from "../account-first-steps";
-import { resolveCajaUrl } from "../../shared/caja-url";
 
 export type AccountAlert = {
   id: string;
@@ -52,6 +52,8 @@ export type AccountResumenTabProps = {
   setActivityFilter: (v: "all" | "pago" | "ticket" | "extra") => void;
   onNavigate: (tab: PortalTab) => void;
   firstSteps?: FirstStep[];
+  /** «Arma y paga»: la tienda sigue en vista previa y el panel CEO se habilita al publicarla. */
+  storeDraft?: boolean;
 };
 
 const toneToVariant = (tone: AccountAlert["tone"]) =>
@@ -98,13 +100,15 @@ export function AccountResumenTab({
   setActivityFilter,
   onNavigate,
   firstSteps = [],
+  storeDraft = false,
 }: AccountResumenTabProps) {
   // «Solo panel CEO»: sin menú público, ni su enlace ni sus secciones.
   const hasPublicMenu = company.hasPublicMenu !== false;
   const menuUrl = hasPublicMenu && company.publicSlug ? getTenantMenuUrl(company.publicSlug, company.customDomain) : "";
   const shortcuts = hasPublicMenu ? quickActions : quickActions.filter((action) => !PUBLIC_MENU_TABS.includes(action.tab));
-  // Panel de ventas (caja): el mismo destino que el botón de la página de inicio del negocio.
-  const salesPanelUrl = resolveCajaUrl(company);
+  // Panel CEO: el mismo destino que el botón de la página de inicio del negocio. En vista
+  // previa todavía no hay acceso, así que se dice cuándo llega en vez de dar un enlace.
+  const salesPanelUrl = storeDraft ? "" : resolveSalesPanelUrl(company.publicSlug);
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -175,7 +179,8 @@ export function AccountResumenTab({
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#a1a1a6]">Suscripción</p>
                 <Badge variant={subscriptionStatusVariant(subscriptionStatus)} dot className="mt-2">
-                  {displayStatus(subscriptionStatus, SUBSCRIPTION_STATUS_LABELS)}
+                  {/* Igual que la cabecera de la cuenta: en vista previa no es una prueba gratis. */}
+                  {storeDraft ? "Vista previa" : displayStatus(subscriptionStatus, SUBSCRIPTION_STATUS_LABELS)}
                 </Badge>
               </div>
               <div className="text-right">
@@ -237,13 +242,23 @@ export function AccountResumenTab({
                       <Store className="h-4 w-4 text-emerald-600" aria-hidden />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[#1d1d1f]">Ir a menú</p>
-                      <p className="text-xs text-[#a1a1a6]">Ver tu carta digital en vivo</p>
+                      <p className="text-sm font-medium text-[#1d1d1f]">{storeDraft ? "Ver la vista previa" : "Ver mi tienda"}</p>
+                      <p className="text-xs text-[#a1a1a6]">{storeDraft ? "Solo tú la ves hasta que la publiques" : "Tu menú, como lo ven tus clientes"}</p>
                     </div>
                     <ExternalLink className="h-4 w-4 shrink-0 text-[#d2d2d7]" aria-hidden />
                   </button>
                 )}
-                {salesPanelUrl && (
+                {storeDraft ? (
+                  <div className="flex w-full items-center gap-3 px-4 py-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#f5f5f7]">
+                      <Lock className="h-4 w-4 text-[#a1a1a6]" aria-hidden />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-[#6e6e73]">Panel CEO</p>
+                      <p className="text-xs text-[#a1a1a6]">Disponible cuando publiques tu tienda</p>
+                    </div>
+                  </div>
+                ) : salesPanelUrl ? (
                   <button
                     type="button"
                     onClick={() => window.open(salesPanelUrl, "_blank", "noopener,noreferrer")}
@@ -253,12 +268,12 @@ export function AccountResumenTab({
                       <CreditCard className="h-4 w-4 text-sky-600" aria-hidden />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[#1d1d1f]">Ir a caja</p>
-                      <p className="text-xs text-[#a1a1a6]">Pedidos, ventas y menú de tu negocio</p>
+                      <p className="text-sm font-medium text-[#1d1d1f]">Ir al panel CEO</p>
+                      <p className="text-xs text-[#a1a1a6]">La caja, los pedidos y los productos de tu negocio</p>
                     </div>
                     <ExternalLink className="h-4 w-4 shrink-0 text-[#d2d2d7]" aria-hidden />
                   </button>
-                )}
+                ) : null}
               </nav>
             </div>
           </Card>

@@ -286,6 +286,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             setActivityFilter={setActivityFilter}
             onNavigate={handleTabChange}
             firstSteps={firstSteps}
+            storeDraft={Boolean(storeDraft)}
           />
         )}
 
@@ -293,6 +294,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
           <AccountMenuTab
             company={company}
             menuSetup={menuSetup ?? { productCount: 0, sampleCount: 0, categoryCount: 0, importEnabled: false, sector: null }}
+            storeDraft={Boolean(storeDraft)}
           />
         )}
 
@@ -393,6 +395,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             activeBranchesCount={activeBranchesCount}
             branchEntitlements={snapshot.branchEntitlements}
             branchFlow={branchFlow}
+            storeDraft={Boolean(storeDraft)}
           />
         )}
 

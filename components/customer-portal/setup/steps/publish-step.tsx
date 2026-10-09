@@ -10,6 +10,7 @@ import { ConfettiBurst } from "../ui/confetti-burst";
 import { SetupButton } from "../ui/setup-button";
 
 import type { OwnerSetupStep } from "@/lib/owner-setup/steps";
+import { brandInitials } from "@/lib/tenant/brand-initials";
 import { cn } from "@/utils/cn";
 
 export type SetupChecklistItem = { step: OwnerSetupStep; label: string; done: boolean };
@@ -30,7 +31,8 @@ function LogoBadge({ logoUrl, name, size }: { logoUrl: string | null; name: stri
 				// eslint-disable-next-line @next/next/no-img-element
 				<img src={logoUrl} alt="" className="h-full w-full object-contain p-1" />
 			) : (
-				name.trim().charAt(0).toUpperCase() || "G"
+				// El mismo monograma que muestra la tienda sin logo («Rica Pizza» → «RP»).
+				brandInitials(name, { fallback: "G" })
 			)}
 		</span>
 	);
@@ -38,7 +40,7 @@ function LogoBadge({ logoUrl, name, size }: { logoUrl: string | null; name: stri
 
 function ActionTile({ icon, label, onClick, href }: { icon: ReactNode; label: string; onClick?: () => void; href?: string }) {
 	const className = cn(
-		"flex h-[76px] flex-col items-center justify-center gap-1.5 rounded-2xl bg-(--su-surface) text-[12.5px] font-medium text-(--su-ink) ring-1 ring-inset ring-(--su-line)",
+		"flex h-[76px] flex-col items-center justify-center gap-1.5 rounded-2xl bg-(--su-surface) px-1.5 text-center text-[12.5px] font-medium leading-tight text-(--su-ink) ring-1 ring-inset ring-(--su-line)",
 		"transition-[background-color,transform] duration-150 hover:bg-(--su-surface-sunken) active:scale-[0.97]",
 		"focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-(--su-accent)/25 [&_svg]:h-5 [&_svg]:w-5",
 	);
@@ -134,7 +136,7 @@ export function PublishStep({
 			setCopied(false);
 		}
 	};
-	const shareText = `¡Ya puedes ver nuestro menú y pedir online! ${storeUrl}`;
+	const shareText = `Ya puedes ver nuestro menú y hacer tu pedido aquí: ${storeUrl}`;
 	const pending = checklist.filter((item) => !item.done);
 
 	if (!published) {
@@ -175,12 +177,14 @@ export function PublishStep({
 				</ul>
 
 				{draft ? (
+					// El link no queda reservado para siempre: como dicen los Términos, una tienda sin
+					// publicar se puede borrar a los 30 días.
 					<p className="text-[13px] leading-relaxed text-(--su-muted)">
 						{draft.paymentInReview
 							? "Recibimos tu comprobante. Te avisamos por correo apenas tu tienda quede abierta."
 							: pending.length > 0
-								? "Puedes publicar igual y completar lo que falta después. Tu link queda reservado hasta que la publiques."
-								: "Tu link queda reservado hasta que la publiques. Puedes cambiar de plan cuando quieras."}
+								? "Puedes publicar igual y completar lo que falta después. Tu link queda reservado 30 días desde que creaste tu tienda."
+								: "Tu link queda reservado 30 días desde que creaste tu tienda. Puedes cambiar de plan cuando quieras."}
 					</p>
 				) : pending.length > 0 ? (
 					<p className="text-[13px] leading-relaxed text-(--su-muted)">Puedes publicar igual y completar lo que falta después desde tu cuenta.</p>
@@ -227,7 +231,7 @@ export function PublishStep({
 			<div className={cn("grid gap-2.5 max-sm:order-first", canShare ? "grid-cols-4" : "grid-cols-3")}>
 				<ActionTile
 					onClick={() => void copy()}
-					label={copied ? "¡Copiado!" : "Copiar enlace"}
+					label={copied ? "Enlace copiado" : "Copiar enlace"}
 					icon={
 						<AnimatePresence mode="wait" initial={false}>
 							<motion.span key={copied ? "ok" : "copy"} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}>

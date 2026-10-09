@@ -4,12 +4,8 @@ import { revalidateTag } from "next/cache";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import {
-	formatBusinessHoursSummary,
-	hasAnyBusinessHours,
-	normalizeBusinessHours,
-	resolveBusinessTimeZone,
-} from "@/lib/tenant/business-hours";
+import { branchBusinessHoursUpdate, branchCountryResolver } from "@/lib/tenant/branch-country";
+import { hasAnyBusinessHours, normalizeBusinessHours } from "@/lib/tenant/business-hours";
 import { parseBranchContactUrlInput } from "@/lib/tenant/home-page/home-page-config";
 
 const CONTACT_URL_FIELDS = [
@@ -87,6 +83,7 @@ export async function PATCH(req: NextRequest) {
 	}
 
 	// Horario por días (lo usa «Configura tu tienda»): mismas reglas que el editor de sucursales.
+	// `null` (o sin días) lo borra; el asistente lo manda así cuando el dueño quita todos los días.
 	if (Object.prototype.hasOwnProperty.call(payload, "business_hours")) {
 		const businessHours = normalizeBusinessHours(payload.business_hours);
 		if (businessHours?.enabled && !hasAnyBusinessHours(businessHours)) {
@@ -95,15 +92,11 @@ export async function PATCH(req: NextRequest) {
 				{ status: 400 },
 			);
 		}
-		let country = (branch as { country?: string | null }).country ?? null;
-		if (!country) {
-			const { data: company } = await supabaseAdmin.from("companies").select("country").eq("id", ctx.companyId).maybeSingle();
-			country = company?.country ?? null;
-		}
-		const withZone =
-			businessHours && hasAnyBusinessHours(businessHours) ? { ...businessHours, timezone: resolveBusinessTimeZone(country) } : null;
-		updates.business_hours = withZone;
-		if (withZone) updates.schedule = formatBusinessHoursSummary(withZone.week);
+		const resolveCountry = branchCountryResolver(supabaseAdmin, {
+			branchCountry: (branch as { country?: string | null }).country,
+			companyId: ctx.companyId,
+		});
+		Object.assign(updates, await branchBusinessHoursUpdate(businessHours, resolveCountry));
 	}
 
 	if (Object.keys(updates).length === 0) {

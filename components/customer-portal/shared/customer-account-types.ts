@@ -60,6 +60,10 @@ export type BranchSummary = {
   order_intake_pause_message?: string | null;
   order_intake_paused_at?: string | null;
   order_intake_paused_by?: string | null;
+  /** País de la sucursal; sin él vale el del negocio (la tasa de cambio solo existe en Venezuela). */
+  country?: string | null;
+  /** Fuente de la tasa de cambio de la sucursal (solo Venezuela). */
+  exchange_rate_source?: string | null;
 };
 
 /** Fila de `payments_history`: un pago hecho o un pedido del portal por pagar. */
@@ -145,7 +149,6 @@ export type CompanySnapshot = {
   planMaxBranches: number | null;
   planMaxUsers: number | null;
   supportEmail: string;
-  tenantAdminUrl: string | null;
   country: string | null;
   currency: string;
   locale: string;

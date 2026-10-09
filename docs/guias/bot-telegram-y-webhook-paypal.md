@@ -149,3 +149,39 @@ Authorization: Bearer <CRON_SECRET>
 - En Vercel Pro basta con añadirla a `vercel.json` con `"schedule": "0 * * * *"`.
 - En el plan Hobby, Vercel solo permite crons diarios. Usa un cron externo gratuito (por ejemplo cron-job.org) con esa URL y la cabecera.
 
+---
+
+## Parte 4 · Variables del alta
+
+Lo que necesita el alta para funcionar entera en producción. «App» es la web (`www.godcode.me`) y «servicio» es `onboarding-billing`. Con `FF_ONBOARDING_BILLING_EXTERNAL` encendido, la app le pasa al servicio el alta y los crons, así que todo lo que usan los crons tiene que estar **también en el servicio**.
+
+| Variable | Dónde | Para qué | Si falta |
+|---|---|---|---|
+| `CRON_SECRET` | App y servicio | La clave de los crons (`Authorization: Bearer …`) | Los crons responden 503 y no corre nada |
+| `STORE_DRAFT_PURGE` | App y servicio | `on` borra las tiendas sin publicar a los 30 días y avisa por correo a los 23; `dry-run` solo cuenta lo que borraría; `off` no hace nada | Queda en `dry-run`: no se borra ninguna tienda ni sale el aviso de los 23 días |
+| `REVALIDATION_SECRET` | App y servicio, mismo valor | El servicio le pide a la app que refresque la tienda recién pagada | La tienda pagada sigue mostrando «abre pronto» hasta 5 minutos |
+| `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID` | App y servicio | Los avisos al equipo (Parte 1) | No llega ningún aviso |
+| `RESEND_API_KEY` y `RESEND_FROM` | App y servicio | Todos los correos (confirmar correo, bienvenida, recordatorios) | No sale ningún correo |
+| `MERCADOPAGO_ACCESS_TOKEN` | App y servicio | El cobro del alta en Chile (ver `mercado-pago-checkout-pro.md`) | Mercado Pago no se ofrece |
+| `NEXT_PUBLIC_LEGAL_PROVIDER_RUT` y `NEXT_PUBLIC_LEGAL_PROVIDER_ADDRESS` | App | El RUT y el domicilio del titular en Términos y Privacidad (DS 6/2021) | Las páginas legales no los muestran |
+| `ANTHROPIC_API_KEY` (y `MENU_IMPORT_MODEL`, opcional) | App | Leer la carta del dueño (foto, PDF o Excel) en «Mi menú» y en «Configura tu tienda» | La opción de subir la carta no aparece |
+
+Las variables `NEXT_PUBLIC_…` se escriben en el código al compilar: en Coolify, márcalas como disponibles en el build y vuelve a desplegar. Para las demás basta con reiniciar.
+
+### Crons que hay que programar
+
+Coolify no lee `vercel.json`: los crons se programan en **Scheduled Tasks** del recurso de la app (o en un cron externo como cron-job.org), siempre con la cabecera `Authorization: Bearer <CRON_SECRET>`.
+
+| Ruta | Frecuencia | Qué hace |
+|---|---|---|
+| `GET https://www.godcode.me/api/system/cron/subscription-status` | Una vez al día (por ejemplo `0 9 * * *`) | Vencimientos, recordatorios por correo, tiendas sin publicar y el barrido de altas a medias |
+| `GET https://www.godcode.me/api/system/cron/onboarding-reconcile` | Opcional, cada hora (`0 * * * *`) | Solo el barrido de altas a medias (Parte 3), más seguido |
+
+Como tarea de Coolify, dentro del contenedor de la app sirve este comando (cambia la ruta para el segundo). Va a la dirección pública, igual que un cron externo, para pasar por el mismo camino que en producción:
+
+```
+wget -qO- --header="Authorization: Bearer $CRON_SECRET" https://www.godcode.me/api/system/cron/subscription-status
+```
+
+Para comprobarlo, en el super admin, **Correos** muestra lo que el cron mandaría hoy, y el historial de envíos dice si ya corrió.
+

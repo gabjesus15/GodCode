@@ -38,12 +38,29 @@ describe("pickBrandColors", () => {
 describe("ownerSetup", () => {
 	const now = new Date("2026-10-10T12:00:00Z");
 
+	const recent = "2026-10-06T12:00:00Z";
+	const draft = { storeDraft: { since: recent } };
+
 	it("abre el asistente solo a negocios nuevos que no lo cerraron", () => {
-		expect(shouldAutoOpenOwnerSetup({ themeConfig: {}, companyCreatedAt: "2026-10-06T12:00:00Z", now })).toBe(true);
-		expect(shouldAutoOpenOwnerSetup({ themeConfig: {}, companyCreatedAt: "2026-08-01T12:00:00Z", now })).toBe(false);
+		expect(shouldAutoOpenOwnerSetup({ themeConfig: draft, companyCreatedAt: recent, now })).toBe(true);
+		expect(shouldAutoOpenOwnerSetup({ themeConfig: draft, companyCreatedAt: "2026-08-01T12:00:00Z", now })).toBe(false);
 		expect(shouldAutoOpenOwnerSetup({ themeConfig: null, companyCreatedAt: null, now })).toBe(false);
-		const skipped = withOwnerSetupMark({ logoUrl: "x" }, "skip", now);
-		expect(shouldAutoOpenOwnerSetup({ themeConfig: skipped, companyCreatedAt: "2026-10-06T12:00:00Z", now })).toBe(false);
+		const skipped = withOwnerSetupMark({ ...draft, logoUrl: "x" }, "skip", now);
+		expect(shouldAutoOpenOwnerSetup({ themeConfig: skipped, companyCreatedAt: recent, now })).toBe(false);
+		const finished = withOwnerSetupMark(draft, "finish", now);
+		expect(shouldAutoOpenOwnerSetup({ themeConfig: finished, companyCreatedAt: recent, now })).toBe(false);
+	});
+
+	it("solo a tiendas que armó el dueño: en vista previa o con el asistente empezado", () => {
+		// Ya publicada: la marca queda con `openedAt` y sigue contando como tienda del dueño.
+		const opened = { storeDraft: { since: recent, openedAt: "2026-10-08T12:00:00Z" } };
+		expect(shouldAutoOpenOwnerSetup({ themeConfig: opened, companyCreatedAt: recent, now })).toBe(true);
+		expect(shouldAutoOpenOwnerSetup({ themeConfig: { ownerSetup: {} }, companyCreatedAt: recent, now })).toBe(true);
+		// Creada por el equipo: sin ninguna marca, entra directo a su cuenta.
+		expect(shouldAutoOpenOwnerSetup({ themeConfig: {}, companyCreatedAt: recent, now })).toBe(false);
+		expect(shouldAutoOpenOwnerSetup({ themeConfig: { logoUrl: "logos/a.png", panelAccess: { a: 1 } }, companyCreatedAt: recent, now })).toBe(false);
+		// Una marca de vista previa rota no cuenta.
+		expect(shouldAutoOpenOwnerSetup({ themeConfig: { storeDraft: { since: "ayer" } }, companyCreatedAt: recent, now })).toBe(false);
 	});
 
 	it("marca terminado o saltado sin tocar el resto del tema", () => {

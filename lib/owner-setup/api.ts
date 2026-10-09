@@ -13,7 +13,10 @@ export type OwnerSetupLocalPatch = {
 	whatsapp_url: string;
 	instagram_url: string;
 	address: string;
-	business_hours?: { enabled: boolean; timezone: string | null; week: BusinessHoursWeek };
+	/** `null` borra el horario; sin la clave, no se toca. */
+	business_hours?: { enabled: boolean; timezone: string | null; week: BusinessHoursWeek } | null;
+	/** `""` borra el texto del horario que muestra la tienda (va junto con `business_hours: null`). */
+	schedule?: string;
 };
 
 export type OwnerSetupApi = {

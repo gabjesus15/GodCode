@@ -16,6 +16,8 @@ import { PageHeader } from "../../ui/PageHeader";
 import { StatCard } from "../../ui/StatCard";
 import { BranchEditModal } from "./branch-edit-modal";
 
+import { resolveSalesPanelUrl } from "@/lib/tenant/panel-url";
+
 export type AccountSucursalesTabProps = {
   company: CompanySnapshot;
   branches: BranchSummary[];
@@ -24,6 +26,8 @@ export type AccountSucursalesTabProps = {
   activeBranchesCount: number;
   branchEntitlements: BranchEntitlementSummary[];
   branchFlow: BranchFlow;
+  /** «Arma y paga»: en vista previa todavía no hay panel CEO al que llevar. */
+  storeDraft?: boolean;
 };
 
 const inputClass =
@@ -162,9 +166,11 @@ export function AccountSucursalesTab({
   activeBranchesCount,
   branchEntitlements,
   branchFlow,
+  storeDraft = false,
 }: AccountSucursalesTabProps) {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedBranchForEdit, setSelectedBranchForEdit] = useState<BranchSummary | null>(null);
+  const panelUrl = storeDraft ? "" : resolveSalesPanelUrl(company.publicSlug);
 
   // Con cada refresco del servidor la sucursal abierta se actualiza sola.
   const branchToEdit = selectedBranchForEdit
@@ -263,9 +269,9 @@ export function AccountSucursalesTab({
                   >
                     <Edit className="h-3 w-3" aria-hidden /> Editar
                   </button>
-                  {company.tenantAdminUrl ? (
-                    <a href={company.tenantAdminUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-indigo-600 hover:underline">
-                      Abrir panel
+                  {panelUrl ? (
+                    <a href={panelUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-indigo-600 hover:underline">
+                      Abrir el panel CEO
                     </a>
                   ) : null}
                 </div>
@@ -316,6 +322,8 @@ export function AccountSucursalesTab({
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
         branch={branchToEdit}
+        // Respaldo para la tasa de cambio cuando la sucursal no tiene su país guardado.
+        companyCountry={company.country}
         onSaveSuccess={() => {
           // router.refresh() dentro del modal actualiza `branches` desde el servidor.
         }}

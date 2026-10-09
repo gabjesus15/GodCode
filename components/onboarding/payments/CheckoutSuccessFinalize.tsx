@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics/track-event";
 import { forgetOnboardingToken, readOnboardingToken } from "@/lib/onboarding/onboarding-token-storage";
 import { MIN_OWNER_PASSWORD_LENGTH } from "@/lib/onboarding/owner-password-rules";
+import type { CheckoutFinalizeCopy } from "@/lib/plans/checkout-copy";
 import { createSupabaseBrowserClient } from "@/utils/supabase/client";
 
 type FinalizeState = "loading" | "paid" | "pending" | "error";
@@ -42,13 +43,16 @@ const RETRY_DELAY_MS = 4000;
  * Confirma el estado del pago al volver del checkout. Solo consulta: el cobro y el alta
  * ya los hizo la captura de PayPal (o los hará el equipo al validar una transferencia).
  * Si PayPal aún no confirma, reintenta unas pocas veces antes de pedir que recargue.
+ * Los textos llegan de la página (`getCheckoutCopy`), en el idioma del visitante.
  */
 export function CheckoutSuccessFinalize({
   refParam,
   captureError,
+  copy,
 }: {
   refParam: string | undefined;
   captureError?: string;
+  copy: CheckoutFinalizeCopy;
 }) {
   const [state, setState] = useState<FinalizeState>(captureError ? "error" : "loading");
   const [result, setResult] = useState<FinalizeResponse>({});
@@ -73,7 +77,9 @@ export function CheckoutSuccessFinalize({
         const response = await fetch(`/api/onboarding/finalize?ref=${encodeURIComponent(refParam)}`, { method: "POST" });
         const payload = (await response.json().catch(() => ({}))) as FinalizeResponse;
         if (cancelled) return;
-        if (!response.ok) throw new Error(payload.error || "No pudimos confirmar el pago.");
+        // Los errores del servicio son genéricos y en español («Error interno»): al visitante se
+        // le dice qué hacer, en su idioma. El de la captura (que llega en la URL) sí se muestra.
+        if (!response.ok) throw new Error(copy.errorText);
         setResult(payload);
         if (payload.status === "paid") {
           setState("paid");
@@ -88,7 +94,7 @@ export function CheckoutSuccessFinalize({
       } catch (error) {
         if (cancelled) return;
         setState("error");
-        setMessage(error instanceof Error ? error.message : "No pudimos confirmar el pago.");
+        setMessage(error instanceof Error && error.message ? error.message : copy.errorText);
       }
     };
 
@@ -97,7 +103,7 @@ export function CheckoutSuccessFinalize({
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [refParam, captureError]);
+  }, [refParam, captureError, copy.errorText]);
 
   // La tienda armada en vista previa ya está abierta: se va directo a compartirla.
   const draftOpened = state === "paid" && Boolean(result.fromDraft);
@@ -116,15 +122,15 @@ export function CheckoutSuccessFinalize({
         <div className="flex items-start gap-3">
           <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden />
           <div className="min-w-0">
-            <p className="text-sm font-semibold">¡Tu tienda ya está abierta!</p>
-            <p className="mt-0.5 text-sm opacity-90">Tus clientes ya pueden entrar con tu link y hacerte pedidos. Te llevamos a compartirla.</p>
+            <p className="text-sm font-semibold">{copy.draftTitle}</p>
+            <p className="mt-0.5 text-sm opacity-90">{copy.draftText}</p>
           </div>
         </div>
         <a
           href={DRAFT_OPENED_PATH}
           className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
-          Ver mi tienda abierta
+          {copy.draftButton}
           <ArrowRight className="h-4 w-4" aria-hidden />
         </a>
       </div>
@@ -140,26 +146,26 @@ export function CheckoutSuccessFinalize({
 
   const title =
     state === "loading"
-      ? "Confirmando tu pago…"
+      ? copy.loadingTitle
       : state === "paid"
-        ? "Pago confirmado"
+        ? copy.paidTitle
         : state === "pending"
-          ? "Tu pago aún no se confirma"
-          : "No pudimos confirmar el pago";
+          ? copy.pendingTitle
+          : copy.errorTitle;
 
   const canSetPasswordHere = state === "paid" && result.ownerReady !== false && Boolean(token);
 
   const detail =
     state === "loading"
-      ? "Esto toma unos segundos."
+      ? copy.loadingText
       : state === "paid"
         ? result.ownerReady === false
-          ? "Estamos preparando tu acceso. Te escribiremos por correo en cuanto esté listo."
+          ? copy.ownerPendingText
           : canSetPasswordHere
-            ? "Crea tu contraseña aquí y entra a tu cuenta ahora mismo. También te enviamos el enlace por correo."
-            : "Te enviamos un correo para crear tu contraseña y entrar a tu cuenta. Revisa también spam."
+            ? copy.setPasswordHereText
+            : copy.checkEmailText
         : state === "pending"
-          ? "Si ya pagaste, espera un minuto y recarga esta página. Si el problema sigue, escríbenos."
+          ? copy.pendingText
           : message;
 
   const Icon = state === "loading" ? Loader2 : state === "paid" ? (result.ownerReady === false ? CheckCircle2 : MailCheck) : AlertCircle;
@@ -173,13 +179,13 @@ export function CheckoutSuccessFinalize({
           {detail ? <p className="mt-0.5 text-sm opacity-90">{detail}</p> : null}
         </div>
       </div>
-      {canSetPasswordHere && token ? <FirstPasswordForm refParam={refParam} token={token} /> : null}
+      {canSetPasswordHere && token ? <FirstPasswordForm refParam={refParam} token={token} copy={copy} /> : null}
     </div>
   );
 }
 
 /** Crear la contraseña sin salir de la página de éxito y entrar directo a /cuenta. */
-function FirstPasswordForm({ refParam, token }: { refParam: string; token: string }) {
+function FirstPasswordForm({ refParam, token, copy }: { refParam: string; token: string; copy: CheckoutFinalizeCopy }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -189,11 +195,11 @@ function FirstPasswordForm({ refParam, token }: { refParam: string; token: strin
     event.preventDefault();
     setError(null);
     if (password.length < MIN_OWNER_PASSWORD_LENGTH) {
-      setError(`Usa al menos ${MIN_OWNER_PASSWORD_LENGTH} caracteres.`);
+      setError(copy.passwordTooShort.replace("{n}", String(MIN_OWNER_PASSWORD_LENGTH)));
       return;
     }
     if (password !== confirm) {
-      setError("Las contraseñas no coinciden.");
+      setError(copy.passwordMismatch);
       return;
     }
     setLoading(true);
@@ -204,18 +210,18 @@ function FirstPasswordForm({ refParam, token }: { refParam: string; token: strin
         body: JSON.stringify({ ref: refParam, token, password }),
       });
       const data = (await res.json().catch(() => ({}))) as { email?: string; error?: string };
-      if (!res.ok || !data.email) throw new Error(data.error || "No pudimos guardar la contraseña.");
+      if (!res.ok || !data.email) throw new Error(data.error || copy.passwordSaveError);
 
       const supabase = createSupabaseBrowserClient("super-admin");
       await supabase.auth.signOut({ scope: "local" });
       const { error: signInError } = await supabase.auth.signInWithPassword({ email: data.email, password });
-      if (signInError) throw new Error("Tu contraseña quedó guardada. Entra desde el login con tu correo.");
+      if (signInError) throw new Error(copy.passwordSavedSignIn);
 
       forgetOnboardingToken();
       trackEvent("first_login", { method: "checkout_success" });
       window.location.assign("/post-login");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No pudimos guardar la contraseña.");
+      setError(err instanceof Error && err.message ? err.message : copy.passwordSaveError);
       setLoading(false);
     }
   };
@@ -227,11 +233,11 @@ function FirstPasswordForm({ refParam, token }: { refParam: string; token: strin
     <form onSubmit={handleSubmit} className="mt-4 rounded-2xl border border-slate-200 p-5">
       <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
         <Lock className="h-4 w-4 text-[#4F5BFF]" aria-hidden />
-        Crea tu contraseña
+        {copy.passwordTitle}
       </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
-          Contraseña
+          {copy.passwordLabel}
           <input
             type="password"
             autoComplete="new-password"
@@ -243,7 +249,7 @@ function FirstPasswordForm({ refParam, token }: { refParam: string; token: strin
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
-          Repítela
+          {copy.passwordRepeatLabel}
           <input
             type="password"
             autoComplete="new-password"
@@ -261,7 +267,7 @@ function FirstPasswordForm({ refParam, token }: { refParam: string; token: strin
         </p>
       ) : null}
       <Button type="submit" loading={loading} className="mt-4 h-11 rounded-xl bg-slate-900 px-5 text-white hover:bg-slate-800">
-        Entrar a mi cuenta
+        {copy.passwordSubmit}
       </Button>
     </form>
   );

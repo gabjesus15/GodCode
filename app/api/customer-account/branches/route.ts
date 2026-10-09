@@ -11,12 +11,8 @@ import {
   sanitizeBranchPaymentMethods,
   validatePublicPaymentConfig,
 } from "@/lib/payments/branch-payment-config";
-import {
-  formatBusinessHoursSummary,
-  hasAnyBusinessHours,
-  normalizeBusinessHours,
-  resolveBusinessTimeZone,
-} from "@/lib/tenant/business-hours";
+import { branchBusinessHoursUpdate, branchCountryResolver } from "@/lib/tenant/branch-country";
+import { hasAnyBusinessHours, normalizeBusinessHours } from "@/lib/tenant/business-hours";
 import { parseBranchContactUrlInput } from "@/lib/tenant/home-page/home-page-config";
 
 /** @service-role customer-account */
@@ -178,34 +174,13 @@ export async function PUT(req: NextRequest) {
     );
   }
 
-  // El país de la sucursal, o el del negocio si la sucursal no tiene el suyo guardado.
-  // Se consulta una sola vez y solo si hace falta (horario o tasa de cambio).
-  let resolvedCountry: string | null | undefined;
-  const resolveBranchCountry = async (): Promise<string | null> => {
-    if (resolvedCountry !== undefined) return resolvedCountry;
-    let country: string | null = (branch.country as string | null) ?? null;
-    if (!country) {
-      const { data: company } = await supabaseAdmin.from("companies").select("country").eq("id", ctx.companyId).maybeSingle();
-      country = (company?.country as string | null | undefined) ?? null;
-    }
-    resolvedCountry = country;
-    return country;
-  };
-
-  // La zona la fija el servidor: es la del país del local, no la del navegador de quien edita.
-  let businessHoursPatch: { business_hours: typeof businessHours; schedule?: string | null } | null = null;
-  if (hasBusinessHoursField) {
-    const country = await resolveBranchCountry();
-    const withZone =
-      businessHours && hasAnyBusinessHours(businessHours)
-        ? { ...businessHours, timezone: resolveBusinessTimeZone(country) }
-        : null;
-    businessHoursPatch = {
-      business_hours: withZone,
-      // Con días cargados, el texto que ya muestran la portada y el carrito sale de ellos.
-      ...(withZone ? { schedule: formatBusinessHoursSummary(withZone.week) } : {}),
-    };
-  }
+  // El país de la sucursal (o el del negocio): se consulta una sola vez y solo si hace falta
+  // (horario o tasa de cambio). El horario sale con la zona de ese país.
+  const resolveBranchCountry = branchCountryResolver(supabaseAdmin, {
+    branchCountry: branch.country as string | null,
+    companyId: ctx.companyId,
+  });
+  const businessHoursPatch = hasBusinessHoursField ? await branchBusinessHoursUpdate(businessHours, resolveBranchCountry) : null;
 
   // Solo una sucursal de Venezuela tiene tasa que elegir; fuera de ahí el campo se ignora
   // (el modal no lo muestra). El cambio queda registrado, como hace la RPC

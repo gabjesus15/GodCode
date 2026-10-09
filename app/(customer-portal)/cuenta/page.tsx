@@ -12,7 +12,6 @@ import { BranchSummary, BusinessInfoSummary, type PortalTab } from "@/components
 import { PORTAL_TAB_ORDER } from "@/components/customer-portal/shared/customer-account-constants";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { sanitizeBranchPaymentConfig } from "@/lib/payments/branch-payment-config";
-import { resolveTenantPanelLoginUrl } from "@/lib/tenant/panel-url";
 import { buildBillingOptionsResponse, getCustomerAccountBillingContext } from "@/lib/tenant/customer-account-billing";
 import { getCountryConfig } from "@/lib/geo/country-registry";
 import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
@@ -88,11 +87,6 @@ type BranchEntitlementRow = {
       }>
     | null;
 };
-
-function resolveTenantAdminUrl(publicSlug: string | null): string | null {
-  if (!publicSlug) return null;
-  return resolveTenantPanelLoginUrl(publicSlug);
-}
 
 export const dynamic = "force-dynamic";
 
@@ -237,7 +231,6 @@ export default async function CustomerAccountPage({
     planMaxBranches: ((company?.plan as { max_branches?: number | null } | null)?.max_branches ?? null) as number | null,
     planMaxUsers: ((company?.plan as { max_users?: number | null } | null)?.max_users ?? null) as number | null,
     supportEmail,
-    tenantAdminUrl: resolveTenantAdminUrl((company?.public_slug as string | null) ?? null),
     country: rawCountry,
     currency: countryConfig?.currency ?? "USD",
     locale: countryConfig?.locale ?? "es-CL",

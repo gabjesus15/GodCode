@@ -6,6 +6,8 @@ import { AlertCircle, Clock, MailCheck } from "lucide-react";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { resolveAvailablePublicSlug } from "@/lib/onboarding/checkout-service";
+import { instagramHandle } from "@/lib/owner-setup/local-form";
+import { phoneFromWhatsappUrl } from "@/lib/tenant/whatsapp-url";
 import { getTenantHomeUrl } from "@/utils/tenant-url";
 import { resolvePlanMarketingLines, resolvePlanName } from "@/lib/plans/plan-i18n";
 import { planHasPublicMenu } from "@/lib/plans/plan-product-mode";
@@ -35,21 +37,21 @@ const COMPLETE_COPY = {
     draftSubtitle: "{business} se abre a tus clientes apenas se confirme el pago. Puedes cambiar de plan cuando quieras.",
     subtitle: "Elige el que encaje con tu negocio: menú digital, panel CEO o los dos. Puedes cambiar de plan cuando quieras.",
     backHome: "Volver al inicio",
-    errorTitle: "Error de registro",
-    errorText: "No se pudo cargar la aplicación. Intenta de nuevo o contacta soporte.",
-    notFoundTitle: "Aplicación no encontrada",
-    notFoundText: "El enlace es inválido o la aplicación no existe.",
-    emailTitle: "Correo no verificado",
-    emailText: "Debes verificar tu correo antes de continuar. Revisa tu bandeja y haz clic en el enlace de verificación.",
-    plansErrorTitle: "Error al cargar planes",
-    plansErrorText: "No pudimos obtener los planes disponibles. Intenta de nuevo en unos minutos.",
-    noPlansTitle: "Sin planes disponibles",
-    noPlansText: "No hay planes activos en este momento. Contacta a soporte para más información.",
+    errorTitle: "No pudimos cargar tu registro",
+    errorText: "Intenta de nuevo en unos minutos. Si sigue igual, escríbenos.",
+    notFoundTitle: "No encontramos tu registro",
+    notFoundText: "El enlace no es válido o el registro ya no existe.",
+    emailTitle: "Confirma tu correo primero",
+    emailText: "Abre el enlace que te enviamos por correo para seguir. Si no lo ves, revisa spam o promociones.",
+    plansErrorTitle: "No pudimos cargar los planes",
+    plansErrorText: "Intenta de nuevo en unos minutos.",
+    noPlansTitle: "No hay planes disponibles",
+    noPlansText: "En este momento no hay planes a la venta. Escríbenos y te ayudamos.",
     paidTitle: "Tu pago ya está registrado",
     paidText: "Tu cuenta está lista o a punto de estarlo. Revisa tu correo: te enviamos el enlace para crear tu contraseña y entrar.",
     reviewTitle: "Estamos revisando tu comprobante",
-    reviewText: "Ya recibimos tu comprobante. Te escribiremos por correo en cuanto lo validemos; no hace falta que vuelvas a pagar.",
-    loginLabel: "Ir al login",
+    reviewText: "Ya recibimos tu comprobante. Te escribimos por correo apenas lo validemos; no hace falta que vuelvas a pagar.",
+    loginLabel: "Entrar a mi cuenta",
   },
   en: {
     title: "Choose a plan for {business}",
@@ -79,10 +81,10 @@ const COMPLETE_COPY = {
     draftSubtitle: "{business} abre para seus clientes assim que o pagamento for confirmado. Você pode trocar de plano quando quiser.",
     subtitle: "Escolha o que combina com seu negócio: cardápio digital, painel CEO ou os dois. Você pode trocar de plano quando quiser.",
     backHome: "Voltar ao início",
-    errorTitle: "Erro de cadastro",
-    errorText: "Não foi possível carregar a aplicação. Tente novamente ou contate o suporte.",
-    notFoundTitle: "Aplicação não encontrada",
-    notFoundText: "O link é inválido ou a aplicação não existe.",
+    errorTitle: "Não conseguimos carregar seu cadastro",
+    errorText: "Tente novamente em alguns minutos. Se continuar igual, escreva para nós.",
+    notFoundTitle: "Não encontramos seu cadastro",
+    notFoundText: "O link não é válido ou o cadastro não existe mais.",
     emailTitle: "E-mail não verificado",
     emailText: "Você precisa verificar seu e-mail antes de continuar. Verifique sua caixa de entrada e clique no link de verificação.",
     plansErrorTitle: "Erro ao carregar planos",
@@ -218,6 +220,37 @@ type EditableApplication = {
   payment_reference_url: string | null;
 };
 
+type StoreContact = { phone: string | null; instagram: string | null; address: string | null };
+
+/**
+ * «Arma y paga»: el WhatsApp, el Instagram y la dirección ya los cargó en «Configura tu
+ * tienda» (van a su sucursal) o en la página de inicio. Se leen de ahí para no volver a
+ * pedirlos al publicar: la solicitud de alta solo los tiene si ya pasó antes por este paso.
+ * Se precargan en vez de esconder los campos porque el formulario del plan los sigue
+ * usando (el pago los pasa al negocio) y así el dueño ve qué se va a guardar.
+ */
+async function loadStoreContact(companyId: string): Promise<StoreContact> {
+  const [{ data: branch }, { data: info }] = await Promise.all([
+    // La sucursal principal es la primera que se creó (la del alta), igual que en el asistente.
+    supabaseAdmin
+      .from("branches")
+      .select("whatsapp_url,phone,instagram_url,address")
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    supabaseAdmin.from("business_info").select("phone,instagram,address").eq("company_id", companyId).maybeSingle(),
+  ]);
+  const b = branch as { whatsapp_url?: string | null; phone?: string | null; instagram_url?: string | null; address?: string | null } | null;
+  const i = info as { phone?: string | null; instagram?: string | null; address?: string | null } | null;
+  const text = (value: string | null | undefined) => String(value ?? "").trim() || null;
+  return {
+    phone: text(phoneFromWhatsappUrl(b?.whatsapp_url)) ?? text(b?.phone) ?? text(i?.phone),
+    instagram: text(instagramHandle(b?.instagram_url)) ?? text(instagramHandle(i?.instagram)),
+    address: text(b?.address) ?? text(i?.address),
+  };
+}
+
 /**
  * Se puede volver a elegir plan o método mientras el pago no esté cobrado ni haya un
  * comprobante en revisión. Antes, en cuanto se pulsaba "Ir a pagar", este paso quedaba
@@ -294,7 +327,7 @@ export default async function OnboardingCompletePage({
     return <ErrorCard tone="review" title={copy.reviewTitle} text={copy.reviewText} backHome={copy.backHome} />;
   }
 
-  const [plansResult, addonsResult, applicationAddonsResult, storeSlug] = await Promise.all([
+  const [plansResult, addonsResult, applicationAddonsResult, storeSlug, storeContact] = await Promise.all([
     // Solo planes a la venta: los internos (dev, promos) no se contratan desde aquí.
     supabaseAdmin.from("plans").select("id,name,name_i18n,price,prices_by_continent,max_branches,features,marketing_lines,marketing_lines_i18n").eq("is_active", true).eq("is_public", true).order("price", { ascending: true }),
     supabaseAdmin.from("addons").select("id,slug,name,description,price_one_time,price_monthly,type,sort_order").eq("is_active", true).order("sort_order", { ascending: true }),
@@ -304,6 +337,7 @@ export default async function OnboardingCompletePage({
     app.company_id
       ? supabaseAdmin.from("companies").select("public_slug").eq("id", app.company_id).maybeSingle().then(({ data }) => (data?.public_slug as string | null) ?? null)
       : resolveAvailablePublicSlug(supabaseAdmin, String(app.business_name ?? "")).catch(() => null),
+    app.company_id ? loadStoreContact(String(app.company_id)).catch(() => null) : Promise.resolve(null),
   ]);
   // «Arma y paga»: ya armó su tienda y viene a publicarla.
   const fromDraft = Boolean(app.company_id);
@@ -358,9 +392,10 @@ export default async function OnboardingCompletePage({
           subscription_payment_method: app.subscription_payment_method,
           addons: applicationAddons,
           email: app.email,
-          phone: app.phone,
-          social_instagram: app.social_instagram,
-          fiscal_address: app.fiscal_address,
+          // Lo que ya cargó en su tienda manda sobre lo que dejó antes en este paso.
+          phone: storeContact?.phone ?? app.phone,
+          social_instagram: storeContact?.instagram ?? app.social_instagram,
+          fiscal_address: storeContact?.address ?? app.fiscal_address,
           sector: app.sector,
         }}
         storeUrl={storeSlug ? getTenantHomeUrl(storeSlug) : null}
