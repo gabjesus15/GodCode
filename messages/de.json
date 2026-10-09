@@ -12,8 +12,8 @@
   },
   "landing": {
     "meta": {
-      "title": "Gcode POS - Erstelle deinen Online-Shop in wenigen Minuten",
-      "description": "Digitales Menu, Warenkorb, Lieferung, Kasse, Kuchenauftrage und Inventar fur dein Unternehmen. Ohne Programmierung und ohne Verkaufsprovisionen. Starte mit +1 Monat kostenlos."
+      "title": "Gcode POS - Erstelle deinen Online-Shop kostenlos und zahle erst beim Veröffentlichen",
+      "description": "Digitales Menü, Warenkorb, Lieferung, Kasse, Küchenaufträge und Inventar für dein Unternehmen. Ohne Programmierung und ohne Verkaufsprovisionen. 2 Monate zum Preis von 1 bei der ersten Zahlung."
     },
     "nav": {
       "goHome": "Zur Startseite",
@@ -609,21 +609,21 @@
           "quantityAria": "Menge"
         },
         "ws": {
-          "titlePrefix": "NEUE WEB-BESTELLUNG",
-          "businessFallback": "RESTAURANT",
+          "titlePrefix": "Neue Bestellung",
+          "businessFallback": "Restaurant",
           "customer": "Kunde",
           "rut": "Steuer-ID",
           "phone": "Telefon",
           "typeLabel": "Typ",
-          "typeDelivery": "LIEFERUNG",
-          "typePickup": "ABHOLUNG",
+          "typeDelivery": "Lieferung",
+          "typePickup": "Abholung",
           "shipping": "Lieferung",
-          "subtotalProducts": "Zwischensumme Produkte",
+          "subtotalProducts": "Zwischensumme",
           "couponLabel": "Gutschein",
-          "orderNumber": "Bestellung #",
+          "orderNumber": "Bestellung",
           "orderId": "Bestell-ID",
           "handoffCode": "Ubergabecode",
-          "detail": "DETAIL",
+          "detail": "Bestellung",
           "doLabel": "Machen",
           "total": "GESAMT",
           "payment": "Zahlung",

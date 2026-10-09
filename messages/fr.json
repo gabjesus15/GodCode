@@ -12,8 +12,8 @@
   },
   "landing": {
     "meta": {
-      "title": "Gcode POS - Creez votre boutique en ligne en quelques minutes",
-      "description": "Menu digital, panier, livraison, caisse, commandes cuisine et inventaire pour votre entreprise. Sans code et sans commission sur les ventes. Commencez avec +1 mois gratuit."
+      "title": "Gcode POS - Créez votre boutique en ligne gratuitement et payez à la publication",
+      "description": "Menu digital, panier, livraison, caisse, commandes cuisine et inventaire pour votre entreprise. Sans code et sans commission sur les ventes. 2 mois pour le prix d'un au premier paiement."
     },
     "nav": {
       "goHome": "Aller a l'accueil",
@@ -609,21 +609,21 @@
           "quantityAria": "Quantité"
         },
         "ws": {
-          "titlePrefix": "NOUVELLE COMMANDE WEB",
-          "businessFallback": "RESTAURANT",
+          "titlePrefix": "Nouvelle commande",
+          "businessFallback": "Restaurant",
           "customer": "Client",
           "rut": "Identifiant fiscal",
           "phone": "Telephone",
           "typeLabel": "Type",
-          "typeDelivery": "LIVRAISON",
-          "typePickup": "RETRAIT SUR PLACE",
+          "typeDelivery": "Livraison",
+          "typePickup": "Retrait sur place",
           "shipping": "Livraison",
-          "subtotalProducts": "Sous-total produits",
+          "subtotalProducts": "Sous-total",
           "couponLabel": "Coupon",
-          "orderNumber": "Commande #",
+          "orderNumber": "Commande",
           "orderId": "ID commande",
           "handoffCode": "Code de remise",
-          "detail": "DETAIL",
+          "detail": "Commande",
           "doLabel": "Faire",
           "total": "TOTAL",
           "payment": "Paiement",

@@ -12,8 +12,8 @@
   },
   "landing": {
     "meta": {
-      "title": "Gcode POS - Crea il tuo negozio online in pochi minuti",
-      "description": "Menu digitale, carrello, delivery, cassa, ordini cucina e inventario per la tua attivita. Senza programmare e senza commissioni sulle vendite. Inizia con +1 mese gratis."
+      "title": "Gcode POS - Crea il tuo negozio online gratis e paga quando lo pubblichi",
+      "description": "Menu digitale, carrello, delivery, cassa, ordini cucina e inventario per la tua attività. Senza programmare e senza commissioni sulle vendite. 2 mesi al prezzo di 1 al primo pagamento."
     },
     "nav": {
       "goHome": "Vai alla home",
@@ -609,21 +609,21 @@
           "quantityAria": "Quantità"
         },
         "ws": {
-          "titlePrefix": "NUOVO ORDINE WEB",
-          "businessFallback": "RISTORANTE",
+          "titlePrefix": "Nuovo ordine",
+          "businessFallback": "Ristorante",
           "customer": "Cliente",
           "rut": "Codice fiscale",
           "phone": "Telefono",
           "typeLabel": "Tipo",
-          "typeDelivery": "CONSEGNA",
-          "typePickup": "RITIRO IN LOCALE",
+          "typeDelivery": "Consegna",
+          "typePickup": "Ritiro in locale",
           "shipping": "Consegna",
-          "subtotalProducts": "Subtotale prodotti",
+          "subtotalProducts": "Subtotale",
           "couponLabel": "Coupon",
-          "orderNumber": "Ordine #",
+          "orderNumber": "Ordine",
           "orderId": "ID ordine",
           "handoffCode": "Codice consegna",
-          "detail": "DETTAGLIO",
+          "detail": "Ordine",
           "doLabel": "Fare",
           "total": "TOTALE",
           "payment": "Pagamento",

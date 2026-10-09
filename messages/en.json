@@ -12,8 +12,8 @@
   },
   "landing": {
     "meta": {
-      "title": "Gcode POS - Build your online store in minutes",
-      "description": "Digital menu, cart, delivery, POS, kitchen orders and inventory for your business. No coding, no sales commissions. Start with +1 free month."
+      "title": "Gcode POS - Build your online store for free and pay when you publish it",
+      "description": "Digital menu, cart, delivery, POS, kitchen orders and inventory for your business. No coding, no sales commissions. 2 months for the price of 1 on your first payment."
     },
     "nav": {
       "goHome": "Go to home",
@@ -609,21 +609,21 @@
           "quantityAria": "Quantity"
         },
         "ws": {
-          "titlePrefix": "NEW WEB ORDER",
-          "businessFallback": "RESTAURANT",
+          "titlePrefix": "New order",
+          "businessFallback": "Restaurant",
           "customer": "Customer",
           "rut": "Tax ID",
           "phone": "Phone",
           "typeLabel": "Type",
-          "typeDelivery": "DELIVERY",
-          "typePickup": "STORE PICKUP",
+          "typeDelivery": "Delivery",
+          "typePickup": "Store pickup",
           "shipping": "Shipping",
-          "subtotalProducts": "Products subtotal",
+          "subtotalProducts": "Subtotal",
           "couponLabel": "Coupon",
-          "orderNumber": "Order #",
+          "orderNumber": "Order",
           "orderId": "Order ID",
           "handoffCode": "Handoff code",
-          "detail": "DETAIL",
+          "detail": "Order",
           "doLabel": "Do",
           "total": "TOTAL",
           "payment": "Payment",
