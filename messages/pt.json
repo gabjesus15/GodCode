@@ -408,7 +408,8 @@
           "newOrder": "Novo Pedido",
           "backToMenu": "Voltar ao Menu",
           "backToDelivery": "Voltar à entrega",
-          "repeatLastOrder": "Repetir último pedido"
+          "repeatLastOrder": "Repetir último pedido",
+          "openWhatsApp": "Abrir WhatsApp"
         },
         "delivery": {
           "pickNamedArea": "Escolha uma area",
@@ -580,7 +581,8 @@
           "paymentConfirmed": "Pagamento confirmado e registrado.",
           "paymentPendingVerification": "Comprovante recebido. O pagamento está pendente de verificação.",
           "keepCodesTitle": "Guarde estes dados.",
-          "keepCodesBody": "Vamos pedi-los na entrega: mostre-os ou dite-os ao entregador."
+          "keepCodesBody": "Vamos pedi-los na entrega: mostre-os ou dite-os ao entregador.",
+          "whatsappSendHint": "Falta um passo: envie a mensagem que abriu no WhatsApp para o local receber seu pedido."
         },
         "empty": {
           "title": "Carrinho vazio",
@@ -619,7 +621,18 @@
           "holder": "Titular",
           "bankTransferHint": "Quando concluir a transferencia, anexe o comprovante ao seu pedido.",
           "note": "Observacao",
-          "taxLabel": "Imposto (IVA)"
+          "taxLabel": "Imposto (IVA)",
+          "taxIncluded": "incluído",
+          "taxAdded": "adicional",
+          "addressReference": "Referência",
+          "mapLink": "Localização",
+          "branch": "Filial",
+          "webReference": "Ref.",
+          "extras": "Extras",
+          "beverages": "Bebidas",
+          "changes": "Alterações",
+          "generalExtra": "Extra do pedido",
+          "bankTransferHintChat": "Quando concluir a transferência, envie o comprovante por este chat."
         },
         "intake": {
           "paused": "Pedidos pausados",

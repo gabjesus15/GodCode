@@ -408,7 +408,8 @@
           "newOrder": "Neue Bestellung",
           "backToMenu": "Zuruck zum Menu",
           "backToDelivery": "Zurück zur Lieferung",
-          "repeatLastOrder": "Letzte Bestellung wiederholen"
+          "repeatLastOrder": "Letzte Bestellung wiederholen",
+          "openWhatsApp": "WhatsApp öffnen"
         },
         "delivery": {
           "pickNamedArea": "Zone auswahlen",
@@ -580,7 +581,8 @@
           "paymentConfirmed": "Zahlung bestätigt und erfasst.",
           "paymentPendingVerification": "Beleg erhalten. Die Zahlung wird noch geprüft.",
           "keepCodesTitle": "Bewahre diese Angaben auf.",
-          "keepCodesBody": "Wir fragen bei der Lieferung danach: Zeige sie vor oder nenne sie dem Kurier."
+          "keepCodesBody": "Wir fragen bei der Lieferung danach: Zeige sie vor oder nenne sie dem Kurier.",
+          "whatsappSendHint": "Noch ein Schritt: Sende die in WhatsApp geöffnete Nachricht, damit das Lokal deine Bestellung erhält."
         },
         "empty": {
           "title": "Warenkorb leer",
@@ -619,7 +621,18 @@
           "holder": "Inhaber",
           "bankTransferHint": "Wenn du die Uberweisung abgeschlossen hast, hange den Beleg an deine Bestellung an.",
           "note": "Hinweis",
-          "taxLabel": "Steuer (MwSt.)"
+          "taxLabel": "Steuer (MwSt.)",
+          "taxIncluded": "inklusive",
+          "taxAdded": "zuzüglich",
+          "addressReference": "Hinweis",
+          "mapLink": "Standort",
+          "branch": "Filiale",
+          "webReference": "Ref.",
+          "extras": "Extras",
+          "beverages": "Getränke",
+          "changes": "Änderungen",
+          "generalExtra": "Extra zur Bestellung",
+          "bankTransferHintChat": "Sobald die Überweisung erledigt ist, schick den Beleg in diesem Chat."
         },
         "intake": {
           "paused": "Bestellungen pausiert",

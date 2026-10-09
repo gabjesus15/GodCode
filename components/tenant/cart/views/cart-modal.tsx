@@ -41,10 +41,12 @@ import { useCheckoutForm } from "../hooks/use-checkout-form";
 import { useDeliveryAddress } from "../hooks/use-delivery-address";
 import { buildOrderPayload } from "../services/build-order-payload";
 import {
+	buildWebOrderReference,
 	buildWhatsAppHandoffMessage,
 	buildWhatsAppUrl,
 	resolveWhatsAppCopy,
 } from "../services/build-whatsapp-handoff";
+import { resolveDeliveryMapsUrl } from "@/lib/delivery/delivery-location";
 import { paymentMethodRequiresReceipt } from "../services/menu-order-payment";
 import { parseOrderRpcPayload } from "../services/order-payload";
 import { useSubmitOrder } from "../services/order-submission";
@@ -70,6 +72,8 @@ import { CartSuccessView } from "./cart-success-view";
 import "../../../../app/[subdomain]/styles/Cart.css";
 
 const WHATSAPP_HANDOFF_DELAY_MS = 1500;
+/** Solo WhatsApp: no hay pedido donde guardar un comprobante; se manda por el chat. */
+const NO_RECEIPT_METHODS: ReadonlySet<string> = new Set();
 
 /** Orden de los pasos: decide si un cambio se anima "hacia adelante" o "hacia atrás". */
 const STEP_ORDER = ["summary", "fulfillment", "payment:pick", "payment:detail", "payment:form", "success"];
@@ -202,7 +206,8 @@ export function CartModal({
 	);
 
 	// --- Formulario, dirección y validación ----------------------------------------
-	const requiresReceipt = paymentMethodRequiresReceipt(flow.paymentMethodKey, live.receiptRequiredMethods);
+	const receiptRequiredMethods = shouldPersistOrderToPanel(orderChannel) ? live.receiptRequiredMethods : NO_RECEIPT_METHODS;
+	const requiresReceipt = paymentMethodRequiresReceipt(flow.paymentMethodKey, receiptRequiredMethods);
 	const patchClientDraft = useCallback(
 		(draft: { name: string; phone: string; rut: string }) => flow.patchCheckoutSession({ clientDraft: draft }),
 		[flow],
@@ -414,6 +419,9 @@ export function CartModal({
 			});
 
 			let parsed: ReturnType<typeof parseOrderRpcPayload> = null;
+			// Sin pedido en el panel (solo WhatsApp) el dueño y el cliente se refieren a él con
+			// este código corto.
+			const webReference = shouldPersistOrderToPanel(orderChannel) ? null : buildWebOrderReference(orderRequestId);
 			let receiptUploadFailed = false;
 			let paymentStatus: string | null = null;
 			let evidenceStatus: string | null = null;
@@ -426,8 +434,8 @@ export function CartModal({
 				receiptUploadFailed = response.receiptUploadFailed ?? false;
 				paymentStatus = response.paymentStatus ?? null;
 				evidenceStatus = response.evidenceStatus ?? null;
-				setOrderRequestId(crypto.randomUUID());
 			}
+			setOrderRequestId(crypto.randomUUID());
 
 			const snapshot = {
 				fulfillment: cart.fulfillment,
@@ -435,6 +443,66 @@ export function CartModal({
 				deliveryFee: isDelivery ? cart.deliveryFee : 0,
 				grandTotal: cart.grandTotal,
 			};
+
+			let whatsAppUrl: string | null = null;
+			if (shouldOpenWhatsAppOnCheckout(orderChannel)) {
+				const deliveryAddress = isDelivery ? payload.delivery_address : null;
+				const message = buildWhatsAppHandoffMessage({
+					client: { name: data.name, rut: data.rut ?? "", phone: data.phone ?? "" },
+					cart: lines,
+					globalExtras: cart.globalExtras,
+					paymentMethodKey,
+					paymentMethodLabel: resolvePaymentMethodLabel(paymentMethodKey, t),
+					paymentData: paymentMethodKey ? (activeInfo as Record<string, unknown>)[paymentMethodKey] : undefined,
+					businessName: activeInfo.name,
+					meta: {
+						fulfillment: snapshot.fulfillment,
+						cartSubtotal: snapshot.subtotal,
+						deliveryFee: snapshot.deliveryFee,
+						grandTotal: snapshot.grandTotal,
+						deliverySummary: deliveryAddress
+							? `${t("delivery.addressLabel")}: ${String(deliveryAddress.address ?? "")}`
+							: undefined,
+						deliveryReference: isDelivery ? cart.deliveryReference : null,
+						deliveryMapsUrl: isDelivery
+							? resolveDeliveryMapsUrl({
+									lat: cart.deliveryLat,
+									lng: cart.deliveryLng,
+									source: cart.deliveryLocationSource ?? null,
+									address: { line1: cart.deliveryLine1, commune: cart.deliveryCommune },
+								})
+							: null,
+						branchName:
+							selectedBranch?.name && selectedBranch.name.trim() !== (businessInfo?.name ?? "").trim()
+								? selectedBranch.name
+								: null,
+						orderId: parsed?.id ?? null,
+						orderNumber: parsed?.order_number ?? null,
+						handoffCode: parsed?.handoff_code ?? null,
+						webReference,
+						couponCode: payload.coupon_code ?? null,
+						couponDiscount: cart.appliedCouponDiscount > 0 ? cart.appliedCouponDiscount : undefined,
+						taxTotal: cart.taxTotal,
+						taxRate: settings.taxRate,
+						taxIncluded: settings.taxIncluded,
+						currency,
+						localCurrency: currency === "USD" ? "VES" : "USD",
+						localTotal: cart.localTotal,
+						country: countryCode,
+						exchangeRate: cart.exchangeRate,
+						paymentMethodKey,
+					},
+					copy: resolveWhatsAppCopy(t, strategy.idName),
+				});
+				whatsAppUrl = buildWhatsAppUrl(activeInfo.phone, message);
+				// Solo WhatsApp: sin número el pedido no llegaría a ningún lado, así que no se
+				// da por enviado.
+				if (!whatsAppUrl && !shouldPersistOrderToPanel(orderChannel)) {
+					showError(t("errors.whatsappNotConfigured"));
+					setResult((current) => ({ ...current, isSaving: false }));
+					return;
+				}
+			}
 			setResult({
 				showSuccess: true,
 				isSaving: false,
@@ -446,51 +514,19 @@ export function CartModal({
 					fulfillment: snapshot.fulfillment,
 					paymentStatus,
 					evidenceStatus,
+					web_reference: webReference,
+					whatsapp_url: whatsAppUrl,
 				},
 			});
 			setShowFieldErrors(false);
 
 			const finalize = () => {
 				if (shouldOpenWhatsAppOnCheckout(orderChannel)) {
-					const message = buildWhatsAppHandoffMessage({
-						client: { name: data.name, rut: data.rut ?? "", phone: data.phone ?? "" },
-						cart: lines,
-						paymentMethodKey,
-						paymentMethodLabel: resolvePaymentMethodLabel(paymentMethodKey, t),
-						paymentData: paymentMethodKey ? (activeInfo as Record<string, unknown>)[paymentMethodKey] : undefined,
-						businessName: activeInfo.name,
-						meta: {
-							fulfillment: snapshot.fulfillment,
-							cartSubtotal: snapshot.subtotal,
-							deliveryFee: snapshot.deliveryFee,
-							grandTotal: snapshot.grandTotal,
-							deliverySummary:
-								isDelivery && payload.delivery_address
-									? `${t("delivery.addressLabel")}: ${String(payload.delivery_address.address ?? "")}`
-									: undefined,
-							orderId: parsed?.id ?? null,
-							orderNumber: parsed?.order_number ?? null,
-							handoffCode: parsed?.handoff_code ?? null,
-							couponCode: payload.coupon_code ?? null,
-							couponDiscount: cart.appliedCouponDiscount > 0 ? cart.appliedCouponDiscount : undefined,
-							taxTotal: cart.taxTotal,
-							taxRate: settings.taxRate,
-							taxIncluded: settings.taxIncluded,
-							currency,
-							localCurrency: currency === "USD" ? "VES" : "USD",
-							localTotal: cart.localTotal,
-							country: countryCode,
-							exchangeRate: cart.exchangeRate,
-							paymentMethodKey,
-						},
-						copy: resolveWhatsAppCopy(t, strategy.idName),
-					});
-					const url = buildWhatsAppUrl(activeInfo.phone, message);
-					if (!url) {
+					if (!whatsAppUrl) {
 						showError(t("errors.whatsappNotConfigured"));
 						return;
 					}
-					window.open(url, "_blank");
+					window.open(whatsAppUrl, "_blank");
 				}
 				cart.clearCart();
 			};
@@ -620,7 +656,7 @@ export function CartModal({
 			<CartPaymentBody
 				methods={paymentMethods}
 				paymentMethodKey={paymentMethodKey}
-				receiptRequiredMethods={live.receiptRequiredMethods}
+				receiptRequiredMethods={receiptRequiredMethods}
 				stage={paymentStage}
 				onPickMethod={flow.pickPaymentMethod}
 				activeInfo={activeInfo}

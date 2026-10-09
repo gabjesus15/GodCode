@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, MessageCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import type { BusinessInfo, LastOrderSuccess } from "../cart-modal-types";
@@ -29,7 +29,12 @@ export function CartSuccessView({
 			? `#${lastOrder.order_number}`
 			: lastOrder && lastOrder.id > 0
 				? `#${lastOrder.id}`
-				: null;
+				: lastOrder?.web_reference
+					? lastOrder.web_reference
+					: null;
+	// Solo WhatsApp: el pedido llega cuando el cliente envía el mensaje, no antes.
+	const whatsappOnly = Boolean(lastOrder?.web_reference);
+	const whatsappUrl = lastOrder?.whatsapp_url ?? null;
 
 	return (
 		<div className="cart-success">
@@ -37,7 +42,9 @@ export function CartSuccessView({
 				<Check size={32} strokeWidth={2.5} />
 			</span>
 			<h3 className="cart-success__title">{t("success.title")}</h3>
-			<p className="cart-success__text">{demo ? t("success.demoNotice") : t("success.description")}</p>
+			<p className="cart-success__text">
+				{demo ? t("success.demoNotice") : whatsappOnly ? t("success.whatsappSendHint") : t("success.description")}
+			</p>
 
 			{receiptUploadFailed ? (
 				<p className="cart-warn">{t("success.receiptUploadFailed")}</p>
@@ -106,7 +113,12 @@ export function CartSuccessView({
 			)}
 
 			<div className="cart-success__actions">
-				<button type="button" className="cart-cta" onClick={onNewOrder}>
+				{whatsappUrl && !demo ? (
+					<a className="cart-cta" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+						<MessageCircle size={16} aria-hidden /> {t("actions.openWhatsApp")}
+					</a>
+				) : null}
+				<button type="button" className={whatsappUrl && !demo ? "cart-secondary-btn" : "cart-cta"} onClick={onNewOrder}>
 					{t("actions.newOrder")}
 				</button>
 				<button type="button" className="cart-secondary-btn" onClick={onGoHome}>

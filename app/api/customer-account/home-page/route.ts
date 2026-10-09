@@ -25,7 +25,7 @@ import { loadHomePageInput } from "@/lib/tenant/home-page/load-home-page";
 async function readCompany(companyId: string) {
 	return supabaseAdmin
 		.from("companies")
-		.select("id,name,public_slug,theme_config")
+		.select("id,name,public_slug,theme_config,plans:plans(features)")
 		.eq("id", companyId)
 		.maybeSingle();
 }

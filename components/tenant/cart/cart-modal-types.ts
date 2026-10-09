@@ -98,6 +98,10 @@ export type LastOrderSuccess = {
 	fulfillment: CartFulfillment;
 	paymentStatus?: string | null;
 	evidenceStatus?: string | null;
+	/** Código corto del pedido cuando solo se envió por WhatsApp (no quedó en el panel). */
+	web_reference?: string | null;
+	/** Enlace al chat con el mensaje armado, para reabrirlo si el navegador lo bloqueó. */
+	whatsapp_url?: string | null;
 };
 
 /** Resultado del envío del pedido; los pasos del checkout viven en `checkoutSession`. */

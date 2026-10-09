@@ -408,7 +408,8 @@
           "newOrder": "New Order",
           "backToMenu": "Back to Menu",
           "backToDelivery": "Back to delivery",
-          "repeatLastOrder": "Reorder last order"
+          "repeatLastOrder": "Reorder last order",
+          "openWhatsApp": "Open WhatsApp"
         },
         "delivery": {
           "pickNamedArea": "Choose an area",
@@ -580,7 +581,8 @@
           "paymentConfirmed": "Payment confirmed and recorded.",
           "paymentPendingVerification": "Receipt received. The payment is pending verification.",
           "keepCodesTitle": "Keep these details.",
-          "keepCodesBody": "We'll ask for them at delivery: show them or read them to the courier."
+          "keepCodesBody": "We'll ask for them at delivery: show them or read them to the courier.",
+          "whatsappSendHint": "One more step: send the message that opened in WhatsApp so the business gets your order."
         },
         "empty": {
           "title": "Empty cart",
@@ -619,7 +621,18 @@
           "holder": "Holder",
           "bankTransferHint": "When you complete the transfer, attach the receipt to your order.",
           "note": "Note",
-          "taxLabel": "Tax (VAT)"
+          "taxLabel": "Tax (VAT)",
+          "taxIncluded": "included",
+          "taxAdded": "added",
+          "addressReference": "Reference",
+          "mapLink": "Location",
+          "branch": "Branch",
+          "webReference": "Ref.",
+          "extras": "Extras",
+          "beverages": "Drinks",
+          "changes": "Changes",
+          "generalExtra": "Order extra",
+          "bankTransferHintChat": "Once you complete the transfer, send the receipt in this chat."
         },
         "intake": {
           "paused": "Orders paused",

@@ -360,6 +360,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             menuSettingsCartEnabled={menuSettings.menuSettings.cartEnabled}
             menuSettingsOrderChannel={menuSettings.menuSettings.orderChannel}
             menuSettingsPlanAllowsOnlineOrdering={menuSettings.planAllowsOnlineOrdering}
+            menuSettingsPlanProductMode={menuSettings.planProductMode}
             menuSettingsDirty={menuSettings.menuSettingsDirty}
             onMenuSettingsCartEnabledChange={menuSettings.setCartEnabled}
             onMenuSettingsOrderChannelChange={menuSettings.setOrderChannel}

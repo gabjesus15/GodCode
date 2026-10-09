@@ -18,6 +18,7 @@ import {
 	resolveOnlineOrderingEnabled,
 } from "@/lib/tenant/menu-settings";
 import { resolveSelectedMenuBranch } from "@/lib/tenant/menu/menu-helpers";
+import { openBranchCandidateIds, resolvePlanOrderChannel } from "@/lib/plans/plan-product-mode";
 import { filterOpenBranchIdsByHours } from "@/lib/tenant/business-hours";
 import { serializeJsonLd } from "@/lib/seo/serialize-json-ld";
 import {
@@ -219,7 +220,8 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
   const planFeatures = (company.plans as { features?: unknown } | null)?.features ?? null;
   const menuSettings = extractMenuSettingsFromIntegration(company.integration_settings);
   const onlineOrderingEnabled = resolveOnlineOrderingEnabled(planFeatures, menuSettings);
-  const orderChannel = menuSettings.orderChannel;
+  // «Solo menú digital»: sin panel donde recibir pedidos, todo sale por WhatsApp.
+  const orderChannel = resolvePlanOrderChannel(planFeatures, menuSettings.orderChannel);
 
   // Misma regla en todo lo público: una cancelación sigue online hasta el vencimiento y
   // un plan vencido se corta aunque el cron todavía no lo haya suspendido. Una tienda en
@@ -261,12 +263,16 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
   }
 
     const openBranchIds = filterOpenBranchIdsByHours(
-      (openShifts ?? [])
-        // `String(null)` devuelve "null" y ese texto pasa el `filter(Boolean)`: una
-        // caja abierta sin sucursal (dato heredado) entraba como id valido, hacia
-        // creer que habia dos locales abiertos y anulaba la auto-seleccion.
-        .map((shift) => (shift.branch_id == null ? "" : String(shift.branch_id)))
-        .filter(Boolean),
+      openBranchCandidateIds(
+        planFeatures,
+        (openShifts ?? [])
+          // `String(null)` devuelve "null" y ese texto pasa el `filter(Boolean)`: una
+          // caja abierta sin sucursal (dato heredado) entraba como id valido, hacia
+          // creer que habia dos locales abiertos y anulaba la auto-seleccion.
+          .map((shift) => (shift.branch_id == null ? "" : String(shift.branch_id)))
+          .filter(Boolean),
+        branches ?? [],
+      ),
       // Caja abierta fuera de horario (alguien la dejó así) cuenta como local cerrado.
       branches ?? [],
     );

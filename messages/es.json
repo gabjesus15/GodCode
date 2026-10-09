@@ -408,7 +408,8 @@
           "newOrder": "Nuevo pedido",
           "backToMenu": "Volver al menú",
           "backToDelivery": "Volver a la entrega",
-          "repeatLastOrder": "Repetir último pedido"
+          "repeatLastOrder": "Repetir último pedido",
+          "openWhatsApp": "Abrir WhatsApp"
         },
         "delivery": {
           "pickNamedArea": "Elige una zona",
@@ -580,7 +581,8 @@
           "paymentConfirmed": "Pago confirmado y registrado.",
           "paymentPendingVerification": "Comprobante recibido. El pago está pendiente de verificación.",
           "keepCodesTitle": "Guarda estos datos.",
-          "keepCodesBody": "Te los pediremos al entregar el pedido: muéstralos o díctalos al repartidor."
+          "keepCodesBody": "Te los pediremos al entregar el pedido: muéstralos o díctalos al repartidor.",
+          "whatsappSendHint": "Falta un paso: envía el mensaje que se abrió en WhatsApp para que el local reciba tu pedido."
         },
         "empty": {
           "title": "Tu bandeja está vacía",
@@ -594,21 +596,21 @@
           "quantityAria": "Cantidad"
         },
         "ws": {
-          "titlePrefix": "NUEVO PEDIDO WEB",
-          "businessFallback": "RESTAURANTE",
+          "titlePrefix": "Nuevo pedido",
+          "businessFallback": "Restaurante",
           "customer": "Cliente",
           "rut": "RUT",
-          "phone": "Fono",
+          "phone": "Teléfono",
           "typeLabel": "Tipo",
-          "typeDelivery": "DELIVERY",
-          "typePickup": "RETIRO EN LOCAL",
+          "typeDelivery": "Delivery",
+          "typePickup": "Retiro en el local",
           "shipping": "Envío",
-          "subtotalProducts": "Subtotal productos",
+          "subtotalProducts": "Subtotal",
           "couponLabel": "Cupón",
-          "orderNumber": "N pedido",
+          "orderNumber": "Pedido",
           "orderId": "ID pedido",
           "handoffCode": "Código de entrega",
-          "detail": "DETALLE",
+          "detail": "Pedido",
           "doLabel": "Hacer",
           "total": "TOTAL",
           "payment": "Pago",
@@ -619,7 +621,18 @@
           "holder": "Titular",
           "bankTransferHint": "Cuando completes la transferencia, adjunta el comprobante en tu pedido.",
           "note": "Nota",
-          "taxLabel": "Impuesto (IVA)"
+          "taxLabel": "Impuesto (IVA)",
+          "taxIncluded": "incluido",
+          "taxAdded": "adicional",
+          "addressReference": "Referencia",
+          "mapLink": "Ubicación",
+          "branch": "Sucursal",
+          "webReference": "Ref.",
+          "extras": "Extras",
+          "beverages": "Bebidas",
+          "changes": "Cambios",
+          "generalExtra": "Extra del pedido",
+          "bankTransferHintChat": "Cuando completes la transferencia, envía el comprobante por este chat."
         },
         "intake": {
           "paused": "Pedidos pausados",

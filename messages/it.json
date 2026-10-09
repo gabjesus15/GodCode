@@ -408,7 +408,8 @@
           "newOrder": "Nuovo Ordine",
           "backToMenu": "Torna al Menu",
           "backToDelivery": "Torna alla consegna",
-          "repeatLastOrder": "Ripeti ultimo ordine"
+          "repeatLastOrder": "Ripeti ultimo ordine",
+          "openWhatsApp": "Apri WhatsApp"
         },
         "delivery": {
           "pickNamedArea": "Scegli una zona",
@@ -580,7 +581,8 @@
           "paymentConfirmed": "Pagamento confermato e registrato.",
           "paymentPendingVerification": "Ricevuta ricevuta. Il pagamento è in attesa di verifica.",
           "keepCodesTitle": "Conserva questi dati.",
-          "keepCodesBody": "Te li chiederemo alla consegna: mostrali o dettali al corriere."
+          "keepCodesBody": "Te li chiederemo alla consegna: mostrali o dettali al corriere.",
+          "whatsappSendHint": "Manca un passo: invia il messaggio aperto su WhatsApp perché il locale riceva il tuo ordine."
         },
         "empty": {
           "title": "Carrello vuoto",
@@ -619,7 +621,18 @@
           "holder": "Intestatario",
           "bankTransferHint": "Quando completi il bonifico, allega la ricevuta al tuo ordine.",
           "note": "Nota",
-          "taxLabel": "Imposta (IVA)"
+          "taxLabel": "Imposta (IVA)",
+          "taxIncluded": "inclusa",
+          "taxAdded": "aggiuntiva",
+          "addressReference": "Riferimento",
+          "mapLink": "Posizione",
+          "branch": "Sede",
+          "webReference": "Rif.",
+          "extras": "Extra",
+          "beverages": "Bevande",
+          "changes": "Modifiche",
+          "generalExtra": "Extra dell'ordine",
+          "bankTransferHintChat": "Completato il bonifico, invia la ricevuta in questa chat."
         },
         "intake": {
           "paused": "Ordini in pausa",

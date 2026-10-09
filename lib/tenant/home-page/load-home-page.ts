@@ -1,5 +1,6 @@
 import "server-only";
 
+import { companyPlanFeatures, openBranchCandidateIds } from "@/lib/plans/plan-product-mode";
 import { filterOpenBranchIdsByHours } from "@/lib/tenant/business-hours";
 import { getCachedMenuStaticData } from "@/lib/tenant/cached-menu";
 import { resolveStorefrontAssetPublicUrl } from "@/lib/storage/storefront-branding";
@@ -14,6 +15,7 @@ type HomePageCompany = {
 	id: string | number;
 	name?: string | null;
 	theme_config?: unknown;
+	plans?: unknown;
 };
 
 /**
@@ -84,8 +86,13 @@ export async function loadHomePageInput(company: HomePageCompany, publicSlug: st
 		})),
 		// Una caja abierta sin sucursal (dato heredado) no cuenta como local abierto, ni una
 		// abierta fuera del horario de su sucursal.
+		// Con «solo menú digital» no hay caja: cuenta solo el horario.
 		openBranchIds: filterOpenBranchIdsByHours(
-			(openShifts ?? []).map((shift) => (shift.branch_id == null ? "" : String(shift.branch_id))).filter(Boolean),
+			openBranchCandidateIds(
+				companyPlanFeatures(company),
+				(openShifts ?? []).map((shift) => (shift.branch_id == null ? "" : String(shift.branch_id))).filter(Boolean),
+				staticData.branches,
+			),
 			staticData.branches,
 		),
 		schedule,
