@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import {
+	getMercadoPagoOffer,
 	priceApplicationAddons,
 	resolveCheckoutPlan,
 	resolveCheckoutPlanPrice,
@@ -106,7 +107,7 @@ export async function GET(req: NextRequest) {
 		return NextResponse.json({ error: "Solicitud no encontrada" }, { status: 404 });
 	}
 
-	const [promoAvailable, quote, coupon, draftState] = await Promise.all([
+	const [promoAvailable, quote, coupon, draftState, mercadoPago] = await Promise.all([
 		isFirstPaymentPromoEligible(supabaseAdmin, {
 			email: data.email,
 			excludeCompanyId: data.company_id,
@@ -115,6 +116,7 @@ export async function GET(req: NextRequest) {
 		describeApplicationCoupon(data).catch(() => null),
 		// «Arma y paga»: la tienda ya existe en vista previa y se abre al confirmarse el pago.
 		data.company_id ? loadStoreDraftState(supabaseAdmin, data.company_id).catch(() => null) : Promise.resolve(null),
+		getMercadoPagoOffer(supabaseAdmin, data.country).catch(() => null),
 	]);
 
 	return NextResponse.json({
@@ -128,5 +130,7 @@ export async function GET(req: NextRequest) {
 		quote,
 		coupon,
 		store_draft: Boolean(draftState?.fromDraft),
+		// Alternativa de pago en esta página (Chile): la tasa sirve para mostrar el monto en CLP.
+		mercadopago: mercadoPago ? { name: mercadoPago.name, rate: mercadoPago.rate } : null,
 	});
 }

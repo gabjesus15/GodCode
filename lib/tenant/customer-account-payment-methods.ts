@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { isOnboardingOnlyMethod } from "@/lib/onboarding/checkout-service";
 import { isPaymentMethodAvailableForCountry } from "@/lib/payments/payment-method-countries";
 import { isPayPalConfigured } from "@/lib/payments/paypal";
 
@@ -35,8 +36,12 @@ export async function listPortalPaymentMethods(country: string | null): Promise<
 		.eq("is_active", true)
 		.order("sort_order", { ascending: true });
 
+	// Mercado Pago se cobra en línea solo en el alta: aquí no hay comprobante que subir.
 	const available = ((methods ?? []) as MethodRow[]).filter(
-		(method) => !method.auto_verify && isPaymentMethodAvailableForCountry(method.countries, country),
+		(method) =>
+			!method.auto_verify &&
+			!isOnboardingOnlyMethod(String(method.slug ?? "").trim().toLowerCase()) &&
+			isPaymentMethodAvailableForCountry(method.countries, country),
 	);
 	if (available.length === 0) return [];
 

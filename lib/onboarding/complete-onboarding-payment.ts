@@ -240,7 +240,7 @@ export async function completeOnboardingPayment(
 		responsibleName: app.responsible_name,
 		email: app.email ?? null,
 		phone: app.phone ?? null,
-		via: input.methodSlug === "coupon" ? "coupon" : input.isManualPayment ? "manual" : "paypal",
+		via: input.methodSlug === "coupon" ? "coupon" : input.isManualPayment ? "manual" : input.methodSlug,
 		months: input.grantedMonths,
 		coupon: app.coupon_code ?? null,
 	});

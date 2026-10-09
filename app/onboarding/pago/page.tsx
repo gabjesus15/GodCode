@@ -118,6 +118,10 @@ type Quote = {
 
 const usdFormatter = new Intl.NumberFormat("es-CL", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const usd = (value: number) => usdFormatter.format(value);
+const clpFormatter = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+
+/** Mercado Pago en esta página (Chile): cobra en CLP a la tasa del panel. */
+type MercadoPagoOffer = { name: string; rate: number };
 
 function capitalize(value: string): string {
 	return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
@@ -213,10 +217,15 @@ function PagoContent() {
 	const [couponInput, setCouponInput] = useState("");
 	const [couponBusy, setCouponBusy] = useState(false);
 	const [couponError, setCouponError] = useState<string | null>(null);
+	const [mpOffer, setMpOffer] = useState<MercadoPagoOffer | null>(null);
+	// Al volver de Mercado Pago sin cobro (`?mp=pending|failure`).
+	const mpNotice = searchParams?.get("mp") === "pending" ? "pending" : searchParams?.get("mp") === "failure" ? "failure" : null;
 	const paypalContainerId = "onboarding-paypal-buttons";
 
 	const isVenezuela = manualData?.country === "Venezuela" || manualData?.country === "VE";
 	const isPaypalSelected = subscriptionMethod === "paypal";
+	// Mercado Pago se elige en el paso 2; `mpOffer` trae la tasa (null si se apagó o falta la tasa).
+	const useMercadoPago = subscriptionMethod === "mercadopago";
 	// Un cupón puede reemplazar la promo de +1 mes; y solo cuenta si se pagan sus meses mínimos.
 	const promoEffective = promoAvailable && (coupon ? coupon.keepsPromo : true);
 	const couponFits = Boolean(coupon && !coupon.problem && months >= coupon.minMonths);
@@ -259,8 +268,10 @@ function PagoContent() {
 				store_draft?: boolean;
 				quote?: Quote | null;
 				coupon?: CouponState | null;
+				mercadopago?: MercadoPagoOffer | null;
 			}) => {
 				if (cancelled) return;
+				setMpOffer(data.mercadopago && data.mercadopago.rate > 0 ? data.mercadopago : null);
 				setSubscriptionMethod((data.subscription_payment_method ?? "").trim().toLowerCase());
 				setPromoAvailable(data.promo_available === true);
 				setPaymentStatus(data.payment_status ?? null);
@@ -366,7 +377,8 @@ function PagoContent() {
 	}, [token, months, copy.errors.createSession, copy.errors.missingUrl]);
 
 	useEffect(() => {
-		if (!isPaypalSelected || !paypalSdkReady) return;
+		// Con Mercado Pago elegido el contenedor no está; al volver a PayPal se vuelve a montar.
+		if (!isPaypalSelected || !paypalSdkReady || useMercadoPago) return;
 		const container = document.getElementById(paypalContainerId);
 		if (!container) return;
 		container.innerHTML = "";
@@ -435,6 +447,7 @@ function PagoContent() {
 	}, [
 		isPaypalSelected,
 		paypalSdkReady,
+		useMercadoPago,
 		createPaypalOrder,
 		token,
 		months,
@@ -442,17 +455,18 @@ function PagoContent() {
 		copy.errors.paypalCanceled,
 	]);
 
-	const handlePay = useCallback(async () => {
+	const handlePay = useCallback(async (method?: "mercadopago") => {
 		if (!token) return;
 		setLoading(true);
 		setError(null);
 		setManualData(null);
+		if (method) trackAnalyticsEvent("onboarding_mercadopago_attempt", { months });
 
 		try {
 			const res = await fetch("/api/onboarding/checkout", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ token, months }),
+				body: JSON.stringify({ token, months, ...(method ? { method } : {}) }),
 			});
 
 			const raw = await res.text();
@@ -667,7 +681,9 @@ function PagoContent() {
 		);
 	}
 
-	const methodName = quote?.method?.name ?? (isPaypalSelected ? "PayPal" : "");
+	/** El método del paso 2: la otra opción del selector cuando también se ofrece Mercado Pago. */
+	const defaultMethodName = quote?.method?.name ?? (isPaypalSelected ? "PayPal" : "");
+	const methodName = useMercadoPago && mpOffer ? mpOffer.name : defaultMethodName;
 	const chargedMonths = manualData ? manualData.months : months;
 	const coveredMonths = manualData ? manualData.granted_months ?? manualData.months : grantedMonths;
 	const baseTotal = manualData ? (manualData.base_amount_usd ?? manualData.amount_usd) : totalFor(months);
@@ -678,6 +694,8 @@ function PagoContent() {
 	const couponLineFree = manualData ? (manualData.coupon_free_months ?? 0) : couponFree;
 	// Cupón que deja el total en 0: no hay nada que pagar, solo confirmar.
 	const isFree = !manualData && Boolean(coupon && couponFits) && total === 0 && baseTotal != null && baseTotal > 0;
+	// Mismo redondeo que el checkout (`toClp`): lo que se ve es lo que cobra Mercado Pago.
+	const totalClp = useMercadoPago && mpOffer && total != null && total > 0 ? Math.round(total * mpOffer.rate) : null;
 
 	const summary = (
 		<aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
@@ -741,6 +759,9 @@ function PagoContent() {
 						<span className="text-sm font-semibold text-slate-900">{ui.totalLabel}</span>
 						<span className="text-2xl font-semibold tracking-tight text-slate-900">{total != null ? usd(total) : "—"}</span>
 					</div>
+					{totalClp != null ? (
+						<p className="mt-1 text-sm text-slate-600">{copy.mercadoPago.clpLine.replace("{amount}", clpFormatter.format(totalClp))}</p>
+					) : null}
 					{coveredMonths > chargedMonths ? (
 						<p className="mt-2 text-sm font-medium text-[#3640C9]">{ui.coverage.replace("{months}", monthsText(coveredMonths))}</p>
 					) : null}
@@ -748,7 +769,9 @@ function PagoContent() {
 				{methodName ? (
 					<div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm">
 						<p className="font-medium text-slate-900">{ui.payWith.replace("{method}", methodName)}</p>
-						<p className="mt-0.5 text-slate-500">{isPaypalSelected ? ui.paypalActivation : ui.manualActivation}</p>
+						<p className="mt-0.5 text-slate-500">
+							{useMercadoPago ? copy.mercadoPago.activation : isPaypalSelected ? ui.paypalActivation : ui.manualActivation}
+						</p>
 					</div>
 				) : null}
 				<Link href={changeMethodHref} className="onboarding-link mt-4 inline-block text-sm font-medium">
@@ -1010,6 +1033,15 @@ function PagoContent() {
 						</div>
 					) : null}
 
+					{mpNotice && !error ? (
+						<div
+							className={`mt-6 rounded-xl border px-4 py-3 text-sm ${mpNotice === "pending" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-red-200 bg-red-50 text-red-700"}`}
+							role={mpNotice === "pending" ? "status" : "alert"}
+						>
+							{mpNotice === "pending" ? copy.mercadoPago.pending : copy.mercadoPago.failure}
+						</div>
+					) : null}
+
 					{error ? (
 						<div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
 							{error}
@@ -1021,17 +1053,33 @@ function PagoContent() {
 						{appLoaded && isFree ? (
 							<div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:p-6">
 								<p className="text-sm text-slate-700">{copy.coupon.freeCheckout}</p>
-								<Button onClick={handlePay} loading={loading} size="lg" className="onboarding-btn-primary mt-4 h-12 w-full rounded-xl text-[15px] sm:w-auto sm:px-8">
+								<Button onClick={() => void handlePay()} loading={loading} size="lg" className="onboarding-btn-primary mt-4 h-12 w-full rounded-xl text-[15px] sm:w-auto sm:px-8">
 									{copy.coupon.freeButton}
 								</Button>
 							</div>
 						) : null}
-						{appLoaded && !isFree && !isPaypalSelected ? (
-							<Button onClick={handlePay} loading={loading} size="lg" className="onboarding-btn-primary h-12 w-full rounded-xl text-[15px] sm:w-auto sm:px-8">
+						{appLoaded && !isFree && useMercadoPago ? (
+							<div className="rounded-2xl border border-slate-200 p-5 sm:p-6">
+								<p className="text-sm font-semibold text-slate-900">{copy.mercadoPago.blockTitle}</p>
+								<p className="mt-1 text-sm text-slate-500">{mpOffer ? copy.mercadoPago.blockHint : copy.mercadoPago.unavailable}</p>
+								<Button
+									onClick={() => void handlePay("mercadopago")}
+									loading={loading}
+									disabled={totalClp == null}
+									size="lg"
+									className="onboarding-btn-primary mt-4 h-12 w-full rounded-xl text-[15px] sm:w-auto sm:px-8"
+								>
+									{copy.mercadoPago.button}
+									{totalClp != null ? ` · ${clpFormatter.format(totalClp)}` : ""}
+								</Button>
+							</div>
+						) : null}
+						{appLoaded && !isFree && !useMercadoPago && !isPaypalSelected ? (
+							<Button onClick={() => void handlePay()} loading={loading} size="lg" className="onboarding-btn-primary h-12 w-full rounded-xl text-[15px] sm:w-auto sm:px-8">
 								{ui.showBankDetails}
 							</Button>
 						) : null}
-						{isPaypalSelected && !isFree ? (
+						{isPaypalSelected && !isFree && !useMercadoPago ? (
 							<div className="rounded-2xl border border-slate-200 p-5 sm:p-6">
 								<p className="text-sm font-semibold text-slate-900">{copy.paypalInlineTitle}</p>
 								<p className="mt-1 text-sm text-slate-500">{copy.paypalInlineHint}</p>

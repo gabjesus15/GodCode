@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { resolveBusinessSector } from "@/lib/onboarding/business-sectors";
 import { templatesForSector } from "@/lib/store-theme/menu-templates";
+import { isMercadoPagoConfigured, parseUsdClpRate } from "@/lib/payments/mercadopago";
+import { isPaymentMethodAvailableForCountry } from "@/lib/payments/payment-method-countries";
 import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
 import { socialInputToUrl } from "@/lib/tenant/home-page/home-page-config";
 import { whatsappUrlFromPhone } from "@/lib/tenant/whatsapp-url";
@@ -51,12 +53,20 @@ export type CheckoutPlan = {
 };
 
 /** Métodos que cobran en línea. Todo lo demás (transferencia, Pago Móvil, Zelle…) es manual. */
-const ONLINE_METHOD_SLUGS = new Set(["paypal"]);
+const ONLINE_METHOD_SLUGS = new Set(["paypal", "mercadopago"]);
+/** Solo cobran el alta (Mercado Pago, para Chile): no salen en las renovaciones de /cuenta. */
+const ONBOARDING_ONLY_METHOD_SLUGS = new Set(["mercadopago"]);
 /** Ya no se cobra con ellos: si alguien los reactiva en el panel, el checkout los rechaza. */
 const RETIRED_METHOD_SLUGS = new Set(["stripe"]);
+/** Clave de `plan_payment_method_config` con la tasa USD→CLP de Mercado Pago. */
+export const MERCADOPAGO_RATE_KEY = "tasa_usd_clp";
 
 export function isOnlineMethod(method: string): boolean {
 	return ONLINE_METHOD_SLUGS.has(method);
+}
+
+export function isOnboardingOnlyMethod(method: string): boolean {
+	return ONBOARDING_ONLY_METHOD_SLUGS.has(method);
 }
 
 export function isRetiredMethod(method: string): boolean {
@@ -425,6 +435,36 @@ export async function updateApplicationPaymentState(
 	// La captura de PayPal solo acepta la orden guardada aquí: si no se guardó, cobrar
 	// después fallaría con el dinero ya pagado. Mejor cortar antes de mandar al cliente a pagar.
 	if (error) throw new Error(`No se pudo guardar el estado del pago: ${error.message}`);
+}
+
+export type MercadoPagoOffer = { name: string; rate: number };
+
+/**
+ * Mercado Pago en el paso de pago: solo si está activo en el panel, vale para el país de
+ * la solicitud, tiene tasa USD→CLP y el servidor tiene credenciales. Si falta algo, la
+ * página no lo ofrece y el checkout lo rechaza.
+ */
+export async function getMercadoPagoOffer(
+	supabaseAdmin: SupabaseClient,
+	country: string | null | undefined,
+): Promise<MercadoPagoOffer | null> {
+	if (!isMercadoPagoConfigured()) return null;
+	const { data: method } = await supabaseAdmin
+		.from("plan_payment_methods")
+		.select("id,name,is_active,countries")
+		.eq("slug", "mercadopago")
+		.maybeSingle();
+	const row = method as { id: string; name: string | null; is_active: boolean | null; countries: string[] | null } | null;
+	if (!row?.is_active || !isPaymentMethodAvailableForCountry(row.countries, country)) return null;
+
+	const { data: config } = await supabaseAdmin
+		.from("plan_payment_method_config")
+		.select("value")
+		.eq("method_id", row.id)
+		.eq("key", MERCADOPAGO_RATE_KEY)
+		.maybeSingle();
+	const rate = parseUsdClpRate((config as { value?: string | null } | null)?.value);
+	return rate ? { name: row.name?.trim() || "Mercado Pago", rate } : null;
 }
 
 export async function getManualMethodConfig(

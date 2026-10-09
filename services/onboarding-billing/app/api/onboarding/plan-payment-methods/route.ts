@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { isManualMethod, isOnlineMethod } from "@/lib/onboarding/checkout-service";
+import { isManualMethod, isOnlineMethod, MERCADOPAGO_RATE_KEY } from "@/lib/onboarding/checkout-service";
 import { isPaymentMethodAvailableForCountry } from "@/lib/payments/payment-method-countries";
+import { isMercadoPagoConfigured, parseUsdClpRate } from "@/lib/payments/mercadopago";
 
 /** @service-role public-read
  *
@@ -36,8 +37,10 @@ export async function GET(req: NextRequest) {
 
 	const list = ((methods ?? []) as MethodRow[]).filter((method) => {
 		const slug = String(method.slug ?? "").trim().toLowerCase();
-		// Solo lo que el checkout sabe cobrar: PayPal en línea y los métodos manuales.
+		// Solo lo que el checkout sabe cobrar: PayPal y Mercado Pago en línea, y los métodos manuales.
 		if (!isOnlineMethod(slug) && !isManualMethod(slug)) return false;
+		// Sin credenciales en el servidor, Mercado Pago no se puede cobrar.
+		if (slug === "mercadopago" && !isMercadoPagoConfigured()) return false;
 		return isPaymentMethodAvailableForCountry(method.countries, country);
 	});
 
@@ -59,7 +62,12 @@ export async function GET(req: NextRequest) {
 		configByMethod.set(row.method_id, config);
 	}
 
+	// Mercado Pago cobra en CLP: sin tasa USD→CLP válida no se ofrece.
+	const payable = list.filter(
+		(method) => method.slug.trim().toLowerCase() !== "mercadopago" || parseUsdClpRate(configByMethod.get(method.id)?.[MERCADOPAGO_RATE_KEY]) !== null,
+	);
+
 	return NextResponse.json({
-		data: list.map((method) => ({ ...method, config: configByMethod.get(method.id) ?? {} })),
+		data: payable.map((method) => ({ ...method, config: configByMethod.get(method.id) ?? {} })),
 	});
 }

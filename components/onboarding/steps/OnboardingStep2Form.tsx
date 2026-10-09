@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useLocale } from "next-intl";
-import { Building2, Check, CreditCard, Landmark } from "lucide-react";
+import { Building2, Check, CreditCard, Landmark, Wallet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics/track-event";
@@ -71,6 +71,7 @@ const STEP2_COPY = {
     paymentMethodLabel: "Cómo vas a pagar",
     paymentMethodHint: "Solo aparecen los métodos disponibles en tu país.",
     paypalDescription: "Con tu cuenta PayPal o con tarjeta. Se activa al instante.",
+    mercadopagoDescription: "Con tarjeta de crédito o débito, o tu cuenta Mercado Pago. Se cobra en pesos chilenos y se activa al instante.",
     manualDescription: "Te damos los datos para transferir y subes el comprobante.",
     continueButton: "Continuar al pago",
     noChargeNote: "Todavía no se cobra nada: en el siguiente paso eliges cuántos meses pagar.",
@@ -106,6 +107,7 @@ const STEP2_COPY = {
     paymentMethodLabel: "How you will pay",
     paymentMethodHint: "Only methods available in your country are shown.",
     paypalDescription: "With your PayPal account or a card. Activates instantly.",
+    mercadopagoDescription: "With a credit or debit card, or your Mercado Pago account. Charged in Chilean pesos; activates instantly.",
     manualDescription: "We give you the transfer details and you upload the receipt.",
     continueButton: "Continue to payment",
     noChargeNote: "Nothing is charged yet: in the next step you choose how many months to pay.",
@@ -141,6 +143,7 @@ const STEP2_COPY = {
     paymentMethodLabel: "Como você vai pagar",
     paymentMethodHint: "Só aparecem os métodos disponíveis no seu país.",
     paypalDescription: "Com sua conta PayPal ou cartão. Ativa na hora.",
+    mercadopagoDescription: "Com cartão de crédito ou débito, ou sua conta Mercado Pago. Cobrado em pesos chilenos; ativa na hora.",
     manualDescription: "Damos os dados para transferir e você envia o comprovante.",
     continueButton: "Continuar para o pagamento",
     noChargeNote: "Nada é cobrado ainda: no próximo passo você escolhe quantos meses pagar.",
@@ -176,6 +179,7 @@ const STEP2_COPY = {
     paymentMethodLabel: "Comment vous allez payer",
     paymentMethodHint: "Seuls les moyens disponibles dans votre pays apparaissent.",
     paypalDescription: "Avec votre compte PayPal ou une carte. Activation immédiate.",
+    mercadopagoDescription: "Par carte de crédit ou de débit, ou avec votre compte Mercado Pago. Débité en pesos chiliens ; activation immédiate.",
     manualDescription: "Nous vous donnons les coordonnées du virement et vous envoyez le justificatif.",
     continueButton: "Continuer vers le paiement",
     noChargeNote: "Rien n’est encore facturé : à l’étape suivante vous choisissez le nombre de mois.",
@@ -211,6 +215,7 @@ const STEP2_COPY = {
     paymentMethodLabel: "Wie Sie bezahlen",
     paymentMethodHint: "Es erscheinen nur die in Ihrem Land verfügbaren Methoden.",
     paypalDescription: "Mit Ihrem PayPal-Konto oder Karte. Sofort aktiv.",
+    mercadopagoDescription: "Mit Kredit- oder Debitkarte oder Ihrem Mercado-Pago-Konto. Abrechnung in chilenischen Pesos; sofort aktiv.",
     manualDescription: "Wir geben Ihnen die Überweisungsdaten, Sie laden den Beleg hoch.",
     continueButton: "Weiter zur Zahlung",
     noChargeNote: "Noch wird nichts berechnet: Im nächsten Schritt wählen Sie die Anzahl der Monate.",
@@ -246,6 +251,7 @@ const STEP2_COPY = {
     paymentMethodLabel: "Come pagherai",
     paymentMethodHint: "Compaiono solo i metodi disponibili nel tuo paese.",
     paypalDescription: "Con il tuo account PayPal o con carta. Attivo subito.",
+    mercadopagoDescription: "Con carta di credito o debito, o con il tuo account Mercado Pago. Addebito in pesos cileni; attivo subito.",
     manualDescription: "Ti diamo i dati per il bonifico e carichi la ricevuta.",
     continueButton: "Continua al pagamento",
     noChargeNote: "Non addebitiamo ancora nulla: nel passaggio successivo scegli quanti mesi pagare.",
@@ -537,13 +543,20 @@ export function OnboardingStep2Form({
           description: copy.paypalDescription,
         };
       }
+      if (slug === "mercadopago") {
+        return {
+          slug,
+          label: method.name ?? "Mercado Pago",
+          description: copy.mercadopagoDescription,
+        };
+      }
       return {
         slug,
         label: method.name ?? method.slug,
         description: copy.manualDescription,
       };
     });
-  }, [copy.manualDescription, copy.paypalDescription, planPaymentMethods]);
+  }, [copy.manualDescription, copy.mercadopagoDescription, copy.paypalDescription, planPaymentMethods]);
   const selectedPlan = plans.find((p) => p.id === planId);
   const selectedCountryRegion = useMemo(() => resolveContinentFromCountryInput(country), [country]);
   const selectedPlanRegionalPrice = useMemo(
@@ -823,7 +836,8 @@ export function OnboardingStep2Form({
           <div role="radiogroup" aria-label={copy.paymentMethodLabel} className="space-y-3">
             {paymentMethodOptions.map((method) => {
               const selected = subMethod === method.slug;
-              const Icon = method.slug === "paypal" ? CreditCard : method.slug.includes("transfer") ? Landmark : Building2;
+              const Icon =
+                method.slug === "paypal" ? CreditCard : method.slug === "mercadopago" ? Wallet : method.slug.includes("transfer") ? Landmark : Building2;
               return (
                 <label key={method.slug} data-selected={selected} className="onboarding-option flex cursor-pointer items-center gap-4 rounded-2xl p-4 sm:p-5">
                   <input
