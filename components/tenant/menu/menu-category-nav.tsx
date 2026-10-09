@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ChevronDown, Compass, MapPin, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { brandInitials } from "@/lib/tenant/brand-initials";
 import { isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { Navbar } from "../navbar/navbar";
@@ -181,12 +182,7 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 					) : (
 						// Sin logo: las iniciales del local, como en la barra de arriba.
 						<span className="sidebar-logo sidebar-logo--monogram" aria-hidden>
-							{displayName
-								.trim()
-								.split(/\s+/)
-								.slice(0, 2)
-								.map((w) => w.charAt(0).toUpperCase())
-								.join("")}
+							{brandInitials(displayName)}
 						</span>
 					)}
 					<div className="sidebar-brand-info">

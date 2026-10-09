@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { generateWSMessage } from "@/components/tenant/cart/services/whatsapp-message";
+import { formatCartMoney } from "@/components/tenant/cart/utils/format-cart-money";
 
 describe("generateWSMessage Venezuela", () => {
 	it("uses cedula label and bolivar-first total for pago movil", () => {
@@ -59,5 +60,39 @@ describe("generateWSMessage Venezuela", () => {
 
 		expect(msg).toContain("*TOTAL: $2,500.00*");
 		expect(msg).not.toContain("Bs.");
+	});
+});
+
+describe("generateWSMessage detalle del pedido", () => {
+	it("separa cantidad y precio de cada línea con un punto medio", () => {
+		const msg = generateWSMessage(
+			{ name: "Ana", rut: "", phone: "" },
+			[
+				{ name: "Pizza Margarita", quantity: 2, lineTotal: 12000, details: ["Sin cebolla"] },
+				{ name: "Bebida", quantity: 1 },
+			],
+			12000,
+			"efectivo",
+			"",
+			"Rica Pizza",
+			undefined,
+			{
+				fulfillment: "pickup",
+				cartSubtotal: 12000,
+				deliveryFee: 0,
+				grandTotal: 12000,
+				currency: "CLP",
+				country: "CL",
+				paymentMethodKey: "efectivo",
+			},
+			undefined,
+			"Efectivo",
+		);
+
+		expect(msg).toContain(`*2x Pizza Margarita* · ${formatCartMoney(12000, "CLP")}`);
+		expect(msg).toContain("   ↳ Sin cebolla");
+		// Sin total de línea no hay separador ni precio.
+		expect(msg).toContain("*1x Bebida*\n");
+		expect(msg).not.toContain(" — ");
 	});
 });

@@ -186,7 +186,7 @@ export function generateWSMessage(
   out.push(`🧾 *${c.detail}*`);
   for (const item of cart) {
     const name = clean(item.name) || "—";
-    const price = item.lineTotal != null && Number.isFinite(item.lineTotal) ? ` — ${money(item.lineTotal)}` : "";
+    const price = item.lineTotal != null && Number.isFinite(item.lineTotal) ? ` · ${money(item.lineTotal)}` : "";
     out.push(`*${item.quantity}x ${name}*${price}`);
     const details = item.details ?? (clean(item.description) ? [clean(item.description)] : []);
     for (const detail of details) {

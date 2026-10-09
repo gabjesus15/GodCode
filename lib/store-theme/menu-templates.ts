@@ -1,5 +1,4 @@
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
-import { asThemeConfigObject } from "@/lib/store-theme/merge-theme-config";
 import {
 	normalizeBrandNameColor,
 	normalizeStoreThemeConfig,
@@ -271,6 +270,23 @@ export function recommendMenuTemplate(sector: string | null | undefined): MenuTe
 	return match?.id ?? DEFAULT_MENU_TEMPLATE_ID;
 }
 
+/** Cómo se nombra el negocio en frases como «Recomendada para tu pizzería». */
+const SECTOR_COPY: ReadonlyArray<readonly [sector: string, copy: string]> = [
+	["Pizzería", "tu pizzería"],
+	["Sushi", "tu sushi"],
+	["Hamburguesas", "tu hamburguesería"],
+	["Comida rápida", "tu local de comida rápida"],
+	["Restaurante", "tu restaurante"],
+	["Cafetería", "tu cafetería"],
+	["Panadería y pastelería", "tu panadería"],
+];
+
+/** «tu pizzería», «tu cafetería»…; con un tipo de negocio desconocido o vacío, «tu negocio». */
+export function describeSectorForCopy(sector: string | null | undefined): string {
+	const wanted = normalizeSector(String(sector ?? ""));
+	return SECTOR_COPY.find(([name]) => normalizeSector(name) === wanted)?.[1] ?? "tu negocio";
+}
+
 /**
  * Plantillas en el orden en que conviene ofrecerlas: la recomendada primero y
  * después las demás en su orden de siempre.
@@ -323,10 +339,4 @@ export function applyMenuTemplate(theme: StoreThemeConfig, templateId: string): 
 		displayName: theme.displayName,
 		backgroundImageUrl: theme.backgroundImageUrl,
 	});
-}
-
-/** Plantilla guardada en theme_config, o null si el local nunca eligió una. */
-export function readMenuTemplateId(themeConfig: unknown): MenuTemplateId | null {
-	const value = asThemeConfigObject(themeConfig)[MENU_TEMPLATE_THEME_KEY];
-	return isMenuTemplateId(value) ? value : null;
 }

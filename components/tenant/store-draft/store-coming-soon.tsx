@@ -2,17 +2,13 @@ import { sanitizeHexColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { resolveStorefrontThemeAssets } from "@/lib/storage/storefront-branding";
 import { getAppUrl } from "@/lib/tenant/app-url";
+import { brandInitials } from "@/lib/tenant/brand-initials";
 
 type ComingSoonCompany = {
 	id: string | number;
 	name?: string | null;
 	theme_config?: unknown;
 };
-
-function initialsOf(name: string): string {
-	const words = name.trim().split(/\s+/).filter(Boolean);
-	return (words.length > 1 ? `${words[0][0]}${words[1][0]}` : (words[0] ?? "G").slice(0, 2)).toUpperCase();
-}
 
 /**
  * Lo que ve cualquiera que abre una tienda en vista previa sin ser su dueño: neutra, con
@@ -52,7 +48,7 @@ export async function StoreComingSoon({ company }: { company: ComingSoonCompany 
 						className="flex h-20 w-20 items-center justify-center rounded-[1.4rem] text-2xl font-semibold text-white shadow-[0_16px_40px_-18px_rgba(15,23,42,0.45)]"
 						style={{ background: accent }}
 					>
-						{initialsOf(name)}
+						{brandInitials(name, { fallback: "G" })}
 					</span>
 				)}
 				<p style={{ marginTop: 28, padding: "4px 12px" }} className="inline-flex items-center gap-2 rounded-full bg-white text-xs font-medium text-slate-600 shadow-sm ring-1 ring-slate-200">

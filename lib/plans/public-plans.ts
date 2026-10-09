@@ -5,7 +5,8 @@ import { unstable_cache } from "next/cache";
 import type { AppLocale } from "@/lib/i18n/config";
 
 import { resolvePlanMarketingLines, resolvePlanName } from "./plan-i18n";
-import { resolvePublicPlanProductMode, type PublicPlanProductMode } from "./plan-variants";
+import { resolvePlanProductMode, type PlanProductMode } from "./plan-product-mode";
+import { isPlanRecommended } from "./plan-variants";
 import { queryPublicPlansLandingRows } from "./plans-db-query";
 
 export type PublicPlanForLanding = {
@@ -16,7 +17,9 @@ export type PublicPlanForLanding = {
   max_users: number;
   featureBullets: string[];
   /** Menú y panel, solo menú o solo panel: decide si el plan se agrupa con sus variantes en una tarjeta. */
-  productMode: PublicPlanProductMode;
+  productMode: PlanProductMode;
+  /** `true` si el dueño lo marcó en el súper admin: su tarjeta lleva la insignia «Recomendado». */
+  recommended?: boolean;
 };
 
 function bulletsFromPlan(row: {
@@ -24,7 +27,7 @@ function bulletsFromPlan(row: {
   max_users: number | null;
   marketing_lines?: unknown;
   marketing_lines_i18n?: unknown;
-}, locale: AppLocale, productMode: PublicPlanProductMode): string[] {
+}, locale: AppLocale, productMode: PlanProductMode): string[] {
   const custom = resolvePlanMarketingLines({
     locale,
     marketingLines: row.marketing_lines,
@@ -103,7 +106,7 @@ async function loadPublicPlansForLanding(locale: AppLocale): Promise<PublicPlanF
   const rows = (data ?? []).filter((p) => p.is_active !== false);
 
   return rows.map((p) => {
-    const productMode = resolvePublicPlanProductMode(p.features);
+    const productMode = resolvePlanProductMode(p.features);
     return {
     id: p.id,
     name: resolvePlanName({ locale, name: p.name, nameI18n: p.name_i18n }),
@@ -120,6 +123,7 @@ async function loadPublicPlansForLanding(locale: AppLocale): Promise<PublicPlanF
     max_users: p.max_users ?? 0,
     featureBullets: bulletsFromPlan(p, locale, productMode),
     productMode,
+    recommended: isPlanRecommended(p.features),
     };
   });
 }
@@ -132,10 +136,4 @@ const getPublicPlansForLandingCached = unstable_cache(
 
 export async function getPublicPlansForLanding(locale: AppLocale): Promise<PublicPlanForLanding[]> {
   return getPublicPlansForLandingCached(locale);
-}
-
-/** Índice del plan destacado como «Recomendado» (centro de la lista). */
-export function popularPlanIndex(count: number): number {
-  if (count <= 1) return 0;
-  return Math.floor(count / 2);
 }

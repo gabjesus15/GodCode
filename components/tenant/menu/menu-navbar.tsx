@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ChevronDown, ChevronLeft, MapPin, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { brandInitials } from "@/lib/tenant/brand-initials";
 import { CategoryTabsNav, IconListCategories } from "./menu-category-nav";
 import { useMenuHeaderHeight } from "./use-menu-header-height";
 import type { BranchInfo, CategoryListItem } from "./menu-types";
@@ -36,15 +37,6 @@ type MenuNavbarProps = {
 	activeCategory: string | null;
 	onCategoryClick: (id: string) => void;
 };
-
-/** "Rica Pizza" → "RP", "Gcode" → "G". */
-function brandInitials(name: string | null | undefined): string {
-	const words = String(name ?? "").trim().split(/\s+/).filter(Boolean);
-	return words
-		.slice(0, 2)
-		.map((w) => w.charAt(0).toUpperCase())
-		.join("");
-}
 
 export const MenuNavbar = memo(function MenuNavbar({
 	navbarType,

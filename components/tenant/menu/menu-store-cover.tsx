@@ -5,19 +5,9 @@ import Image from "next/image";
 import { MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { brandInitials } from "@/lib/tenant/brand-initials";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import type { BranchInfo } from "./menu-types";
-
-/** "Rica Pizza" → "RP". */
-function initials(name: string): string {
-	return name
-		.trim()
-		.split(/\s+/)
-		.filter(Boolean)
-		.slice(0, 2)
-		.map((w) => w.charAt(0).toUpperCase())
-		.join("");
-}
 
 /**
  * Portada del menú (headerStyle "cover"): foto ancha, logo grande que se
@@ -92,7 +82,7 @@ export function MenuStoreCover({
 						<Image src={logoUrl} alt="" width={88} height={88} onError={onLogoError} unoptimized />
 					) : (
 						<span className="store-cover__monogram" aria-hidden>
-							{initials(displayName)}
+							{brandInitials(displayName)}
 						</span>
 					)}
 				</div>

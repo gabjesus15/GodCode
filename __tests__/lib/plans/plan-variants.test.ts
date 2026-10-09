@@ -1,18 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { groupPlanVariants, resolvePublicPlanProductMode } from "@/lib/plans/plan-variants";
+import {
+	groupPlanVariants,
+	isPlanRecommended,
+	popularPlanIndex,
+	recommendedGroupIndex,
+	upsertPlanRecommended,
+} from "@/lib/plans/plan-variants";
 
-const plan = (name: string, productMode: "full" | "menu_only" | "panel_only" = "full") => ({ name, productMode });
-
-describe("resolvePublicPlanProductMode", () => {
-	it("lee product_mode de features y cae en «full» si falta o es otra cosa", () => {
-		expect(resolvePublicPlanProductMode({ product_mode: "menu_only" })).toBe("menu_only");
-		expect(resolvePublicPlanProductMode({ product_mode: "panel_only" })).toBe("panel_only");
-		expect(resolvePublicPlanProductMode({})).toBe("full");
-		expect(resolvePublicPlanProductMode({ product_mode: "otro" })).toBe("full");
-		expect(resolvePublicPlanProductMode(null)).toBe("full");
-		expect(resolvePublicPlanProductMode(["menu_only"])).toBe("full");
-	});
+const plan = (name: string, productMode: "full" | "menu_only" | "panel_only" = "full", recommended = false) => ({
+	name,
+	productMode,
+	recommended,
 });
 
 describe("groupPlanVariants", () => {
@@ -73,5 +72,58 @@ describe("groupPlanVariants", () => {
 		const groups = groupPlanVariants([plan("Basic · Digital menu", "menu_only"), plan("Basic · CEO panel", "panel_only")]);
 		expect(groups).toHaveLength(1);
 		expect(groups[0]?.name).toBe("Basic");
+	});
+});
+
+describe("isPlanRecommended / upsertPlanRecommended", () => {
+	it("solo cuenta el `true` literal en features.recommended", () => {
+		expect(isPlanRecommended({ recommended: true })).toBe(true);
+		expect(isPlanRecommended({ recommended: "true" })).toBe(false);
+		expect(isPlanRecommended({ recommended: 1 })).toBe(false);
+		expect(isPlanRecommended({})).toBe(false);
+		expect(isPlanRecommended(null)).toBe(false);
+		expect(isPlanRecommended([true])).toBe(false);
+	});
+
+	it("escribe la marca sin tocar el resto y la borra al desmarcar", () => {
+		const marked = upsertPlanRecommended({ product_mode: "menu_only", ceo_tabs: ["products"] }, true);
+		expect(marked).toEqual({ product_mode: "menu_only", ceo_tabs: ["products"], recommended: true });
+		expect(upsertPlanRecommended(marked, false)).toEqual({ product_mode: "menu_only", ceo_tabs: ["products"] });
+		expect(upsertPlanRecommended(null, false)).toEqual({});
+	});
+});
+
+describe("recommendedGroupIndex", () => {
+	it("sin ningún plan marcado, la insignia cae en la tarjeta del medio", () => {
+		expect(popularPlanIndex(0)).toBe(0);
+		expect(popularPlanIndex(1)).toBe(0);
+		expect(popularPlanIndex(2)).toBe(1);
+		expect(popularPlanIndex(3)).toBe(1);
+		expect(popularPlanIndex(4)).toBe(2);
+
+		const groups = groupPlanVariants([plan("Básico"), plan("Avanzado"), plan("Business")]);
+		expect(recommendedGroupIndex(groups)).toBe(1);
+		expect(recommendedGroupIndex([])).toBe(0);
+	});
+
+	it("con un plan marcado, la insignia va a su tarjeta aunque no sea la del medio", () => {
+		const groups = groupPlanVariants([plan("Básico"), plan("Avanzado"), plan("Business", "full", true)]);
+		expect(recommendedGroupIndex(groups)).toBe(2);
+	});
+
+	it("una variante marcada recomienda la tarjeta de su grupo", () => {
+		const groups = groupPlanVariants([
+			plan("Básico · Menú digital", "menu_only"),
+			plan("Básico · Panel CEO", "panel_only", true),
+			plan("Avanzado"),
+			plan("Business"),
+		]);
+		expect(groups).toHaveLength(3);
+		expect(recommendedGroupIndex(groups)).toBe(0);
+	});
+
+	it("con varios marcados gana el primero de la lista (que ya viene ordenada por precio)", () => {
+		const groups = groupPlanVariants([plan("Básico"), plan("Avanzado", "full", true), plan("Business", "full", true)]);
+		expect(recommendedGroupIndex(groups)).toBe(1);
 	});
 });

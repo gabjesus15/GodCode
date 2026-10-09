@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { CheckCircle2, ChevronDown, Download, History, Upload, XCircle } from "lucide-react";
 import Image from "next/image";
@@ -192,6 +192,8 @@ export function AccountTiendaTab({
   const [productCardOpen, setProductCardOpen] = useState(false);
   const [productDetailsOpen, setProductDetailsOpen] = useState(false);
   const [openPiece, setOpenPiece] = useState<"headerStyle" | "featuredStyle" | "cartStyle" | null>(null);
+  /* Prefijo de los ids de los acordeones de diseño, para enlazar botón y panel (aria-controls). */
+  const panelId = useId();
   /* Lo que el usuario va tecleando en el hex del color del nombre. Va aparte
      del borrador porque "#ff" a medio escribir no es un color válido y, si se
      guardara tal cual, el selector saltaría a "Primario" con cada tecla. */
@@ -335,13 +337,15 @@ export function AccountTiendaTab({
                 <button
                   type="button"
                   onClick={() => setNavbarOpen((v) => !v)}
+                  aria-expanded={navbarOpen}
+                  aria-controls={`${panelId}-navbar`}
                   className="flex w-full items-center justify-between px-5 py-4 text-sm font-semibold text-[#1d1d1f]"
                 >
                   <span>Barra de navegación</span>
                   <ChevronDown className={`h-4 w-4 text-[#a1a1a6] transition-transform ${navbarOpen ? "rotate-180" : ""}`} aria-hidden />
                 </button>
                 {navbarOpen && (
-                  <div className="space-y-4 px-5 pb-5">
+                  <div id={`${panelId}-navbar`} className="space-y-4 px-5 pb-5">
                     <div>
                       <p className="mb-2 text-xs font-medium text-[#6e6e73]">Tipo de barra de navegación</p>
                       <StoreThemeNavbarPicker
@@ -372,13 +376,15 @@ export function AccountTiendaTab({
                 <button
                   type="button"
                   onClick={() => setProductCardOpen((v) => !v)}
+                  aria-expanded={productCardOpen}
+                  aria-controls={`${panelId}-card`}
                   className="flex w-full items-center justify-between px-5 py-4 text-sm font-semibold text-[#1d1d1f]"
                 >
                   <span>Estilo de tarjeta de producto</span>
                   <ChevronDown className={`h-4 w-4 text-[#a1a1a6] transition-transform ${productCardOpen ? "rotate-180" : ""}`} aria-hidden />
                 </button>
                 {productCardOpen && (
-                  <div className="px-5 pb-5">
+                  <div id={`${panelId}-card`} className="px-5 pb-5">
                     <StoreThemeProductCardPicker
                       value={storeThemeDraft?.productCardStyle}
                       theme={storeThemeDraft}
@@ -394,13 +400,15 @@ export function AccountTiendaTab({
                 <button
                   type="button"
                   onClick={() => setProductDetailsOpen((v) => !v)}
+                  aria-expanded={productDetailsOpen}
+                  aria-controls={`${panelId}-details`}
                   className="flex w-full items-center justify-between px-5 py-4 text-sm font-semibold text-[#1d1d1f]"
                 >
                   <span>Modo de detalles del producto</span>
                   <ChevronDown className={`h-4 w-4 text-[#a1a1a6] transition-transform ${productDetailsOpen ? "rotate-180" : ""}`} aria-hidden />
                 </button>
                 {productDetailsOpen && (
-                  <div className="px-5 pb-5">
+                  <div id={`${panelId}-details`} className="px-5 pb-5">
                     <StoreThemeProductDetailsPicker
                       value={storeThemeDraft?.productDetailsMode}
                       theme={storeThemeDraft}
@@ -421,13 +429,15 @@ export function AccountTiendaTab({
                   <button
                     type="button"
                     onClick={() => setOpenPiece((open) => (open === key ? null : key))}
+                    aria-expanded={openPiece === key}
+                    aria-controls={`${panelId}-${key}`}
                     className="flex w-full items-center justify-between px-5 py-4 text-sm font-semibold text-[#1d1d1f]"
                   >
                     <span>{title}</span>
                     <ChevronDown className={`h-4 w-4 text-[#a1a1a6] transition-transform ${openPiece === key ? "rotate-180" : ""}`} aria-hidden />
                   </button>
                   {openPiece === key && (
-                    <div className="px-5 pb-5">
+                    <div id={`${panelId}-${key}`} className="px-5 pb-5">
                       <Picker
                         value={storeThemeDraft?.[key]}
                         theme={storeThemeDraft}

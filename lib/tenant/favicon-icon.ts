@@ -1,6 +1,7 @@
 import "server-only";
 
 import { sanitizeHexColor } from "@/lib/store-theme/apply-theme-css-vars";
+import { brandInitials } from "@/lib/tenant/brand-initials";
 
 /**
  * Piezas comunes de las dos rutas de favicon del tenant (`/tenant-favicon` y
@@ -23,9 +24,9 @@ export function escapeXml(value: string): string {
 	return value.replace(/[<>&"']/g, (char) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" })[char] ?? char);
 }
 
+/** Las mismas iniciales que el monograma del menú; sin nombre, las de Gcode. */
 export function iconInitials(name: string): string {
-	const parts = name.trim().split(/\s+/).filter(Boolean);
-	return parts.slice(0, 2).map((part) => Array.from(part)[0]?.toUpperCase() ?? "").join("") || "GC";
+	return brandInitials(name, { fallback: "GC" });
 }
 
 /**

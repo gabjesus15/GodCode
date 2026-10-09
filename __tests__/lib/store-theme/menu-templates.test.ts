@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
 	MENU_TEMPLATES,
 	applyMenuTemplate,
+	describeSectorForCopy,
 	findMenuTemplate,
 	menuTemplatePatch,
 	orderMenuTemplatesForSector,
-	readMenuTemplateId,
 	recommendMenuTemplate,
 	templatesForSector,
 } from "@/lib/store-theme/menu-templates";
@@ -54,7 +54,6 @@ describe("menu templates", () => {
 		expect(theme.featuredStyle).toBe("carousel");
 		expect(theme.cartStyle).toBe("bar");
 		expect(theme.logoUrl).toBe("logo.png");
-		expect(readMenuTemplateId(theme)).toBe("horno");
 	});
 
 	it("respeta el color de marca del local si se lo pasan", () => {
@@ -64,9 +63,13 @@ describe("menu templates", () => {
 		expect(menuTemplatePatch("mantel", { accentColor: "rojo" }).primaryColor).toBe("#1f6f4a");
 	});
 
-	it("no lee como plantilla un id desconocido", () => {
-		expect(readMenuTemplateId({ templateId: "nope" })).toBeNull();
-		expect(readMenuTemplateId(null)).toBeNull();
+	it("nombra el negocio en la frase «Recomendada para…»", () => {
+		expect(describeSectorForCopy("Panadería y pastelería")).toBe("tu panadería");
+		expect(describeSectorForCopy("Pizzería")).toBe("tu pizzería");
+		expect(describeSectorForCopy("  comida RAPIDA ")).toBe("tu local de comida rápida");
+		expect(describeSectorForCopy("Otro")).toBe("tu negocio");
+		expect(describeSectorForCopy("Heladería")).toBe("tu negocio");
+		expect(describeSectorForCopy(null)).toBe("tu negocio");
 	});
 });
 

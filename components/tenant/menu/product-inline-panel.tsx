@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 
 import { useCartStore } from "../cart/cart-store";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
+import { isVenezuelaCountry } from "@/lib/geo/venezuela";
 import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
 import { FromPriceLabel, PRODUCT_CARD_FALLBACK_IMAGE } from "./product-card-shared";
 import { useSizePickerStore } from "./product-size-store";
@@ -46,7 +47,7 @@ export function ProductInlinePanel({
 			item.id === product.id ? sum + (Number(item.quantity) || 0) : sum,
 		0,
 	);
-	const showUSD = country === "VE" || country === "Venezuela";
+	const showUSD = isVenezuelaCountry(country);
 
 	const formatPrice = (priceVal: number) => {
 		const primaryStr = showUSD

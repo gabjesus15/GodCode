@@ -1,7 +1,7 @@
 import { formatLandingPrice } from "@/lib/landing/price";
-import { popularPlanIndex, type PublicPlanForLanding } from "@/lib/plans/public-plans";
+import type { PublicPlanForLanding } from "@/lib/plans/public-plans";
 import { filterPlansWithPositiveRegionalPrice, resolveRegionalPlanPrice } from "@/lib/plans/plan-regional-pricing";
-import { groupPlanVariants } from "@/lib/plans/plan-variants";
+import { groupPlanVariants, recommendedGroupIndex } from "@/lib/plans/plan-variants";
 import { cn } from "@/utils/cn";
 import { PlanCard } from "./plan-card";
 import { SectionGlow } from "./section-light";
@@ -23,7 +23,8 @@ export function Pricing({ plans, country }: PricingProps) {
   const paidPlans = filterPlansWithPositiveRegionalPrice(plans, country);
   // Las variantes de un mismo plan (Básico con solo menú o solo panel) van en una tarjeta con selector.
   const groups = groupPlanVariants(paidPlans);
-  const popularIdx = popularPlanIndex(groups.length);
+  // «Recomendado» va al plan que marcó el dueño; sin ninguno marcado, a la tarjeta del medio.
+  const popularIdx = recommendedGroupIndex(groups);
 
   return (
     <section id="precios" className="v3-section-dark py-24 md:py-32">

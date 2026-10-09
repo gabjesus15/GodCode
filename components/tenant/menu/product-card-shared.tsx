@@ -33,6 +33,8 @@ export interface ProductCardProduct {
   variants?: ProductVariantGroup[];
 }
 
+import { isVenezuelaCountry } from "@/lib/geo/venezuela";
+import { brandInitials } from "@/lib/tenant/brand-initials";
 import { TENANT_PRODUCT_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
 import { minSizePrice, type ProductSizeOption } from "@/lib/tenant/product-sizes";
 import { productNeedsConfiguration, type ProductVariantGroup } from "@/lib/tenant/product-variants";
@@ -41,21 +43,14 @@ import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-ur
 
 export const PRODUCT_CARD_FALLBACK_IMAGE = TENANT_PRODUCT_FALLBACK_IMAGE;
 
-export /** Inicial (o dos) del producto: "Pollo crispy" → "PC", "Americano" → "A". */
-function productInitials(name: string | null | undefined): string {
-	const words = String(name ?? "").trim().split(/\s+/).filter((w) => w.length > 2);
-	if (words.length === 0) return String(name ?? "?").trim().charAt(0).toUpperCase() || "?";
-	return words
-		.slice(0, 2)
-		.map((w) => w.charAt(0).toUpperCase())
-		.join("");
+/** Inicial del producto sin foto, con la regla de las iniciales de marca: "Pollo crispy" → "P", "La Especial" → "E". */
+export function productInitials(name: string | null | undefined): string {
+	return brandInitials(name, { max: 1, fallback: "?" });
 }
 
-/** Tamaños responsive para next/image según layout del grid */
+/** Tamaños responsive para next/image de la tarjeta en rejilla. */
 export const PRODUCT_IMAGE_SIZES = {
   grid: "(max-width: 480px) 45vw, (max-width: 768px) 42vw, (max-width: 1024px) 28vw, 220px",
-  horizontal: "(max-width: 640px) 42vw, (max-width: 1024px) 22vw, 200px",
-  tall: "(max-width: 480px) 48vw, (max-width: 768px) 44vw, 260px",
 } as const;
 
 export function truncateText(text: string | null | undefined, maxLength: number): string {
@@ -160,7 +155,7 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
     [decreaseQuantity, product.id],
   );
 
-  const showUSD = country === "VE" || country === "Venezuela";
+  const showUSD = isVenezuelaCountry(country);
   const currencyCode = showUSD ? "USD" : undefined;
 
   // Mismo objeto mientras nada cambie: las tarjetas son memo() y reciben `logic`
@@ -368,46 +363,6 @@ export function ProductOfferBadges({
 		</TenantOfferBadgeStack>
 	);
 }
-
-/**
- * `className` era un reemplazo, no un anadido: al pasar `clean-details-affordance`
- * el elemento perdia `product-details-affordance`, que es quien aporta tamano,
- * peso y color. Cuatro de los cinco modificadores por layout no tienen ninguna
- * regla propia, asi que la etiqueta salia sin estilar — 16px por defecto — y
- * `.is-subtle` tampoco enganchaba, porque su regla es
- * `.product-details-affordance.is-subtle`.
- *
- * En Zapatillas eso era visible: "Ver producto" a 16px horizontales dentro de la
- * franja vertical de 38px se desbordaba por ambos lados y desplazaba el nombre
- * del producto fuera de la tarjeta. Que `.product-layout-food .food-details-affordance`
- * solo declare `margin-top` y `color` confirma que la intencion siempre fue
- * base + modificador.
- */
-export const ProductDetailsAffordance = React.memo(function ProductDetailsAffordance({
-  detailsMode,
-  hasDescription,
-  className,
-  subtle = false,
-}: {
-  detailsMode?: string;
-  hasDescription: boolean;
-  className?: string;
-  subtle?: boolean;
-}) {
-  const t = useTranslations("tenant.menu");
-  const isModal = detailsMode !== "inline";
-  if (!isModal && !hasDescription) return null;
-  const label = isModal ? t("card.viewProduct") : t("card.viewMore");
-  const classes = ["product-details-affordance", className, subtle ? "is-subtle" : null]
-    .filter((value): value is string => Boolean(value) && value !== "product-details-affordance")
-    .join(" ");
-
-  return (
-    <span className={`product-details-affordance${classes ? ` ${classes}` : ""}`} aria-hidden>
-      {label}
-    </span>
-  );
-});
 
 type CardCartActionsProps = {
 	logic: ProductCardLogic;

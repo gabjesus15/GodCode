@@ -1,6 +1,7 @@
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
 import { parseThemeColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { STORE_THEME_FONTS, normalizeBackgroundMode, normalizeBrandNameColor, normalizeFontFamily } from "@/lib/store-theme/theme-config";
+import { brandInitials } from "@/lib/tenant/brand-initials";
 import { resolveSurfaceScheme } from "@/lib/tenant/theme/surface-scheme";
 
 import {
@@ -136,13 +137,6 @@ function channelHref(channel: HomeContactChannel, branch: HomeBranchInput): stri
 		case "phone":
 			return phoneToTelHref(branch.phone);
 	}
-}
-
-export function homeInitials(name: string): string {
-	const parts = name.trim().split(/\s+/).filter(Boolean);
-	if (parts.length === 0) return "G";
-	if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-	return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
 function resolveCover(input: ResolveHomePageInput): HomeCover {
@@ -304,7 +298,8 @@ export function resolveHomePage(input: ResolveHomePageInput): HomeViewModel {
 
 	return {
 		name: input.name,
-		initials: homeInitials(input.name),
+		// Sin nombre, la «G» de Gcode: el avatar nunca queda vacío.
+		initials: brandInitials(input.name, { fallback: "G" }),
 		logoUrl: input.logoUrl || null,
 		bio: config.bio,
 		cover: resolveCover(input),

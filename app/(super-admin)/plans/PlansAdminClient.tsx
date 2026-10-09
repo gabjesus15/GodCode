@@ -54,6 +54,10 @@ import {
 	upsertPlanProductMode,
 	type PlanProductMode,
 } from "@/lib/plans/plan-product-mode";
+import { isPlanRecommended, PLAN_RECOMMENDED_KEY, upsertPlanRecommended } from "@/lib/plans/plan-variants";
+
+/** Pestañas que «solo menú digital» deja activas; las demás se bloquean en el formulario. */
+const MENU_ONLY_TAB_SET = new Set<string>(MENU_ONLY_CEO_TABS);
 
 function newDescriptionLineId(): string {
 	if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -192,6 +196,8 @@ type PlanFormState = {
 	is_active: boolean;
 	ceoTabs: string[];
 	productMode: PlanProductMode;
+	/** Lleva la insignia «Recomendado» en la landing (`features.recommended`). */
+	recommended: boolean;
 	baseFeatures: Record<string, unknown>;
 	includedAddonTokens: string[];
 	blockedAddonTokens: string[];
@@ -288,6 +294,7 @@ const emptyForm = (): PlanFormState => ({
 	is_active: true,
 	ceoTabs: [...DEFAULT_ROLE_NAV_PERMISSIONS.ceo],
 	productMode: "full",
+	recommended: false,
 	baseFeatures: {},
 	includedAddonTokens: [],
 	blockedAddonTokens: [],
@@ -332,8 +339,10 @@ export function PlansAdminClient({
 	const startEdit = (p: Plan) => {
 		const baseName = (p.name ?? "").trim();
 		const baseLines = normalizeMarketingLines(p.marketing_lines);
-		const ceoTabsByPlan =
-			extractCeoTabsFromPlanFeatures(p.features) ?? [...DEFAULT_ROLE_NAV_PERMISSIONS.ceo];
+		const productMode = resolvePlanProductMode(p.features);
+		const savedCeoTabs = extractCeoTabsFromPlanFeatures(p.features) ?? [...DEFAULT_ROLE_NAV_PERMISSIONS.ceo];
+		// Con solo menú, el panel se limita a catálogo y banners aunque el plan traiga más pestañas guardadas.
+		const ceoTabsByPlan = productMode === "menu_only" ? savedCeoTabs.filter((id) => MENU_ONLY_TAB_SET.has(id)) : savedCeoTabs;
 		const baseDescriptionLines = toDescriptionLines(baseLines);
 		const localizedLines = localeLinesFromUnknown(baseLines, p.marketing_lines_i18n);
 		localizedLines[DEFAULT_LOCALE] = baseDescriptionLines.map((line) => ({ ...line }));
@@ -353,7 +362,9 @@ export function PlansAdminClient({
 			}
 		);
 		const { baseFeatures, includedAddonTokens, blockedAddonTokens, allowedAddonTokens } = splitBaseAndPolicyFeatures(p.features);
+		// Las claves con campo propio en el formulario se vuelven a escribir al guardar.
 		delete baseFeatures[PLAN_PRODUCT_MODE_KEY];
+		delete baseFeatures[PLAN_RECOMMENDED_KEY];
 		setForm({
 			name: baseName,
 			price: p.price ?? "",
@@ -366,7 +377,8 @@ export function PlansAdminClient({
 			is_public: p.is_public !== false,
 			is_active: p.is_active !== false,
 			ceoTabs: ceoTabsByPlan,
-			productMode: resolvePlanProductMode(p.features),
+			productMode,
+			recommended: isPlanRecommended(p.features),
 			baseFeatures,
 			includedAddonTokens,
 			blockedAddonTokens,
@@ -422,9 +434,9 @@ export function PlansAdminClient({
 			max_users: maxUsersNum,
 			is_public: form.is_public,
 			is_active: form.is_active,
-			features: upsertPlanProductMode(
-				upsertPlanFeaturesCeoTabs(buildFeaturesPayload(form), form.ceoTabs),
-				form.productMode,
+			features: upsertPlanRecommended(
+				upsertPlanProductMode(upsertPlanFeaturesCeoTabs(buildFeaturesPayload(form), form.ceoTabs), form.productMode),
+				form.recommended,
 			),
 			marketing_lines: normalizeMarketingLines(form.descriptionLines.map((l) => l.text)),
 			name_i18n: buildPlanNameI18nPayload(form.nameByLocale, nameTrimmed),
@@ -493,6 +505,8 @@ export function PlansAdminClient({
 			setSaving(false);
 		}
 	};
+
+	const menuOnly = form.productMode === "menu_only";
 
 	return (
 		<div className="flex min-w-0 flex-col gap-6">
@@ -580,7 +594,7 @@ export function PlansAdminClient({
 									En landing: si es 0 no se añade línea de usuarios; si es mayor, muestra el tope.
 								</span>
 							</label>
-							<div className="grid gap-2 sm:col-span-2 sm:grid-cols-2">
+							<div className="grid gap-2 sm:col-span-2 sm:grid-cols-3">
 								<div className="rounded-lg bg-zinc-50 px-3 py-2.5 dark:bg-zinc-900">
 									<SaasSwitch
 										checked={form.is_public}
@@ -595,7 +609,17 @@ export function PlansAdminClient({
 										label="Plan activo"
 									/>
 								</div>
+								<div className="rounded-lg bg-zinc-50 px-3 py-2.5 dark:bg-zinc-900">
+									<SaasSwitch
+										checked={form.recommended}
+										onChange={(checked) => setForm((p) => ({ ...p, recommended: checked }))}
+										label="Recomendado en el landing"
+									/>
+								</div>
 							</div>
+							<span className={cn(HELPER_CLASS, "sm:col-span-2")}>
+								«Recomendado» destaca su tarjeta en la landing. Si ningún plan lo tiene, se destaca el del medio.
+							</span>
 						</div>
 					</FormSection>
 
@@ -887,7 +911,8 @@ export function PlansAdminClient({
 						title="Qué incluye el plan"
 						description="«Solo menú digital» manda los pedidos al WhatsApp del dueño y deja el panel en productos y banners. «Solo panel CEO» no publica menú."
 					>
-						<div className="grid gap-2.5 sm:grid-cols-3" role="radiogroup" aria-label="Qué incluye el plan">
+						{/* Botones con `aria-pressed`: todos tabulables, sin la mecánica de flechas de un radiogroup. */}
+						<div className="grid gap-2.5 sm:grid-cols-3" role="group" aria-label="Qué incluye el plan">
 							{PLAN_PRODUCT_MODES.map((mode) => {
 								const selected = form.productMode === mode;
 								const label = PLAN_PRODUCT_MODE_LABELS[mode];
@@ -895,8 +920,7 @@ export function PlansAdminClient({
 									<button
 										key={mode}
 										type="button"
-										role="radio"
-										aria-checked={selected}
+										aria-pressed={selected}
 										onClick={() =>
 											setForm((prev) => ({
 												...prev,
@@ -930,6 +954,9 @@ export function PlansAdminClient({
 						title="Accesos del panel de la empresa por membresía"
 						description="Selecciona las pestañas que tendrá activa la empresa cuando use este plan."
 					>
+						{menuOnly ? (
+							<p className={cn(HELPER_CLASS, "mb-3")}>Con solo menú, el panel se limita a estas secciones.</p>
+						) : null}
 						<div className="grid gap-2.5 sm:grid-cols-2">
 							{TENANT_ADMIN_TAB_OPTIONS.map((tab) => {
 								const checked = form.ceoTabs.includes(tab.id);
@@ -937,6 +964,7 @@ export function PlansAdminClient({
 									<SaasCheckbox
 										key={tab.id}
 										checked={checked}
+										disabled={menuOnly && !MENU_ONLY_TAB_SET.has(tab.id)}
 										onChange={(checked) =>
 											setForm((prev) => ({
 												...prev,
@@ -1170,6 +1198,7 @@ function isLongFeatureLine(line: string): boolean {
 
 function PlanCard({ plan, rate, onEdit }: { plan: Plan; rate: number | null; onEdit: (plan: Plan) => void }) {
 	const productMode = resolvePlanProductMode(plan.features);
+	const recommended = isPlanRecommended(plan.features);
 	const [expanded, setExpanded] = useState(false);
 	const listId = useId();
 	const latinPrice = plan.prices_by_continent?.["Latinoamérica"];
@@ -1188,8 +1217,9 @@ function PlanCard({ plan, rate, onEdit }: { plan: Plan; rate: number | null; onE
 					<h3 className="truncate text-sm font-semibold text-zinc-950 dark:text-zinc-50" title={name}>
 						{name}
 					</h3>
-					{plan.is_public === false || plan.is_active === false || productMode !== "full" ? (
+					{plan.is_public === false || plan.is_active === false || productMode !== "full" || recommended ? (
 						<div className="mt-1.5 flex flex-wrap gap-1.5">
+							{recommended && <SaasStatusBadge label="Recomendado" variant="info" />}
 							{productMode !== "full" && (
 								<SaasStatusBadge label={PLAN_PRODUCT_MODE_LABELS[productMode].title} variant="neutral" />
 							)}

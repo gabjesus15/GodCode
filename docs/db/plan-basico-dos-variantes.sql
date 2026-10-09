@@ -3,6 +3,9 @@
 -- NO está aplicado en producción. Revisar y correr a mano (SQL editor o MCP de Supabase)
 -- cuando se fusione el PR que agrega `plans.features.product_mode`.
 --
+-- Antes de correr: comprobar que existan `plans.name_i18n`, `plans.marketing_lines_i18n` y
+-- `plans.prices_by_continent` (columnas opcionales de las migraciones de planes).
+--
 -- Qué hace:
 -- 1. Crea «Básico · Menú digital» copiando precio, límites y precios por región del Básico
 --    actual. `product_mode = menu_only`: los pedidos llegan por WhatsApp y el panel CEO
@@ -40,10 +43,7 @@ select
 	(coalesce(b.features, '{}'::jsonb) - 'ceo_tabs')
 		|| jsonb_build_object(
 			'product_mode', 'menu_only',
-			'ceo_tabs', jsonb_build_array('categories', 'products', 'beverages', 'extras', 'menu_modifiers', 'menu_carousel'),
-			'menu', true,
-			'cash', false,
-			'crm', false
+			'ceo_tabs', jsonb_build_array('categories', 'products', 'beverages', 'extras', 'menu_modifiers', 'menu_carousel')
 		),
 	jsonb_build_array(
 		'Menú digital con tu marca y tu link',
@@ -94,10 +94,7 @@ select
 				'orders', 'caja', 'analytics', 'local_expenses', 'categories', 'products', 'inventory',
 				'beverages', 'extras', 'menu_modifiers', 'menu_carousel', 'clients', 'users',
 				'payment_methods', 'coupons'
-			),
-			'menu', true,
-			'cash', true,
-			'crm', true
+			)
 		),
 	jsonb_build_array(
 		'Caja, pedidos y reportes de tu local',

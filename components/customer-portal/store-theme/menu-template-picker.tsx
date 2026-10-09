@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { Check, Sparkles } from "lucide-react";
 
 import {
+	describeSectorForCopy,
 	orderMenuTemplatesForSector,
 	recommendMenuTemplate,
 	type MenuTemplate,
@@ -36,7 +37,9 @@ export function MenuTemplatePicker({
 	const recommended = sector ? recommendMenuTemplate(sector) : null;
 
 	return (
-		<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" role="radiogroup" aria-label="Plantillas del menú">
+		// Botones normales con `aria-pressed`: todos entran en el orden de tabulación y
+		// la elegida se anuncia como pulsada, sin la mecánica de flechas de un radiogroup.
+		<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" role="group" aria-label="Plantillas del menú">
 			{templates.map((template) => {
 				const selected = value === template.id;
 				const isRecommended = recommended === template.id;
@@ -44,8 +47,7 @@ export function MenuTemplatePicker({
 					<button
 						key={template.id}
 						type="button"
-						role="radio"
-						aria-checked={selected}
+						aria-pressed={selected}
 						disabled={disabled}
 						onClick={() => onChange(template.id)}
 						className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-60 ${
@@ -65,7 +67,7 @@ export function MenuTemplatePicker({
 							{isRecommended ? (
 								<span className="inline-flex w-fit items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
 									<Sparkles className="h-3 w-3" aria-hidden />
-									Recomendada para {sector?.toLocaleLowerCase("es") === "otro" ? "tu negocio" : sector}
+									Recomendada para {describeSectorForCopy(sector)}
 								</span>
 							) : null}
 							<span className="text-xs leading-snug text-[#6e6e73]">{template.description}</span>
@@ -83,9 +85,10 @@ function fontStack(fontId: string): string {
 }
 
 /**
- * Miniatura del menú: cabecera con el nombre, dos pestañas y dos productos con
- * la forma de tarjeta de la plantilla. No usa fotos: los platos son manchas de
- * color, para que se juzgue el estilo y no la comida.
+ * Miniatura del menú: cabecera con el nombre, las categorías, los destacados si
+ * van en carrusel, dos productos con la forma de tarjeta de la plantilla y el
+ * carrito (botón redondo o barra con el total). No usa fotos: los platos son
+ * manchas de color, para que se juzgue el estilo y no la comida.
  */
 export function MenuTemplateThumbnail({ template }: { template: MenuTemplate }) {
 	const { theme } = template;
@@ -101,11 +104,12 @@ export function MenuTemplateThumbnail({ template }: { template: MenuTemplate }) 
 		`radial-gradient(circle at 50% 50%, ${accent}cc 0 32%, #f3d9a4 33% 46%, ${dark ? "#2a2a2f" : "#ece7df"} 47%)`,
 		`radial-gradient(circle at 50% 55%, #e9b872 0 30%, #8a5a2b 31% 40%, ${dark ? "#26262b" : "#efe9e1"} 41%)`,
 	];
+	const floating: CSSProperties = { background: accent, boxShadow: "0 2px 6px rgba(0,0,0,0.25)" };
 
 	const root: CSSProperties = { background: theme.backgroundColor, color: fg };
 
 	return (
-		<span className="block aspect-[4/3] w-full overflow-hidden border-b border-[#f0f0f2]" style={root} aria-hidden>
+		<span className="relative block aspect-[4/3] w-full overflow-hidden border-b border-[#f0f0f2]" style={root} aria-hidden>
 			{theme.headerStyle === "cover" ? (
 				<span className="relative block h-9" style={{ background: `linear-gradient(135deg, ${accent}, ${theme.secondaryColor})` }}>
 					<span
@@ -157,6 +161,24 @@ export function MenuTemplateThumbnail({ template }: { template: MenuTemplate }) 
 					</>
 				)}
 			</span>
+			{theme.featuredStyle === "carousel" ? (
+				// Destacados en carrusel: una fila de tarjetitas que sigue fuera del borde.
+				<span className="flex gap-1.5 overflow-hidden px-2.5 pt-1.5">
+					{[dishes[0], dishes[1], dishes[0]].map((dish, i) => (
+						<span
+							key={i}
+							className="flex w-[38%] shrink-0 items-center gap-1 rounded-md p-1"
+							style={{ background: surface, border: `1px solid ${line}`, opacity: i === 2 ? 0.6 : 1 }}
+						>
+							<span className="h-4 w-4 shrink-0 rounded" style={{ background: dish }} />
+							<span className="flex flex-1 flex-col gap-0.5">
+								<span className="h-1 w-4/5 rounded-full" style={{ background: fg, opacity: 0.85 }} />
+								<span className="h-1 w-1/2 rounded-full" style={{ background: accent }} />
+							</span>
+						</span>
+					))}
+				</span>
+			) : null}
 			{theme.productCardStyle === "layout-carta" || theme.productCardStyle === "glass-row" ? (
 				<span className="flex flex-col gap-1.5 px-2.5 pt-2">
 					{[...dishes, dishes[0]].map((dish, i) => (
@@ -215,6 +237,16 @@ export function MenuTemplateThumbnail({ template }: { template: MenuTemplate }) 
 						),
 					)}
 				</span>
+			)}
+			{theme.cartStyle === "bar" ? (
+				// Barra fina abajo con la cantidad, el texto y el total, como en el menú.
+				<span className="absolute inset-x-2.5 bottom-2 flex h-4 items-center gap-1 rounded-md px-1" style={floating}>
+					<span className="h-2.5 w-3 rounded-sm bg-black/20" />
+					<span className="h-1 flex-1 rounded-full bg-white/80" />
+					<span className="h-1 w-4 rounded-full bg-white" />
+				</span>
+			) : (
+				<span className="absolute bottom-2 right-2.5 h-4 w-4 rounded-full" style={floating} />
 			)}
 		</span>
 	);

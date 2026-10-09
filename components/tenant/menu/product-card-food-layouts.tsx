@@ -28,8 +28,7 @@ export type LayoutCardProps = {
 /**
  * Tarjetas pensadas para comida (plantillas de menú por tipo de negocio).
  *
- * A diferencia de las de product-card-layouts (sacadas de tiendas de ropa,
- * zapatillas o gaming), estas cuatro:
+ * Las cuatro siguen las mismas reglas:
  * - leen solo los tokens de superficie del menú (`--menu-*`), así que se ven
  *   bien en claro y en oscuro sin reglas aparte;
  * - no fingen foto: un producto sin imagen lleva un relleno con su inicial en

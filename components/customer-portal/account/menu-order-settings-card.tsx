@@ -87,13 +87,8 @@ export function MenuOrderSettingsCard({
 		);
 	}
 
+	// Con solo menú digital no hay panel donde recibir pedidos: el canal no se elige, es WhatsApp.
 	const menuOnly = planProductMode === "menu_only";
-	const channelOptions = menuOnly
-		? CHANNEL_OPTIONS.filter((option) => option.value === "whatsapp_only").map((option) => ({
-				...option,
-				description: "El cliente arma su pedido en el menú y te llega a WhatsApp con todo el detalle.",
-			}))
-		: CHANNEL_OPTIONS;
 
 	return (
 		<Card className="space-y-4 p-4 sm:p-5">
@@ -116,12 +111,6 @@ export function MenuOrderSettingsCard({
 				</Alert>
 			) : null}
 
-			{menuOnly ? (
-				<Alert variant="info">
-					Tu plan es solo menú digital: cada pedido te llega a WhatsApp con el detalle listo para preparar.
-				</Alert>
-			) : null}
-
 			<label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#e5e5ea] bg-[#fbfbfd] p-3.5">
 				<input
 					type="checkbox"
@@ -140,36 +129,50 @@ export function MenuOrderSettingsCard({
 
 			{cartEnabled && planAllowsOnlineOrdering ? (
 				<div className="space-y-2">
-					<p className="text-sm font-medium text-[#1d1d1f]">Canal de pedidos</p>
-					<div className="grid gap-2">
-						{channelOptions.map((option) => {
-							const Icon = option.icon;
-							const selected = orderChannel === option.value;
-							return (
-								<button
-									key={option.value}
-									type="button"
-									disabled={saving}
-									onClick={() => onOrderChannelChange(option.value)}
-									className={`flex items-start gap-3 rounded-xl border p-3.5 text-left transition-colors ${
-										selected
-											? "border-[#0071e3] bg-[#f0f7ff]"
-											: "border-[#e5e5ea] bg-white hover:border-[#c7c7cc]"
-									}`}
-								>
-									<Icon
-										size={18}
-										className={`mt-0.5 shrink-0 ${selected ? "text-[#0071e3]" : "text-[#6e6e73]"}`}
-									/>
-									<span className="space-y-0.5">
-										<span className="block text-sm font-medium text-[#1d1d1f]">{option.title}</span>
-										<span className="block text-sm text-[#6e6e73]">{option.description}</span>
-									</span>
-								</button>
-							);
-						})}
-					</div>
-					{orderChannel !== "panel_only" ? (
+					{menuOnly ? (
+						<div className="rounded-xl border border-[#e5e5ea] bg-[#fbfbfd] p-3.5">
+							<p className="flex items-center gap-2 text-sm text-[#1d1d1f]">
+								<MessageCircle size={18} className="shrink-0 text-[#6e6e73]" aria-hidden />
+								<span className="font-medium">Canal de pedidos:</span>
+								<span>WhatsApp</span>
+							</p>
+							<p className="mt-1 text-sm text-[#6e6e73]">Tu plan envía los pedidos por WhatsApp.</p>
+						</div>
+					) : (
+						<>
+							<p className="text-sm font-medium text-[#1d1d1f]">Canal de pedidos</p>
+							<div className="grid gap-2">
+								{CHANNEL_OPTIONS.map((option) => {
+									const Icon = option.icon;
+									const selected = orderChannel === option.value;
+									return (
+										<button
+											key={option.value}
+											type="button"
+											disabled={saving}
+											aria-pressed={selected}
+											onClick={() => onOrderChannelChange(option.value)}
+											className={`flex items-start gap-3 rounded-xl border p-3.5 text-left transition-colors ${
+												selected
+													? "border-[#0071e3] bg-[#f0f7ff]"
+													: "border-[#e5e5ea] bg-white hover:border-[#c7c7cc]"
+											}`}
+										>
+											<Icon
+												size={18}
+												className={`mt-0.5 shrink-0 ${selected ? "text-[#0071e3]" : "text-[#6e6e73]"}`}
+											/>
+											<span className="space-y-0.5">
+												<span className="block text-sm font-medium text-[#1d1d1f]">{option.title}</span>
+												<span className="block text-sm text-[#6e6e73]">{option.description}</span>
+											</span>
+										</button>
+									);
+								})}
+							</div>
+						</>
+					)}
+					{menuOnly || orderChannel !== "panel_only" ? (
 						<p className="text-xs text-[#6e6e73]">
 							Asegúrate de tener el teléfono de WhatsApp configurado en Perfil público o en cada sucursal.
 						</p>

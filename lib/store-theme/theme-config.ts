@@ -226,7 +226,7 @@ export function isGlassCardStyle(style: unknown): boolean {
   return String(style ?? "").startsWith("glass");
 }
 
-/** Clase CSS del grid (`grid-glass`, `grid-layout-clean`, …). */
+/** Clase CSS del grid (`grid-glass`, `grid-layout-cartel`, …). */
 export function productCardGridClass(cardStyle: unknown): string {
   return `grid-${normalizeProductCardStyle(cardStyle)}`;
 }
