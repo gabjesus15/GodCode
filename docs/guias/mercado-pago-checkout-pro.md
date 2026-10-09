@@ -10,8 +10,8 @@ Se usa la aplicación **GdCode** de la cuenta Mercado Pago de GodCode (Tus integ
 
 1. El paso 2 lista Mercado Pago solo si el método está activo, el país está permitido (CL), hay tasa USD→CLP y el servidor tiene `MERCADOPAGO_ACCESS_TOKEN`. Si falta algo, la opción no aparece.
 2. En el paso 3, la página muestra el total en USD y debajo «Se cobra en pesos chilenos: $18.050». Si Mercado Pago se apagó después del paso 2, el botón queda desactivado y pide cambiar el método.
-3. «Pagar con Mercado Pago» crea una orden (Checkout Pro, Orders API) con ese monto en CLP y lleva a la persona a Mercado Pago. La orden queda guardada como la vigente de la solicitud.
-4. Al terminar, Mercado Pago la devuelve a `/api/onboarding/mercadopago-return`. El servidor **consulta la orden a Mercado Pago**, comprueba que sea la vigente y que esté cobrada por el total, y cierra el alta (empresa, suscripción, cupón, correo de bienvenida).
+3. «Pagar con Mercado Pago» crea una preferencia (Checkout Pro, API de Preferencias) con ese monto en CLP y lleva a la persona a Mercado Pago. La preferencia queda guardada como la vigente de la solicitud y vence en 24 horas.
+4. Al terminar, Mercado Pago la devuelve a `/api/onboarding/mercadopago-return`. El servidor **consulta a Mercado Pago la merchant order** de esa preferencia, comprueba que sea la vigente y que esté cobrada por el total, y cierra el alta (empresa, suscripción, cupón, correo de bienvenida).
 5. Si la persona cierra la pestaña antes de volver, el **webhook** (`/api/payments/mercadopago/webhook`) hace lo mismo. Las dos vías son idempotentes: la segunda solo confirma.
 
 Mercado Pago no aparece en `/cuenta` (renovaciones): por ahora solo cobra el alta.
@@ -57,7 +57,7 @@ Después, en **Super admin → Métodos de cobro → Mercado Pago**: el switch l
 En Tus integraciones → GdCode → **Webhooks → Configurar notificaciones**:
 
 - URL de producción: `https://www.godcode.me/api/payments/mercadopago/webhook`
-- Evento: solo **Órdenes (Mercado Pago)** (tópico `order`).
+- Evento: solo **Pagos** (tópico `payment`). El webhook busca la merchant order del pago y la cierra igual que el regreso.
 - Guardar genera la clave secreta → `MERCADOPAGO_WEBHOOK_SECRET`.
 
 Sin la clave, el webhook responde 503 y no aplica nada (falla cerrado). Con firma inválida responde 401. Mercado Pago reintenta lo que no sea 2xx.
@@ -72,14 +72,18 @@ Sin la clave, el webhook responde 503 y no aplica nada (falla cerrado). Con firm
 4. En Mercado Pago, entrar con la **cuenta compradora de prueba** (Tus integraciones → Cuentas de prueba) y pagar con una **tarjeta de prueba** (Tus integraciones → Tarjetas de prueba; el nombre del titular define el resultado, `APRO` = aprobado).
 5. Al volver, la cuenta queda activa. Si se cierra la pestaña antes, el webhook la activa (en local no llega: Mercado Pago no puede avisar a `localhost`).
 
-Con la URL de regreso en `localhost` la orden se crea sin regreso automático (Mercado Pago no lo acepta hacia direcciones locales): para volver se usa el enlace de regreso de la pantalla final de Mercado Pago.
+Con la URL de regreso en `localhost` la preferencia se crea sin regreso automático (Mercado Pago no lo acepta hacia direcciones locales): para volver se usa el enlace de regreso de la pantalla final de Mercado Pago.
 
 ---
+
+## Por qué API de Preferencias y no Orders
+
+La cuenta de GodCode responde **403 «At least one policy returned UNAUTHORIZED»** al crear órdenes de Checkout Pro con la API Orders, con cualquier aplicación (el token de producción es el mismo). La API de Preferencias es la de Checkout Pro de siempre y sí está habilitada. En pruebas, además, los tokens antiguos `TEST-…` también dan 403: usa el `APP_USR-…` de una cuenta de prueba vendedor.
 
 ## Qué revisar si algo falla
 
 - **No aparece Mercado Pago en el paso 2:** país distinto de Chile, método apagado, sin tasa o sin `MERCADOPAGO_ACCESS_TOKEN` en el servicio.
-- **«No pudimos iniciar el pago con Mercado Pago»:** token inválido o de otra cuenta. Los logs del servicio muestran `mercadopago create order` con el código de Mercado Pago.
-- **Volvió y dice «procesando»:** la orden aún no está cobrada; el webhook la activa cuando se confirme.
+- **«No pudimos iniciar el pago con Mercado Pago»:** token inválido o de otra cuenta. Los logs del servicio muestran `mercadopago create preference` con el código de Mercado Pago.
+- **Volvió y dice «procesando»:** el pago aún no está acreditado; el webhook la activa cuando se confirme.
 - **Webhook 401:** la clave secreta no coincide (¿se copió con un prefijo?).
 - Telegram avisa «Eligió plan» con el monto en USD y en CLP, y «Negocio activado (pagó con Mercado Pago)».

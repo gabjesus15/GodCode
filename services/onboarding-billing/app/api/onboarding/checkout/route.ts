@@ -26,7 +26,7 @@ import { completeOnboardingPayment } from "@/lib/onboarding/complete-onboarding-
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 import { isPaymentMethodAvailableForCountry } from "@/lib/payments/payment-method-countries";
-import { createMercadoPagoOrder, toClp, toMercadoPagoReference } from "@/lib/payments/mercadopago";
+import { createMercadoPagoPreference, toClp, toMercadoPagoReference } from "@/lib/payments/mercadopago";
 import { createPayPalOrder, encodePayPalCustomId, isPayPalConfigured } from "@/lib/payments/paypal";
 import { getAppUrl } from "@/lib/tenant/app-url";
 
@@ -257,7 +257,7 @@ export async function POST(req: NextRequest) {
 			if (!(amountClp > 0)) {
 				return NextResponse.json({ error: "No pudimos calcular el total en pesos. Escríbenos a soporte." }, { status: 409 });
 			}
-			const order = await createMercadoPagoOrder({
+			const preference = await createMercadoPagoPreference({
 				amountClp,
 				title: `${plan.name} · ${app.business_name}`,
 				// Mismo contenido que el customId de PayPal (meses pagados y otorgados), con `_` en vez de `|`.
@@ -272,14 +272,14 @@ export async function POST(req: NextRequest) {
 				),
 				returnUrl: `${getAppUrl()}/api/onboarding/mercadopago-return`,
 			});
-			if (!order.ok) {
-				return NextResponse.json({ error: order.error }, { status: 502 });
+			if (!preference.ok) {
+				return NextResponse.json({ error: preference.error }, { status: 502 });
 			}
 
-			// La orden vigente queda en la solicitud: el regreso y el webhook solo aceptan esta.
+			// La preferencia vigente queda en la solicitud: el regreso y el webhook solo aceptan esta.
 			await updateApplicationPaymentState(supabaseAdmin, app.id, {
 				applicationStatus: "payment_pending",
-				paymentReference: order.orderId,
+				paymentReference: preference.preferenceId,
 				paymentStatus: "pending",
 				paymentReferenceUrl: null,
 				paymentMonths: grant.chargedMonths,
@@ -288,7 +288,7 @@ export async function POST(req: NextRequest) {
 			});
 			await notifyPlanChosen();
 
-			return NextResponse.json({ ok: true, url: order.checkoutUrl, ...summary });
+			return NextResponse.json({ ok: true, url: preference.checkoutUrl, ...summary });
 		}
 
 		const paymentRef = `manual-${app.id}-${Date.now()}`;

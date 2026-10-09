@@ -33,17 +33,17 @@ type ApplicationRow = {
  * Mercado Pago (GET) y el webhook; las dos vías llegan aquí y `completeOnboardingPayment`
  * es idempotente, así que la que llegue segunda solo confirma.
  *
- * Mismos controles que PayPal: la orden se consulta a Mercado Pago (no se confía en lo que
- * traiga la URL), debe ser la vigente de la solicitud (si la persona volvió a pagar o cambió
- * de plan, la vieja ya no vale) y estar cobrada por el total.
+ * Mismos controles que PayPal: la merchant order se consulta a Mercado Pago (no se confía en
+ * lo que traiga la URL), su preferencia debe ser la vigente de la solicitud (si la persona
+ * volvió a pagar o cambió de plan, la vieja ya no vale) y debe estar cobrada por el total.
  */
 export async function captureOnboardingMercadoPagoOrder(params: {
 	supabaseAdmin: SupabaseClient;
-	orderId: string;
+	merchantOrderId: string;
 }): Promise<MercadoPagoOnboardingResult> {
-	const { supabaseAdmin, orderId } = params;
+	const { supabaseAdmin, merchantOrderId } = params;
 
-	const order = await getMercadoPagoOrder(orderId);
+	const order = await getMercadoPagoOrder(merchantOrderId);
 	if (!order) {
 		return { ok: false, reason: "pending", error: "No pudimos consultar el pago en Mercado Pago.", status: 502 };
 	}
@@ -61,7 +61,8 @@ export async function captureOnboardingMercadoPagoOrder(params: {
 	if (!app) return { ok: false, reason: "ignored", error: "Solicitud no encontrada", status: 404 };
 	const verificationToken = app.verification_token;
 
-	if (String(app.payment_reference ?? "") !== order.id) {
+	const preferenceId = order.preferenceId ?? "";
+	if (!preferenceId || String(app.payment_reference ?? "") !== preferenceId) {
 		return {
 			ok: false,
 			reason: "rejected",
@@ -91,7 +92,7 @@ export async function captureOnboardingMercadoPagoOrder(params: {
 	const result = await completeOnboardingPayment({
 		supabaseAdmin,
 		applicationId: app.id,
-		paymentReference: order.id,
+		paymentReference: preferenceId,
 		// El historial guarda importes en USD: el que se cobró al tipo de cambio del día.
 		amountPaid: Number(app.payment_amount ?? 0),
 		methodSlug: "mercadopago",
@@ -104,5 +105,21 @@ export async function captureOnboardingMercadoPagoOrder(params: {
 	if (!result.ok) {
 		return { ok: false, reason: "pending", error: result.error, status: result.status, verificationToken };
 	}
-	return { ok: true, ref: order.id };
+	return { ok: true, ref: preferenceId };
+}
+
+/**
+ * Token de la página de pago de la solicitud cuya preferencia vigente es esta. Sirve para
+ * devolver a la persona al paso de pago cuando vuelve de Mercado Pago sin haber pagado.
+ */
+export async function findOnboardingTokenByPreference(
+	supabaseAdmin: SupabaseClient,
+	preferenceId: string,
+): Promise<string | null> {
+	const { data } = await supabaseAdmin
+		.from("onboarding_applications")
+		.select("verification_token")
+		.eq("payment_reference", preferenceId)
+		.maybeSingle();
+	return (data as { verification_token: string | null } | null)?.verification_token ?? null;
 }

@@ -16,17 +16,19 @@ vi.mock("@/lib/onboarding/complete-onboarding-payment", () => ({
 
 import { captureOnboardingMercadoPagoOrder } from "@/lib/onboarding/mercadopago-onboarding";
 
-const ORDER_ID = "ORD01M28P44G5FG8RJPM579EH56FV";
+const ORDER_ID = "36012345678";
+const PREF_ID = "3751385378-4d78444f-87fb-4ab4-878d-b484e6c987dd";
 
 function order(overrides: Record<string, unknown> = {}) {
 	return {
 		id: ORDER_ID,
-		status: "processed",
-		statusDetail: "accredited",
+		preferenceId: PREF_ID,
+		orderStatus: "paid",
 		externalReference: "ob_app-1_3_4_1",
 		currency: "CLP",
 		totalAmount: 54150,
-		totalPaidAmount: 54150,
+		paidAmount: 54150,
+		paymentStatuses: ["approved"],
 		...overrides,
 	};
 }
@@ -39,7 +41,7 @@ beforeEach(() => {
 		onboarding_applications: [
 			{
 				id: "app-1",
-				payment_reference: ORDER_ID,
+				payment_reference: PREF_ID,
 				payment_amount: 57,
 				verification_token: "tok-1",
 				subscription_payment_method: "paypal",
@@ -55,13 +57,13 @@ beforeEach(() => {
 describe("captureOnboardingMercadoPagoOrder", () => {
 	it("orden cobrada y vigente: cierra el alta con los meses de la orden y el monto en USD", async () => {
 		getOrder.mockResolvedValue(order());
-		const result = await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, orderId: ORDER_ID });
+		const result = await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, merchantOrderId: ORDER_ID });
 
-		expect(result).toEqual({ ok: true, ref: ORDER_ID });
+		expect(result).toEqual({ ok: true, ref: PREF_ID });
 		expect(complete).toHaveBeenCalledWith(
 			expect.objectContaining({
 				applicationId: "app-1",
-				paymentReference: ORDER_ID,
+				paymentReference: PREF_ID,
 				amountPaid: 57,
 				methodSlug: "mercadopago",
 				chargedMonths: 3,
@@ -73,43 +75,43 @@ describe("captureOnboardingMercadoPagoOrder", () => {
 		expect(db.onboarding_applications[0].subscription_payment_method).toBe("mercadopago");
 	});
 
-	it("una orden que ya no es la vigente no activa nada", async () => {
-		db.onboarding_applications[0].payment_reference = "ORD-NUEVA";
+	it("una preferencia que ya no es la vigente no activa nada", async () => {
+		db.onboarding_applications[0].payment_reference = "3751385378-otra";
 		getOrder.mockResolvedValue(order());
-		const result = await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, orderId: ORDER_ID });
+		const result = await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, merchantOrderId: ORDER_ID });
 
 		expect(result).toMatchObject({ ok: false, reason: "rejected", verificationToken: "tok-1" });
 		expect(complete).not.toHaveBeenCalled();
 	});
 
 	it("cobro parcial o en proceso: queda pendiente", async () => {
-		getOrder.mockResolvedValue(order({ totalPaidAmount: 1000 }));
-		expect(await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, orderId: ORDER_ID })).toMatchObject({ ok: false, reason: "pending" });
-		getOrder.mockResolvedValue(order({ status: "action_required", totalPaidAmount: 0 }));
-		expect(await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, orderId: ORDER_ID })).toMatchObject({ ok: false, reason: "pending" });
+		getOrder.mockResolvedValue(order({ orderStatus: "payment_required", paidAmount: 1000 }));
+		expect(await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, merchantOrderId: ORDER_ID })).toMatchObject({ ok: false, reason: "pending" });
+		getOrder.mockResolvedValue(order({ orderStatus: "payment_in_process", paidAmount: 0, paymentStatuses: ["in_process"] }));
+		expect(await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, merchantOrderId: ORDER_ID })).toMatchObject({ ok: false, reason: "pending" });
 		expect(complete).not.toHaveBeenCalled();
 	});
 
 	it("orden fallida: hay que volver a pagar", async () => {
-		getOrder.mockResolvedValue(order({ status: "failed", totalPaidAmount: 0 }));
-		const result = await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, orderId: ORDER_ID });
+		getOrder.mockResolvedValue(order({ orderStatus: "payment_required", paidAmount: 0, paymentStatuses: ["rejected"] }));
+		const result = await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, merchantOrderId: ORDER_ID });
 		expect(result).toMatchObject({ ok: false, reason: "failed", verificationToken: "tok-1" });
 		expect(complete).not.toHaveBeenCalled();
 	});
 
 	it("otra moneda no se acepta", async () => {
 		getOrder.mockResolvedValue(order({ currency: "USD" }));
-		expect(await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, orderId: ORDER_ID })).toMatchObject({ ok: false, reason: "rejected" });
+		expect(await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, merchantOrderId: ORDER_ID })).toMatchObject({ ok: false, reason: "rejected" });
 		expect(complete).not.toHaveBeenCalled();
 	});
 
 	it("una orden que no es de un alta se ignora", async () => {
 		getOrder.mockResolvedValue(order({ externalReference: "pedido-123" }));
-		expect(await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, orderId: ORDER_ID })).toMatchObject({ ok: false, reason: "ignored" });
+		expect(await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, merchantOrderId: ORDER_ID })).toMatchObject({ ok: false, reason: "ignored" });
 	});
 
 	it("si Mercado Pago no responde, se reintenta después", async () => {
 		getOrder.mockResolvedValue(null);
-		expect(await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, orderId: ORDER_ID })).toMatchObject({ ok: false, reason: "pending", status: 502 });
+		expect(await captureOnboardingMercadoPagoOrder({ supabaseAdmin: client, merchantOrderId: ORDER_ID })).toMatchObject({ ok: false, reason: "pending", status: 502 });
 	});
 });
