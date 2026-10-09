@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { createRequestContext, logger } from "@/lib/infra/logger";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { sendEmail, teamInbox } from "@/lib/email/send";
 import { verifyRecaptcha } from "@/lib/onboarding/recaptcha";
@@ -81,6 +82,8 @@ export async function POST(req: NextRequest) {
 
 		const recaptcha = await verifyRecaptcha(body.recaptcha_token, RECAPTCHA_SECRET);
 		if (!recaptcha.ok) {
+			// El código de Google (p. ej. invalid-input-response) solo queda en el log, no se le muestra al cliente.
+			logger.warn("recaptcha_failed", createRequestContext("/api/onboarding/apply", "POST", "onboarding-billing"), { reason: recaptcha.error });
 			return NextResponse.json({ error: "Verificación de seguridad fallida. Intenta de nuevo." }, { status: 400 });
 		}
 
