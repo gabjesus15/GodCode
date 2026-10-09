@@ -514,6 +514,7 @@
           "tarjeta": "Cartao (Presencial)",
           "pago_movil": "Pagamento movel",
           "zelle": "Zelle",
+          "binance_pay": "Binance Pay",
           "transferencia_bancaria": "Transferencia",
           "stripe": "Cartao (Online)",
           "mercadopago": "MercadoPago",
@@ -528,6 +529,7 @@
           "noBankData": "Sem dados bancarios configurados.",
           "noMobilePaymentData": "Sem dados de pagamento movel.",
           "noZelleData": "Sem dados de Zelle.",
+          "noBinancePayData": "Sem dados de Binance Pay.",
           "followInstructions": "Siga as instrucoes para pagar com",
           "detailsTitle": "Dados de pagamento",
           "configLabels": {
@@ -540,6 +542,8 @@
             "phone": "Telefone",
             "idCard": "Documento",
             "zelleEmail": "Email Zelle",
+            "binancePayId": "Pay ID da Binance",
+            "binanceEmail": "Email Binance",
             "link": "Link de pagamento",
             "alias": "Alias"
           },

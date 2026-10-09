@@ -26,6 +26,11 @@ interface BranchesTableProps {
       email?: string;
       name?: string;
     } | null;
+    binance_pay?: {
+      pay_id?: string;
+      email?: string;
+      name?: string;
+    } | null;
     transferencia_bancaria?: {
       banco?: string;
       nro_cuenta?: string;

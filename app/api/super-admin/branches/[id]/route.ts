@@ -17,6 +17,7 @@ import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/ser
 const PAYMENT_JSON_FIELDS = [
   "pago_movil",
   "zelle",
+  "binance_pay",
   "transferencia_bancaria",
   "mercadopago",
   "paypal",
@@ -48,7 +49,7 @@ export async function PUT(
   const { data: existing, error: existingError } = await supabaseAdmin
     .from("branches")
     .select(
-      "id,company_id,name,delivery_settings,payment_methods,pago_movil,zelle,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta",
+      "id,company_id,name,delivery_settings,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta",
     )
     .eq("id", branchId)
     .maybeSingle();

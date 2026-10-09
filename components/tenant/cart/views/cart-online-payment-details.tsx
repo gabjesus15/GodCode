@@ -19,6 +19,7 @@ import { copyToClipboard } from "../utils/clipboard";
 type TransferenciaBancariaConfig = NonNullable<BranchInfo["transferencia_bancaria"]>;
 type PagoMovilConfig = NonNullable<BranchInfo["pago_movil"]>;
 type ZelleConfig = NonNullable<BranchInfo["zelle"]>;
+type BinancePayConfig = NonNullable<BranchInfo["binance_pay"]>;
 
 interface PaymentDetailField {
 	key: string;
@@ -74,6 +75,10 @@ export function CartOnlinePaymentDetails({
 		const data = methodData as ZelleConfig;
 		if (!data.email) return renderEmpty(t("payment.noZelleData"));
 	}
+	if (methodKey === "binance_pay") {
+		const data = methodData as BinancePayConfig;
+		if (!data.pay_id && !data.email) return renderEmpty(t("payment.noBinancePayData"));
+	}
 
 	const labels = {
 		bank: t("payment.configLabels.bank"),
@@ -85,6 +90,8 @@ export function CartOnlinePaymentDetails({
 		phone: t("payment.configLabels.phone"),
 		idCard: t("payment.configLabels.idCard"),
 		zelleEmail: t("payment.configLabels.zelleEmail"),
+		binancePayId: t("payment.configLabels.binancePayId"),
+		binanceEmail: t("payment.configLabels.binanceEmail"),
 		link: t("payment.configLabels.link"),
 		alias: t("payment.configLabels.alias"),
 	};
@@ -110,6 +117,12 @@ export function CartOnlinePaymentDetails({
 	} else if (methodKey === "zelle") {
 		const data = methodData as ZelleConfig;
 		push("zelleEmail", labels.zelleEmail, data.email);
+		push("holder", labels.holder, data.name);
+	} else if (methodKey === "binance_pay") {
+		// USDT 1 a 1 con el dólar: el monto es el total en dólares, sin tasa.
+		const data = methodData as BinancePayConfig;
+		push("binancePayId", labels.binancePayId, data.pay_id);
+		push("binanceEmail", labels.binanceEmail, data.email);
 		push("holder", labels.holder, data.name);
 	} else if (methodKey === "mercadopago" || methodKey === "paypal") {
 		// Solo la lista cerrada de campos públicos: nunca se pinta una clave arbitraria

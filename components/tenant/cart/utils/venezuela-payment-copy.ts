@@ -11,6 +11,7 @@ export const VENEZUELA_VES_PAYMENT_METHODS = new Set([
 /** Métodos internacionales en Venezuela: el cliente paga en dólares. */
 export const VENEZUELA_USD_PAYMENT_METHODS = new Set([
 	"zelle",
+	"binance_pay",
 	"paypal",
 	"stripe",
 	"mercadopago",

@@ -25,10 +25,10 @@ import { resolveDeliveryQuoteState } from "../utils/delivery-quote-state";
 import { parseManualKm } from "../utils/fulfillment-validation";
 import { joinAddressLine } from "../utils/street-number";
 import { isVenezuelaCountry } from "../utils/venezuela-payment-copy";
+import { useBranchExchangeRate } from "../../menu/use-branch-exchange-rate";
 
 export { useTenantCartStore } from "../cart-store";
 
-const BCV_RATE_ENDPOINT = "https://ve.dolarapi.com/v1/dolares/oficial";
 
 type PersistApi = {
 	setOptions?: (options: { name: string }) => void;
@@ -124,25 +124,12 @@ export function CartProvider({
 	const pricingMode = useMemo(() => effectiveDeliveryPricingMode(settings), [settings]);
 	const branchFeatureFlags = useCartBranchFeatureFlags(branchDeliverySettings, selectedBranchId);
 
-	const [bcvRate, setBcvRate] = useState<number | null>(null);
-	useEffect(() => {
-		if (!isVenezuela || !isCartOpen) return;
-		const controller = new AbortController();
-		fetch(BCV_RATE_ENDPOINT, { signal: controller.signal })
-			.then((response) => (response.ok ? response.json() : null))
-			.then((data: { promedio?: unknown } | null) => {
-				if (data && typeof data.promedio === "number") setBcvRate(data.promedio);
-			})
-			.catch(() => {
-				/* sin tasa en vivo: se usa la configurada por el local */
-			});
-		return () => controller.abort();
-	}, [isVenezuela, isCartOpen]);
-
-	const exchangeRate = useMemo(() => {
-		if (isVenezuela) return bcvRate ?? settings.exchangeRate ?? null;
-		return settings.exchangeRate ?? null;
-	}, [isVenezuela, bcvRate, settings.exchangeRate]);
+	// Misma tasa que el menú: la de la fuente que eligió la sucursal (BCV dólar o BCV
+	// euro). Fuera de Venezuela se mantiene la tasa guardada en la sucursal.
+	const exchangeRate = useBranchExchangeRate(selectedBranchId ?? null, {
+		enabled: isVenezuela,
+		legacyRate: settings.exchangeRate ?? null,
+	});
 
 	// Persistencia por tenant: el nombre del storage lleva el slug y se rehidrata al cambiar.
 	useEffect(() => {

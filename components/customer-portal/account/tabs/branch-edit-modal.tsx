@@ -43,6 +43,7 @@ const ALL_PAYMENT_METHODS = [
   { id: "tarjeta", label: "Tarjeta de Débito/Crédito", description: "Pago físico con POS" },
   { id: "pago_movil", label: "Pago Móvil", description: "Transferencia rápida móvil (VE)" },
   { id: "zelle", label: "Zelle", description: "Transferencias Zelle (US)" },
+  { id: "binance_pay", label: "Binance Pay", description: "Pago en USDT, 1 a 1 con el dólar" },
   { id: "transferencia_bancaria", label: "Transferencia Bancaria", description: "Depósito o transferencia local" },
   { id: "mercadopago", label: "Mercado Pago", description: "Enlace de pago o alias" },
   { id: "paypal", label: "PayPal", description: "Correo o enlace PayPal.me" },
@@ -99,6 +100,11 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
   // Zelle details
   const [zelleEmail, setZelleEmail] = useState("");
   const [zelleName, setZelleName] = useState("");
+
+  // Binance Pay details
+  const [bpPayId, setBpPayId] = useState("");
+  const [bpEmail, setBpEmail] = useState("");
+  const [bpName, setBpName] = useState("");
 
   // Transferencia Bancaria details
   const [tbBanco, setTbBanco] = useState("");
@@ -157,6 +163,12 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
       const z = parseJsonField(branch.zelle);
       setZelleEmail(z.email || "");
       setZelleName(z.name || "");
+
+      // Binance Pay
+      const bp = parseJsonField(branch.binance_pay);
+      setBpPayId(bp.pay_id || "");
+      setBpEmail(bp.email || "");
+      setBpName(bp.name || "");
 
       // Transferencia bancaria
       const tb = parseJsonField(branch.transferencia_bancaria);
@@ -242,6 +254,13 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
           ? {
               email: zelleEmail.trim() || null,
               name: zelleName.trim() || null,
+            }
+          : null,
+        binance_pay: activeMethods.includes("binance_pay")
+          ? {
+              pay_id: bpPayId.trim() || null,
+              email: bpEmail.trim() || null,
+              name: bpName.trim() || null,
             }
           : null,
         transferencia_bancaria: activeMethods.includes("transferencia_bancaria")
@@ -619,7 +638,7 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
             </div>
 
             {/* Payment Details forms */}
-            {activeMethods.some((m) => ["pago_movil", "zelle", "transferencia_bancaria", "mercadopago", "paypal"].includes(m)) && (
+            {activeMethods.some((m) => ["pago_movil", "zelle", "binance_pay", "transferencia_bancaria", "mercadopago", "paypal"].includes(m)) && (
               <div className="space-y-3">
                 <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-[#8e8e93] border-b border-[#f5f5f7] pb-1 flex items-center gap-1.5">
                   <Settings className="w-3.5 h-3.5" /> Detalles de Métodos Digitales
@@ -685,6 +704,41 @@ export function BranchEditModal({ open, onOpenChange, branch, onSaveSuccess }: B
                             <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Nombre del Titular</label>
                             <input value={zelleName} onChange={(e) => setZelleName(e.target.value)} placeholder="Ej. Inversiones Rojas S.A." className={inputClass} />
                           </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Binance Pay */}
+                  {activeMethods.includes("binance_pay") && (
+                    <div className="overflow-hidden rounded-xl border border-[#e5e5ea] bg-[#fbfbfd]">
+                      <button
+                        type="button"
+                        onClick={() => toggleDetail("binance_pay")}
+                        className="flex w-full items-center justify-between px-4.5 py-3 text-left transition hover:bg-[#f5f5f7]"
+                      >
+                        <span className="text-sm font-semibold text-[#1d1d1f]">Datos para Binance Pay</span>
+                        {expandedDetails.has("binance_pay") ? (
+                          <ChevronDown className="h-4 w-4 text-[#8e8e93]" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-[#8e8e93]" />
+                        )}
+                      </button>
+                      {expandedDetails.has("binance_pay") && (
+                        <div className="border-t border-[#e5e5ea] bg-white p-4.5 grid grid-cols-1 gap-3.5 sm:grid-cols-3">
+                          <div>
+                            <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Pay ID</label>
+                            <input value={bpPayId} onChange={(e) => setBpPayId(e.target.value)} placeholder="Ej. 123456789" className={inputClass} />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Correo Binance</label>
+                            <input value={bpEmail} onChange={(e) => setBpEmail(e.target.value)} placeholder="Ej. pagos@miempresa.com" className={inputClass} />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-[11px] font-medium text-[#6e6e73]">Nombre en Binance</label>
+                            <input value={bpName} onChange={(e) => setBpName(e.target.value)} placeholder="Ej. Inversiones Rojas" className={inputClass} />
+                          </div>
+                          <p className="text-[11px] text-[#8e8e93] sm:col-span-3">El cliente paga en USDT, 1 a 1 con el precio en dólares, y sube el comprobante.</p>
                         </div>
                       )}
                     </div>

@@ -20,6 +20,8 @@ describe("venezuela-payment-copy", () => {
 		expect(paymentMethodUsesBolivaresInVenezuela("pago_movil")).toBe(true);
 		expect(paymentMethodUsesBolivaresInVenezuela("transferencia_bancaria")).toBe(true);
 		expect(paymentMethodUsesUsdInVenezuela("zelle")).toBe(true);
+		expect(paymentMethodUsesUsdInVenezuela("binance_pay")).toBe(true);
+		expect(paymentMethodUsesBolivaresInVenezuela("binance_pay")).toBe(false);
 		expect(paymentMethodUsesUsdInVenezuela("paypal")).toBe(true);
 	});
 
@@ -46,6 +48,18 @@ describe("venezuela-payment-copy", () => {
 		expect(value).not.toContain("Bs.");
 		expect(value).not.toContain("/");
 		expect(value).not.toContain("$");
+	});
+
+	it("copies dollars for Binance Pay in Venezuela (USDT 1 a 1)", () => {
+		expect(
+			resolvePaymentAmountCopyValue({
+				methodKey: "binance_pay",
+				cartTotal: 12.5,
+				currency: "USD",
+				exchangeRate: 639.703,
+				country: "VE",
+			}),
+		).toBe("$12.50");
 	});
 
 	it("copies dollars for zelle in Venezuela", () => {

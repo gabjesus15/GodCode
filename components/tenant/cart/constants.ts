@@ -11,7 +11,7 @@ export { ENHANCE_CATALOG_BEVERAGE_FALLBACK, ENHANCE_CATALOG_EXTRA_FALLBACK };
 export type PaymentMethodConfig = {
 	/** Icono de trazo para los métodos genéricos; las marcas usan `mark`. */
 	icon?: ComponentType<LucideProps>;
-	/** Sigla de la marca (Zelle, Stripe, Mercado Pago, PayPal) en su color. */
+	/** Sigla de la marca (Zelle, Binance Pay, Stripe, Mercado Pago, PayPal) en su color. */
 	mark?: string;
 	/** Color propio del método: tiñe el azulejo y pinta el icono o la sigla. */
 	color: string;
@@ -23,6 +23,7 @@ export const PAYMENT_METHOD_CONFIG: Record<string, PaymentMethodConfig> = {
 	tarjeta: { icon: CreditCard, color: "#2f6fed", isOnline: false },
 	pago_movil: { icon: Smartphone, color: "#7c3aed", isOnline: true },
 	zelle: { mark: "Z", color: "#6d1ed4", isOnline: true },
+	binance_pay: { mark: "B", color: "#c99400", isOnline: true },
 	transferencia_bancaria: { icon: Landmark, color: "#0f8a7d", isOnline: true },
 	stripe: { mark: "S", color: "#635bff", isOnline: true },
 	mercadopago: { mark: "MP", color: "#009ee3", isOnline: true },
@@ -34,6 +35,7 @@ export const PAYMENT_METHOD_LABEL_BY_KEY: Record<string, string> = {
 	tarjeta: "paymentMethods.tarjeta",
 	pago_movil: "paymentMethods.pago_movil",
 	zelle: "paymentMethods.zelle",
+	binance_pay: "paymentMethods.binance_pay",
 	transferencia_bancaria: "paymentMethods.transferencia_bancaria",
 	stripe: "paymentMethods.stripe",
 	mercadopago: "paymentMethods.mercadopago",

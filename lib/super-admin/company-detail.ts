@@ -32,7 +32,7 @@ export async function loadCompanyDetail(id: string) {
 		supabaseAdmin
 			.from("branches")
 			.select(
-				"id,name,slug,address,phone,is_active,country,currency,instagram,schedule,payment_methods,pago_movil,zelle,transferencia_bancaria,stripe,mercadopago,efectivo,tarjeta,paypal,company_id,delivery_settings",
+				"id,name,slug,address,phone,is_active,country,currency,instagram,schedule,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,efectivo,tarjeta,paypal,company_id,delivery_settings",
 			)
 			.eq("company_id", id)
 			.order("created_at", { ascending: false }),

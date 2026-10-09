@@ -51,6 +51,7 @@ export type BranchSummary = {
   payment_methods?: string[] | null;
   pago_movil?: Record<string, unknown> | null;
   zelle?: Record<string, unknown> | null;
+  binance_pay?: Record<string, unknown> | null;
   transferencia_bancaria?: Record<string, unknown> | null;
   stripe?: Record<string, unknown> | null;
   mercadopago?: Record<string, unknown> | null;

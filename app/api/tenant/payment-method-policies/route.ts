@@ -12,6 +12,7 @@ const FALLBACK_RECEIPT_METHODS = new Set([
   "transferencia_bancaria",
   "pago_movil",
   "zelle",
+  "binance_pay",
   "paypal",
 ]);
 
