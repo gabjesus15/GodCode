@@ -8,6 +8,7 @@ import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-ur
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isStoreDraftPending } from "@/lib/tenant/store-draft";
+import { isPubliclyListedCompany } from "@/lib/seo/public-tenant-listing";
 import { getCurrentLocale } from "../../../lib/i18n/server";
 import { getTenantUrl } from "../../../utils/tenant-url";
 
@@ -71,7 +72,7 @@ async function fetchPublicCompanies(): Promise<CompanyPublic[]> {
 	try {
 		const { data, error } = await supabaseAdmin
 			.from("companies")
-			.select("id,name,public_slug,custom_domain,theme_config,subscription_status")
+			.select("id,name,public_slug,custom_domain,theme_config,subscription_status,plans:plans(features)")
 			.in("subscription_status", ["active", "trial"])
 			.not("public_slug", "is", null)
 			.order("name");
@@ -81,8 +82,9 @@ async function fetchPublicCompanies(): Promise<CompanyPublic[]> {
 		}
 
 		const mapped = data
-			// Las tiendas en vista previa («Arma y paga») no se muestran hasta que se publiquen.
-			.filter((row) => !isStoreDraftPending(row))
+			// Fuera las tiendas en vista previa («Arma y paga») hasta que se publiquen, y, como en el
+			// sitemap, fuera las tiendas demo/QA y los planes «solo panel CEO» (sin menú público).
+			.filter((row) => !isStoreDraftPending(row) && isPubliclyListedCompany(row))
 			.map((row) => {
 				const theme = (row.theme_config as ThemeConfig) ?? null;
 				const id = row.id as string;

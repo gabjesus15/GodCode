@@ -23,6 +23,8 @@ const footerLinks = [
 	{ label: "Precios", href: "/#precios" },
 	{ label: "Preguntas frecuentes", href: "/#faq" },
 	{ label: "Calculadora de comisiones", href: "/calculadora-comisiones" },
+	{ label: "Gcode en Chile", href: "/chile" },
+	{ label: "Gcode en Venezuela", href: "/venezuela" },
 	{ label: "Negocios que usan Gcode", href: "/onboarding/negocios" },
 	{ label: "Crear mi tienda", href: "/onboarding" },
 ];

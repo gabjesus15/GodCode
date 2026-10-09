@@ -17,11 +17,19 @@ const PROMISES = [
 	{ lead: "Te atiende quien lo construyó.", rest: "Por WhatsApp o correo, sin bots de por medio." },
 	{
 		lead: "Ya lo usan restaurantes reales",
-		rest: "en Chile y Venezuela.",
+		rest: "en",
+		// Enlaces a las páginas de país: señal interna para «menú digital Chile / Venezuela».
+		countries: [
+			{ label: "Chile", href: "/chile" },
+			{ label: "Venezuela", href: "/venezuela" },
+		],
 		href: "/onboarding/negocios",
 		cta: "Verlos",
 	},
 ] as const;
+
+const COUNTRY_LINK_CLASS =
+	"text-[#d4d4d8] underline decoration-white/25 underline-offset-[6px] transition-colors hover:text-white hover:decoration-white/60";
 
 export function Trust({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 	const whatsapp = socialLinks.find((link) => link.kind === "whatsapp");
@@ -67,6 +75,19 @@ export function Trust({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 							<li key={item.lead} className="border-b border-white/[0.1] py-7 md:py-8">
 								<p className="text-xl leading-snug text-[#71717a] text-pretty md:text-2xl md:leading-snug">
 									<span className="text-[#f4f4f5]">{item.lead}</span> {item.rest}
+									{"countries" in item ? (
+										<>
+											{" "}
+											<Link href={item.countries[0].href} className={COUNTRY_LINK_CLASS}>
+												{item.countries[0].label}
+											</Link>{" "}
+											y{" "}
+											<Link href={item.countries[1].href} className={COUNTRY_LINK_CLASS}>
+												{item.countries[1].label}
+											</Link>
+											.
+										</>
+									) : null}
 									{"href" in item ? (
 										<>
 											{" "}

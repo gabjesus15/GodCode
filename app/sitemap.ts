@@ -1,9 +1,11 @@
 import type { MetadataRoute } from "next";
+import { LANDING_COUNTRY_SLUGS } from "@/lib/landing/countries";
+import { isPubliclyListedCompany } from "@/lib/seo/public-tenant-listing";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { createSupabasePublicServerClient } from "../utils/supabase/server";
 
 /** Actualizar al desplegar cambios de marketing relevantes para incentivar recrawl. */
-const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-09-26T00:00:00.000Z";
+const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-10-08T00:00:00.000Z";
 
 function getMarketingLastModified(): Date {
 	const fromEnv = process.env.NEXT_PUBLIC_SITEMAP_LAST_MODIFIED?.trim();
@@ -27,15 +29,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 	const { data: companies } = await supabase
 		.from("companies")
-		.select("public_slug,custom_domain,updated_at")
+		// `plans(features)` trae `product_mode`: los negocios «solo panel CEO» no tienen menú público.
+		.select("public_slug,custom_domain,updated_at,plans:plans(features)")
 		.eq("subscription_status", "active");
 
 	const tenantUrls: MetadataRoute.Sitemap = (companies ?? [])
 		.filter(
-			(c): c is { public_slug: string; custom_domain: string | null; updated_at: string | null } =>
-				typeof c.public_slug === "string" &&
-				c.public_slug.length > 0 &&
-				!String(c.custom_domain ?? "").trim(),
+			(c): c is typeof c & { public_slug: string } =>
+				isPubliclyListedCompany(c) && !String(c.custom_domain ?? "").trim(),
 		)
 		.flatMap((c) => {
 			// Tenants se sirven por path en el dominio principal (godcode.me/{slug});
@@ -70,6 +71,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			changeFrequency: "monthly",
 			priority: 0.8,
 		},
+		// Páginas de país: compiten por «menú digital Chile» y «sistema para restaurantes Venezuela».
+		...LANDING_COUNTRY_SLUGS.map((slug) => ({
+			url: `${base}/${slug}`,
+			lastModified: marketingLastModified,
+			changeFrequency: "monthly" as const,
+			priority: 0.9,
+		})),
 		{
 			url: `${base}/calculadora-comisiones`,
 			lastModified: marketingLastModified,

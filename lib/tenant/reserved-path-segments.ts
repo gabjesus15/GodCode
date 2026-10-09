@@ -21,6 +21,9 @@ export const MAIN_DOMAIN_RESERVED_PATH_SEGMENTS = new Set([
 	"tenant-hero",
 	"sobre-godcode",
 	"calculadora-comisiones",
+	// Páginas de país del landing (app/(landing-v3)/{chile,venezuela}).
+	"chile",
+	"venezuela",
 	"images",
 	"post-login",
 	// Panel super admin: sin esto "/landing" se trataba como el slug de un tenant.

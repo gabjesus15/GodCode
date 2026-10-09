@@ -13,6 +13,16 @@ export default function robots(): MetadataRoute.Robots {
           "/admin/",
           "/api/",
           "/login",
+          "/post-login",
+          // Panel de la empresa (requieren sesión; evitamos que gasten rastreo)
+          "/dashboard/",
+          "/companies/",
+          "/plans/",
+          "/addons/",
+          "/plan-payment-methods/",
+          "/herramientas/",
+          "/tickets/",
+          "/landing/",
           // Rutas del super-admin (panel interno)
           "/saas-admin/",
           // Portal de cliente (privado)
