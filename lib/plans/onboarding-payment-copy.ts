@@ -77,6 +77,18 @@ export type OnboardingPaymentCopy = {
     submittedBody: string;
     referenceLabel: string;
   };
+  /** Métodos por enlace fijo por plan (Mercado Pago): un mes del plan, sin cupones. */
+  linkPayment: {
+    monthsNote: string;
+    noCoupons: string;
+    startButton: string;
+    title: string;
+    intro: string;
+    payStep: string;
+    payButton: string;
+    payHint: string;
+    activation: string;
+  };
   /** Cupón del alta en el paso de pago. */
   coupon: {
     prompt: string;
@@ -177,6 +189,17 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       submittedTitle: "Recibimos tu comprobante",
       submittedBody: "Lo revisamos y te avisamos por correo apenas quede validado. Puedes cerrar esta página.",
       referenceLabel: "Referencia del pago",
+    },
+    linkPayment: {
+      monthsNote: "Con {method} pagas tu plan mes a mes con una suscripción.",
+      noCoupons: "Los cupones no se pueden usar con {method}.",
+      startButton: "Pagar con {method}",
+      title: "Paga con {method}",
+      intro: "Abre el enlace, completa la suscripción en {method} y luego sube el comprobante aquí.",
+      payStep: "Paga tu plan en {method}",
+      payButton: "Ir a {method}",
+      payHint: "Se abre en una pestaña nueva. Vuelve aquí cuando termines.",
+      activation: "Activamos tu cuenta cuando validamos el comprobante de {method}. Te avisamos por correo.",
     },
     coupon: {
       prompt: "¿Tienes un cupón?",
@@ -302,6 +325,17 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       submittedBody: "We will review it and email you as soon as it is validated. You can close this page.",
       referenceLabel: "Payment reference",
     },
+    linkPayment: {
+      monthsNote: "With {method} you pay your plan monthly through a subscription.",
+      noCoupons: "Coupons can't be used with {method}.",
+      startButton: "Pay with {method}",
+      title: "Pay with {method}",
+      intro: "Open the link, complete the subscription in {method}, then upload the receipt here.",
+      payStep: "Pay your plan in {method}",
+      payButton: "Go to {method}",
+      payHint: "It opens in a new tab. Come back here when you're done.",
+      activation: "We activate your account once we validate the {method} receipt. We will let you know by email.",
+    },
     coupon: {
       prompt: "Have a coupon?",
       placeholder: "Coupon code",
@@ -425,6 +459,17 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       submittedTitle: "Recebemos seu comprovante",
       submittedBody: "Vamos revisá-lo e avisar por e-mail assim que for validado. Você pode fechar esta página.",
       referenceLabel: "Referência do pagamento",
+    },
+    linkPayment: {
+      monthsNote: "Com {method} você paga seu plano mês a mês com uma assinatura.",
+      noCoupons: "Cupons não podem ser usados com {method}.",
+      startButton: "Pagar com {method}",
+      title: "Pague com {method}",
+      intro: "Abra o link, conclua a assinatura no {method} e depois envie o comprovante aqui.",
+      payStep: "Pague seu plano no {method}",
+      payButton: "Ir para {method}",
+      payHint: "Abre em uma nova aba. Volte aqui quando terminar.",
+      activation: "Ativamos sua conta quando validamos o comprovante do {method}. Avisamos por e-mail.",
     },
     coupon: {
       prompt: "Tem um cupom?",
@@ -550,6 +595,17 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       submittedBody: "Nous le vérifions et vous écrivons dès qu’il est validé. Vous pouvez fermer cette page.",
       referenceLabel: "Référence du paiement",
     },
+    linkPayment: {
+      monthsNote: "Avec {method}, vous payez votre forfait chaque mois par abonnement.",
+      noCoupons: "Les coupons ne sont pas utilisables avec {method}.",
+      startButton: "Payer avec {method}",
+      title: "Payer avec {method}",
+      intro: "Ouvrez le lien, finalisez l’abonnement sur {method}, puis envoyez le justificatif ici.",
+      payStep: "Payez votre forfait sur {method}",
+      payButton: "Aller sur {method}",
+      payHint: "S’ouvre dans un nouvel onglet. Revenez ici une fois terminé.",
+      activation: "Nous activons votre compte après validation du justificatif {method}. Nous vous prévenons par e-mail.",
+    },
     coupon: {
       prompt: "Vous avez un code promo ?",
       placeholder: "Code promo",
@@ -674,6 +730,17 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       submittedBody: "Wir prüfen ihn und schreiben Ihnen, sobald er bestätigt ist. Sie können diese Seite schließen.",
       referenceLabel: "Zahlungsreferenz",
     },
+    linkPayment: {
+      monthsNote: "Mit {method} zahlst du deinen Plan monatlich per Abonnement.",
+      noCoupons: "Gutscheine können mit {method} nicht verwendet werden.",
+      startButton: "Mit {method} bezahlen",
+      title: "Mit {method} bezahlen",
+      intro: "Öffne den Link, schließe das Abo bei {method} ab und lade dann hier den Beleg hoch.",
+      payStep: "Bezahle deinen Plan bei {method}",
+      payButton: "Zu {method}",
+      payHint: "Öffnet sich in einem neuen Tab. Komm danach hierher zurück.",
+      activation: "Wir aktivieren dein Konto, sobald wir den {method}-Beleg geprüft haben. Wir informieren dich per E-Mail.",
+    },
     coupon: {
       prompt: "Haben Sie einen Gutschein?",
       placeholder: "Gutscheincode",
@@ -797,6 +864,17 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       submittedTitle: "Abbiamo ricevuto la tua ricevuta",
       submittedBody: "La controlliamo e ti scriviamo appena è convalidata. Puoi chiudere questa pagina.",
       referenceLabel: "Riferimento del pagamento",
+    },
+    linkPayment: {
+      monthsNote: "Con {method} paghi il tuo piano ogni mese con un abbonamento.",
+      noCoupons: "I coupon non si possono usare con {method}.",
+      startButton: "Paga con {method}",
+      title: "Paga con {method}",
+      intro: "Apri il link, completa l’abbonamento su {method} e poi carica qui la ricevuta.",
+      payStep: "Paga il tuo piano su {method}",
+      payButton: "Vai su {method}",
+      payHint: "Si apre in una nuova scheda. Torna qui quando hai finito.",
+      activation: "Attiviamo il tuo account dopo aver validato la ricevuta di {method}. Ti avvisiamo via email.",
     },
     coupon: {
       prompt: "Hai un coupon?",

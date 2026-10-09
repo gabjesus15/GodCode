@@ -26,6 +26,7 @@ import { completeOnboardingPayment } from "@/lib/onboarding/complete-onboarding-
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 import { isPaymentMethodAvailableForCountry } from "@/lib/payments/payment-method-countries";
+import { isLinkMethod, resolvePlanPaymentLink } from "@/lib/payments/plan-payment-links";
 import { createPayPalOrder, isPayPalConfigured } from "@/lib/payments/paypal";
 import { getAppUrl } from "@/lib/tenant/app-url";
 
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
 	try {
 		const body = (await req.json().catch(() => ({}))) as { token: string; months?: number };
 		const token = typeof body.token === "string" ? body.token.trim() : "";
-		const months = Math.min(12, Math.max(1, Number(body.months) || 1));
+		const requestedMonths = Math.min(12, Math.max(1, Number(body.months) || 1));
 
 		if (!token) {
 			return NextResponse.json({ error: "Falta el enlace de tu solicitud. Vuelve a abrirlo desde el correo." }, { status: 400 });
@@ -86,6 +87,9 @@ export async function POST(req: NextRequest) {
 
 		const isPayPal = isOnlineMethod(subscriptionMethod);
 		const isManualPayment = isManualMethod(subscriptionMethod);
+		// Enlace fijo por plan (Mercado Pago): cobra un mes del plan, sin cupones.
+		const isLinkPayment = isLinkMethod(subscriptionMethod);
+		const months = isLinkPayment ? 1 : requestedMonths;
 		if (
 			!methodRow?.is_active ||
 			(!isPayPal && !isManualPayment) ||
@@ -100,6 +104,26 @@ export async function POST(req: NextRequest) {
 		}
 		const plan = planResult.plan;
 		const planPricing = resolveCheckoutPlanPrice(plan, app.country);
+
+		let methodConfig: Record<string, string> = {};
+		let paymentLink: string | null = null;
+		if (isLinkPayment) {
+			if (app.coupon_id) {
+				return NextResponse.json(
+					{ error: `Los cupones no se pueden usar con ${methodRow.name ?? "este método"}. Quita el cupón o elige otro método de pago.` },
+					{ status: 409 },
+				);
+			}
+			const linkConfig = await getManualMethodConfig(supabaseAdmin, subscriptionMethod);
+			paymentLink = resolvePlanPaymentLink(linkConfig, plan.name);
+			if (!paymentLink) {
+				console.error(`onboarding checkout: ${subscriptionMethod} sin enlace para el plan "${plan.name}"`);
+				return NextResponse.json(
+					{ error: `${methodRow.name ?? "Este método"} todavía no está disponible para el plan ${plan.name}. Elige otro método de pago.` },
+					{ status: 409 },
+				);
+			}
+		}
 
 		// El cupón se vuelve a comprobar aquí, con los meses definitivos: lo que valía al
 		// aplicarlo puede haber vencido o agotado su cupo mientras la persona decidía.
@@ -257,11 +281,13 @@ export async function POST(req: NextRequest) {
 		});
 		await notifyPlanChosen();
 
-		const methodConfig = await getManualMethodConfig(supabaseAdmin, subscriptionMethod);
+		// Los enlaces por plan no son datos para transferir: solo se devuelve el del plan.
+		if (!isLinkPayment) methodConfig = await getManualMethodConfig(supabaseAdmin, subscriptionMethod);
 
 		return NextResponse.json({
 			ok: true,
 			manual: true,
+			payment_link: paymentLink,
 			payment_reference: paymentRef,
 			method_slug: subscriptionMethod,
 			method_name: methodRow.name ?? subscriptionMethod,
