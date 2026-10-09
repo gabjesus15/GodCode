@@ -336,6 +336,8 @@ export default async function CustomerAccountPage({
     orderCount: orderCount ?? 0,
     templateId: typeof themeConfig?.templateId === "string" ? themeConfig.templateId : null,
     setupFinished: ownerSetupFinished,
+    // En vista previa el último paso es publicar la tienda, no compartir su enlace.
+    storeDraft,
   });
 
   const businessInfo: BusinessInfoSummary | null = businessInfoRaw

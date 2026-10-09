@@ -6,6 +6,7 @@ import {
 	LANDING_PRODUCT_NAME,
 } from "@/lib/landing/brand";
 import type { LandingSocialLink } from "@/lib/landing/contact";
+import { LEGAL_PROVIDER_NAME } from "@/lib/legal/legal-documents";
 
 import { CookieSettingsLink } from "@/components/legal/cookie-consent";
 
@@ -134,8 +135,9 @@ export function Footer({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 					<div className="flex items-center gap-3">
 						<LandingBrandMark variant="onLight" className="h-8" />
 						<div className="text-sm text-[#52525b]">
+							{/* El mismo titular que nombran los Términos y la Política de privacidad. */}
 							<p>
-								© {new Date().getFullYear()} {LANDING_COMPANY_NAME}
+								© {new Date().getFullYear()} {LEGAL_PROVIDER_NAME}
 							</p>
 							{/* Mención visible del nombre anterior: mantiene la home en las búsquedas por "godcode". */}
 							<p className="mt-0.5">

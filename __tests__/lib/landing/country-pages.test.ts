@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { LANDING_COMPANY_NAME } from "@/lib/landing/brand";
-import { LANDING_COUNTRIES, LANDING_COUNTRY_SLUGS, getLandingCountry } from "@/lib/landing/countries";
+import { LANDING_COUNTRIES, LANDING_COUNTRY_SLUGS } from "@/lib/landing/countries";
 import { buildLandingCountryJsonLd, buildLandingCountryMetadata } from "@/lib/landing/country-page";
 import { LEGAL_MERCADO_PAGO_CLP, LEGAL_OTHER_CURRENCY, LEGAL_PRICES_IN_USD } from "@/lib/legal/legal-documents";
 import { INTERNAL_TEST_TENANT_SLUGS, isInternalTestTenantSlug } from "@/lib/seo/internal-test-tenant";
@@ -18,7 +18,7 @@ describe("páginas de país del landing", () => {
 			expect(MAIN_DOMAIN_RESERVED_PATH_SEGMENTS.has(slug)).toBe(true);
 			expect(resolveTenantSlugFromPathname(`/${slug}`)).toBeNull();
 		}
-		expect(getLandingCountry("peru")).toBeNull();
+		expect("peru" in LANDING_COUNTRIES).toBe(false);
 	});
 
 	it("cada país tiene su título corto, su descripción y sus propias preguntas", () => {

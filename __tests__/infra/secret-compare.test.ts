@@ -37,10 +37,24 @@ describe("secretsMatch", () => {
 	});
 
 	it("no lanza con longitudes distintas", () => {
-		// timingSafeEqual lanza si los buffers difieren en tamaño; por eso se
-		// comparan digests y no los bytes originales.
+		// timingSafeEqual lanza si los buffers difieren en tamaño; por eso lo recibido se
+		// lleva al largo del esperado antes de comparar.
 		expect(() => secretsMatch("a", "una-clave-mucho-mas-larga")).not.toThrow();
 		expect(secretsMatch("a", "una-clave-mucho-mas-larga")).toBe(false);
+		expect(() => secretsMatch("una-clave-mucho-mas-larga", "a")).not.toThrow();
+		expect(secretsMatch("una-clave-mucho-mas-larga", "a")).toBe(false);
+	});
+
+	it("rechaza el secreto correcto con bytes de más", () => {
+		expect(secretsMatch("s3cr3t-extra", "s3cr3t")).toBe(false);
+		// El relleno con ceros no hace pasar un secreto más corto ni uno con ceros al final.
+		expect(secretsMatch("s3cr3t\u0000", "s3cr3t")).toBe(false);
+		expect(secretsMatch("s3cr3t", "s3cr3t\u0000")).toBe(false);
+	});
+
+	it("compara bytes UTF-8, no caracteres", () => {
+		expect(secretsMatch("contraseña", "contraseña")).toBe(true);
+		expect(secretsMatch("contrasena", "contraseña")).toBe(false);
 	});
 });
 

@@ -11,6 +11,7 @@ import {
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
 import { getLegalBackHref } from "@/lib/legal/legal-back-href-server";
+import { LEGAL_PROVIDER_DESCRIPTION } from "@/lib/legal/legal-documents";
 
 export const metadata: Metadata = {
 	title: "Política de privacidad",
@@ -36,8 +37,8 @@ export default async function PrivacidadPage() {
 			<section>
 				<h2 className="font-semibold text-slate-800">1. Quién es responsable</h2>
 				<p className="mt-2">
-					Gcode, operado por una persona natural bajo el nombre comercial Gcode, con sede en Santiago,
-					Chile<ProviderIdentity />, y correo de contacto <SupportEmail />.
+					Gcode, operado por {LEGAL_PROVIDER_DESCRIPTION}
+					<ProviderIdentity />, y correo de contacto <SupportEmail />.
 				</p>
 				<p className="mt-2">
 					Aplicamos la Ley N° 19.628 sobre Protección de la Vida Privada y, desde su entrada en vigencia, la Ley N°

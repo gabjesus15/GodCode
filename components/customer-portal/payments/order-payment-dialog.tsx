@@ -14,7 +14,7 @@ import { Button } from "../ui/Button";
 import { Dialog, DialogFooter } from "../ui/Dialog";
 import { PayPalButtons } from "./paypal-buttons";
 
-export type OrderPaymentDialogProps = {
+type OrderPaymentDialogProps = {
   order: PaymentSummary | null;
   /** Qué se paga, p. ej. "Renovación Pro · 3 meses". */
   concept: string;
@@ -92,7 +92,16 @@ export function OrderPaymentDialog({
       ? previousMethod
       : (availableMethods[0] ?? "");
 
-  const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  // Vista previa local del comprobante. `createObjectURL` siempre da una URL `blob:`; se
+  // comprueba igual porque va a un `src`: así nunca puede llevar otro esquema (`javascript:`),
+  // que es lo que no se puede asegurar de algo que sale del DOM (CodeQL js/xss-through-dom).
+  const previewUrl = useMemo(() => {
+    if (!file) return null;
+    const url = URL.createObjectURL(file);
+    if (url.startsWith("blob:")) return url;
+    URL.revokeObjectURL(url);
+    return null;
+  }, [file]);
   useEffect(() => () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);

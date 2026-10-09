@@ -1,3 +1,4 @@
+import { escapeHtml } from "@/lib/email/render";
 import { escapeTelegramHtml, sendTelegramMessage, type TelegramSendResult } from "@/lib/infra/telegram";
 import { getAppUrl } from "@/lib/tenant/app-url";
 
@@ -64,7 +65,7 @@ type OnboardingStep =
 			detail?: string | null;
 	  };
 
-export type OnboardingAlert = AlertContact & OnboardingStep;
+type OnboardingAlert = AlertContact & OnboardingStep;
 
 const STEPS_TOTAL = 4;
 
@@ -74,7 +75,10 @@ function line(label: string, value: unknown): string | null {
 }
 
 function link(href: string, label: string): string {
-	return `<a href="${escapeTelegramHtml(href)}">${escapeTelegramHtml(label)}</a>`;
+	// El enlace va entre comillas: `escapeTelegramHtml` no escapa `"` ni `'`, y una URL que
+	// los trajera cerraría el atributo y metería HTML en el mensaje. Telegram acepta
+	// `&quot;` y las entidades numéricas que deja `escapeHtml`.
+	return `<a href="${escapeHtml(href)}">${escapeTelegramHtml(label)}</a>`;
 }
 
 /** Mensaje en HTML de Telegram para un paso del alta. */

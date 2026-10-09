@@ -50,7 +50,7 @@ function saveChoice(choice: ConsentChoice) {
 }
 
 /** Reabre el aviso desde cualquier enlace «Cookies» del sitio. */
-export function openCookieSettings() {
+function openCookieSettings() {
 	window.dispatchEvent(new Event(OPEN_COOKIE_SETTINGS_EVENT));
 }
 

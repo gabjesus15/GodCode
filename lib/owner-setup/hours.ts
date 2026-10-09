@@ -13,7 +13,7 @@ export type UniformHours = { days: Weekday[]; interval: BusinessHoursInterval };
 
 export const DEFAULT_SETUP_INTERVAL: BusinessHoursInterval = { open: "12:00", close: "23:00" };
 
-export type HoursPreset = { id: string; label: string; /** Para botones angostos. */ short: string; hours: UniformHours };
+type HoursPreset = { id: string; label: string; /** Para botones angostos. */ short: string; hours: UniformHours };
 
 /** Atajos del asistente; el editor por día sigue disponible para todo lo demás. */
 export const HOURS_PRESETS: readonly HoursPreset[] = [

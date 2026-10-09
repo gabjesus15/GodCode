@@ -1,6 +1,6 @@
 import { OWNER_SETUP_STEPS, type OwnerSetupStep } from "./steps";
 
-export type OwnerSetupProgressInput = {
+type OwnerSetupProgressInput = {
 	/** Logo guardado en el borrador (ruta de storage, no la URL firmada). */
 	logoUrl: string;
 	templateId: string | null | undefined;

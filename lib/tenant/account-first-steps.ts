@@ -7,7 +7,7 @@ import type { OwnerSetupStep } from "./owner-setup";
  * tarjeta desaparece cuando están todos hechos.
  */
 
-export type FirstStepId = "menu" | "whatsapp" | "hours" | "logo" | "design" | "first_order";
+type FirstStepId = "menu" | "whatsapp" | "hours" | "logo" | "design" | "first_order" | "publish";
 
 export type FirstStep = {
 	id: FirstStepId;
@@ -21,7 +21,7 @@ export type FirstStep = {
 	actionLabel: string;
 };
 
-export type FirstStepsInput = {
+type FirstStepsInput = {
 	productCount: number;
 	sampleCount: number;
 	branches: Array<{ whatsapp_url?: string | null; business_hours?: unknown; schedule?: string | null }>;
@@ -31,6 +31,8 @@ export type FirstStepsInput = {
 	templateId?: string | null;
 	/** Terminó «Configura tu tienda». */
 	setupFinished?: boolean;
+	/** «Arma y paga»: la tienda sigue en vista previa (`theme_config.storeDraft` sin `openedAt`). */
+	storeDraft?: { paymentInReview: boolean } | null;
 };
 
 export function buildFirstSteps(input: FirstStepsInput): FirstStep[] {
@@ -88,13 +90,28 @@ export function buildFirstSteps(input: FirstStepsInput): FirstStep[] {
 			setupStep: "diseno",
 			actionLabel: "Elegir diseño",
 		},
-		{
-			id: "first_order",
-			title: "Recibe tu primer pedido",
-			detail: "Comparte el enlace de tu tienda en tu Instagram y tu WhatsApp.",
-			done: input.orderCount > 0,
-			target: "store",
-			actionLabel: "Ver mi tienda",
-		},
+		// En vista previa solo el dueño ve la tienda: compartir el enlace no trae pedidos. El
+		// paso que falta es publicarla, desde el paso «Publicar» del asistente (de ahí va a
+		// `/cuenta/publicar`, a elegir el plan y pagar).
+		input.storeDraft
+			? {
+					id: "publish",
+					title: "Publica tu tienda",
+					detail: input.storeDraft.paymentInReview
+						? "Estamos validando tu pago. Se publica sola al confirmarlo."
+						: "Tus clientes todavía no la ven. Eliges tu plan y pagas.",
+					done: false,
+					target: "setup",
+					setupStep: "publicar",
+					actionLabel: input.storeDraft.paymentInReview ? "Ver el estado" : "Publicar mi tienda",
+				}
+			: {
+					id: "first_order",
+					title: "Recibe tu primer pedido",
+					detail: "Comparte el enlace de tu tienda en tu Instagram y tu WhatsApp.",
+					done: input.orderCount > 0,
+					target: "store",
+					actionLabel: "Ver mi tienda",
+				},
 	];
 }

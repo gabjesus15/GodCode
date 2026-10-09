@@ -27,7 +27,7 @@ export function isExchangeRateSource(value: unknown): value is ExchangeRateSourc
 	return typeof value === "string" && (EXCHANGE_RATE_SOURCES as readonly string[]).includes(value);
 }
 
-export type FetchedRate = { rate: number; publishedAt: string };
+type FetchedRate = { rate: number; publishedAt: string };
 
 const DOLARAPI_BCV_USD = "https://ve.dolarapi.com/v1/dolares/oficial";
 const DOLARAPI_BCV_EUR = "https://ve.dolarapi.com/v1/euros/oficial";

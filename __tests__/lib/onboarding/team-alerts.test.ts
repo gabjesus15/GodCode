@@ -87,6 +87,19 @@ describe("formatOnboardingAlert", () => {
 		expect(text).toContain("&lt;b&gt;Pizza&lt;/b&gt; &amp; Co");
 		expect(text).not.toContain("<b>Pizza</b>");
 	});
+
+	it("una URL con comillas no puede cerrar el atributo del enlace", () => {
+		const text = formatOnboardingAlert(
+			{ kind: "activated", businessName: "Juni", via: "manual", menuUrl: `${APP}/juni"><b>x</b><a href='y` },
+			APP,
+		);
+		expect(text).toContain(`<a href="${APP}/juni&quot;&gt;&lt;b&gt;x&lt;/b&gt;&lt;a href=&#39;y">Ver su menú</a>`);
+		expect(text).not.toContain('juni"');
+		// La URL del panel sale tal cual: no tiene nada que escapar.
+		expect(formatOnboardingAlert({ kind: "email_verified", businessName: "Juni", email: "n@x.com" }, APP)).toContain(
+			`<a href="${APP}/dashboard">Abrir el panel</a>`,
+		);
+	});
 });
 
 describe("alertOnboardingTeam", () => {

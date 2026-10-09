@@ -6,7 +6,7 @@ import type { BusinessHoursWeek } from "@/lib/tenant/business-hours";
  * una app (React Native) puede usar las mismas con su `baseUrl` y su sesión en `headers`.
  */
 
-export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string };
+type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
 export type OwnerSetupLocalPatch = {
 	id: string;

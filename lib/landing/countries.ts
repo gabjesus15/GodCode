@@ -25,9 +25,9 @@ import type { LANDING_COUNTRY_SLUG_LIST } from "./marketing-paths";
  */
 export type LandingCountrySlug = (typeof LANDING_COUNTRY_SLUG_LIST)[number];
 
-export type LandingCountryFaq = { question: string; answer: string };
+type LandingCountryFaq = { question: string; answer: string };
 
-export type LandingCountryFeature = { title: string; text: string };
+type LandingCountryFeature = { title: string; text: string };
 
 export type LandingCountry = {
 	slug: LandingCountrySlug;
@@ -250,7 +250,3 @@ export const LANDING_COUNTRIES: Record<LandingCountrySlug, LandingCountry> = {
 };
 
 export const LANDING_COUNTRY_SLUGS = Object.keys(LANDING_COUNTRIES) as LandingCountrySlug[];
-
-export function getLandingCountry(slug: string): LandingCountry | null {
-	return (LANDING_COUNTRIES as Record<string, LandingCountry>)[slug] ?? null;
-}

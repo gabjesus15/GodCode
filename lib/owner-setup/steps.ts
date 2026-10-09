@@ -2,7 +2,7 @@ import { OWNER_SETUP_STEPS, type OwnerSetupStep } from "@/lib/tenant/owner-setup
 
 export { OWNER_SETUP_STEPS, type OwnerSetupStep };
 
-export type OwnerSetupStepMeta = {
+type OwnerSetupStepMeta = {
 	/** Nombre corto, para la barra de progreso. */
 	label: string;
 	title: string;

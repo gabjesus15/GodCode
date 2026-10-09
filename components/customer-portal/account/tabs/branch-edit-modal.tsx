@@ -40,16 +40,10 @@ import {
 import type { BranchSummary } from "../../shared/customer-account-types";
 import { BranchHoursEditor } from "./branch-hours-editor";
 
-/** La fila de `/cuenta` trae además el país y la fuente de tasa (no están en `BranchSummary`). */
-type BranchEditTarget = BranchSummary & {
-  country?: string | null;
-  exchange_rate_source?: string | null;
-};
-
 type BranchEditModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  branch: BranchEditTarget | null;
+  branch: BranchSummary | null;
   onSaveSuccess: () => void;
   /** País del negocio: respaldo cuando la sucursal no tiene el suyo guardado. */
   companyCountry?: string | null;

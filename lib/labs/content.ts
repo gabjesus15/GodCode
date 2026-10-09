@@ -7,7 +7,7 @@ import { LANDING_BRAND_ALTERNATE, LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } f
  */
 export const POS_PATH = "/";
 /** La dirección del landing del producto tal como se lee en la barra del navegador de la captura. */
-export const POS_ADDRESS = "godcode.me";
+const POS_ADDRESS = "godcode.me";
 
 /**
  * Contenido de la home corporativa de Gcode Labs (el estudio).
@@ -59,7 +59,7 @@ export type LabsShowcaseItem = {
 	phone?: LabsScreen;
 };
 
-export type LabsProcessStep = { num: string; title: string; text: string };
+type LabsProcessStep = { num: string; title: string; text: string };
 
 export type LabsProject = {
 	name: string;
@@ -78,9 +78,9 @@ export type LabsProject = {
 	phone?: LabsScreen;
 };
 
-export type LabsTeamMember = { name: string; role: string; photoUrl?: string; linkedinUrl?: string };
+type LabsTeamMember = { name: string; role: string; photoUrl?: string; linkedinUrl?: string };
 
-export type LabsFaq = { question: string; answer: string };
+type LabsFaq = { question: string; answer: string };
 
 export const LABS_HOME = {
 	/** El nombre ya está en el logo; la línea dice qué somos y dónde. */

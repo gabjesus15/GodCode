@@ -19,7 +19,14 @@ import { createSecretBox, secretLast4 } from "./secret-box";
 
 const TABLE = "company_email_senders";
 const RESEND_API = "https://api.resend.com/emails";
-const EMAIL_RE = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]+$/;
+/**
+ * La última etiqueta del dominio no lleva puntos. Antes las dos partes alrededor de `\.`
+ * aceptaban `.`, y con «a@» seguido de miles de puntos el motor probaba cada forma de
+ * repartirlos: tardaba un tiempo cuadrático en fallar (CodeQL js/polynomial-redos).
+ */
+const EMAIL_RE = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;.]+$/;
+/** Largo máximo de una dirección (RFC 5321): lo más largo ni siquiera llega a la expresión. */
+const EMAIL_MAX_LENGTH = 254;
 
 export type CompanySenderStatus = {
 	fromEmail: string;
@@ -32,7 +39,7 @@ export type CompanySenderStatus = {
 	updatedAt: string | null;
 };
 
-export type SaveCompanySenderInput = {
+type SaveCompanySenderInput = {
 	companyId: string;
 	/** Vacía: se reusa la guardada (para cambiar solo el remitente). */
 	apiKey?: string;
@@ -44,18 +51,20 @@ export type SaveCompanySenderInput = {
 	actorEmail: string;
 };
 
-export type SaveCompanySenderResult = { ok: true } | { ok: false; status: number; error: string };
+type SaveCompanySenderResult = { ok: true } | { ok: false; status: number; error: string };
 
 function db(client?: SupabaseClient): SupabaseClient {
 	return client ?? supabaseAdmin;
 }
 
-export function isValidSenderEmail(value: unknown): value is string {
-	return typeof value === "string" && EMAIL_RE.test(value.trim());
+function isValidSenderEmail(value: unknown): value is string {
+	if (typeof value !== "string") return false;
+	const email = value.trim();
+	return email.length <= EMAIL_MAX_LENGTH && EMAIL_RE.test(email);
 }
 
 /** El nombre va entre comillas en el encabezado «De:»: sin comillas, saltos ni `<>`. */
-export function cleanSenderName(value: string): string {
+function cleanSenderName(value: string): string {
 	return value.replace(/["<>\\\r\n\t]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
 }
 

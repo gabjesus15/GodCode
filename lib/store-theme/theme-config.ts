@@ -30,13 +30,13 @@ export type ProductDetailsMode = (typeof PRODUCT_DETAILS_MODES)[number];
  * - cartStyle: "float" botón redondo; "bar" barra abajo con el total, solo
  *   cuando hay algo en el pedido.
  */
-export const HEADER_STYLES = ["bar", "cover"] as const;
+const HEADER_STYLES = ["bar", "cover"] as const;
 export type HeaderStyle = (typeof HEADER_STYLES)[number];
 
-export const FEATURED_STYLES = ["section", "carousel"] as const;
+const FEATURED_STYLES = ["section", "carousel"] as const;
 export type FeaturedStyle = (typeof FEATURED_STYLES)[number];
 
-export const CART_STYLES = ["float", "bar"] as const;
+const CART_STYLES = ["float", "bar"] as const;
 export type CartStyle = (typeof CART_STYLES)[number];
 
 export type MenuLayoutConfig = {
@@ -76,7 +76,7 @@ export function normalizeMenuLayout(input: unknown): MenuLayoutConfig {
 }
 
 /** "auto" decide por la luminancia del color de fondo (ver lib/tenant/theme/surface-scheme). */
-export const SURFACE_SCHEMES = ["auto", "light", "dark"] as const;
+const SURFACE_SCHEMES = ["auto", "light", "dark"] as const;
 export type SurfaceSchemeSetting = (typeof SURFACE_SCHEMES)[number];
 
 /**
@@ -109,8 +109,7 @@ export type StoreThemeFontId = (typeof STORE_THEME_FONTS)[number]["id"];
  * imagen de fondo: eligen un neutro de la paleta y el menú se resuelve solo
  * (claro u oscuro según el tono, sombras y bordes ya calibrados para liso).
  */
-export const BACKGROUND_MODES = ["image", "solid"] as const;
-export type BackgroundMode = (typeof BACKGROUND_MODES)[number];
+export type BackgroundMode = "image" | "solid";
 
 export function normalizeBackgroundMode(value: unknown): BackgroundMode {
   return String(value ?? "").trim().toLowerCase() === "solid" ? "solid" : "image";
@@ -231,7 +230,7 @@ export function productCardGridClass(cardStyle: unknown): string {
   return `grid-${normalizeProductCardStyle(cardStyle)}`;
 }
 
-export function normalizeBackgroundBrightness(value: unknown): number | null {
+function normalizeBackgroundBrightness(value: unknown): number | null {
   if (value == null || value === "") return null;
   const n = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(n)) return null;

@@ -70,7 +70,7 @@ interface CreateOrderPayload {
 }
 
 /** Pedidos creados desde el menú / carrito del tenant. */
-export const WEB_MENU_ORDER_ORIGIN = "web" as const;
+const WEB_MENU_ORDER_ORIGIN = "web" as const;
 
 const UNAVAILABLE_BRANCH_ITEMS_MESSAGE =
 	"Hay productos del carrito que no estan disponibles para esta sucursal. Actualiza el menu e intenta nuevamente.";
@@ -82,6 +82,15 @@ const TOTAL_MISMATCH_MESSAGE =
 	"No pudimos confirmar el total del pedido. Revisa delivery y extras, o vacia el carrito e intenta de nuevo.";
 const OUTSIDE_BUSINESS_HOURS_MESSAGE =
 	"Estamos fuera de horario y no estamos recibiendo pedidos en este momento.";
+
+/**
+ * Tienda que no vende (vista previa sin pagar, suspendida o vencida). Es el texto de
+ * `tenant.cart.modal.errors.noOrdersNow`, en español como el resto de este servicio: el
+ * carrito muestra el mensaje del error tal cual y nunca debe ver el código crudo.
+ */
+const STORE_NOT_OPEN_MESSAGE = "No se pueden recibir pedidos en este momento.";
+/** `code` de las rutas del carrito (`STORE_NOT_OPEN_CODE` en lib/tenant/store-draft-viewer, solo servidor). */
+const STORE_NOT_OPEN_CODE = "store_not_open";
 
 async function resolveCouponDiscountForOrder(
 	branchId: string,
@@ -168,7 +177,9 @@ async function resolveNormalizedCatalogItems(
 			ok?: boolean;
 			items?: OrderCatalogLine[];
 			error?: string;
+			code?: string;
 		};
+		if (json.code === STORE_NOT_OPEN_CODE) throw new Error(STORE_NOT_OPEN_MESSAGE);
 		if (!res.ok || !json.ok || !Array.isArray(json.items)) {
 			throw new Error(
 				json.error || "No se pudo validar los productos de la sucursal. Intenta nuevamente.",
@@ -620,6 +631,11 @@ export const ordersService = {
 
     if (orderError) {
       const rpcMessage = String(orderError.message || "").toLowerCase();
+      // La base rechaza el pedido de una tienda que no vende, o con una sucursal de otra
+      // empresa (migrations/20261010_public_order_requires_open_store.sql).
+      if (rpcMessage.includes(STORE_NOT_OPEN_CODE) || rpcMessage.includes("branch_company_mismatch")) {
+        throw new Error(STORE_NOT_OPEN_MESSAGE);
+      }
       if (rpcMessage.includes("invalid_coupon")) {
         throw new Error("Cupón no válido.");
       }
@@ -687,13 +703,15 @@ export const ordersService = {
         }),
       });
       if (!patchRes.ok) {
-        const j = (await patchRes.json().catch(() => ({}))) as { error?: string; message?: string };
+        const j = (await patchRes.json().catch(() => ({}))) as { error?: string; message?: string; code?: string };
         // El pedido huérfano lo cancela la propia ruta, que sí tiene permiso: desde
         // aquí la clave anónima no puede escribir en `orders` y el intento siempre
         // moria en un 42501 silencioso, dejando el pedido vivo en el panel.
-        const msg = j.error === "ORDER_INTAKE_PAUSED"
-          ? (j.message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.")
-          : (j.error || "No se pudo registrar los datos de facturación del pedido.");
+        const msg = j.code === STORE_NOT_OPEN_CODE
+          ? STORE_NOT_OPEN_MESSAGE
+          : j.error === "ORDER_INTAKE_PAUSED"
+            ? (j.message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.")
+            : (j.error || "No se pudo registrar los datos de facturación del pedido.");
         throw new Error(msg);
       }
     }

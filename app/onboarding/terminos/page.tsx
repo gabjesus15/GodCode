@@ -10,7 +10,12 @@ import {
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
 import { getLegalBackHref } from "@/lib/legal/legal-back-href-server";
-import { LEGAL_MERCADO_PAGO_CLP, LEGAL_OTHER_CURRENCY, LEGAL_PRICES_IN_USD } from "@/lib/legal/legal-documents";
+import {
+	LEGAL_MERCADO_PAGO_CLP,
+	LEGAL_OTHER_CURRENCY,
+	LEGAL_PRICES_IN_USD,
+	LEGAL_PROVIDER_DESCRIPTION,
+} from "@/lib/legal/legal-documents";
 
 export const metadata: Metadata = {
 	title: "Términos y Condiciones",
@@ -38,9 +43,8 @@ export default async function TerminosPage() {
 			<section>
 				<h2 className="font-semibold text-slate-800">1. Quién presta el Servicio</h2>
 				<p className="mt-2">
-					Gcode es operado por una persona natural bajo el nombre comercial Gcode (también &quot;Gcode Labs&quot; o
-					&quot;Gcode POS&quot;), con sede en Santiago, Chile<ProviderIdentity />, y correo de contacto{" "}
-					<SupportEmail /> (&quot;Gcode&quot;, &quot;nosotros&quot;).
+					Gcode es operado por {LEGAL_PROVIDER_DESCRIPTION}
+					<ProviderIdentity />, y correo de contacto <SupportEmail /> (&quot;Gcode&quot;, &quot;nosotros&quot;).
 				</p>
 				<p className="mt-2">
 					Si contratas en nombre de una empresa, declaras tener facultades para obligarla.

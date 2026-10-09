@@ -105,6 +105,32 @@ describe("saveCompanySender", () => {
 		expect(await saveCompanySender(input, client)).toMatchObject({ ok: false, status: 503 });
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
+
+	it("un correo armado para trabar la validación se rechaza al instante", async () => {
+		const fetchMock = resend();
+		const { client } = db();
+		// Con la expresión anterior, «a@» y muchos puntos tardaban un tiempo cuadrático en fallar.
+		const attacks = ["a@" + ".".repeat(50_000) + "@", "a@" + "x.".repeat(25_000) + " ", "a@b." + "c".repeat(50_000) + " "];
+
+		for (const fromEmail of attacks) {
+			const started = performance.now();
+			expect(await saveCompanySender({ ...input, fromEmail }, client)).toEqual({
+				ok: false,
+				status: 400,
+				error: "El correo remitente no es válido",
+			});
+			expect(performance.now() - started).toBeLessThan(200);
+		}
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it("acepta subdominios y rechaza un dominio que termina en punto", async () => {
+		resend();
+		const { client } = db();
+
+		await expect(saveCompanySender({ ...input, fromEmail: "cupones@mail.oishi.co.uk" }, client)).resolves.toEqual({ ok: true });
+		expect(await saveCompanySender({ ...input, fromEmail: "cupones@oishisushi.shop." }, client)).toMatchObject({ ok: false, status: 400 });
+	});
 });
 
 describe("getCompanySender", () => {

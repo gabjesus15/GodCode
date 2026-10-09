@@ -4,21 +4,12 @@ import { Copy, Moon, Plus, X } from "lucide-react";
 
 import {
   MAX_INTERVALS_PER_DAY,
+  WEEKDAY_NAME,
   WEEKDAYS_FROM_MONDAY,
   type BusinessHoursInterval,
   type BusinessHoursWeek,
   type Weekday,
 } from "@/lib/tenant/business-hours";
-
-const DAY_LABEL: Record<Weekday, string> = {
-  1: "Lunes",
-  2: "Martes",
-  3: "Miércoles",
-  4: "Jueves",
-  5: "Viernes",
-  6: "Sábado",
-  0: "Domingo",
-};
 
 const DEFAULT_INTERVAL: BusinessHoursInterval = { open: "09:00", close: "18:00" };
 
@@ -128,7 +119,7 @@ export function BranchHoursEditor({
           className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-indigo-600 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:text-[#c7c7cc] disabled:hover:bg-transparent"
         >
           <Copy className="h-3.5 w-3.5" aria-hidden />
-          {firstOpenDay != null ? `Copiar el ${DAY_LABEL[firstOpenDay].toLowerCase()} a todos` : "Copiar a todos"}
+          {firstOpenDay != null ? `Copiar el ${WEEKDAY_NAME[firstOpenDay].toLowerCase()} a todos` : "Copiar a todos"}
         </button>
       </div>
 
@@ -149,7 +140,7 @@ export function BranchHoursEditor({
                   className="h-4 w-4 rounded border-[#d2d2d7] text-indigo-600 focus:ring-indigo-500/20"
                   disabled={disabled}
                 />
-                {DAY_LABEL[day]}
+                {WEEKDAY_NAME[day]}
               </label>
 
               {isOpen ? (
@@ -163,7 +154,7 @@ export function BranchHoursEditor({
                           type="time"
                           value={interval.open}
                           onChange={(e) => e.target.value && updateInterval(day, index, { open: e.target.value })}
-                          aria-label={`${DAY_LABEL[day]}: abre`}
+                          aria-label={`${WEEKDAY_NAME[day]}: abre`}
                           className={timeInputClass}
                           disabled={disabled}
                           required
@@ -173,7 +164,7 @@ export function BranchHoursEditor({
                           type="time"
                           value={interval.close}
                           onChange={(e) => e.target.value && updateInterval(day, index, { close: e.target.value })}
-                          aria-label={`${DAY_LABEL[day]}: cierra`}
+                          aria-label={`${WEEKDAY_NAME[day]}: cierra`}
                           className={timeInputClass}
                           disabled={disabled}
                           required
@@ -182,7 +173,7 @@ export function BranchHoursEditor({
                           <button
                             type="button"
                             onClick={() => removeInterval(day, index)}
-                            aria-label={`Quitar el segundo turno del ${DAY_LABEL[day].toLowerCase()}`}
+                            aria-label={`Quitar el segundo turno del ${WEEKDAY_NAME[day].toLowerCase()}`}
                             className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#8e8e93] transition hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
                             disabled={disabled}
                           >

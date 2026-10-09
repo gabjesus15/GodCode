@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 
 import { ProviderIdentity } from "@/components/legal/legal-page";
 import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
-import { LEGAL_UPDATED_AT_LABEL } from "@/lib/legal/legal-documents";
+import { LEGAL_PROVIDER_DESCRIPTION, LEGAL_UPDATED_AT_LABEL } from "@/lib/legal/legal-documents";
 import { getAppUrl } from "@/lib/tenant/app-url";
 
 export const MENU_ACCOUNT_TERMS_UPDATED_AT = LEGAL_UPDATED_AT_LABEL;
@@ -52,8 +52,8 @@ export function MenuAccountTermsContent() {
 					</li>
 					<li>
 						<strong>Gcode</strong> es la plataforma tecnológica que el Negocio usa para su menú y sus pedidos. Gcode
-						es operado por una persona natural bajo el nombre comercial Gcode, con sede en Santiago,
-						Chile<ProviderIdentity />, y correo <ContactEmail />.
+						es operado por {LEGAL_PROVIDER_DESCRIPTION}
+						<ProviderIdentity />, y correo <ContactEmail />.
 					</li>
 				</ul>
 				<p>

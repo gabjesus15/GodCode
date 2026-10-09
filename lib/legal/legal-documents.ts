@@ -1,3 +1,5 @@
+import { LANDING_BRAND_NAME, LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
+
 /**
  * Versión vigente de los documentos legales (términos, privacidad, cookies y
  * términos de la cuenta del menú), en formato AAAA-MM-DD, y la fecha que muestran
@@ -33,6 +35,16 @@ export const LEGAL_PRICES_IN_USD = "Los precios se muestran en dólares estadoun
 export const LEGAL_MERCADO_PAGO_CLP =
 	"Si pagas con Mercado Pago, te cobramos el equivalente en pesos chilenos y ves el monto exacto antes de pagar.";
 export const LEGAL_OTHER_CURRENCY = "Si pagas en otra moneda, el tipo de cambio es el de tu banco o de la pasarela de pago.";
+
+/**
+ * Titular del Servicio. Los Términos, la Política de privacidad y los términos de la
+ * cuenta del menú lo presentan con `LEGAL_PROVIDER_DESCRIPTION` (la descripción que ya
+ * traían los Términos) y el pie del landing firma el © con `LEGAL_PROVIDER_NAME`: antes
+ * cada uno lo nombraba a su manera. Cambiar cualquiera de los dos cambia el texto de los
+ * documentos: sube la versión.
+ */
+export const LEGAL_PROVIDER_NAME = LANDING_COMPANY_NAME;
+export const LEGAL_PROVIDER_DESCRIPTION = `una persona natural bajo el nombre comercial ${LANDING_BRAND_NAME} (también "${LEGAL_PROVIDER_NAME}" o "${LANDING_PRODUCT_NAME}"), con sede en Santiago, Chile`;
 
 /**
  * RUT y domicilio del titular de Gcode. El Reglamento de Comercio Electrónico

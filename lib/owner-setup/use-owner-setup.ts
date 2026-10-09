@@ -19,7 +19,7 @@ import { whatsappUrlFromPhone } from "@/lib/tenant/whatsapp-url";
  * propias vistas (y su `api` con `baseUrl`).
  */
 
-export type OwnerSetupBusy = "save" | "skip" | "publish" | "finish" | null;
+type OwnerSetupBusy = "save" | "skip" | "publish" | "finish" | null;
 
 /** Adónde va «Publicar mi tienda» con la tienda en vista previa: elegir plan y pagar. */
 export const STORE_DRAFT_PUBLISH_PATH = "/cuenta/publicar";
@@ -289,5 +289,3 @@ export function useOwnerSetup({
 		finish,
 	};
 }
-
-export type OwnerSetupController = ReturnType<typeof useOwnerSetup>;

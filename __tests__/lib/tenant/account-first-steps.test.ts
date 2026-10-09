@@ -45,4 +45,28 @@ describe("buildFirstSteps", () => {
 		expect(design({ templateId: "nori" }).done).toBe(true);
 		expect(design({ setupFinished: true }).done).toBe(true);
 	});
+
+	it("en vista previa el último paso es publicar la tienda, no compartir el enlace", () => {
+		const steps = buildFirstSteps({ ...base, orderCount: 2, storeDraft: { paymentInReview: false } });
+		expect(steps.map((s) => s.id)).toEqual(["menu", "whatsapp", "hours", "logo", "design", "publish"]);
+		// Aunque haya pedidos guardados, mientras siga en vista previa falta publicarla.
+		expect(steps.at(-1)).toMatchObject({
+			title: "Publica tu tienda",
+			done: false,
+			target: "setup",
+			setupStep: "publicar",
+			actionLabel: "Publicar mi tienda",
+		});
+	});
+
+	it("con el pago en revisión, publicar lleva a ver el estado", () => {
+		const publish = buildFirstSteps({ ...base, storeDraft: { paymentInReview: true } }).at(-1)!;
+		expect(publish).toMatchObject({ id: "publish", done: false, setupStep: "publicar", actionLabel: "Ver el estado" });
+		expect(publish.detail).toContain("validando tu pago");
+	});
+
+	it("una tienda ya publicada vuelve a pedir el primer pedido", () => {
+		const last = buildFirstSteps({ ...base, storeDraft: null }).at(-1)!;
+		expect(last).toMatchObject({ id: "first_order", target: "store", actionLabel: "Ver mi tienda" });
+	});
 });

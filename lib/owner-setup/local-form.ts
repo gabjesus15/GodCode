@@ -23,7 +23,7 @@ export function instagramHandle(url: string | null | undefined): string {
 	return match ? `@${match[1]}` : (url ?? "");
 }
 
-export function hasHoursDays(week: BusinessHoursWeek): boolean {
+function hasHoursDays(week: BusinessHoursWeek): boolean {
 	return Object.values(week).some((intervals) => intervals.length > 0);
 }
 

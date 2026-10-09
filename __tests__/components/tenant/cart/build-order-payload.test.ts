@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
 // `sanitizeUserText` usa DOMPurify (necesita DOM); en node replicamos su contrato: trim + sin HTML.
+// Se quitan los signos `<` y `>` uno por uno: con `/<[^>]*>/` una etiqueta sin cerrar
+// (`<img src=x onerror=…`) pasaba entera. Ningún texto de estos tests trae etiquetas.
 vi.mock("@/utils/sanitize-user-text", () => ({
 	sanitizeUserText: (text: string | null | undefined) =>
 		String(text ?? "")
 			.trim()
-			.replace(/<[^>]*>/g, ""),
+			.replace(/[<>]/g, ""),
 }));
 
 import {
