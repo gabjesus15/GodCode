@@ -147,11 +147,20 @@
         "sendingCode": "Invio…",
         "passwordCodeHint": "Per cambiare la password ti inviamo un codice via email.",
         "codeSentHint": "Controlla la tua email: il codice scade tra 1 ora.",
-        "legalTitle": "Note legali"
+        "legalTitle": "Note legali",
+        "deleteTitle": "Elimina account",
+        "deleteLabel": "Elimina il mio account in questo negozio",
+        "deleteStart": "Elimina il mio account",
+        "deleteHint": "Cancelliamo i tuoi dati, gli indirizzi salvati e il tuo accesso in questo negozio. Gli ordini già fatti restano nei registri del negozio e i tuoi account in altri negozi non cambiano.",
+        "deleteCodeHint": "Ti abbiamo inviato un codice via email. Inseriscilo per confermare: l'eliminazione non si può annullare.",
+        "deleteCancel": "Annulla",
+        "deleteConfirm": "Elimina definitivamente",
+        "deleting": "Eliminazione…"
       },
       "notices": {
         "passwordChanged": "Password aggiornata. Accedi di nuovo con quella nuova.",
-        "linked": "Fatto, abbiamo collegato questo negozio al tuo account."
+        "linked": "Fatto, abbiamo collegato questo negozio al tuo account.",
+        "accountDeleted": "Abbiamo eliminato il tuo account in questo negozio."
       },
       "errors": {
         "company_not_found": "Questa attività non è disponibile.",

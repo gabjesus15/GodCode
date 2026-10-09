@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Lock } from "lucide-react";
 
+import { CookieSettingsLink } from "@/components/legal/cookie-consent";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { OnboardingRecaptchaProvider } from "@/components/onboarding/recaptcha-provider";
 import { LandingLogo } from "@/components/ui/logo/landing-logo";
@@ -57,6 +58,7 @@ export default async function OnboardingLayout({ children }: { children: React.R
 						<Link href="/onboarding/privacidad" className="onboarding-link">
 							{t.footer.privacy}
 						</Link>
+						<CookieSettingsLink className="onboarding-link" />
 						<a href={`mailto:${LANDING_SUPPORT_EMAIL}`} className="onboarding-link">
 							{t.footer.help}
 						</a>

@@ -147,11 +147,20 @@
         "sendingCode": "Sending…",
         "passwordCodeHint": "To change your password we'll send a code to your email.",
         "codeSentHint": "Check your email: the code expires in 1 hour.",
-        "legalTitle": "Legal"
+        "legalTitle": "Legal",
+        "deleteTitle": "Delete account",
+        "deleteLabel": "Delete my account at this business",
+        "deleteStart": "Delete my account",
+        "deleteHint": "We delete your details, saved addresses and access at this business. Past orders stay in the business's records, and your accounts at other businesses don't change.",
+        "deleteCodeHint": "We sent a code to your email. Enter it to confirm: this can't be undone.",
+        "deleteCancel": "Cancel",
+        "deleteConfirm": "Delete permanently",
+        "deleting": "Deleting…"
       },
       "notices": {
         "passwordChanged": "Password updated. Please sign in again with the new one.",
-        "linked": "Done, we linked this business to your account."
+        "linked": "Done, we linked this business to your account.",
+        "accountDeleted": "We deleted your account at this business."
       },
       "errors": {
         "company_not_found": "This business is not available.",

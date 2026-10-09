@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { FileText, LogOut, MapPin, Package, Settings, UserRound, UtensilsCrossed } from "lucide-react";
+import { FileText, LogOut, MapPin, Package, Settings, Trash2, UserRound, UtensilsCrossed } from "lucide-react";
 
 import { getFormStrategy } from "@/lib/geo/country-forms";
 import type { MenuAccountDeliveryOptions } from "@/lib/menu-account/delivery-options";
@@ -31,6 +31,8 @@ type MenuAccountDashboardProps = {
 	 * la persona al login en vez de dejarla en un panel que ya no responde.
 	 */
 	onPasswordChanged: () => void;
+	/** La cuenta ya no existe y la sesión se cerró: se vuelve al acceso con un aviso. */
+	onAccountDeleted: () => void;
 };
 
 type DashboardSection = "account" | "orders" | "addresses" | "settings";
@@ -51,6 +53,7 @@ export function MenuAccountDashboard({
 	menuPath,
 	onSignedOut,
 	onPasswordChanged,
+	onAccountDeleted,
 }: MenuAccountDashboardProps) {
 	const t = useTranslations("tenant.account");
 	const [section, setSection] = useState<DashboardSection>("account");
@@ -117,6 +120,7 @@ export function MenuAccountDashboard({
 						companySlug={companySlug}
 						onSignedOut={onSignedOut}
 						onPasswordChanged={onPasswordChanged}
+						onAccountDeleted={onAccountDeleted}
 					/>
 				) : null}
 			</div>
@@ -274,9 +278,10 @@ type SettingsSectionProps = {
 	companySlug: string;
 	onSignedOut: () => void;
 	onPasswordChanged: () => void;
+	onAccountDeleted: () => void;
 };
 
-function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: SettingsSectionProps) {
+function SettingsSection({ companySlug, onSignedOut, onPasswordChanged, onAccountDeleted }: SettingsSectionProps) {
 	const t = useTranslations("tenant.account");
 	const password = useMenuAccount("login");
 	const logout = useMenuAccount("login");
@@ -408,6 +413,106 @@ function SettingsSection({ companySlug, onSignedOut, onPasswordChanged }: Settin
 				</SettingsRow>
 			</SettingsGroup>
 			<MenuAccountTermsDialog open={termsOpen} onClose={() => setTermsOpen(false)} />
+
+			<DeleteAccountGroup companySlug={companySlug} onAccountDeleted={onAccountDeleted} />
 		</div>
+	);
+}
+
+type DeleteAccountGroupProps = {
+	companySlug: string;
+	onAccountDeleted: () => void;
+};
+
+/**
+ * Eliminar la cuenta en este negocio. Dos pasos, como la contraseña: primero se manda
+ * un código al correo y después se confirma con él. No se puede deshacer.
+ */
+function DeleteAccountGroup({ companySlug, onAccountDeleted }: DeleteAccountGroupProps) {
+	const t = useTranslations("tenant.account");
+	const removal = useMenuAccount("login");
+
+	const [code, setCode] = useState("");
+	const [codeSent, setCodeSent] = useState(false);
+	const [attempted, setAttempted] = useState(false);
+	const codeError = code.length === 6 ? null : t("fields.code");
+
+	const handleSendCode = async () => {
+		const result = await removal.run("delete/code", { body: { companySlug } });
+		if (result.ok) setCodeSent(true);
+	};
+
+	const handleCancel = () => {
+		setCode("");
+		setCodeSent(false);
+		setAttempted(false);
+		removal.setErrorCode(null);
+	};
+
+	const handleDelete = async (event: React.FormEvent) => {
+		event.preventDefault();
+		if (codeError) {
+			setAttempted(true);
+			return;
+		}
+		const result = await removal.run("delete", { body: { companySlug, code } });
+		if (result.ok) onAccountDeleted();
+	};
+
+	return (
+		<form onSubmit={handleDelete} noValidate>
+			<SettingsGroup title={t("dashboard.deleteTitle")}>
+				{!codeSent ? (
+					<SettingsRow label={t("dashboard.deleteLabel")}>
+						<button
+							type="button"
+							className="account-button account-button--ghost"
+							onClick={handleSendCode}
+							disabled={removal.pending}
+						>
+							{removal.pending ? null : <Trash2 size={15} aria-hidden />}
+							<AccountBusyLabel busy={removal.pending} idle={t("dashboard.deleteStart")} working={t("dashboard.sendingCode")} />
+						</button>
+						<span className="account-field-hint">{t("dashboard.deleteHint")}</span>
+					</SettingsRow>
+				) : (
+					<SettingsRow label={t("code.label")} htmlFor="account-delete-code">
+						<input
+							id="account-delete-code"
+							className="account-input account-input--code"
+							value={code}
+							onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+							inputMode="numeric"
+							autoComplete="one-time-code"
+							placeholder="000000"
+							aria-invalid={attempted && codeError ? true : undefined}
+							autoFocus
+						/>
+						{attempted && codeError ? <span className="account-field-error" role="alert">{codeError}</span> : null}
+						<span className="account-field-hint">{t("dashboard.deleteCodeHint")}</span>
+					</SettingsRow>
+				)}
+			</SettingsGroup>
+			<div className="account-actions">
+				{removal.errorCode ? (
+					<p className="account-error" role="alert">{errorMessage(t, removal.errorCode)}</p>
+				) : null}
+				{codeSent ? (
+					<>
+						<button
+							type="button"
+							className="account-button account-button--ghost"
+							onClick={handleCancel}
+							disabled={removal.pending}
+						>
+							{t("dashboard.deleteCancel")}
+						</button>
+						<button type="submit" className="account-button account-button--danger" disabled={removal.pending}>
+							<AccountBusyLabel busy={removal.pending} idle={t("dashboard.deleteConfirm")} working={t("dashboard.deleting")} />
+						</button>
+					</>
+				) : null}
+			</div>
+		</form>
 	);
 }

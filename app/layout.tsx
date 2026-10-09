@@ -24,9 +24,11 @@ import { SilentConsole } from "../components/silent-console";
 import { GlobalAntiZoom } from "../components/theme/global-anti-zoom";
 import { LIGHT_ONLY_THEME_SCRIPT } from "@/components/theme/saas-theme-scope";
 import { PageAnalyticsTracker } from "../components/analytics/page-analytics-tracker";
+import { CookieConsentBanner } from "@/components/legal/cookie-consent";
 import { getClientMessagesForPath } from "@/lib/i18n/client-messages";
 import { getCurrentLocale } from "@/lib/i18n/server";
 import { LANDING_COMPANY_NAME } from "@/lib/landing/brand";
+import { ANALYTICS_CONSENT_MAX_AGE_MS, ANALYTICS_CONSENT_STORAGE_KEY } from "@/lib/legal/legal-documents";
 import { LANDING_DESCRIPTION, LANDING_SHARE_TITLE } from "@/lib/landing/metadata";
 import { getAppUrl } from "@/lib/tenant/app-url";
 // import Image from 'next/image'; // Eliminado porque no se usa
@@ -179,9 +181,18 @@ export default async function RootLayout({
         />
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
+          {/* Modo de consentimiento: la analítica con cookies parte denegada y solo se
+              activa si la persona la aceptó en el aviso (components/legal/cookie-consent).
+              En los menús de los negocios se queda denegada: GA mide sin cookies. */}
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
+            var gcodeAnalytics = 'denied';
+            try {
+              var gcodeConsent = JSON.parse(localStorage.getItem('${ANALYTICS_CONSENT_STORAGE_KEY}') || 'null');
+              if (${isTenantRoute ? "false" : "true"} && gcodeConsent && gcodeConsent.choice === 'granted' && Date.now() - gcodeConsent.at < ${ANALYTICS_CONSENT_MAX_AGE_MS}) gcodeAnalytics = 'granted';
+            } catch (e) {}
+            gtag('consent', 'default', { analytics_storage: gcodeAnalytics, ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
             gtag('js', new Date());
             gtag('config', '${GA_ID}', { send_page_view: false });
           `}
@@ -203,6 +214,7 @@ export default async function RootLayout({
           {process.env.NODE_ENV === "production" ? <SilentConsole /> : null}
           {process.env.NODE_ENV !== "production" ? <DevServiceWorkerCleanup /> : null}
           {process.env.NODE_ENV === "production" ? <PageAnalyticsTracker /> : null}
+          {isTenantRoute ? null : <CookieConsentBanner />}
           {children}
           {IS_VERCEL ? (
             <>

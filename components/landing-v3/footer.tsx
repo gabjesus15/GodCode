@@ -7,6 +7,8 @@ import {
 } from "@/lib/landing/brand";
 import type { LandingSocialLink } from "@/lib/landing/contact";
 
+import { CookieSettingsLink } from "@/components/legal/cookie-consent";
+
 import { LandingBrandMark } from "./landing-brand-mark";
 import {
 	LandingInstagramIcon,
@@ -149,6 +151,9 @@ export function Footer({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 								</Link>
 							</li>
 						))}
+						<li>
+							<CookieSettingsLink className="transition-colors hover:text-[#0d0d0d]" />
+						</li>
 					</ul>
 				</div>
 			</div>

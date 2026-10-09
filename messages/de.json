@@ -147,11 +147,20 @@
         "sendingCode": "Wird gesendet…",
         "passwordCodeHint": "Um dein Passwort zu ändern, senden wir dir einen Code per E-Mail.",
         "codeSentHint": "Sieh in deinen E-Mails nach: Der Code läuft in 1 Stunde ab.",
-        "legalTitle": "Rechtliches"
+        "legalTitle": "Rechtliches",
+        "deleteTitle": "Konto löschen",
+        "deleteLabel": "Mein Konto bei diesem Geschäft löschen",
+        "deleteStart": "Mein Konto löschen",
+        "deleteHint": "Wir löschen deine Daten, gespeicherten Adressen und deinen Zugang bei diesem Geschäft. Bisherige Bestellungen bleiben in den Unterlagen des Geschäfts, deine Konten bei anderen Geschäften bleiben unverändert.",
+        "deleteCodeHint": "Wir haben dir einen Code per E-Mail geschickt. Gib ihn zur Bestätigung ein: Das Löschen kann nicht rückgängig gemacht werden.",
+        "deleteCancel": "Abbrechen",
+        "deleteConfirm": "Endgültig löschen",
+        "deleting": "Wird gelöscht…"
       },
       "notices": {
         "passwordChanged": "Passwort aktualisiert. Melde dich mit dem neuen an.",
-        "linked": "Fertig, dieses Geschäft ist jetzt mit deinem Konto verknüpft."
+        "linked": "Fertig, dieses Geschäft ist jetzt mit deinem Konto verknüpft.",
+        "accountDeleted": "Wir haben dein Konto bei diesem Geschäft gelöscht."
       },
       "errors": {
         "company_not_found": "Dieses Geschäft ist nicht verfügbar.",

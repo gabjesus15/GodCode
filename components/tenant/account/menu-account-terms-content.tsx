@@ -1,28 +1,27 @@
 /**
- * Términos y Condiciones para Usuarios Finales (cuenta del menú).
+ * Términos de la cuenta de cliente en los menús (usuarios finales).
  *
- * El texto legal va solo en español: es un contrato bajo ley chilena y una
- * traducción automática no tendría validez. Si cambia el texto, actualiza
- * `MENU_ACCOUNT_TERMS_UPDATED_AT`.
+ * El texto legal va solo en español: una traducción automática no tendría validez.
+ * Fuente: `legal/5-terminos-comensales.md` en los archivos del proyecto. Si cambia
+ * el texto, sube `LEGAL_DOCUMENTS_VERSION` y la fecha en `lib/legal/legal-documents.ts`.
  */
+import type { ReactNode } from "react";
 
+import { ProviderIdentity } from "@/components/legal/legal-page";
 import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
+import { LEGAL_UPDATED_AT_LABEL } from "@/lib/legal/legal-documents";
 import { getAppUrl } from "@/lib/tenant/app-url";
 
-export const MENU_ACCOUNT_TERMS_UPDATED_AT = "4 de octubre de 2026";
+export const MENU_ACCOUNT_TERMS_UPDATED_AT = LEGAL_UPDATED_AT_LABEL;
 
 /** Mismo correo que los Términos y la Política de privacidad del sitio (NEXT_PUBLIC_SUPPORT_EMAIL). */
 const CONTACT_EMAIL = LANDING_SUPPORT_EMAIL;
 
-function PrivacyPolicyLink() {
+/** Las páginas legales viven en el dominio de Gcode, no en el del negocio: se abren aparte. */
+function AppLink({ path, children }: { path: string; children: ReactNode }) {
 	return (
-		<a
-			href={`${getAppUrl()}/onboarding/privacidad`}
-			target="_blank"
-			rel="noopener noreferrer"
-			className="account-terms-link"
-		>
-			Política de privacidad de Gcode
+		<a href={`${getAppUrl()}${path}`} target="_blank" rel="noopener noreferrer" className="account-terms-link">
+			{children}
 		</a>
 	);
 }
@@ -40,230 +39,155 @@ export function MenuAccountTermsContent() {
 	return (
 		<div className="account-terms" lang="es">
 			<p>
-				Estos Términos regulan el registro y uso de la cuenta de usuario final (&quot;Usuario&quot;, comensal) en la
-				plataforma Gcode, distinta de los Términos y Condiciones que Gcode suscribe con los restaurantes afiliados
-				como clientes del Servicio.
+				Estos Términos regulan la cuenta que puedes crear en el menú digital de un negocio que usa Gcode (&quot;el
+				Negocio&quot;) para guardar tus datos, tus direcciones y tu historial de pedidos (&quot;la Cuenta&quot;).
+				Son distintos de los Términos que Gcode firma con los negocios.
 			</p>
-
 			<section>
-				<h2>1. Objeto y Aceptación de los Términos</h2>
-				<p>
-					Estos Términos y Condiciones (&quot;Términos&quot;) regulan el registro y uso de la cuenta de usuario final
-					en la plataforma Gcode (&quot;la Plataforma&quot;, &quot;nosotros&quot;), operada como persona natural bajo
-					el nombre Gcode, con sede en Santiago, Chile, y correo de contacto <ContactEmail />, por parte de personas
-					naturales que se registran para explorar menús y hacer pedidos en restaurantes afiliados (&quot;el
-					Usuario&quot;, &quot;tú&quot;).
-				</p>
-				<p>
-					Al crear una cuenta o utilizar la Plataforma de cualquier forma, el Usuario declara haber leído, entendido
-					y aceptado íntegramente estos Términos. Si el Usuario es menor de edad, solo puede usar la Plataforma con el
-					consentimiento y bajo la supervisión de su padre, madre o tutor legal.
-				</p>
-			</section>
-
-			<section>
-				<h2>2. Descripción del Servicio</h2>
-				<p>
-					Gcode es una plataforma que permite al Usuario explorar los menús digitales de los restaurantes afiliados
-					y realizar pedidos a través de una cuenta personal. Gcode no es un restaurante ni prepara ni entrega
-					alimentos: actúa como intermediario tecnológico entre el Usuario y cada restaurante afiliado, conforme se
-					detalla en la Sección 6.
-				</p>
-				<p>
-					Gcode podrá agregar, modificar o discontinuar funcionalidades de la Plataforma en cualquier momento,
-					procurando informar al Usuario con antelación razonable cuando el cambio afecte de forma relevante el uso
-					que este hace de su cuenta.
-				</p>
-			</section>
-
-			<section>
-				<h2>3. Registro y Requisitos de la Cuenta</h2>
-				<p>
-					Para registrarse, el Usuario debe ser mayor de 18 años o contar con la autorización de su padre, madre o
-					tutor, y proporcionar información veraz, completa y actualizada (nombre, correo electrónico, teléfono y
-					demás datos que se soliciten).
-				</p>
-				<p>
-					El Usuario es responsable de mantener la confidencialidad de sus credenciales de acceso y de toda actividad
-					realizada desde su cuenta. Debe notificar a Gcode de inmediato ante cualquier uso no autorizado o sospecha
-					de vulneración de seguridad, escribiendo a <ContactEmail />.
-				</p>
-				<p>
-					Gcode podrá suspender o cancelar una cuenta cuya información de registro sea falsa, incompleta o utilizada
-					para fines fraudulentos.
-				</p>
-			</section>
-
-			<section>
-				<h2>4. Funcionalidades de la Cuenta</h2>
-				<p>La cuenta del Usuario permite:</p>
+				<h2>1. Quiénes participan</h2>
 				<ul>
-					<li>Guardar una o más direcciones de entrega o retiro.</li>
-					<li>Consultar el historial de pedidos realizados a través de la cuenta y repetir un pedido anterior.</li>
 					<li>
-						Elegir el medio con el que pagará cada pedido y, si el restaurante lo pide, adjuntar el comprobante.
-						El cobro se realiza directamente con el restaurante (Sección 6): Gcode no procesa ni almacena datos
-						completos de tarjetas u otros instrumentos de pago.
+						<strong>El Negocio</strong> es quien vende y entrega la comida, fija sus precios y te cobra. Tu compra es
+						con el Negocio.
 					</li>
-					<li>Programa de puntos y fidelización: actualmente no disponible (ver Sección 5).</li>
-				</ul>
-				<p>El Usuario puede editar o eliminar esta información desde su panel de cuenta en cualquier momento.</p>
-			</section>
-
-			<section>
-				<h2>5. Programa de Puntos y Fidelización</h2>
-				<p>
-					Actualmente Gcode no cuenta con un programa de puntos ni de fidelización activo. La cuenta permite
-					consultar el historial de pedidos, pero no acumula puntos ni beneficios por ahora.
-				</p>
-				<p>
-					Si en el futuro se implementa un programa de este tipo, estos Términos se actualizarán conforme a la
-					Sección 12 para incluir sus reglas (acumulación, vigencia y condiciones de canje) antes de que entre en
-					vigencia.
-				</p>
-			</section>
-
-			<section>
-				<h2>6. Pedidos y Relación con los Restaurantes Afiliados</h2>
-				<p>
-					Cuando el Usuario realiza un pedido a través de la Plataforma, el contrato de compraventa de alimentos se
-					celebra directamente entre el Usuario y el restaurante afiliado correspondiente, no con Gcode. El pago del
-					pedido se realiza fuera de la Plataforma, directamente con el restaurante (efectivo, tarjeta u otro medio
-					que este disponga en el local).
-				</p>
-				<p>
-					Gcode no interviene en la preparación, calidad, precio final, cumplimiento del pedido ni en el cobro del
-					mismo, y no es responsable por errores, retrasos, incumplimientos o disputas de pago entre el Usuario y el
-					restaurante. Cualquier reclamo sobre el pedido debe dirigirse directamente al restaurante correspondiente;
-					Gcode podrá facilitar el contacto pero no actúa como parte ni garante de esa relación comercial.
-				</p>
-				<p>
-					La disponibilidad, precios y condiciones publicadas por cada restaurante son de exclusiva responsabilidad
-					de este último.
-				</p>
-			</section>
-
-			<section>
-				<h2>7. Protección de Datos Personales</h2>
-				<p>
-					<strong>Marco legal.</strong> El tratamiento de los datos personales del Usuario se rige por la Ley N°
-					19.628 sobre Protección de la Vida Privada y, a partir del 1 de diciembre de 2026, por la Ley N° 21.719
-					que moderniza la protección de datos personales en Chile.
-				</p>
-				<p>
-					<strong>Rol de Gcode.</strong> Respecto de los datos que el Usuario entrega para registrarse y usar su
-					cuenta (identificación, contacto, direcciones, historial de pedidos), Gcode actúa como responsable del
-					tratamiento. Los usa para operar la cuenta, gestionar pedidos y comunicarse con el Usuario.
-				</p>
-				<p>
-					<strong>Datos compartidos con restaurantes.</strong> Al realizar un pedido, Gcode comparte con el
-					restaurante afiliado correspondiente los datos necesarios para gestionarlo (nombre, dirección de entrega o
-					retiro, teléfono, detalle del pedido). Cada restaurante trata esos datos bajo su propia responsabilidad
-					para cumplir el pedido.
-				</p>
-				<p>
-					<strong>Seguridad y transferencias.</strong> Gcode implementa medidas de seguridad técnicas y
-					organizativas razonables (cifrado, control de acceso) y notificará sin demora injustificada ante cualquier
-					vulneración de seguridad que afecte estos datos. Para ubicar la dirección de entrega y cotizar el envío
-					intervienen proveedores de búsqueda de direcciones y, si el restaurante lo activa, de reparto con
-					repartidores externos; algunos tienen servidores fuera de Chile. La lista de proveedores y el dato que
-					recibe cada uno está en la <PrivacyPolicyLink />, que complementa estos Términos.
-				</p>
-				<p>
-					<strong>Derechos del Usuario.</strong> El Usuario puede ejercer sus derechos de acceso, rectificación,
-					cancelación/supresión, oposición y portabilidad sobre sus datos, escribiendo a <ContactEmail />. Estos
-					derechos son irrenunciables y no pueden limitarse contractualmente.
-				</p>
-			</section>
-
-			<section>
-				<h2>8. Obligaciones del Usuario</h2>
-				<p>El Usuario se compromete a:</p>
-				<ul>
-					<li>Usar la Plataforma de acuerdo con la ley chilena y estos Términos.</li>
-					<li>Proporcionar información veraz al registrarse y al realizar pedidos (dirección, contacto).</li>
-					<li>No intentar vulnerar la seguridad de la Plataforma ni acceder a cuentas de otros usuarios.</li>
-					<li>No usar la Plataforma para realizar pedidos fraudulentos o con datos falsos.</li>
 					<li>
-						Cumplir con las condiciones de pago y retiro/entrega acordadas directamente con cada restaurante.
+						<strong>Gcode</strong> es la plataforma tecnológica que el Negocio usa para su menú y sus pedidos. Gcode
+						es operado por una persona natural bajo el nombre comercial Gcode, con sede en Santiago,
+						Chile<ProviderIdentity />, y correo <ContactEmail />.
+					</li>
+				</ul>
+				<p>
+					Al crear la Cuenta aceptas estos Términos y declaras haber leído la{" "}
+					<AppLink path="/onboarding/privacidad">Política de privacidad</AppLink>.
+				</p>
+			</section>
+			<section>
+				<h2>2. Requisitos</h2>
+				<p>
+					Para crear una Cuenta debes ser mayor de 18 años o contar con la autorización de tu padre, madre o tutor,
+					y entregar datos verdaderos. La Cuenta es personal: cuida tu contraseña y avísanos a <ContactEmail /> si
+					sospechas un acceso no autorizado.
+				</p>
+				<p>
+					Cada Cuenta pertenece al menú del Negocio donde la creaste. Si pides en otro negocio que usa Gcode,
+					necesitas otra cuenta en ese menú.
+				</p>
+			</section>
+			<section>
+				<h2>3. Qué puedes hacer con la Cuenta</h2>
+				<ul>
+					<li>
+						Guardar tus datos de contacto y una o más direcciones.
+					</li>
+					<li>
+						Ver tu historial de pedidos y repetir uno anterior.
+					</li>
+					<li>
+						Elegir cómo pagarás cada pedido y, si el Negocio lo pide, adjuntar el comprobante.
+					</li>
+					<li>
+						Eliminar la Cuenta cuando quieras (sección 7).
+					</li>
+				</ul>
+				<p>
+					Por ahora la Cuenta no tiene programa de puntos. Si se agrega uno, estos Términos se actualizarán antes
+					con sus reglas.
+				</p>
+			</section>
+			<section>
+				<h2>4. Pedidos, precios y pagos</h2>
+				<ul>
+					<li>
+						El contrato de compra de cada pedido es entre tú y el Negocio. El Negocio es responsable de los precios,
+						la calidad, la preparación, la entrega, los cambios y las devoluciones, y de emitirte la boleta o factura
+						que corresponda.
+					</li>
+					<li>
+						El precio final, el costo de envío y los medios de pago son los que el Negocio muestra antes de que
+						confirmes. Gcode no cobra comisiones ni procesa los pagos de los pedidos: pagas directamente al Negocio.
+					</li>
+					<li>
+						Los pagos por medios externos (transferencia, Pago Móvil, Zelle, Binance Pay u otros que acepte el
+						Negocio) los haces desde tu propia cuenta en ese servicio y se rigen por sus condiciones. Gcode no recibe
+						tu dinero.
+					</li>
+					<li>
+						<strong>Si el Negocio cobra en bolívares (Venezuela),</strong> el monto en bolívares se calcula con la
+						tasa que el Negocio indica en su menú al momento del pedido. Tienes derecho a conocer la tasa usada antes
+						de pagar.
+					</li>
+					<li>
+						Los reclamos sobre un pedido se dirigen al Negocio. Gcode puede ayudarte a contactarlo, pero no es parte
+						de la compra.
 					</li>
 				</ul>
 			</section>
-
 			<section>
-				<h2>9. Propiedad Intelectual</h2>
+				<h2>5. Tus datos</h2>
 				<p>
-					El software, diseño, marca y demás elementos de la Plataforma son de propiedad de Gcode (o de sus
-					licenciantes) y están protegidos por la legislación de propiedad intelectual e industrial. Estos Términos
-					no transfieren al Usuario ningún derecho sobre la Plataforma; solo se concede una licencia de uso personal,
-					limitada, no exclusiva e intransferible, mientras la cuenta esté vigente.
+					El Negocio es el responsable de los datos que entregas en su menú (nombre, correo, teléfono, documento de
+					identidad, direcciones e historial) y los usa para reconocerte como cliente y gestionar tus pedidos. Gcode
+					los guarda y procesa por cuenta del Negocio, con medidas de seguridad, y los usa además solo para la
+					seguridad de la plataforma y la prevención de fraude. El detalle, los proveedores que intervienen y tus
+					derechos están en la <AppLink path="/onboarding/privacidad">Política de privacidad</AppLink>.
 				</p>
 				<p>
-					Los menús, marcas, precios e imágenes de cada restaurante son de propiedad de dicho restaurante; Gcode solo
-					los aloja y muestra para prestar el Servicio.
+					Puedes pedir acceso, rectificación, supresión, oposición, portabilidad y bloqueo de tus datos al Negocio o
+					escribiendo a <ContactEmail />. Estos derechos son gratuitos e irrenunciables.
 				</p>
 			</section>
-
 			<section>
-				<h2>10. Limitación de Responsabilidad</h2>
+				<h2>6. Uso correcto</h2>
 				<p>
-					Gcode procurará mantener la Plataforma disponible de forma continua, pero no garantiza una disponibilidad
-					del 100% ni la exactitud permanente de la información publicada por cada restaurante (menú, precios,
-					disponibilidad).
-				</p>
-				<p>
-					En la máxima medida permitida por la ley, Gcode no será responsable por: (i) el cumplimiento, calidad o
-					precio final de los pedidos, que son responsabilidad exclusiva del restaurante (Sección 6); (ii) daños
-					indirectos o lucro cesante derivados del uso o la imposibilidad de uso de la Plataforma; ni (iii) daños
-					causados por terceros ajenos a Gcode, salvo en casos de dolo o culpa grave de su parte.
+					Te comprometes a usar la Cuenta de buena fe: sin hacer pedidos falsos, sin usar datos de otras personas y
+					sin intentar vulnerar la seguridad de la plataforma o acceder a cuentas ajenas.
 				</p>
 			</section>
-
 			<section>
-				<h2>11. Suspensión y Terminación de la Cuenta</h2>
+				<h2>7. Eliminar la Cuenta</h2>
 				<p>
-					<strong>Por el Usuario.</strong> El Usuario puede eliminar su cuenta en cualquier momento desde su panel o
-					escribiendo a <ContactEmail />.
+					Puedes eliminar tu Cuenta en cualquier momento desde Mi cuenta, en Ajustes, confirmando con un código que
+					te enviamos al correo. Al eliminarla borramos tus datos, tus direcciones guardadas y tu acceso en este
+					Negocio; tus cuentas en otros negocios que usan Gcode no cambian. También puedes pedirlo escribiendo a{" "}
+					<ContactEmail /> desde el correo de la Cuenta, o al Negocio, y la eliminaremos dentro de 30 días corridos.
 				</p>
 				<p>
-					<strong>Por Gcode.</strong> Gcode podrá suspender o cancelar la cuenta del Usuario, con aviso previo
-					cuando sea razonablemente posible, en caso de incumplimiento de estos Términos, uso fraudulento de la
-					Plataforma, o por decisión de discontinuar el Servicio, avisando con al menos 30 días de anticipación en
-					este último caso.
+					Los pedidos ya hechos se conservan en los registros del Negocio, y en Gcode solo por el plazo que exija la
+					ley.
 				</p>
 				<p>
-					Al eliminarse la cuenta, el historial asociado deja de estar disponible para el Usuario. Los pedidos ya
-					realizados se conservan en los registros del restaurante correspondiente y, en Gcode, solo por el plazo
-					que exija la ley.
+					Gcode o el Negocio pueden suspender una Cuenta usada para fraude o en incumplimiento de estos Términos. Si
+					el Negocio deja de usar Gcode, te avisaremos antes de cerrar la Cuenta.
 				</p>
 			</section>
-
 			<section>
-				<h2>12. Modificaciones de estos Términos</h2>
+				<h2>8. Responsabilidad</h2>
 				<p>
-					Gcode podrá modificar estos Términos para reflejar cambios en la Plataforma, la normativa aplicable u otras
-					razones justificadas. Los cambios relevantes se notificarán al Usuario por correo electrónico o mediante
-					aviso en la Plataforma, con al menos 15 días de anticipación a su entrada en vigencia. El uso continuado de
-					la cuenta después de esa fecha implica la aceptación de los nuevos Términos; si el Usuario no está de
-					acuerdo, puede eliminar su cuenta conforme a la Sección 11.
+					Gcode procura que la plataforma funcione siempre, pero puede haber interrupciones. Gcode responde por los
+					daños que cause por su culpa en el funcionamiento de la plataforma; no responde por el cumplimiento de los
+					pedidos, que es del Negocio. Nada en estos Términos limita tus derechos como consumidor.
 				</p>
 			</section>
-
 			<section>
-				<h2>13. Ley Aplicable y Jurisdicción</h2>
+				<h2>9. Cambios</h2>
 				<p>
-					Estos Términos se rigen por las leyes de la República de Chile. Cualquier controversia derivada de su
-					interpretación o cumplimiento se someterá a los tribunales ordinarios de justicia de Santiago, Chile, sin
-					perjuicio de los derechos que la Ley N° 19.496 sobre Protección de los Derechos de los Consumidores
-					reconozca al Usuario como consumidor final.
+					Si cambiamos estos Términos de forma relevante, te avisaremos por correo o en el menú con al menos 15 días
+					de anticipación. Si no estás de acuerdo, puedes eliminar la Cuenta.
 				</p>
 			</section>
-
 			<section>
-				<h2>14. Contacto</h2>
+				<h2>10. Ley aplicable</h2>
 				<p>
-					Para consultas sobre estos Términos, la Plataforma o el ejercicio de derechos sobre datos personales, el
-					Usuario puede escribir a <ContactEmail />.
+					La Cuenta se rige por las leyes de Chile. Tus compras se rigen por la ley del país del Negocio. En todo
+					caso conservas los derechos que te reconozcan las leyes de protección al consumidor de tu país (en Chile,
+					la Ley N° 19.496 y el SERNAC; en Venezuela, la Ley Orgánica de Precios Justos y la SUNDDE) y puedes
+					reclamar ante los tribunales de tu domicilio.
+				</p>
+			</section>
+			<section>
+				<h2>11. Contacto</h2>
+				<p>
+					Escribe a <ContactEmail />.
 				</p>
 			</section>
 		</div>

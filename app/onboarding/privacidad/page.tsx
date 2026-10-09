@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import type { ReactNode } from "react";
-
-import { getAppUrl } from "@/lib/tenant/app-url";
 
 import {
-	LANDING_COMPANY_NAME,
-	LANDING_PRODUCT_NAME,
-	LANDING_SUPPORT_EMAIL,
-} from "@/lib/landing/brand";
-
-const SUPPORT_EMAIL = LANDING_SUPPORT_EMAIL;
+	LegalLink,
+	LegalPage,
+	LegalTable,
+	Lead,
+	ProviderIdentity,
+	SupportEmail,
+} from "@/components/legal/legal-page";
+import { getAppUrl } from "@/lib/tenant/app-url";
+import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "@/lib/landing/brand";
 
 export const metadata: Metadata = {
 	title: "Política de privacidad",
@@ -24,266 +23,214 @@ export const metadata: Metadata = {
 	},
 };
 
-function SupportEmail() {
-	return (
-		<a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-indigo-600 hover:underline">
-			{SUPPORT_EMAIL}
-		</a>
-	);
-}
-
-function Lead({ children }: { children: ReactNode }) {
-	return <strong className="font-semibold text-slate-700">{children}</strong>;
-}
-
 export default function PrivacidadPage() {
 	return (
-		<div className="mx-auto max-w-2xl px-5 py-10 sm:px-6 sm:py-16">
-			<div className="onboarding-card p-6 sm:p-8">
-				<h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Política de privacidad</h1>
-				<p className="mt-2 text-xs text-slate-400">Última actualización: 4 de octubre de 2026</p>
-
-				<div className="mt-6 space-y-5 text-sm leading-relaxed text-slate-600">
-					<p>
-						Esta Política explica cómo Gcode trata los datos personales de los restaurantes y negocios que usan la
-						plataforma (&quot;el Cliente&quot;), de las personas que visitan nuestro sitio web y de los comensales
-						que navegan los menús digitales alojados en ella. Complementa los{" "}
-						<Link href="/onboarding/terminos" className="font-medium text-indigo-600 hover:underline">
-							Términos y Condiciones
-						</Link>
-						; ante cualquier diferencia sobre datos personales, prevalece lo dispuesto en su Sección 7.
-					</p>
-
-					<section>
-						<h2 className="font-semibold text-slate-800">1. Quién es responsable de tus datos</h2>
-						<p className="mt-1">
-							Gcode, operado como persona natural bajo el nombre Gcode, con sede en Santiago, Chile, y correo de
-							contacto <SupportEmail />.
-						</p>
-						<p className="mt-2">
-							El tratamiento se rige por la Ley N° 19.628 sobre Protección de la Vida Privada y, a partir del 1 de
-							diciembre de 2026, por la Ley N° 21.719 que moderniza la protección de datos personales en Chile.
-						</p>
-					</section>
-
-					<section>
-						<h2 className="font-semibold text-slate-800">2. Nuestro rol según el tipo de dato</h2>
-						<ul className="ml-5 mt-1 list-disc space-y-1">
-							<li>
-								<Lead>Datos del Cliente (Restaurante):</Lead> Gcode es <em>responsable</em> del tratamiento y los
-								usa para prestar el Servicio, facturar y comunicarse con el Cliente.
-							</li>
-							<li>
-								<Lead>Datos de los comensales</Lead> que hacen pedidos en el menú de un Cliente (nombre, teléfono,
-								dirección de entrega): Gcode es <em>encargado</em> del tratamiento por cuenta del Cliente, que es
-								el responsable frente a esos comensales. Los tratamos solo conforme a sus instrucciones y para
-								prestar el Servicio.
-							</li>
-							<li>
-								<Lead>Datos de navegación</Lead> de quienes visitan nuestro sitio o los menús digitales: se tratan
-								con fines de medición y seguridad, según la Sección 6.
-							</li>
-						</ul>
-					</section>
-
-					<section>
-						<h2 className="font-semibold text-slate-800">3. Qué datos recopilamos</h2>
-						<ul className="ml-5 mt-1 list-disc space-y-1">
-							<li>
-								<Lead>Datos de registro:</Lead> nombre del negocio, nombre de contacto, correo electrónico,
-								teléfono y los demás datos que solicita el formulario.
-							</li>
-							<li>
-								<Lead>Datos de facturación:</Lead> plan contratado, historial de pagos y los datos necesarios para
-								cobrar. Los datos completos de tarjeta los recibe directamente la pasarela de pago; Gcode no los
-								almacena. Si el Cliente paga por transferencia u otro medio con comprobante, la imagen del
-								comprobante que sube se guarda en almacenamiento privado y solo la ve nuestro equipo para
-								validar el pago.
-							</li>
-							<li>
-								<Lead>Contenido y uso del Servicio:</Lead> menú, productos, precios, imágenes, sucursales, pedidos
-								y configuraciones que el Cliente ingresa.
-							</li>
-							<li>
-								<Lead>Datos técnicos:</Lead> dirección IP, tipo de navegador y dispositivo, páginas visitadas, país
-								aproximado e identificadores de sesión, para seguridad, rendimiento y medición.
-							</li>
-						</ul>
-					</section>
-
-					<section>
-						<h2 className="font-semibold text-slate-800">4. Para qué los usamos</h2>
-						<ul className="ml-5 mt-1 list-disc space-y-0.5">
-							<li>Prestar, mantener y dar soporte al Servicio.</li>
-							<li>Procesar pagos y emitir la facturación de las suscripciones.</li>
-							<li>Enviar comunicaciones sobre la cuenta, el Servicio o cambios en estos documentos.</li>
-							<li>Medir el uso de la plataforma y mejorarla.</li>
-							<li>Prevenir fraude, abusos y vulneraciones de seguridad.</li>
-							<li>Cumplir obligaciones legales, tributarias y requerimientos de autoridades.</li>
-						</ul>
-						<p className="mt-2">No vendemos datos personales ni los usamos para publicidad comportamental propia.</p>
-					</section>
-
-					<section>
-						<h2 className="font-semibold text-slate-800">5. Con quién los compartimos</h2>
-						<p className="mt-1">
-							Solo con proveedores que necesitamos para operar el Servicio, que tratan los datos por nuestra
-							cuenta y bajo sus propias obligaciones de confidencialidad y seguridad:
-						</p>
-						<ul className="ml-5 mt-1 list-disc space-y-0.5">
-							<li>
-								<Lead>Pasarela de pago</Lead> (PayPal), para cobrar las suscripciones que se pagan con tarjeta o
-								saldo PayPal. PayPal recibe el correo y el importe del pago; los datos de tarjeta los ingresa el
-								Cliente directamente en PayPal.
-							</li>
-							<li>
-								<Lead>Alojamiento del sitio</Lead> (Vercel) y <Lead>servidores de base de datos y archivos</Lead>{" "}
-								(Supabase) donde se guarda la información del Servicio.
-							</li>
-							<li>
-								<Lead>Envío de correos</Lead> (Resend), para correos de cuenta, códigos de verificación y avisos.
-							</li>
-							<li>
-								<Lead>Protección contra bots</Lead> (Google reCAPTCHA) en el formulario de registro, que analiza
-								datos técnicos del navegador para distinguir personas de programas automáticos.
-							</li>
-							<li>
-								<Lead>Límites de uso y caché</Lead> (Upstash), que procesa direcciones IP de forma temporal para
-								frenar abusos en los formularios y las subidas de archivos.
-							</li>
-							<li>
-								<Lead>Medición de uso</Lead> (Google Analytics y Vercel Analytics), según la Sección 6.
-							</li>
-						</ul>
-						<p className="mt-2">
-							Al tratar los pedidos de los comensales por cuenta del Cliente, también intervienen estos
-							proveedores, solo cuando la función se usa:
-						</p>
-						<ul className="ml-5 mt-1 list-disc space-y-0.5">
-							<li>
-								<Lead>Búsqueda de direcciones</Lead> (OpenStreetMap / Nominatim): recibe la dirección que el
-								comensal escribe para ubicarla en el mapa y calcular el costo de envío.
-							</li>
-							<li>
-								<Lead>Reparto con repartidores externos</Lead> (Uber Direct), si el Cliente activa esa
-								integración: recibe la dirección de entrega, el nombre y el teléfono del comensal para cotizar y
-								realizar la entrega.
-							</li>
-							<li>
-								<Lead>WhatsApp</Lead> (Meta): si el Cliente configura que los pedidos se confirmen por WhatsApp,
-								el comensal envía el detalle del pedido desde su propia cuenta de WhatsApp al número del
-								negocio; ese mensaje se rige por las condiciones de WhatsApp.
-							</li>
-						</ul>
-						<p className="mt-2">
-							Con cada Cliente compartimos los datos de los pedidos que sus comensales hacen en su menú, porque
-							son necesarios para cumplirlos. También podemos divulgar datos cuando la ley o una autoridad
-							competente lo exija.
-						</p>
-					</section>
-
-					<section>
-						<h2 className="font-semibold text-slate-800">6. Cookies y medición de uso</h2>
-						<p className="mt-1">
-							Usamos cookies esenciales para que el Servicio funcione (inicio de sesión, seguridad y preferencias)
-							y herramientas de medición para entender cómo se usa la plataforma:
-						</p>
-						<ul className="ml-5 mt-1 list-disc space-y-1">
-							<li>
-								<Lead>Google Analytics (GA4)</Lead>, de Google LLC, que puede usar cookies y recopilar datos
-								técnicos seudonimizados (páginas visitadas, dispositivo, país aproximado, origen del tráfico).
-							</li>
-							<li>
-								<Lead>Vercel Analytics y Speed Insights</Lead>, que miden visitas y rendimiento de forma agregada.
-							</li>
-							<li>
-								<Lead>Analítica interna de Gcode</Lead>, guardada en nuestros sistemas, para medir el sitio, los
-								menús digitales de cada negocio y el panel de administración (visitas, rutas, país aproximado e
-								identificadores de sesión seudonimizados).
-							</li>
-						</ul>
-						<p className="mt-2">
-							Estas mediciones se aplican a quienes visitan el sitio de Gcode y también a los comensales que
-							navegan el home y el menú digital de los negocios alojados en la plataforma. El Cliente es
-							responsable de informar a sus comensales, cuando la ley lo exija, que al visitar su menú pueden
-							aplicarse estas mediciones.
-						</p>
-						<p className="mt-2">
-							Puedes bloquear o borrar las cookies desde tu navegador. Si bloqueas las esenciales, algunas
-							funciones (como iniciar sesión) pueden dejar de funcionar.
-						</p>
-					</section>
-
-					<section>
-						<h2 className="font-semibold text-slate-800">7. Transferencias internacionales</h2>
-						<p className="mt-1">
-							Los proveedores de la Sección 5 (pagos, alojamiento, correo, medición, direcciones y reparto)
-							tienen sus servidores fuera de Chile, principalmente en Estados Unidos y la Unión Europea. En esos
-							casos, los datos se transfieren solo en la medida necesaria para prestar el Servicio y quedan
-							protegidos por las medidas de seguridad y las garantías contractuales de cada proveedor. Gcode
-							también atiende Clientes fuera de Chile; sus datos se tratan con estas mismas reglas.
-						</p>
-					</section>
-
-					<section>
-						<h2 className="font-semibold text-slate-800">8. Seguridad</h2>
-						<p className="mt-1">
-							Aplicamos medidas técnicas y organizativas razonables para proteger los datos: cifrado en tránsito,
-							cifrado adicional de los datos personales más sensibles, control de acceso y registros de actividad.
-							Ningún sistema es infalible; ante una vulneración de seguridad que afecte datos personales,
-							notificaremos sin demora injustificada a los afectados y, cuando corresponda, a la autoridad.
-						</p>
-					</section>
-
-					<section>
-						<h2 className="font-semibold text-slate-800">9. Cuánto tiempo los conservamos</h2>
-						<p className="mt-1">
-							Conservamos los datos mientras la cuenta del Cliente esté activa. Al terminar el Servicio, el Cliente
-							tiene 30 días para exportar sus datos (Sección 9 de los Términos); después los eliminamos, salvo
-							los que la ley nos obligue a conservar, como los registros de facturación exigidos por la normativa
-							tributaria, que se guardan solo por el plazo legal.
-						</p>
-						<p className="mt-2">
-							Los datos de medición se conservan de forma agregada o seudonimizada y por el plazo que permite
-							cada herramienta.
-						</p>
-					</section>
-
-					<section>
-						<h2 className="font-semibold text-slate-800">10. Tus derechos</h2>
-						<p className="mt-1">
-							Puedes ejercer tus derechos de acceso, rectificación, cancelación/supresión, oposición y
-							portabilidad, y retirar tu consentimiento cuando el tratamiento se base en él, escribiendo a{" "}
-							<SupportEmail />. Responderemos dentro de los plazos que fija la ley. Estos derechos son
-							irrenunciables y no pueden limitarse contractualmente.
-						</p>
-						<p className="mt-2">
-							Si eres comensal de un restaurante que usa Gcode, puedes dirigirte al restaurante o escribirnos
-							directamente; si la solicitud le corresponde al restaurante, se la haremos llegar.
-						</p>
-					</section>
-
-					<section>
-						<h2 className="font-semibold text-slate-800">11. Cambios a esta política</h2>
-						<p className="mt-1">
-							Podemos actualizar esta Política para reflejar cambios en el Servicio o en la normativa. Los cambios
-							relevantes se notificarán por correo electrónico o mediante aviso en la plataforma con al menos 15
-							días de anticipación a su entrada en vigencia.
-						</p>
-					</section>
-
-					<section>
-						<h2 className="font-semibold text-slate-800">12. Contacto</h2>
-						<p className="mt-1">
-							Para consultas sobre privacidad o el ejercicio de tus derechos, escríbenos a <SupportEmail />.
-						</p>
-					</section>
-				</div>
-
-				<Link href="/onboarding" className="mt-6 inline-block text-sm font-medium text-indigo-600 hover:underline">
-					← Volver al registro
-				</Link>
-			</div>
-		</div>
+		<LegalPage title="Política de privacidad">
+			<p>
+				Esta Política explica qué datos personales trata Gcode, para qué, con quién los comparte y qué derechos
+				tienes. Se aplica a los negocios que usan la plataforma (&quot;el Cliente&quot;), a las personas que
+				visitan nuestro sitio y a los comensales que usan los menús digitales alojados en ella. Complementa los{" "}
+				<LegalLink href="/onboarding/terminos">Términos y Condiciones</LegalLink>.
+			</p>
+			<section>
+				<h2 className="font-semibold text-slate-800">1. Quién es responsable</h2>
+				<p className="mt-2">
+					Gcode, operado por una persona natural bajo el nombre comercial Gcode, con sede en Santiago,
+					Chile<ProviderIdentity />, y correo de contacto <SupportEmail />.
+				</p>
+				<p className="mt-2">
+					Aplicamos la Ley N° 19.628 sobre Protección de la Vida Privada y, desde su entrada en vigencia, la Ley N°
+					21.719 que la reemplaza. Si estás en Venezuela, también te amparan los artículos 28 y 60 de la
+					Constitución. Si estás en otro país, tienes además los derechos que te reconozca tu ley local (por
+					ejemplo, el RGPD en la Unión Europea o la LGPD en Brasil).
+				</p>
+			</section>
+			<section>
+				<h2 className="font-semibold text-slate-800">2. Nuestro rol según el dato</h2>
+				<ul className="ml-5 mt-1 list-disc space-y-1">
+					<li>
+						<Lead>Datos de los Clientes, de sus representantes y de quienes visitan nuestro sitio:</Lead> Gcode es el{" "}
+						<Lead>responsable</Lead> y decide cómo se usan.
+					</li>
+					<li>
+						<Lead>Datos de los comensales y del equipo de cada negocio:</Lead> el <Lead>negocio es el
+						responsable</Lead> y Gcode es <Lead>encargado</Lead>: los tratamos por cuenta del negocio y según sus
+						instrucciones, como explica el <LegalLink href="/onboarding/terminos#anexo-datos">Anexo de encargo de
+						tratamiento</LegalLink>. Si eres comensal, el negocio donde pides es quien recibe tus datos y responde
+						por su uso; también puedes escribirnos y le haremos llegar tu solicitud.
+					</li>
+					<li>
+						<Lead>Seguridad y prevención de fraude:</Lead> en los límites de seguridad, abuso y obligaciones legales,
+						Gcode trata esos datos como responsable.
+					</li>
+				</ul>
+			</section>
+			<section>
+				<h2 className="font-semibold text-slate-800">3. Qué datos tratamos</h2>
+				<ul className="ml-5 mt-1 list-disc space-y-1">
+					<li>
+						<Lead>Registro del negocio:</Lead> nombre del negocio y del responsable, correo, teléfono, rubro, país,
+						razón social y dirección fiscal cuando los entregas, redes sociales y logo.
+					</li>
+					<li>
+						<Lead>Facturación:</Lead> plan, cupones usados, historial de pagos, referencia y comprobante de cada pago
+						con comprobante (guardado en almacenamiento privado, solo lo ve nuestro equipo para validarlo). Los datos
+						de tarjeta los ingresas directamente en PayPal; Gcode no los recibe.
+					</li>
+					<li>
+						<Lead>Contenido del negocio:</Lead> menú, precios, fotos, sucursales, horarios, configuración, pedidos,
+						caja y reportes.
+					</li>
+					<li>
+						<Lead>Comensales que piden:</Lead> nombre, teléfono, dirección de entrega, detalle del pedido, medio de
+						pago elegido y, si el negocio lo pide, el comprobante de pago.
+					</li>
+					<li>
+						<Lead>Comensales con cuenta en un menú:</Lead> además, correo, contraseña (guardada cifrada), documento
+						de identidad (RUT, cédula u otro) que el negocio usa para reconocerte como cliente, direcciones guardadas
+						e historial de pedidos.
+					</li>
+					<li>
+						<Lead>Datos técnicos:</Lead> dirección IP, navegador, dispositivo, país aproximado, páginas visitadas e
+						identificadores de sesión, para seguridad, funcionamiento y medición.
+					</li>
+					<li>
+						<Lead>Prueba de aceptación:</Lead> versión de los documentos aceptados, fecha, IP y navegador.
+					</li>
+				</ul>
+				<p className="mt-2">
+					No pedimos datos sensibles. Si escribes una alergia o indicación de salud en un pedido, solo se usa para
+					preparar ese pedido.
+				</p>
+			</section>
+			<section>
+				<h2 className="font-semibold text-slate-800">4. Para qué los usamos y con qué base legal</h2>
+				<LegalTable
+					head={["Finalidad", "Base legal"]}
+					rows={[
+						[<>Crear la cuenta del negocio y prestar el Servicio</>, <>Ejecución del contrato</>],
+						[<>Cobrar las suscripciones y emitir los documentos tributarios</>, <>Contrato y obligación legal</>],
+						[<>Enviar avisos de la cuenta: verificación, recordatorios para publicar tu tienda, pagos, renovación, cambios de los documentos</>, <>Ejecución del contrato y de las gestiones previas que pediste</>],
+						[<>Gestionar los pedidos y las cuentas de los comensales por cuenta de cada negocio</>, <>Contrato del comensal con el negocio (Gcode como encargado)</>],
+						[<>Seguridad, prevención de fraude y abuso (límites de intentos, reCAPTCHA, registros)</>, <>Interés legítimo y obligación legal</>],
+						[<>Medición con nuestra analítica propia y Vercel, sin cookies publicitarias</>, <>Interés legítimo en mejorar el Servicio</>],
+						[<>Medición con Google Analytics usando cookies</>, <>Tu consentimiento, que das o rechazas en el aviso de cookies</>],
+						[<>Enviarte novedades de Gcode</>, <>Tu consentimiento; puedes darte de baja en cada correo</>],
+						[<>Cumplir requerimientos de autoridades</>, <>Obligación legal</>],
+					]}
+				/>
+				<p className="mt-2">
+					No vendemos datos personales, no los usamos para publicidad personalizada y no tomamos decisiones
+					automatizadas que te afecten de forma significativa.
+				</p>
+			</section>
+			<section>
+				<h2 className="font-semibold text-slate-800">5. Con quién los compartimos</h2>
+				<p className="mt-2">
+					Con el negocio donde pides, para cumplir tu pedido. Con autoridades, cuando la ley lo exija. Y con estos
+					proveedores, que tratan los datos por nuestra cuenta y con obligaciones de confidencialidad y seguridad:
+				</p>
+				<LegalTable
+					head={["Proveedor", "Para qué", "Qué datos recibe", "Dónde"]}
+					rows={[
+						[<>Supabase</>, <>Base de datos, archivos y autenticación</>, <>Todos los datos del Servicio</>, <>Servidores contratados por Gcode</>],
+						[<>Vercel</>, <>Alojamiento del sitio y medición agregada (Analytics, Speed Insights)</>, <>Datos técnicos</>, <>Estados Unidos y otros</>],
+						[<>PayPal</>, <>Cobro de suscripciones</>, <>Correo, importe y datos que ingresas en PayPal</>, <>Estados Unidos</>],
+						[<>Resend</>, <>Envío de correos</>, <>Correo, nombre y contenido del aviso</>, <>Estados Unidos</>],
+						[<>Anthropic</>, <>Leer la carta que subes (foto, PDF o planilla) para armar tu menú, si usas esa opción</>, <>El archivo de la carta</>, <>Estados Unidos</>],
+						[<>Google (reCAPTCHA)</>, <>Protección contra bots en el registro</>, <>Datos técnicos del navegador</>, <>Estados Unidos</>],
+						[<>Google (Analytics)</>, <>Medición de uso, solo con tu consentimiento</>, <>Datos técnicos seudonimizados</>, <>Estados Unidos</>],
+						[<>Upstash</>, <>Límites de uso y caché</>, <>Dirección IP de forma temporal</>, <>Estados Unidos y Unión Europea</>],
+						[<>Telegram</>, <>Avisos internos a nuestro equipo cuando un negocio se registra o paga</>, <>Nombre del negocio y del responsable, correo y teléfono</>, <>Fuera de Chile</>],
+						[<>OpenStreetMap (Nominatim)</>, <>Ubicar direcciones y calcular el envío</>, <>La dirección que escribes</>, <>Unión Europea</>],
+						[<>Uber Direct</>, <>Reparto con repartidores externos, si el negocio lo activa</>, <>Nombre, teléfono y dirección de entrega</>, <>Estados Unidos y país de entrega</>],
+						[<>WhatsApp (Meta)</>, <>Confirmar pedidos por WhatsApp, si el negocio lo usa</>, <>Lo envías tú desde tu WhatsApp al negocio</>, <>Según las condiciones de WhatsApp</>],
+					]}
+				/>
+			</section>
+			<section>
+				<h2 className="font-semibold text-slate-800">6. Transferencias internacionales</h2>
+				<p className="mt-2">
+					Varios proveedores procesan datos fuera de Chile y de Venezuela, principalmente en Estados Unidos y la
+					Unión Europea. Solo transferimos lo necesario para prestar el Servicio y elegimos proveedores con
+					garantías contractuales de protección de datos.
+				</p>
+			</section>
+			<section>
+				<h2 className="font-semibold text-slate-800">7. Cookies</h2>
+				<p className="mt-2">
+					Usamos cookies esenciales para iniciar sesión y mantener la seguridad, y, solo si aceptas, cookies de
+					Google Analytics para medir el uso del sitio. Al entrar al menú de un negocio no te preguntamos ni
+					instalamos cookies de medición de Google, salvo que ya las hayas aceptado en el sitio de Gcode. El detalle
+					está en la <LegalLink href="/onboarding/cookies">Política de cookies</LegalLink>.
+				</p>
+			</section>
+			<section>
+				<h2 className="font-semibold text-slate-800">8. Cuánto tiempo los guardamos</h2>
+				<LegalTable
+					head={["Dato", "Plazo"]}
+					rows={[
+						[<>Cuenta y contenido del negocio</>, <>Mientras la cuenta exista, más 30 días para que puedas pedir una copia (sección 13 de los Términos)</>],
+						[<>Tienda en vista previa que no publicas</>, <>Hasta que la publiques; si pasan 30 días sin publicarla, podemos borrarla, con aviso por correo 7 días antes</>],
+						[<>Registros de facturación y pagos</>, <>6 años, por las obligaciones tributarias</>],
+						[<>Comprobantes de pago</>, <>Hasta validar el pago y luego el mismo plazo que la facturación</>],
+						[<>Cuenta del comensal en un menú</>, <>Hasta que la elimines desde Mi cuenta, lo pidas o el negocio deje Gcode</>],
+						[<>Pedidos y datos de comensales</>, <>Mientras el negocio tenga cuenta, o hasta que el negocio o el comensal pidan su eliminación, salvo obligación legal</>],
+						[<>Solicitudes de registro no completadas</>, <>12 meses</>],
+						[<>Datos técnicos y de seguridad</>, <>Hasta 12 meses</>],
+						[<>Google Analytics</>, <>14 meses</>],
+					]}
+				/>
+			</section>
+			<section>
+				<h2 className="font-semibold text-slate-800">9. Seguridad</h2>
+				<p className="mt-2">
+					Usamos cifrado en tránsito, cifrado adicional para los datos más sensibles, control de acceso por negocio,
+					almacenamiento privado para comprobantes, límites de intentos y registros de actividad. Ningún sistema es
+					infalible: si ocurre una vulneración que afecte tus datos, te avisaremos sin dilaciones indebidas y,
+					cuando corresponda, a la autoridad.
+				</p>
+			</section>
+			<section>
+				<h2 className="font-semibold text-slate-800">10. Tus derechos</h2>
+				<p className="mt-2">
+					Puedes pedir acceso, rectificación, supresión, oposición, portabilidad y bloqueo de tus datos, y retirar
+					tu consentimiento en cualquier momento, escribiendo a <SupportEmail /> desde el correo de tu cuenta.
+					Responderemos dentro del plazo legal, que como máximo es de 30 días corridos. El ejercicio de estos
+					derechos es gratuito.
+				</p>
+				<p className="mt-2">
+					Si eres comensal, puedes dirigirte al negocio o escribirnos; si la solicitud le corresponde al negocio, se
+					la haremos llegar y te avisaremos. Si tienes cuenta en el menú de un negocio, también puedes eliminarla tú
+					mismo desde Mi cuenta.
+				</p>
+				<p className="mt-2">
+					Si no quedas conforme con nuestra respuesta, puedes reclamar ante la autoridad de tu país: en Chile, ante
+					la Agencia de Protección de Datos Personales una vez que esté en funciones (mientras tanto, ante los
+					tribunales); en Venezuela, mediante la acción de habeas data ante los tribunales; en otros países, ante su
+					autoridad de protección de datos.
+				</p>
+			</section>
+			<section>
+				<h2 className="font-semibold text-slate-800">11. Menores de edad</h2>
+				<p className="mt-2">
+					Gcode no está dirigido a menores de 14 años. Para crear una cuenta en un menú se requiere ser mayor de 18
+					años o contar con la autorización de un padre, madre o tutor.
+				</p>
+			</section>
+			<section>
+				<h2 className="font-semibold text-slate-800">12. Cambios a esta Política</h2>
+				<p className="mt-2">
+					Si hacemos cambios relevantes, te avisaremos por correo o en la plataforma con al menos 15 días de
+					anticipación.
+				</p>
+			</section>
+			<section>
+				<h2 className="font-semibold text-slate-800">13. Contacto</h2>
+				<p className="mt-2">
+					Para cualquier consulta sobre privacidad, escribe a <SupportEmail />.
+				</p>
+			</section>
+		</LegalPage>
 	);
 }

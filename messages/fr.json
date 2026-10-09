@@ -147,11 +147,20 @@
         "sendingCode": "Envoi…",
         "passwordCodeHint": "Pour changer le mot de passe, nous envoyons un code à votre e-mail.",
         "codeSentHint": "Consultez votre e-mail : le code expire dans 1 heure.",
-        "legalTitle": "Mentions légales"
+        "legalTitle": "Mentions légales",
+        "deleteTitle": "Supprimer le compte",
+        "deleteLabel": "Supprimer mon compte dans ce commerce",
+        "deleteStart": "Supprimer mon compte",
+        "deleteHint": "Nous supprimons vos données, vos adresses enregistrées et votre accès dans ce commerce. Les commandes passées restent dans les registres du commerce et vos comptes dans d'autres commerces ne changent pas.",
+        "deleteCodeHint": "Nous avons envoyé un code à votre e-mail. Saisissez-le pour confirmer : la suppression est définitive.",
+        "deleteCancel": "Annuler",
+        "deleteConfirm": "Supprimer définitivement",
+        "deleting": "Suppression…"
       },
       "notices": {
         "passwordChanged": "Mot de passe mis à jour. Reconnectez-vous avec le nouveau.",
-        "linked": "C'est fait, ce commerce est lié à votre compte."
+        "linked": "C'est fait, ce commerce est lié à votre compte.",
+        "accountDeleted": "Votre compte dans ce commerce a été supprimé."
       },
       "errors": {
         "company_not_found": "Cet établissement n'est pas disponible.",
