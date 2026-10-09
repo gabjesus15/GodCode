@@ -10,7 +10,7 @@
 --
 -- `exchange_rates` guarda cada valor distinto que publicó cada fuente: nunca se edita una
 -- fila salvo `checked_at` (la última vez que se confirmó ese mismo valor). Las escribe solo
--- el servidor (`/api/exchange-rates`, con service role) a través de `record_exchange_rate`.
+-- el servidor (`/api/tenant/exchange-rates`, con service role) a través de `record_exchange_rate`.
 --
 -- Cada pedido de una sucursal con fuente guarda la tasa vigente al crearse
 -- (`orders.quoted_exchange_rate*`), sin tocar las RPC de pedidos: lo hace un trigger.
@@ -83,6 +83,34 @@ where b.exchange_rate_source is null
     )
   );
 
+-- Las sucursales de Venezuela que se creen después (alta, «Arma y paga», súper admin)
+-- también arrancan con el dólar BCV: ninguna de esas rutas manda la fuente.
+create or replace function public.branches_default_exchange_rate_source()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.exchange_rate_source is null and (
+    upper(btrim(coalesce(new.country, ''))) in ('VE', 'VENEZUELA')
+    or exists (
+      select 1 from public.companies c
+      where c.id = new.company_id
+        and upper(btrim(coalesce(c.country, ''))) in ('VE', 'VENEZUELA')
+    )
+  ) then
+    new.exchange_rate_source := 'bcv_usd';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists branches_default_exchange_rate_source on public.branches;
+create trigger branches_default_exchange_rate_source
+  before insert or update of country, company_id on public.branches
+  for each row execute function public.branches_default_exchange_rate_source();
+
 create table if not exists public.branch_exchange_rate_source_changes (
   id          bigint generated always as identity primary key,
   company_id  uuid not null references public.companies(id) on delete cascade,
@@ -142,11 +170,12 @@ begin
   order by id desc
   limit 1;
 
-  if found
-     and v_last.rate = round(p_rate, 6)
-     and v_last.published_at = coalesce(p_published_at, v_last.published_at) then
+  -- Solo cuenta el valor: dolarapi cambia la fecha de publicación cada día aunque la
+  -- tasa sea la misma, y eso no debe abrir una fila nueva.
+  if found and v_last.rate = round(p_rate, 6) then
     update public.exchange_rates
-    set checked_at = now()
+    set checked_at = now(),
+        published_at = greatest(v_last.published_at, coalesce(p_published_at, v_last.published_at))
     where id = v_last.id
     returning * into v_row;
     return v_row;
