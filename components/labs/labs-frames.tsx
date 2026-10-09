@@ -5,13 +5,12 @@ import type { LabsScreen } from "@/lib/labs/content";
 import { cn } from "@/utils/cn";
 
 /**
- * Marcos de dispositivo dibujados en CSS con las proporciones de los equipos de Apple: iPhone 16 Pro
- * (banda de titanio, bisel negro, isla dinámica, botón de acción, volumen, encendido y control de
- * cámara) y MacBook Pro (pantalla de bisel fino con la muesca de la cámara, tapa y base de aluminio).
- * Las medidas van en `cqw`, porcentaje del ancho del propio marco, así que cada marco se dibuja igual a
- * cualquier tamaño. Las capturas de teléfono traen pintada el área segura (hora e iconos) a la altura
- * real de un iPhone; la isla la pone el marco, en su sitio. Apple publica biseles oficiales en PNG
- * (developer.apple.com/design/resources, «Product Bezels»): si se quieren usar, cambia solo este archivo.
+ * Marcos de dispositivo. El iPhone es el bisel oficial que publica Apple en sus recursos de diseño
+ * (developer.apple.com/design/resources, «Product Bezels»: iPhone 17 Pro, plateado), un PNG con la
+ * pantalla transparente y la isla dinámica ya dibujada; la captura va debajo, recortada al hueco de la
+ * pantalla. Las medidas del hueco son las del archivo original (1350 × 2760, pantalla de 1206 × 2622 a
+ * 72 px del borde izquierdo y 69 del superior) y van en porcentaje, así el marco se dibuja igual a
+ * cualquier tamaño. El MacBook Pro y la ventana del navegador siguen dibujados en CSS.
  */
 
 type FrameProps = {
@@ -24,14 +23,22 @@ type FrameProps = {
 	sizes?: string;
 };
 
-const TITANIUM =
-	"bg-[conic-gradient(from_200deg_at_50%_50%,#d2d2d7,#8f8f95_10%,#ebebee_22%,#9c9ca2_36%,#dcdce0_50%,#8a8a90_64%,#eeeef1_78%,#a2a2a8_90%,#d2d2d7)]";
-const BUTTON_L = "bg-[linear-gradient(90deg,#66666c,#b7b7bd_55%,#85858b)]";
-const BUTTON_R = "bg-[linear-gradient(270deg,#66666c,#b7b7bd_55%,#85858b)]";
+/** Bisel oficial de Apple (iPhone 17 Pro, plateado), reducido a 900 px de ancho para la web. */
+const IPHONE_BEZEL = { src: "/labs/marcos/iphone-17-pro.png", width: 900, height: 1840 } as const;
+
+/** Hueco de la pantalla en el bisel original de 1350 × 2760 px, como fracción del marco. */
+const IPHONE_SCREEN = {
+	left: 72 / 1350,
+	top: 69 / 2760,
+	width: 1206 / 1350,
+	height: 2622 / 2760,
+} as const;
+
+const pct = (value: number) => `${(value * 100).toFixed(3)}%`;
 
 /**
- * iPhone. `screenClassName` admite un `max-h` que corta la captura por abajo sin deformarla; con `cut`
- * el teléfono sale por el borde inferior del bloque que lo contiene.
+ * iPhone con el bisel de Apple. Con `cut` el teléfono sale por el borde inferior del bloque que lo
+ * contiene y `screenClassName` admite un `max-h` que decide por dónde se corta (sin deformar nada).
  */
 export function PhoneFrame({
 	screen,
@@ -41,49 +48,42 @@ export function PhoneFrame({
 	sizes = "176px",
 	cut = false,
 }: FrameProps & { screenClassName?: string; cut?: boolean }) {
-	return (
-		<div className={cn("relative [container-type:inline-size]", className)}>
-			{/* Botones: acción, subir y bajar volumen a la izquierda; encendido y control de cámara a la derecha. */}
-			<span aria-hidden className={cn("absolute -left-[0.9cqw] top-[17.5%] h-[3%] w-[1.1cqw] rounded-l-[0.5cqw]", BUTTON_L)} />
-			<span aria-hidden className={cn("absolute -left-[0.9cqw] top-[23.5%] h-[6%] w-[1.1cqw] rounded-l-[0.5cqw]", BUTTON_L)} />
-			<span aria-hidden className={cn("absolute -left-[0.9cqw] top-[31.5%] h-[6%] w-[1.1cqw] rounded-l-[0.5cqw]", BUTTON_L)} />
-			<span aria-hidden className={cn("absolute -right-[0.9cqw] top-[26%] h-[9.5%] w-[1.1cqw] rounded-r-[0.5cqw]", BUTTON_R)} />
-			<span aria-hidden className={cn("absolute -right-[0.7cqw] top-[42%] h-[5%] w-[0.9cqw] rounded-r-[0.4cqw]", BUTTON_R)} />
-			{/* Banda de titanio */}
+	const phone = (
+		<div className="relative w-full [container-type:inline-size]" style={{ aspectRatio: `${IPHONE_BEZEL.width} / ${IPHONE_BEZEL.height}` }}>
+			{/* La captura, debajo del bisel y recortada al hueco de la pantalla. */}
 			<div
-				className={cn(
-					"relative p-[1.7cqw] shadow-[0_0_0_0.25cqw_rgba(0,0,0,0.28),0_40px_70px_-30px_rgba(0,0,0,0.6)]",
-					TITANIUM,
-					cut ? "rounded-t-[16cqw] pb-0" : "rounded-[16cqw]",
-				)}
+				className="absolute overflow-hidden bg-black"
+				style={{
+					left: pct(IPHONE_SCREEN.left),
+					top: pct(IPHONE_SCREEN.top),
+					width: pct(IPHONE_SCREEN.width),
+					height: pct(IPHONE_SCREEN.height),
+					borderRadius: "13.8cqw",
+				}}
 			>
-				{/* Bisel negro */}
-				<div
-					className={cn(
-						"relative bg-[#07070a] p-[2.3cqw] shadow-[inset_0_0_0_0.3cqw_rgba(255,255,255,0.07)]",
-						cut ? "rounded-t-[14.5cqw] pb-0" : "rounded-[14.5cqw]",
-					)}
-				>
-					{/* Pantalla */}
-					<div className={cn("relative overflow-hidden bg-black", cut ? "rounded-t-[12.5cqw]" : "rounded-[12.5cqw]", screenClassName)}>
-						<Image
-							src={screen.src}
-							alt={screen.alt}
-							width={screen.width}
-							height={screen.height}
-							sizes={sizes}
-							className={cn("block w-full object-cover object-top", imageClassName)}
-						/>
-						{/* Isla dinámica: 125 × 37 pt en una pantalla de 402 pt, a 11 pt del borde. */}
-						<span aria-hidden className="absolute left-1/2 top-[2.5cqw] h-[8.5cqw] w-[28.5cqw] -translate-x-1/2 rounded-full bg-[#050507]" />
-						{/* Reflejo del cristal, apenas. */}
-						<span
-							aria-hidden
-							className="pointer-events-none absolute inset-0 bg-[linear-gradient(118deg,rgba(255,255,255,0.09)_0%,rgba(255,255,255,0.02)_28%,transparent_42%)]"
-						/>
-					</div>
-				</div>
+				<Image
+					src={screen.src}
+					alt={screen.alt}
+					fill
+					sizes={sizes}
+					className={cn("object-cover object-top", imageClassName)}
+				/>
 			</div>
+			<Image
+				src={IPHONE_BEZEL.src}
+				alt=""
+				aria-hidden
+				fill
+				sizes={sizes}
+				className="pointer-events-none select-none [filter:drop-shadow(0_30px_50px_rgba(0,0,0,0.35))]"
+			/>
+		</div>
+	);
+
+	if (!cut) return <div className={cn("relative", className)}>{phone}</div>;
+	return (
+		<div className={cn("relative", className)}>
+			<div className={cn("overflow-hidden", screenClassName)}>{phone}</div>
 		</div>
 	);
 }
