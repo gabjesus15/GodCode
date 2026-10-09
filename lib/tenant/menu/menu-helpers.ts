@@ -1,7 +1,11 @@
 import { sanitizeHomeUrl } from "@/lib/tenant/home-page/home-page-config";
 
-/** Emoji de fuego animado (Noto) de Google: la llama que se mueve en "Promociones" y "Solo hoy". */
-export const FIRE_ICON = "https://fonts.gstatic.com/s/e/notoemoji/latest/1f525/512.gif";
+/**
+ * Emoji de fuego animado (Noto Emoji de Google, licencia Apache 2.0): la llama
+ * que se mueve en "Promociones" y "Solo hoy". Autoalojado como WebP animado de
+ * 88 px (~73 KB): el original era un GIF de 512 px (~465 KB) pintado a 24-44 px.
+ */
+export const FIRE_ICON = "/tenant/fire-animated.webp";
 
 export function isPromocionesCategoryName(name: string | null | undefined): boolean {
 	const normalized = String(name || "")

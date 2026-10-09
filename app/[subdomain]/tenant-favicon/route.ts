@@ -3,7 +3,7 @@ import { parseThemeLogoUrl } from "@/lib/tenant/tenant-favicon-utils";
 import { buildInitialsIconSvg, fetchTenantLogo, TENANT_ICON_SECURITY_HEADERS } from "@/lib/tenant/favicon-icon";
 import { resolveTenantDisplayName } from "@/lib/tenant/seo-metadata";
 import { createSupabasePublicServerClient } from "../../../utils/supabase/server";
-import { createStorefrontAssetSignedUrl } from "@/lib/storage/storefront-branding";
+import { resolveStorefrontAssetPublicUrl } from "@/lib/storage/storefront-branding";
 import { isTenantSubscriptionAccessible } from "@/lib/plans/tenant-subscription";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,7 @@ export async function GET(
   const name = resolveTenantDisplayName(company, { slug: subdomain });
   const storedLogoUrl = parseThemeLogoUrl(company?.theme_config);
   const logoUrl = company?.id
-    ? await createStorefrontAssetSignedUrl(storedLogoUrl, String(company.id))
+    ? resolveStorefrontAssetPublicUrl(storedLogoUrl, String(company.id))
     : storedLogoUrl;
   if (logoUrl && isTenantSubscriptionAccessible(company)) {
     const logo = await fetchTenantLogo(String(logoUrl));

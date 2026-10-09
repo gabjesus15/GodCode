@@ -258,11 +258,20 @@ export function useMenuClientController(props: MenuClientProps) {
 
 	const catalogScrollRef = useRef<MenuCatalogScrollController | null>(null);
 
+	// Identidad estable mientras no cambien las categorías visibles: un array
+	// nuevo en cada render reiniciaba los listeners de scroll (y medía el DOM)
+	// cada vez que cambiaba la categoría activa a mitad del desplazamiento.
+	const visibleCategoryIdsKey = visibleCategories.map((c) => c.id).join("\u0000");
+	const visibleCategoryIds = useMemo(
+		() => (visibleCategoryIdsKey ? visibleCategoryIdsKey.split("\u0000") : []),
+		[visibleCategoryIdsKey],
+	);
+
 	const { scrollToCategory, scrollToHome, observerBlockRef } = useMenuCategoryScroll({
 		navigationMode: effectiveNavigationMode,
 		navbarType,
 		query,
-		visibleCategoryIds: visibleCategories.map((c) => c.id),
+		visibleCategoryIds,
 		specialProductsCount: specialProducts.length,
 		activeCategory,
 		setActiveCategory,

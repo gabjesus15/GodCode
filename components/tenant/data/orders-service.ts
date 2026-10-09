@@ -231,10 +231,22 @@ export const ordersService = {
       throw new Error("El pedido debe contener al menos un producto.");
     }
 
-    const normalizedItems = await resolveNormalizedCatalogItems(
-      orderData.branch_id,
-      orderData.items
-    );
+    // Las tres lecturas solo dependen de la sucursal: van en paralelo (antes eran
+    // tres viajes seguidos). Los errores se siguen comprobando en el mismo orden.
+    const [normalizedItems, { data: openShift }, { data: branchCfg, error: branchCfgError }] = await Promise.all([
+      resolveNormalizedCatalogItems(orderData.branch_id, orderData.items),
+      supabase
+        .from("cash_shifts")
+        .select("id")
+        .eq("status", "open")
+        .eq("branch_id", orderData.branch_id)
+        .maybeSingle(),
+      supabase
+        .from("branches")
+        .select("delivery_settings, order_intake_paused, order_intake_pause_message, business_hours, country")
+        .eq("id", orderData.branch_id)
+        .maybeSingle(),
+    ]);
 
     const customItems: OrderCatalogLine[] = (orderData.items ?? [])
       .filter((it) => it.custom_item === true)
@@ -284,13 +296,6 @@ export const ordersService = {
       );
     }
 
-    const { data: openShift } = await supabase
-      .from("cash_shifts")
-      .select("id")
-      .eq("status", "open")
-      .eq("branch_id", orderData.branch_id)
-      .maybeSingle();
-
     if (!openShift) {
       throw new Error(
         "El local no esta recibiendo pedidos en este momento (Caja Cerrada)."
@@ -308,12 +313,6 @@ export const ordersService = {
         return sum + (price + extrasTotal) * qty;
       }, 0)
     );
-
-    const { data: branchCfg, error: branchCfgError } = await supabase
-      .from("branches")
-      .select("delivery_settings, order_intake_paused, order_intake_pause_message, business_hours, country")
-      .eq("id", orderData.branch_id)
-      .maybeSingle();
 
     if (branchCfgError) {
       throw new Error("No se pudo validar la configuracion de la sucursal. Intenta nuevamente.");

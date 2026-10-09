@@ -1,6 +1,6 @@
 import { getSubdomainFromHost, isMainDomain } from "@/lib/tenant/main-domain-host";
 import { resolveTenantSlugFromCustomDomainHost } from "@/lib/tenant/custom-domain-resolve";
-import { createSupabasePublicServerClient } from "@/utils/supabase/server";
+import { getCachedCompany } from "@/utils/tenant-cache";
 
 import { normalizeLocale, type AppLocale } from "./config";
 
@@ -133,12 +133,9 @@ function resolveLocaleFromThemeConfig(themeConfig: unknown): AppLocale | null {
 }
 
 async function resolveLocaleBySlug(slug: string): Promise<AppLocale | null> {
-  const supabase = createSupabasePublicServerClient();
-  const { data: company } = await supabase
-    .from("companies")
-    .select("country,theme_config")
-    .eq("public_slug", slug)
-    .maybeSingle();
+  // Misma fila (y caché) que usan el layout y el menú: antes era una consulta
+  // propia sin caché que se repetía dos veces por visita sin cookie de idioma.
+  const company = await getCachedCompany(slug);
 
   if (!company) return null;
 

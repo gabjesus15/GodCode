@@ -3,11 +3,11 @@
 import { createClientDynamic } from "@/lib/lazy/create-client-dynamic";
 
 export const LazyCartModal = createClientDynamic(
-	() => import("@/components/tenant/cart").then((mod) => ({ default: mod.CartModal })),
+	() => import("@/components/tenant/cart/views/cart-modal").then((mod) => ({ default: mod.CartModal })),
 );
 
 export const LazyCartFloat = createClientDynamic(
-	() => import("@/components/tenant/cart").then((mod) => ({ default: mod.CartFloat })),
+	() => import("@/components/tenant/cart/cart-float").then((mod) => ({ default: mod.CartFloat })),
 );
 
 export const LazyProductDetailsModal = createClientDynamic(

@@ -2,6 +2,7 @@ import "server-only";
 
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { resolveMenuImageUrl } from "@/lib/tenant/images/resolve-menu-image-url";
 
 export const STOREFRONT_BRANDING_BUCKET = "menu";
 export const STOREFRONT_BRANDING_SIGNED_URL_TTL = 60 * 60 * 12;
@@ -63,18 +64,35 @@ export async function createStorefrontAssetSignedUrl(
   return data.signedUrl;
 }
 
+/**
+ * URL pública y estable de un recurso de marca (logo, fondo, portada).
+ *
+ * El bucket `menu` es público (migrations/20260720_public_menu_storage_bucket.sql)
+ * y las fotos de producto ya se sirven así. Firmar en cada visita costaba una
+ * llamada a Storage por imagen y daba una URL distinta cada vez, de modo que ni
+ * el navegador ni el optimizador de imágenes podían guardarla en caché.
+ * Las rutas del panel (/cuenta, super admin) siguen usando la firmada.
+ */
+export function resolveStorefrontAssetPublicUrl(
+  value: string | null | undefined,
+  companyId: string,
+): string {
+  const asset = String(value ?? "").trim();
+  if (!asset) return "";
+
+  if (isExternalStorefrontAsset(asset) || asset.startsWith("/")) return asset;
+  if (!isCompanyStorefrontAssetPath(asset, companyId)) return "";
+
+  return resolveMenuImageUrl(asset) ?? "";
+}
+
 export async function resolveStorefrontThemeAssets(
   theme: StoreThemeConfig,
   companyId: string,
 ): Promise<StoreThemeConfig> {
-  const [logoUrl, backgroundImageUrl] = await Promise.all([
-    createStorefrontAssetSignedUrl(theme.logoUrl, companyId),
-    createStorefrontAssetSignedUrl(theme.backgroundImageUrl, companyId),
-  ]);
-
   return {
     ...theme,
-    logoUrl,
-    backgroundImageUrl,
+    logoUrl: resolveStorefrontAssetPublicUrl(theme.logoUrl, companyId),
+    backgroundImageUrl: resolveStorefrontAssetPublicUrl(theme.backgroundImageUrl, companyId),
   };
 }

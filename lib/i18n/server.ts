@@ -1,9 +1,11 @@
+import { cache } from "react";
 import { cookies, headers } from "next/headers";
 
 import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME, normalizeLocale, type AppLocale } from "./config";
 import { resolveTenantPreferredLocale } from "./tenant-locale";
 
-export async function getCurrentLocale(): Promise<AppLocale> {
+/** Memoizado por petición: lo piden el layout raíz y la config de next-intl. */
+export const getCurrentLocale = cache(async function getCurrentLocale(): Promise<AppLocale> {
   const cookieStore = await cookies();
   const cookieLocale = cookieStore.get(LOCALE_COOKIE_NAME)?.value;
   if (cookieLocale) return normalizeLocale(cookieLocale);
@@ -17,4 +19,4 @@ export async function getCurrentLocale(): Promise<AppLocale> {
 
   if (!firstPreferred) return DEFAULT_LOCALE;
   return normalizeLocale(firstPreferred);
-}
+});
