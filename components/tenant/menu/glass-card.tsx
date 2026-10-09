@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { memo, useState, type KeyboardEvent } from "react";
 import clsx from "clsx";
 import { Minus, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -11,12 +11,32 @@ import {
 	ProductCardImage,
 	ProductOfferBadges,
 	ProductQtyBadge,
+	productInitials,
 	useProductPricing,
 	type ProductCardLogic,
 	type ProductCardProduct,
 } from "./product-card-shared";
+import { MotionCount } from "./ui/tenant-ui";
+
+/**
+ * Variantes de la misma tarjeta: comparten marcado, tokens, accesibilidad y
+ * pie; solo cambia cómo se reparte el espacio (ver GlassCard.css).
+ * - grid: foto arriba, la de siempre (Rica Pizza, Oishi).
+ * - row: fila con la foto a la izquierda; caben más productos por pantalla.
+ * - plate: el plato redondo sale por encima de la tarjeta; luce con recortes PNG.
+ * - wide: foto grande a lo ancho; una columna en el teléfono.
+ */
+export type GlassCardVariant = "grid" | "row" | "plate" | "wide";
+
+const VARIANT_IMAGE_SIZES: Record<GlassCardVariant, string> = {
+	grid: PRODUCT_IMAGE_SIZES.grid,
+	row: "(max-width: 640px) 112px, 140px",
+	plate: "(max-width: 480px) 36vw, (max-width: 1024px) 22vw, 180px",
+	wide: "(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 420px",
+};
 
 export type GlassCardProps = {
+	variant?: GlassCardVariant;
 	product: ProductCardProduct;
 	logic: ProductCardLogic;
 	priority?: boolean;
@@ -37,6 +57,7 @@ const LONG_DESCRIPTION = 60;
  * rótulo; el acento del local se reserva para el cromo, no para cada "+".
  */
 export const GlassCard = memo(function GlassCard({
+	variant = "grid",
 	product,
 	logic,
 	priority = false,
@@ -50,7 +71,6 @@ export const GlassCard = memo(function GlassCard({
 	const t = useTranslations("tenant.menu");
 	const pricing = useProductPricing(product, currency, logic, exchangeRate);
 	const [expanded, setExpanded] = useState(false);
-	const [pop, setPop] = useState(false);
 
 	const name = product.name || t("card.productFallback");
 	const description = product.description?.trim() ?? "";
@@ -71,21 +91,24 @@ export const GlassCard = memo(function GlassCard({
 		}
 	};
 
-	const add = (event: MouseEvent<HTMLButtonElement>) => {
-		logic.handleAdd(event);
-		setPop(true);
-	};
-
 	const content = (
 		<>
 			<div className="gcard__media">
-				<ProductCardImage
-					src={logic.imageSrc}
-					alt={name}
-					priority={priority}
-					sizes={PRODUCT_IMAGE_SIZES.grid}
-					onError={logic.setImageError}
-				/>
+				{/* Sin foto propia: relleno con las iniciales en el color del local, en vez
+				    de una foto genérica de comida que no es suya. */}
+				{logic.hasPhoto ? (
+					<ProductCardImage
+						src={logic.imageSrc}
+						alt={name}
+						priority={priority}
+						sizes={VARIANT_IMAGE_SIZES[variant]}
+						onError={logic.setImageError}
+					/>
+				) : (
+					<div className="product-card-media fcard-photo--empty gcard__empty" aria-hidden>
+						<span className="fcard-photo__initials">{productInitials(name)}</span>
+					</div>
+				)}
 				<ProductOfferBadges product={product} />
 				{/* Solo en tarjeta estrecha (ver CSS): ahí el pie muestra solo el "+" y la
 				    cantidad va sobre la foto; quitar se hace desde el carrito. */}
@@ -100,7 +123,7 @@ export const GlassCard = memo(function GlassCard({
 
 	return (
 		<article
-			className={clsx("product-card glass gcard", expanded && "is-expanded", detailsMode === "inline" && "gcard--inline")}
+			className={clsx("product-card glass gcard", variant !== "grid" && `gcard--${variant}`, expanded && "is-expanded", detailsMode === "inline" && "gcard--inline")}
 		>
 			{clickable ? (
 				<div
@@ -146,18 +169,17 @@ export const GlassCard = memo(function GlassCard({
 							<Minus size={16} strokeWidth={2.5} aria-hidden />
 						</button>
 						<span className="gcard__count" aria-live="polite">
-							{logic.quantity}
+							<MotionCount value={logic.quantity} />
 						</span>
-						<button type="button" className="gcard__step gcard__step--plus" onClick={add} aria-label={t("card.addOne")}>
+						<button type="button" className="gcard__step gcard__step--plus" onClick={logic.handleAdd} aria-label={t("card.addOne")}>
 							<Plus size={16} strokeWidth={2.5} aria-hidden />
 						</button>
 					</div>
 				) : (
 					<button
 						type="button"
-						className={clsx("gcard__add", pop && "is-pop")}
-						onClick={add}
-						onAnimationEnd={() => setPop(false)}
+						className="gcard__add"
+						onClick={logic.handleAdd}
 						aria-label={t("card.addAria", { name })}
 					>
 						<Plus size={20} strokeWidth={2.5} aria-hidden />

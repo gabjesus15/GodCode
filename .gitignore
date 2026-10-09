@@ -77,3 +77,6 @@ next-env.d.ts
 
 # Capturas de revisión de diseño (Impeccable): evidencia local, se regeneran.
 .impeccable/review/
+
+# Fotos del laboratorio del menú (/dev/menu-lab); no se versionan
+public/dev-lab/

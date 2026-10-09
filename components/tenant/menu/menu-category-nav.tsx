@@ -2,12 +2,13 @@
 
 import { memo, useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
-import { ChevronDown, Compass, Grid, MapPin, X } from "lucide-react";
+import { ChevronDown, Compass, MapPin, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { Navbar } from "../navbar/navbar";
+import { useSlidingIndicator } from "../navbar/use-sliding-indicator";
 import { PoweredByGcode } from "../branding/powered-by-gcode";
 import type { BranchInfo, CategoryListItem } from "./menu-types";
 
@@ -152,20 +153,42 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 	tenantSlug?: string | null;
 }) {
 	const t = useTranslations("tenant.menu");
+	// El fondo de la activa se desliza por la lista en vez de saltar.
+	const sidebarNavRef = useRef<HTMLElement | null>(null);
+	const sidebarIndicatorRef = useRef<HTMLSpanElement | null>(null);
+	useSlidingIndicator(
+		sidebarNavRef,
+		sidebarIndicatorRef,
+		activeCategory ? `.sidebar-nav-item[data-id="${activeCategory}"]` : null,
+		"y",
+		[categories],
+	);
 	return (
 		<aside className="sidebar-categories-panel">
 			<div className="sidebar-header">
 				<div className="sidebar-header-row">
-					<Image
-						src={logoError ? "/tenant/logo-placeholder.svg" : logoUrl || "/tenant/logo-placeholder.svg"}
-						alt={t("nav.logoAlt")}
-						className="sidebar-logo"
-						width={44}
-						height={44}
-						onError={onLogoError}
-						// Branding: servir el logo original sin recomprimir.
-						unoptimized
-					/>
+					{logoUrl && !logoError ? (
+						<Image
+							src={logoUrl}
+							alt={t("nav.logoAlt")}
+							className="sidebar-logo"
+							width={44}
+							height={44}
+							onError={onLogoError}
+							// Branding: servir el logo original sin recomprimir.
+							unoptimized
+						/>
+					) : (
+						// Sin logo: las iniciales del local, como en la barra de arriba.
+						<span className="sidebar-logo sidebar-logo--monogram" aria-hidden>
+							{displayName
+								.trim()
+								.split(/\s+/)
+								.slice(0, 2)
+								.map((w) => w.charAt(0).toUpperCase())
+								.join("")}
+						</span>
+					)}
 					<div className="sidebar-brand-info">
 						<h3 className="sidebar-brand-title">{displayName}</h3>
 						<p className="sidebar-brand-subtitle">{t("nav.digitalMenu")}</p>
@@ -190,11 +213,13 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 					</div>
 				) : null}
 			</div>
-			<nav className="sidebar-nav" aria-label={t("nav.categories")}>
+			<nav ref={sidebarNavRef} className="sidebar-nav" aria-label={t("nav.categories")}>
+				<span ref={sidebarIndicatorRef} className="sidebar-nav-indicator" aria-hidden />
 				{categories.map((cat) => (
 					<button
 						key={cat.id}
 						type="button"
+						data-id={cat.id}
 						onClick={() => onCategoryClick(cat.id)}
 						{...currentCategoryProps(activeCategory === cat.id)}
 						className={`sidebar-nav-item ${activeCategory === cat.id ? "active" : ""}`}
@@ -209,9 +234,7 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 								quality={85}
 								unoptimized={shouldUnoptimizeImageSrc(cat.icon)}
 							/>
-						) : (
-							<Grid size={14} className="sidebar-item-icon opacity-60" />
-						)}
+						) : null}
 						<span className="sidebar-item-text">{cat.name}</span>
 					</button>
 				))}

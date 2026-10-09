@@ -23,7 +23,7 @@ import { describe, expect, it } from "vitest";
 const STYLES_DIR = join(process.cwd(), "app", "[subdomain]", "styles");
 
 const cardCss = readFileSync(join(STYLES_DIR, "ProductCard.css"), "utf8");
-const layoutsCss = readFileSync(join(STYLES_DIR, "ProductCardLayouts.css"), "utf8");
+const layoutsCss = readFileSync(join(STYLES_DIR, "FoodCardLayouts.css"), "utf8");
 
 /** La calle mas apretada de todas las parrillas: Cristal y Barra lateral en movil. */
 const CALLE_MAS_ESTRECHA_PX = 12;
@@ -82,24 +82,9 @@ describe("contrato de elevacion de las tarjetas", () => {
 		}
 	});
 
-	/**
-	 * Food no puede usar la escala: su contenedor es transparente y la tarjeta
-	 * visible es un hijo, asi que la elevacion la pone `filter: drop-shadow`,
-	 * que no admite `spread`. Queda fuera del token, pero no fuera de la regla.
-	 */
-	it.each(["reposo", "hover"])("la sombra de Food en %s respeta la misma silueta", (estado) => {
-		// El color lleva sus propios parentesis — `rgba(...)` —, asi que la captura
-		// tiene que ser perezosa hasta el `);` final y no cortar en el primero.
-		const filtros = [...layoutsCss.matchAll(/filter: drop-shadow\((.+?)\);/g)].map((m) => m[1]);
-		expect(filtros).toHaveLength(2);
-
-		const { lateral, arriba } = alcance(filtros[estado === "reposo" ? 0 : 1]);
-		expect(lateral).toBeLessThanOrEqual(MARGEN_LATERAL_PX);
-		expect(arriba).toBeLessThanOrEqual(0);
-	});
-
 	it("ningun estilo de tarjeta se inventa su propia sombra", () => {
-		// Los nueve contenedores de tarjeta, con su estado de hover. Si alguien
+		// Los contenedores de tarjeta, con su estado de hover. Las de comida usan
+		// la sombra de la superficie del menú (`--menu-shadow-card`). Si alguien
 		// anade un estilo nuevo con sombra propia, aparece aqui.
 		const contenedores = /^\.product-(?:layout-[a-z]+|card)(?:[.:][a-z-]+)*\s*\{([^}]*)\}/gm;
 		const propias: string[] = [];
@@ -109,7 +94,7 @@ describe("contrato de elevacion de las tarjetas", () => {
 				const declaracion = /box-shadow:([^;]+);/.exec(cuerpo);
 				if (!declaracion) continue;
 				const fuera = capasDe(declaracion[1]);
-				if (fuera.length > 0 && !fuera.some((c) => c.includes("--card-elev-"))) {
+				if (fuera.length > 0 && !fuera.some((c) => c.includes("--card-elev-") || c.includes("--menu-shadow-card"))) {
 					propias.push(regla.slice(0, regla.indexOf("{")).trim());
 				}
 			}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
+import { useSlidingIndicator } from "./use-sliding-indicator";
 
 interface CategoryItem {
   id: string;
@@ -29,6 +30,16 @@ export function Navbar({ categories, activeCategory, onCategoryClick }: NavbarPr
     }
   }, [activeCategory]);
 
+  // Una sola línea bajo la activa que se desliza entre pestañas.
+  const indicatorRef = useRef<HTMLSpanElement | null>(null);
+  useSlidingIndicator(
+    scrollRef,
+    indicatorRef,
+    activeCategory ? `.tab-item[data-id="${activeCategory}"]` : null,
+    "x",
+    [categories],
+  );
+
   const handleClick = (id: string) => {
     onCategoryClick(id);
   };
@@ -51,6 +62,7 @@ export function Navbar({ categories, activeCategory, onCategoryClick }: NavbarPr
                 {cat.name}
               </button>
             ))}
+            <span ref={indicatorRef} className="tab-indicator" aria-hidden />
           </nav>
           <div className="nav-fade-right" />
         </div>

@@ -26,12 +26,10 @@
 	background: var(--accent-primary, #e63946);
 	color: #fff;
 	cursor: pointer;
-	box-shadow:
-		0 10px 25px var(--accent-shadow, rgba(0, 0, 0, 0.35)),
-		inset 0 1px 0 rgba(255, 255, 255, 0.18);
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
 	transition:
 		width 320ms var(--cart-float-ease),
-		transform 160ms ease,
+		transform 120ms cubic-bezier(0.23, 1, 0.32, 1),
 		box-shadow 320ms ease;
 	-webkit-tap-highlight-color: transparent;
 }
@@ -102,7 +100,7 @@
 	.cart-float:hover {
 		width: 200px;
 		transform: translateY(-4px);
-		box-shadow: 0 20px 40px var(--accent-shadow-strong, rgba(0, 0, 0, 0.5));
+		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.26);
 	}
 
 	.cart-float:hover .cart-label-container {
@@ -120,27 +118,25 @@
 
 	.cart-float:active {
 		transform: scale(0.95);
-		box-shadow: 0 5px 15px var(--accent-shadow, rgba(0, 0, 0, 0.35));
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 	}
 }
 
-/* Tras 10 s sin interacción con productos en el carrito, un pulso suave recuerda el pedido. */
-@keyframes cart-float-pulse {
-	0% {
-		box-shadow: 0 0 0 0 var(--accent-shadow-strong, rgba(230, 57, 70, 0.5));
-	}
-
-	70% {
-		box-shadow: 0 0 0 15px transparent;
-	}
-
-	100% {
-		box-shadow: 0 0 0 0 transparent;
-	}
+/* Cada vez que cambia el número del pedido, el globo da un saltito corto: es
+   la confirmación de que el producto llegó al carrito. Antes, tras 10 s sin
+   tocar nada, el botón latía sin fin para "recordar" el pedido; se quitó, era
+   insistencia y no información. */
+.cart-float-badge {
+	animation: cart-badge-bump 260ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-.cart-float.pulse-urgent {
-	animation: cart-float-pulse 2s infinite;
+@keyframes cart-badge-bump {
+	from {
+		transform: scale(0.8);
+	}
+	55% {
+		transform: scale(1.1);
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -149,7 +145,111 @@
 		transition: none;
 	}
 
-	.cart-float.pulse-urgent {
+	.cart-float-badge {
 		animation: none;
+	}
+}
+
+/* =============================================================================
+   Carrito en barra (cartStyle "bar"): ancho completo abajo, aparece al agregar
+   el primer producto. Cuenta, "Ver pedido" y total siempre a la vista.
+   ============================================================================= */
+
+.cart-bar {
+	position: fixed;
+	left: 50%;
+	bottom: calc(16px + env(safe-area-inset-bottom));
+	z-index: var(--z-bottom-chrome, 1000);
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: min(560px, calc(100% - 32px));
+	min-height: 58px;
+	padding: 8px 18px 8px 8px;
+	border: 0;
+	border-radius: 18px;
+	background: var(--accent-primary, #e63946);
+	color: var(--menu-on-accent, #fff);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	box-shadow:
+		0 14px 32px -8px var(--accent-shadow-strong, rgba(0, 0, 0, 0.5)),
+		inset 0 1px 0 rgba(255, 255, 255, 0.18);
+	transform: translate(-50%, calc(100% + 32px));
+	opacity: 0;
+	pointer-events: none;
+	transition:
+		transform 380ms cubic-bezier(0.16, 1, 0.3, 1),
+		opacity 200ms ease;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.cart-bar.is-visible {
+	transform: translate(-50%, 0);
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.cart-bar:active {
+	transform: translate(-50%, 0) scale(0.985);
+	transition-duration: 120ms;
+}
+
+/* Al irse (se vació el pedido) baja más rápido de lo que subió. */
+.cart-bar:not(.is-visible) {
+	transition:
+		transform 200ms cubic-bezier(0.4, 0, 1, 1),
+		opacity 160ms ease;
+}
+
+.cart-bar:focus-visible {
+	outline: 2px solid #fff;
+	outline-offset: 3px;
+}
+
+.cart-bar__count {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 42px;
+	padding: 0 12px;
+	border-radius: 12px;
+	background: rgba(0, 0, 0, 0.18);
+	font-size: 0.95rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+.cart-bar__label {
+	flex: 1;
+	min-width: 0;
+	font-size: 0.98rem;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.cart-bar__total {
+	font-size: 1.02rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.cart-bar__arrow {
+	flex-shrink: 0;
+	opacity: 0.85;
+}
+
+/* El catálogo deja sitio para la barra al final. */
+.page-wrapper.cart-ui-float-with-modal.cart-style-bar {
+	padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cart-bar {
+		transition: opacity 150ms ease;
 	}
 }

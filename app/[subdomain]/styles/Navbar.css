@@ -63,7 +63,11 @@
     font-weight: 500;
     font-size: 0.84rem;
     cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+    transition:
+        background-color var(--menu-dur-fast) ease-out,
+        color var(--menu-dur-fast) ease-out,
+        border-color var(--menu-dur-fast) ease-out,
+        transform var(--menu-dur-press) var(--menu-ease-out);
     -webkit-user-select: none;
     user-select: none;
 }
@@ -84,7 +88,7 @@
 }
 
 .tab-item:active {
-    transform: scale(0.98);
+    transform: scale(0.97);
 }
 
 /* Iconos dentro de los tabs */
@@ -109,7 +113,11 @@
     position: relative;
     display: flex;
     align-items: center;
-    justify-content: center;
+    /* La lupa va siempre pegada a la izquierda con el mismo margen: centrada
+       en el círculo, y quieta mientras la pastilla se estira o se recoge (con
+       justify-content: center saltaba al centro al cerrar). */
+    justify-content: flex-start;
+    padding-left: 7px;
     width: 36px;
     height: 36px;
     background: var(--menu-surface-2);
@@ -117,15 +125,14 @@
     border-radius: 50px;
     cursor: pointer;
     overflow: hidden;
-    transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+    transition:
+        width var(--menu-dur-enter, 240ms) var(--menu-ease-out, ease-out),
+        border-color var(--menu-dur-fast, 180ms) ease-out;
 }
 
 .search-pill-wrapper.expanded {
     width: 160px;
     border-color: var(--menu-accent);
-    box-shadow: 0 4px 14px var(--accent-shadow, rgba(0, 0, 0, 0.25));
-    justify-content: flex-start;
-    padding-left: 10px;
 }
 
 .search-pill-wrapper.expanded .search-icon-pill {
@@ -165,7 +172,9 @@
     color: var(--menu-fg-3);
 }
 
+/* La X aparece cuando la pastilla ya tiene sitio, no encima de la lupa. */
 .btn-close-pill {
+    animation: search-close-in var(--menu-dur-fast, 180ms) ease-out 100ms both;
     background: var(--menu-surface);
     border: none;
     color: var(--menu-fg);
@@ -205,12 +214,6 @@
     background: linear-gradient(to left, var(--menu-chrome), transparent);
 }
 
-@media (max-width: 380px) {
-    .search-pill-wrapper.expanded {
-        width: 140px;
-    }
-}
-
 @media (max-width: 600px) {
     .navbar-main-row {
         padding: 0 4px;
@@ -230,9 +233,21 @@
         scroll-snap-align: start;
     }
 
+    /* El hueco del buscador mide siempre lo mismo: abierto, la pastilla crece
+       hacia la izquierda por encima del nombre (que se funde) en vez de
+       empujarlo. Así el nombre no se encoge ni se vuelve a partir. */
     .nav-search-section {
         position: relative;
         flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+    }
+
+    .nav-search-section .search-pill-wrapper {
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 2;
     }
 
     /* Encogia a 32x32 justo en movil, que es donde se usa con el dedo: el objetivo
@@ -243,15 +258,14 @@
     .search-pill-wrapper {
         width: 40px;
         height: 40px;
+        padding-left: 9px;
     }
 
-    .search-pill-wrapper.expanded {
-        position: relative;
-        right: auto;
-        width: min(58vw, 190px);
+    /* De la flecha al borde: 100vw menos la flecha (44) y los márgenes. */
+    .nav-search-section .search-pill-wrapper.expanded {
+        width: calc(100vw - 88px);
         height: 40px;
-        padding-left: 8px;
-        z-index: auto;
+        background: var(--menu-surface);
     }
 
     .search-input-pill {
@@ -269,6 +283,125 @@
     .search-pill-wrapper,
     .search-input-pill,
     .navbar-wrapper {
+        transition: none;
+    }
+}
+
+/* =========================================
+   CATEGORÍAS SUBRAYADAS (navbarType "underline-tabs")
+   La barra lateral usa este mismo estilo en teléfono y tablet, donde el
+   panel no cabe.
+   Solo texto; la activa lleva una línea del color del local debajo y la tira
+   entera una línea fina de base, como las pestañas de una app nativa.
+   ========================================= */
+
+.navbar-type-underline-tabs .navbar-container,
+.navbar-type-sidebar-categories .navbar-container {
+    gap: 2px;
+    padding: 0 6px;
+}
+
+.navbar-type-underline-tabs .tab-item,
+.navbar-type-sidebar-categories .tab-item {
+    position: relative;
+    min-height: 44px;
+    padding: 10px 14px 12px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--menu-fg-3);
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+}
+
+.navbar-type-underline-tabs .tab-item:hover,
+.navbar-type-sidebar-categories .tab-item:hover {
+    color: var(--menu-fg);
+}
+
+.navbar-type-underline-tabs .tab-item.active,
+.navbar-type-sidebar-categories .tab-item.active {
+    background: none;
+    color: var(--menu-fg);
+    box-shadow: none;
+}
+
+/* La línea de la activa es una sola (.tab-indicator, la coloca navbar.tsx)
+   que se desliza de una pestaña a otra. */
+.tab-indicator {
+    display: none;
+}
+
+.navbar-type-underline-tabs .navbar-container,
+.navbar-type-sidebar-categories .navbar-container {
+    position: relative;
+}
+
+.navbar-type-underline-tabs .tab-indicator,
+.navbar-type-sidebar-categories .tab-indicator {
+    display: block;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 1px;
+    height: 3px;
+    background: var(--menu-accent);
+    transform-origin: left center;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.navbar-type-underline-tabs .tab-indicator[data-ready],
+.navbar-type-sidebar-categories .tab-indicator[data-ready] {
+    transition:
+        transform 280ms var(--menu-ease-out),
+        opacity var(--menu-dur-fast) ease-out;
+}
+
+@media (max-width: 640px) {
+    .navbar-type-underline-tabs .tab-item,
+.navbar-type-sidebar-categories .tab-item {
+        padding: 10px 12px 12px;
+        font-size: 0.86rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .navbar-type-underline-tabs .tab-indicator[data-ready],
+    .navbar-type-sidebar-categories .tab-indicator[data-ready] {
+        transition: none;
+    }
+}
+
+/* Pantallas anchas: las categorías arrancan en el mismo borde que el
+   contenido (portada, títulos y tarjetas: 1220px como máximo), no pegadas
+   al borde de la ventana. */
+@media (min-width: 900px) {
+    .navbar-main-row {
+        max-width: 1220px;
+        margin-inline: auto;
+        padding-inline: clamp(12px, 4vw, 28px);
+    }
+
+    .navbar-main-row .navbar-container {
+        padding-inline: 0;
+    }
+}
+
+@keyframes search-close-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-close-pill {
+        animation: none;
+    }
+
+    .search-pill-wrapper {
         transition: none;
     }
 }

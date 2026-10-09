@@ -19,15 +19,18 @@ describe("resolveProductDetailsInteraction", () => {
 		expect(result.showLayoutInlinePanel).toBe(false);
 	});
 
-	it("inline + layout-clean uses grid panel", () => {
-		const result = resolveProductDetailsInteraction("inline", "layout-clean", noop);
+	it("inline + layout-carta uses grid panel", () => {
+		const result = resolveProductDetailsInteraction("inline", "layout-carta", noop);
 		expect(result.productClickHandler).toBe(noop);
 		expect(result.inlineDetails).toBe(false);
 		expect(result.showLayoutInlinePanel).toBe(true);
 	});
 
-	it("normalizes card style aliases", () => {
-		const result = resolveProductDetailsInteraction("inline", "minimal", noop);
-		expect(result.showLayoutInlinePanel).toBe(true);
+	it("las variantes de Cristal y sus alias despliegan dentro de la tarjeta", () => {
+		for (const style of ["glass-row", "glass-plate", "glass-wide", "minimal", "layout-horizontal"]) {
+			const result = resolveProductDetailsInteraction("inline", style, noop);
+			expect(result.inlineDetails, style).toBe(true);
+			expect(result.showLayoutInlinePanel, style).toBe(false);
+		}
 	});
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	isGlassCardStyle,
 	NAVBAR_TYPES,
 	NAVIGATION_MODES,
 	PRODUCT_CARD_STYLES,
@@ -9,8 +10,8 @@ import {
 import { resolveProductDetailsInteraction } from "@/lib/tenant/menu/product-details-interaction";
 
 /**
- * Matrix: navbar × navMode × card × details = 180 combinations.
- * Interaction rules are card×details only; this test covers all 18 card×details pairs.
+ * Matrix: navbar × navMode × card × details.
+ * Interaction rules are card×details only; this test covers every card×details pair.
  */
 describe("menu theme combination matrix (card × details)", () => {
 	const noop = () => {};
@@ -27,7 +28,7 @@ describe("menu theme combination matrix (card × details)", () => {
 					return;
 				}
 
-				if (cardStyle === "glass") {
+				if (isGlassCardStyle(cardStyle)) {
 					expect(result.inlineDetails).toBe(true);
 					expect(result.showLayoutInlinePanel).toBe(false);
 					expect(result.productClickHandler).toBeUndefined();
@@ -42,6 +43,6 @@ describe("menu theme combination matrix (card × details)", () => {
 	}
 
 	it("exports full navbar and navigation mode lists for QA checklist", () => {
-		expect(NAVBAR_TYPES.length * NAVIGATION_MODES.length * PRODUCT_CARD_STYLES.length * PRODUCT_DETAILS_MODES.length).toBe(180);
+		expect(NAVBAR_TYPES.length * NAVIGATION_MODES.length * PRODUCT_CARD_STYLES.length * PRODUCT_DETAILS_MODES.length).toBe(192);
 	});
 });

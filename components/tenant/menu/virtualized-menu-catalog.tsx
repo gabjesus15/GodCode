@@ -32,6 +32,7 @@ type VirtualizedMenuCatalogProps = {
 	catalogScrollRef: React.RefObject<MenuCatalogScrollController | null>;
 	observerBlockRef: React.RefObject<boolean>;
 	onActiveSectionChange: (sectionId: string) => void;
+	featuredStyle?: string;
 };
 
 function estimateSectionHeight(section: VirtualSection, cardStyle: string): number {
@@ -52,6 +53,7 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 	catalogScrollRef,
 	observerBlockRef,
 	onActiveSectionChange,
+	featuredStyle = "section",
 }: VirtualizedMenuCatalogProps) {
 	const t = useTranslations("tenant.menu");
 	const [scrollAnchor, setScrollAnchor] = useState(() => getMenuScrollAnchorPx());
@@ -200,7 +202,7 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 					>
 						<h2 className="category-title">{section.title}</h2>
 						{section.products.length > 0 ? (
-							<ProductGrid products={section.products} {...gridProps} />
+							<ProductGrid products={section.products} {...gridProps} rail={section.id === "special" && featuredStyle === "carousel"} />
 						) : (
 							<p className="no-results-text">{section.emptyText ?? t("catalog.emptyCategory")}</p>
 						)}

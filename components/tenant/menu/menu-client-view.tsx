@@ -7,6 +7,7 @@ import { HeroCarousel } from "./hero-carousel";
 import { OrderIntakePausedBanner, OutsideBusinessHoursBanner } from "./order-intake-paused-banner";
 import { MegaMenuFab, MegaMenuOverlay, SidebarCategoriesPanel } from "./menu-category-nav";
 import { MenuCatalog } from "./menu-catalog";
+import { MenuStoreCover } from "./menu-store-cover";
 import { MenuContactChannelSheet } from "./menu-contact-channel-sheet";
 import { ProductSizeSheet } from "./product-size-picker";
 import { PoweredByGcode } from "../branding/powered-by-gcode";
@@ -21,6 +22,7 @@ import {
 import type { MenuCatalogScrollController } from "@/lib/tenant/menu/menu-catalog-scroll-controller";
 import { useMenuPerfProfile } from "@/lib/tenant/menu/menu-perf-context";
 import { useApplyTenantSurfaceScheme } from "@/lib/tenant/hooks/use-tenant-surface-scheme";
+import type { MenuLayoutConfig } from "@/lib/store-theme/theme-config";
 
 export type MenuClientViewProps = {
 	mounted: boolean;
@@ -49,6 +51,7 @@ export type MenuClientViewProps = {
 	filteredBySearch: MenuProduct[];
 	cardStyle: string;
 	detailsMode: string;
+	menuLayout: MenuLayoutConfig;
 	effectiveCountry: string;
 	effectiveCurrency: string;
 	exchangeRate: number | null;
@@ -63,6 +66,8 @@ export type MenuClientViewProps = {
 	onCloseLocationModal: () => void;
 	onGoHome?: () => void;
 	hasOpenBranches?: boolean;
+	/** null: aún no hay sucursal elegida. */
+	selectedBranchOpen?: boolean | null;
 	modalBranches: BranchModalItem[];
 	allBranches: BranchInfo[];
 	onSelectBranch: (branch: BranchModalItem) => void;
@@ -118,6 +123,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 		filteredBySearch,
 		cardStyle,
 		detailsMode,
+		menuLayout,
 		effectiveCountry,
 		effectiveCurrency,
 		exchangeRate,
@@ -132,6 +138,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 		onCloseLocationModal,
 		onGoHome,
 		hasOpenBranches = true,
+		selectedBranchOpen = null,
 		modalBranches,
 		allBranches,
 		onSelectBranch,
@@ -154,6 +161,11 @@ export function MenuClientView(props: MenuClientViewProps) {
 		onActiveSectionChange,
 		tenantSlug = null,
 	} = props;
+
+	// Con portada y sin foto propia, el primer banner hace de portada y el
+	// carrusel sigue con los demás: así no se ve la misma imagen dos veces.
+	const withCover = menuLayout.headerStyle === "cover";
+	const carouselBanners = withCover && !menuLayout.coverImageUrl ? banners.slice(1) : banners;
 
 	const contactBranches = pendingContactChannel
 		? allBranches.filter((branch) => branchHasContactChannel(branch, pendingContactChannel))
@@ -190,7 +202,18 @@ export function MenuClientView(props: MenuClientViewProps) {
 					: navbar}
 
 				<div className="menu-spacer" />
-				{banners.length > 0 && <HeroCarousel banners={banners} autoplayEnabled={heroAutoplay} />}
+				{withCover ? (
+					<MenuStoreCover
+						displayName={displayName}
+						logoUrl={effectiveLogoUrl}
+						logoError={logoError}
+						onLogoError={onLogoError}
+						coverImageUrl={menuLayout.coverImageUrl || banners[0]?.image_url || null}
+						branch={selectedBranch}
+						isOpen={selectedBranchOpen}
+					/>
+				) : null}
+				{carouselBanners.length > 0 && <HeroCarousel banners={carouselBanners} autoplayEnabled={heroAutoplay} />}
 
 				<main className="container">
 					<MenuCatalog
@@ -215,6 +238,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 						catalogScrollRef={catalogScrollRef}
 						observerBlockRef={observerBlockRef}
 						onActiveSectionChange={onActiveSectionChange}
+						featuredStyle={menuLayout.featuredStyle}
 					/>
 					{!isEmbeddedPreview ? (
 						<PoweredByGcode tenantSlug={tenantSlug} surface="menu" logoUrl={effectiveLogoUrl} brandName={displayName} />

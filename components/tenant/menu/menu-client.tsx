@@ -38,6 +38,7 @@ function MenuClientViewFromVm({ vm }: { vm: ReturnType<typeof useMenuClientContr
 				filteredBySearch={vm.filteredBySearch}
 				cardStyle={vm.cardStyle}
 				detailsMode={vm.detailsMode}
+				menuLayout={vm.menuLayout}
 				effectiveCountry={vm.effectiveCountry}
 				effectiveCurrency={vm.effectiveCurrency}
 				exchangeRate={vm.exchangeRate}
@@ -52,6 +53,7 @@ function MenuClientViewFromVm({ vm }: { vm: ReturnType<typeof useMenuClientContr
 				onCloseLocationModal={() => { if (vm.selectedBranchId) vm.setIsLocationModalOpen(false); }}
 				onGoHome={vm.goHomeFromMenu}
 				hasOpenBranches={vm.hasOpenBranches}
+				selectedBranchOpen={vm.selectedBranchOpen}
 				modalBranches={vm.modalBranches}
 				allBranches={vm.branches}
 				onSelectBranch={vm.handleBranchSelect}

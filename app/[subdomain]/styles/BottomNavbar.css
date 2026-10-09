@@ -207,7 +207,6 @@
 
 /* Page wrapper extra padding when floating bar is present */
 .page-wrapper.navbar-type-floating-bottom,
-.page-wrapper.card-style-layout-food,
 .page-wrapper.cart-ui-bottom-nav {
     padding-bottom: calc(var(--menu-bottom-chrome-h) + env(safe-area-inset-bottom, 0px));
 }
@@ -216,17 +215,12 @@
     padding-bottom: calc(var(--menu-cart-float-h) + env(safe-area-inset-bottom, 0px));
 }
 
-.page-wrapper.card-style-layout-food .container {
-    padding-bottom: 16px;
-}
-
 .page-wrapper.embedded-preview {
     padding-bottom: calc(var(--menu-bottom-chrome-h) + env(safe-area-inset-bottom, 0px));
 }
 
 .page-wrapper.embedded-preview.cart-ui-bottom-nav,
 .page-wrapper.embedded-preview.navbar-type-floating-bottom,
-.page-wrapper.embedded-preview.card-style-layout-food,
 .page-wrapper.embedded-preview.cart-ui-float-with-modal {
     padding-bottom: calc(var(--menu-bottom-chrome-h) + env(safe-area-inset-bottom, 0px));
 }
@@ -316,17 +310,17 @@
 }
 
 .menu-contact-sheet-overlay--closing {
-    animation: menu-contact-overlay-out 0.28s ease-in both;
+    animation: menu-contact-overlay-out 0.2s ease-in both;
     pointer-events: none;
 }
 
 .menu-contact-sheet-overlay--closing .menu-contact-sheet {
-    animation: menu-contact-sheet-out 0.34s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: menu-contact-sheet-out 0.22s cubic-bezier(0.4, 0, 1, 1) both;
 }
 
 
 .menu-contact-sheet-overlay--closing .menu-contact-sheet__btn {
-    animation: menu-contact-item-out 0.24s ease-in both;
+    animation: menu-contact-item-out 0.16s ease-in both;
 }
 
 

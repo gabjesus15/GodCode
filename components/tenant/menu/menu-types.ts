@@ -120,6 +120,8 @@ export interface MenuClientProps {
 	navigationMode?: string;
 	productCardStyle?: string;
 	productDetailsMode?: string;
+	/** Cabecera, destacados y carrito (ver MenuLayoutConfig en theme-config). */
+	menuLayout?: Partial<Record<"headerStyle" | "featuredStyle" | "cartStyle" | "coverImageUrl", string>>;
 	onlineOrderingEnabled?: boolean;
 	orderChannel?: OrderChannelMode;
 	/** public_slug del negocio (path o dominio custom). */
@@ -144,6 +146,9 @@ export type PreviewThemePayload = {
 	backgroundMode?: string;
 	brandNameColor?: string;
 	fontFamily?: string;
+	headerStyle?: string;
+	featuredStyle?: string;
+	cartStyle?: string;
 };
 
 export type BottomNavTab = "home" | "cart" | "contact" | "account";

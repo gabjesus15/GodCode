@@ -66,61 +66,12 @@
 
 /*
  * Grid por estilo de tarjeta — columnas según ancho del catálogo (container queries).
+ * Las de comida (carta, vitrina, cartel, nori) están en FoodCardLayouts.css.
  */
 
-/* Compactas — clean, rappi, sneaker */
-.product-grid.grid-layout-clean,
-.product-grid.grid-layout-rappi,
-.product-grid.grid-layout-sneaker {
-  --grid-gap: 16px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-@container product-catalog (min-width: 520px) {
-  .product-grid.grid-layout-clean,
-  .product-grid.grid-layout-rappi,
-  .product-grid.grid-layout-sneaker {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@container product-catalog (min-width: 720px) {
-  .product-grid.grid-layout-clean,
-  .product-grid.grid-layout-rappi,
-  .product-grid.grid-layout-sneaker {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-@container product-catalog (min-width: 1200px) {
-  .product-grid.grid-layout-clean,
-  .product-grid.grid-layout-rappi,
-  .product-grid.grid-layout-sneaker {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-}
-
-/* Food Deluxe */
-.product-grid.grid-layout-food {
-  --grid-gap: 16px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-@container product-catalog (min-width: 640px) {
-  .product-grid.grid-layout-food {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@container product-catalog (min-width: 960px) {
-  .product-grid.grid-layout-food {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-/* Cristal y sidebar. Los cortes están calculados para que la tarjeta mida
-   siempre entre ~160 y ~235px: cada columna nueva entra justo cuando cabe a
-   160px, y la anterior se retira antes de pasar de ~235. Así la tarjeta se
+/* Cristal y Cristal plato. Los cortes están calculados para que la tarjeta
+   mida siempre entre ~160 y ~235px: cada columna nueva entra justo cuando cabe
+   a 160px, y la anterior se retira antes de pasar de ~235. Así la tarjeta se
    mantiene alargada en cualquier pantalla en vez de engordar hasta 330px
    justo antes de un corte, que es lo que pasaba con cortes "redondos".
 
@@ -129,14 +80,14 @@
      4 col  708 – 913   → 165–216px
      5 col  914 – 1160  → 170–219px (tope del catálogo) */
 .product-grid.grid-glass,
-.product-grid.grid-layout-sidebar {
+.product-grid.grid-glass-plate {
   --grid-gap: 12px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 @container product-catalog (min-width: 492px) {
   .product-grid.grid-glass,
-  .product-grid.grid-layout-sidebar {
+  .product-grid.grid-glass-plate {
     --grid-gap: 14px;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -144,7 +95,7 @@
 
 @container product-catalog (min-width: 708px) {
   .product-grid.grid-glass,
-  .product-grid.grid-layout-sidebar {
+  .product-grid.grid-glass-plate {
     --grid-gap: 16px;
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -152,148 +103,204 @@
 
 @container product-catalog (min-width: 914px) {
   .product-grid.grid-glass,
-  .product-grid.grid-layout-sidebar {
+  .product-grid.grid-glass-plate {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 
-/* Detalladas / gaming */
-.product-grid.grid-layout-detailed,
-.product-grid.grid-layout-skew {
-  --grid-gap: 24px;
+/* Cristal fila: una columna en el teléfono, dos desde tableta, tres en escritorio ancho. */
+.product-grid.grid-glass-row {
+  --grid-gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@container product-catalog (min-width: 640px) {
+  .product-grid.grid-glass-row {
+    --grid-gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container product-catalog (min-width: 1100px) {
+  .product-grid.grid-glass-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Cristal foto grande: una por fila en el teléfono. */
+.product-grid.grid-glass-wide {
+  --grid-gap: 16px;
   grid-template-columns: minmax(0, 1fr);
 }
 
 @container product-catalog (min-width: 560px) {
-  .product-grid.grid-layout-detailed,
-  .product-grid.grid-layout-skew {
+  .product-grid.grid-glass-wide {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @container product-catalog (min-width: 960px) {
-  .product-grid.grid-layout-detailed,
-  .product-grid.grid-layout-skew {
+  .product-grid.grid-glass-wide {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-/* Horizontal */
-.product-grid.grid-layout-horizontal {
-  --grid-gap: 20px;
-  grid-template-columns: minmax(0, 1fr);
-}
-
-@container product-catalog (min-width: 900px) {
-  .product-grid.grid-layout-horizontal {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 /* Preview embebido estrecho */
-.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-clean,
-.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-rappi,
-.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-sneaker,
 .page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-glass,
-.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-sidebar,
-.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-food {
+.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-glass-plate {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 }
 
-.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-detailed,
-.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-skew,
-.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-layout-horizontal {
+.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-glass-row,
+.page-wrapper.embedded-preview.preview-device-mobile .product-grid.grid-glass-wide {
   grid-template-columns: minmax(0, 1fr) !important;
 }
 
 /* Fallback sin container queries */
 @supports not (container-type: inline-size) {
-  @media (min-width: 520px) {
-    .product-grid.grid-layout-clean,
-    .product-grid.grid-layout-rappi,
-    .product-grid.grid-layout-sneaker {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
   @media (min-width: 768px) {
-    .product-grid.grid-layout-clean,
-    .product-grid.grid-layout-rappi,
-    .product-grid.grid-layout-sneaker {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
     .product-grid.grid-glass,
-    .product-grid.grid-layout-sidebar {
+    .product-grid.grid-glass-plate {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
-    .product-grid.grid-layout-food {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-    .product-grid.grid-layout-detailed,
-    .product-grid.grid-layout-skew {
+    .product-grid.grid-glass-row,
+    .product-grid.grid-glass-wide {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
   @media (min-width: 1024px) {
     .product-grid.grid-glass,
-    .product-grid.grid-layout-sidebar {
+    .product-grid.grid-glass-plate {
       grid-template-columns: repeat(5, minmax(0, 1fr));
     }
-    .product-grid.grid-layout-food {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-    .product-grid.grid-layout-detailed,
-    .product-grid.grid-layout-skew {
+    .product-grid.grid-glass-wide {
       grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-  @media (min-width: 1100px) {
-    .product-grid.grid-layout-clean,
-    .product-grid.grid-layout-rappi,
-    .product-grid.grid-layout-sneaker {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-    }
-  }
-  @media (min-width: 900px) {
-    .product-grid.grid-layout-horizontal {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .product-card,
-  .product-layout-clean.card,
-  .product-layout-detailed,
-  .product-layout-horizontal,
-  .product-layout-sidebar,
-  .product-layout-rappi,
-  .product-layout-sneaker,
-  .product-layout-skew.card {
+  .product-card {
     transition: none !important;
   }
-  .product-card:hover,
-  .product-layout-clean.card:hover,
-  .product-layout-detailed:hover,
-  .product-layout-horizontal:hover,
-  .product-layout-sidebar:hover,
-  .product-layout-rappi:hover,
-  .product-layout-sneaker:hover,
-  .product-layout-skew.card:hover {
+  .product-card:hover {
     transform: none !important;
   }
-  .product-image img,
-  .product-layout-clean .clean-img,
-  .detailed-img,
-  .horizontal-img,
-  .sidebar-img,
-  .rappi-img,
-  .sneaker-img,
-  .product-layout-skew .skew-img {
+  .product-image img {
     transition: none !important;
   }
 }
 
-/* Layouts alternativos: ver ProductCardLayouts.css */
+/* --- Destacados en carrusel (featuredStyle "carousel") -----------------------
+   La misma tarjeta, en una fila que se desliza con el dedo y se detiene en
+   cada producto. Gana a las columnas de arriba por especificidad. */
+.product-grid-container .product-grid.product-rail {
+  --rail-card: clamp(158px, 44cqi, 220px);
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: var(--rail-card);
+  gap: 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 2px;
+  padding: 2px 2px 10px;
+  scrollbar-width: none;
+}
+
+.product-grid-container .product-grid.product-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.product-grid-container .product-grid.product-rail > * {
+  scroll-snap-align: start;
+}
+
+.product-grid-container .product-grid.product-rail.grid-glass-row,
+.product-grid-container .product-grid.product-rail.grid-layout-carta {
+  --rail-card: clamp(280px, 82cqi, 360px);
+}
+
+.product-grid-container .product-grid.product-rail.grid-glass-wide {
+  --rail-card: clamp(260px, 78cqi, 340px);
+}
+
+/* --- Imagen de producto (ProductCardImage), común a todas las tarjetas ------- */
+
+@keyframes layout-shimmer {
+  0%   { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+
+.product-card-media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.product-card-media__skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.09) 45%,
+    rgba(255, 255, 255, 0.03) 90%
+  );
+  background-size: 220% 100%;
+  animation: layout-shimmer 1.4s ease-in-out infinite;
+}
+
+/* No usar opacity:0 en la img: Safari iOS puede no disparar la descarga/lazy-load. */
+.product-card-media__img {
+  opacity: 1;
+  transition: transform 0.5s ease;
+}
+
+/* Modo libre de ProductCardImage: la carga se marca en el contenedor, sin render. */
+.product-card-media[data-loaded] > .product-card-media__skeleton {
+  display: none;
+}
+
+/* Acuse de pulsado: en un menú que se usa con el dedo no hay hover, así que
+   la tarjeta responde en el pointer-down. Sutil y corto para no retrasar la
+   apertura del detalle. */
+[class*="product-layout-"]:active,
+.product-card:active {
+  transform: scale(0.985);
+}
+
+/* "Desde" delante del precio de un producto con tamaños (precio del más barato). */
+.layout-price-from,
+.gcard__price-from,
+.pds__price-from,
+.product-inline-panel__price-from {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--menu-fg-3, currentColor);
+  white-space: nowrap;
+}
+
+/* Montserrat tiene el asta fina: en la descripción (11-14px de gris sobre
+   tarjeta oscura) 450 devuelve el grosor que se lee bien. */
+.product-desc-clamped {
+  font-weight: 450;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="product-layout-"]:active,
+  .product-card:active {
+    transform: none !important;
+  }
+  .product-card-media__img {
+    transition: opacity 0.15s ease !important;
+  }
+}
+
+/* Otras tarjetas: GlassCard.css (familia Cristal) y FoodCardLayouts.css. */
 .skeleton-loader {
   position: absolute;
   inset: 0;
@@ -596,10 +603,7 @@
      TenantUiPrimitives.css, que es donde gana la especificidad del fondo. */
   .product-inline-panel,
   [class*="product-layout-"],
-  [class*="product-layout-"] .layout-card,
-  [class*="product-layout-"].product-layout-horizontal,
-  [class*="product-layout-"].product-layout-rappi,
-  [class*="product-layout-"].product-layout-food {
+  [class*="product-layout-"] .layout-card {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
@@ -614,12 +618,12 @@
    con la curva expo de la casa. Antes vivía en CartFloat.css, así que solo
    se animaba cuando el botón flotante estaba montado. */
 .animate-pop-in {
-  animation: product-qty-pop-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: product-qty-pop-in 240ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 @keyframes product-qty-pop-in {
   0% {
-    transform: scale(0.6);
+    transform: scale(0.8);
     opacity: 0;
   }
 

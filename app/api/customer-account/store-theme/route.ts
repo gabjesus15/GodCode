@@ -22,7 +22,12 @@ export async function GET() {
   const limited = await assertCustomerAccountRateLimit(ctx.companyId, "store_theme_get", 40, 60_000);
   if (limited) return limited;
 
-  const [{ data: company, error: companyError }, { data: draft, error: draftError }, { data: versions, error: versionsError }] = await Promise.all([
+  const [
+    { data: company, error: companyError },
+    { data: draft, error: draftError },
+    { data: versions, error: versionsError },
+    { data: application },
+  ] = await Promise.all([
     supabaseAdmin
       .from("companies")
       .select("id,name,theme_config")
@@ -39,6 +44,14 @@ export async function GET() {
       .eq("company_id", ctx.companyId)
       .order("created_at", { ascending: false })
       .limit(25),
+    // Tipo de negocio del alta, para recomendar plantilla. Si falla, se sigue sin recomendación.
+    supabaseAdmin
+      .from("onboarding_applications")
+      .select("sector")
+      .eq("company_id", ctx.companyId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   if (companyError) return NextResponse.json({ error: companyError.message }, { status: 500 });
@@ -59,6 +72,7 @@ export async function GET() {
     company: {
       id: String(company?.id ?? ctx.companyId),
       name: String(company?.name ?? "Mi tienda"),
+      sector: typeof application?.sector === "string" && application.sector.trim() ? application.sector.trim() : null,
     },
     published,
     draft: {

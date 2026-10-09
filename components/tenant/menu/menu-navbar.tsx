@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import Image from "next/image";
-import { ChevronDown, ChevronLeft, Compass, MapPin, Search, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, MapPin, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { CategoryTabsNav, IconListCategories } from "./menu-category-nav";
@@ -27,7 +27,8 @@ type MenuNavbarProps = {
 	onSearchChange: (value: string) => void;
 	onSearchExpand: () => void;
 	onSearchCollapse: () => void;
-	onOpenMegaMenu: () => void;
+	/** Ya no se usa aquí: el menú de categorías se abre con el botón flotante. */
+	onOpenMegaMenu?: () => void;
 	categories: CategoryListItem[];
 	visibleCategories: Array<{ id: string; name: string }>;
 	specialProductsCount: number;
@@ -35,6 +36,15 @@ type MenuNavbarProps = {
 	activeCategory: string | null;
 	onCategoryClick: (id: string) => void;
 };
+
+/** "Rica Pizza" → "RP", "Gcode" → "G". */
+function brandInitials(name: string | null | undefined): string {
+	const words = String(name ?? "").trim().split(/\s+/).filter(Boolean);
+	return words
+		.slice(0, 2)
+		.map((w) => w.charAt(0).toUpperCase())
+		.join("");
+}
 
 export const MenuNavbar = memo(function MenuNavbar({
 	navbarType,
@@ -53,7 +63,6 @@ export const MenuNavbar = memo(function MenuNavbar({
 	onSearchChange,
 	onSearchExpand,
 	onSearchCollapse,
-	onOpenMegaMenu,
 	categories,
 	visibleCategories,
 	specialProductsCount,
@@ -71,16 +80,23 @@ export const MenuNavbar = memo(function MenuNavbar({
 					<ChevronLeft size={28} />
 				</button>
 				<div className={`nav-brand-wrapper ${searchExpanded ? "mobile-search-active" : ""} ${navbarType === "sidebar-categories" ? "nav-brand-sidebar-hidden" : ""}`}>
-					<Image
-						src={logoError ? "/tenant/logo-placeholder.svg" : logoUrl || "/tenant/logo-placeholder.svg"}
-						alt={t("nav.logoAlt")}
-						className="nav-logo"
-						width={52}
-						height={52}
-						onError={onLogoError}
-						// Branding: servir el logo original sin recomprimir.
-						unoptimized
-					/>
+					{logoUrl && !logoError ? (
+						<Image
+							src={logoUrl}
+							alt={t("nav.logoAlt")}
+							className="nav-logo"
+							width={52}
+							height={52}
+							onError={onLogoError}
+							// Branding: servir el logo original sin recomprimir.
+							unoptimized
+						/>
+					) : (
+						// Sin logo: las iniciales del local sobre su color, en vez de un muñeco genérico.
+						<span className="nav-logo nav-logo--monogram" aria-hidden>
+							{brandInitials(displayName)}
+						</span>
+					)}
 					<div className={`nav-brand-info ${showBranchSelector ? "" : "nav-brand-info--solo-titulo"}`}>
 						{/* El nombre de la tienda es el encabezado de nivel uno de la pagina:
 						    coincide con el <title> y es el tema del documento. Al ser <h2>,
@@ -105,13 +121,6 @@ export const MenuNavbar = memo(function MenuNavbar({
 					</div>
 				</div>
 				<div className="nav-search-section">
-					<div className="nav-actions-wrapper">
-						{navbarType === "mega-menu" && (
-							<button type="button" onClick={onOpenMegaMenu} className="mega-menu-header-trigger" aria-label={t("nav.viewCategories")}>
-								<Compass size={20} />
-							</button>
-						)}
-					</div>
 					<div
 						className={`search-pill-wrapper ${searchExpanded ? "expanded" : ""}`}
 						onClick={() => {
@@ -152,7 +161,7 @@ export const MenuNavbar = memo(function MenuNavbar({
 					</div>
 				</div>
 			</div>
-			{(navbarType === "category-tabs" || navbarType === "sidebar-categories") && (
+			{(navbarType === "category-tabs" || navbarType === "underline-tabs" || navbarType === "sidebar-categories") && (
 				<CategoryTabsNav
 					specialProductsCount={specialProductsCount}
 					fireIcon={fireIcon}

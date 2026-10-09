@@ -5,6 +5,7 @@ import { ArrowRight, ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCart } from "./use-cart";
 import { formatCartMoney } from "./utils/format-cart-money";
+import { MotionCount } from "../menu/ui/tenant-ui";
 import "../../../app/[subdomain]/styles/CartFloat.css";
 
 /**
@@ -13,16 +14,14 @@ import "../../../app/[subdomain]/styles/CartFloat.css";
  * `selectedBranch.currency`, que en Venezuela vale "VES" aunque los precios
  * estén en dólares, y el proveedor ya aplica esa excepción.
  */
-export function CartFloat({ currency = "CLP" }: { currency?: string }) {
+export function CartFloat({ currency = "CLP", variant = "float" }: { currency?: string; variant?: "float" | "bar" }) {
   const t = useTranslations("tenant.cart.float");
   const { totalItems, grandTotal, isCartOpen, openCart, closeCart, currency: cartCurrency } = useCart();
   const displayCurrency = cartCurrency || currency;
   const hasItems = totalItems > 0;
-  const [isIdle, setIsIdle] = useState(false);
   const [mounted, setMounted] = useState(false);
   const userInteractedRef = useRef(false);
   const prevCountRef = useRef(totalItems);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 0);
@@ -60,25 +59,32 @@ export function CartFloat({ currency = "CLP" }: { currency?: string }) {
     prevCountRef.current = totalItems;
   }, [totalItems]);
 
-  useEffect(() => {
-    const resetTimer = () => {
-      setIsIdle(false);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (totalItems > 0) {
-        timerRef.current = setTimeout(() => setIsIdle(true), 10000);
-      }
-    };
-    window.addEventListener("touchstart", resetTimer);
-    window.addEventListener("click", resetTimer);
-    window.addEventListener("scroll", resetTimer);
-    resetTimer();
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      window.removeEventListener("touchstart", resetTimer);
-      window.removeEventListener("click", resetTimer);
-      window.removeEventListener("scroll", resetTimer);
-    };
-  }, [totalItems]);
+  /* Barra: ancho completo abajo, solo con algo en el pedido. Cuenta, "Ver
+     pedido" y el total a la vista sin hover: en el teléfono no lo hay. */
+  if (variant === "bar") {
+    const visible = mounted && hasItems;
+    return (
+      <button
+        type="button"
+        suppressHydrationWarning
+        onClick={() => {
+          if (isCartOpen) closeCart();
+          else openCart();
+        }}
+        aria-hidden={!visible}
+        tabIndex={visible ? 0 : -1}
+        className={["cart-bar", visible ? "is-visible" : ""].filter(Boolean).join(" ")}
+      >
+        <span className="cart-bar__count" aria-hidden>
+          <ShoppingBag size={18} strokeWidth={2.4} />
+          <MotionCount value={visible ? totalItems : 0} />
+        </span>
+        <span className="cart-bar__label">{t("viewOrder")}</span>
+        <span className="cart-bar__total">{visible ? formatCartMoney(grandTotal, displayCurrency) : ""}</span>
+        <ArrowRight size={18} className="cart-bar__arrow" aria-hidden />
+      </button>
+    );
+  }
 
   return (
     <button
@@ -87,13 +93,11 @@ export function CartFloat({ currency = "CLP" }: { currency?: string }) {
         if (isCartOpen) closeCart();
         else openCart();
       }}
-      className={["cart-float", mounted && hasItems ? "has-items" : "", mounted && isIdle && hasItems ? "pulse-urgent" : ""]
-        .filter(Boolean)
-        .join(" ")}
+      className={["cart-float", mounted && hasItems ? "has-items" : ""].filter(Boolean).join(" ")}
     >
       <div className="cart-icon-wrapper">
         <ShoppingBag size={24} strokeWidth={2.5} />
-        {mounted && hasItems ? <span className="cart-float-badge">{totalItems}</span> : null}
+        {mounted && hasItems ? <span key={totalItems} className="cart-float-badge">{totalItems}</span> : null}
       </div>
       <div className="cart-label-container">
         <span className="cart-label-text">

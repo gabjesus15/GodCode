@@ -39,6 +39,8 @@ type MenuCatalogProps = {
 	catalogScrollRef: React.RefObject<MenuCatalogScrollController | null>;
 	observerBlockRef: React.RefObject<boolean>;
 	onActiveSectionChange: (sectionId: string) => void;
+	/** "carousel": los destacados van en una fila que se desliza. */
+	featuredStyle?: string;
 };
 
 export const MenuCatalog = memo(function MenuCatalog({
@@ -63,6 +65,7 @@ export const MenuCatalog = memo(function MenuCatalog({
 	catalogScrollRef,
 	observerBlockRef,
 	onActiveSectionChange,
+	featuredStyle = "section",
 }: MenuCatalogProps) {
 	const t = useTranslations("tenant.menu");
 	const { priorityImageMax } = useMenuPerfProfile();
@@ -110,6 +113,26 @@ export const MenuCatalog = memo(function MenuCatalog({
 	);
 
 	const useVirtualizedScroll = shouldVirtualizeMenuCatalog(query, navigationMode, catalogProductCount);
+
+	/**
+	 * Destacados en carrusel: si el local no tiene "Solo por hoy" (especiales
+	 * dentro de una categoría de promociones), la fila se arma con todos sus
+	 * productos marcados como especiales, para que la pieza no quede vacía.
+	 */
+	const featuredProducts = useMemo(() => {
+		if (featuredStyle !== "carousel" || specialProducts.length > 0) return [];
+		const seen = new Set<string>();
+		const list: MenuProduct[] = [];
+		for (const category of visibleCategories) {
+			for (const product of productsByCategory.get(category.id) ?? []) {
+				if (product.is_special && !seen.has(product.id)) {
+					seen.add(product.id);
+					list.push(product);
+				}
+			}
+		}
+		return list;
+	}, [featuredStyle, productsByCategory, specialProducts.length, visibleCategories]);
 
 	// Catálogo clásico: registrar scroll por sección en DOM
 	useEffect(() => {
@@ -159,19 +182,27 @@ export const MenuCatalog = memo(function MenuCatalog({
 				catalogScrollRef={catalogScrollRef}
 				observerBlockRef={observerBlockRef}
 				onActiveSectionChange={onActiveSectionChange}
+				featuredStyle={featuredStyle}
 			/>
 		);
 	}
 
 	return (
 		<>
+			{featuredProducts.length > 0 && (navigationMode !== "pagination" || activeCategory === visibleCategories[0]?.id) ? (
+				<section className="category-section category-section--featured">
+					<h2 className="category-title">{t("catalog.featured")}</h2>
+					<ProductGrid products={featuredProducts} {...gridProps} rail />
+				</section>
+			) : null}
+
 			{(navigationMode === "pagination" ? activeCategory === "special" : true) && specialProducts.length > 0 ? (
 				<section id="section-special" className="category-section">
 					<h2 className="category-title">
 						<Image src={FIRE_ICON} className="category-icon" alt="" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
 						{t("catalog.onlyToday")}
 					</h2>
-					<ProductGrid products={specialProducts} {...gridProps} />
+					<ProductGrid products={specialProducts} {...gridProps} rail={featuredStyle === "carousel"} />
 				</section>
 			) : null}
 

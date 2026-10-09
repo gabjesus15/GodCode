@@ -303,7 +303,8 @@
     "cart": {
       "float": {
         "totalPrefix": "Total:",
-        "emptyLabel": "Seu Carrinho"
+        "emptyLabel": "Seu Carrinho",
+        "viewOrder": "Ver pedido"
       },
       "modal": {
         "common": {
@@ -660,6 +661,7 @@
       },
       "catalog": {
         "onlyToday": "Só por hoje",
+        "featured": "Destaques",
         "resultsFor": "Resultados para “{query}”",
         "noResults": "Nenhum prato com esse nome.",
         "emptyCategory": "Nenhum produto nesta categoria."

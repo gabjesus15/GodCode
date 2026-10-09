@@ -1,5 +1,5 @@
 import type { ProductDetailsMode } from "@/lib/store-theme/theme-config";
-import { normalizeProductCardStyle, normalizeProductDetailsMode } from "@/lib/store-theme/theme-config";
+import { isGlassCardStyle, normalizeProductCardStyle, normalizeProductDetailsMode } from "@/lib/store-theme/theme-config";
 
 export type ProductDetailsInteraction = {
 	productClickHandler: ((productId: string) => void) | undefined;
@@ -14,7 +14,7 @@ export function resolveProductDetailsInteraction(
 ): ProductDetailsInteraction {
 	const detailsMode = normalizeProductDetailsMode(detailsModeRaw) as ProductDetailsMode;
 	const cardStyle = normalizeProductCardStyle(cardStyleRaw);
-	const useGlassInlineExpand = detailsMode === "inline" && cardStyle === "glass";
+	const useGlassInlineExpand = detailsMode === "inline" && isGlassCardStyle(cardStyle);
 	const showLayoutInlinePanel = detailsMode === "inline" && !useGlassInlineExpand;
 	const productClickHandler =
 		detailsMode === "modal-premium" || showLayoutInlinePanel ? onProductClick : undefined;

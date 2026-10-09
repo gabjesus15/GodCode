@@ -6,7 +6,8 @@ import "../styles/ProductCard.css";
 import "../styles/GlassCard.css";
 import "../styles/Navbar.css";
 import "../styles/HeroCarousel.css";
-import "../styles/ProductCardLayouts.css";
+import "../styles/FoodCardLayouts.css";
+import "../styles/StoreCover.css";
 /**
  * El menu monta `LazyBranchSelectorModal` (menu-client-view) y los modales de
  * contacto, pero esta hoja solo se importaba en la home del tenant. Sin ella el

@@ -18,7 +18,9 @@ import {
 	normalizeNavbarType,
 	normalizeNavigationMode,
 	normalizeProductCardStyle,
+	normalizeMenuLayout,
 	normalizeProductDetailsMode,
+	type MenuLayoutConfig,
 } from "@/lib/store-theme/theme-config";
 import type { PreviewThemePayload } from "./menu-types";
 
@@ -29,6 +31,8 @@ type UseMenuPreviewThemeArgs = {
 	initialNavigationMode: string;
 	initialProductCardStyle: string;
 	initialProductDetailsMode: string;
+	initialMenuLayout: MenuLayoutConfig;
+	setMenuLayout: (v: MenuLayoutConfig) => void;
 	setNavbarType: (v: string) => void;
 	setNavigationMode: (v: string) => void;
 	setCardStyle: (v: string) => void;
@@ -44,6 +48,8 @@ export function useMenuPreviewTheme({
 	initialNavigationMode,
 	initialProductCardStyle,
 	initialProductDetailsMode,
+	initialMenuLayout,
+	setMenuLayout,
 	setNavbarType,
 	setNavigationMode,
 	setCardStyle,
@@ -56,6 +62,7 @@ export function useMenuPreviewTheme({
 		navigationMode: initialNavigationMode,
 		productCardStyle: initialProductCardStyle,
 		productDetailsMode: initialProductDetailsMode,
+		menuLayout: initialMenuLayout,
 	});
 
 	useEffect(() => {
@@ -64,8 +71,9 @@ export function useMenuPreviewTheme({
 			navigationMode: initialNavigationMode,
 			productCardStyle: initialProductCardStyle,
 			productDetailsMode: initialProductDetailsMode,
+			menuLayout: initialMenuLayout,
 		};
-	}, [initialNavbarType, initialNavigationMode, initialProductCardStyle, initialProductDetailsMode]);
+	}, [initialNavbarType, initialNavigationMode, initialProductCardStyle, initialProductDetailsMode, initialMenuLayout]);
 
 	const embeddedLivePreviewRef = useRef(false);
 	const revertCssRef = useRef<(() => void) | null>(null);
@@ -89,6 +97,13 @@ export function useMenuPreviewTheme({
 		setNavigationMode(normalizeNavigationMode(previewTheme.navigationMode || initial.navigationMode));
 		setCardStyle(nextCard);
 		setDetailsMode(normalizeProductDetailsMode(previewTheme.productDetailsMode || initial.productDetailsMode));
+		setMenuLayout(
+			normalizeMenuLayout({
+				...initial.menuLayout,
+				...previewTheme,
+				coverImageUrl: sanitizeThemeImageUrl(previewTheme.backgroundImageUrl) || initial.menuLayout.coverImageUrl,
+			}),
+		);
 		setPreviewDisplayName(previewTheme.displayName?.trim() || null);
 		setPreviewLogoUrl(sanitizeThemeImageUrl(previewTheme.logoUrl) || null);
 
@@ -103,6 +118,7 @@ export function useMenuPreviewTheme({
 		setNavigationMode,
 		setCardStyle,
 		setDetailsMode,
+		setMenuLayout,
 		setPreviewDisplayName,
 		setPreviewLogoUrl,
 	]);
@@ -117,6 +133,7 @@ export function useMenuPreviewTheme({
 		setNavigationMode(initial.navigationMode);
 		setCardStyle(initial.productCardStyle);
 		setDetailsMode(initial.productDetailsMode);
+		setMenuLayout(initial.menuLayout);
 		setPreviewDisplayName(null);
 		setPreviewLogoUrl(null);
 		revertCssRef.current?.();
@@ -128,6 +145,7 @@ export function useMenuPreviewTheme({
 		setNavigationMode,
 		setCardStyle,
 		setDetailsMode,
+		setMenuLayout,
 		setPreviewDisplayName,
 		setPreviewLogoUrl,
 	]);
@@ -174,6 +192,7 @@ export function useMenuPreviewTheme({
 		initialNavigationMode,
 		initialProductCardStyle,
 		initialProductDetailsMode,
+		initialMenuLayout,
 		syncPublishedThemeFromServer,
 	]);
 
