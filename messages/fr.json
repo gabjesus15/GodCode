@@ -152,7 +152,7 @@
         "deleteLabel": "Supprimer mon compte dans ce commerce",
         "deleteStart": "Supprimer mon compte",
         "deleteHint": "Nous supprimons vos données, vos adresses enregistrées et votre accès dans ce commerce. Les commandes passées restent dans les registres du commerce et vos comptes dans d'autres commerces ne changent pas.",
-        "deleteCodeHint": "Nous avons envoyé un code à votre e-mail. Saisissez-le pour confirmer : la suppression est définitive.",
+        "deleteCodeHint": "Nous avons envoyé un code à votre e-mail. Il expire dans 1 heure.",
         "deleteCancel": "Annuler",
         "deleteConfirm": "Supprimer définitivement",
         "deleting": "Suppression…"
@@ -574,7 +574,8 @@
             "presential": "Vous payez au retrait ou à la livraison",
             "receipt": "Vous payez et joignez le justificatif",
             "online": "Nous vous montrons les données de paiement"
-          }
+          },
+          "binanceUsdtHint": "Envoyez l'équivalent en USDT. Il compte 1 pour 1 avec le dollar."
         },
         "success": {
           "sentAria": "Commande envoyee",

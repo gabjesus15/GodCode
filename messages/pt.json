@@ -152,7 +152,7 @@
         "deleteLabel": "Excluir minha conta neste negócio",
         "deleteStart": "Excluir minha conta",
         "deleteHint": "Apagamos seus dados, endereços salvos e seu acesso neste negócio. Os pedidos já feitos ficam nos registros do negócio, e suas contas em outros negócios não mudam.",
-        "deleteCodeHint": "Enviamos um código para seu e-mail. Digite-o para confirmar: a exclusão não pode ser desfeita.",
+        "deleteCodeHint": "Enviamos um código para seu e-mail. Ele expira em 1 hora.",
         "deleteCancel": "Cancelar",
         "deleteConfirm": "Excluir definitivamente",
         "deleting": "Excluindo…"
@@ -574,7 +574,8 @@
             "presential": "Você paga ao retirar ou receber",
             "receipt": "Você paga e anexa o comprovante",
             "online": "Mostramos os dados para pagar"
-          }
+          },
+          "binanceUsdtHint": "Envie o equivalente em USDT. Vale 1 para 1 com o dólar."
         },
         "success": {
           "sentAria": "Pedido enviado",

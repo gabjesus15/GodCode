@@ -152,7 +152,7 @@
         "deleteLabel": "Mein Konto bei diesem Geschäft löschen",
         "deleteStart": "Mein Konto löschen",
         "deleteHint": "Wir löschen deine Daten, gespeicherten Adressen und deinen Zugang bei diesem Geschäft. Bisherige Bestellungen bleiben in den Unterlagen des Geschäfts, deine Konten bei anderen Geschäften bleiben unverändert.",
-        "deleteCodeHint": "Wir haben dir einen Code per E-Mail geschickt. Gib ihn zur Bestätigung ein: Das Löschen kann nicht rückgängig gemacht werden.",
+        "deleteCodeHint": "Wir haben dir einen Code per E-Mail geschickt. Er läuft in 1 Stunde ab.",
         "deleteCancel": "Abbrechen",
         "deleteConfirm": "Endgültig löschen",
         "deleting": "Wird gelöscht…"
@@ -574,7 +574,8 @@
             "presential": "Du zahlst bei Abholung oder Lieferung",
             "receipt": "Du zahlst und fügst den Beleg bei",
             "online": "Wir zeigen dir die Zahlungsdaten"
-          }
+          },
+          "binanceUsdtHint": "Schick den Gegenwert in USDT. Er zählt 1 zu 1 mit dem Dollar."
         },
         "success": {
           "sentAria": "Bestellung gesendet",

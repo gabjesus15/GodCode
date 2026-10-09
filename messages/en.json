@@ -152,7 +152,7 @@
         "deleteLabel": "Delete my account at this business",
         "deleteStart": "Delete my account",
         "deleteHint": "We delete your details, saved addresses and access at this business. Past orders stay in the business's records, and your accounts at other businesses don't change.",
-        "deleteCodeHint": "We sent a code to your email. Enter it to confirm: this can't be undone.",
+        "deleteCodeHint": "We sent a code to your email. It expires in 1 hour.",
         "deleteCancel": "Cancel",
         "deleteConfirm": "Delete permanently",
         "deleting": "Deleting…"
@@ -574,7 +574,8 @@
             "presential": "Pay at pickup or on delivery",
             "receipt": "Pay and attach the receipt",
             "online": "We'll show you the payment details"
-          }
+          },
+          "binanceUsdtHint": "Send the equivalent in USDT. It counts 1 to 1 with the dollar."
         },
         "success": {
           "sentAria": "Order sent",

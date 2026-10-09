@@ -152,7 +152,7 @@
         "deleteLabel": "Eliminar mi cuenta en este negocio",
         "deleteStart": "Eliminar mi cuenta",
         "deleteHint": "Borramos tus datos, tus direcciones guardadas y tu acceso en este negocio. Los pedidos ya hechos quedan en los registros del negocio y tus cuentas en otros negocios no cambian.",
-        "deleteCodeHint": "Te enviamos un código a tu correo. Escríbelo para confirmar: la eliminación no se puede deshacer.",
+        "deleteCodeHint": "Te enviamos un código a tu correo. Caduca en 1 hora.",
         "deleteCancel": "Cancelar",
         "deleteConfirm": "Eliminar definitivamente",
         "deleting": "Eliminando…"
@@ -574,7 +574,8 @@
             "presential": "Pagas al retirar o recibir",
             "receipt": "Pagas y adjuntas el comprobante",
             "online": "Te mostramos los datos para pagar"
-          }
+          },
+          "binanceUsdtHint": "Envía el equivalente en USDT. Se toma 1 a 1 con el dólar."
         },
         "success": {
           "sentAria": "Pedido enviado",

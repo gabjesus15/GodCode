@@ -152,7 +152,7 @@
         "deleteLabel": "Elimina il mio account in questo negozio",
         "deleteStart": "Elimina il mio account",
         "deleteHint": "Cancelliamo i tuoi dati, gli indirizzi salvati e il tuo accesso in questo negozio. Gli ordini già fatti restano nei registri del negozio e i tuoi account in altri negozi non cambiano.",
-        "deleteCodeHint": "Ti abbiamo inviato un codice via email. Inseriscilo per confermare: l'eliminazione non si può annullare.",
+        "deleteCodeHint": "Ti abbiamo inviato un codice via email. Scade tra 1 ora.",
         "deleteCancel": "Annulla",
         "deleteConfirm": "Elimina definitivamente",
         "deleting": "Eliminazione…"
@@ -574,7 +574,8 @@
             "presential": "Paghi al ritiro o alla consegna",
             "receipt": "Paghi e alleghi la ricevuta",
             "online": "Ti mostriamo i dati per pagare"
-          }
+          },
+          "binanceUsdtHint": "Invia l'equivalente in USDT. Vale 1 a 1 con il dollaro."
         },
         "success": {
           "sentAria": "Ordine inviato",
