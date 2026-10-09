@@ -51,7 +51,7 @@ type OnboardingStep =
 			businessName: string;
 			planName?: string | null;
 			months?: number | null;
-			via: "paypal" | "manual" | "promo" | "coupon" | string;
+			via: "paypal" | "mercadopago" | "manual" | "promo" | "coupon" | string;
 			menuUrl?: string | null;
 			coupon?: string | null;
 	  };
@@ -117,7 +117,7 @@ export function formatOnboardingAlert(alert: OnboardingAlert, appUrl: string = g
 				...contact,
 				detail || null,
 				line("Cupón: ", alert.coupon),
-				`Paso 3 de ${STEPS_TOTAL}: falta el pago. Con PayPal se activa solo; con transferencia o Pago Móvil sube el comprobante.`,
+				`Paso 3 de ${STEPS_TOTAL}: falta el pago. Con PayPal o Mercado Pago se activa solo; con transferencia o Pago Móvil sube el comprobante.`,
 				panel,
 			]
 				.filter(Boolean)
@@ -143,7 +143,9 @@ export function formatOnboardingAlert(alert: OnboardingAlert, appUrl: string = g
 			const via =
 				alert.via === "paypal"
 					? "pagó con PayPal"
-					: alert.via === "promo"
+					: alert.via === "mercadopago"
+						? "pagó con Mercado Pago"
+						: alert.via === "promo"
 						? "entró con promoción"
 						: alert.via === "coupon"
 							? "entró gratis con cupón"

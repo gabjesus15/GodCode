@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logAdminAudit } from "@/lib/super-admin/admin-audit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { MERCADOPAGO_RATE_KEY } from "@/lib/onboarding/checkout-service";
+import { parseUsdClpRate } from "@/lib/payments/mercadopago";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../../utils/admin/server-auth";
 
 /** @service-role super-admin */
@@ -24,6 +26,11 @@ export async function PATCH(
 
 	const body = (await req.json().catch(() => ({}))) as { config?: Record<string, string> };
 	const config = body.config && typeof body.config === "object" ? body.config : {};
+	// Con una tasa inválida Mercado Pago dejaría de ofrecerse en silencio: se avisa al guardar.
+	const rate = config[MERCADOPAGO_RATE_KEY];
+	if (rate !== undefined && String(rate).trim() && !parseUsdClpRate(String(rate))) {
+		return NextResponse.json({ error: "La tasa USD → CLP debe ser un número mayor que 0 (ej: 950)." }, { status: 400 });
+	}
 
 	const { data: existing } = await supabaseAdmin
 		.from("plan_payment_method_config")

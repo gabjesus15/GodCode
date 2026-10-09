@@ -24,7 +24,14 @@ type Method = {
 	config: Record<string, string>;
 };
 
-const ONLINE_METHOD_SLUGS = ["paypal"];
+const ONLINE_METHOD_SLUGS = ["paypal", "mercadopago"];
+/** Online pero con datos que se cargan aquí (la tasa de Mercado Pago). */
+const EDITABLE_ONLINE_SLUGS = ["mercadopago"];
+const ONLINE_NOTES: Record<string, string> = {
+	paypal: "Se configura con las variables de entorno (.env): PAYPAL_CLIENT_ID y PAYPAL_CLIENT_SECRET. No hace falta cargar datos aquí; el cliente paga en la página de PayPal.",
+	mercadopago:
+		"Se ofrece en el paso de pago del alta (Chile) y cobra en pesos chilenos: el total en USD se multiplica por esta tasa. Credenciales en las variables MERCADOPAGO_ACCESS_TOKEN y MERCADOPAGO_WEBHOOK_SECRET.",
+};
 /** Métodos que el alta y /cuenta ya ignoran (ver `lib/onboarding/checkout-service`); solo queda apagarlos. */
 const RETIRED_METHOD_SLUGS = ["stripe"];
 
@@ -46,6 +53,7 @@ const METHOD_FIELDS: Record<string, { key: string; label: string; placeholder?: 
 		{ key: "titular", label: "Nombre del titular", placeholder: "Ej: Tu empresa SpA" },
 		{ key: "email", label: "Correo (opcional)", placeholder: "Para confirmación" },
 	],
+	mercadopago: [{ key: "tasa_usd_clp", label: "Tasa USD → CLP", placeholder: "Ej: 950 (1 USD = 950 CLP)" }],
 	transferencia_bancaria: [
 		{ key: "banco", label: "Banco", placeholder: "Ej: Banco de Chile" },
 		{ key: "tipo_cuenta", label: "Tipo de cuenta", placeholder: "Ej: Cuenta corriente" },
@@ -137,11 +145,14 @@ export default function PlanPaymentMethodsPage() {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ config: editConfig }),
 			});
-			if (!res.ok) throw new Error("Error al guardar");
+			if (!res.ok) {
+				const json = (await res.json().catch(() => ({}))) as { error?: string };
+				throw new Error(json.error ?? "No se pudo guardar");
+			}
 			setMethods((prev) => prev.map((m) => (m.id === editingId ? { ...m, config: { ...editConfig } } : m)));
 			cancelEdit();
-		} catch {
-			setError("No se pudo guardar");
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "No se pudo guardar");
 		} finally {
 			setSaving(false);
 		}
@@ -199,6 +210,7 @@ export default function PlanPaymentMethodsPage() {
 					{methods.map((m) => {
 						const isRetired = RETIRED_METHOD_SLUGS.includes(m.slug);
 						const isOnline = isRetired || ONLINE_METHOD_SLUGS.includes(m.slug);
+						const isEditable = !isOnline || EDITABLE_ONLINE_SLUGS.includes(m.slug);
 						const isToggling = togglingId === m.id;
 						const isEditing = editingId === m.id;
 						const name = m.name ?? m.slug;
@@ -258,10 +270,8 @@ export default function PlanPaymentMethodsPage() {
 													: "Ya no se ofrece en el alta ni en /cuenta."
 											}
 										/>
-									) : isOnline ? (
-										<ClampedNote
-											text={`Se configura con las variables de entorno (.env): PAYPAL_CLIENT_ID y PAYPAL_CLIENT_SECRET. No hace falta cargar datos aquí; el cliente paga en la página de ${name}.`}
-										/>
+									) : isOnline && !isEditable ? (
+										<ClampedNote text={ONLINE_NOTES[m.slug] ?? `No hace falta cargar datos aquí; el cliente paga en la página de ${name}.`} />
 									) : isEditing ? (
 										<div className="grid gap-3 @sm:grid-cols-2">
 											{getFieldsForMethod(m.slug).map(({ key, label, placeholder }) => (
@@ -281,7 +291,11 @@ export default function PlanPaymentMethodsPage() {
 									)}
 								</div>
 
-								{!isOnline && (
+								{isOnline && isEditable && ONLINE_NOTES[m.slug] ? (
+									<p className="mt-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">{ONLINE_NOTES[m.slug]}</p>
+								) : null}
+
+								{isEditable && (
 									<div className="mt-4 flex flex-wrap items-center gap-2">
 										{isEditing ? (
 											<>

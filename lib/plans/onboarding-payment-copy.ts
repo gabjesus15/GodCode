@@ -77,6 +77,17 @@ export type OnboardingPaymentCopy = {
     submittedBody: string;
     referenceLabel: string;
   };
+  /** Mercado Pago como alternativa en el paso de pago (Chile, cobra en CLP). */
+  mercadoPago: {
+    unavailable: string;
+    blockTitle: string;
+    blockHint: string;
+    button: string;
+    clpLine: string;
+    activation: string;
+    pending: string;
+    failure: string;
+  };
   /** Cupón del alta en el paso de pago. */
   coupon: {
     prompt: string;
@@ -102,6 +113,16 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
   es: {
     title: "Paga y activa tu cuenta",
     subtitle: "Elige cuántos meses pagar. Después renuevas cuando quieras desde tu cuenta.",
+    mercadoPago: {
+      unavailable: "Mercado Pago no está disponible ahora. Cambia el método de pago en el paso anterior.",
+      blockTitle: "Pagar con Mercado Pago",
+      blockHint: "Te llevamos a Mercado Pago para pagar de forma segura. Al terminar vuelves aquí y tu cuenta se activa.",
+      button: "Pagar con Mercado Pago",
+      clpLine: "Se cobra en pesos chilenos: {amount}",
+      activation: "Con Mercado Pago tu cuenta se activa en cuanto se confirma el pago.",
+      pending: "Mercado Pago está procesando tu pago. Te avisamos por correo apenas se confirme; no hace falta pagar de nuevo.",
+      failure: "El pago en Mercado Pago no se completó. Puedes intentarlo de nuevo o elegir otro método.",
+    },
     paypalInlineTitle: "Pagar con PayPal",
     paypalInlineHint: "Completa el pago desde este bloque seguro de PayPal.",
     paypalInlineLoading: "Cargando PayPal...",
@@ -226,6 +247,16 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
   en: {
     title: "Pay and activate your account",
     subtitle: "Choose how many months to pay. You can renew anytime from your account.",
+    mercadoPago: {
+      unavailable: "Mercado Pago isn't available right now. Change the payment method in the previous step.",
+      blockTitle: "Pay with Mercado Pago",
+      blockHint: "We'll take you to Mercado Pago to pay securely. When you're done you come back here and your account is activated.",
+      button: "Pay with Mercado Pago",
+      clpLine: "Charged in Chilean pesos: {amount}",
+      activation: "With Mercado Pago your account is activated as soon as the payment is confirmed.",
+      pending: "Mercado Pago is processing your payment. We'll email you as soon as it's confirmed; no need to pay again.",
+      failure: "The Mercado Pago payment wasn't completed. You can try again or choose another method.",
+    },
     paypalInlineTitle: "Pay with PayPal",
     paypalInlineHint: "Complete the payment using this secure PayPal block.",
     paypalInlineLoading: "Loading PayPal...",
@@ -350,6 +381,16 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
   pt: {
     title: "Pague e ative sua conta",
     subtitle: "Escolha quantos meses pagar. Depois você renova quando quiser pela sua conta.",
+    mercadoPago: {
+      unavailable: "O Mercado Pago não está disponível agora. Altere o método de pagamento na etapa anterior.",
+      blockTitle: "Pagar com Mercado Pago",
+      blockHint: "Levamos você ao Mercado Pago para pagar com segurança. Ao terminar, você volta aqui e sua conta é ativada.",
+      button: "Pagar com Mercado Pago",
+      clpLine: "Cobrado em pesos chilenos: {amount}",
+      activation: "Com Mercado Pago sua conta é ativada assim que o pagamento é confirmado.",
+      pending: "O Mercado Pago está processando seu pagamento. Avisaremos por e-mail assim que for confirmado; não precisa pagar de novo.",
+      failure: "O pagamento no Mercado Pago não foi concluído. Você pode tentar de novo ou escolher outro método.",
+    },
     paypalInlineTitle: "Pagar com PayPal",
     paypalInlineHint: "Conclua o pagamento neste bloco seguro do PayPal.",
     paypalInlineLoading: "Carregando PayPal...",
@@ -474,6 +515,16 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
   fr: {
     title: "Payez et activez votre compte",
     subtitle: "Choisissez combien de mois payer. Vous renouvelez ensuite quand vous voulez depuis votre compte.",
+    mercadoPago: {
+      unavailable: "Mercado Pago n'est pas disponible pour le moment. Changez de moyen de paiement à l'étape précédente.",
+      blockTitle: "Payer avec Mercado Pago",
+      blockHint: "Nous vous redirigeons vers Mercado Pago pour payer en toute sécurité. Ensuite vous revenez ici et votre compte est activé.",
+      button: "Payer avec Mercado Pago",
+      clpLine: "Débité en pesos chiliens : {amount}",
+      activation: "Avec Mercado Pago, votre compte est activé dès que le paiement est confirmé.",
+      pending: "Mercado Pago traite votre paiement. Nous vous écrivons dès qu'il est confirmé ; inutile de payer à nouveau.",
+      failure: "Le paiement Mercado Pago n'a pas abouti. Vous pouvez réessayer ou choisir un autre moyen.",
+    },
     paypalInlineTitle: "Payer avec PayPal",
     paypalInlineHint: "Finalisez le paiement dans ce bloc PayPal sécurisé.",
     paypalInlineLoading: "Chargement de PayPal...",
@@ -598,6 +649,16 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
   de: {
     title: "Bezahlen und Konto aktivieren",
     subtitle: "Wählen Sie, wie viele Monate Sie zahlen. Verlängern können Sie jederzeit in Ihrem Konto.",
+    mercadoPago: {
+      unavailable: "Mercado Pago ist gerade nicht verfügbar. Ändern Sie die Zahlungsmethode im vorherigen Schritt.",
+      blockTitle: "Mit Mercado Pago bezahlen",
+      blockHint: "Wir leiten Sie zu Mercado Pago weiter, um sicher zu bezahlen. Danach kommen Sie hierher zurück und Ihr Konto wird aktiviert.",
+      button: "Mit Mercado Pago bezahlen",
+      clpLine: "Abgerechnet in chilenischen Pesos: {amount}",
+      activation: "Mit Mercado Pago wird Ihr Konto aktiviert, sobald die Zahlung bestätigt ist.",
+      pending: "Mercado Pago verarbeitet Ihre Zahlung. Wir benachrichtigen Sie per E-Mail, sobald sie bestätigt ist; Sie müssen nicht erneut zahlen.",
+      failure: "Die Zahlung bei Mercado Pago wurde nicht abgeschlossen. Sie können es erneut versuchen oder eine andere Methode wählen.",
+    },
     paypalInlineTitle: "Mit PayPal bezahlen",
     paypalInlineHint: "Schließen Sie die Zahlung in diesem sicheren PayPal-Bereich ab.",
     paypalInlineLoading: "PayPal wird geladen...",
@@ -722,6 +783,16 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
   it: {
     title: "Paga e attiva il tuo account",
     subtitle: "Scegli quanti mesi pagare. Poi rinnovi quando vuoi dal tuo account.",
+    mercadoPago: {
+      unavailable: "Mercado Pago non è disponibile al momento. Cambia il metodo di pagamento nel passaggio precedente.",
+      blockTitle: "Paga con Mercado Pago",
+      blockHint: "Ti portiamo su Mercado Pago per pagare in modo sicuro. Al termine torni qui e il tuo account viene attivato.",
+      button: "Paga con Mercado Pago",
+      clpLine: "Addebitato in pesos cileni: {amount}",
+      activation: "Con Mercado Pago il tuo account si attiva appena il pagamento è confermato.",
+      pending: "Mercado Pago sta elaborando il tuo pagamento. Ti avvisiamo via email appena è confermato; non serve pagare di nuovo.",
+      failure: "Il pagamento con Mercado Pago non è stato completato. Puoi riprovare o scegliere un altro metodo.",
+    },
     paypalInlineTitle: "Paga con PayPal",
     paypalInlineHint: "Completa il pagamento in questo blocco sicuro di PayPal.",
     paypalInlineLoading: "Caricamento di PayPal...",

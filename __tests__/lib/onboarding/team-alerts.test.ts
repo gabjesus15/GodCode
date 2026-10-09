@@ -46,6 +46,9 @@ describe("formatOnboardingAlert", () => {
 		);
 		expect(active).toContain("Negocio activado: Juni</b> (pagó con PayPal)");
 		expect(active).toContain(`<a href="${APP}/juni/menu">Ver su menú</a>`);
+		expect(formatOnboardingAlert({ kind: "activated", businessName: "Juni", via: "mercadopago" }, APP)).toContain(
+			"Negocio activado: Juni</b> (pagó con Mercado Pago)",
+		);
 	});
 
 	it("todos los avisos llevan nombre, correo y teléfono para escribirle", () => {

@@ -49,7 +49,7 @@ o con un método nuevo que se saltó la comprobación, rompe el CI (job
 | `cron-secret` | `CRON_SECRET` en la cabecera `Authorization` |
 | `capability-token` | un token no adivinable en la petición: `verification_token`, `client_request_id` |
 | `webhook-signature` | firma de la pasarela verificada contra el cuerpo crudo |
-| `payment-provider-verified` | el estado del pago se confirma contra Stripe o PayPal, no contra el cuerpo |
+| `payment-provider-verified` | el estado del pago se confirma contra Stripe, PayPal o Mercado Pago, no contra el cuerpo |
 | `public` | sin sesión a propósito; **exige** una llamada de rate limit |
 | `public-read` | catálogo o página pública; el auditor verifica que el fichero **no escriba nada** |
 

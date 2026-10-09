@@ -16,8 +16,8 @@ import {
 import {
 	calculateAddonsTotalUsd,
 	getManualMethodConfig,
+	getMercadoPagoOffer,
 	isManualMethod,
-	isOnlineMethod,
 	resolveCheckoutPlan,
 	resolveCheckoutPlanPrice,
 	updateApplicationPaymentState,
@@ -26,7 +26,8 @@ import { completeOnboardingPayment } from "@/lib/onboarding/complete-onboarding-
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 import { isPaymentMethodAvailableForCountry } from "@/lib/payments/payment-method-countries";
-import { createPayPalOrder, isPayPalConfigured } from "@/lib/payments/paypal";
+import { createMercadoPagoOrder, toClp, toMercadoPagoReference } from "@/lib/payments/mercadopago";
+import { createPayPalOrder, encodePayPalCustomId, isPayPalConfigured } from "@/lib/payments/paypal";
 import { getAppUrl } from "@/lib/tenant/app-url";
 
 /** @service-role capability-token */
@@ -49,7 +50,7 @@ type CheckoutApplication = {
 
 export async function POST(req: NextRequest) {
 	try {
-		const body = (await req.json().catch(() => ({}))) as { token: string; months?: number };
+		const body = (await req.json().catch(() => ({}))) as { token: string; months?: number; method?: string };
 		const token = typeof body.token === "string" ? body.token.trim() : "";
 		const months = Math.min(12, Math.max(1, Number(body.months) || 1));
 
@@ -73,7 +74,9 @@ export async function POST(req: NextRequest) {
 			return NextResponse.json({ error: "Tu pago ya está registrado." }, { status: 409 });
 		}
 
-		const subscriptionMethod = (app.subscription_payment_method ?? "").trim().toLowerCase();
+		// Mercado Pago se elige en esta misma página, como alternativa al método del paso 2.
+		const subscriptionMethod =
+			body.method === "mercadopago" ? "mercadopago" : (app.subscription_payment_method ?? "").trim().toLowerCase();
 		if (!subscriptionMethod) {
 			return NextResponse.json({ error: "Selecciona un método de pago" }, { status: 400 });
 		}
@@ -84,11 +87,12 @@ export async function POST(req: NextRequest) {
 			.eq("slug", subscriptionMethod)
 			.maybeSingle();
 
-		const isPayPal = isOnlineMethod(subscriptionMethod);
+		const isPayPal = subscriptionMethod === "paypal";
 		const isManualPayment = isManualMethod(subscriptionMethod);
+		const mercadoPago = subscriptionMethod === "mercadopago" ? await getMercadoPagoOffer(supabaseAdmin, app.country) : null;
 		if (
 			!methodRow?.is_active ||
-			(!isPayPal && !isManualPayment) ||
+			(!isPayPal && !isManualPayment && !mercadoPago) ||
 			!isPaymentMethodAvailableForCountry(methodRow.countries, app.country)
 		) {
 			return NextResponse.json({ error: "El método de pago elegido no está disponible. Elige otro." }, { status: 400 });
@@ -142,6 +146,8 @@ export async function POST(req: NextRequest) {
 
 		// Aviso por Telegram solo la primera vez que inicia un pago: un reintento o un cambio
 		// de meses no vuelve a avisar (el comprobante y la activación tienen aviso propio).
+		// Mercado Pago cobra en CLP: el total en USD a la tasa del panel, redondeado al peso.
+		const amountClp = mercadoPago ? toClp(amountUsd, mercadoPago.rate) : 0;
 		const notifyPlanChosen = async () => {
 			if (String(app.payment_status ?? "").trim()) return;
 			await alertOnboardingTeam({
@@ -152,7 +158,9 @@ export async function POST(req: NextRequest) {
 				phone: app.phone,
 				planName: plan.name,
 				months: grant.chargedMonths,
-				amount: `$${amountUsd.toFixed(2)} USD`,
+				amount: amountClp
+					? `$${amountUsd.toFixed(2)} USD (CLP ${amountClp.toLocaleString("es-CL")})`
+					: `$${amountUsd.toFixed(2)} USD`,
 				method: methodRow.name ?? subscriptionMethod,
 				coupon: coupon?.code ?? null,
 			});
@@ -174,6 +182,7 @@ export async function POST(req: NextRequest) {
 			coupon_discount_usd: pricing.discountUsd,
 			coupon_free_months: grant.couponFreeMonths,
 			currency: app.currency || "USD",
+			...(amountClp ? { amount_clp: amountClp } : {}),
 		};
 
 		// Cupón que cubre todo el importe: no hay nada que cobrar y el alta se cierra aquí
@@ -242,6 +251,44 @@ export async function POST(req: NextRequest) {
 			await notifyPlanChosen();
 
 			return NextResponse.json({ ok: true, sessionId: order.orderId, url: order.approveUrl, ...summary });
+		}
+
+		if (mercadoPago) {
+			if (!(amountClp > 0)) {
+				return NextResponse.json({ error: "No pudimos calcular el total en pesos. Escríbenos a soporte." }, { status: 409 });
+			}
+			const order = await createMercadoPagoOrder({
+				amountClp,
+				title: `${plan.name} · ${app.business_name}`,
+				// Mismo contenido que el customId de PayPal (meses pagados y otorgados), con `_` en vez de `|`.
+				externalReference: toMercadoPagoReference(
+					encodePayPalCustomId({
+						kind: "onboarding",
+						applicationId: app.id,
+						chargedMonths: grant.chargedMonths,
+						grantedMonths: grant.grantedMonths,
+						promoApplied: grant.promoApplied,
+					}),
+				),
+				returnUrl: `${getAppUrl()}/api/onboarding/mercadopago-return`,
+			});
+			if (!order.ok) {
+				return NextResponse.json({ error: order.error }, { status: 502 });
+			}
+
+			// La orden vigente queda en la solicitud: el regreso y el webhook solo aceptan esta.
+			await updateApplicationPaymentState(supabaseAdmin, app.id, {
+				applicationStatus: "payment_pending",
+				paymentReference: order.orderId,
+				paymentStatus: "pending",
+				paymentReferenceUrl: null,
+				paymentMonths: grant.chargedMonths,
+				paymentAmount: amountUsd,
+				coupon: couponSnapshot,
+			});
+			await notifyPlanChosen();
+
+			return NextResponse.json({ ok: true, url: order.checkoutUrl, ...summary });
 		}
 
 		const paymentRef = `manual-${app.id}-${Date.now()}`;

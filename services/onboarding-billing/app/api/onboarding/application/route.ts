@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import {
+	getMercadoPagoOffer,
 	priceApplicationAddons,
 	resolveCheckoutPlan,
 	resolveCheckoutPlanPrice,
@@ -105,13 +106,14 @@ export async function GET(req: NextRequest) {
 		return NextResponse.json({ error: "Solicitud no encontrada" }, { status: 404 });
 	}
 
-	const [promoAvailable, quote, coupon] = await Promise.all([
+	const [promoAvailable, quote, coupon, mercadoPago] = await Promise.all([
 		isFirstPaymentPromoEligible(supabaseAdmin, {
 			email: data.email,
 			excludeCompanyId: data.company_id,
 		}),
 		buildQuote(data).catch(() => null),
 		describeApplicationCoupon(data).catch(() => null),
+		getMercadoPagoOffer(supabaseAdmin, data.country).catch(() => null),
 	]);
 
 	return NextResponse.json({
@@ -124,5 +126,7 @@ export async function GET(req: NextRequest) {
 		promo_available: promoAvailable,
 		quote,
 		coupon,
+		// Alternativa de pago en esta página (Chile): la tasa sirve para mostrar el monto en CLP.
+		mercadopago: mercadoPago ? { name: mercadoPago.name, rate: mercadoPago.rate } : null,
 	});
 }
