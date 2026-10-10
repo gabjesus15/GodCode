@@ -9,11 +9,12 @@ export function isRenderableImageSrc(value: string | null | undefined): boolean 
 }
 
 /**
- * `src` seguro para una imagen del carrito. Una clave de storage sin resolver o
- * una URL legacy de Cloudinary no deben tumbar el panel: caen al respaldo.
+ * `src` seguro para la foto de un producto, o `null` si no tiene una utilizable. Una clave
+ * de storage sin resolver o una URL legacy de Cloudinary no deben tumbar next/image: sin
+ * foto se pinta la inicial del producto (ProductPhotoFallback), nunca una foto de stock.
  */
-export function safeImageSrc(value: string | null | undefined, fallback: string): string {
+export function safeImageSrc(value: string | null | undefined): string | null {
 	const src = String(value ?? "").trim();
-	if (!src || isCloudinaryImageUrl(src) || !isRenderableImageSrc(src)) return fallback;
+	if (!src || isCloudinaryImageUrl(src) || !isRenderableImageSrc(src)) return null;
 	return src;
 }

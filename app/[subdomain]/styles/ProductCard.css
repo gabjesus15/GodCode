@@ -391,6 +391,13 @@
   object-fit: cover;
 }
 
+/* Sin foto (o si no carga): la inicial del producto llena el hueco, como en las tarjetas. */
+.product-inline-panel__initial {
+  position: absolute;
+  inset: 0;
+  --ppf-size: 2.5rem;
+}
+
 .product-inline-panel__body {
   flex: 1;
   min-width: 0;
@@ -531,6 +538,10 @@
   .product-inline-panel__img-wrap {
     width: 80px;
     height: 80px;
+  }
+
+  .product-inline-panel__initial {
+    --ppf-size: 1.875rem;
   }
 
   .product-inline-panel__name {

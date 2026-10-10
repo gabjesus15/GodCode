@@ -8,7 +8,7 @@ import { useCartStore } from "@/components/tenant/cart/cart-store";
 
 const RICA = "https://supabase.ghamnas.online/storage/v1/object/public/menu/3c4e3b36-ce1d-4e8d-8c29-fda7eb990aec/catalog/products/drafts";
 
-/** Productos de muestra: recortes PNG reales de Rica Pizza y una foto JPG para el caso "con fondo". */
+/** Productos de muestra: recortes PNG reales de Rica Pizza, una foto JPG para el caso "con fondo" y uno sin foto (la inicial). */
 const FIXTURES: Record<string, ProductCardProduct> = {
 	pizza: {
 		id: "11111111-1111-4111-8111-111111111111",
@@ -84,6 +84,18 @@ const FIXTURES: Record<string, ProductCardProduct> = {
 		image_url: `${RICA}/95d63b01-d528-425a-95ba-f8950ce8eb97.png`,
 		price: 18,
 		is_special: true,
+	},
+	nophoto: {
+		id: "55555555-5555-4555-8555-555555555555",
+		name: "Pizza Pepperoni",
+		description: "Salsa de tomate, mozzarella y pepperoni en rodajas.",
+		image_url: null,
+		price: 8,
+		sizes: [
+			{ id: "ffffffff-ffff-4fff-8fff-fffffffffff1", name: "Personal", price: 8 },
+			{ id: "ffffffff-ffff-4fff-8fff-fffffffffff2", name: "Mediana", price: 13 },
+			{ id: "ffffffff-ffff-4fff-8fff-fffffffffff3", name: "Familiar", price: 19 },
+		],
 	},
 };
 
@@ -172,6 +184,7 @@ export function ProductSheetPlayground() {
 								{key === "burger" && "oferta · 2 grupos · foto por variante · JPG"}
 								{key === "sushi" && "4 tamaños · sin variantes · JPG"}
 								{key === "simple" && "sin opciones · especial"}
+								{key === "nophoto" && "sin foto · 3 tamaños · la inicial crece con el plato"}
 							</span>
 						</button>
 					))}

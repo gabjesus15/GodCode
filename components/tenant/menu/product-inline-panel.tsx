@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import Image from "next/image";
 import { Minus, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useCartStore } from "../cart/cart-store";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
 import { isVenezuelaCountry } from "@/lib/geo/venezuela";
-import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
-import { FromPriceLabel, PRODUCT_CARD_FALLBACK_IMAGE } from "./product-card-shared";
+import { FromPriceLabel } from "./product-card-shared";
+import { ProductThumb } from "./product-photo-fallback";
 import { useSizePickerStore } from "./product-size-store";
 import { minSizePrice } from "@/lib/tenant/product-sizes";
 import { productNeedsConfiguration } from "@/lib/tenant/product-variants";
@@ -33,6 +32,7 @@ export function ProductInlinePanel({
 	panelRef?: React.RefObject<HTMLDivElement | null>;
 }) {
 	const t = useTranslations("tenant.menu");
+	const displayName = product.name || t("card.productFallback");
 	const addToCart = useCartStore((state) => state.addToCart);
 	const decreaseQuantity = useCartStore((state) => state.decreaseQuantity);
 	const openSizePicker = useSizePickerStore((state) => state.open);
@@ -83,15 +83,13 @@ export function ProductInlinePanel({
 
 			<div className="product-inline-panel__inner">
 				<div className="product-inline-panel__img-wrap">
-					<Image
-						src={
-							product.image_url && !isCloudinaryImageUrl(product.image_url)
-								? product.image_url
-								: PRODUCT_CARD_FALLBACK_IMAGE
-						}
-						alt={product.name ?? t("card.productFallback")}
+					<ProductThumb
+						src={product.image_url}
+						name={displayName}
+						alt={displayName}
 						fill
 						className="product-inline-panel__img"
+						fallbackClassName="product-inline-panel__initial"
 						sizes="160px"
 						quality={75}
 					/>

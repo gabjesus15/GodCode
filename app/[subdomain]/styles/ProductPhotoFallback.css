@@ -1,0 +1,28 @@
+/* =============================================================================
+   Producto sin foto propia, o con una que no cargó: su inicial sobre el color
+   del local (ProductPhotoFallback). Lo usan las tarjetas, la hoja de producto,
+   el panel en línea y el carrito, en vez de una foto de stock que no es suya.
+
+   Va en :where() (especificidad cero) a propósito: cada sitio pone tamaño,
+   forma y, si tiene neutros propios (el carrito), fondo y tinta, sin depender
+   del orden en que se cargan las hojas. La letra mide --ppf-size, que cada
+   sitio ajusta a su hueco.
+   ============================================================================= */
+
+:where(.product-photo-fallback) {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	background: color-mix(in srgb, var(--menu-accent, var(--accent-primary, #e63946)) 7%, var(--menu-surface-2, #27272b));
+	color: color-mix(in srgb, var(--menu-accent-ink, currentColor) 55%, transparent);
+	font-family: var(--tenant-font, inherit);
+	font-weight: var(--tenant-font-weight, 700);
+	line-height: 1;
+	letter-spacing: 0.02em;
+	user-select: none;
+}
+
+:where(.product-photo-fallback__initial) {
+	font-size: var(--ppf-size, 1.6rem);
+}

@@ -11,11 +11,11 @@ import {
 	ProductCardImage,
 	ProductOfferBadges,
 	ProductQtyBadge,
-	productInitials,
 	useProductPricing,
 	type ProductCardLogic,
 	type ProductCardProduct,
 } from "./product-card-shared";
+import { ProductPhotoFallback } from "./product-photo-fallback";
 import { MotionCount } from "./ui/tenant-ui";
 
 /**
@@ -96,7 +96,7 @@ export const GlassCard = memo(function GlassCard({
 			<div className="gcard__media">
 				{/* Sin foto propia: relleno con las iniciales en el color del local, en vez
 				    de una foto genérica de comida que no es suya. */}
-				{logic.hasPhoto ? (
+				{logic.imageSrc ? (
 					<ProductCardImage
 						src={logic.imageSrc}
 						alt={name}
@@ -105,9 +105,11 @@ export const GlassCard = memo(function GlassCard({
 						onError={logic.setImageError}
 					/>
 				) : (
-					<div className="product-card-media fcard-photo--empty gcard__empty" aria-hidden>
-						<span className="fcard-photo__initials">{productInitials(name)}</span>
-					</div>
+					<ProductPhotoFallback
+						name={name}
+						className="product-card-media fcard-photo--empty gcard__empty"
+						initialClassName="fcard-photo__initials"
+					/>
 				)}
 				<ProductOfferBadges product={product} />
 				{/* Solo en tarjeta estrecha (ver CSS): ahí el pie muestra solo el "+" y la

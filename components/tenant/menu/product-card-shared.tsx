@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 
 import { useCartStore } from "../cart/cart-store";
 import { formatCartMoney } from "../cart/utils/format-cart-money";
+import { safeImageSrc } from "../cart/utils/image-src";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import {
 	MotionCount,
@@ -34,19 +35,9 @@ export interface ProductCardProduct {
 }
 
 import { isVenezuelaCountry } from "@/lib/geo/venezuela";
-import { brandInitials } from "@/lib/tenant/brand-initials";
-import { TENANT_PRODUCT_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
 import { minSizePrice, type ProductSizeOption } from "@/lib/tenant/product-sizes";
 import { productNeedsConfiguration, type ProductVariantGroup } from "@/lib/tenant/product-variants";
 import { useSizePickerStore } from "./product-size-store";
-import { isCloudinaryImageUrl } from "@/lib/tenant/images/is-cloudinary-image-url";
-
-export const PRODUCT_CARD_FALLBACK_IMAGE = TENANT_PRODUCT_FALLBACK_IMAGE;
-
-/** Inicial del producto sin foto, con la regla de las iniciales de marca: "Pollo crispy" → "P", "La Especial" → "E". */
-export function productInitials(name: string | null | undefined): string {
-	return brandInitials(name, { max: 1, fallback: "?" });
-}
 
 /** Tamaños responsive para next/image de la tarjeta en rejilla. */
 export const PRODUCT_IMAGE_SIZES = {
@@ -112,15 +103,12 @@ export function useProductCardLogic(product: ProductCardProduct, country = "CL")
     [],
   );
 
-  const resolvedProductImage =
-    product.image_url && !isCloudinaryImageUrl(product.image_url)
-      ? product.image_url
-      : null;
-  const imageSrc = imageError
-    ? PRODUCT_CARD_FALLBACK_IMAGE
-    : resolvedProductImage || PRODUCT_CARD_FALLBACK_IMAGE;
-  /** Foto propia del producto que cargó bien; sin ella las tarjetas nuevas pintan su relleno. */
-  const hasPhoto = Boolean(resolvedProductImage) && !imageError;
+  /**
+   * Foto propia del producto, o null si no tiene una utilizable o no cargó. Sin ella cada
+   * tarjeta (y la hoja) pinta la inicial (ProductPhotoFallback), nunca una foto de stock.
+   */
+  const imageSrc = imageError ? null : safeImageSrc(product.image_url);
+  const hasPhoto = imageSrc !== null;
 
   const setImageLoaded = useCallback((_value: boolean | ((prev: boolean) => boolean) = true) => {
     // Callers always mark loaded=true; identity mismatch already means "not loaded".

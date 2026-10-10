@@ -1,35 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { ProductThumb } from "../../menu/product-photo-fallback";
 
-import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
-import { safeImageSrc } from "../utils/image-src";
-
-/** Miniatura de una bebida o extra del catálogo, con respaldo si la imagen falla o no es válida. */
+/**
+ * Miniatura de una bebida o extra del catálogo: su foto si tiene una válida y carga; si no,
+ * su inicial sobre el color del local (no una foto de stock de otra bebida u otro plato).
+ */
 export function CartEnhanceCatalogGlyph({
 	imageUrl,
-	fallbackSrc,
+	name,
 }: {
 	imageUrl: string | null | undefined;
-	fallbackSrc: string;
+	name: string;
 }) {
-	const primary = safeImageSrc(imageUrl, fallbackSrc);
-	const [failed, setFailed] = useState(false);
-	const src = failed ? fallbackSrc : primary;
-
 	return (
 		<span className="cart-pick__glyph" aria-hidden>
-			<Image
-				key={primary}
-				src={src}
-				alt=""
+			<ProductThumb
+				src={imageUrl}
+				name={name}
 				width={44}
 				height={44}
 				quality={70}
-				unoptimized={shouldUnoptimizeImageSrc(src)}
 				className="cart-pick__img"
-				onError={() => setFailed(true)}
+				fallbackClassName="cart-pick__initial"
 			/>
 		</span>
 	);

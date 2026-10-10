@@ -1,12 +1,6 @@
 import type { ComponentType } from "react";
 import type { LucideProps } from "lucide-react";
 import { Banknote, CreditCard, Landmark, Smartphone } from "lucide-react";
-import {
-	ENHANCE_CATALOG_BEVERAGE_FALLBACK,
-	ENHANCE_CATALOG_EXTRA_FALLBACK,
-} from "@/lib/tenant/config/tenant-assets";
-
-export { ENHANCE_CATALOG_BEVERAGE_FALLBACK, ENHANCE_CATALOG_EXTRA_FALLBACK };
 
 export type PaymentMethodConfig = {
 	/** Icono de trazo para los métodos genéricos; las marcas usan `mark`. */

@@ -5,7 +5,6 @@ import { CupSoda, Minus, Plus, Sparkles, Ticket, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import type { CheckoutEnhancePanel } from "@/lib/tenant/mobile/checkout-session";
-import { ENHANCE_CATALOG_BEVERAGE_FALLBACK, ENHANCE_CATALOG_EXTRA_FALLBACK } from "../constants";
 import { useCart } from "../use-cart";
 import type { EnhancementCatalogItem, EnhancementCatalogs } from "../utils/enhancement-catalogs";
 import { formatCartMoney } from "../utils/format-cart-money";
@@ -38,7 +37,6 @@ function CatalogRow({
 	index,
 	selected,
 	onPick,
-	fallbackSrc,
 	currency,
 	selectedLabel,
 	addLabel,
@@ -48,20 +46,13 @@ function CatalogRow({
 	index: number;
 	selected: boolean;
 	onPick: () => void;
-	fallbackSrc: string;
 	currency: string;
 	selectedLabel: string;
 	addLabel: string;
 	/** Con el ítem ya en el pedido, la fila muestra − cantidad + en vez de un toggle. */
 	stepper?: CatalogRowStepper;
 }) {
-	const glyph = (
-		<CartEnhanceCatalogGlyph
-			key={`${item.id}-${item.image_url ?? ""}`}
-			imageUrl={item.image_url}
-			fallbackSrc={fallbackSrc}
-		/>
-	);
+	const glyph = <CartEnhanceCatalogGlyph imageUrl={item.image_url} name={item.name} />;
 	const style = { "--i": Math.min(index, 5) } as React.CSSProperties;
 
 	if (selected && stepper) {
@@ -223,7 +214,6 @@ export function CartEnhanceRail({
 									item={beverage}
 									selected={false}
 									onPick={() => addBeverage(beverage)}
-									fallbackSrc={ENHANCE_CATALOG_BEVERAGE_FALLBACK}
 									currency={currency}
 									selectedLabel={t("catalog.inYourOrder")}
 									addLabel={t("catalog.addItemAria", { name: beverage.name })}
@@ -241,7 +231,6 @@ export function CartEnhanceRail({
 										item={extra}
 										selected={Boolean(inOrder)}
 										onPick={() => addExtra(extra)}
-										fallbackSrc={ENHANCE_CATALOG_EXTRA_FALLBACK}
 										currency={currency}
 										selectedLabel={t("catalog.inYourOrder")}
 										addLabel={t("catalog.addItemAria", { name: extra.name })}

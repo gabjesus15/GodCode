@@ -1,15 +1,13 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import Image from "next/image";
 import clsx from "clsx";
 import { CupSoda, Minus, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { TENANT_PRODUCT_FALLBACK_IMAGE } from "@/lib/tenant/config/tenant-assets";
+import { ProductThumb } from "../../menu/product-photo-fallback";
 import { isUpsellBeverageLineId, type AddToCartOptions } from "../cart-context";
 import type { CartLineItem } from "../cart-modal-types";
-import { safeImageSrc } from "../utils/image-src";
 import { CartMoney } from "./cart-money";
 
 function selectionsTotal(list: Array<{ price: number; qty: number }> | undefined): number {
@@ -59,7 +57,7 @@ export function CartLine({
 	const lineStyle = { "--i": Math.min(index, MAX_STAGGER_INDEX) } as CSSProperties;
 
 	const isUpsellBeverage = isUpsellBeverageLineId(item.id);
-	const imageSrc = safeImageSrc(item.image_url, TENANT_PRODUCT_FALLBACK_IMAGE);
+	const name = item.name || t("item.productFallback");
 
 	const extrasText = describe(item.selected_extras);
 	const beveragesText = isUpsellBeverage ? "" : describe(item.selected_beverages);
@@ -82,22 +80,21 @@ export function CartLine({
 					<CupSoda size={22} strokeWidth={1.8} />
 				</span>
 			) : (
-				<Image
-					src={imageSrc}
-					alt=""
+				// Sin foto propia, o si no carga, la inicial del producto (como en el menú).
+				<ProductThumb
+					src={item.image_url}
+					name={name}
 					width={56}
 					height={56}
 					quality={70}
 					className="cart-line__media"
-					onError={(event) => {
-						event.currentTarget.src = TENANT_PRODUCT_FALLBACK_IMAGE;
-					}}
+					fallbackClassName="cart-line__media cart-line__media--initial"
 				/>
 			)}
 
 			<div className="cart-line__body">
 				<div className="cart-line__row">
-					<h3 className="cart-line__name">{item.name || t("item.productFallback")}</h3>
+					<h3 className="cart-line__name">{name}</h3>
 					<CartMoney amount={lineUnit * item.quantity} className="cart-line__price" />
 				</div>
 

@@ -4,17 +4,18 @@ import { isRenderableImageSrc, safeImageSrc } from "@/components/tenant/cart/uti
 
 describe("safeImageSrc", () => {
 	it("keeps what next/image can render", () => {
-		expect(safeImageSrc("https://cdn.test/a.png", "/fb.png")).toBe("https://cdn.test/a.png");
-		expect(safeImageSrc("/images/a.png", "/fb.png")).toBe("/images/a.png");
-		expect(safeImageSrc("blob:http://x/1", "/fb.png")).toBe("blob:http://x/1");
+		expect(safeImageSrc("https://cdn.test/a.png")).toBe("https://cdn.test/a.png");
+		expect(safeImageSrc("  /images/a.png ")).toBe("/images/a.png");
+		expect(safeImageSrc("blob:http://x/1")).toBe("blob:http://x/1");
 	});
 
-	it("falls back for storage keys, cloudinary and empty values", () => {
-		expect(safeImageSrc("3c4e/cart-upsell/x.png", "/fb.png")).toBe("/fb.png");
-		expect(safeImageSrc("https://res.cloudinary.com/demo/x.png", "/fb.png")).toBe("/fb.png");
-		expect(safeImageSrc("", "/fb.png")).toBe("/fb.png");
-		expect(safeImageSrc(null, "/fb.png")).toBe("/fb.png");
-		expect(safeImageSrc("//evil.test/x.png", "/fb.png")).toBe("/fb.png");
+	it("returns null (no stock photo) for storage keys, cloudinary and empty values", () => {
+		expect(safeImageSrc("3c4e/cart-upsell/x.png")).toBeNull();
+		expect(safeImageSrc("https://res.cloudinary.com/demo/x.png")).toBeNull();
+		expect(safeImageSrc("")).toBeNull();
+		expect(safeImageSrc(null)).toBeNull();
+		expect(safeImageSrc(undefined)).toBeNull();
+		expect(safeImageSrc("//evil.test/x.png")).toBeNull();
 	});
 
 	it("exposes the renderable check on its own", () => {

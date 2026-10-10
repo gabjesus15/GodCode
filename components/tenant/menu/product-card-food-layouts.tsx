@@ -8,12 +8,12 @@ import {
 	ProductOfferBadges,
 	ProductPriceBlock,
 	ProductQtyBadge,
-	productInitials,
 	truncateText,
 	useProductPricing,
 	type ProductCardLogic,
 	type ProductCardProduct,
 } from "./product-card-shared";
+import { ProductPhotoFallback } from "./product-photo-fallback";
 
 export type LayoutCardProps = {
 	product: ProductCardProduct;
@@ -71,11 +71,13 @@ function FoodPhoto({
 	sizes: string;
 	className: string;
 }) {
-	if (!logic.hasPhoto) {
+	if (!logic.imageSrc) {
 		return (
-			<div className={`${className} fcard-photo fcard-photo--empty`} aria-hidden>
-				<span className="fcard-photo__initials">{productInitials(name)}</span>
-			</div>
+			<ProductPhotoFallback
+				name={name}
+				className={`${className} fcard-photo fcard-photo--empty`}
+				initialClassName="fcard-photo__initials"
+			/>
 		);
 	}
 	return (

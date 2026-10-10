@@ -222,6 +222,17 @@
 	filter: none;
 }
 
+/* Sin foto: la inicial ocupa el sitio de la foto con su misma forma y sombra. Está dentro
+   del plato, así que crece con el tamaño elegido igual que la foto; la letra va en
+   proporción al plato para leerse igual en teléfono y en escritorio. */
+.pds__fallback {
+	position: absolute;
+	inset: 0;
+	border-radius: 28px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18), 0 22px 44px -18px rgba(0, 0, 0, 0.55);
+	--ppf-size: calc(var(--pds-plate) * 0.34);
+}
+
 /* Etiqueta del tamaño elegido, sobre el borde inferior del escenario. */
 .pds__stage-tag {
 	position: absolute;

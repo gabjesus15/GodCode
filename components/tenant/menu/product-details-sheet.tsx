@@ -31,6 +31,7 @@ import {
 	useProductPricing,
 	type ProductCardProduct,
 } from "./product-card-shared";
+import { ProductPhotoFallback } from "./product-photo-fallback";
 
 import "../../../app/[subdomain]/styles/ProductDetailsSheet.css";
 
@@ -218,6 +219,97 @@ function VariantChips({
 }
 
 /**
+ * Escenario de la hoja: el plato que crece con el tamaño elegido. Sin foto propia (o si la
+ * foto no carga) el plato es la inicial del producto en el color del local, con la forma, la
+ * sombra y la escala que tendría la foto; nunca una foto de stock.
+ */
+export function ProductSheetStage({
+	product,
+	name,
+	photoSrc,
+	onPhotoError,
+	scale,
+	selectedSize,
+	reduced,
+	lite,
+}: {
+	product: ProductCardProduct;
+	name: string;
+	/** La foto de la variante elegida o la del producto; null si no hay ninguna utilizable. */
+	photoSrc: string | null;
+	onPhotoError: () => void;
+	scale: number;
+	selectedSize: ProductSizeOption | null;
+	reduced: boolean;
+	lite: boolean;
+}) {
+	const fit = photoSrc && isCutoutSource(photoSrc) ? "contain" : "cover";
+	const plateTransition = reduced ? INSTANT : PLATE_SPRING;
+	return (
+		<div className={clsx("pds__stage", lite && "pds__stage--lite")} data-fit={fit}>
+			<span className="pds__glow" aria-hidden />
+			<m.span
+				className="pds__plate-shadow"
+				aria-hidden
+				initial={false}
+				animate={{ scaleX: scale, scaleY: 0.85 + 0.15 * scale, opacity: 0.45 + 0.55 * scale }}
+				transition={plateTransition}
+			/>
+			<m.div
+				className="pds__plate"
+				initial={reduced ? false : { scale: scale * 0.88, opacity: 0 }}
+				animate={{ scale, opacity: 1 }}
+				transition={plateTransition}
+			>
+				{/* La inicial va dentro del plato, como la foto: crece con el tamaño y se funde
+				    con la foto al cambiar a una variante que sí tiene. */}
+				<AnimatePresence initial={false}>
+					<m.div
+						key={photoSrc ?? "pds-initial"}
+						className="pds__img-wrap"
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						transition={{ duration: reduced ? 0.12 : 0.3, ease: EASE }}
+					>
+						{photoSrc ? (
+							<Image
+								src={photoSrc}
+								alt={name}
+								fill
+								sizes="(max-width: 767px) 70vw, 300px"
+								quality={85}
+								priority
+								unoptimized={shouldUnoptimizeImageSrc(photoSrc)}
+								className="pds__img"
+								onError={onPhotoError}
+							/>
+						) : (
+							<ProductPhotoFallback name={name} className="pds__fallback" />
+						)}
+					</m.div>
+				</AnimatePresence>
+			</m.div>
+			<ProductOfferBadges product={product} />
+			{selectedSize ? (
+				<AnimatePresence initial={false} mode="popLayout">
+					<m.span
+						key={selectedSize.id}
+						className="pds__stage-tag"
+						initial={{ opacity: 0, y: reduced ? 0 : 6 }}
+						animate={{ opacity: 1, y: 0 }}
+						exit={{ opacity: 0, y: reduced ? 0 : -6 }}
+						transition={{ duration: 0.22, ease: EASE }}
+					>
+						{selectedSize.name}
+					</m.span>
+				</AnimatePresence>
+			) : null}
+		</div>
+	);
+}
+
+/**
  * Hoja de producto: el plato sobre su escenario, nombre, precio, descripción y, si el
  * local los definió, los tamaños (el plato crece con el elegido) y las variantes
  * (chips, una por grupo). Abajo, cantidad y "Agregar · total". Sube desde abajo en
@@ -307,10 +399,10 @@ export function ProductDetailsSheet({
 	const description = product.description?.trim() ?? "";
 	const canOrder = onlineOrderingEnabled !== false;
 	const variantImage = selectedOptions.find((option) => option.imageUrl)?.imageUrl ?? null;
+	// Manda la foto de la variante elegida; si no tiene o falló, la del producto; si tampoco
+	// hay, null y el escenario pinta la inicial.
 	const heroSrc = variantImage && brokenSrc !== variantImage ? variantImage : logic.imageSrc;
-	const fit = isCutoutSource(heroSrc) ? "contain" : "cover";
 	const scale = sizes ? plateScale(sizes.findIndex((size) => size.id === selectedSize?.id), sizes.length) : 1;
-	const plateTransition = reduced ? INSTANT : PLATE_SPRING;
 	const formatDelta = (amount: number) =>
 		`${amount > 0 ? "+" : "−"}${pricing.formatPrice(Math.abs(amount))}`;
 	const row = (index: number) => ({ "--i": index }) as CSSProperties;
@@ -356,63 +448,19 @@ export function ProductDetailsSheet({
 					</div>
 
 					<div className="pds__body">
-						<div className={clsx("pds__stage", lite && "pds__stage--lite")} data-fit={fit}>
-							<span className="pds__glow" aria-hidden />
-							<m.span
-								className="pds__plate-shadow"
-								aria-hidden
-								initial={false}
-								animate={{ scaleX: scale, scaleY: 0.85 + 0.15 * scale, opacity: 0.45 + 0.55 * scale }}
-								transition={plateTransition}
-							/>
-							<m.div
-								className="pds__plate"
-								initial={reduced ? false : { scale: scale * 0.88, opacity: 0 }}
-								animate={{ scale, opacity: 1 }}
-								transition={plateTransition}
-							>
-								<AnimatePresence initial={false}>
-									<m.div
-										key={heroSrc}
-										className="pds__img-wrap"
-										initial={{ opacity: 0 }}
-										animate={{ opacity: 1 }}
-										exit={{ opacity: 0 }}
-										transition={{ duration: reduced ? 0.12 : 0.3, ease: EASE }}
-									>
-										<Image
-											src={heroSrc}
-											alt={name}
-											fill
-											sizes="(max-width: 767px) 70vw, 300px"
-											quality={85}
-											priority
-											unoptimized={shouldUnoptimizeImageSrc(heroSrc)}
-											className="pds__img"
-											onError={() => {
-												if (heroSrc === variantImage) setBrokenSrc(variantImage);
-												else logic.setImageError();
-											}}
-										/>
-									</m.div>
-								</AnimatePresence>
-							</m.div>
-							<ProductOfferBadges product={product} />
-							{selectedSize ? (
-								<AnimatePresence initial={false} mode="popLayout">
-									<m.span
-										key={selectedSize.id}
-										className="pds__stage-tag"
-										initial={{ opacity: 0, y: reduced ? 0 : 6 }}
-										animate={{ opacity: 1, y: 0 }}
-										exit={{ opacity: 0, y: reduced ? 0 : -6 }}
-										transition={{ duration: 0.22, ease: EASE }}
-									>
-										{selectedSize.name}
-									</m.span>
-								</AnimatePresence>
-							) : null}
-						</div>
+						<ProductSheetStage
+							product={product}
+							name={name}
+							photoSrc={heroSrc}
+							onPhotoError={() => {
+								if (heroSrc === variantImage) setBrokenSrc(variantImage);
+								else logic.setImageError();
+							}}
+							scale={scale}
+							selectedSize={selectedSize}
+							reduced={reduced}
+							lite={lite}
+						/>
 
 						<div className="pds__content">
 							<h2 id={titleId} className="pds__title" style={row(0)}>

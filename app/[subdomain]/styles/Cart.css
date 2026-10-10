@@ -648,6 +648,19 @@
 	color: var(--cart-fg-2);
 }
 
+/* Producto sin foto (o con una que no carga): su inicial, como en el menú. */
+.cart-line__media--initial {
+	--ppf-size: 1.375rem;
+}
+
+/* La inicial de un producto sin foto (ProductPhotoFallback) sobre el acento del local, con
+   los neutros del panel en vez de los del menú. Con dos clases gana al fondo de
+   `.cart-line__media`, que es el de la foto mientras carga. */
+.cart-overlay .product-photo-fallback {
+	background: color-mix(in srgb, var(--cart-accent) 7%, var(--cart-raised));
+	color: color-mix(in srgb, var(--cart-accent-ink) 55%, transparent);
+}
+
 .cart-line__body {
 	flex: 1;
 	min-width: 0;
@@ -930,6 +943,13 @@
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
+}
+
+/* Bebida o extra sin foto: su inicial llena el marco. */
+.cart-pick__initial {
+	width: 100%;
+	height: 100%;
+	--ppf-size: 1.125rem;
 }
 
 .cart-pick__text {
