@@ -130,8 +130,11 @@ export default async function MenuLabPage({ searchParams }: { searchParams: Prom
 					onlineOrderingEnabled
 					tenantSlug="lab"
 				/>
-				{/* En el menú real lo pone TenantShell; sin él no se ve el carrito. */}
+				{/* En el menú real los pone TenantShell. Sin el del carrito no se ve el carrito; sin
+				    `modal-root` la hoja de producto se abría en <body>, fuera del tema: sin fondo, sin
+				    el botón del color del local y con otra tipografía. */}
 				<div id="cart-portal-root" className="tenant-portal-cart" />
+				<div id="modal-root" className="tenant-portal-modal" />
 			</div>
 		</QueryProvider>
 	);
