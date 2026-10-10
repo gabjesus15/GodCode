@@ -22,6 +22,7 @@ import {
 	buildMenuOrderPaymentPayload,
 	paymentMethodRequiresReceipt,
 } from "../cart/services/menu-order-payment";
+import { ORDER_STORE_NOT_OPEN, OrderError } from "../cart/services/order-error";
 
 interface CreateOrderPayload {
   client_name: string;
@@ -84,13 +85,18 @@ const OUTSIDE_BUSINESS_HOURS_MESSAGE =
 	"Estamos fuera de horario y no estamos recibiendo pedidos en este momento.";
 
 /**
- * Tienda que no vende (vista previa sin pagar, suspendida o vencida). Es el texto de
- * `tenant.cart.modal.errors.noOrdersNow`, en español como el resto de este servicio: el
- * carrito muestra el mensaje del error tal cual y nunca debe ver el código crudo.
+ * Tienda que no vende (vista previa sin pagar, suspendida o vencida). Se lanza como
+ * `OrderError` con el código `store_not_open`: el carrito lo traduce con
+ * `tenant.cart.modal.errors.noOrdersNow`. Este texto en español queda para quien lea el
+ * mensaje del error sin mirar el código; nunca debe verse el código crudo.
  */
 const STORE_NOT_OPEN_MESSAGE = "No se pueden recibir pedidos en este momento.";
 /** `code` de las rutas del carrito (`STORE_NOT_OPEN_CODE` en lib/tenant/store-draft-viewer, solo servidor). */
-const STORE_NOT_OPEN_CODE = "store_not_open";
+const STORE_NOT_OPEN_CODE = ORDER_STORE_NOT_OPEN;
+
+function storeNotOpenError(): OrderError {
+	return new OrderError(ORDER_STORE_NOT_OPEN, STORE_NOT_OPEN_MESSAGE);
+}
 
 async function resolveCouponDiscountForOrder(
 	branchId: string,
@@ -158,8 +164,13 @@ async function createAccountOrder(args: {
       clientRequestId: args.p_client_request_id,
     }),
   });
-  const json = (await res.json().catch(() => ({}))) as { order?: unknown; error?: string };
-  if (!res.ok) return { data: null, error: { message: json.error || "No se pudo crear el pedido." } };
+  const json = (await res.json().catch(() => ({}))) as { order?: unknown; error?: string; code?: string };
+  if (!res.ok) {
+    // La ruta rechaza la tienda que no vende con `code: "store_not_open"` y un texto en español:
+    // se pasa el código, para que el pedido lo trate igual que el rechazo de la RPC.
+    const message = json.code === STORE_NOT_OPEN_CODE ? STORE_NOT_OPEN_CODE : json.error || "No se pudo crear el pedido.";
+    return { data: null, error: { message } };
+  }
   return { data: json.order ?? null, error: null };
 }
 
@@ -179,7 +190,7 @@ async function resolveNormalizedCatalogItems(
 			error?: string;
 			code?: string;
 		};
-		if (json.code === STORE_NOT_OPEN_CODE) throw new Error(STORE_NOT_OPEN_MESSAGE);
+		if (json.code === STORE_NOT_OPEN_CODE) throw storeNotOpenError();
 		if (!res.ok || !json.ok || !Array.isArray(json.items)) {
 			throw new Error(
 				json.error || "No se pudo validar los productos de la sucursal. Intenta nuevamente.",
@@ -634,7 +645,7 @@ export const ordersService = {
       // La base rechaza el pedido de una tienda que no vende, o con una sucursal de otra
       // empresa (migrations/20261010_public_order_requires_open_store.sql).
       if (rpcMessage.includes(STORE_NOT_OPEN_CODE) || rpcMessage.includes("branch_company_mismatch")) {
-        throw new Error(STORE_NOT_OPEN_MESSAGE);
+        throw storeNotOpenError();
       }
       if (rpcMessage.includes("invalid_coupon")) {
         throw new Error("Cupón no válido.");
@@ -707,11 +718,10 @@ export const ordersService = {
         // El pedido huérfano lo cancela la propia ruta, que sí tiene permiso: desde
         // aquí la clave anónima no puede escribir en `orders` y el intento siempre
         // moria en un 42501 silencioso, dejando el pedido vivo en el panel.
-        const msg = j.code === STORE_NOT_OPEN_CODE
-          ? STORE_NOT_OPEN_MESSAGE
-          : j.error === "ORDER_INTAKE_PAUSED"
-            ? (j.message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.")
-            : (j.error || "No se pudo registrar los datos de facturación del pedido.");
+        if (j.code === STORE_NOT_OPEN_CODE) throw storeNotOpenError();
+        const msg = j.error === "ORDER_INTAKE_PAUSED"
+          ? (j.message || "Tenemos mucha demanda por el momento. Vuelve a intentar en unos minutos.")
+          : (j.error || "No se pudo registrar los datos de facturación del pedido.");
         throw new Error(msg);
       }
     }

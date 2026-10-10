@@ -58,3 +58,23 @@ describe("pago del alta: tienda ya armada («Arma y paga»)", () => {
 		expect(text).not.toMatch(/activ|cuenta/i);
 	});
 });
+
+describe("pago del alta: «solo panel CEO»", () => {
+	it("en español el último paso es entrar al panel", () => {
+		expect(getOnboardingPaymentCopy("es").ui.panelOnlyNextSteps).toEqual([
+			"Confirmamos tu pago",
+			"Te llega un correo para crear tu contraseña",
+			"Entras a tu panel CEO",
+		]);
+	});
+
+	it.each(LOCALES)("%s: tres pasos que no hablan del menú ni de una tienda", (locale) => {
+		const { ui } = getOnboardingPaymentCopy(locale);
+		expect(ui.panelOnlyNextSteps).toHaveLength(3);
+		const text = ui.panelOnlyNextSteps.join(" ").toLowerCase();
+		expect(text).not.toMatch(/menú|menu|cardápio|speisekarte|tienda|store|loja|boutique|shop|negozio/);
+		expect(text).toContain("ceo");
+		// Pagar y crear la contraseña son iguales con o sin tienda.
+		expect(ui.panelOnlyNextSteps.slice(0, 2)).toEqual(ui.nextSteps.slice(0, 2));
+	});
+});

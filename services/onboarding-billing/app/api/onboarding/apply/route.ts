@@ -11,6 +11,7 @@ import { isRateLimited } from "@/lib/onboarding/rate-limit";
 import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 import { sendOnboardingResumeLink } from "@/lib/onboarding/resume-application";
 import { resolveOnboardingCountry, sanitizePlanHint } from "@/lib/onboarding/onboarding-entry";
+import type { ApplyErrorCode } from "@/lib/onboarding/onboarding-ui-copy";
 import { normalizeEmail } from "@/lib/onboarding/trial-eligibility";
 import { resolvePlanProductMode } from "@/lib/plans/plan-product-mode";
 
@@ -21,6 +22,9 @@ import { resolvePlanProductMode } from "@/lib/plans/plan-product-mode";
  * Un correo que ya tenía alta recibe la misma respuesta que uno nuevo (y en su bandeja, el
  * enlace para seguir o el aviso de que ya tiene cuenta): el formulario no sirve para
  * averiguar qué correos están registrados en Gcode.
+ *
+ * Los errores llevan un `code` estable que el paso 1 traduce (`lib/onboarding/onboarding-ui-copy.ts`);
+ * el texto en español queda para el log y para clientes viejos.
  */
 
 const SENT_RESPONSE = { ok: true, emailSent: true, message: "Solicitud enviada. Revisa tu correo para seguir." } as const;
@@ -75,6 +79,10 @@ function getClientIp(req: NextRequest): string {
 	return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
 }
 
+function fail(code: ApplyErrorCode, error: string, status: number) {
+	return NextResponse.json({ code, error }, { status });
+}
+
 export async function POST(req: NextRequest) {
 	try {
 		const body = (await req.json().catch(() => ({}))) as ApplyBody;
@@ -88,24 +96,25 @@ export async function POST(req: NextRequest) {
 		const message = sanitize(body.message, 2000);
 
 		if (!businessName || businessName.length < 2) {
-			return NextResponse.json({ error: "El nombre del negocio es requerido" }, { status: 400 });
+			return fail("invalid_input", "El nombre del negocio es requerido", 400);
 		}
 		if (!responsibleName || responsibleName.length < 2) {
-			return NextResponse.json({ error: "El nombre del responsable es requerido" }, { status: 400 });
+			return fail("invalid_input", "El nombre del responsable es requerido", 400);
 		}
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		if (!emailRaw || !emailRegex.test(emailRaw)) {
-			return NextResponse.json({ error: "Email inválido" }, { status: 400 });
+			return fail("email_invalid", "Email inválido", 400);
 		}
+		// Los dos límites cuentan intentos, no cuentas: responden igual exista o no un alta con ese correo.
 		if (await isRateLimited(`onboarding_apply:ip:${ip}`, 12, 60_000)) {
-			return NextResponse.json({ error: "Demasiados intentos. Intenta de nuevo en un minuto." }, { status: 429 });
+			return fail("rate_limited", "Demasiados intentos. Intenta de nuevo en un minuto.", 429);
 		}
 		if (await isRateLimited(`onboarding_apply:email:${emailRaw}`, 5, 10 * 60_000)) {
-			return NextResponse.json({ error: "Demasiados intentos con este correo. Intenta más tarde." }, { status: 429 });
+			return fail("rate_limited", "Demasiados intentos con este correo. Intenta más tarde.", 429);
 		}
 
 		if (body.terms_accepted !== true || body.privacy_accepted !== true) {
-			return NextResponse.json({ error: "Debes aceptar los términos y la política de privacidad" }, { status: 400 });
+			return fail("terms_required", "Debes aceptar los términos y la política de privacidad", 400);
 		}
 
 		// La acción es la que pide el paso 1 al enviar (`OnboardingStep1Form`).
@@ -117,7 +126,7 @@ export async function POST(req: NextRequest) {
 				score: recaptcha.score,
 				action: recaptcha.action,
 			});
-			return NextResponse.json({ error: "Verificación de seguridad fallida. Intenta de nuevo." }, { status: 400 });
+			return fail("recaptcha_failed", "Verificación de seguridad fallida. Intenta de nuevo.", 400);
 		}
 
 		// El plan del landing solo se guarda si existe y está a la venta.
@@ -185,7 +194,7 @@ export async function POST(req: NextRequest) {
 				return NextResponse.json(delivered ? SENT_RESPONSE : NOT_SENT_RESPONSE);
 			}
 			console.error("onboarding apply insert:", insertError);
-			return NextResponse.json({ error: "Error al registrar la solicitud" }, { status: 500 });
+			return fail("server_error", "Error al registrar la solicitud", 500);
 		}
 
 		// Aviso por Telegram al equipo (si está configurado): la solicitud ya existe aunque
@@ -242,6 +251,6 @@ export async function POST(req: NextRequest) {
 		return NextResponse.json(SENT_RESPONSE);
 	} catch (err) {
 		console.error("onboarding apply error:", err);
-		return NextResponse.json({ error: "Error interno. Intenta más tarde." }, { status: 500 });
+		return fail("server_error", "Error interno. Intenta más tarde.", 500);
 	}
 }

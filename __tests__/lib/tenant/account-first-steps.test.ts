@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildFirstSteps } from "@/lib/tenant/account-first-steps";
+import { ACCOUNT_PUBLISH_PATH, buildFirstSteps, firstStepPath } from "@/lib/tenant/account-first-steps";
 
 const base = { productCount: 0, sampleCount: 0, branches: [{}], logoUrl: null, orderCount: 0 };
 
@@ -53,16 +53,31 @@ describe("buildFirstSteps", () => {
 		expect(steps.at(-1)).toMatchObject({
 			title: "Publica tu tienda",
 			done: false,
-			target: "setup",
-			setupStep: "publicar",
+			target: "publish",
 			actionLabel: "Publicar mi tienda",
 		});
 	});
 
-	it("con el pago en revisión, publicar lleva a ver el estado", () => {
+	it("publicar va directo a elegir el plan y pagar, sin pasar por el asistente", () => {
+		const publish = buildFirstSteps({ ...base, storeDraft: { paymentInReview: false } }).at(-1)!;
+		expect(publish.target).toBe("publish");
+		expect(publish).not.toHaveProperty("setupStep");
+		expect(firstStepPath("publish")).toBe("/cuenta/publicar");
+		expect(ACCOUNT_PUBLISH_PATH).toBe("/cuenta/publicar");
+	});
+
+	it("con el pago en revisión, publicar lleva a ver el estado (la misma ruta lo resuelve)", () => {
 		const publish = buildFirstSteps({ ...base, storeDraft: { paymentInReview: true } }).at(-1)!;
-		expect(publish).toMatchObject({ id: "publish", done: false, setupStep: "publicar", actionLabel: "Ver el estado" });
+		expect(publish).toMatchObject({ id: "publish", done: false, target: "publish", actionLabel: "Ver el estado" });
 		expect(publish.detail).toContain("validando tu pago");
+	});
+
+	it("los pasos del asistente abren «Configura tu tienda» en su paso", () => {
+		const steps = buildFirstSteps(base);
+		const logo = steps.find((s) => s.id === "logo")!;
+		expect(logo.target).toBe("setup");
+		expect(firstStepPath("setup", logo.setupStep)).toBe("/cuenta/configurar?paso=marca");
+		expect(firstStepPath("setup")).toBe("/cuenta/configurar");
 	});
 
 	it("una tienda ya publicada vuelve a pedir el primer pedido", () => {

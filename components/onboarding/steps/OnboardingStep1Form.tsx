@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { trackEvent } from "@/lib/analytics/track-event";
 import { LEGAL_DOCUMENTS_VERSION, LEGAL_PRIVACY_PATH, LEGAL_TERMS_PATH } from "@/lib/legal/legal-documents";
-import { fillCopy, getOnboardingUiCopy } from "@/lib/onboarding/onboarding-ui-copy";
+import { fillCopy, getOnboardingUiCopy, resolveApplyErrorCode, resolveResendErrorCode } from "@/lib/onboarding/onboarding-ui-copy";
 import { RECAPTCHA_ACTIONS } from "@/lib/onboarding/recaptcha";
 
 type SentState = { email: string; emailSent: boolean };
@@ -53,8 +53,12 @@ export function OnboardingStep1Form({
 		setLoading(true);
 		setError(null);
 		try {
-			// El servicio exige esta misma acción (y un puntaje mínimo) al verificar el token.
-			const recaptchaToken = executeRecaptcha ? await executeRecaptcha(RECAPTCHA_ACTIONS.onboardingApply) : "";
+			// El servicio exige esta misma acción (y un puntaje mínimo) al verificar el token. Si
+			// reCAPTCHA no carga, el servicio decide: sin clave secreta acepta y con ella responde
+			// `recaptcha_failed`, que pide recargar la página.
+			const recaptchaToken = executeRecaptcha
+				? await executeRecaptcha(RECAPTCHA_ACTIONS.onboardingApply).catch(() => "")
+				: "";
 			const res = await fetch("/api/onboarding/apply", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -73,12 +77,17 @@ export function OnboardingStep1Form({
 				}),
 			});
 			const data = (await res.json().catch(() => ({}))) as {
-				error?: string;
+				code?: unknown;
 				skippedVerification?: boolean;
 				token?: string;
 				emailSent?: boolean;
 			};
-			if (!res.ok) throw new Error(data.error ?? t.errorSubmit);
+			if (!res.ok) {
+				// El servicio manda un código y un texto en español para el log: aquí va el del idioma
+				// de la página. Sin código (límite de la app, servicio caído), el que sale del status.
+				setError(t.errors[resolveApplyErrorCode(data.code, res.status)]);
+				return;
+			}
 			// También cuenta cuando el correo ya tenía un alta: el servicio responde igual a
 			// propósito para no delatar qué correos están registrados, así que aquí no se distingue.
 			trackEvent("sign_up", { method: "email", flow: panelOnly ? "panel_only" : "draft", plan: planId ?? "" });
@@ -92,8 +101,9 @@ export function OnboardingStep1Form({
 			setSent({ email: form.email.trim(), emailSent: data.emailSent !== false });
 			// Si el correo no salió, se puede reenviar enseguida.
 			setResendCooldown(data.emailSent === false ? 0 : 30);
-		} catch (err) {
-			setError(err instanceof Error && err.message ? err.message : t.errorUnexpected);
+		} catch {
+			// La petición no llegó: el texto técnico del navegador («Failed to fetch») no ayuda.
+			setError(t.errorConnection);
 		} finally {
 			setLoading(false);
 		}
@@ -109,14 +119,20 @@ export function OnboardingStep1Form({
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ email: sent.email }),
 			});
-			const data = (await res.json().catch(() => ({}))) as { error?: string };
-			if (!res.ok) throw new Error(data.error ?? t.resendError);
+			const data = (await res.json().catch(() => ({}))) as { code?: unknown };
+			if (!res.ok) {
+				const code = resolveResendErrorCode(data.code, res.status);
+				setResendMessage(t.resendErrors[code]);
+				// Con el límite alcanzado, el botón cuenta la espera en vez de dejar insistir.
+				if (code === "rate_limited") setResendCooldown(60);
+				return;
+			}
 			// El servicio no dice en qué paso va el alta (manda a ese correo el enlace que toca).
 			setResendMessage(t.resendSuccess);
 			setSent((prev) => (prev ? { ...prev, emailSent: true } : prev));
 			setResendCooldown(45);
-		} catch (err) {
-			setResendMessage(err instanceof Error && err.message ? err.message : t.resendError);
+		} catch {
+			setResendMessage(t.errorConnection);
 		} finally {
 			setResending(false);
 		}

@@ -4,6 +4,9 @@ import { resolveOnboardingLocale, type OnboardingLocale } from "./onboarding-ui-
  * «Crear mi tienda» (`/onboarding/tienda`): con el correo confirmado, el dueño elige el
  * link y su contraseña y entra a armar su tienda en vista previa. `{name}`, `{email}` y
  * `{slug}` se reemplazan al usarlos.
+ *
+ * Con «solo panel CEO» no hay tienda que armar: esa alta pasa por aquí solo de camino a
+ * elegir el plan, o ya pagada, y entonces el aviso habla de la cuenta (`panelOnlyCreated*`).
  */
 export type StoreStartCopy = {
 	title: string;
@@ -39,6 +42,9 @@ export type StoreStartCopy = {
 	existingClassic: string;
 	createdTitle: string;
 	createdBody: string;
+	/** «Solo panel CEO» ya pagado: la cuenta existe y no hay tienda de la que hablar. */
+	panelOnlyCreatedTitle: string;
+	panelOnlyCreatedBody: string;
 	login: string;
 	errorGeneric: string;
 	errorSignIn: string;
@@ -78,6 +84,8 @@ const es: StoreStartCopy = {
 	existingClassic: "Elegir mi plan",
 	createdTitle: "Tu tienda ya está creada",
 	createdBody: "Entra con tu correo y tu contraseña para seguir armándola.",
+	panelOnlyCreatedTitle: "Tu cuenta ya está creada",
+	panelOnlyCreatedBody: "Entra con tu correo para usar tu panel CEO. Si aún no tienes contraseña, créala con el enlace del correo de bienvenida.",
 	login: "Iniciar sesión",
 	errorGeneric: "No pudimos crear tu tienda. Intenta de nuevo.",
 	errorSignIn: "Tu tienda quedó creada. Entra desde el inicio de sesión con tu correo y tu contraseña.",
@@ -117,6 +125,8 @@ const en: StoreStartCopy = {
 	existingClassic: "Choose my plan",
 	createdTitle: "Your store is already created",
 	createdBody: "Sign in with your email and password to keep building it.",
+	panelOnlyCreatedTitle: "Your account is already created",
+	panelOnlyCreatedBody: "Sign in with your email to use your CEO panel. If you don’t have a password yet, create it with the link in the welcome email.",
 	login: "Sign in",
 	errorGeneric: "We couldn’t create your store. Please try again.",
 	errorSignIn: "Your store was created. Sign in with your email and password.",
@@ -156,6 +166,8 @@ const pt: StoreStartCopy = {
 	existingClassic: "Escolher meu plano",
 	createdTitle: "Sua loja já foi criada",
 	createdBody: "Entre com seu e-mail e sua senha para continuar montando.",
+	panelOnlyCreatedTitle: "Sua conta já foi criada",
+	panelOnlyCreatedBody: "Entre com seu e-mail para usar seu painel CEO. Se ainda não tem senha, crie-a com o link do e-mail de boas-vindas.",
 	login: "Entrar",
 	errorGeneric: "Não conseguimos criar sua loja. Tente novamente.",
 	errorSignIn: "Sua loja foi criada. Entre com seu e-mail e sua senha.",
@@ -195,6 +207,8 @@ const fr: StoreStartCopy = {
 	existingClassic: "Choisir mon offre",
 	createdTitle: "Votre boutique est déjà créée",
 	createdBody: "Connectez-vous avec votre e-mail et votre mot de passe pour continuer.",
+	panelOnlyCreatedTitle: "Votre compte est déjà créé",
+	panelOnlyCreatedBody: "Connectez-vous avec votre e-mail pour utiliser votre panneau CEO. Si vous n’avez pas encore de mot de passe, créez-le avec le lien de l’e-mail de bienvenue.",
 	login: "Se connecter",
 	errorGeneric: "Nous n’avons pas pu créer votre boutique. Réessayez.",
 	errorSignIn: "Votre boutique est créée. Connectez-vous avec votre e-mail et votre mot de passe.",
@@ -234,6 +248,8 @@ const de: StoreStartCopy = {
 	existingClassic: "Plan wählen",
 	createdTitle: "Ihr Shop ist bereits erstellt",
 	createdBody: "Melden Sie sich mit E-Mail und Passwort an, um weiterzumachen.",
+	panelOnlyCreatedTitle: "Ihr Konto ist bereits erstellt",
+	panelOnlyCreatedBody: "Melden Sie sich mit Ihrer E-Mail an, um Ihr CEO-Panel zu nutzen. Noch kein Passwort? Erstellen Sie es über den Link in der Willkommens-E-Mail.",
 	login: "Anmelden",
 	errorGeneric: "Ihr Shop konnte nicht erstellt werden. Bitte erneut versuchen.",
 	errorSignIn: "Ihr Shop wurde erstellt. Melden Sie sich mit E-Mail und Passwort an.",
@@ -273,6 +289,8 @@ const it: StoreStartCopy = {
 	existingClassic: "Scegli il mio piano",
 	createdTitle: "Il tuo negozio è già creato",
 	createdBody: "Accedi con email e password per continuare a crearlo.",
+	panelOnlyCreatedTitle: "Il tuo account è già creato",
+	panelOnlyCreatedBody: "Accedi con la tua email per usare il tuo pannello CEO. Se non hai ancora una password, creala con il link dell’email di benvenuto.",
 	login: "Accedi",
 	errorGeneric: "Non siamo riusciti a creare il negozio. Riprova.",
 	errorSignIn: "Il negozio è stato creato. Accedi con email e password.",

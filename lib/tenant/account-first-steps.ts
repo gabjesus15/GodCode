@@ -9,17 +9,32 @@ import type { OwnerSetupStep } from "./owner-setup";
 
 type FirstStepId = "menu" | "whatsapp" | "hours" | "logo" | "design" | "first_order" | "publish";
 
+/**
+ * Sección de /cuenta que resuelve el paso: una pestaña (`menu`, `perfil`, `tienda`), la tienda
+ * pública (`store`), «Configura tu tienda» (`setup`) o publicarla (`publish`: elegir el plan y
+ * pagar, o el estado del pago si ya está en revisión).
+ */
+export type FirstStepTarget = "menu" | "perfil" | "tienda" | "store" | "setup" | "publish";
+
 export type FirstStep = {
 	id: FirstStepId;
 	title: string;
 	detail: string;
 	done: boolean;
-	/** Sección de /cuenta que lo resuelve; `store` abre la tienda pública y `setup`, «Configura tu tienda». */
-	target: "menu" | "perfil" | "tienda" | "store" | "setup";
+	target: FirstStepTarget;
 	/** Paso de «Configura tu tienda» en el que se abre (con `target: "setup"`). */
 	setupStep?: OwnerSetupStep;
 	actionLabel: string;
 };
+
+/** «Publicar mi tienda»: lleva al plan y al pago de su propia alta (o al estado del pago). */
+export const ACCOUNT_PUBLISH_PATH = "/cuenta/publicar";
+
+/** La ruta de los pasos que salen del Resumen a otra página. */
+export function firstStepPath(target: Extract<FirstStepTarget, "setup" | "publish">, setupStep?: OwnerSetupStep): string {
+	if (target === "publish") return ACCOUNT_PUBLISH_PATH;
+	return `/cuenta/configurar${setupStep ? `?paso=${setupStep}` : ""}`;
+}
 
 type FirstStepsInput = {
 	productCount: number;
@@ -91,8 +106,8 @@ export function buildFirstSteps(input: FirstStepsInput): FirstStep[] {
 			actionLabel: "Elegir diseño",
 		},
 		// En vista previa solo el dueño ve la tienda: compartir el enlace no trae pedidos. El
-		// paso que falta es publicarla, desde el paso «Publicar» del asistente (de ahí va a
-		// `/cuenta/publicar`, a elegir el plan y pagar).
+		// paso que falta es publicarla: va directo a `/cuenta/publicar` (elegir el plan y pagar,
+		// o ver el estado del pago si ya está en revisión), sin pasar por el asistente.
 		input.storeDraft
 			? {
 					id: "publish",
@@ -101,8 +116,7 @@ export function buildFirstSteps(input: FirstStepsInput): FirstStep[] {
 						? "Estamos validando tu pago. Se publica sola al confirmarlo."
 						: "Tus clientes todavía no la ven. Eliges tu plan y pagas.",
 					done: false,
-					target: "setup",
-					setupStep: "publicar",
+					target: "publish",
 					actionLabel: input.storeDraft.paymentInReview ? "Ver el estado" : "Publicar mi tienda",
 				}
 			: {

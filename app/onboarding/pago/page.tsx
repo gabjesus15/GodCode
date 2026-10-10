@@ -155,6 +155,7 @@ function StatusCard({
 	actionLabel,
 	actionHref,
 	step = false,
+	panelOnly = false,
 }: {
 	tone: "error" | "done" | "review";
 	title: string;
@@ -162,12 +163,14 @@ function StatusCard({
 	actionLabel?: string;
 	actionHref?: string;
 	step?: boolean;
+	/** «Solo panel CEO»: la barra de pasos dice «Tu plan» en vez de «Publicar». */
+	panelOnly?: boolean;
 }) {
 	const Icon = tone === "error" ? AlertCircle : tone === "review" ? Clock : MailCheck;
 	const iconClass = tone === "error" ? "bg-red-50 text-red-600" : tone === "review" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700";
 	return (
 		<main className="mx-auto w-full max-w-xl px-5 py-10 sm:px-8 sm:py-16">
-			{step ? <OnboardingStepBar current={3} compact /> : null}
+			{step ? <OnboardingStepBar current={3} compact panelOnly={panelOnly} /> : null}
 			<div className="rounded-2xl border border-slate-200 p-6 sm:p-8" role={tone === "error" ? "alert" : "status"}>
 				<span className={`flex h-11 w-11 items-center justify-center rounded-full ${iconClass}`}>
 					<Icon className="h-5 w-5" aria-hidden />
@@ -202,6 +205,8 @@ function PagoContent() {
 	const [referenceSubmitted, setReferenceSubmitted] = useState(false);
 	/** «Arma y paga»: paga para abrir una tienda que ya armó (vuelve a ella, no al login). */
 	const [storeDraft, setStoreDraft] = useState(false);
+	/** «Solo panel CEO» sin tienda armada: ni la barra ni los próximos pasos hablan de una tienda. */
+	const [panelOnly, setPanelOnly] = useState(false);
 	const [planSummary, setPlanSummary] = useState<{ name: string; price: number; addons: Array<{ name: string; price: number }> } | null>(null);
 	const [promoAvailable, setPromoAvailable] = useState(false);
 	const [subscriptionMethod, setSubscriptionMethod] = useState<string>("");
@@ -270,6 +275,7 @@ function PagoContent() {
 				receipt_uploaded?: boolean;
 				business_name?: string | null;
 				store_draft?: boolean;
+				panel_only?: boolean;
 				quote?: Quote | null;
 				coupon?: CouponState | null;
 				mercadopago?: MercadoPagoOffer | null;
@@ -282,6 +288,8 @@ function PagoContent() {
 				setReceiptUploaded(data.receipt_uploaded === true);
 				setBusinessName(String(data.business_name ?? "").trim());
 				setStoreDraft(data.store_draft === true);
+				// Con una tienda armada siempre manda la tienda (el servicio ya responde así).
+				setPanelOnly(data.panel_only === true && data.store_draft !== true);
 				setQuote(data.quote ?? null);
 				setCoupon(data.coupon ?? null);
 			})
@@ -676,6 +684,7 @@ function PagoContent() {
 		return (
 			<StatusCard
 				step
+				panelOnly={panelOnly}
 				tone={alreadyPaid ? "done" : "review"}
 				title={alreadyPaid ? copy.alreadyPaidTitle : copy.manualSuccessTitle}
 				body={alreadyPaid ? copy.alreadyPaidBody : copy.manualSuccessBody}
@@ -712,7 +721,8 @@ function PagoContent() {
 			: isPaypalSelected
 				? copy.ui.paypalActivation
 				: copy.ui.manualActivation;
-	const nextSteps = storeDraft ? copy.draft.nextSteps : copy.ui.nextSteps;
+	// «Solo panel CEO»: el último paso es entrar al panel, no dejar el menú listo.
+	const nextSteps = storeDraft ? copy.draft.nextSteps : panelOnly ? copy.ui.panelOnlyNextSteps : copy.ui.nextSteps;
 
 	const summary = (
 		<aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
@@ -815,7 +825,7 @@ function PagoContent() {
 		const configEntries = Object.entries(manualData.method_config).filter(([, value]) => Boolean(value));
 		return (
 			<main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-12 lg:py-14">
-				<OnboardingStepBar current={3} />
+				<OnboardingStepBar current={3} panelOnly={panelOnly} />
 				<div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
 					<section className="min-w-0 max-w-2xl">
 						{referenceSubmitted ? (
@@ -923,7 +933,8 @@ function PagoContent() {
 	/* ── Elegir meses y pagar ── */
 	return (
 		<main className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-12 lg:py-14">
-			<OnboardingStepBar current={3} />
+			{/* Hasta saber si es «solo panel CEO», la barra guarda su lugar sin mostrar pasos que no son. */}
+			<OnboardingStepBar current={3} panelOnly={panelOnly} className={appLoaded ? undefined : "invisible"} />
 			<div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-12">
 				<section className="min-w-0 max-w-2xl">
 					<h1 className="text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">

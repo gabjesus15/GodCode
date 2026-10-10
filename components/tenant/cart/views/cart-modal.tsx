@@ -48,6 +48,7 @@ import {
 } from "../services/build-whatsapp-handoff";
 import { resolveDeliveryMapsUrl } from "@/lib/delivery/delivery-location";
 import { paymentMethodRequiresReceipt } from "../services/menu-order-payment";
+import { orderSubmitErrorMessage } from "../services/order-error";
 import { parseOrderRpcPayload } from "../services/order-payload";
 import { useSubmitOrder } from "../services/order-submission";
 import { useCart } from "../use-cart";
@@ -536,8 +537,9 @@ export function CartModal({
 				finalize();
 			}
 		} catch (caught: unknown) {
-			const message = (caught as { message?: unknown } | null)?.message;
-			showError(typeof message === "string" && message ? message : t("errors.processOrderTryAgain"));
+			// La tienda dejó de vender (vista previa, suspendida o vencida) llega con código y se
+			// avisa en el idioma del menú; el resto de los rechazos ya trae su texto.
+			showError(orderSubmitErrorMessage(caught, t));
 			setResult((current) => ({ ...current, isSaving: false }));
 		} finally {
 			submitLockRef.current = false;

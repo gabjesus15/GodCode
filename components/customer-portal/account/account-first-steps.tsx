@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { ArrowRight, Check } from "lucide-react";
 
-import type { FirstStep } from "@/lib/tenant/account-first-steps";
+import { trackEvent } from "@/lib/analytics/track-event";
+import { firstStepPath, type FirstStep } from "@/lib/tenant/account-first-steps";
 import type { PortalTab } from "../shared/customer-account-types";
 import { Card } from "../ui/Card";
 
@@ -26,8 +27,15 @@ export function AccountFirstSteps({
 			if (storeUrl) window.open(storeUrl, "_blank", "noopener,noreferrer");
 			return;
 		}
+		if (step.target === "publish") {
+			// Directo a elegir el plan y pagar, sin pasar por el asistente. Con recarga completa, como
+			// «Publicar mi tienda» del asistente: la ruta termina en el alta, que tiene otro diseño.
+			trackEvent("publish_click", { flow: "draft", from: "first_steps" });
+			window.location.assign(firstStepPath("publish"));
+			return;
+		}
 		if (step.target === "setup") {
-			router.push(`/cuenta/configurar${step.setupStep ? `?paso=${step.setupStep}` : ""}`);
+			router.push(firstStepPath("setup", step.setupStep));
 			return;
 		}
 		onNavigate(step.target);

@@ -6,6 +6,8 @@
  *
  * Quien llega con un plan «solo panel CEO» (sin menú público) no arma tienda: con
  * `getOnboardingUiCopy(locale, { panelOnly: true })` los textos dejan de prometerla.
+ *
+ * Los errores del paso 1 llegan del servicio de alta como códigos (abajo) y se traducen aquí.
  */
 
 export type OnboardingLocale = "es" | "en" | "pt" | "fr" | "de" | "it";
@@ -14,6 +16,36 @@ export function resolveOnboardingLocale(locale: string | null | undefined): Onbo
 	const value = String(locale ?? "es").toLowerCase();
 	for (const candidate of ["en", "pt", "fr", "de", "it"] as const) if (value.startsWith(candidate)) return candidate;
 	return "es";
+}
+
+/**
+ * Códigos de error de `/api/onboarding/apply` (el paso 1) y de
+ * `/api/onboarding/resend-verification` («Reenviar correo»). El servicio los responde junto a
+ * un texto en español que queda para el log y para clientes viejos: el formulario muestra el
+ * de su idioma (`form.errors` y `form.resendErrors`).
+ */
+export const APPLY_ERROR_CODES = ["invalid_input", "email_invalid", "terms_required", "recaptcha_failed", "rate_limited", "server_error"] as const;
+export type ApplyErrorCode = (typeof APPLY_ERROR_CODES)[number];
+
+export const RESEND_ERROR_CODES = ["email_invalid", "rate_limited", "email_not_sent", "server_error"] as const;
+export type ResendErrorCode = (typeof RESEND_ERROR_CODES)[number];
+
+/**
+ * El código de la respuesta si es uno conocido. Si no trae (el límite de intentos de la app,
+ * el servicio caído o una versión del servicio anterior a los códigos), el que sale del
+ * status: 429 es el límite y lo demás, un problema nuestro.
+ */
+function resolveErrorCode<Code extends string>(known: readonly Code[], code: unknown, status: number): Code | "rate_limited" | "server_error" {
+	if (typeof code === "string" && (known as readonly string[]).includes(code)) return code as Code;
+	return status === 429 ? "rate_limited" : "server_error";
+}
+
+export function resolveApplyErrorCode(code: unknown, status: number): ApplyErrorCode {
+	return resolveErrorCode(APPLY_ERROR_CODES, code, status);
+}
+
+export function resolveResendErrorCode(code: unknown, status: number): ResendErrorCode {
+	return resolveErrorCode(RESEND_ERROR_CODES, code, status);
 }
 
 type StepItem = { title: string; hint: string };
@@ -47,8 +79,10 @@ export type OnboardingUiCopy = {
 		privacyLink: string;
 		analyticsNotice: string;
 		submit: string;
-		errorSubmit: string;
-		errorUnexpected: string;
+		/** Por código de `/api/onboarding/apply`. */
+		errors: Record<ApplyErrorCode, string>;
+		/** La petición no llegó (sin conexión): en el envío y en «Reenviar correo». */
+		errorConnection: string;
 		sentTitle: string;
 		sentBody: string;
 		sentTips: string[];
@@ -58,7 +92,8 @@ export type OnboardingUiCopy = {
 		resending: string;
 		resendWait: string;
 		resendSuccess: string;
-		resendError: string;
+		/** Por código de `/api/onboarding/resend-verification`. */
+		resendErrors: Record<ResendErrorCode, string>;
 		wrongEmail: string;
 		startOver: string;
 	};
@@ -126,8 +161,15 @@ const es: OnboardingUiCopy = {
 		analyticsNotice:
 			"Gcode mide el uso de la plataforma (tu panel CEO y tu menú público) con analítica propia y, si lo aceptas en el aviso de cookies, Google Analytics.",
 		submit: "Crear mi tienda",
-		errorSubmit: "No pudimos enviar tu solicitud. Intenta de nuevo.",
-		errorUnexpected: "Algo salió mal. Intenta de nuevo.",
+		errors: {
+			invalid_input: "Escribe el nombre del negocio y tu nombre, con al menos 2 letras.",
+			email_invalid: "Revisa tu correo. Debe tener la forma tu@negocio.com.",
+			terms_required: "Para seguir, acepta los términos y la política de privacidad.",
+			recaptcha_failed: "No pudimos comprobar que eres una persona. Recarga la página e inténtalo de nuevo.",
+			rate_limited: "Hiciste muchos intentos seguidos. Espera unos minutos e inténtalo de nuevo.",
+			server_error: "No pudimos enviar tu solicitud. Intenta de nuevo en unos minutos.",
+		},
+		errorConnection: "No hay conexión. Revisa tu internet e intenta de nuevo.",
 		sentTitle: "Revisa tu correo",
 		sentBody: "Enviamos un enlace a {email}. Ábrelo para crear tu tienda.",
 		sentTips: ["Llega en menos de un minuto. Si no lo ves, revisa spam o promociones.", "El enlace vale 7 días."],
@@ -137,7 +179,12 @@ const es: OnboardingUiCopy = {
 		resending: "Reenviando…",
 		resendWait: "Puedes reenviarlo en {seconds} s",
 		resendSuccess: "Listo, te lo enviamos de nuevo.",
-		resendError: "No pudimos reenviar el correo.",
+		resendErrors: {
+			email_invalid: "Revisa tu correo. Pulsa «Volver a empezar» y escríbelo de nuevo.",
+			rate_limited: "Pediste varios correos seguidos. Espera unos minutos antes de pedir otro.",
+			email_not_sent: "El correo no salió. Intenta de nuevo en unos minutos.",
+			server_error: "No pudimos reenviar el correo. Intenta de nuevo en unos minutos.",
+		},
 		wrongEmail: "¿Escribiste mal el correo?",
 		startOver: "Volver a empezar",
 	},
@@ -199,8 +246,15 @@ const en: OnboardingUiCopy = {
 		analyticsNotice:
 			"Gcode measures platform usage (your CEO panel and your public menu) with its own analytics and, if you accept it in the cookie notice, Google Analytics.",
 		submit: "Create my store",
-		errorSubmit: "We could not send your request. Please try again.",
-		errorUnexpected: "Something went wrong. Please try again.",
+		errors: {
+			invalid_input: "Enter your business name and your name, with at least 2 letters.",
+			email_invalid: "Check your email. It should look like you@business.com.",
+			terms_required: "To continue, accept the terms and the privacy policy.",
+			recaptcha_failed: "We could not verify that you are a person. Reload the page and try again.",
+			rate_limited: "Too many attempts in a row. Wait a few minutes and try again.",
+			server_error: "We could not send your request. Try again in a few minutes.",
+		},
+		errorConnection: "No connection. Check your internet and try again.",
 		sentTitle: "Check your email",
 		sentBody: "We sent a link to {email}. Open it to create your store.",
 		sentTips: ["It arrives in under a minute. If you don't see it, check spam or promotions.", "The link is valid for 7 days."],
@@ -210,7 +264,12 @@ const en: OnboardingUiCopy = {
 		resending: "Resending…",
 		resendWait: "You can resend in {seconds} s",
 		resendSuccess: "Done, we sent it again.",
-		resendError: "We could not resend the email.",
+		resendErrors: {
+			email_invalid: "Check your email. Tap “Start over” and enter it again.",
+			rate_limited: "You asked for several emails in a row. Wait a few minutes before asking for another.",
+			email_not_sent: "The email did not go out. Try again in a few minutes.",
+			server_error: "We could not resend the email. Try again in a few minutes.",
+		},
 		wrongEmail: "Typed the wrong email?",
 		startOver: "Start over",
 	},
@@ -272,8 +331,15 @@ const pt: OnboardingUiCopy = {
 		analyticsNotice:
 			"A Gcode mede o uso da plataforma (seu painel CEO e seu cardápio público) com análise própria e, se você aceitar no aviso de cookies, Google Analytics.",
 		submit: "Criar minha loja",
-		errorSubmit: "Não conseguimos enviar sua solicitação. Tente novamente.",
-		errorUnexpected: "Algo deu errado. Tente novamente.",
+		errors: {
+			invalid_input: "Escreva o nome do negócio e o seu nome, com pelo menos 2 letras.",
+			email_invalid: "Confira seu e-mail. Ele deve ter a forma voce@negocio.com.",
+			terms_required: "Para continuar, aceite os termos e a política de privacidade.",
+			recaptcha_failed: "Não conseguimos confirmar que você é uma pessoa. Recarregue a página e tente novamente.",
+			rate_limited: "Muitas tentativas seguidas. Espere alguns minutos e tente novamente.",
+			server_error: "Não conseguimos enviar sua solicitação. Tente novamente em alguns minutos.",
+		},
+		errorConnection: "Sem conexão. Verifique sua internet e tente novamente.",
 		sentTitle: "Confira seu e-mail",
 		sentBody: "Enviamos um link para {email}. Abra-o para criar sua loja.",
 		sentTips: ["Chega em menos de um minuto. Se não aparecer, veja o spam ou promoções.", "O link vale por 7 dias."],
@@ -283,7 +349,12 @@ const pt: OnboardingUiCopy = {
 		resending: "Reenviando…",
 		resendWait: "Você pode reenviar em {seconds} s",
 		resendSuccess: "Pronto, enviamos de novo.",
-		resendError: "Não conseguimos reenviar o e-mail.",
+		resendErrors: {
+			email_invalid: "Confira seu e-mail. Toque em “Começar de novo” e digite-o novamente.",
+			rate_limited: "Você pediu vários e-mails seguidos. Espere alguns minutos antes de pedir outro.",
+			email_not_sent: "O e-mail não saiu. Tente novamente em alguns minutos.",
+			server_error: "Não conseguimos reenviar o e-mail. Tente novamente em alguns minutos.",
+		},
 		wrongEmail: "Digitou o e-mail errado?",
 		startOver: "Começar de novo",
 	},
@@ -345,8 +416,15 @@ const fr: OnboardingUiCopy = {
 		analyticsNotice:
 			"Gcode mesure l’utilisation de la plateforme (votre panneau CEO et votre menu public) avec ses propres statistiques et, si vous l’acceptez dans le bandeau des cookies, Google Analytics.",
 		submit: "Créer ma boutique",
-		errorSubmit: "Nous n’avons pas pu envoyer votre demande. Réessayez.",
-		errorUnexpected: "Une erreur s’est produite. Réessayez.",
+		errors: {
+			invalid_input: "Indiquez le nom de l’établissement et votre nom, avec au moins 2 lettres.",
+			email_invalid: "Vérifiez votre e-mail. Il doit avoir la forme vous@etablissement.com.",
+			terms_required: "Pour continuer, acceptez les conditions et la politique de confidentialité.",
+			recaptcha_failed: "Nous n’avons pas pu vérifier que vous êtes une personne. Rechargez la page et réessayez.",
+			rate_limited: "Trop de tentatives d’affilée. Patientez quelques minutes et réessayez.",
+			server_error: "Nous n’avons pas pu envoyer votre demande. Réessayez dans quelques minutes.",
+		},
+		errorConnection: "Pas de connexion. Vérifiez votre internet et réessayez.",
 		sentTitle: "Consultez votre e-mail",
 		sentBody: "Nous avons envoyé un lien à {email}. Ouvrez-le pour créer votre boutique.",
 		sentTips: ["Il arrive en moins d’une minute. Sinon, vérifiez les spams ou les promotions.", "Le lien est valable 7 jours."],
@@ -356,7 +434,12 @@ const fr: OnboardingUiCopy = {
 		resending: "Envoi…",
 		resendWait: "Vous pourrez le renvoyer dans {seconds} s",
 		resendSuccess: "C’est fait, nous l’avons renvoyé.",
-		resendError: "Nous n’avons pas pu renvoyer l’e-mail.",
+		resendErrors: {
+			email_invalid: "Vérifiez votre e-mail. Appuyez sur « Recommencer » et saisissez-le à nouveau.",
+			rate_limited: "Vous avez demandé plusieurs e-mails d’affilée. Patientez quelques minutes avant d’en demander un autre.",
+			email_not_sent: "L’e-mail n’est pas parti. Réessayez dans quelques minutes.",
+			server_error: "Nous n’avons pas pu renvoyer l’e-mail. Réessayez dans quelques minutes.",
+		},
 		wrongEmail: "Erreur dans l’e-mail ?",
 		startOver: "Recommencer",
 	},
@@ -418,8 +501,15 @@ const de: OnboardingUiCopy = {
 		analyticsNotice:
 			"Gcode misst die Nutzung der Plattform (Ihr CEO-Panel und Ihre öffentliche Speisekarte) mit eigener Analyse und, wenn Sie es im Cookie-Hinweis erlauben, mit Google Analytics.",
 		submit: "Meinen Shop erstellen",
-		errorSubmit: "Wir konnten Ihre Anfrage nicht senden. Bitte erneut versuchen.",
-		errorUnexpected: "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+		errors: {
+			invalid_input: "Geben Sie den Namen des Geschäfts und Ihren Namen ein, mit mindestens 2 Buchstaben.",
+			email_invalid: "Prüfen Sie Ihre E-Mail. Sie sollte so aussehen: sie@geschaeft.com.",
+			terms_required: "Um fortzufahren, akzeptieren Sie die Nutzungsbedingungen und die Datenschutzerklärung.",
+			recaptcha_failed: "Wir konnten nicht bestätigen, dass Sie ein Mensch sind. Laden Sie die Seite neu und versuchen Sie es erneut.",
+			rate_limited: "Zu viele Versuche hintereinander. Warten Sie ein paar Minuten und versuchen Sie es erneut.",
+			server_error: "Wir konnten Ihre Anfrage nicht senden. Versuchen Sie es in ein paar Minuten erneut.",
+		},
+		errorConnection: "Keine Verbindung. Prüfen Sie Ihr Internet und versuchen Sie es erneut.",
 		sentTitle: "Prüfen Sie Ihr Postfach",
 		sentBody: "Wir haben einen Link an {email} gesendet. Öffnen Sie ihn, um Ihren Shop zu erstellen.",
 		sentTips: ["Er kommt in weniger als einer Minute. Sonst prüfen Sie Spam oder Werbung.", "Der Link ist 7 Tage gültig."],
@@ -429,7 +519,12 @@ const de: OnboardingUiCopy = {
 		resending: "Wird gesendet…",
 		resendWait: "Erneut senden in {seconds} s",
 		resendSuccess: "Erledigt, wir haben sie erneut gesendet.",
-		resendError: "Die E-Mail konnte nicht erneut gesendet werden.",
+		resendErrors: {
+			email_invalid: "Prüfen Sie Ihre E-Mail. Tippen Sie auf „Neu beginnen“ und geben Sie sie erneut ein.",
+			rate_limited: "Sie haben mehrere E-Mails nacheinander angefordert. Warten Sie ein paar Minuten, bevor Sie eine weitere anfordern.",
+			email_not_sent: "Die E-Mail wurde nicht gesendet. Versuchen Sie es in ein paar Minuten erneut.",
+			server_error: "Die E-Mail konnte nicht erneut gesendet werden. Versuchen Sie es in ein paar Minuten erneut.",
+		},
 		wrongEmail: "Falsche E-Mail eingegeben?",
 		startOver: "Neu beginnen",
 	},
@@ -491,8 +586,15 @@ const it: OnboardingUiCopy = {
 		analyticsNotice:
 			"Gcode misura l’uso della piattaforma (il tuo pannello CEO e il tuo menu pubblico) con analisi proprie e, se lo accetti nell’avviso sui cookie, Google Analytics.",
 		submit: "Crea il mio negozio",
-		errorSubmit: "Non siamo riusciti a inviare la richiesta. Riprova.",
-		errorUnexpected: "Qualcosa è andato storto. Riprova.",
+		errors: {
+			invalid_input: "Scrivi il nome dell’attività e il tuo nome, con almeno 2 lettere.",
+			email_invalid: "Controlla la tua email. Deve avere la forma tu@attivita.com.",
+			terms_required: "Per continuare, accetta i termini e la politica sulla privacy.",
+			recaptcha_failed: "Non siamo riusciti a verificare che sei una persona. Ricarica la pagina e riprova.",
+			rate_limited: "Troppi tentativi di fila. Aspetta qualche minuto e riprova.",
+			server_error: "Non siamo riusciti a inviare la richiesta. Riprova tra qualche minuto.",
+		},
+		errorConnection: "Nessuna connessione. Controlla internet e riprova.",
 		sentTitle: "Controlla la tua email",
 		sentBody: "Abbiamo inviato un link a {email}. Aprilo per creare il tuo negozio.",
 		sentTips: ["Arriva in meno di un minuto. Se non lo vedi, controlla spam o promozioni.", "Il link è valido 7 giorni."],
@@ -502,7 +604,12 @@ const it: OnboardingUiCopy = {
 		resending: "Invio…",
 		resendWait: "Puoi reinviarla tra {seconds} s",
 		resendSuccess: "Fatto, te l’abbiamo inviata di nuovo.",
-		resendError: "Non siamo riusciti a reinviare l’email.",
+		resendErrors: {
+			email_invalid: "Controlla la tua email. Tocca «Ricomincia» e scrivila di nuovo.",
+			rate_limited: "Hai chiesto diverse email di fila. Aspetta qualche minuto prima di chiederne un’altra.",
+			email_not_sent: "L’email non è partita. Riprova tra qualche minuto.",
+			server_error: "Non siamo riusciti a reinviare l’email. Riprova tra qualche minuto.",
+		},
 		wrongEmail: "Hai sbagliato email?",
 		startOver: "Ricomincia",
 	},

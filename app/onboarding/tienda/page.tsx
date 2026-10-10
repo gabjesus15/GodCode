@@ -10,7 +10,7 @@ import { getCurrentLocale } from "@/lib/i18n/server";
 import { resolveBusinessSector } from "@/lib/onboarding/business-sectors";
 import { getOnboardingUiCopy } from "@/lib/onboarding/onboarding-ui-copy";
 import { getStoreStartCopy } from "@/lib/onboarding/store-start-copy";
-import { isPanelOnlyPlan, suggestStoreSlug } from "@/lib/onboarding/store-draft-service";
+import { isPanelOnlyPlan, loadStoreDraftState, suggestStoreSlug } from "@/lib/onboarding/store-draft-service";
 import { getTenantHomeUrl } from "@/utils/tenant-url";
 
 /** @service-role capability-token
@@ -46,10 +46,35 @@ function readToken(raw: string | string[] | undefined): string | null {
 	return token && token.length <= 100 ? token : null;
 }
 
-function Notice({ title, text, action }: { title: string; text: string; action: { label: string; href: string } }) {
+/**
+ * «Solo panel CEO» con la cuenta ya creada (pagó): no hay tienda armada de la que hablar. Con
+ * una tienda armada, o si no se puede leer el plan o la tienda, los textos de la tienda.
+ */
+async function isPanelOnlyAccount(app: AppRow): Promise<boolean> {
+	const [panelOnly, draft] = await Promise.all([
+		isPanelOnlyPlan(supabaseAdmin, app.plan_id).catch(() => false),
+		app.company_id ? loadStoreDraftState(supabaseAdmin, app.company_id).catch(() => null) : Promise.resolve({ fromDraft: false }),
+	]);
+	return panelOnly && draft?.fromDraft === false;
+}
+
+/** `step` y `panelOnly`: con «solo panel CEO» la barra es Registro → Tu correo → Tu plan, y la cuenta llega al pagar. */
+function Notice({
+	title,
+	text,
+	action,
+	step = 2,
+	panelOnly = false,
+}: {
+	title: string;
+	text: string;
+	action: { label: string; href: string };
+	step?: 2 | 3;
+	panelOnly?: boolean;
+}) {
 	return (
 		<main className="mx-auto w-full max-w-xl px-5 py-10 sm:px-8 sm:py-16">
-			<OnboardingStepBar current={2} compact />
+			<OnboardingStepBar current={step} compact panelOnly={panelOnly} />
 			<div className="rounded-2xl border border-slate-200 p-6 sm:p-8" role="status">
 				<span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#EEF0FF] text-[#3640C9]">
 					<AlertCircle className="h-5 w-5" aria-hidden />
@@ -84,12 +109,19 @@ export default async function OnboardingStorePage({ searchParams }: { searchPara
 	}
 	if (app.status === "pending_verification") redirect(`/onboarding/verify/${encodeURIComponent(token)}`);
 	if (app.company_id || app.payment_status === "paid" || app.status === "active") {
+		// «Solo panel CEO» ya pagado (p. ej. desde el enlace del primer correo): habla de la cuenta.
+		if (await isPanelOnlyAccount(app)) {
+			return (
+				<Notice step={3} panelOnly title={t.panelOnlyCreatedTitle} text={t.panelOnlyCreatedBody} action={{ label: t.login, href: "/login" }} />
+			);
+		}
 		return <Notice title={t.createdTitle} text={t.createdBody} action={{ label: t.login, href: "/login" }} />;
 	}
 	// Quien empezó con el alta de antes (plan y pago primero) sigue por ahí.
 	if (app.status === "form_completed" || app.status === "payment_pending") redirect(`/onboarding/pago?token=${encodeURIComponent(token)}`);
-	// «Solo panel CEO»: no hay tienda que armar, sigue directo a elegir el plan y pagar.
-	if (await isPanelOnlyPlan(supabaseAdmin, app.plan_id)) redirect(`/onboarding/complete?token=${encodeURIComponent(token)}`);
+	// «Solo panel CEO»: no hay tienda que armar, sigue directo a elegir el plan y pagar. Si no se
+	// puede leer el plan se muestra el formulario: «Crear mi tienda» lo vuelve a revisar y lo manda ahí.
+	if (await isPanelOnlyPlan(supabaseAdmin, app.plan_id).catch(() => false)) redirect(`/onboarding/complete?token=${encodeURIComponent(token)}`);
 
 	const businessName = String(app.business_name ?? "").trim();
 	const initialSlug = await suggestStoreSlug(supabaseAdmin, businessName);

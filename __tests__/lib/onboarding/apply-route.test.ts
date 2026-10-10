@@ -28,7 +28,10 @@ vi.mock("@/lib/onboarding/recaptcha", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@/lib/onboarding/recaptcha")>()),
 	verifyRecaptcha: (...args: unknown[]) => verifyRecaptcha(...args),
 }));
-vi.mock("@/lib/onboarding/rate-limit", () => ({ isRateLimited: async () => false }));
+const isRateLimited = vi.fn(async (_key: string, _limit: number, _windowMs: number) => false);
+vi.mock("@/lib/onboarding/rate-limit", () => ({
+	isRateLimited: (key: string, limit: number, windowMs: number) => isRateLimited(key, limit, windowMs),
+}));
 vi.mock("@/lib/onboarding/team-alerts", () => ({ alertOnboardingTeam: async () => undefined }));
 const sendEmail = vi.fn(async (_input: unknown) => ({ status: "sent" as const }));
 vi.mock("@/lib/email/send", () => ({ sendEmail: (input: unknown) => sendEmail(input), teamInbox: () => null }));
@@ -38,6 +41,7 @@ vi.mock("@/lib/onboarding/resume-application", () => ({
 }));
 
 import { logger } from "@/lib/infra/logger";
+import { APPLY_ERROR_CODES } from "@/lib/onboarding/onboarding-ui-copy";
 import { POST } from "@/services/onboarding-billing/app/api/onboarding/apply/route";
 
 function apply(extra: Record<string, unknown> = {}) {
@@ -66,7 +70,19 @@ beforeEach(() => {
 	sendOnboardingResumeLink.mockReset();
 	verifyRecaptcha.mockReset();
 	verifyRecaptcha.mockResolvedValue({ ok: true });
+	isRateLimited.mockReset();
+	isRateLimited.mockResolvedValue(false);
 });
+
+/** Un rechazo: el código que traduce el paso 1, más el texto en español para el log y clientes viejos. */
+async function expectFailure(res: Response, status: number, code: string) {
+	expect(res.status).toBe(status);
+	const body = (await res.json()) as { code?: string; error?: string };
+	expect(body.code).toBe(code);
+	expect(APPLY_ERROR_CODES as readonly string[]).toContain(body.code);
+	expect(body.error?.trim()).toBeTruthy();
+	expect(db.insertedRows).toHaveLength(0);
+}
 
 describe("POST /api/onboarding/apply", () => {
 	it("un correo que ya tenía alta recibe la misma respuesta que uno nuevo", async () => {
@@ -126,15 +142,55 @@ describe("POST /api/onboarding/apply", () => {
 		expect(verifyRecaptcha).toHaveBeenCalledWith("token-del-paso-1", expect.any(String), { expectedAction: "onboarding_apply" });
 	});
 
-	it("si reCAPTCHA rechaza, no guarda nada y deja el motivo en el log", async () => {
+	it("si reCAPTCHA rechaza, no guarda nada, responde recaptcha_failed y deja el motivo en el log", async () => {
 		const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
 		verifyRecaptcha.mockResolvedValue({ ok: false, error: "low-score", score: 0.1, action: "onboarding_apply" });
 		const res = await apply();
 		expect(res.status).toBe(400);
-		expect(await res.json()).not.toHaveProperty("score");
+		const body = await res.json();
+		expect(body).toMatchObject({ code: "recaptcha_failed" });
+		// El motivo y el puntaje solo van al log.
+		expect(body).not.toHaveProperty("score");
+		expect(JSON.stringify(body)).not.toContain("low-score");
 		expect(db.insertedRows).toHaveLength(0);
 		expect(warn).toHaveBeenCalledWith("recaptcha_failed", expect.anything(), { reason: "low-score", score: 0.1, action: "onboarding_apply" });
 		warn.mockRestore();
+	});
+
+	it("sin nombre del negocio o del responsable responde invalid_input", async () => {
+		await expectFailure(await apply({ business_name: "  " }), 400, "invalid_input");
+		await expectFailure(await apply({ responsible_name: "A" }), 400, "invalid_input");
+	});
+
+	it("un correo mal escrito responde email_invalid", async () => {
+		await expectFailure(await apply({ email: "dueno@local" }), 400, "email_invalid");
+	});
+
+	it("sin aceptar los términos responde terms_required", async () => {
+		await expectFailure(await apply({ privacy_accepted: false }), 400, "terms_required");
+	});
+
+	it("con el límite de intentos alcanzado responde rate_limited, exista o no el alta", async () => {
+		isRateLimited.mockResolvedValue(true);
+		await expectFailure(await apply(), 429, "rate_limited");
+		expect(sendOnboardingResumeLink).not.toHaveBeenCalled();
+		expect(verifyRecaptcha).not.toHaveBeenCalled();
+	});
+
+	it("si la base falla al guardar responde server_error", async () => {
+		const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+		db.inserts = [{ data: null, error: { code: "08006", message: "connection failure" } }];
+		const res = await apply();
+		expect(res.status).toBe(500);
+		expect(await res.json()).toMatchObject({ code: "server_error" });
+		expect(sendEmail).not.toHaveBeenCalled();
+		error.mockRestore();
+	});
+
+	it("una respuesta correcta no trae código de error", async () => {
+		const res = await apply();
+		expect(res.status).toBe(200);
+		expect(await res.json()).not.toHaveProperty("code");
 	});
 
 	it("con un plan con tienda, el correo de verificación va como siempre", async () => {

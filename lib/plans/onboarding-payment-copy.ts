@@ -94,6 +94,8 @@ export type OnboardingPaymentCopy = {
     manualActivation: string;
     nextTitle: string;
     nextSteps: [string, string, string];
+    /** «Solo panel CEO» (sin menú público): el último paso es entrar al panel, no dejar el menú listo. */
+    panelOnlyNextSteps: [string, string, string];
     showBankDetails: string;
     transferStep: string;
     uploadStep: string;
@@ -229,6 +231,7 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       manualActivation: "Activamos tu cuenta cuando validamos el comprobante. Te avisamos por correo.",
       nextTitle: "Qué pasa después",
       nextSteps: ["Confirmamos tu pago", "Te llega un correo para crear tu contraseña", "Te ayudamos a dejar tu menú listo"],
+      panelOnlyNextSteps: ["Confirmamos tu pago", "Te llega un correo para crear tu contraseña", "Entras a tu panel CEO"],
       showBankDetails: "Ver datos para transferir",
       transferStep: "Transfiere el monto exacto",
       uploadStep: "Sube el comprobante",
@@ -376,6 +379,7 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       manualActivation: "We activate your account once we validate the receipt. We will let you know by email.",
       nextTitle: "What happens next",
       nextSteps: ["We confirm your payment", "You get an email to create your password", "We help you get your menu ready"],
+      panelOnlyNextSteps: ["We confirm your payment", "You get an email to create your password", "You sign in to your CEO panel"],
       showBankDetails: "See transfer details",
       transferStep: "Transfer the exact amount",
       uploadStep: "Upload the receipt",
@@ -523,6 +527,7 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       manualActivation: "Ativamos sua conta quando validamos o comprovante. Avisamos por e-mail.",
       nextTitle: "O que acontece depois",
       nextSteps: ["Confirmamos seu pagamento", "Você recebe um e-mail para criar sua senha", "Ajudamos a deixar seu cardápio pronto"],
+      panelOnlyNextSteps: ["Confirmamos seu pagamento", "Você recebe um e-mail para criar sua senha", "Você entra no seu painel CEO"],
       showBankDetails: "Ver dados para transferir",
       transferStep: "Transfira o valor exato",
       uploadStep: "Envie o comprovante",
@@ -670,6 +675,7 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       manualActivation: "Nous activons votre compte après validation du justificatif. Nous vous prévenons par e-mail.",
       nextTitle: "La suite",
       nextSteps: ["Nous confirmons votre paiement", "Vous recevez un e-mail pour créer votre mot de passe", "Nous vous aidons à préparer votre menu"],
+      panelOnlyNextSteps: ["Nous confirmons votre paiement", "Vous recevez un e-mail pour créer votre mot de passe", "Vous accédez à votre panneau CEO"],
       showBankDetails: "Voir les coordonnées du virement",
       transferStep: "Virez le montant exact",
       uploadStep: "Envoyez le justificatif",
@@ -817,6 +823,7 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       manualActivation: "Wir aktivieren Ihr Konto, sobald wir den Beleg geprüft haben. Wir informieren Sie per E-Mail.",
       nextTitle: "So geht es weiter",
       nextSteps: ["Wir bestätigen Ihre Zahlung", "Sie erhalten eine E-Mail zum Erstellen Ihres Passworts", "Wir helfen Ihnen mit Ihrer Speisekarte"],
+      panelOnlyNextSteps: ["Wir bestätigen Ihre Zahlung", "Sie erhalten eine E-Mail zum Erstellen Ihres Passworts", "Sie melden sich in Ihrem CEO-Panel an"],
       showBankDetails: "Überweisungsdaten anzeigen",
       transferStep: "Überweisen Sie den genauen Betrag",
       uploadStep: "Laden Sie den Beleg hoch",
@@ -964,6 +971,7 @@ const COPY: Record<OnboardingPaymentLocale, OnboardingPaymentCopy> = {
       manualActivation: "Attiviamo l’account quando convalidiamo la ricevuta. Ti avvisiamo via email.",
       nextTitle: "Cosa succede dopo",
       nextSteps: ["Confermiamo il pagamento", "Ricevi un’email per creare la password", "Ti aiutiamo a preparare il menu"],
+      panelOnlyNextSteps: ["Confermiamo il pagamento", "Ricevi un’email per creare la password", "Entri nel tuo pannello CEO"],
       showBankDetails: "Vedi i dati per il bonifico",
       transferStep: "Trasferisci l’importo esatto",
       uploadStep: "Carica la ricevuta",

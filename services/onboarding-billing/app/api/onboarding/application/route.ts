@@ -6,12 +6,14 @@ import {
 	priceApplicationAddons,
 	resolveCheckoutPlan,
 	resolveCheckoutPlanPrice,
+	type CheckoutPlan,
 	type OnboardingApplication,
 } from "@/lib/onboarding/checkout-service";
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 import { loadStoreDraftState } from "@/lib/onboarding/store-draft-service";
 import { checkCouponForApplication, findSubscriptionCouponById } from "@/lib/billing/subscription-coupon-service";
 import { toAppliedCoupon, type AppliedCoupon, type CouponProblem } from "@/lib/billing/subscription-coupons";
+import { resolvePlanProductMode } from "@/lib/plans/plan-product-mode";
 
 /** @service-role capability-token
  *
@@ -19,6 +21,8 @@ import { toAppliedCoupon, type AppliedCoupon, type CouponProblem } from "@/lib/b
  * el token viaja en la URL, así que antes exponía RUT, direcciones y redes a quien lo tuviera.
  * Incluye el presupuesto (plan, extras y método) calculado con las mismas funciones que
  * el cobro, para mostrar el total antes de pagar; el monto final lo vuelve a calcular el checkout.
+ * `panel_only`: el plan es «solo panel CEO» y no hay tienda armada, así que la página no habla
+ * de armar ni de publicar una tienda.
  */
 
 type QuoteAddon = { name: string; unit: number; quantity: number; monthly: boolean };
@@ -28,15 +32,14 @@ type Quote = {
 	method: { slug: string; name: string } | null;
 };
 
-async function buildQuote(app: {
-	id: string;
-	plan_id: string | null;
-	country: string | null;
-	subscription_payment_method: string | null;
-}): Promise<Quote | null> {
-	const planResult = await resolveCheckoutPlan(supabaseAdmin, app as unknown as OnboardingApplication);
-	if (!planResult.plan) return null;
-	const plan = planResult.plan;
+async function buildQuote(
+	app: {
+		id: string;
+		country: string | null;
+		subscription_payment_method: string | null;
+	},
+	plan: CheckoutPlan,
+): Promise<Quote> {
 	const pricing = resolveCheckoutPlanPrice(plan, app.country);
 
 	const { data: choices } = await supabaseAdmin
@@ -107,17 +110,30 @@ export async function GET(req: NextRequest) {
 		return NextResponse.json({ error: "Solicitud no encontrada" }, { status: 404 });
 	}
 
-	const [promoAvailable, quote, coupon, draftState, mercadoPago] = await Promise.all([
+	// El plan sirve al presupuesto y a «solo panel CEO»: se lee una vez. Si falla, sin presupuesto
+	// y con la página de siempre.
+	const planRead = resolveCheckoutPlan(supabaseAdmin, data as unknown as OnboardingApplication)
+		.then((result) => result.plan)
+		.catch(() => null);
+
+	const [promoAvailable, plan, quote, coupon, draftState, mercadoPago] = await Promise.all([
 		isFirstPaymentPromoEligible(supabaseAdmin, {
 			email: data.email,
 			excludeCompanyId: data.company_id,
 		}),
-		buildQuote(data).catch(() => null),
+		planRead,
+		planRead.then((checkoutPlan) => (checkoutPlan ? buildQuote(data, checkoutPlan) : null)).catch(() => null),
 		describeApplicationCoupon(data).catch(() => null),
 		// «Arma y paga»: la tienda ya existe en vista previa y se abre al confirmarse el pago.
 		data.company_id ? loadStoreDraftState(supabaseAdmin, data.company_id).catch(() => null) : Promise.resolve(null),
 		getMercadoPagoOffer(supabaseAdmin, data.country).catch(() => null),
 	]);
+
+	// Con una tienda armada sí hay algo que publicar, aunque el plan guardado diga otra cosa
+	// (igual que en /onboarding/complete). Si hay empresa y no se pudo leer si es una tienda
+	// armada, se da por armada: mejor los textos de siempre que esconder una tienda.
+	const storeBuilt = data.company_id ? draftState?.fromDraft !== false : false;
+	const panelOnly = plan != null && resolvePlanProductMode(plan.features) === "panel_only" && !storeBuilt;
 
 	return NextResponse.json({
 		status: data.status,
@@ -130,6 +146,7 @@ export async function GET(req: NextRequest) {
 		quote,
 		coupon,
 		store_draft: Boolean(draftState?.fromDraft),
+		panel_only: panelOnly,
 		// Alternativa de pago en esta página (Chile): la tasa sirve para mostrar el monto en CLP.
 		mercadopago: mercadoPago ? { name: mercadoPago.name, rate: mercadoPago.rate } : null,
 	});
