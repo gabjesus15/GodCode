@@ -30,6 +30,8 @@ export default function AppError({
 			className="flex min-h-dvh flex-col items-center justify-center px-6 py-16 text-center"
 			style={{ background: "#ffffff" }}
 		>
+			{/* Si falló el layout de una tienda, su metadata tampoco llegó: la pestaña quedaba sin título. */}
+			<title>{t("title")}</title>
 			<h1
 				className="font-serif text-xl font-bold leading-snug sm:text-2xl md:text-3xl"
 				style={{ color: TEXT, maxWidth: "34rem" }}
