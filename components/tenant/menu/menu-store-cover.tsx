@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -42,6 +42,10 @@ export function MenuStoreCover({
 	const t = useTranslations("tenant.home.status");
 	const place = [branch?.name, branch?.address].filter(Boolean).join(" · ");
 	const sectionRef = useRef<HTMLElement>(null);
+	// Si la foto no carga (archivo borrado, URL vieja), la portada queda como si no tuviera:
+	// logo y nombre, sin el ícono de imagen rota del navegador.
+	const [failedCover, setFailedCover] = useState<string | null>(null);
+	const cover = coverImageUrl && coverImageUrl !== failedCover ? coverImageUrl : null;
 
 	useEffect(() => {
 		const section = sectionRef.current;
@@ -60,19 +64,20 @@ export function MenuStoreCover({
 	}, []);
 
 	return (
-		<section ref={sectionRef} className={`store-cover${coverImageUrl ? "" : " store-cover--plain"}`} aria-label={displayName}>
+		<section ref={sectionRef} className={`store-cover${cover ? "" : " store-cover--plain"}`} aria-label={displayName}>
 			{/* Sin foto no se dibuja un bloque de color de relleno: el logo y el nombre
 			    bastan, como en la ficha de un local en un mapa. */}
-			{coverImageUrl ? (
+			{cover ? (
 				<div className="store-cover__media">
 					<Image
-						src={coverImageUrl}
+						src={cover}
 						alt=""
 						fill
 						priority
 						sizes="(max-width: 1200px) 100vw, 1200px"
 						className="store-cover__img"
-						unoptimized={shouldUnoptimizeImageSrc(coverImageUrl)}
+						unoptimized={shouldUnoptimizeImageSrc(cover)}
+						onError={() => setFailedCover(cover)}
 					/>
 				</div>
 			) : null}
