@@ -173,6 +173,18 @@ from (values
               where to_regclass('public.' || x) is null),
       case when exists (select 1 from fn where nombre = 'validate_and_normalize_order_items' and position('product_variants' in prosrc) > 0)
         then null else 'validate_and_normalize_order_items es anterior a 20261005' end)),
+  -- Con estas el Panel CEO guarda tamaños y variantes: sin ellas, «Varios tamaños» no se guarda.
+  -- Las dos primeras las crean 20261001/20261005 (firma exacta); las otras tres viven solo en la
+  -- base y se buscan por nombre.
+  ('B9b Funciones del Panel para guardar tamaños y variantes (y las que usan por dentro)',
+    nullif(concat_ws(', ',
+      (select string_agg(x, ', ') from unnest(array[
+          'public.admin_set_product_sizes(uuid,uuid,jsonb,boolean)',
+          'public.admin_set_product_variants(uuid,uuid,jsonb,boolean)']) as x
+       where to_regprocedure(x) is null
+          or not has_function_privilege((select autenticado from rol), to_regprocedure(x), 'EXECUTE')),
+      (select string_agg(x, ', ') from unnest(array['is_valid_uuid', 'current_user_company_id', 'is_super_admin']) as x
+       where not exists (select 1 from fn where nombre = x))), '')),
   ('B10 Cupones de suscripción completos (20261006)',
     coalesce((select detalle from faltan where grupo = 'cupones'),
       (select string_agg(x, ', ') from unnest(array['subscription_coupons', 'subscription_coupon_redemptions']) as x
