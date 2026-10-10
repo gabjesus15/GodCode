@@ -25,10 +25,10 @@ export async function POST(req: NextRequest) {
 		};
 		const token = typeof body.token === "string" ? body.token.trim() : "";
 		if (!token || token.length > 100) {
-			return NextResponse.json({ error: "Falta el enlace de tu registro. Vuelve a abrirlo desde el correo." }, { status: 400 });
+			return NextResponse.json({ error: "Falta el enlace de tu registro. Vuelve a abrirlo desde el correo.", code: "missing_link" }, { status: 400 });
 		}
 		if (await isRateLimited(`onboarding_start_store:ip:${getClientIp(req)}`, 10, 10 * 60_000)) {
-			return NextResponse.json({ error: "Demasiados intentos. Espera unos minutos." }, { status: 429 });
+			return NextResponse.json({ error: "Demasiados intentos. Espera unos minutos.", code: "rate_limited" }, { status: 429 });
 		}
 
 		const result = await startStoreFromApplication(supabaseAdmin, {
@@ -42,6 +42,6 @@ export async function POST(req: NextRequest) {
 		return NextResponse.json({ ok: true, email: result.email, slug: result.slug });
 	} catch (err) {
 		console.error("onboarding start-store error:", err);
-		return NextResponse.json({ error: "Error interno. Intenta de nuevo en un momento." }, { status: 500 });
+		return NextResponse.json({ error: "Error interno. Intenta de nuevo en un momento.", code: "error" }, { status: 500 });
 	}
 }

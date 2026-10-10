@@ -48,6 +48,16 @@ export type StoreStartCopy = {
 	login: string;
 	errorGeneric: string;
 	errorSignIn: string;
+	/** Rechazos de «Crear mi tienda» por código (el servidor manda `code`; su texto en español queda para el log). */
+	errors: {
+		password: string;
+		notFound: string;
+		notReady: string;
+		slugTaken: string;
+		slugInvalid: string;
+		rateLimited: string;
+		missingLink: string;
+	};
 };
 
 const es: StoreStartCopy = {
@@ -89,6 +99,15 @@ const es: StoreStartCopy = {
 	login: "Iniciar sesión",
 	errorGeneric: "No pudimos crear tu tienda. Intenta de nuevo.",
 	errorSignIn: "Tu tienda quedó creada. Entra desde el inicio de sesión con tu correo y tu contraseña.",
+	errors: {
+		password: "Tu contraseña debe tener entre {min} y {max} caracteres.",
+		notFound: "No encontramos tu registro. Vuelve a abrir el enlace del correo.",
+		notReady: "Primero confirma tu correo con el enlace que te enviamos.",
+		slugTaken: "Ese link ya lo tiene otra tienda. Prueba con otro.",
+		slugInvalid: "Ese link no se puede usar. Usa al menos 3 letras o números y prueba con otro.",
+		rateLimited: "Demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
+		missingLink: "Falta el enlace de tu registro. Vuelve a abrirlo desde el correo.",
+	},
 };
 
 const en: StoreStartCopy = {
@@ -130,6 +149,15 @@ const en: StoreStartCopy = {
 	login: "Sign in",
 	errorGeneric: "We couldn’t create your store. Please try again.",
 	errorSignIn: "Your store was created. Sign in with your email and password.",
+	errors: {
+		password: "Your password must be between {min} and {max} characters.",
+		notFound: "We couldn’t find your sign-up. Open the link in the email again.",
+		notReady: "First confirm your email with the link we sent you.",
+		slugTaken: "Another store already has that link. Try a different one.",
+		slugInvalid: "That link can’t be used. Use at least 3 letters or numbers and try another one.",
+		rateLimited: "Too many attempts. Wait a few minutes and try again.",
+		missingLink: "The link to your sign-up is missing. Open it again from the email.",
+	},
 };
 
 const pt: StoreStartCopy = {
@@ -171,6 +199,15 @@ const pt: StoreStartCopy = {
 	login: "Entrar",
 	errorGeneric: "Não conseguimos criar sua loja. Tente novamente.",
 	errorSignIn: "Sua loja foi criada. Entre com seu e-mail e sua senha.",
+	errors: {
+		password: "Sua senha deve ter entre {min} e {max} caracteres.",
+		notFound: "Não encontramos seu cadastro. Abra novamente o link do e-mail.",
+		notReady: "Primeiro confirme seu e-mail com o link que enviamos.",
+		slugTaken: "Outra loja já usa esse link. Tente outro.",
+		slugInvalid: "Esse link não pode ser usado. Use pelo menos 3 letras ou números e tente outro.",
+		rateLimited: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+		missingLink: "Falta o link do seu cadastro. Abra-o novamente pelo e-mail.",
+	},
 };
 
 const fr: StoreStartCopy = {
@@ -212,6 +249,15 @@ const fr: StoreStartCopy = {
 	login: "Se connecter",
 	errorGeneric: "Nous n’avons pas pu créer votre boutique. Réessayez.",
 	errorSignIn: "Votre boutique est créée. Connectez-vous avec votre e-mail et votre mot de passe.",
+	errors: {
+		password: "Votre mot de passe doit contenir entre {min} et {max} caractères.",
+		notFound: "Nous ne trouvons pas votre inscription. Ouvrez à nouveau le lien de l’e-mail.",
+		notReady: "Confirmez d’abord votre e-mail avec le lien que nous vous avons envoyé.",
+		slugTaken: "Une autre boutique utilise déjà ce lien. Essayez-en un autre.",
+		slugInvalid: "Ce lien ne peut pas être utilisé. Utilisez au moins 3 lettres ou chiffres et essayez-en un autre.",
+		rateLimited: "Trop de tentatives. Attendez quelques minutes et réessayez.",
+		missingLink: "Le lien de votre inscription est manquant. Ouvrez-le à nouveau depuis l’e-mail.",
+	},
 };
 
 const de: StoreStartCopy = {
@@ -253,6 +299,15 @@ const de: StoreStartCopy = {
 	login: "Anmelden",
 	errorGeneric: "Ihr Shop konnte nicht erstellt werden. Bitte erneut versuchen.",
 	errorSignIn: "Ihr Shop wurde erstellt. Melden Sie sich mit E-Mail und Passwort an.",
+	errors: {
+		password: "Dein Passwort muss zwischen {min} und {max} Zeichen lang sein.",
+		notFound: "Wir finden deine Anmeldung nicht. Öffne den Link aus der E-Mail erneut.",
+		notReady: "Bestätige zuerst deine E-Mail mit dem Link, den wir dir geschickt haben.",
+		slugTaken: "Diesen Link hat schon ein anderer Shop. Probier einen anderen.",
+		slugInvalid: "Dieser Link kann nicht verwendet werden. Nutze mindestens 3 Buchstaben oder Zahlen und probier einen anderen.",
+		rateLimited: "Zu viele Versuche. Warte ein paar Minuten und versuch es noch einmal.",
+		missingLink: "Der Link zu deiner Anmeldung fehlt. Öffne ihn erneut aus der E-Mail.",
+	},
 };
 
 const it: StoreStartCopy = {
@@ -294,10 +349,45 @@ const it: StoreStartCopy = {
 	login: "Accedi",
 	errorGeneric: "Non siamo riusciti a creare il negozio. Riprova.",
 	errorSignIn: "Il negozio è stato creato. Accedi con email e password.",
+	errors: {
+		password: "La password deve avere tra {min} e {max} caratteri.",
+		notFound: "Non troviamo la tua registrazione. Apri di nuovo il link dell’email.",
+		notReady: "Prima conferma la tua email con il link che ti abbiamo inviato.",
+		slugTaken: "Un altro negozio ha già questo link. Provane un altro.",
+		slugInvalid: "Questo link non si può usare. Usa almeno 3 lettere o numeri e provane un altro.",
+		rateLimited: "Troppi tentativi. Aspetta qualche minuto e riprova.",
+		missingLink: "Manca il link della tua registrazione. Riaprilo dall’email.",
+	},
 };
 
 const COPY: Record<OnboardingLocale, StoreStartCopy> = { es, en, pt, fr, de, it };
 
 export function getStoreStartCopy(locale: string | null | undefined): StoreStartCopy {
 	return COPY[resolveOnboardingLocale(locale)];
+}
+
+/** Códigos que manda `start-store` (lib/onboarding/start-store.ts y su ruta en el servicio). */
+const START_STORE_ERROR_KEYS: Record<string, keyof StoreStartCopy["errors"]> = {
+	invalid: "password",
+	not_found: "notFound",
+	not_ready: "notReady",
+	slug_taken: "slugTaken",
+	slug_invalid: "slugInvalid",
+	rate_limited: "rateLimited",
+	missing_link: "missingLink",
+};
+
+/**
+ * El texto de un rechazo de «Crear mi tienda» en el idioma de la página. Sin código conocido:
+ * 429 es «demasiados intentos» y lo demás, el error genérico (el servidor ya deshizo todo).
+ */
+export function startStoreErrorMessage(
+	copy: StoreStartCopy,
+	code: string | null | undefined,
+	status: number,
+	limits: { min: number; max: number },
+): string {
+	const key = (code ? START_STORE_ERROR_KEYS[code] : undefined) ?? (status === 429 ? "rateLimited" : null);
+	if (!key) return copy.errorGeneric;
+	return copy.errors[key].replace("{min}", String(limits.min)).replace("{max}", String(limits.max));
 }
