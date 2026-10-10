@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { useReducedMotion } from "framer-motion";
 
 type Piece = {
@@ -24,6 +25,8 @@ type Piece = {
 const GRAVITY = 0.32;
 const DRAG = 0.985;
 const DURATION_MS = 3600;
+
+const subscribeNothing = () => () => {};
 
 /** Mezcla un hex con blanco (t > 0) o con negro (t < 0). */
 function shade(hex: string, t: number): string {
@@ -54,11 +57,14 @@ function seeded(seed: number) {
 export function ConfettiBurst({ accent: rawAccent, count = 140 }: { accent: string; count?: number }) {
 	const accent = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(rawAccent) ? rawAccent : "#4F5BFF";
 	const reduce = useReducedMotion();
+	// El canvas va en un portal y solo existe en el navegador: en el servidor y al hidratar no hay.
+	const inBrowser = useSyncExternalStore(subscribeNothing, () => true, () => false);
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const [done, setDone] = useState(false);
 
 	useEffect(() => {
-		if (reduce) return;
+		// Al hidratar, el canvas aparece recién en el segundo render: por eso `inBrowser` va en las dependencias.
+		if (reduce || !inBrowser) return;
 		const canvas = canvasRef.current;
 		const ctx = canvas?.getContext("2d");
 		if (!canvas || !ctx) return;
@@ -70,12 +76,12 @@ export function ConfettiBurst({ accent: rawAccent, count = 140 }: { accent: stri
 		canvas.height = height * dpr;
 		ctx.scale(dpr, dpr);
 
+		// Sin grises claros: sobre el fondo del asistente (#f6f6f8) no se ven.
 		const palette: Array<[string, string]> = [
 			[accent, shade(accent, -0.25)],
 			[shade(accent, 0.45), shade(accent, 0.2)],
 			["#E3B341", "#B98A1F"],
 			["#1D1D1F", "#3A3A3F"],
-			["#E9E9EE", "#C7C7CF"],
 		];
 		const rand = seeded(7);
 		const scale = Math.min(1, width / 900) * 0.35 + 0.65;
@@ -135,9 +141,8 @@ export function ConfettiBurst({ accent: rawAccent, count = 140 }: { accent: stri
 				ctx.rotate(p.angle);
 				ctx.scale(1, Math.max(0.08, Math.abs(facing)));
 				ctx.fillStyle = facing >= 0 ? p.front : p.back;
-				ctx.beginPath();
-				ctx.roundRect(-p.w / 2, -p.h / 2, p.w, p.h, Math.min(1.5, p.w / 4));
-				ctx.fill();
+				// fillRect y no roundRect: Safari < 16 (iOS 15) no lo tiene y a este tamaño la esquina no se nota.
+				ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
 				ctx.restore();
 			}
 			if (alive > 0 || now - started < 400) {
@@ -156,8 +161,10 @@ export function ConfettiBurst({ accent: rawAccent, count = 140 }: { accent: stri
 			window.clearTimeout(safety);
 			cancelAnimationFrame(frame);
 		};
-	}, [accent, count, reduce]);
+	}, [accent, count, reduce, inBrowser]);
 
-	if (reduce || done) return null;
-	return <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-50 h-full w-full" aria-hidden />;
+	if (reduce || done || !inBrowser) return null;
+	// Al body: dentro del paso que entra (lleva `transform`), el `fixed` quedaría atado a la
+	// columna y los primeros fotogramas saldrían aplastados.
+	return createPortal(<canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-50 h-full w-full" aria-hidden />, document.body);
 }
