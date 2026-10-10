@@ -75,8 +75,20 @@ next-env.d.ts
 # MCP local (apunta a una IP privada)
 .mcp.json
 
-# Capturas de revisión de diseño (Impeccable): evidencia local, se regeneran.
-.impeccable/review/
-
-# Fotos del laboratorio del menú (/dev/menu-lab); no se versionan
-public/dev-lab/
+# Lo que no es parte de la app no entra al proyecto (lo pidió el dueño):
+# - herramientas de diseño con IA (Impeccable) y su contexto;
+.impeccable/
+/DESIGN.md
+/PRODUCT.md
+# - migraciones y SQL: se entregan aparte y el dueño las corre a mano;
+migrations/
+/docs/
+# - material para redes y videos (capturas, posts, PDF y sus scripts).
+/*.png
+/*.jpg
+/*.jpeg
+/*.pdf
+/*.svg
+/*.mp4
+/*.gif
+scripts/video/

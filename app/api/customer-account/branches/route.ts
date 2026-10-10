@@ -264,7 +264,7 @@ export async function PUT(req: NextRequest) {
     logger.warn("branch_pending_migration_columns", {
       branchId: String(id),
       columns: droppedColumns,
-      detail: "Falta aplicar su migración (migrations/20261009_binance_pay.sql, migrations/20261007_exchange_rates.sql): esas columnas no se guardaron.",
+      detail: "Falta correr en la base el SQL de octubre de 2026 (Binance Pay y tasas de cambio): esas columnas no se guardaron.",
     });
   }
   // Sin la columna tampoco existe la tabla del historial (misma migración): no se intenta.

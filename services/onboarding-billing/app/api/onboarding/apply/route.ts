@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
 
 		let { data: inserted, error: insertError } = await insertApplication(row);
 		if (insertError && "legal_version" in row && isMissingColumnError(insertError, "legal_version")) {
-			// La migración 20261010_onboarding_legal_version.sql todavía no corrió: el alta sigue
+			// El SQL de octubre de 2026 (versión de los Términos) todavía no corrió: el alta sigue
 			// sin guardar la versión aceptada (los booleanos de aceptación sí quedan).
 			logger.warn("onboarding_legal_version_column_missing", createRequestContext("/api/onboarding/apply", "POST", "onboarding-billing"), {
 				legalVersion,

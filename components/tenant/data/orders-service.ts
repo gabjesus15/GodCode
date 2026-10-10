@@ -643,7 +643,7 @@ export const ordersService = {
     if (orderError) {
       const rpcMessage = String(orderError.message || "").toLowerCase();
       // La base rechaza el pedido de una tienda que no vende, o con una sucursal de otra
-      // empresa (migrations/20261010_public_order_requires_open_store.sql).
+      // empresa (SQL de octubre de 2026, «pedidos solo en tiendas abiertas»).
       if (rpcMessage.includes(STORE_NOT_OPEN_CODE) || rpcMessage.includes("branch_company_mismatch")) {
         throw storeNotOpenError();
       }

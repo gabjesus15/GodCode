@@ -59,8 +59,8 @@ export function storeDraftPublishHref(): string {
  * Rutas públicas del carrito que reciben un `companyId` o solo un `branchId` (precios,
  * catálogo, cierre del envío, políticas de pago): ¿la tienda vende al público? `open` y
  * `preview` (su dueño, con la sesión de /cuenta) pasan; `coming-soon` y `closed`, no. La
- * barrera real está en la base (`create_public_order_v1` y `create_order_transaction`, ver
- * migrations/20261010_public_order_requires_open_store.sql), que rechaza el pedido también al
+ * barrera real está en la base (`create_public_order_v1` y `create_order_transaction`, con el
+ * SQL de octubre de 2026), que rechaza el pedido también al
  * dueño en vista previa: estas rutas no deben servir precios ni políticas de una tienda sin
  * publicar o cerrada.
  */

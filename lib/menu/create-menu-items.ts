@@ -11,7 +11,7 @@ import { isSampleProduct, SAMPLE_CATEGORY_NAMES } from "./sample-menus";
  * - `userClient`: cliente con la sesión del dueño (para las RPC y los borrados).
  * - `adminClient`: solo para leer lo que ya existe, filtrado por `companyId`.
  *
- * Contrato con la base. Estas RPC no están en migrations/ de este repo: viven en el repo del
+ * Contrato con la base. Estas RPC no están versionadas en este repo: viven en el repo del
  * Panel (Caja). Firmas que este archivo asume, según types/supabase-database.ts (tipos
  * generados el 19-09-2026). Si el Panel cambia una, la carga de la carta falla con el error
  * de PostgREST en `errors`, no en silencio:

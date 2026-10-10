@@ -44,7 +44,7 @@ function json(body: unknown, status = 200, cacheSeconds = 0) {
 const branchIdSchema = z.string().uuid();
 
 /**
- * Sin migrations/20261007_exchange_rates.sql (la corre el dueño a mano) no existen la columna
+ * Sin el SQL de tasas de cambio de octubre de 2026 (lo corre el dueño a mano) no existen la columna
  * `branches.exchange_rate_source` ni la tabla `exchange_rates`. En vez de un 500 por cada visita
  * al menú se responde «sin fuente» con 200 y `fallback: true`: con eso el menú y el carrito usan
  * su tasa de respaldo (la manual de la sucursal), igual que cuando la petición falla. Con

@@ -1,9 +1,9 @@
 import { DEFAULT_EXCHANGE_RATE_SOURCE } from "@/lib/exchange-rates/sources";
 
 /**
- * Columnas de `branches` que agregan migraciones que el dueño corre a mano:
- * - `binance_pay`: migrations/20261009_binance_pay.sql
- * - `exchange_rate_source`: migrations/20261007_exchange_rates.sql
+ * Columnas de `branches` que agrega el SQL de octubre de 2026, que el dueño corre a mano:
+ * - `binance_pay` (datos de Binance Pay)
+ * - `exchange_rate_source` (fuente de la tasa BCV)
  *
  * La app puede desplegarse antes, y PostgREST rechaza entero un select o un update que nombra una
  * columna que no existe (42703 / PGRST204): eso dejó sin sucursales al menú, a Mi cuenta y al

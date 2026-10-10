@@ -16,7 +16,7 @@ const eslintConfig = defineConfig([
   ]),
   {
     // Mismos archivos que registran el plugin `react` en eslint-config-next: sin
-    // esto `npm run lint` fallaba al llegar a los .cjs de scripts/video.
+    // esto `npm run lint` fallaba al llegar a archivos .cjs.
     files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
     rules: {
       // Allow inline styles for CSS custom properties (CSS variables)

@@ -67,8 +67,7 @@ export async function createStorefrontAssetSignedUrl(
 /**
  * URL pública y estable de un recurso de marca (logo, fondo, portada).
  *
- * El bucket `menu` es público (migrations/20260720_public_menu_storage_bucket.sql)
- * y las fotos de producto ya se sirven así. Firmar en cada visita costaba una
+ * El bucket `menu` es público y las fotos de producto ya se sirven así. Firmar en cada visita costaba una
  * llamada a Storage por imagen y daba una URL distinta cada vez, de modo que ni
  * el navegador ni el optimizador de imágenes podían guardarla en caché.
  * Las rutas del panel (/cuenta, super admin) siguen usando la firmada.

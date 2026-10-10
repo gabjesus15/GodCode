@@ -39,7 +39,7 @@ export function __resetExchangeRateBackoff() {
 
 /**
  * ¿El error es porque todavía no existe la tabla `exchange_rates`? La crea
- * migrations/20261007_exchange_rates.sql, que el dueño corre a mano. `getCurrentExchangeRate` no
+ * el SQL de tasas de cambio de octubre de 2026, que el dueño corre a mano. `getCurrentExchangeRate` no
  * lo convierte en «sin tasa»: lo lanza tal cual y cada llamador usa su respaldo. La ruta de la
  * tienda responde «sin fuente» (el menú usa su tasa manual) y la tasa del alta va a dolarapi.
  */

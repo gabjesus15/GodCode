@@ -33,7 +33,7 @@ const ALERT_INTERVAL_MS = DAY;
 export const MAX_RECLAIM_ATTEMPTS = 3;
 const RECLAIM_COUNTER_TTL_SECONDS = 7 * 24 * 60 * 60;
 
-/** Columna de migrations/20261010_onboarding_reconcile_alerted_at.sql. */
+/** Columna del SQL de octubre de 2026 (marca del último aviso de altas trabadas). */
 const ALERTED_COLUMN = "reconcile_alerted_at";
 
 type Row = {

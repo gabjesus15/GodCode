@@ -120,8 +120,7 @@ function isMissingTableError(error: DbError): boolean {
  * paso que falla queda en el resumen del cron y se intenta el siguiente.
  *
  * Qué depende de ON DELETE CASCADE: `product_sizes` y `product_variants` cascadean desde
- * `products`, `branches` y `companies` (migrations/20261001_product_sizes.sql y
- * 20261005_product_variants.sql). El resto (`products`, `categories`, `product_branch`,
+ * `products`, `branches` y `companies` (el SQL de tamaños y variantes de octubre de 2026). El resto (`products`, `categories`, `product_branch`,
  * `product_prices`, `category_branch`, `product_extras_*`, `product_upsell_beverages`,
  * `product_inventory_recipe`, `hero_banners`, `company_theme_*`) lo creó el repo del Panel y
  * no sabemos si cascadea; algunas tienen `company_id` sin clave foránea y quedarían
