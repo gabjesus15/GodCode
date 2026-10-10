@@ -6,7 +6,6 @@ import { Check, ChevronRight, Copy, Download, ExternalLink, Globe, Lock, Share2 
 import { QRCodeSVG } from "qrcode.react";
 
 import { WhatsAppIcon } from "../ui/brand-icons";
-import { ConfettiBurst } from "../ui/confetti-burst";
 import { SetupButton } from "../ui/setup-button";
 
 import type { OwnerSetupStep } from "@/lib/owner-setup/steps";
@@ -103,7 +102,6 @@ export function PublishStep({
 	published,
 	businessName,
 	logoUrl,
-	accentColor,
 	checklist,
 	draft,
 	onGoToStep,
@@ -112,8 +110,6 @@ export function PublishStep({
 	published: boolean;
 	businessName: string;
 	logoUrl: string | null;
-	/** Color de los botones de la tienda, para la celebración. */
-	accentColor: string;
 	checklist: SetupChecklistItem[];
 	/** «Arma y paga»: la tienda sigue en vista previa (publicar es elegir plan y pagar). */
 	draft?: { paymentInReview: boolean } | null;
@@ -195,8 +191,6 @@ export function PublishStep({
 
 	return (
 		<div className="relative flex flex-col gap-6">
-			<ConfettiBurst colors={[accentColor, "#4f5bff", "#ffd166", "#06d6a0", "#ef476f"]} />
-
 			<motion.div
 				initial={{ opacity: 0, y: 16, scale: 0.98 }}
 				animate={{ opacity: 1, y: 0, scale: 1 }}

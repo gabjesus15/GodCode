@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, ArrowRight, CheckCircle2, Loader2, Lock, MailCheck, PartyPopper } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, Loader2, Lock, MailCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics/track-event";
@@ -127,7 +127,7 @@ export function CheckoutSuccessFinalize({
     return (
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-5 text-emerald-900" role="status" aria-live="polite">
         <div className="flex items-start gap-3">
-          <PartyPopper className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden />
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden />
           <div className="min-w-0">
             <p className="text-sm font-semibold">{copy.draftTitle}</p>
             <p className="mt-0.5 text-sm opacity-90">{copy.draftText}</p>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { ExternalLink, FileUp, Lock, Sparkles, Trash2, UtensilsCrossed } from "lucide-react";
+import { ExternalLink, FileUp, LayoutList, Lock, Trash2, UtensilsCrossed } from "lucide-react";
 
 import type { CompanySnapshot, MenuSetupSummary } from "../../shared/customer-account-types";
 import { Alert } from "../../ui/Alert";
@@ -129,8 +129,8 @@ export function AccountMenuTab({ company, menuSetup, storeDraft = false, onStatu
 				<div className="grid gap-3 md:grid-cols-3">
 					{menuSetup.importEnabled && (
 						<Card compact className="flex flex-col gap-3">
-							<div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50">
-								<FileUp className="h-4 w-4 text-indigo-600" aria-hidden />
+							<div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f5f5f7]">
+								<FileUp className="h-4 w-4 text-[#1d1d1f]" aria-hidden />
 							</div>
 							<div>
 								<p className="text-sm font-semibold text-[#1d1d1f]">Sube tu carta</p>
@@ -156,8 +156,8 @@ export function AccountMenuTab({ company, menuSetup, storeDraft = false, onStatu
 					)}
 
 					<Card compact className="flex flex-col gap-3">
-						<div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50">
-							<Sparkles className="h-4 w-4 text-amber-600" aria-hidden />
+						<div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f5f5f7]">
+							<LayoutList className="h-4 w-4 text-[#1d1d1f]" aria-hidden />
 						</div>
 						<div>
 							<p className="text-sm font-semibold text-[#1d1d1f]">Empieza con un ejemplo</p>
@@ -185,8 +185,8 @@ export function AccountMenuTab({ company, menuSetup, storeDraft = false, onStatu
 					</Card>
 
 					<Card compact className="flex flex-col gap-3">
-						<div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
-							<UtensilsCrossed className="h-4 w-4 text-emerald-600" aria-hidden />
+						<div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f5f5f7]">
+							<UtensilsCrossed className="h-4 w-4 text-[#1d1d1f]" aria-hidden />
 						</div>
 						<div>
 							<p className="text-sm font-semibold text-[#1d1d1f]">Crea tus productos uno por uno</p>

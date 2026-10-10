@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
-import { ChevronDown, ExternalLink, FileUp, Lock, Sparkles, Trash2, UtensilsCrossed } from "lucide-react";
+import { ChevronDown, ExternalLink, FileUp, LayoutList, Lock, Trash2, UtensilsCrossed } from "lucide-react";
 
 import { MenuImportReview } from "../../account/tabs/menu-import-review";
 import type { CompanySnapshot, MenuSetupSummary } from "../../shared/customer-account-types";
@@ -147,15 +147,7 @@ export function MenuStep({
 								dragging ? "ring-2 ring-(--su-accent)" : "ring-(--su-line)",
 							)}
 						>
-							<span
-								aria-hidden
-								className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(79,91,255,0.16),rgba(79,91,255,0)_70%)]"
-							/>
-							<span className="relative inline-flex items-center gap-1.5 rounded-full bg-(--su-accent-soft) px-2.5 py-1 text-[12px] font-semibold text-(--su-accent)">
-								<Sparkles className="h-3.5 w-3.5" aria-hidden />
-								Lo más rápido
-							</span>
-							<h3 className="relative mt-3 text-[18px] font-semibold tracking-[-0.015em] text-(--su-ink)">Sube tu carta y la leemos por ti</h3>
+							<h3 className="relative text-[18px] font-semibold tracking-[-0.015em] text-(--su-ink)">Sube tu carta y la leemos por ti</h3>
 							<p className="relative mt-1 max-w-md text-[14px] leading-relaxed text-(--su-muted)">
 								Una foto, un PDF o un Excel. Te mostramos los productos para que los revises antes de crearlos.
 							</p>
@@ -191,8 +183,8 @@ export function MenuStep({
 
 					<div className="divide-y divide-(--su-line) overflow-hidden rounded-[22px] bg-(--su-surface) ring-1 ring-inset ring-(--su-line)">
 						<OptionRow
-							icon={<Sparkles aria-hidden />}
-							iconClass="bg-[#fff4e0] text-[#c2700c]"
+							icon={<LayoutList aria-hidden />}
+							iconClass="bg-(--su-surface-sunken) text-(--su-ink2)"
 							title="Empieza con un ejemplo"
 							description="Productos de muestra para ver cómo queda. Los cambias cuando quieras."
 						>
@@ -218,7 +210,7 @@ export function MenuStep({
 						{storeDraft || panelUrl ? (
 							<OptionRow
 								icon={<UtensilsCrossed aria-hidden />}
-								iconClass="bg-[#e7f7ee] text-[#15803d]"
+								iconClass="bg-(--su-surface-sunken) text-(--su-ink2)"
 								title="Créalos uno por uno"
 								description="En el panel CEO agregas fotos, variantes y precios por sucursal."
 							>

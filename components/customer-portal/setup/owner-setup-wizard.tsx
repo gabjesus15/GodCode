@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, Clock, Rocket, Smartphone, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronLeft, Clock, Smartphone, X } from "lucide-react";
 import { Drawer } from "vaul";
 
 import type { OwnerSetupInitial } from "./owner-setup-types";
@@ -29,22 +29,13 @@ import { brandButtonColors } from "@/lib/tenant/logo-colors";
 const ROOT_STYLE = setupCssVariables() as CSSProperties;
 const EASE = SETUP_TOKENS.motion.ease;
 
-/** Fondo del escenario del teléfono: un halo suave del color de la marca sobre gris. */
-function stageBackground(accent: string): string {
-	return [
-		`radial-gradient(55% 42% at 50% 46%, color-mix(in srgb, ${accent} 24%, transparent) 0%, transparent 72%)`,
-		"radial-gradient(circle at 1px 1px, rgba(17,17,19,0.07) 1px, transparent 0) 0 0 / 22px 22px",
-		"linear-gradient(180deg, #f3f3f6 0%, #e9e9ef 100%)",
-	].join(", ");
-}
+/** Fondo del escenario del teléfono: gris liso, sin halos ni tramas, para que mande la tienda. */
+const STAGE_BACKGROUND = "#ededf1";
 
 function LivePill({ draft }: { draft: boolean }) {
 	return (
 		<span className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3.5 py-1.5 text-[12.5px] font-medium text-(--su-ink2) shadow-[0_1px_2px_rgba(17,17,19,0.06)] ring-1 ring-black/5 backdrop-blur">
-			<span className="relative flex h-2 w-2" aria-hidden>
-				<span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 motion-reduce:hidden ${draft ? "bg-amber-400" : "bg-emerald-400"}`} />
-				<span className={`relative inline-flex h-2 w-2 rounded-full ${draft ? "bg-amber-500" : "bg-emerald-500"}`} />
-			</span>
+			<span className={`h-1.5 w-1.5 rounded-full ${draft ? "bg-amber-500" : "bg-emerald-500"}`} aria-hidden />
 			{draft ? "Vista previa · tus clientes todavía no la ven" : "En vivo · así lo ven tus clientes"}
 		</span>
 	);
@@ -72,14 +63,9 @@ function StepHeader({ eyebrow, title, description, celebrate }: { eyebrow: strin
 	return (
 		<div className="mb-8 sm:mb-10">
 			{celebrate ? (
-				<motion.span
-					initial={{ scale: 0.4, opacity: 0 }}
-					animate={{ scale: 1, opacity: 1 }}
-					transition={{ type: "spring", stiffness: 420, damping: 20 }}
-					className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-(--su-success) text-white shadow-[0_10px_24px_-8px_rgba(22,163,74,0.6)]"
-				>
-					<Check className="h-7 w-7" strokeWidth={3} aria-hidden />
-				</motion.span>
+				<span className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-(--su-success) text-white">
+					<Check className="h-6 w-6" strokeWidth={2.5} aria-hidden />
+				</span>
 			) : (
 				<p className="mb-2.5 hidden text-[12.5px] font-semibold uppercase tracking-[0.09em] text-(--su-accent) lg:block">{eyebrow}</p>
 			)}
@@ -158,7 +144,6 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 
 	const template = findMenuTemplate(effectiveTheme.templateId);
 	const templateColor = template?.theme.primaryColor ?? null;
-	const accent = effectiveTheme.primaryColor || SETUP_TOKENS.color.accent;
 	const businessName = effectiveTheme.displayName || initial.company.name;
 	const realProducts = Math.max(0, menuStatus.productCount - menuStatus.sampleCount);
 
@@ -181,7 +166,7 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 					onClick: () => void setup.publish(),
 					loading: busy === "publish",
 					variant: "accent" as const,
-					icon: draft?.paymentInReview ? <Clock aria-hidden /> : <Rocket aria-hidden />,
+					icon: draft?.paymentInReview ? <Clock aria-hidden /> : null,
 					trailing: null,
 				}
 			: {
@@ -273,7 +258,6 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 				published={published}
 				businessName={businessName}
 				logoUrl={setup.logoPreviewUrl}
-				accentColor={accent}
 				draft={draft}
 				onGoToStep={(target) => void setup.goTo(target)}
 				checklist={[
@@ -290,7 +274,7 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 		);
 	}
 
-	const stage = stageBackground(accent);
+	const stage = STAGE_BACKGROUND;
 
 	return (
 		<div style={ROOT_STYLE} className="min-h-dvh overflow-x-clip bg-(--su-canvas) text-(--su-ink) antialiased lg:h-dvh lg:overflow-hidden">

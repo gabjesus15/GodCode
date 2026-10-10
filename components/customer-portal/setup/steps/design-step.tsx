@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Sparkles } from "lucide-react";
+import { Check } from "lucide-react";
 
 import type { BusinessSector } from "@/lib/onboarding/business-sectors";
 import { templatesForSector, type MenuTemplate } from "@/lib/store-theme/menu-templates";
@@ -181,9 +181,8 @@ function TemplateCard({
 				<p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] font-semibold tracking-[-0.01em] text-(--su-ink)">
 					{template.name}
 					{recommended ? (
-						<span className="inline-flex items-center gap-1 rounded-full bg-(--su-accent-soft) px-1.5 py-0.5 text-[10.5px] font-semibold tracking-normal text-(--su-accent)">
-							<Sparkles className="h-3 w-3" aria-hidden />
-							Para ti
+						<span className="rounded-md bg-(--su-surface-sunken) px-1.5 py-0.5 text-[11px] font-medium tracking-normal text-(--su-muted)">
+							Recomendada
 						</span>
 					) : null}
 				</p>
