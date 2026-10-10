@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useId, useRef, useState } from "react";
+import { memo, type ReactNode, useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronDown, Compass, MapPin, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -20,6 +20,40 @@ import type { BranchInfo, CategoryListItem } from "./menu-types";
  */
 function currentCategoryProps(isActive: boolean) {
 	return isActive ? ({ "aria-current": "true" } as const) : null;
+}
+
+/**
+ * Foto de una categoría. Si no carga (archivo borrado, URL vieja), muestra lo mismo que una
+ * categoría sin foto en vez del ícono de imagen rota del navegador.
+ */
+function CategoryThumb({
+	src,
+	className,
+	size,
+	sizes,
+	fallback,
+}: {
+	src: string;
+	className: string;
+	size: number;
+	sizes?: string;
+	fallback: ReactNode;
+}) {
+	const [failed, setFailed] = useState(false);
+	if (failed) return <>{fallback}</>;
+	return (
+		<Image
+			src={src}
+			className={className}
+			alt=""
+			width={size}
+			height={size}
+			quality={85}
+			sizes={sizes}
+			unoptimized={shouldUnoptimizeImageSrc(src)}
+			onError={() => setFailed(true)}
+		/>
+	);
 }
 
 /**
@@ -44,15 +78,13 @@ const IconListCard = memo(function IconListCard({
 		>
 			<div className="icon-list-card-image-wrapper">
 				{cat.icon ? (
-					<Image
+					<CategoryThumb
+						key={cat.icon}
 						src={cat.icon}
 						className="icon-list-card-image"
-						alt=""
-						width={108}
-						height={108}
-						quality={85}
+						size={108}
 						sizes="(max-width: 600px) 88px, 108px"
-						unoptimized={shouldUnoptimizeImageSrc(cat.icon)}
+						fallback={<span className="icon-list-card-initial">{cat.name.charAt(0).toUpperCase()}</span>}
 					/>
 				) : (
 					<span className="icon-list-card-initial">{cat.name.charAt(0).toUpperCase()}</span>
@@ -221,15 +253,7 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 						className={`sidebar-nav-item ${activeCategory === cat.id ? "active" : ""}`}
 					>
 						{cat.icon ? (
-							<Image
-								src={cat.icon}
-								className="sidebar-item-icon"
-								alt=""
-								width={36}
-								height={36}
-								quality={85}
-								unoptimized={shouldUnoptimizeImageSrc(cat.icon)}
-							/>
+							<CategoryThumb key={cat.icon} src={cat.icon} className="sidebar-item-icon" size={36} fallback={null} />
 						) : null}
 						<span className="sidebar-item-text">{cat.name}</span>
 					</button>
@@ -348,15 +372,13 @@ export const MegaMenuOverlay = memo(function MegaMenuOverlay({
 						>
 							<div className="mega-menu-item-icon-wrapper">
 								{cat.icon ? (
-									<Image
+									<CategoryThumb
+										key={cat.icon}
 										src={cat.icon}
 										className={`mega-menu-item-icon ${cat.id === "special" || isPromocionesCategoryName(cat.name) ? "icon-contain" : "icon-cover"}`}
-										alt=""
-										width={88}
-										height={88}
-										quality={85}
+										size={88}
 										sizes="88px"
-										unoptimized={shouldUnoptimizeImageSrc(cat.icon)}
+										fallback={<span className="mega-menu-item-initial">{cat.name.charAt(0).toUpperCase()}</span>}
 									/>
 								) : (
 									<span className="mega-menu-item-initial">{cat.name.charAt(0).toUpperCase()}</span>
@@ -411,7 +433,7 @@ export const CategoryTabsNav = memo(function CategoryTabsNav({
 								<Image
 									src={fireIcon}
 									className="fire-inline-icon"
-									alt="🔥"
+									alt=""
 									width={16}
 									height={16}
 									unoptimized={shouldUnoptimizeImageSrc(fireIcon)}

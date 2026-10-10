@@ -129,11 +129,11 @@ const es: OnboardingUiCopy = {
 	start: {
 		title: "Crea tu tienda online",
 		subtitle: "Ármala gratis con tu menú, tu logo y tus colores. Pagas cuando quieras publicarla.",
-		includesTitle: "Todos los planes incluyen",
+		includesTitle: "Tu tienda incluye",
 		includes: [
 			"Menú digital con tu marca, listo para compartir",
 			"Pedidos online desde tu link o tu QR",
-			"Caja para cobrar en tu local",
+			"Panel CEO para cargar tu menú, tus fotos y tus precios",
 			"Sin comisiones por venta",
 		],
 		nextTitle: "Cómo sigue",
@@ -219,8 +219,8 @@ const en: OnboardingUiCopy = {
 	start: {
 		title: "Create your online store",
 		subtitle: "Build it free with your menu, logo and colors. Pay when you want to publish it.",
-		includesTitle: "Every plan includes",
-		includes: ["A branded digital menu, ready to share", "Online orders from your link or QR code", "A POS to take payments at your venue", "No commission on sales"],
+		includesTitle: "Your store includes",
+		includes: ["A branded digital menu, ready to share", "Online orders from your link or QR code", "A CEO panel to manage your menu, photos and prices", "No commission on sales"],
 		nextTitle: "What happens next",
 		next: [
 			{ title: "Confirm your email", text: "We are sending you a link right now." },
@@ -304,8 +304,8 @@ const pt: OnboardingUiCopy = {
 	start: {
 		title: "Crie sua loja online",
 		subtitle: "Monte grátis com seu cardápio, seu logo e suas cores. Você paga quando quiser publicá-la.",
-		includesTitle: "Todos os planos incluem",
-		includes: ["Cardápio digital com a sua marca, pronto para compartilhar", "Pedidos online pelo seu link ou QR", "Caixa para cobrar no seu local", "Sem comissão por venda"],
+		includesTitle: "Sua loja inclui",
+		includes: ["Cardápio digital com a sua marca, pronto para compartilhar", "Pedidos online pelo seu link ou QR", "Painel CEO para cadastrar seu cardápio, suas fotos e seus preços", "Sem comissão por venda"],
 		nextTitle: "Como continua",
 		next: [
 			{ title: "Confirme seu e-mail", text: "Enviamos um link agora mesmo." },
@@ -389,8 +389,8 @@ const fr: OnboardingUiCopy = {
 	start: {
 		title: "Créez votre boutique en ligne",
 		subtitle: "Créez-la gratuitement avec votre menu, votre logo et vos couleurs. Vous payez quand vous voulez la publier.",
-		includesTitle: "Toutes les offres incluent",
-		includes: ["Un menu digital à votre image, prêt à partager", "Commandes en ligne depuis votre lien ou votre QR", "Une caisse pour encaisser sur place", "Sans commission sur les ventes"],
+		includesTitle: "Votre boutique inclut",
+		includes: ["Un menu digital à votre image, prêt à partager", "Commandes en ligne depuis votre lien ou votre QR", "Un panneau CEO pour gérer votre menu, vos photos et vos prix", "Sans commission sur les ventes"],
 		nextTitle: "La suite",
 		next: [
 			{ title: "Confirmez votre e-mail", text: "Nous vous envoyons un lien tout de suite." },
@@ -474,8 +474,8 @@ const de: OnboardingUiCopy = {
 	start: {
 		title: "Erstellen Sie Ihren Online-Shop",
 		subtitle: "Richten Sie ihn kostenlos mit Speisekarte, Logo und Farben ein. Sie zahlen erst, wenn Sie ihn veröffentlichen.",
-		includesTitle: "Alle Pläne enthalten",
-		includes: ["Digitale Speisekarte mit Ihrer Marke, bereit zum Teilen", "Online-Bestellungen über Ihren Link oder QR-Code", "Kasse für Zahlungen vor Ort", "Keine Provision pro Verkauf"],
+		includesTitle: "Ihr Shop enthält",
+		includes: ["Digitale Speisekarte mit Ihrer Marke, bereit zum Teilen", "Online-Bestellungen über Ihren Link oder QR-Code", "CEO-Panel für Ihre Speisekarte, Fotos und Preise", "Keine Provision pro Verkauf"],
 		nextTitle: "So geht es weiter",
 		next: [
 			{ title: "E-Mail bestätigen", text: "Wir senden Ihnen sofort einen Link." },
@@ -559,8 +559,8 @@ const it: OnboardingUiCopy = {
 	start: {
 		title: "Crea il tuo negozio online",
 		subtitle: "Crealo gratis con il tuo menu, il tuo logo e i tuoi colori. Paghi quando vuoi pubblicarlo.",
-		includesTitle: "Tutti i piani includono",
-		includes: ["Menu digitale con il tuo marchio, pronto da condividere", "Ordini online dal tuo link o QR", "Cassa per incassare nel tuo locale", "Nessuna commissione sulle vendite"],
+		includesTitle: "Il tuo negozio include",
+		includes: ["Menu digitale con il tuo marchio, pronto da condividere", "Ordini online dal tuo link o QR", "Pannello CEO per gestire menu, foto e prezzi", "Nessuna commissione sulle vendite"],
 		nextTitle: "Come prosegue",
 		next: [
 			{ title: "Conferma la tua email", text: "Ti inviamo subito un link." },

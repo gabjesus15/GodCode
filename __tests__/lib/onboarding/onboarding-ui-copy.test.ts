@@ -113,3 +113,16 @@ describe("errores del paso 1", () => {
 		expect(resolveResendErrorCode(42, 500)).toBe("server_error");
 	});
 });
+
+describe("lo que incluye la tienda en el paso 1", () => {
+	// Los planes «solo menú digital» no traen caja: la lista del alta con tienda no puede
+	// prometerla. Con «solo panel CEO» se muestra otra lista, la del panel.
+	it("no promete caja en ningún idioma y nombra el panel CEO", () => {
+		for (const locale of LOCALES) {
+			const { start } = getOnboardingUiCopy(locale);
+			const text = [start.includesTitle, ...start.includes].join(" ").toLowerCase();
+			expect(text, locale).not.toMatch(/\bcaja\b|\bpos\b|\bcaixa\b|\bcaisse\b|\bkasse\b|\bcassa\b|todos los planes|every plan/);
+			expect(text, locale).toContain("ceo");
+		}
+	});
+});
