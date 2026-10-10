@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, ChevronLeft, Clock, Smartphone, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronLeft, Clock, Rocket, Smartphone, X } from "lucide-react";
 import { Drawer } from "vaul";
 
 import type { OwnerSetupInitial } from "./owner-setup-types";
@@ -59,13 +59,47 @@ function SaveIndicator({ saving, savedAt }: { saving: boolean; savedAt: number |
 	);
 }
 
+/**
+ * El check de «tu tienda está en línea»: el círculo aparece sin rebote, el trazo se dibuja
+ * y un anillo fino se abre una sola vez. Con «reducir movimiento», todo quieto.
+ */
+function SuccessMark() {
+	const reduce = useReducedMotion();
+	const ease = [0.22, 1, 0.36, 1] as const;
+	return (
+		<span className="relative mb-5 flex h-12 w-12 items-center justify-center" aria-hidden>
+			{reduce ? null : (
+				<motion.span
+					className="absolute inset-0 rounded-full border border-(--su-success)"
+					initial={{ scale: 1, opacity: 0.5 }}
+					animate={{ scale: 1.7, opacity: 0 }}
+					transition={{ duration: 1.1, ease, delay: 0.35 }}
+				/>
+			)}
+			<motion.span
+				className="flex h-12 w-12 items-center justify-center rounded-full bg-(--su-success) shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_1px_2px_rgba(17,17,19,0.12),0_8px_20px_-10px_rgba(17,17,19,0.35)]"
+				initial={reduce ? false : { scale: 0.86, opacity: 0 }}
+				animate={{ scale: 1, opacity: 1 }}
+				transition={{ duration: 0.45, ease }}
+			>
+				<svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="white" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+					<motion.path
+						d="M5.5 12.5l4.2 4.2L18.5 7.8"
+						initial={reduce ? false : { pathLength: 0 }}
+						animate={{ pathLength: 1 }}
+						transition={{ duration: 0.45, ease, delay: 0.2 }}
+					/>
+				</svg>
+			</motion.span>
+		</span>
+	);
+}
+
 function StepHeader({ eyebrow, title, description, celebrate }: { eyebrow: string; title: string; description: string; celebrate: boolean }) {
 	return (
 		<div className="mb-8 sm:mb-10">
 			{celebrate ? (
-				<span className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-(--su-success) text-white">
-					<Check className="h-6 w-6" strokeWidth={2.5} aria-hidden />
-				</span>
+				<SuccessMark />
 			) : (
 				<p className="mb-2.5 hidden text-[12.5px] font-semibold uppercase tracking-[0.09em] text-(--su-accent) lg:block">{eyebrow}</p>
 			)}
@@ -144,6 +178,7 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 
 	const template = findMenuTemplate(effectiveTheme.templateId);
 	const templateColor = template?.theme.primaryColor ?? null;
+	const accent = effectiveTheme.primaryColor || SETUP_TOKENS.color.accent;
 	const businessName = effectiveTheme.displayName || initial.company.name;
 	const realProducts = Math.max(0, menuStatus.productCount - menuStatus.sampleCount);
 
@@ -166,7 +201,7 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 					onClick: () => void setup.publish(),
 					loading: busy === "publish",
 					variant: "accent" as const,
-					icon: draft?.paymentInReview ? <Clock aria-hidden /> : null,
+					icon: draft?.paymentInReview ? <Clock aria-hidden /> : <Rocket aria-hidden strokeWidth={1.75} className="transition-transform duration-300 ease-out group-hover:-translate-y-px group-hover:translate-x-px" />,
 					trailing: null,
 				}
 			: {
@@ -260,6 +295,7 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 				logoUrl={setup.logoPreviewUrl}
 				draft={draft}
 				onGoToStep={(target) => void setup.goTo(target)}
+				accentColor={accent}
 				checklist={[
 					{ step: "marca", label: "Tu logo", done: setup.stepDone.marca },
 					{ step: "diseno", label: "Un diseño para tu menú", done: setup.stepDone.diseno },
