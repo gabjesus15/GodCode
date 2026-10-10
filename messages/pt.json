@@ -8,6 +8,11 @@
       "fr": "Francês",
       "de": "Alemão",
       "it": "Italiano"
+    },
+    "errorPage": {
+      "title": "Não foi possível carregar esta página",
+      "body": "Pode ser uma falha momentânea. Tente de novo em alguns segundos.",
+      "retry": "Tentar de novo"
     }
   },
   "landing": {

@@ -363,3 +363,83 @@ html[data-store-preview] #app-ui-layer {
     height: calc(100% - var(--store-preview-h)) !important;
     transform: translateZ(0);
 }
+
+/* =============================================================================
+   Página de error de la tienda (app/[subdomain]/error.tsx)
+
+   La portada o el menú no pudieron cargar (la base no respondió). Misma tarjeta
+   que «Mi cuenta», con los colores del local, sobre su piso opaco.
+   ============================================================================= */
+.tenant-error {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 18px calc(32px + env(safe-area-inset-bottom));
+    color: var(--menu-fg);
+    background-color: var(--menu-canvas);
+}
+
+.tenant-error-card {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 30px 24px;
+    border-radius: 24px;
+    text-align: center;
+    background: var(--menu-surface);
+    border: 1px solid var(--menu-line);
+}
+
+.tenant-error-glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--menu-surface-2);
+    color: var(--menu-accent-ink);
+}
+
+.tenant-error-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.tenant-error-text {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--menu-fg-2);
+}
+
+.tenant-error-action {
+    margin-top: 6px;
+    height: 46px;
+    padding: 0 26px;
+    border: none;
+    border-radius: 999px;
+    background: var(--menu-accent);
+    color: var(--menu-on-accent);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tenant-error-action:hover {
+    filter: brightness(1.08);
+}
+
+.tenant-error-action:focus-visible {
+    outline: 2px solid var(--menu-accent);
+    outline-offset: 2px;
+}

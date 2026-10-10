@@ -135,7 +135,10 @@ function resolveLocaleFromThemeConfig(themeConfig: unknown): AppLocale | null {
 async function resolveLocaleBySlug(slug: string): Promise<AppLocale | null> {
   // Misma fila (y caché) que usan el layout y el menú: antes era una consulta
   // propia sin caché que se repetía dos veces por visita sin cookie de idioma.
-  const company = await getCachedCompany(slug);
+  // Si la base falla, sigue con el idioma del navegador: esto corre en el layout
+  // raíz, que no tiene página de error. El layout de la tienda vuelve a toparse
+  // con el fallo y lo muestra `app/error.tsx`.
+  const company = await getCachedCompany(slug).catch(() => null);
 
   if (!company) return null;
 

@@ -8,6 +8,11 @@
       "fr": "Francese",
       "de": "Tedesco",
       "it": "Italiano"
+    },
+    "errorPage": {
+      "title": "Non siamo riusciti a caricare questa pagina",
+      "body": "Potrebbe essere un'interruzione momentanea. Riprova tra qualche secondo.",
+      "retry": "Riprova"
     }
   },
   "landing": {

@@ -8,6 +8,11 @@
       "fr": "French",
       "de": "German",
       "it": "Italian"
+    },
+    "errorPage": {
+      "title": "We couldn't load this page",
+      "body": "It may be a brief outage. Try again in a few seconds.",
+      "retry": "Try again"
     }
   },
   "landing": {

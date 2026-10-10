@@ -8,6 +8,11 @@
       "fr": "Français",
       "de": "Allemand",
       "it": "Italien"
+    },
+    "errorPage": {
+      "title": "Impossible de charger cette page",
+      "body": "Il s'agit peut-être d'une coupure passagère. Réessayez dans quelques secondes.",
+      "retry": "Réessayer"
     }
   },
   "landing": {

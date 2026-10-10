@@ -8,6 +8,11 @@
       "fr": "Französisch",
       "de": "Deutsch",
       "it": "Italienisch"
+    },
+    "errorPage": {
+      "title": "Diese Seite konnte nicht geladen werden",
+      "body": "Vielleicht nur eine kurze Störung. Versuchen Sie es in ein paar Sekunden erneut.",
+      "retry": "Erneut versuchen"
     }
   },
   "landing": {

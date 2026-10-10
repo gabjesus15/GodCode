@@ -8,6 +8,11 @@
       "fr": "Francés",
       "de": "Alemán",
       "it": "Italiano"
+    },
+    "errorPage": {
+      "title": "No pudimos cargar esta página",
+      "body": "Puede ser un corte momentáneo. Vuelve a intentarlo en unos segundos.",
+      "retry": "Intentar de nuevo"
     }
   },
   "landing": {

@@ -9,8 +9,16 @@ import { Button } from "@/components/ui/button";
 /**
  * Error dentro del panel: el menú sigue a mano (lo pinta el layout) y se puede reintentar
  * sin recargar todo. Antes un fallo en una página dejaba la pantalla genérica de Next.
+ * «Reintentar» vuelve a pedir los datos al servidor (`unstable_retry`): con `reset()` solo se
+ * repintaba lo que ya había fallado y un corte de la base no se recuperaba sin recargar.
  */
-export default function SuperAdminError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function SuperAdminError({
+  error,
+  unstable_retry,
+}: {
+  error: Error & { digest?: string };
+  unstable_retry: () => void;
+}) {
   useEffect(() => {
     console.error("super admin page error:", error);
   }, [error]);
@@ -33,7 +41,7 @@ export default function SuperAdminError({ error, reset }: { error: Error & { dig
           >
             Ir al inicio
           </Link>
-          <Button onClick={reset}>Reintentar</Button>
+          <Button onClick={() => unstable_retry()}>Reintentar</Button>
         </div>
       </div>
     </div>
