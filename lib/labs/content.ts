@@ -95,25 +95,28 @@ export const LABS_HOME = {
 	/** Tres respuestas a los miedos de quien cotiza: perder plata, quedar amarrado, no recibir respuesta. Van en una sola línea bajo el botón. */
 	assurances: ["Propuesta cerrada por escrito", "Código y dominio a tu nombre", "Respuesta en dos días hábiles"],
 	/**
-	 * La frase grande entre el hero y los hechos. Lo que va entre llaves se lee en tinta y el resto
-	 * en gris (`components/labs/labs-home.tsx`). Sin adjetivos de venta: cada pieza es algo que ya
-	 * está en producción (las reservas de Auto Care Planet, la caja de Gcode POS, el dominio propio
-	 * de cada tienda, los avisos al equipo).
+	 * La frase grande entre el hero y los hechos. Cada frase entre llaves es un tipo de trabajo:
+	 * lleva su icono delante (por la primera palabra) y va en tinta; lo que las une, en gris
+	 * (`components/labs/labs-home.tsx`). Sin adjetivos de venta: cada pieza es algo que ya está
+	 * en producción (las reservas de Auto Care Planet, la caja de Gcode POS, el dominio propio de
+	 * cada tienda, los avisos al equipo).
 	 */
 	statement:
 		"Hacemos {sitios con reservas y pago en línea}, {sistemas de caja e inventario}, {tiendas con dominio propio} y {automatizaciones que avisan al equipo} por Telegram o por correo.",
 	/**
 	 * Hechos, no promesas: cada cifra se comprueba en esta misma página. Los productos son los
 	 * de «Proyectos» y los países, los mismos del intro, de las preguntas frecuentes y de los
-	 * metadatos (`lib/labs/metadata.ts`). «Hablas con quien programa» no va aquí como un «1»:
-	 * lo dice la sección del equipo.
+	 * metadatos (`lib/labs/metadata.ts`).
 	 */
 	facts: [
 		{ value: "3", unit: "productos", label: "Software propio en producción", detail: `${LANDING_PRODUCT_NAME}, MiDinerito y Colorín: los diseñamos, los programamos y los mantenemos nosotros.` },
 		{ value: "3", unit: "países", label: "Clientes en tres países", detail: "Chile, Venezuela y Estados Unidos, trabajando a distancia." },
-		{ value: "7", unit: "días", label: "Entre una entrega y la siguiente", detail: "Ves el proyecto funcionando en un entorno de prueba desde la primera entrega." },
+		{ value: "1", unit: "interlocutor", label: "Interlocutor directo", detail: "Hablas con quien diseña y programa, no con un vendedor." },
+		{ value: "7", unit: "días", label: "Avances cada semana", detail: "Ves el proyecto funcionando en un entorno de prueba desde la primera entrega." },
 	],
-	servicesEyebrow: "Servicios",
+	/** La banda de logos bajo el hero: solo marcas que están en el código o en un proyecto entregado. */
+	logosTitle: "Construimos y cobramos con",
+	servicesEyebrow: "01 · Servicios",
 	servicesTitle: "Qué construimos",
 	servicesIntro: "Trabajamos con empresas que necesitan algo que un producto estándar no cubre.",
 	/** El producto propio, con su propia sección: quien llega de Instagram buscándolo lo encuentra sin salir de la home. */
@@ -124,18 +127,22 @@ export const LABS_HOME = {
 	productPoints: ["Pedidos online y en el local, en una sola caja", "Cobros con PayPal, Mercado Pago, Zelle y pago móvil", "Restaurantes en Chile y Venezuela operando hoy"],
 	productCta: `Ver ${LANDING_PRODUCT_NAME}`,
 	productNote: "Si llegaste desde Instagram buscando el menú digital, es aquí.",
-	processEyebrow: "Cómo trabajamos",
-	processTitle: "Un método por escrito, de principio a fin",
-	stackEyebrow: "Con qué construimos",
+	processEyebrow: "02 · Cómo trabajamos",
+	processTitle: "Un método sencillo, de principio a fin",
+	/** El título del método se dibuja con una palabra que rueda: «Un método [sencillo] de principio a fin». */
+	processTitleLead: "Un método",
+	processWords: ["sencillo", "por escrito", "por entregas", "sin sorpresas"],
+	processTitleTail: "de principio a fin",
+	stackEyebrow: "03 · Con qué construimos",
 	stackTitle: "Herramientas probadas, conectadas con lo que ya usas",
 	/** Solo lo que de verdad usamos y mantenemos en producción; es el inventario de `LABS_STACK`. */
 	stackIntro:
 		"No reinventamos la base de cada proyecto. Trabajamos con tecnología que mantenemos en producción todos los días y la conectamos con los sistemas que tu empresa ya tiene.",
-	projectsEyebrow: "Proyectos",
+	projectsEyebrow: "04 · Proyectos",
 	projectsTitle: "Trabajo reciente",
 	/** Solo lo que está en producción: sin cifras ni promesas. */
 	projectsIntro: "Lo que está en producción hoy: nuestro producto, dos apps propias y un sitio con reservas para un cliente en Estados Unidos.",
-	teamEyebrow: "Equipo",
+	teamEyebrow: "05 · Equipo",
 	teamTitle: "Quiénes somos",
 	teamIntro:
 		"Somos un equipo pequeño a propósito. Hablas directamente con quien diseña y programa tu proyecto, y la persona que te responde es la que escribe el código.",
@@ -231,7 +238,7 @@ export const LABS_SHOWCASE: LabsShowcaseItem[] = [
 /** Las dos pantallas de la sección del producto propio. */
 export const LABS_PRODUCT_SCREENS: LabsScreen[] = [
 	{ src: "/labs/capturas/gcode-pos-menu.jpg", alt: "Menú digital de Rica Pizza en Gcode POS: las pizzas con foto, precio y una oferta", width: 600, height: 1386, frame: "phone", label: "Menú con tu marca y QR" },
-	{ src: "/labs/capturas/gcode-pos-pedido.jpg", alt: "Carrito de un pedido en el menú de Rica Pizza, con el total en dólares y en bolívares", width: 600, height: 1386, frame: "phone", label: "Pedido y pago desde el teléfono" },
+	{ src: "/labs/capturas/gcode-pos-pedido.jpg", alt: "Carrito de un pedido en el menú de Rica Pizza, con el total en dólares y en bolívares", width: 600, height: 1386, frame: "phone", label: "Pedido y pago" },
 ];
 
 /** Con qué construimos: herramientas e integraciones que usamos de verdad, por grupo. Sin logos, solo nombres. */

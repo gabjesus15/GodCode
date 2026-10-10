@@ -79,9 +79,9 @@ describe("home de Gcode Labs: contenido", () => {
 	});
 
 	it("la frase grande dice qué hacemos, sin adjetivos de venta", () => {
-		// Lo que va entre llaves se lee en tinta: una frase por tipo de trabajo, en este orden.
-		const strong = [...LABS_HOME.statement.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]!.split(" ")[0]);
-		expect(strong).toEqual(["sitios", "sistemas", "tiendas", "automatizaciones"]);
+		// Una frase entre llaves por tipo de trabajo, en este orden: su primera palabra elige el icono.
+		const kinds = [...LABS_HOME.statement.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]!.split(" ")[0]);
+		expect(kinds).toEqual(["sitios", "sistemas", "tiendas", "automatizaciones"]);
 		expect(LABS_HOME.statement).not.toMatch(/convierten|ahorran horas|sin intermediarios|fácil de explicar|facturan/);
 	});
 
