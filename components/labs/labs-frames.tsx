@@ -69,13 +69,15 @@ export function PhoneFrame({
 					className={cn("object-cover object-top", imageClassName)}
 				/>
 			</div>
+			{/* Cortado (sale por el borde del panel), sin sombra: el contenedor que lo corta la recortaba
+			    en un rectángulo de bordes duros alrededor del teléfono. */}
 			<Image
 				src={IPHONE_BEZEL.src}
 				alt=""
 				aria-hidden
 				fill
 				sizes={sizes}
-				className="pointer-events-none select-none [filter:drop-shadow(0_30px_50px_rgba(0,0,0,0.35))]"
+				className={cn("pointer-events-none select-none", !cut && "[filter:drop-shadow(0_30px_50px_rgba(0,0,0,0.35))]")}
 			/>
 		</div>
 	);

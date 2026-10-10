@@ -88,7 +88,7 @@ export function LabsNavbar({ links, homeHref, ctaHref, ctaLabel, companyName, pr
 					) : null}
 					<Link
 						href={ctaHref}
-						className="hidden items-center gap-1.5 rounded-full bg-[#15151a] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#4f5bff] sm:inline-flex"
+						className="hidden items-center gap-1.5 rounded-full bg-[#15151a] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2c2c34] sm:inline-flex"
 					>
 						{ctaLabel}
 						<ArrowRight className="h-3.5 w-3.5" aria-hidden />
