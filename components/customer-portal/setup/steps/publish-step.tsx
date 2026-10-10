@@ -112,7 +112,7 @@ export function PublishStep({
 	published: boolean;
 	businessName: string;
 	logoUrl: string | null;
-	/** Color de los botones de la tienda, para la celebración. */
+	/** Color de la marca, para el confeti de la celebración. */
 	accentColor: string;
 	checklist: SetupChecklistItem[];
 	/** «Arma y paga»: la tienda sigue en vista previa (publicar es elegir plan y pagar). */
@@ -195,7 +195,7 @@ export function PublishStep({
 
 	return (
 		<div className="relative flex flex-col gap-6">
-			<ConfettiBurst colors={[accentColor, "#4f5bff", "#ffd166", "#06d6a0", "#ef476f"]} />
+			<ConfettiBurst accent={accentColor} />
 
 			<motion.div
 				initial={{ opacity: 0, y: 16, scale: 0.98 }}

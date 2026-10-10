@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { Check, Sparkles } from "lucide-react";
+import { Check } from "lucide-react";
 
 import {
 	describeSectorForCopy,
@@ -65,8 +65,7 @@ export function MenuTemplatePicker({
 								) : null}
 							</span>
 							{isRecommended ? (
-								<span className="inline-flex w-fit items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
-									<Sparkles className="h-3 w-3" aria-hidden />
+								<span className="w-fit rounded-md bg-[#f5f5f7] px-1.5 py-0.5 text-[11px] font-medium text-[#6e6e73]">
 									Recomendada para {describeSectorForCopy(sector)}
 								</span>
 							) : null}

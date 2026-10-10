@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { CupSoda, Minus, Plus, Sparkles, Ticket, Trash2 } from "lucide-react";
+import { CirclePlus, CupSoda, Minus, Plus, Ticket, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import type { CheckoutEnhancePanel } from "@/lib/tenant/mobile/checkout-session";
@@ -134,7 +134,7 @@ export function CartEnhanceRail({
 	type Tab = { key: CheckoutEnhancePanel; label: string; icon: React.ReactNode; on: boolean };
 	const allTabs: Tab[] = [
 		{ key: "beverages", label: t("catalog.beveragesTab"), icon: <CupSoda size={15} aria-hidden />, on: showBeverages },
-		{ key: "extras", label: t("catalog.extrasTab"), icon: <Sparkles size={15} aria-hidden />, on: showExtras },
+		{ key: "extras", label: t("catalog.extrasTab"), icon: <CirclePlus size={15} aria-hidden />, on: showExtras },
 		{ key: "coupon", label: t("coupon.segLabel"), icon: <Ticket size={15} aria-hidden />, on: showCoupon },
 	];
 	const tabs = allTabs.filter((tab) => tab.on);

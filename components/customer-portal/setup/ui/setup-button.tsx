@@ -8,7 +8,7 @@ export type SetupButtonVariant = "primary" | "accent" | "secondary" | "ghost" | 
 export type SetupButtonSize = "sm" | "md" | "lg";
 
 const BASE =
-	"relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap font-medium tracking-[-0.01em] " +
+	"group relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap font-medium tracking-[-0.01em] " +
 	"transition-[background-color,box-shadow,transform,color,opacity] duration-150 ease-out active:scale-[0.97] " +
 	"focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-(--su-accent)/25 " +
 	"disabled:pointer-events-none disabled:opacity-45 [-webkit-tap-highlight-color:transparent]";

@@ -29,22 +29,13 @@ import { brandButtonColors } from "@/lib/tenant/logo-colors";
 const ROOT_STYLE = setupCssVariables() as CSSProperties;
 const EASE = SETUP_TOKENS.motion.ease;
 
-/** Fondo del escenario del teléfono: un halo suave del color de la marca sobre gris. */
-function stageBackground(accent: string): string {
-	return [
-		`radial-gradient(55% 42% at 50% 46%, color-mix(in srgb, ${accent} 24%, transparent) 0%, transparent 72%)`,
-		"radial-gradient(circle at 1px 1px, rgba(17,17,19,0.07) 1px, transparent 0) 0 0 / 22px 22px",
-		"linear-gradient(180deg, #f3f3f6 0%, #e9e9ef 100%)",
-	].join(", ");
-}
+/** Fondo del escenario del teléfono: gris liso, sin halos ni tramas, para que mande la tienda. */
+const STAGE_BACKGROUND = "#ededf1";
 
 function LivePill({ draft }: { draft: boolean }) {
 	return (
 		<span className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3.5 py-1.5 text-[12.5px] font-medium text-(--su-ink2) shadow-[0_1px_2px_rgba(17,17,19,0.06)] ring-1 ring-black/5 backdrop-blur">
-			<span className="relative flex h-2 w-2" aria-hidden>
-				<span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 motion-reduce:hidden ${draft ? "bg-amber-400" : "bg-emerald-400"}`} />
-				<span className={`relative inline-flex h-2 w-2 rounded-full ${draft ? "bg-amber-500" : "bg-emerald-500"}`} />
-			</span>
+			<span className={`h-1.5 w-1.5 rounded-full ${draft ? "bg-amber-500" : "bg-emerald-500"}`} aria-hidden />
 			{draft ? "Vista previa · tus clientes todavía no la ven" : "En vivo · así lo ven tus clientes"}
 		</span>
 	);
@@ -68,18 +59,47 @@ function SaveIndicator({ saving, savedAt }: { saving: boolean; savedAt: number |
 	);
 }
 
+/**
+ * El check de «tu tienda está en línea»: el círculo aparece sin rebote, el trazo se dibuja
+ * y un anillo fino se abre una sola vez. Con «reducir movimiento», todo quieto.
+ */
+function SuccessMark() {
+	const reduce = useReducedMotion();
+	const ease = [0.22, 1, 0.36, 1] as const;
+	return (
+		<span className="relative mb-5 flex h-12 w-12 items-center justify-center" aria-hidden>
+			{reduce ? null : (
+				<motion.span
+					className="absolute inset-0 rounded-full border border-(--su-success)"
+					initial={{ scale: 1, opacity: 0.5 }}
+					animate={{ scale: 1.7, opacity: 0 }}
+					transition={{ duration: 1.1, ease, delay: 0.35 }}
+				/>
+			)}
+			<motion.span
+				className="flex h-12 w-12 items-center justify-center rounded-full bg-(--su-success) shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_1px_2px_rgba(17,17,19,0.12),0_8px_20px_-10px_rgba(17,17,19,0.35)]"
+				initial={reduce ? false : { scale: 0.86, opacity: 0 }}
+				animate={{ scale: 1, opacity: 1 }}
+				transition={{ duration: 0.45, ease }}
+			>
+				<svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="white" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+					<motion.path
+						d="M5.5 12.5l4.2 4.2L18.5 7.8"
+						initial={reduce ? false : { pathLength: 0 }}
+						animate={{ pathLength: 1 }}
+						transition={{ duration: 0.45, ease, delay: 0.2 }}
+					/>
+				</svg>
+			</motion.span>
+		</span>
+	);
+}
+
 function StepHeader({ eyebrow, title, description, celebrate }: { eyebrow: string; title: string; description: string; celebrate: boolean }) {
 	return (
 		<div className="mb-8 sm:mb-10">
 			{celebrate ? (
-				<motion.span
-					initial={{ scale: 0.4, opacity: 0 }}
-					animate={{ scale: 1, opacity: 1 }}
-					transition={{ type: "spring", stiffness: 420, damping: 20 }}
-					className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-(--su-success) text-white shadow-[0_10px_24px_-8px_rgba(22,163,74,0.6)]"
-				>
-					<Check className="h-7 w-7" strokeWidth={3} aria-hidden />
-				</motion.span>
+				<SuccessMark />
 			) : (
 				<p className="mb-2.5 hidden text-[12.5px] font-semibold uppercase tracking-[0.09em] text-(--su-accent) lg:block">{eyebrow}</p>
 			)}
@@ -181,7 +201,7 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 					onClick: () => void setup.publish(),
 					loading: busy === "publish",
 					variant: "accent" as const,
-					icon: draft?.paymentInReview ? <Clock aria-hidden /> : <Rocket aria-hidden />,
+					icon: draft?.paymentInReview ? <Clock aria-hidden /> : <Rocket aria-hidden strokeWidth={1.75} className="transition-transform duration-300 ease-out group-hover:-translate-y-px group-hover:translate-x-px" />,
 					trailing: null,
 				}
 			: {
@@ -273,9 +293,9 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 				published={published}
 				businessName={businessName}
 				logoUrl={setup.logoPreviewUrl}
-				accentColor={accent}
 				draft={draft}
 				onGoToStep={(target) => void setup.goTo(target)}
+				accentColor={accent}
 				checklist={[
 					{ step: "marca", label: "Tu logo", done: setup.stepDone.marca },
 					{ step: "diseno", label: "Un diseño para tu menú", done: setup.stepDone.diseno },
@@ -290,7 +310,7 @@ export function OwnerSetupWizard({ initial, initialStep }: { initial: OwnerSetup
 		);
 	}
 
-	const stage = stageBackground(accent);
+	const stage = STAGE_BACKGROUND;
 
 	return (
 		<div style={ROOT_STYLE} className="min-h-dvh overflow-x-clip bg-(--su-canvas) text-(--su-ink) antialiased lg:h-dvh lg:overflow-hidden">

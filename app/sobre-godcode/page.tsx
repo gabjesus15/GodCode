@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { ArrowRight, ChartNoAxesCombined, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { ArrowRight, ChartNoAxesCombined, MousePointerClick, ShieldCheck, Users } from "lucide-react";
 
 import { AboutNavbar } from "@/components/landing-v3/about-navbar";
 import {
@@ -53,7 +53,7 @@ const copy = {
     valuesTitle: "Principios de la plataforma",
     values: [
       { num: "01", icon: ShieldCheck, title: "Datos protegidos", text: "Cada negocio mantiene su información aislada y segura." },
-      { num: "02", icon: Sparkles, title: "Experiencia limpia", text: "Interfaces directas, sin ruido visual ni pasos innecesarios." },
+      { num: "02", icon: MousePointerClick, title: "Experiencia limpia", text: "Interfaces directas, sin ruido visual ni pasos innecesarios." },
       { num: "03", icon: Users, title: "Para equipos reales", text: "Funciona para locales únicos y para operaciones con varias sucursales." },
       { num: "04", icon: ChartNoAxesCombined, title: "Crecimiento visible", text: "Una marca fuerte y un dominio propio ayudan a posicionarte mejor." },
     ],
@@ -93,7 +93,7 @@ const copy = {
     valuesTitle: "Platform principles",
     values: [
       { num: "01", icon: ShieldCheck, title: "Protected data", text: "Each business keeps its information isolated and secure." },
-      { num: "02", icon: Sparkles, title: "Clean experience", text: "Straightforward interfaces without visual noise or extra steps." },
+      { num: "02", icon: MousePointerClick, title: "Clean experience", text: "Straightforward interfaces without visual noise or extra steps." },
       { num: "03", icon: Users, title: "Built for real teams", text: "Works for single locations and multi-branch operations alike." },
       { num: "04", icon: ChartNoAxesCombined, title: "Visible growth", text: "A strong brand and your own domain help you rank better." },
     ],
