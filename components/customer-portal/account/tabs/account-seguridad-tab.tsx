@@ -47,10 +47,6 @@ export function AccountSeguridadTab() {
 		<div className="space-y-5 sm:space-y-6">
 			{/* Hero: en móvil el icono va junto al título (no debajo), para no “pesar” visualmente */}
 			<section className="relative overflow-hidden rounded-2xl border border-[#e5e5ea] bg-gradient-to-br from-indigo-50/90 via-white to-[#fbfbfd] p-4 shadow-sm sm:p-8">
-				<div
-					className="pointer-events-none absolute -right-24 -top-20 h-36 w-36 rounded-full bg-indigo-400/[0.08] blur-2xl sm:-right-16 sm:-top-16 sm:h-48 sm:w-48 sm:bg-indigo-400/10 sm:blur-3xl"
-					aria-hidden
-				/>
 				<div className="relative">
 					<p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-indigo-600 sm:tracking-[0.2em]">
 						Seguridad de la cuenta

@@ -27,15 +27,6 @@ function FloatingSocialButton({ link }: { link: LandingSocialLink }) {
 					: "hover:border-[#25d366]/45 hover:bg-[#25d366]/10 hover:text-[#4ade80]",
 			)}
 		>
-			<span
-				className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-				aria-hidden
-				style={{
-					background: isInstagram
-						? "radial-gradient(circle at center, rgba(225,48,108,0.18) 0%, transparent 70%)"
-						: "radial-gradient(circle at center, rgba(37,211,102,0.18) 0%, transparent 70%)",
-				}}
-			/>
 			{isInstagram ? (
 				<LandingInstagramIcon size={16} className="relative transition-transform duration-300 group-hover:scale-105" />
 			) : (
@@ -80,10 +71,6 @@ export function FloatingSocialDock({ links }: FloatingSocialDockProps) {
 					visible ? "pointer-events-auto" : "pointer-events-none",
 				)}
 			>
-				<div
-					className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-[#4f5bff]/15 blur-2xl"
-					aria-hidden
-				/>
 				<div className="relative flex flex-col gap-1.5">
 					{links.map((link) => (
 						<FloatingSocialButton key={link.kind} link={link} />

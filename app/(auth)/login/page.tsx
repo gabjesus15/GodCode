@@ -189,9 +189,6 @@ function LoginPageContent() {
 
 	return (
 		<div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#F5F7FF] via-[#FAFBFF] to-white px-4 py-8 sm:px-6">
-			<div className="pointer-events-none absolute -left-32 top-0 h-96 w-96 rounded-full bg-[#4F5BFF]/[0.06] blur-3xl" />
-			<div className="pointer-events-none absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-[#4F5BFF]/[0.05] blur-3xl" />
-
 			{/* LazyMotion + m: mismas animaciones con el paquete mínimo de framer-motion */}
 			<LazyMotion features={domAnimation}>
 				<m.div

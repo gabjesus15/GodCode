@@ -361,9 +361,9 @@
 	color: var(--gh-fg);
 }
 
+/* Solo el punto, sin halo verde: igual que «Abierto ahora» en la portada del menú. */
 .gh-status[data-open] .gh-status__dot {
 	background: var(--gh-ok);
-	box-shadow: 0 0 0 3px color-mix(in srgb, var(--gh-ok) 24%, transparent);
 }
 
 .gh-socials {

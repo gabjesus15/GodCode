@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, AlertTriangle, Clock3, ExternalLink, ShieldAlert } from "lucide-react";
+import { ArrowLeft, AlertTriangle, ShieldAlert } from "lucide-react";
 
 import { Badge } from "../../../components/ui/badge";
 import { CheckoutRetryLink } from "@/components/onboarding/payments/CheckoutRetryLink";
+import { LandingLogo } from "@/components/ui/logo/landing-logo";
 import { formatUsd } from "@/lib/billing/portal-pricing";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
@@ -54,6 +56,19 @@ type CancelledPayment = {
 };
 
 type PaymentRow = { status: unknown; planId: unknown; amount: unknown; companyId: unknown };
+
+/** El correo se puede cortar después de la «@» y no a mitad de palabra («gmail.c / om») en una columna angosta. */
+function breakableEmail(email: string): ReactNode {
+  const at = email.indexOf("@");
+  if (at < 0) return email;
+  return (
+    <>
+      {email.slice(0, at + 1)}
+      <wbr />
+      {email.slice(at + 1)}
+    </>
+  );
+}
 
 function isSafeReference(ref: string | undefined): ref is string {
   return Boolean(ref && ref.length <= 100 && /^[A-Za-z0-9_-]+$/.test(ref));
@@ -132,60 +147,50 @@ export default async function CheckoutCancelPage({
   const statusText = payment ? checkoutStatusLabel(payment.status, checkout.status) : null;
   const amountText = payment?.amountUsd ? formatUsd(payment.amountUsd, AMOUNT_LOCALES[locale] ?? "es-CL") : null;
 
+  // Misma familia que /checkout/success: fondo blanco liso, cabecera con la marca y el detalle a la derecha.
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_#fef9c3_0%,_#ffffff_45%,_#f8fafc_100%)]">
-      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl" />
-      <div className="pointer-events-none absolute -right-32 top-24 h-96 w-96 rounded-full bg-rose-200/40 blur-3xl" />
+    <div className="min-h-screen bg-white text-slate-900 antialiased">
+      <header className="border-b border-slate-200/80 px-5 sm:px-8">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4">
+          <Link href="/" className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4F5BFF]/40">
+            <LandingLogo forceLightText />
+          </Link>
+          <a href={`mailto:${supportEmail}`} className="text-sm font-medium text-slate-600 underline-offset-4 hover:text-slate-900 hover:underline">
+            {copy.supportButton}
+          </a>
+        </div>
+      </header>
 
-      <div className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-10 sm:py-16">
-        <div className="grid w-full gap-8 lg:grid-cols-[1.12fr_0.88fr]">
-          <section className="flex flex-col gap-6">
-            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-amber-700">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              {copy.badge}
-            </div>
+      <main className="mx-auto w-full max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-14">
+          <section className="min-w-0 max-w-2xl">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-700">
+              <AlertTriangle className="h-6 w-6" aria-hidden />
+            </span>
+            <p className="mt-6 text-sm font-semibold text-amber-700">{copy.badge}</p>
+            <h1 className="mt-2 text-balance text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+              {hasPayment ? copy.titlePaid : copy.titleFallback}
+            </h1>
+            <p className="mt-3 text-pretty text-base leading-relaxed text-slate-600 sm:text-lg">
+              {hasPayment ? copy.leadPaid : copy.leadFallback}
+            </p>
 
-            <div className="space-y-4">
-              <h1 className="max-w-xl text-4xl font-semibold leading-tight text-zinc-900 sm:text-5xl">
-                {hasPayment ? copy.titlePaid : copy.titleFallback}
-              </h1>
-              <p className="max-w-2xl text-base text-zinc-600 sm:text-lg">
-                {hasPayment ? copy.leadPaid : copy.leadFallback}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Link href={recoveryHref} className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800">
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href={recoveryHref}
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
                 {hasPayment ? copy.accountButtonPaid : copy.accountButtonFallback}
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-4 w-4" aria-hidden />
               </Link>
-              <CheckoutRetryLink className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50">
+              <CheckoutRetryLink className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50">
                 {copy.retryButton}
               </CheckoutRetryLink>
-              <Link href={`mailto:${supportEmail}`} className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50">
-                {copy.supportButton}
-                <ExternalLink className="h-4 w-4" />
-              </Link>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-zinc-200 bg-white/75 p-4 shadow-sm backdrop-blur">
-                <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">{copy.statusLabel}</p>
-                <p className="mt-2 text-sm font-semibold text-amber-700">{copy.statusText}</p>
-              </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white/75 p-4 shadow-sm backdrop-blur">
-                <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">{copy.recoveryLabel}</p>
-                <p className="mt-2 text-sm font-semibold text-zinc-900">{copy.recoveryText}</p>
-              </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white/75 p-4 shadow-sm backdrop-blur">
-                <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">{copy.supportLabel}</p>
-                <p className="mt-2 text-sm font-semibold text-zinc-900">{supportEmail}</p>
-              </div>
             </div>
 
             {!hasReference ? (
-              <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+              <div className="mt-8 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" aria-hidden />
                 <div>
                   <p className="font-semibold">{copy.noReferenceTitle}</p>
                   <p className="mt-1 text-amber-800">{copy.noReferenceText}</p>
@@ -193,81 +198,77 @@ export default async function CheckoutCancelPage({
               </div>
             ) : null}
 
-            <div className="rounded-2xl border border-zinc-200 bg-white/70 p-5 text-sm text-zinc-600 shadow-sm backdrop-blur">
-              {copy.noteText}
+            <div className="mt-12 border-t border-slate-200 pt-8">
+              <dl className="grid gap-6 sm:grid-cols-3">
+                <div>
+                  <dt className="text-sm font-semibold text-slate-900">{copy.statusLabel}</dt>
+                  <dd className="mt-1 text-sm leading-relaxed text-amber-700">{copy.statusText}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-semibold text-slate-900">{copy.recoveryLabel}</dt>
+                  <dd className="mt-1 text-sm leading-relaxed text-slate-600">{copy.recoveryText}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-semibold text-slate-900">{copy.supportLabel}</dt>
+                  <dd className="mt-1 text-sm leading-relaxed text-slate-600 [overflow-wrap:anywhere]">{breakableEmail(supportEmail)}</dd>
+                </div>
+              </dl>
+              <p className="mt-6 text-sm leading-relaxed text-slate-500">{copy.noteText}</p>
             </div>
           </section>
 
-          <aside className="relative rounded-3xl border border-zinc-200 bg-white/85 p-6 shadow-xl backdrop-blur sm:p-8">
-            <div className="absolute -top-8 right-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <AlertTriangle className="h-8 w-8 text-amber-600" />
-            </div>
-
-            <div className="flex flex-col gap-6">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">{copy.detailTitle}</p>
-                <h2 className="mt-2 text-2xl font-semibold text-zinc-900">
+          <aside className="min-w-0 lg:pt-1">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-20px_rgba(15,23,42,0.25)] sm:p-6">
+              <p className="text-sm text-slate-500">{copy.detailTitle}</p>
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <h2 className="text-base font-semibold text-slate-900">
                   {hasPayment ? copy.summaryTitlePaid : copy.summaryTitleFallback}
                 </h2>
+                {payment && statusText ? (
+                  <Badge variant={statusBadge[payment.status.toLowerCase()] ?? "neutral"}>{statusText}</Badge>
+                ) : null}
               </div>
-
               {payment ? (
-                <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4 text-sm text-zinc-700">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs uppercase tracking-[0.2em] text-zinc-500">{copy.detailTitle}</span>
-                    {statusText ? <Badge variant={statusBadge[payment.status.toLowerCase()] ?? "neutral"}>{statusText}</Badge> : null}
-                  </div>
-                  <div className="mt-4 grid gap-3">
-                    {payment.planName || amountText ? (
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {payment.planName ? (
-                          <div>
-                            <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.planLabel}</p>
-                            <p className="mt-1 font-semibold text-zinc-900">{payment.planName}</p>
-                          </div>
-                        ) : null}
-                        {amountText ? (
-                          <div>
-                            <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.amountLabel}</p>
-                            <p className="mt-1 font-semibold text-zinc-900">{amountText}</p>
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.referenceLabel}</p>
-                      <p className="mt-1 break-all font-mono text-xs text-zinc-700">{payment.reference}</p>
+                <dl className="mt-4 divide-y divide-slate-100 text-sm">
+                  {payment.planName ? (
+                    <div className="flex items-start justify-between gap-4 py-3">
+                      <dt className="text-slate-500">{copy.planLabel}</dt>
+                      <dd className="text-right font-medium text-slate-900">{payment.planName}</dd>
                     </div>
+                  ) : null}
+                  {amountText ? (
+                    <div className="flex items-start justify-between gap-4 py-3">
+                      <dt className="text-slate-500">{copy.amountLabel}</dt>
+                      <dd className="text-right font-medium text-slate-900">{amountText}</dd>
+                    </div>
+                  ) : null}
+                  <div className="py-3">
+                    <dt className="text-slate-500">{copy.referenceLabel}</dt>
+                    <dd className="mt-1 break-all font-mono text-xs text-slate-700">{payment.reference}</dd>
                   </div>
-                </div>
+                </dl>
               ) : (
-                <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 px-4 py-5 text-sm text-zinc-600">
-                  {copy.noReferenceText}
-                </div>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">{copy.noReferenceText}</p>
               )}
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4 text-sm text-zinc-600 shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.actionTitle}</p>
-                  <p className="mt-2 font-medium text-zinc-900">{copy.actionText}</p>
-                </div>
-                <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4 text-sm text-zinc-600 shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.16em] text-zinc-500">{copy.timingTitle}</p>
-                  <p className="mt-2 font-medium text-zinc-900">{copy.timingText}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
-                <Clock3 className="mt-0.5 h-5 w-5 shrink-0 text-sky-600" />
-                <div>
-                  <p className="font-semibold">{copy.protectedTitle}</p>
-                  <p className="mt-1 text-sky-800">{copy.protectedText}</p>
-                </div>
-              </div>
             </div>
+
+            <dl className="mt-6 space-y-4 px-1 text-sm">
+              <div>
+                <dt className="font-semibold text-slate-900">{copy.actionTitle}</dt>
+                <dd className="mt-1 leading-relaxed text-slate-600">{copy.actionText}</dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-slate-900">{copy.timingTitle}</dt>
+                <dd className="mt-1 leading-relaxed text-slate-600">{copy.timingText}</dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-slate-900">{copy.protectedTitle}</dt>
+                <dd className="mt-1 leading-relaxed text-slate-600">{copy.protectedText}</dd>
+              </div>
+            </dl>
           </aside>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
