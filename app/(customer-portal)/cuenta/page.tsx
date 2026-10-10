@@ -10,8 +10,11 @@ import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 import { resolveRegionalPlanPrice } from "@/lib/plans/plan-regional-pricing";
 import { BranchSummary, BusinessInfoSummary, type PortalTab } from "@/components/customer-portal/shared/customer-account-types";
 import { PORTAL_TAB_ORDER } from "@/components/customer-portal/shared/customer-account-constants";
+import { selectWithOptionalColumns } from "@/lib/infra/db-compat";
+import { logger } from "@/lib/infra/logger";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { sanitizeBranchPaymentConfig } from "@/lib/payments/branch-payment-config";
+import { PENDING_BRANCH_COLUMNS } from "@/lib/tenant/branch-pending-columns";
 import { buildBillingOptionsResponse, getCustomerAccountBillingContext } from "@/lib/tenant/customer-account-billing";
 import { getCountryConfig } from "@/lib/geo/country-registry";
 import { LANDING_SUPPORT_EMAIL } from "@/lib/landing/brand";
@@ -124,20 +127,25 @@ export default async function CustomerAccountPage({
       .maybeSingle(),
   ]);
 
-  const [{ data: company }, { data: branches }, { data: businessInfoRaw }, { data: payments }, { data: companyAddons }, { data: tickets }, { data: branchEntitlements }, { data: schedule }] = await Promise.all([
+  const [{ data: company }, { data: branches, error: branchesError }, { data: businessInfoRaw }, { data: payments }, { data: companyAddons }, { data: tickets }, { data: branchEntitlements }, { data: schedule }] = await Promise.all([
     supabaseAdmin
       .from("companies")
       .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,theme_config,created_at,plan:plans(id,name,name_i18n,price,prices_by_continent,max_branches,max_users,features)")
       .eq("id", companyId)
       .maybeSingle(),
-    supabaseAdmin
-      .from("branches")
-      .select(
-        // `country` y `exchange_rate_source`: el modal de sucursal muestra el selector de tasa solo en Venezuela.
-        "id,name,address,is_active,phone,schedule,business_hours,instagram_url,whatsapp_url,map_url,origin_lat,origin_lng,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,paypal,order_intake_paused,order_intake_pause_message,order_intake_paused_at,order_intake_paused_by,country,exchange_rate_source",
-      )
-      .eq("company_id", companyId)
-      .order("created_at", { ascending: false }),
+    // `binance_pay` y `exchange_rate_source` llegan con migraciones que el dueño corre a mano: sin
+    // ellas el select falla entero (42703) y se repite sin esas columnas, que llegan en `null`.
+    selectWithOptionalColumns(
+      // `country` y `exchange_rate_source`: el modal de sucursal muestra el selector de tasa solo en Venezuela.
+      "id,name,address,is_active,phone,schedule,business_hours,instagram_url,whatsapp_url,map_url,origin_lat,origin_lng,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,paypal,order_intake_paused,order_intake_pause_message,order_intake_paused_at,order_intake_paused_by,country,exchange_rate_source",
+      PENDING_BRANCH_COLUMNS,
+      (columns) =>
+        supabaseAdmin
+          .from("branches")
+          .select(columns)
+          .eq("company_id", companyId)
+          .order("created_at", { ascending: false }),
+    ),
     supabaseAdmin
       .from("business_info")
       .select("name,phone,address,instagram,schedule")
@@ -175,6 +183,12 @@ export default async function CustomerAccountPage({
       .eq("status", "scheduled")
       .maybeSingle(),
   ]);
+
+  // Otro error deja la lista vacía como antes, para que el resto de Mi cuenta siga usable, pero
+  // queda en el log: sin log, el 42703 de las columnas nuevas se veía solo como «sin sucursales».
+  if (branchesError) {
+    logger.error("customer_account_branches_load_failed", { companyId, code: branchesError.code, error: branchesError.message });
+  }
 
   // «Solo panel CEO»: sin menú público, no hay tienda que configurar ni secciones de la tienda.
   const hasPublicMenu = companyHasPublicMenu({ plans: company?.plan });

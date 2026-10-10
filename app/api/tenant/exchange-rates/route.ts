@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { getAllCurrentExchangeRates, getCurrentExchangeRate } from "@/lib/exchange-rates/current";
+import { getAllCurrentExchangeRates, getCurrentExchangeRate, isExchangeRatesTableMissing } from "@/lib/exchange-rates/current";
 import { isExchangeRateSource } from "@/lib/exchange-rates/sources";
 import { enforceRateLimit } from "@/lib/infra/api-guard";
+import { isMissingColumnError } from "@/lib/infra/db-compat";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
 /** @service-role public
@@ -42,6 +43,21 @@ function json(body: unknown, status = 200, cacheSeconds = 0) {
 
 const branchIdSchema = z.string().uuid();
 
+/**
+ * Sin migrations/20261007_exchange_rates.sql (la corre el dueño a mano) no existen la columna
+ * `branches.exchange_rate_source` ni la tabla `exchange_rates`. En vez de un 500 por cada visita
+ * al menú se responde «sin fuente» con 200 y `fallback: true`: con eso el menú y el carrito usan
+ * su tasa de respaldo (la manual de la sucursal), igual que cuando la petición falla. Con
+ * `source: null` a secas no mostrarían bolívares. Caché corta: al correr la migración se nota.
+ */
+function exchangeRatesMigrationPending(allRates: boolean) {
+	return json(
+		allRates ? { ok: true as const, rates: {}, fallback: true } : { ok: true as const, source: null, rate: null, fallback: true },
+		200,
+		60,
+	);
+}
+
 export async function OPTIONS() {
 	return new Response(null, { status: 204, headers: CORS_HEADERS });
 }
@@ -53,8 +69,8 @@ export async function GET(req: NextRequest) {
 		return limited;
 	}
 
+	const rawBranchId = req.nextUrl.searchParams.get("branchId");
 	try {
-		const rawBranchId = req.nextUrl.searchParams.get("branchId");
 		if (rawBranchId == null) {
 			const rates = await getAllCurrentExchangeRates(supabaseAdmin);
 			return json({ ok: true as const, rates }, 200, 60);
@@ -68,7 +84,10 @@ export async function GET(req: NextRequest) {
 			.select("exchange_rate_source")
 			.eq("id", branchId.data)
 			.maybeSingle();
-		if (error) throw error;
+		if (error) {
+			if (isMissingColumnError(error, "exchange_rate_source")) return exchangeRatesMigrationPending(false);
+			throw error;
+		}
 		if (!branch) return json({ ok: false as const, error: "not_found" }, 404);
 
 		const source = branch.exchange_rate_source;
@@ -78,7 +97,8 @@ export async function GET(req: NextRequest) {
 
 		const current = await getCurrentExchangeRate(supabaseAdmin, source);
 		return json({ ok: true as const, source, rate: current }, 200, 60);
-	} catch {
+	} catch (error) {
+		if (isExchangeRatesTableMissing(error)) return exchangeRatesMigrationPending(rawBranchId == null);
 		return json({ ok: false as const, error: "exchange_rate_unavailable" }, 500);
 	}
 }

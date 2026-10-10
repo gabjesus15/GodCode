@@ -11,8 +11,14 @@ import {
   sanitizeBranchPaymentMethods,
   validatePublicPaymentConfig,
 } from "@/lib/payments/branch-payment-config";
+import { selectWithOptionalColumns, updateWithOptionalColumns } from "@/lib/infra/db-compat";
 import { logger } from "@/lib/infra/logger";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import {
+  PENDING_BRANCH_COLUMNS,
+  pendingBranchMigrationMessage,
+  unsavedBranchChanges,
+} from "@/lib/tenant/branch-pending-columns";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "@/utils/admin/server-auth";
 
 /** @service-role super-admin */
@@ -62,13 +68,13 @@ export async function PUT(
     return NextResponse.json({ error: "La tasa de cambio elegida no existe.", field: "exchange_rate_source" }, { status: 400 });
   }
 
-  const { data: existing, error: existingError } = await supabaseAdmin
-    .from("branches")
-    .select(
-      "id,company_id,name,delivery_settings,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta,exchange_rate_source",
-    )
-    .eq("id", branchId)
-    .maybeSingle();
+  // `binance_pay` y `exchange_rate_source` llegan con migraciones que el dueño corre a mano: sin
+  // ellas el select se repite sin esas columnas (llegan en `null`) y el update no las manda.
+  const { data: existing, error: existingError, missingColumns } = await selectWithOptionalColumns(
+    "id,company_id,name,delivery_settings,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta,exchange_rate_source",
+    PENDING_BRANCH_COLUMNS,
+    (columns) => supabaseAdmin.from("branches").select(columns).eq("id", branchId).maybeSingle(),
+  );
 
   if (existingError) {
     return NextResponse.json({ error: existingError.message }, { status: 500 });
@@ -129,18 +135,31 @@ export async function PUT(
     );
   }
 
-  const { error: updateError } = await supabaseAdmin
-    .from("branches")
-    .update(update)
-    .eq("id", branchId);
+  // Sin las migraciones de Binance Pay o de tasas, el resto del cambio se guarda igual.
+  const { error: updateError, droppedColumns } = await updateWithOptionalColumns(
+    update,
+    PENDING_BRANCH_COLUMNS,
+    (patch) => supabaseAdmin.from("branches").update(patch).eq("id", branchId),
+    missingColumns,
+  );
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
+  if (droppedColumns.length > 0) {
+    logger.warn("branch_pending_migration_columns", {
+      branchId,
+      columns: droppedColumns,
+      detail: "Falta aplicar su migración (migrations/20261009_binance_pay.sql, migrations/20261007_exchange_rates.sql): esas columnas no se guardaron.",
+    });
+  }
+  // Sin la columna tampoco existe la tabla del historial (misma migración): no se intenta.
+  const exchangeRateSourceSaved = exchangeRateSourceChanged && !droppedColumns.includes("exchange_rate_source");
+
   // Mismo registro que deja la RPC `set_branch_exchange_rate_source` (que aquí no sirve:
   // exige `auth.uid()`). Quién lo cambió queda en la auditoría de abajo, por correo.
-  if (exchangeRateSourceChanged && typeof nextExchangeRateSource === "string") {
+  if (exchangeRateSourceSaved && typeof nextExchangeRateSource === "string") {
     const { error: changeError } = await supabaseAdmin.from("branch_exchange_rate_source_changes").insert({
       company_id: existing.company_id,
       branch_id: branchId,
@@ -164,11 +183,18 @@ export async function PUT(
     metadata: {
       company_id: existing.company_id,
       via: "api.super-admin.branches.put",
-      ...(exchangeRateSourceChanged
+      ...(exchangeRateSourceSaved
         ? { exchange_rate_source: { from: previousExchangeRateSource, to: nextExchangeRateSource ?? null } }
         : {}),
     },
   });
+
+  // Lo demás ya quedó guardado; si lo que no entró era un cambio de verdad (datos de Binance Pay,
+  // otra tasa), se avisa. 503: falta algo en el servidor (la migración), no es culpa de la petición.
+  const unsaved = unsavedBranchChanges(update, droppedColumns);
+  if (unsaved.length > 0) {
+    return NextResponse.json({ error: pendingBranchMigrationMessage(unsaved) }, { status: 503 });
+  }
 
   return NextResponse.json({ ok: true });
 }

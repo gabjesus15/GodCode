@@ -5,6 +5,7 @@ import {
 	__resetExchangeRateBackoff,
 	EXCHANGE_RATE_FETCH_BACKOFF_MS,
 	getCurrentExchangeRate,
+	isExchangeRatesTableMissing,
 } from "@/lib/exchange-rates/current";
 
 type Row = { id: number; source: string; rate: number; published_at: string; checked_at: string };
@@ -115,5 +116,45 @@ describe("getCurrentExchangeRate", () => {
 			expect(fetchEur).toHaveBeenCalledTimes(1);
 			expect(result).toMatchObject({ rateId: 10, stale: false });
 		});
+	});
+});
+
+describe("getCurrentExchangeRate sin la migración de tasas", () => {
+	beforeEach(() => __resetExchangeRateBackoff());
+
+	/** La tabla `exchange_rates` todavía no existe: PostgREST 12+ responde PGRST205. */
+	function missingTableSupabase() {
+		const rpc = vi.fn();
+		const query = {
+			select: () => query,
+			eq: () => query,
+			order: () => query,
+			limit: () => query,
+			maybeSingle: async () => ({
+				data: null,
+				error: { code: "PGRST205", message: "Could not find the table 'public.exchange_rates' in the schema cache" },
+			}),
+		};
+		return { client: { from: () => query, rpc } as unknown as SupabaseClient, rpc };
+	}
+
+	it("lanza el error tal cual, sin consultar la fuente: el alta cae a dolarapi y la tienda responde «sin fuente»", async () => {
+		const { client, rpc } = missingTableSupabase();
+		const fetchImpl = vi.fn();
+
+		const failure = await getCurrentExchangeRate(client, "bcv_usd", { now: NOW, fetchImpl: fetchImpl as unknown as typeof fetch }).catch(
+			(error: unknown) => error,
+		);
+
+		expect(isExchangeRatesTableMissing(failure)).toBe(true);
+		expect(fetchImpl).not.toHaveBeenCalled();
+		expect(rpc).not.toHaveBeenCalled();
+	});
+
+	it("isExchangeRatesTableMissing no confunde otros errores de la base", () => {
+		expect(isExchangeRatesTableMissing({ code: "42P01", message: 'relation "public.exchange_rates" does not exist' })).toBe(true);
+		expect(isExchangeRatesTableMissing({ code: "57014", message: "canceling statement due to statement timeout" })).toBe(false);
+		expect(isExchangeRatesTableMissing({ code: "42703", message: "column exchange_rates.rate does not exist" })).toBe(false);
+		expect(isExchangeRatesTableMissing(new Error("sin base"))).toBe(false);
 	});
 });

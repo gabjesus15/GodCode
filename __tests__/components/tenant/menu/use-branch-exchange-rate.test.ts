@@ -46,6 +46,12 @@ describe("resolveBranchExchangeRate", () => {
 		const state = loaded({ source: null, rate: null });
 		expect(resolveBranchExchangeRate({ enabled: true, branchId: "b1", legacyRate: LEGACY, state })).toBeNull();
 	});
+
+	it("si a la base le falta la migración de tasas (fallback), usa la tasa manual como cuando la petición falla", () => {
+		const state = loaded({ source: null, rate: null, fallback: true });
+		expect(resolveBranchExchangeRate({ enabled: true, branchId: "b1", legacyRate: LEGACY, state })).toBe(LEGACY);
+		expect(resolveBranchExchangeRate({ enabled: true, branchId: "b1", legacyRate: null, state })).toBeNull();
+	});
 });
 
 describe("parseBranchRateResponse", () => {
@@ -60,6 +66,15 @@ describe("parseBranchRateResponse", () => {
 		expect(parseBranchRateResponse({ ok: true, source: null, rate: null })).toEqual({ source: null, rate: null });
 		expect(parseBranchRateResponse({ ok: true, source: "bcv_eur", rate: null })).toEqual({ source: "bcv_eur", rate: null });
 		expect(parseBranchRateResponse({ ok: true, source: "bcv_eur", rate: { rate: 0 } })).toEqual({ source: "bcv_eur", rate: null });
+	});
+
+	it("lee el `fallback` de la base sin la migración de tasas", () => {
+		expect(parseBranchRateResponse({ ok: true, source: null, rate: null, fallback: true })).toEqual({
+			source: null,
+			rate: null,
+			fallback: true,
+		});
+		expect(parseBranchRateResponse({ ok: true, source: null, rate: null, fallback: "sí" })).toEqual({ source: null, rate: null });
 	});
 
 	it("una respuesta rara cuenta como sin fuente", () => {

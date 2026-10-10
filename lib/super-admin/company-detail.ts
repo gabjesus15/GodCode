@@ -3,6 +3,7 @@ import "server-only";
 import type { CompanyDetail, CompanyPayment, CompanyPlanOption } from "@/components/super-admin/companies/detail/company-detail-types";
 import { listCompanyDeliveries } from "@/lib/email/deliveries";
 import { remainingPaidDays, resolveSubscriptionPhase } from "@/lib/billing/portal-pricing";
+import { selectWithOptionalColumns } from "@/lib/infra/db-compat";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isTenantExternalDeliveryAllowed } from "@/lib/integrations/company-integration-policy";
 import { parseCompanyIntegrationSettingsJson } from "@/lib/integrations/company-integration-json";
@@ -10,6 +11,7 @@ import { sanitizeBranchPaymentConfig } from "@/lib/payments/branch-payment-confi
 import { resolveStorefrontThemeAssets } from "@/lib/storage/storefront-branding";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { companySubscriptionStatus } from "@/lib/super-admin/status-maps";
+import { PENDING_BRANCH_COLUMNS } from "@/lib/tenant/branch-pending-columns";
 import { resolveSalesPanelUrl } from "@/lib/tenant/panel-url";
 import { getTenantMenuUrl } from "@/utils/tenant-url";
 
@@ -29,13 +31,14 @@ export async function loadCompanyDetail(id: string) {
 			.eq("id", id)
 			.maybeSingle(),
 		supabaseAdmin.from("business_info").select("name,phone,address,instagram,schedule").eq("company_id", id).maybeSingle(),
-		supabaseAdmin
-			.from("branches")
-			.select(
-				"id,name,slug,address,phone,is_active,country,currency,instagram,schedule,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,efectivo,tarjeta,paypal,company_id,delivery_settings,exchange_rate_source",
-			)
-			.eq("company_id", id)
-			.order("created_at", { ascending: false }),
+		// `binance_pay` y `exchange_rate_source` llegan con migraciones que el dueño corre a mano:
+		// sin ellas el select falla entero (42703), toda la ficha quedaba en «No se pudo cargar», y
+		// ahora se repite sin esas columnas (llegan en `null`). Otro error sigue saliendo abajo.
+		selectWithOptionalColumns(
+			"id,name,slug,address,phone,is_active,country,currency,instagram,schedule,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,efectivo,tarjeta,paypal,company_id,delivery_settings,exchange_rate_source",
+			PENDING_BRANCH_COLUMNS,
+			(columns) => supabaseAdmin.from("branches").select(columns).eq("company_id", id).order("created_at", { ascending: false }),
+		),
 		supabaseAdmin.from("plans").select("id,name,price,max_branches,features,is_active,is_public").order("price", { ascending: true }),
 		supabaseAdmin
 			.from("payments_history")

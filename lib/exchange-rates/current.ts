@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { isMissingRelationError } from "@/lib/infra/db-compat";
+
 import {
 	EXCHANGE_RATE_SOURCES,
 	EXCHANGE_RATE_TTL_MS,
@@ -35,6 +37,16 @@ export function __resetExchangeRateBackoff() {
 	lastFailureAt.clear();
 }
 
+/**
+ * ¿El error es porque todavía no existe la tabla `exchange_rates`? La crea
+ * migrations/20261007_exchange_rates.sql, que el dueño corre a mano. `getCurrentExchangeRate` no
+ * lo convierte en «sin tasa»: lo lanza tal cual y cada llamador usa su respaldo. La ruta de la
+ * tienda responde «sin fuente» (el menú usa su tasa manual) y la tasa del alta va a dolarapi.
+ */
+export function isExchangeRatesTableMissing(error: unknown): boolean {
+	return isMissingRelationError(error, "exchange_rates");
+}
+
 function toStored(row: Row, stale: boolean): StoredExchangeRate {
 	return {
 		source: row.source as ExchangeRateSource,
@@ -62,7 +74,8 @@ async function latestRow(supabase: SupabaseClient, source: ExchangeRateSource): 
  * Tasa vigente de una fuente. Si la guardada tiene más que su TTL, consulta la fuente y
  * la registra (una fila nueva solo si el valor cambió). Si la fuente no responde,
  * devuelve la última guardada marcada como `stale` y no la vuelve a consultar hasta
- * pasados `EXCHANGE_RATE_FETCH_BACKOFF_MS`.
+ * pasados `EXCHANGE_RATE_FETCH_BACKOFF_MS`. Si no puede leer la base (también si falta la
+ * tabla, ver `isExchangeRatesTableMissing`) lanza, sin consultar la fuente.
  */
 export async function getCurrentExchangeRate(
 	supabase: SupabaseClient,

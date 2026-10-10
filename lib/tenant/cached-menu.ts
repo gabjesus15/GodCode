@@ -1,7 +1,9 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { createSupabasePublicServerClient } from "@/utils/supabase/server";
+import { selectWithOptionalColumns } from "@/lib/infra/db-compat";
 import { sanitizeBranchPaymentConfig } from "@/lib/payments/branch-payment-config";
+import { PENDING_BRANCH_COLUMNS } from "@/lib/tenant/branch-pending-columns";
 import { PRODUCT_SIZES_SELECT } from "@/lib/tenant/product-sizes";
 import { PRODUCT_VARIANTS_SELECT } from "@/lib/tenant/product-variants";
 
@@ -110,17 +112,22 @@ export const getCachedMenuStaticData = async (
       const supabase = createSupabasePublicServerClient();
 
       const [
-        { data: branchesRaw },
+        { data: branchesRaw, error: branchesError },
         { data: businessInfoRaw },
       ] = await Promise.all([
-        supabase
-          .from("branches")
-          .select(
-            "id,name,address,phone,whatsapp_url,instagram_url,map_url,schedule,company_id,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta,delivery_settings,origin_lat,origin_lng,order_intake_paused,order_intake_pause_message,order_intake_paused_at,business_hours,country,currency",
-          )
-          .eq("company_id", cId)
-          .eq("is_active", true)
-          .order("name"),
+        // `binance_pay` llega con una migración que el dueño corre a mano: sin ella el select
+        // falla entero (42703) y se repite sin esa columna, que llega en `null`.
+        selectWithOptionalColumns(
+          "id,name,address,phone,whatsapp_url,instagram_url,map_url,schedule,company_id,payment_methods,pago_movil,zelle,binance_pay,transferencia_bancaria,stripe,mercadopago,paypal,efectivo,tarjeta,delivery_settings,origin_lat,origin_lng,order_intake_paused,order_intake_pause_message,order_intake_paused_at,business_hours,country,currency",
+          PENDING_BRANCH_COLUMNS,
+          (columns) =>
+            supabase
+              .from("branches")
+              .select(columns)
+              .eq("company_id", cId)
+              .eq("is_active", true)
+              .order("name"),
+        ),
         supabase
           .from("business_info")
           .select(
@@ -129,6 +136,13 @@ export const getCachedMenuStaticData = async (
           .eq("company_id", cId)
           .maybeSingle(),
       ]);
+
+      // Cualquier otro error se lanza: `unstable_cache` no guarda lo que lanzó (la próxima visita
+      // vuelve a consultar) y, si ya tenía una entrada, la sigue sirviendo. Devolver `[]` dejaba
+      // cacheado 60 s «sin sucursales» y el menú daba 404 a todo el mundo por un fallo pasajero.
+      if (branchesError) {
+        throw new Error(`menu_branches_unavailable: ${branchesError.message}`, { cause: branchesError });
+      }
 
       return {
         // Las filas llegan tal cual a componentes cliente: solo datos de cobro públicos.

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createFakeSupabase, type FakeOptions } from "../../stubs/fake-supabase";
 import { makeAdminMock, type TableQueues } from "../menu-account/test-supabase-mock";
 
 type AdminMock = ReturnType<typeof makeAdminMock>;
@@ -28,6 +29,7 @@ vi.mock("@/lib/tenant/customer-account-context", () => ({
 }));
 
 import { PUT } from "@/app/api/customer-account/branches/route";
+import { logger } from "@/lib/infra/logger";
 
 const BRANCH_ID = "22222222-2222-4222-8222-222222222222";
 
@@ -161,5 +163,114 @@ describe("PUT /api/customer-account/branches: Pay ID de Binance", () => {
 		const res = await put({ payment_methods: ["binance_pay"], binance_pay: { pay_id: "123456789", email: null, name: null } });
 		expect(res.status).toBe(200);
 		expect(JSON.parse(String(branchUpdatePayload().binance_pay))).toEqual({ pay_id: "123456789" });
+	});
+});
+
+/**
+ * Sin `branches.binance_pay` ni `branches.exchange_rate_source` (ni la tabla del historial): las
+ * migraciones las corre el dueño a mano y la app puede llegar antes. Base en memoria que responde
+ * 42703 / PGRST204 como PostgREST según las columnas que se piden.
+ */
+describe("PUT /api/customer-account/branches sin las migraciones de Binance Pay y de tasas", () => {
+	const TIMEOUT = { code: "57014", message: "canceling statement due to statement timeout" };
+	const BOTH_MISSING: FakeOptions = {
+		missingColumns: { branches: ["binance_pay", "exchange_rate_source"] },
+		missingTables: ["branch_exchange_rate_source_changes"],
+	};
+
+	let warned: ReturnType<typeof vi.spyOn>;
+	let loggedError: ReturnType<typeof vi.spyOn>;
+
+	function setupDb(options: FakeOptions) {
+		const fake = createFakeSupabase(
+			{
+				branches: [
+					{
+						id: BRANCH_ID,
+						company_id: "acme",
+						name: "Centro",
+						country: "VE",
+						order_intake_paused: false,
+						pago_movil: null,
+						zelle: null,
+						transferencia_bancaria: null,
+						mercadopago: null,
+						paypal: null,
+					},
+				],
+				companies: [{ id: "acme", country: "VE" }],
+				payment_methods: [],
+			},
+			options,
+		);
+		const from = vi.spyOn(fake.client, "from");
+		holder.admin = fake.client;
+		return { ...fake, from };
+	}
+
+	beforeEach(() => {
+		warned = vi.spyOn(logger, "warn").mockImplementation(() => {});
+		loggedError = vi.spyOn(logger, "error").mockImplementation(() => {});
+	});
+
+	afterEach(() => {
+		warned.mockRestore();
+		loggedError.mockRestore();
+	});
+
+	it("el guardado de siempre de una sucursal de Venezuela (tasa por defecto, sin Binance) responde ok", async () => {
+		const fake = setupDb(BOTH_MISSING);
+
+		// El modal manda «Dólar BCV» por defecto: la migración se lo pondrá igual a esta sucursal.
+		const res = await put({ name: "Centro nuevo", exchange_rate_source: "bcv_usd", binance_pay: null });
+
+		expect(res.status).toBe(200);
+		expect(fake.db.branches[0].name).toBe("Centro nuevo");
+		const update = fake.log.find((entry) => entry.table === "branches" && entry.op === "update")?.patch as Record<string, unknown>;
+		expect(update).not.toHaveProperty("binance_pay");
+		expect(update).not.toHaveProperty("exchange_rate_source");
+		// Dos selects fallidos (uno por columna) y el bueno; el update ya no las mandó.
+		expect(fake.selects.filter((entry) => entry.table === "branches")).toHaveLength(3);
+		expect(fake.from.mock.calls.map(([table]) => table)).not.toContain("branch_exchange_rate_source_changes");
+		expect(warned).toHaveBeenCalledWith(
+			"branch_pending_migration_columns",
+			expect.objectContaining({ columns: ["binance_pay", "exchange_rate_source"] }),
+		);
+	});
+
+	it("con datos de Binance Pay guarda el resto y avisa que falta su migración", async () => {
+		const fake = setupDb(BOTH_MISSING);
+
+		const res = await put({ name: "Centro nuevo", payment_methods: ["binance_pay"], binance_pay: { pay_id: "123456789" } });
+
+		expect(res.status).toBe(503);
+		expect(await res.json()).toEqual({
+			error: "Falta aplicar la migración de Binance Pay en la base, así que sus datos no se guardaron. El resto de la sucursal sí se guardó.",
+		});
+		expect(fake.db.branches[0]).toMatchObject({ name: "Centro nuevo", payment_methods: ["binance_pay"] });
+		expect(fake.db.branches[0]).not.toHaveProperty("binance_pay");
+	});
+
+	it("elegir Euro BCV sin la migración de tasas avisa y no escribe el historial", async () => {
+		const fake = setupDb(BOTH_MISSING);
+
+		const res = await put({ name: "Centro nuevo", exchange_rate_source: "bcv_eur" });
+
+		expect(res.status).toBe(503);
+		expect((await res.json()).error).toMatch(/^Falta aplicar la migración de tasas de cambio en la base/);
+		expect(fake.db.branches[0].name).toBe("Centro nuevo");
+		expect(fake.from.mock.calls.map(([table]) => table)).not.toContain("branch_exchange_rate_source_changes");
+	});
+
+	it("otro error al leer la sucursal responde 500 (no «Sucursal no encontrada») y no guarda nada", async () => {
+		const fake = setupDb({ failures: [{ table: "branches", op: "select", error: TIMEOUT }] });
+
+		const res = await put({ name: "Centro nuevo" });
+
+		expect(res.status).toBe(500);
+		expect(await res.json()).toEqual({ error: "No se pudo leer la sucursal. Intenta de nuevo." });
+		expect(fake.selects.filter((entry) => entry.table === "branches")).toHaveLength(1);
+		expect(fake.log.filter((entry) => entry.table === "branches")).toHaveLength(0);
+		expect(loggedError).toHaveBeenCalledWith("customer_account_branch_read_failed", expect.objectContaining({ code: "57014" }));
 	});
 });

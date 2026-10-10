@@ -4,6 +4,7 @@ import { isExchangeRateSource } from "@/lib/exchange-rates/sources";
 import { isVenezuelaCountry } from "@/lib/geo/venezuela";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
+import { selectWithOptionalColumns, updateWithOptionalColumns } from "@/lib/infra/db-compat";
 import { logger } from "@/lib/infra/logger";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import {
@@ -12,6 +13,11 @@ import {
   validatePublicPaymentConfig,
 } from "@/lib/payments/branch-payment-config";
 import { branchBusinessHoursUpdate, branchCountryResolver } from "@/lib/tenant/branch-country";
+import {
+  PENDING_BRANCH_COLUMNS,
+  pendingBranchMigrationMessage,
+  unsavedBranchChanges,
+} from "@/lib/tenant/branch-pending-columns";
 import { hasAnyBusinessHours, normalizeBusinessHours } from "@/lib/tenant/business-hours";
 import { parseBranchContactUrlInput } from "@/lib/tenant/home-page/home-page-config";
 
@@ -154,16 +160,21 @@ export async function PUT(req: NextRequest) {
     );
   }
 
-  // Verify branch ownership and get current pause state + payment configs
-  const { data: branch, error: fetchError } = await supabaseAdmin
-    .from("branches")
-    .select(
-      "company_id, country, exchange_rate_source, order_intake_paused, pago_movil, zelle, binance_pay, transferencia_bancaria, mercadopago, paypal",
-    )
-    .eq("id", id)
-    .maybeSingle();
+  // Verify branch ownership and get current pause state + payment configs.
+  // `binance_pay` y `exchange_rate_source` llegan con migraciones que el dueño corre a mano: sin
+  // ellas el select se repite sin esas columnas (llegan en `null`) y el update no las manda.
+  const { data: branch, error: fetchError, missingColumns } = await selectWithOptionalColumns(
+    "company_id, country, exchange_rate_source, order_intake_paused, pago_movil, zelle, binance_pay, transferencia_bancaria, mercadopago, paypal",
+    PENDING_BRANCH_COLUMNS,
+    (columns) => supabaseAdmin.from("branches").select(columns).eq("id", id).maybeSingle(),
+  );
 
-  if (fetchError || !branch) {
+  // Un fallo de la base no es «no encontrada»: así se veía el 42703 de las columnas nuevas.
+  if (fetchError) {
+    logger.error("customer_account_branch_read_failed", { branchId: String(id), code: fetchError.code, error: fetchError.message });
+    return NextResponse.json({ error: "No se pudo leer la sucursal. Intenta de nuevo." }, { status: 500 });
+  }
+  if (!branch) {
     return NextResponse.json({ error: "Sucursal no encontrada" }, { status: 404 });
   }
 
@@ -209,43 +220,55 @@ export async function PUT(req: NextRequest) {
   }
 
   // Perform update
-  const { error: updateError } = await supabaseAdmin
-    .from("branches")
-    .update({
-      name: name.trim(),
-      address: typeof address === "string" && address.trim() ? address.trim() : null,
-      phone: typeof phone === "string" && phone.trim() ? phone.trim() : null,
-      schedule: typeof schedule === "string" && schedule.trim() ? schedule.trim() : null,
-      ...(businessHoursPatch ?? {}),
-      ...contactUrls,
-      origin_lat: toCoordinate(origin_lat),
-      origin_lng: toCoordinate(origin_lng),
-      payment_methods: sanitizeBranchPaymentMethods(payment_methods) ?? [],
-      // Solo datos públicos: el menú los lee con la clave anónima y los enseña al cliente.
-      pago_movil: mergePublicPaymentConfig("pago_movil", pago_movil, branch.pago_movil),
-      zelle: mergePublicPaymentConfig("zelle", zelle, branch.zelle),
-      binance_pay: mergePublicPaymentConfig("binance_pay", binance_pay, branch.binance_pay),
-      transferencia_bancaria: mergePublicPaymentConfig(
-        "transferencia_bancaria",
-        transferencia_bancaria,
-        branch.transferencia_bancaria,
-      ),
-      stripe: null,
-      mercadopago: mergePublicPaymentConfig("mercadopago", mercadopago, branch.mercadopago),
-      paypal: mergePublicPaymentConfig("paypal", paypal, branch.paypal),
-      order_intake_paused: parsedPaused,
-      order_intake_pause_message: parsedPaused ? (order_intake_pause_message ? order_intake_pause_message.trim() : null) : null,
-      ...(finalPausedAt !== undefined ? { order_intake_paused_at: finalPausedAt } : {}),
-      ...(finalPausedBy !== undefined ? { order_intake_paused_by: finalPausedBy } : {}),
-      ...(exchangeRateSourceChanged ? { exchange_rate_source: nextSource } : {}),
-    })
-    .eq("id", id);
+  const patch = {
+    name: name.trim(),
+    address: typeof address === "string" && address.trim() ? address.trim() : null,
+    phone: typeof phone === "string" && phone.trim() ? phone.trim() : null,
+    schedule: typeof schedule === "string" && schedule.trim() ? schedule.trim() : null,
+    ...(businessHoursPatch ?? {}),
+    ...contactUrls,
+    origin_lat: toCoordinate(origin_lat),
+    origin_lng: toCoordinate(origin_lng),
+    payment_methods: sanitizeBranchPaymentMethods(payment_methods) ?? [],
+    // Solo datos públicos: el menú los lee con la clave anónima y los enseña al cliente.
+    pago_movil: mergePublicPaymentConfig("pago_movil", pago_movil, branch.pago_movil),
+    zelle: mergePublicPaymentConfig("zelle", zelle, branch.zelle),
+    binance_pay: mergePublicPaymentConfig("binance_pay", binance_pay, branch.binance_pay),
+    transferencia_bancaria: mergePublicPaymentConfig(
+      "transferencia_bancaria",
+      transferencia_bancaria,
+      branch.transferencia_bancaria,
+    ),
+    stripe: null,
+    mercadopago: mergePublicPaymentConfig("mercadopago", mercadopago, branch.mercadopago),
+    paypal: mergePublicPaymentConfig("paypal", paypal, branch.paypal),
+    order_intake_paused: parsedPaused,
+    order_intake_pause_message: parsedPaused ? (order_intake_pause_message ? order_intake_pause_message.trim() : null) : null,
+    ...(finalPausedAt !== undefined ? { order_intake_paused_at: finalPausedAt } : {}),
+    ...(finalPausedBy !== undefined ? { order_intake_paused_by: finalPausedBy } : {}),
+    ...(exchangeRateSourceChanged ? { exchange_rate_source: nextSource } : {}),
+  };
+  // Sin las migraciones de Binance Pay o de tasas, el resto del cambio se guarda igual.
+  const { error: updateError, droppedColumns } = await updateWithOptionalColumns(
+    patch,
+    PENDING_BRANCH_COLUMNS,
+    (values) => supabaseAdmin.from("branches").update(values).eq("id", id),
+    missingColumns,
+  );
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
 
-  if (exchangeRateSourceChanged) {
+  if (droppedColumns.length > 0) {
+    logger.warn("branch_pending_migration_columns", {
+      branchId: String(id),
+      columns: droppedColumns,
+      detail: "Falta aplicar su migración (migrations/20261009_binance_pay.sql, migrations/20261007_exchange_rates.sql): esas columnas no se guardaron.",
+    });
+  }
+  // Sin la columna tampoco existe la tabla del historial (misma migración): no se intenta.
+  if (exchangeRateSourceChanged && !droppedColumns.includes("exchange_rate_source")) {
     const { error: changeError } = await supabaseAdmin.from("branch_exchange_rate_source_changes").insert({
       company_id: ctx.companyId,
       branch_id: id,
@@ -292,6 +315,13 @@ export async function PUT(req: NextRequest) {
 
   // Purge menu cache for this tenant
   revalidateTag(`menu:${ctx.companyId}`, "max");
+
+  // Lo demás ya quedó guardado; si lo que no entró era un cambio de verdad (datos de Binance Pay,
+  // otra tasa), se avisa. 503: falta algo en el servidor (la migración), no es culpa de la petición.
+  const unsaved = unsavedBranchChanges(patch, droppedColumns);
+  if (unsaved.length > 0) {
+    return NextResponse.json({ error: pendingBranchMigrationMessage(unsaved) }, { status: 503 });
+  }
 
   return NextResponse.json({
     ok: true,

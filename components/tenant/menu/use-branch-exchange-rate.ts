@@ -13,6 +13,11 @@ export type BranchRateResponse = {
 	source: ExchangeRateSource | null;
 	/** `null` con fuente: la base todavía no registró ninguna tasa. */
 	rate: number | null;
+	/**
+	 * `true`: a la base le falta la migración de tasas y no se sabe la fuente de la sucursal. No es
+	 * «sin fuente»: se usa la tasa manual de respaldo, como cuando la petición falla.
+	 */
+	fallback?: true;
 };
 
 type CacheEntry = { result: BranchRateResponse | null; at: number; pending?: Promise<BranchRateResponse> };
@@ -20,7 +25,12 @@ const cache = new Map<string, CacheEntry>();
 
 /** Lee la respuesta de la API; cualquier forma inesperada cuenta como «sin fuente». */
 export function parseBranchRateResponse(data: unknown): BranchRateResponse {
-	const record = (data && typeof data === "object" ? data : {}) as { source?: unknown; rate?: { rate?: unknown } | null };
+	const record = (data && typeof data === "object" ? data : {}) as {
+		source?: unknown;
+		rate?: { rate?: unknown } | null;
+		fallback?: unknown;
+	};
+	if (record.fallback === true) return { source: null, rate: null, fallback: true };
 	if (!isExchangeRateSource(record.source)) return { source: null, rate: null };
 	const rate = Number(record.rate?.rate);
 	return { source: record.source, rate: Number.isFinite(rate) && rate > 0 ? rate : null };
@@ -62,7 +72,8 @@ export type BranchRateLoadState = {
 /**
  * Qué tasa mostrar. `legacyRate` (la tasa manual que la sucursal guardaba antes en
  * `delivery_settings.exchangeRate`) solo entra cuando no hay forma de saber la de la
- * fuente: la petición falló, o la sucursal tiene fuente pero la base aún no tiene tasa.
+ * fuente: la petición falló, a la base le falta la migración de tasas (`fallback`), o la
+ * sucursal tiene fuente pero la base aún no tiene tasa.
  * Si la API dice `source: null` no hay nada que convertir: se devuelve `null`, no la
  * tasa manual vieja, que podía llevar meses sin actualizarse.
  */
@@ -75,7 +86,7 @@ export function resolveBranchExchangeRate(params: {
 	const { enabled, branchId, legacyRate, state } = params;
 	if (!enabled || !branchId) return legacyRate;
 	if (state.branchId !== branchId) return null;
-	if (state.failed || !state.result) return legacyRate;
+	if (state.failed || !state.result || state.result.fallback) return legacyRate;
 	if (state.result.source == null) return null;
 	return state.result.rate ?? legacyRate;
 }

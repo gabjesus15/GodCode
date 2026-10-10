@@ -2,22 +2,31 @@
  * Supabase en memoria para probar lógica que encadena consultas (`from().update().eq()…`).
  * Cubre solo lo que usan los módulos probados: select/insert/update/upsert/delete con
  * filtros eq / neq / in / is(null) / not(is null) y maybeSingle / single. Las columnas del select se
- * ignoran (devuelve la fila completa). Opcional: columnas únicas por tabla (un insert
- * repetido devuelve 23505, como Postgres) y tablas que «no existen» (42P01), para probar
- * el código que depende de una migración.
+ * ignoran (devuelve la fila completa), pero quedan anotadas en `selects`. Opcional: columnas únicas
+ * por tabla (un insert repetido devuelve 23505, como Postgres), tablas que «no existen» (42P01) y
+ * columnas que «no existen» (un select que las nombra da 42703 y un insert/update que las trae,
+ * PGRST204, como PostgREST), para probar el código que depende de una migración; y errores
+ * forzados por tabla y operación (un timeout, la red caída).
  */
 
 type Row = Record<string, unknown>;
 type Filter = (row: Row) => boolean;
 type FakeError = { code: string; message: string } | null;
 type FakeResult = { data: unknown; error: FakeError };
+type FakeOp = "select" | "update" | "insert" | "upsert" | "delete";
 
 export type FakeDb = Record<string, Row[]>;
-export type FakeOptions = { unique?: Record<string, string[]>; missingTables?: string[] };
+export type FakeOptions = {
+	unique?: Record<string, string[]>;
+	missingTables?: string[];
+	missingColumns?: Record<string, string[]>;
+	failures?: Array<{ table: string; op?: FakeOp; error: { code: string; message: string } }>;
+};
 
 class FakeQuery implements PromiseLike<FakeResult> {
 	private filters: Filter[] = [];
-	private op: "select" | "update" | "insert" | "upsert" | "delete" = "select";
+	private op: FakeOp = "select";
+	private columns = "*";
 	private patch: Row | Row[] | null = null;
 	private conflictKeys: string[] = [];
 	private returning = false;
@@ -29,11 +38,13 @@ class FakeQuery implements PromiseLike<FakeResult> {
 		private readonly table: string,
 		private readonly log: Array<{ table: string; op: string; patch: unknown }>,
 		private readonly options: FakeOptions = {},
+		private readonly selects: Array<{ table: string; columns: string }> = [],
 	) {}
 
-	select() {
+	select(columns?: string) {
 		// Tras update/insert/upsert, `select()` pide las filas afectadas.
 		if (this.op !== "select") this.returning = true;
+		else this.columns = columns ?? "*";
 		return this;
 	}
 	update(patch: Row) {
@@ -98,8 +109,25 @@ class FakeQuery implements PromiseLike<FakeResult> {
 	}
 
 	private execute(): FakeResult {
+		if (this.op === "select") this.selects.push({ table: this.table, columns: this.columns });
 		if (this.options.missingTables?.includes(this.table)) {
 			return { data: null, error: { code: "42P01", message: `relation "${this.table}" does not exist` } };
+		}
+		const failure = this.options.failures?.find((item) => item.table === this.table && (!item.op || item.op === this.op));
+		if (failure) return { data: null, error: failure.error };
+		const missingColumns = this.options.missingColumns?.[this.table] ?? [];
+		if (this.op === "select") {
+			const absent = this.columns.split(",").map((column) => column.trim()).find((column) => missingColumns.includes(column));
+			if (absent) return { data: null, error: { code: "42703", message: `column ${this.table}.${absent} does not exist` } };
+		} else if (this.op !== "delete") {
+			const patches = (Array.isArray(this.patch) ? this.patch : [this.patch]) as Array<Row | null>;
+			const absent = missingColumns.find((column) => patches.some((patch) => patch != null && column in patch));
+			if (absent) {
+				return {
+					data: null,
+					error: { code: "PGRST204", message: `Could not find the '${absent}' column of '${this.table}' in the schema cache` },
+				};
+			}
 		}
 		const rows = this.rows();
 		const matched = rows.filter((row) => this.filters.every((filter) => filter(row)));
@@ -144,10 +172,11 @@ class FakeQuery implements PromiseLike<FakeResult> {
 
 export function createFakeSupabase(db: FakeDb, options: FakeOptions = {}) {
 	const log: Array<{ table: string; op: string; patch: unknown }> = [];
+	const selects: Array<{ table: string; columns: string }> = [];
 	const client = {
 		from(table: string) {
-			return new FakeQuery(db, table, log, options);
+			return new FakeQuery(db, table, log, options, selects);
 		},
 	};
-	return { client, db, log };
+	return { client, db, log, selects };
 }
