@@ -165,7 +165,6 @@ export default async function RootLayout({
         {process.env.NEXT_PUBLIC_SUPABASE_URL ? (
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL.replace(/\/$/, "")} crossOrigin="anonymous" />
         ) : null}
-        <link rel="preconnect" href="https://saas-godcode-admin.vercel.app" crossOrigin="anonymous" />
         {!isTenantRoute ? (
           <>
             {/* Los preload de Outfit apuntaban a cuatro ficheros de 0 bytes: la
