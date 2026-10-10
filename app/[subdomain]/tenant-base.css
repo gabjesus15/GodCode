@@ -417,6 +417,7 @@ html[data-store-preview] #app-ui-layer {
     font-size: 0.88rem;
     line-height: 1.5;
     color: var(--menu-fg-2);
+    text-wrap: pretty;
 }
 
 .tenant-error-action {

@@ -38,7 +38,7 @@ export default function AppError({
 			>
 				{t("title")}
 			</h1>
-			<p className="mt-2 max-w-xs text-sm leading-relaxed sm:max-w-sm" style={{ color: MUTED }}>
+			<p className="mt-2 max-w-xs text-sm leading-relaxed text-pretty sm:max-w-sm" style={{ color: MUTED }}>
 				{t("body")}
 			</p>
 			<button
