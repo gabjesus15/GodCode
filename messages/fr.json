@@ -5,7 +5,7 @@
       "es": "Espagnol",
       "en": "Anglais",
       "pt": "Portugais",
-      "fr": "Francais",
+      "fr": "Français",
       "de": "Allemand",
       "it": "Italien"
     }
@@ -16,20 +16,20 @@
       "description": "Menu digital, panier, livraison, caisse, commandes cuisine et inventaire pour votre entreprise. Sans code et sans commission sur les ventes. 2 mois pour le prix d'un au premier paiement."
     },
     "nav": {
-      "goHome": "Aller a l'accueil",
+      "goHome": "Aller à l'accueil",
       "main": "Principal",
       "mobile": "Navigation mobile",
       "openMenu": "Ouvrir le menu",
       "closeMenu": "Fermer le menu",
       "login": "Se connecter",
-      "createAccount": "Creer un compte",
+      "createAccount": "Créer un compte",
       "links": {
-        "features": "Fonctionnalites",
-        "howItWorks": "Comment ca marche",
+        "features": "Fonctionnalités",
+        "howItWorks": "Comment ça marche",
         "product": "Produit",
-        "demo": "Demo",
+        "demo": "Démo",
         "compare": "Comparer",
-        "testimonials": "Temoignages",
+        "testimonials": "Témoignages",
         "pricing": "Tarifs",
         "faq": "FAQ",
         "contact": "Contact"
@@ -40,21 +40,21 @@
       "sections": {
         "product": "Produit",
         "support": "Support",
-        "legal": "Legal"
+        "legal": "Légal"
       },
       "links": {
-        "createStore": "Creer une boutique",
-        "features": "Fonctionnalites",
-        "demo": "Demo",
+        "createStore": "Créer une boutique",
+        "features": "Fonctionnalités",
+        "demo": "Démo",
         "pricing": "Tarifs",
-        "howItWorks": "Comment ca marche",
+        "howItWorks": "Comment ça marche",
         "compare": "Comparer",
-        "testimonials": "Temoignages",
+        "testimonials": "Témoignages",
         "faq": "FAQ",
         "contact": "Contact",
         "login": "Se connecter",
         "terms": "Conditions d'utilisation",
-        "privacy": "Politique de confidentialite",
+        "privacy": "Politique de confidentialité",
         "backToTop": "Retour en haut"
       }
     }
@@ -63,14 +63,14 @@
     "layout": {
       "viewBusinesses": "Voir les entreprises",
       "businesses": "Entreprises",
-      "securityFooter": "Protege par verification e-mail et chiffrement SSL."
+      "securityFooter": "Protégé par vérification e-mail et chiffrement SSL."
     },
     "start": {
       "title": "Enregistrez votre entreprise",
-      "subtitle": "Completez vos informations et nous vous enverrons un e-mail de verification.",
+      "subtitle": "Complétez vos informations et nous vous enverrons un e-mail de vérification.",
       "trust": {
-        "email": "Verification par e-mail",
-        "encrypted": "Donnees chiffrees",
+        "email": "Vérification par e-mail",
+        "encrypted": "Données chiffrées",
         "time": "Moins de 5 minutes"
       }
     }
@@ -285,12 +285,12 @@
         "confirmDelete": "Supprimer ?"
       },
       "fields": {
-        "document": "Vérifie le champ {idName}.",
-        "email": "Saisis un e-mail valide.",
-        "name": "Saisis ton nom complet.",
-        "phone": "Vérifie le téléphone.",
+        "document": "Vérifiez le champ {idName}.",
+        "email": "Saisissez un e-mail valide.",
+        "name": "Saisissez votre nom complet.",
+        "phone": "Vérifiez le téléphone.",
         "password": "Au moins 8 caractères.",
-        "code": "Saisis le code à 6 chiffres.",
+        "code": "Saisissez le code à 6 chiffres.",
         "terms": "Acceptez les conditions générales pour créer votre compte."
       },
       "password": {
@@ -311,8 +311,8 @@
     },
     "cart": {
       "float": {
-        "totalPrefix": "Total:",
-        "emptyLabel": "Votre Panier",
+        "totalPrefix": "Total :",
+        "emptyLabel": "Votre panier",
         "viewOrder": "Voir la commande"
       },
       "modal": {
@@ -324,30 +324,30 @@
           "currentOrderAria": "Votre commande"
         },
         "header": {
-          "title": "Votre Commande",
+          "title": "Votre commande",
           "itemCount": "{count, plural, =1 {1 produit} other {# produits}}",
           "account": "Mon compte"
         },
         "branchSelector": {
           "title": "Choisissez votre succursale",
-          "subtitle": "Selectionnez l'emplacement le plus proche",
-          "closeAria": "Fermer la fenetre",
-          "checkingBranches": "Verification des succursales disponibles...",
-          "noBranchesReceiving": "Aucune succursale ne recoit de commandes",
+          "subtitle": "Sélectionnez l'emplacement le plus proche",
+          "closeAria": "Fermer la fenêtre",
+          "checkingBranches": "Vérification des succursales disponibles...",
+          "noBranchesReceiving": "Aucune succursale ne reçoit de commandes",
           "attentionSchedule": "Horaires d'ouverture : {schedule}",
           "openCashAnyBranch": "Ouvrez la caisse dans le panneau d'administration d'une succursale pour activer les achats.",
           "openCash": "Ouvrez la caisse dans le panneau d'administration pour activer les achats.",
           "openBadge": "OUVERT",
-          "closedBadge": "FERME",
-          "goHome": "Retour a l'accueil",
+          "closedBadge": "FERMÉ",
+          "goHome": "Retour à l'accueil",
           "allBranchesClosed": "Aucun magasin ne prend de commandes pour le moment"
         },
         "contactBranch": {
           "title": "Choisissez votre succursale",
           "subtitle": "De quel magasin voulez-vous des informations ?",
-          "closeAria": "Fermer la fenetre",
+          "closeAria": "Fermer la fenêtre",
           "loading": "Chargement des succursales...",
-          "empty": "Aucune succursale configuree."
+          "empty": "Aucune succursale configurée."
         },
         "previewMap": {
           "locationLabel": "Position sur la carte",
@@ -362,7 +362,7 @@
         "notes": {
           "addTab": "Ajouter une note",
           "editTab": "Modifier la note",
-          "placeholder": "Ex: Sans sesame...",
+          "placeholder": "Ex. : Sans sésame...",
           "inputAria": "Note pour ce produit",
           "done": "Terminé"
         },
@@ -379,7 +379,7 @@
         "coupon": {
           "segLabel": "Coupon",
           "title": "Un coupon ?",
-          "placeholder": "Ex : PROMO",
+          "placeholder": "Ex. : PROMO",
           "apply": "Appliquer",
           "remove": "Retirer",
           "applied": "Coupon {code}",
@@ -388,7 +388,7 @@
             "empty": "Entrez un code.",
             "invalid_coupon": "Coupon invalide.",
             "coupon_expired": "Ce coupon n'est plus valide.",
-            "coupon_min_subtotal": "Le sous-total doit être au moins {amount}.",
+            "coupon_min_subtotal": "Le sous-total doit être d'au moins {amount}.",
             "coupon_phone_required": "Entrez votre téléphone pour ce coupon.",
             "coupon_wrong_client": "Ce coupon ne correspond pas à votre compte.",
             "coupon_login_required": "Connectez-vous à votre compte pour utiliser ce coupon.",
@@ -405,12 +405,12 @@
           "loading": "Chargement...",
           "goToPay": "Aller au paiement",
           "continueToPaymentMethods": "Continuer vers les moyens de paiement",
-          "backToSummary": "Retour au resume",
+          "backToSummary": "Retour au résumé",
           "sending": "Envoi...",
           "confirmOrder": "Confirmer la commande",
-          "confirmPrivacyNotice": "En confirmant, le restaurant recoit ton nom, ton telephone et ton adresse uniquement pour preparer et livrer ta commande. <link>Politique de confidentialite</link>",
+          "confirmPrivacyNotice": "Si vous confirmez, le restaurant reçoit votre nom, votre téléphone et votre adresse uniquement pour préparer et livrer votre commande. <link>Politique de confidentialité</link>",
           "back": "Retour",
-          "alreadyPaid": "J'ai deja paye",
+          "alreadyPaid": "J'ai déjà payé",
           "continue": "Continuer",
           "chooseAnotherMethod": "Choisir un autre moyen",
           "cancel": "Annuler",
@@ -422,7 +422,7 @@
         },
         "delivery": {
           "pickNamedArea": "Choisir une zone",
-          "selectAreaAria": "Selectionner la zone de livraison",
+          "selectAreaAria": "Sélectionner la zone de livraison",
           "zoneSearch": "Rechercher une zone",
           "zoneSearchClear": "Effacer la recherche",
           "zoneNoResults": "Aucune zone ne correspond à « {query} ».",
@@ -431,11 +431,11 @@
           "geoNeedsHttps": "La localisation fonctionne seulement en HTTPS.",
           "searchingLocation": "Recherche de localisation...",
           "searchingAddress": "Recherche d'adresse...",
-          "locationSavedReview": "Localisation enregistree. Verifiez rue, commune et cout.",
-          "locationSavedCompleteManually": "Localisation enregistree. Completez manuellement si besoin.",
-          "permissionDenied": "Permission refusee.",
+          "locationSavedReview": "Localisation enregistrée. Vérifiez rue, commune et coût.",
+          "locationSavedCompleteManually": "Localisation enregistrée. Complétez manuellement si besoin.",
+          "permissionDenied": "Permission refusée.",
           "noSignal": "Pas de signal de localisation.",
-          "timeout": "Delai depasse.",
+          "timeout": "Délai dépassé.",
           "cannotReadLocation": "Impossible de lire votre localisation.",
           "addressLabel": "Adresse",
           "howReceiveOrder": "Comment voulez-vous recevoir votre commande",
@@ -443,26 +443,26 @@
           "delivery": "Livraison",
           "zoneLabel": "Zone de livraison",
           "useCurrentLocation": "Utiliser la position actuelle",
-          "preciseShippingHint": "Nous calculons la livraison avec plus de precision.",
+          "preciseShippingHint": "Nous calculons la livraison avec plus de précision.",
           "street": "Rue",
-          "number": "Numero",
-          "updatingLocationFromStreet": "Mise a jour de la position avec rue et numero (recalcul de la livraison)...",
+          "number": "Numéro",
+          "updatingLocationFromStreet": "Mise à jour de la position avec rue et numéro (recalcul de la livraison)...",
           "driverInstructionsRequired": "Instructions pour le livreur (obligatoire)",
-          "driverInstructionsPlaceholder": "Appartement, interphone, couleur du portail, reperes...",
-          "driverInstructionsMin": "Minimum {min} caracteres pour que le livreur vous trouve.",
+          "driverInstructionsPlaceholder": "Appartement, interphone, couleur du portail, repères...",
+          "driverInstructionsMin": "Minimum {min} caractères pour que le livreur vous trouve.",
           "calculatingShipping": "Calcul de la livraison...",
-          "detectedZone": "Zone detectee : {zone}",
-          "shippingCost": "Cout de livraison",
+          "detectedZone": "Zone détectée : {zone}",
+          "shippingCost": "Coût de livraison",
           "outOfZone": "Hors zone",
           "minOrderForDelivery": "Le minimum pour la livraison est de ${amount}.",
-          "locationExceedsMaxKm": "Votre position depasse la distance maximale de ce magasin.",
+          "locationExceedsMaxKm": "Votre position dépasse la distance maximale de ce magasin.",
           "pickupOnlyBranch": "Cette succursale accepte uniquement le retrait sur place.",
           "needLocationForUber": "Pour calculer la livraison (Uber), placez le point sur la carte ou appuyez sur Utiliser la position actuelle.",
-          "needLocationStreetOrKm": "Indiquez votre position sur la carte, saisissez rue et numero avec commune/ville, ou entrez les km manuellement pour continuer.",
-          "addDriverInstructionsMin": "Ajoutez des instructions pour le livreur (minimum {min} caracteres).",
+          "needLocationStreetOrKm": "Indiquez votre position sur la carte, saisissez rue et numéro avec commune/ville, ou entrez les km manuellement pour continuer.",
+          "addDriverInstructionsMin": "Ajoutez des instructions pour le livreur (minimum {min} caractères).",
           "locationOutsideArea": "Votre position est hors de la zone de livraison de ce magasin.",
           "calculatingWithLocation": "Calcul de la livraison avec votre position...",
-          "completeDataToContinue": "Completez les informations de livraison pour continuer.",
+          "completeDataToContinue": "Complétez les informations de livraison pour continuer.",
           "writeStreetNumberArea": "Indiquez la rue, le numéro et {area} ; nous calculons le tarif selon les zones du commerce.",
           "approxHint": "Position approximative : touchez « Ajuster le point » et déplacez la carte jusqu’à votre porte pour que le livreur vous trouve.",
           "areaLabel": {
@@ -472,22 +472,22 @@
           },
           "example": "Ex. : {value}",
           "invalidNamedArea": "La zone choisie n'est plus disponible.",
-          "writeAddressInstead": "Saisis l’adresse",
+          "writeAddressInstead": "Saisissez l’adresse",
           "detectedAddress": "Nous livrons à",
           "editAddress": "Modifier",
-          "shippingPending": "Nous le calculons avec ta position",
-          "pickupTitle": "Tu récupères sur place",
-          "pickupNoAddress": "Nous te donnons l’adresse à la confirmation de la commande.",
+          "shippingPending": "Nous le calculons avec votre position",
+          "pickupTitle": "Vous récupérez sur place",
+          "pickupNoAddress": "Nous vous donnons l’adresse à la confirmation de la commande.",
           "pickupOpenMap": "Itinéraire",
           "savedAddresses": "Vos adresses enregistrées"
         },
         "errors": {
           "noOrdersNow": "Les commandes ne sont pas disponibles maintenant.",
-          "noBranchSelected": "Aucune succursale selectionnee.",
-          "completeDeliveryOrMin": "Completez l'adresse ou verifiez le minimum.",
-          "paymentNotAllowedForDelivery": "Moyen de paiement non autorise pour cette livraison.",
-          "whatsappNotConfigured": "Aucun WhatsApp configure.",
-          "processOrderTryAgain": "Erreur lors du traitement. Reessayez.",
+          "noBranchSelected": "Aucune succursale sélectionnée.",
+          "completeDeliveryOrMin": "Complétez l'adresse ou vérifiez le minimum.",
+          "paymentNotAllowedForDelivery": "Moyen de paiement non autorisé pour cette livraison.",
+          "whatsappNotConfigured": "Aucun WhatsApp configuré.",
+          "processOrderTryAgain": "Erreur lors du traitement. Réessayez.",
           "oneProductUnavailableInBranch": "1 article du panier n'est pas disponible dans cette succursale.",
           "productsUnavailableInBranch": "{count} articles du panier ne sont pas disponibles dans cette succursale.",
           "scheduleIs": "Nos horaires : {schedule}"
@@ -495,75 +495,75 @@
         "validation": {
           "nameShort": "Nom trop court",
           "nameInvalid": "Nom invalide",
-          "phoneShort": "Telephone trop court",
-          "phoneLong": "Telephone trop long",
-          "phoneInvalid": "Telephone invalide",
+          "phoneShort": "Téléphone trop court",
+          "phoneLong": "Téléphone trop long",
+          "phoneInvalid": "Téléphone invalide",
           "invalidFile": "Fichier invalide.",
-          "reviewFields": "Verifiez les champs"
+          "reviewFields": "Vérifiez les champs"
         },
         "validationItems": {
           "validName": "nom valide",
           "validId": "{id} valide",
           "validPhone": "numéro de téléphone complet ({prefix})",
-          "transferReceipt": "recu de virement"
+          "transferReceipt": "reçu de virement"
         },
         "catalog": {
-          "suggestedDrink": "Boisson suggeree",
+          "suggestedDrink": "Boisson suggérée",
           "globalExtra": "Extra global",
           "globalExtraDescription": "Extra global de la commande",
           "inYourOrder": "Dans votre commande",
-          "addDrinksOrExtras": "Ajouter boissons ou extras",
+          "addDrinksOrExtras": "Ajouter des boissons ou des extras",
           "beveragesTab": "Boissons",
           "extrasTab": "Extras",
           "addItemAria": "Ajouter {name}"
         },
         "paymentMethods": {
-          "unknown": "Non defini",
-          "efectivo": "Especes",
-          "tarjeta": "Carte (Sur place)",
+          "unknown": "Non défini",
+          "efectivo": "Espèces",
+          "tarjeta": "Carte (sur place)",
           "pago_movil": "Paiement mobile",
           "zelle": "Zelle",
           "binance_pay": "Binance Pay",
           "transferencia_bancaria": "Virement",
-          "stripe": "Carte (En ligne)",
+          "stripe": "Carte (en ligne)",
           "mercadopago": "MercadoPago",
           "paypal": "PayPal"
         },
         "payment": {
-          "clientData": "Donnees client",
+          "clientData": "Données client",
           "title": "Moyen de paiement",
           "noMethodsForFulfillment": "Aucun moyen disponible pour ce mode.",
-          "payInStoreHelp": "Paiement en especes ou carte au retrait.",
-          "noDataConfiguredFor": "Aucune donnee configuree pour",
-          "noBankData": "Aucune donnee bancaire configuree.",
-          "noMobilePaymentData": "Aucune donnee mobile.",
-          "noZelleData": "Aucune donnee Zelle.",
-          "noBinancePayData": "Aucune donnee Binance Pay.",
+          "payInStoreHelp": "Paiement en espèces ou carte au retrait.",
+          "noDataConfiguredFor": "Aucune donnée configurée pour",
+          "noBankData": "Aucune donnée bancaire configurée.",
+          "noMobilePaymentData": "Aucune donnée de paiement mobile.",
+          "noZelleData": "Aucune donnée Zelle.",
+          "noBinancePayData": "Aucune donnée Binance Pay.",
           "followInstructions": "Suivez les instructions pour payer avec",
-          "detailsTitle": "Details de paiement",
+          "detailsTitle": "Détails de paiement",
           "configLabels": {
             "bank": "Banque",
             "accountType": "Type de compte",
-            "accountNumber": "Numero de compte",
+            "accountNumber": "Numéro de compte",
             "document": "Document fiscal",
             "holder": "Titulaire",
-            "email": "Email",
-            "phone": "Telephone",
-            "idCard": "Piece d'identite",
-            "zelleEmail": "Email Zelle",
+            "email": "E-mail",
+            "phone": "Téléphone",
+            "idCard": "Pièce d'identité",
+            "zelleEmail": "E-mail Zelle",
             "binancePayId": "Pay ID Binance",
-            "binanceEmail": "Email Binance",
+            "binanceEmail": "E-mail Binance",
             "link": "Lien de paiement",
             "alias": "Alias"
           },
           "fields": {
             "name": "Nom",
             "namePlaceholder": "Votre nom",
-            "phone": "Telephone",
-            "receipt": "Recu",
-            "uploadReceipt": "Televerser recu",
-            "imageLoaded": "Image televersee",
-            "uploadCapture": "Televerser capture"
+            "phone": "Téléphone",
+            "receipt": "Reçu",
+            "uploadReceipt": "Téléverser le reçu",
+            "imageLoaded": "Image téléversée",
+            "uploadCapture": "Téléverser une capture"
           },
           "amount": "Montant",
           "copy": "Copier",
@@ -578,17 +578,17 @@
           "binanceUsdtHint": "Envoyez l'équivalent en USDT. Il compte 1 pour 1 avec le dollar."
         },
         "success": {
-          "sentAria": "Commande envoyee",
-          "sentTitle": "Commande envoyee",
+          "sentAria": "Commande envoyée",
+          "sentTitle": "Commande envoyée",
           "demoNotice": "Ceci est une démo : la commande n'a été envoyée à aucun établissement. Voici ce que verra votre client.",
-          "title": "Commande recue",
+          "title": "Commande reçue",
           "description": "Parfait. Nous vous contacterons sur WhatsApp.",
-          "receiptUploadFailed": "Impossible de televerser le recu. Envoyez-le via WhatsApp.",
+          "receiptUploadFailed": "Impossible de téléverser le reçu. Envoyez-le via WhatsApp.",
           "yourOrder": "Votre commande",
-          "copyOrderNumber": "Copier numero",
+          "copyOrderNumber": "Copier le numéro de commande",
           "deliveryCode": "Code de livraison",
-          "copyDeliveryCode": "Copier code",
-          "pickupAt": "Retrait a",
+          "copyDeliveryCode": "Copier le code de livraison",
+          "pickupAt": "Retrait à",
           "addressUnavailable": "Adresse indisponible",
           "storeNameFallback": "Nom du magasin",
           "orderNumber": "Commande #",
@@ -604,9 +604,9 @@
         },
         "item": {
           "productFallback": "Produit",
-          "removeProduct": "Retirer produit",
-          "decreaseQuantity": "Diminuer quantite",
-          "increaseQuantity": "Augmenter quantite",
+          "removeProduct": "Retirer le produit",
+          "decreaseQuantity": "Diminuer la quantité",
+          "increaseQuantity": "Augmenter la quantité",
           "quantityAria": "Quantité"
         },
         "ws": {
@@ -614,7 +614,7 @@
           "businessFallback": "Restaurant",
           "customer": "Client",
           "rut": "Identifiant fiscal",
-          "phone": "Telephone",
+          "phone": "Téléphone",
           "typeLabel": "Type",
           "typeDelivery": "Livraison",
           "typePickup": "Retrait sur place",
@@ -633,10 +633,10 @@
           "accountType": "Type",
           "account": "Compte",
           "holder": "Titulaire",
-          "bankTransferHint": "Une fois le virement effectue, joignez le recu a votre commande.",
+          "bankTransferHint": "Une fois le virement effectué, joignez le reçu à votre commande.",
           "note": "Note",
           "taxLabel": "Taxe (TVA)",
-          "taxIncluded": "inclus",
+          "taxIncluded": "incluse",
           "taxAdded": "en sus",
           "addressReference": "Indication",
           "mapLink": "Localisation",
@@ -659,7 +659,7 @@
           "paymentRecapLabel": "Paiement",
           "pickupValue": "Retrait sur place",
           "orderRecapLabel": "Commande",
-          "recapAria": "Résumé de ta commande"
+          "recapAria": "Résumé de votre commande"
         }
       }
     },
@@ -722,9 +722,9 @@
         "decrease": "Diminuer",
         "add": "Ajouter",
         "addWithPrice": "Ajouter · {price}",
-        "inCart": "Dans ta commande",
+        "inCart": "Dans votre commande",
         "done": "Terminé",
-        "added": "Ajoute"
+        "added": "Ajouté"
       },
       "sizes": {
         "title": "Choisissez la taille",
@@ -734,18 +734,18 @@
       },
       "contact": {
         "title": "Contact",
-        "subtitle": "Comment veux-tu nous contacter ?",
+        "subtitle": "Comment voulez-vous nous contacter ?",
         "pickChannel": "Choisir un canal de contact",
         "whatsapp": "WhatsApp",
         "whatsappHint": "Écrire sur WhatsApp",
         "instagram": "Instagram",
         "instagramHint": "Voir le profil Instagram",
         "location": "Adresse",
-        "locationHint": "Ouvrir dans la carte"
+        "locationHint": "Ouvrir sur la carte"
       },
       "paused": {
         "title": "Commandes en pause.",
-        "fallback": "Nous avons beaucoup de demandes en ce moment. Réessaie dans quelques minutes."
+        "fallback": "Nous avons beaucoup de demandes en ce moment. Réessayez dans quelques minutes."
       },
       "hero": {
         "aria": "Promotions",

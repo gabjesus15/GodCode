@@ -24,7 +24,7 @@
       "login": "Accedi",
       "createAccount": "Crea account",
       "links": {
-        "features": "Funzionalita",
+        "features": "Funzionalità",
         "howItWorks": "Come funziona",
         "product": "Prodotto",
         "demo": "Demo",
@@ -36,7 +36,7 @@
       }
     },
     "footer": {
-      "brandDescription": "Tutto cio che serve alla tua attivita per vendere online. Menu, carrello, cassa, inventario e altro.",
+      "brandDescription": "Tutto ciò che serve alla tua attività per vendere online. Menu, carrello, cassa, inventario e altro.",
       "sections": {
         "product": "Prodotto",
         "support": "Supporto",
@@ -44,7 +44,7 @@
       },
       "links": {
         "createStore": "Crea negozio",
-        "features": "Funzionalita",
+        "features": "Funzionalità",
         "demo": "Demo",
         "pricing": "Prezzi",
         "howItWorks": "Come funziona",
@@ -256,7 +256,7 @@
           "other": "In verifica"
         },
         "repeat": "Ripeti ordine",
-        "goToMenu": "Vai al menù",
+        "goToMenu": "Vai al menu",
         "orderNow": "Fai il mio primo ordine",
         "repeatHint": "Ripetendo, i prodotti vanno nel carrello ai prezzi di oggi. Puoi modificarli prima di confermare.",
         "repeatUnavailable": "Questo ordine non ha prodotti che si possano ripetere.",
@@ -312,7 +312,7 @@
     "cart": {
       "float": {
         "totalPrefix": "Totale:",
-        "emptyLabel": "Il tuo Carrello",
+        "emptyLabel": "Il tuo carrello",
         "viewOrder": "Vedi ordine"
       },
       "modal": {
@@ -324,13 +324,13 @@
           "currentOrderAria": "Il tuo ordine"
         },
         "header": {
-          "title": "Il tuo Ordine",
+          "title": "Il tuo ordine",
           "itemCount": "{count, plural, =1 {1 prodotto} other {# prodotti}}",
           "account": "Il mio account"
         },
         "branchSelector": {
           "title": "Scegli la tua filiale",
-          "subtitle": "Seleziona la sede piu vicina",
+          "subtitle": "Seleziona la sede più vicina",
           "closeAria": "Chiudi finestra",
           "checkingBranches": "Verifica delle filiali disponibili...",
           "noBranchesReceiving": "Nessuna filiale sta ricevendo ordini",
@@ -362,7 +362,7 @@
         "notes": {
           "addTab": "Aggiungi nota",
           "editTab": "Modifica nota",
-          "placeholder": "Es: Senza sesamo...",
+          "placeholder": "Es.: Senza sesamo...",
           "inputAria": "Nota per questo prodotto",
           "done": "Fatto"
         },
@@ -379,7 +379,7 @@
         "coupon": {
           "segLabel": "Coupon",
           "title": "Hai un coupon?",
-          "placeholder": "Es: PROMO",
+          "placeholder": "Es.: PROMO",
           "apply": "Applica",
           "remove": "Rimuovi",
           "applied": "Coupon {code}",
@@ -407,15 +407,15 @@
           "continueToPaymentMethods": "Continua ai metodi di pagamento",
           "backToSummary": "Torna al riepilogo",
           "sending": "Invio...",
-          "confirmOrder": "Conferma Ordine",
-          "confirmPrivacyNotice": "Confermando, il locale riceve il tuo nome, telefono e indirizzo solo per preparare e consegnare il tuo ordine. <link>Informativa sulla privacy</link>",
+          "confirmOrder": "Conferma ordine",
+          "confirmPrivacyNotice": "Se confermi, il locale riceve il tuo nome, telefono e indirizzo solo per preparare e consegnare il tuo ordine. <link>Informativa sulla privacy</link>",
           "back": "Indietro",
-          "alreadyPaid": "Ho gia pagato",
+          "alreadyPaid": "Ho già pagato",
           "continue": "Continua",
-          "chooseAnotherMethod": "Scegli altro metodo",
+          "chooseAnotherMethod": "Scegli un altro metodo",
           "cancel": "Annulla",
-          "newOrder": "Nuovo Ordine",
-          "backToMenu": "Torna al Menu",
+          "newOrder": "Nuovo ordine",
+          "backToMenu": "Torna al menu",
           "backToDelivery": "Torna alla consegna",
           "repeatLastOrder": "Ripeti ultimo ordine",
           "openWhatsApp": "Apri WhatsApp"
@@ -454,13 +454,13 @@
           "detectedZone": "Zona rilevata: {zone}",
           "shippingCost": "Costo consegna",
           "outOfZone": "Fuori zona",
-          "minOrderForDelivery": "L'ordine minimo per consegna e ${amount}.",
+          "minOrderForDelivery": "L'ordine minimo per la consegna è ${amount}.",
           "locationExceedsMaxKm": "La tua posizione supera la distanza massima di questo locale.",
           "pickupOnlyBranch": "Questa sede accetta solo ritiro in negozio.",
           "needLocationForUber": "Per quotare la consegna (Uber), posiziona il punto sulla mappa o tocca Usa posizione attuale.",
-          "needLocationStreetOrKm": "Imposta la tua posizione sulla mappa, inserisci via e numero con comune/citta, oppure inserisci i km manualmente per continuare.",
+          "needLocationStreetOrKm": "Imposta la tua posizione sulla mappa, inserisci via e numero con comune/città, oppure inserisci i km manualmente per continuare.",
           "addDriverInstructionsMin": "Aggiungi istruzioni per il corriere (minimo {min} caratteri).",
-          "locationOutsideArea": "La tua posizione e fuori dall'area di consegna di questo locale.",
+          "locationOutsideArea": "La tua posizione è fuori dall'area di consegna di questo locale.",
           "calculatingWithLocation": "Calcolo consegna con la tua posizione...",
           "completeDataToContinue": "Completa i dati di consegna per continuare.",
           "writeStreetNumberArea": "Scrivi via, numero e {area}; calcoliamo la tariffa in base alle zone del locale.",
@@ -485,10 +485,10 @@
           "noOrdersNow": "Ordini non disponibili al momento.",
           "noBranchSelected": "Nessuna sede selezionata.",
           "completeDeliveryOrMin": "Completa l'indirizzo o verifica il minimo.",
-          "paymentNotAllowedForDelivery": "Metodo di pagamento non consentito per consegna.",
-          "whatsappNotConfigured": "Questo business non ha WhatsApp configurato.",
+          "paymentNotAllowedForDelivery": "Metodo di pagamento non consentito per la consegna.",
+          "whatsappNotConfigured": "Questa attività non ha WhatsApp configurato.",
           "processOrderTryAgain": "Errore durante l'ordine. Riprova.",
-          "oneProductUnavailableInBranch": "1 articolo nel carrello non e disponibile in questa sede.",
+          "oneProductUnavailableInBranch": "1 articolo nel carrello non è disponibile in questa sede.",
           "productsUnavailableInBranch": "{count} articoli nel carrello non sono disponibili in questa sede.",
           "scheduleIs": "I nostri orari: {schedule}"
         },
@@ -520,12 +520,12 @@
         "paymentMethods": {
           "unknown": "Non definito",
           "efectivo": "Contanti",
-          "tarjeta": "Carta (Presenziale)",
+          "tarjeta": "Carta (di persona)",
           "pago_movil": "Pagamento mobile",
           "zelle": "Zelle",
           "binance_pay": "Binance Pay",
           "transferencia_bancaria": "Bonifico",
-          "stripe": "Carta (Online)",
+          "stripe": "Carta (online)",
           "mercadopago": "MercadoPago",
           "paypal": "PayPal"
         },
@@ -536,7 +536,7 @@
           "payInStoreHelp": "Paghi in contanti o carta al ritiro.",
           "noDataConfiguredFor": "Nessun dato configurato per",
           "noBankData": "Nessun dato bancario configurato.",
-          "noMobilePaymentData": "Nessun dato pagamento mobile.",
+          "noMobilePaymentData": "Nessun dato di pagamento mobile.",
           "noZelleData": "Nessun dato Zelle.",
           "noBinancePayData": "Nessun dato Binance Pay.",
           "followInstructions": "Segui le istruzioni per pagare con",
@@ -549,7 +549,7 @@
             "holder": "Intestatario",
             "email": "Email",
             "phone": "Telefono",
-            "idCard": "Carta d'identita",
+            "idCard": "Carta d'identità",
             "zelleEmail": "Email Zelle",
             "binancePayId": "Pay ID Binance",
             "binanceEmail": "Email Binance",
@@ -579,9 +579,9 @@
         },
         "success": {
           "sentAria": "Ordine inviato",
-          "sentTitle": "Ordine Inviato",
+          "sentTitle": "Ordine inviato",
           "demoNotice": "Questa è una demo: l'ordine non è stato inviato a nessun locale. Ecco cosa vedrà il tuo cliente.",
-          "title": "Ordine Ricevuto",
+          "title": "Ordine ricevuto",
           "description": "Perfetto. Ti contatteremo su WhatsApp.",
           "receiptUploadFailed": "Impossibile caricare la ricevuta. Invia via WhatsApp.",
           "yourOrder": "Il tuo ordine",
@@ -593,7 +593,7 @@
           "storeNameFallback": "Nome negozio",
           "orderNumber": "Ordine #",
           "paymentConfirmed": "Pagamento confermato e registrato.",
-          "paymentPendingVerification": "Ricevuta ricevuta. Il pagamento è in attesa di verifica.",
+          "paymentPendingVerification": "Ricevuta inviata. Il pagamento è in attesa di verifica.",
           "keepCodesTitle": "Conserva questi dati.",
           "keepCodesBody": "Te li chiederemo alla consegna: mostrali o dettali al corriere.",
           "whatsappSendHint": "Manca un passo: invia il messaggio aperto su WhatsApp perché il locale riceva il tuo ordine."
@@ -605,8 +605,8 @@
         "item": {
           "productFallback": "Prodotto",
           "removeProduct": "Rimuovi prodotto",
-          "decreaseQuantity": "Diminuisci quantita",
-          "increaseQuantity": "Aumenta quantita",
+          "decreaseQuantity": "Diminuisci quantità",
+          "increaseQuantity": "Aumenta quantità",
           "quantityAria": "Quantità"
         },
         "ws": {
@@ -675,9 +675,9 @@
         "selectBranch": "Scegli la sede",
         "branchLabel": "Sede",
         "changeBranch": "Sede: {name}. Cambia sede",
-        "digitalMenu": "Menù digitale",
+        "digitalMenu": "Menu digitale",
         "close": "Chiudi",
-        "navAria": "Navigazione del menù"
+        "navAria": "Navigazione del menu"
       },
       "tabs": {
         "home": "Home",
@@ -756,12 +756,12 @@
       },
       "poweredBy": {
         "madeWith": "Creato con",
-        "aria": "Creato con {brand}: menù digitale e ordini online"
+        "aria": "Creato con {brand}: menu digitale e ordini online"
       }
     },
     "home": {
       "links": {
-        "menu": "Vedi il menù",
+        "menu": "Vedi il menu",
         "whatsapp": "WhatsApp",
         "instagram": "Instagram",
         "location": "Come arrivare",
@@ -806,14 +806,14 @@
         "title": "Orari"
       },
       "gcode": {
-        "label": "Crea il tuo menù",
-        "aria": "Crea il tuo menù digitale con {brand}"
+        "label": "Crea il tuo menu",
+        "aria": "Crea il tuo menu digitale con {brand}"
       },
       "qr": {
-        "title": "Apri il menù sul telefono",
+        "title": "Apri il menu sul telefono",
         "hint": "Inquadra il codice con la fotocamera",
         "copy": "Copia link",
-        "alt": "Codice QR del menù"
+        "alt": "Codice QR del menu"
       }
     },
     "hours": {
