@@ -413,7 +413,7 @@ export default function SubscriptionCouponsPage() {
 											<p className="mt-1.5 text-sm font-medium text-zinc-900 dark:text-zinc-100">
 												{describeCouponValueEs(coupon)}
 												<span className="font-normal text-zinc-500 dark:text-zinc-400">
-													{coupon.keeps_promo ? " · mantiene la promo +1 mes" : " · reemplaza la promo +1 mes"}
+													{coupon.keeps_promo ? " · mantiene la promo del primer pago" : " · reemplaza la promo del primer pago"}
 												</span>
 											</p>
 											{coupon.description ? <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{coupon.description}</p> : null}
@@ -651,8 +651,8 @@ export default function SubscriptionCouponsPage() {
 						<SaasSwitch
 							checked={form.keeps_promo}
 							onChange={(checked) => setForm((prev) => ({ ...prev, keeps_promo: checked }))}
-							label="Mantener la promo «+1 mes gratis en tu primer pago»"
-							description="Apágalo si el cupón ya es generoso y no quieres sumar también el mes de regalo."
+							label="Mantener la promo del primer pago («2 meses al precio de 1»)"
+							description="Apágalo si el cupón ya es generoso y no quieres sumarle además el mes que regala la promo."
 						/>
 						<SaasSwitch
 							checked={form.is_active}
