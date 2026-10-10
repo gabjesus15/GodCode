@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, CheckCircle2, Clock, Copy, ExternalLink, ImageUp, Loader2 } from "lucide-react";
 
 import { isOrderAwaitingPayment } from "@/lib/billing/portal-orders";
@@ -28,6 +28,67 @@ type OrderPaymentDialogProps = {
 };
 
 type Outcome = { tone: "success" | "info"; title: string; message: string };
+
+/** Lado del canvas de la miniatura: 56 px CSS al doble de densidad. */
+const RECEIPT_THUMB_PX = 112;
+
+/**
+ * Miniatura del comprobante elegido, dibujada desde el archivo en un canvas (recortada al
+ * centro, como `object-cover`). Antes iba como URL `blob:` al `src` de un `<img>`: es seguro,
+ * pero CodeQL lo marca como texto del DOM reinterpretado (js/xss-through-dom) y no reconoce
+ * ninguna comprobación del esquema. Sin URL no hay nada que marcar ni que revocar.
+ */
+function ReceiptThumb({ file }: { file: File }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [failedFile, setFailedFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Dentro de una promesa: en un navegador sin createImageBitmap el fallo cae en el catch
+    // (ícono) en vez de romper el diálogo. `from-image` gira la foto según su EXIF, como un <img>.
+    Promise.resolve()
+      .then(() => createImageBitmap(file, { imageOrientation: "from-image" }))
+      .then((bitmap) => {
+        try {
+          const ctx = canvasRef.current?.getContext("2d");
+          if (cancelled || !ctx) return;
+          const scale = Math.max(RECEIPT_THUMB_PX / bitmap.width, RECEIPT_THUMB_PX / bitmap.height);
+          const width = bitmap.width * scale;
+          const height = bitmap.height * scale;
+          ctx.clearRect(0, 0, RECEIPT_THUMB_PX, RECEIPT_THUMB_PX);
+          ctx.drawImage(bitmap, (RECEIPT_THUMB_PX - width) / 2, (RECEIPT_THUMB_PX - height) / 2, width, height);
+        } finally {
+          // El canvas ya guardó los píxeles: el bitmap se libera siempre, también si se canceló.
+          bitmap.close();
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setFailedFile(file);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [file]);
+
+  // Un archivo que el navegador no sabe leer: el mismo ícono que sin archivo.
+  if (failedFile === file) {
+    return (
+      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-white">
+        <ImageUp className="h-6 w-6 text-[#a1a1a6]" aria-hidden />
+      </span>
+    );
+  }
+  return (
+    <canvas
+      ref={canvasRef}
+      width={RECEIPT_THUMB_PX}
+      height={RECEIPT_THUMB_PX}
+      role="img"
+      aria-label="Comprobante elegido"
+      className="h-14 w-14 shrink-0 rounded-lg bg-white"
+    />
+  );
+}
 
 const PAYPAL = "paypal";
 
@@ -91,20 +152,6 @@ export function OrderPaymentDialog({
     : availableMethods.includes(previousMethod)
       ? previousMethod
       : (availableMethods[0] ?? "");
-
-  // Vista previa local del comprobante. `createObjectURL` siempre da una URL `blob:`; se
-  // comprueba igual porque va a un `src`: así nunca puede llevar otro esquema (`javascript:`),
-  // que es lo que no se puede asegurar de algo que sale del DOM (CodeQL js/xss-through-dom).
-  const previewUrl = useMemo(() => {
-    if (!file) return null;
-    const url = URL.createObjectURL(file);
-    if (url.startsWith("blob:")) return url;
-    URL.revokeObjectURL(url);
-    return null;
-  }, [file]);
-  useEffect(() => () => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-  }, [previewUrl]);
 
   // En Venezuela se muestra el monto aproximado en bolívares (misma tasa que el alta).
   // Por país y no solo por moneda: el registro de países da USD a Venezuela.
@@ -380,9 +427,8 @@ export function OrderPaymentDialog({
                       file ? "border-indigo-300 bg-indigo-50/40" : "border-[#d2d2d7] bg-[#fbfbfd] hover:border-indigo-400"
                     } ${busy ? "pointer-events-none opacity-60" : ""}`}
                   >
-                    {previewUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- vista previa local (blob:)
-                      <img src={previewUrl} alt="Comprobante elegido" className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                    {file ? (
+                      <ReceiptThumb file={file} />
                     ) : (
                       <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-white">
                         <ImageUp className="h-6 w-6 text-[#a1a1a6]" aria-hidden />
