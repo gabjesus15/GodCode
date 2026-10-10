@@ -87,7 +87,7 @@ export const VirtualizedMenuCatalog = memo(function VirtualizedMenuCatalog({
 				title: isPromocionesCategoryName(category.name) ? (
 					<>
 						{category.name}
-						<Image src={FIRE_ICON} className="category-icon" alt="🔥" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
+						<Image src={FIRE_ICON} className="category-icon" alt="" width={24} height={24} unoptimized={shouldUnoptimizeImageSrc(FIRE_ICON)} />
 					</>
 				) : (
 					category.name
