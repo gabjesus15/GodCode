@@ -6,10 +6,12 @@ import type { LandingSocialLink } from "@/lib/landing/contact";
 import { LANDING_COUNTRY_SHARED_FEATURES, type LandingCountry } from "@/lib/landing/countries";
 import { buildHeroAssurances, HERO_ASSURANCE_FIRST_PAYMENT_PROMO } from "@/lib/landing/hero-assurances";
 import { formatLandingPrice } from "@/lib/landing/price";
+import type { LandingV3PhoneSlide } from "@/lib/landing/v3-config";
 
 import { FloatingSocialDock } from "./floating-social-dock";
 import { Footer } from "./footer";
 import { HeroAssurances } from "./hero-assurances";
+import { HeroPhoneShowcase } from "./hero-phone-showcase";
 import { LandingConversionTracker } from "./landing-conversion-tracker";
 import { Navbar } from "./navbar";
 import { SectionGlow } from "./section-light";
@@ -21,6 +23,8 @@ type CountryLandingProps = {
 	socialLinks: LandingSocialLink[];
 	/** JSON-LD ya serializado (la página lo arma con la URL base). */
 	jsonLd: string;
+	/** Los teléfonos del hero de la home: la página de país no queda con media portada vacía. */
+	heroPhones: LandingV3PhoneSlide[];
 };
 
 /**
@@ -28,7 +32,7 @@ type CountryLandingProps = {
  * mismas piezas compartidas; el contenido sale de `lib/landing/countries.ts`
  * para que el texto visible y el FAQPage del JSON-LD sean el mismo.
  */
-export function CountryLanding({ country, fromPrice, socialLinks, jsonLd }: CountryLandingProps) {
+export function CountryLanding({ country, fromPrice, socialLinks, jsonLd, heroPhones }: CountryLandingProps) {
 	const floatingSocialLinks = socialLinks.filter(
 		(link) => link.kind === "instagram" || link.kind === "whatsapp",
 	);
@@ -53,36 +57,41 @@ export function CountryLanding({ country, fromPrice, socialLinks, jsonLd }: Coun
 						className="pointer-events-none absolute -right-[15%] top-[5%] h-[70vh] w-[70vw] max-w-[900px] rounded-full opacity-60 blur-[90px]"
 						style={{ background: "radial-gradient(ellipse at center, rgba(79,91,255,0.4) 0%, transparent 70%)" }}
 					/>
-					<div className="v3-container relative flex flex-col items-center pt-32 pb-16 text-center lg:items-start lg:pt-36 lg:pb-24 lg:text-left">
-						<p className="v3-label">
-							{LANDING_PRODUCT_NAME} en {country.name}
-						</p>
-						<h1 className="mt-5 max-w-4xl font-display text-[clamp(2.9rem,10vw,5.25rem)] leading-[0.92] text-white text-balance">
-							{heroPlain} <span className="text-[#4f5bff]">{heroAccent}</span>
-						</h1>
-						<p className="mt-6 max-w-xl text-lg leading-relaxed text-[#a1a1aa] text-pretty">{country.heroSubtitle}</p>
+					<div className="v3-container relative flex flex-col gap-14 pt-32 pb-16 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-center lg:gap-x-12 lg:pt-36 lg:pb-24 xl:gap-x-20">
+						<div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+							<p className="v3-label">
+								{LANDING_PRODUCT_NAME} en {country.name}
+							</p>
+							<h1 className="mt-5 max-w-4xl font-display text-[clamp(2.9rem,10vw,5.25rem)] leading-[0.92] text-white text-balance">
+								{heroPlain} <span className="text-[#4f5bff]">{heroAccent}</span>
+							</h1>
+							<p className="mt-6 max-w-xl text-lg leading-relaxed text-[#a1a1aa] text-pretty">{country.heroSubtitle}</p>
 
-						<div className="mt-9 flex flex-col items-center gap-5 sm:flex-row sm:gap-7">
-							<Link
-								href={`/onboarding?pais=${country.code}`}
-								className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#4f5bff] px-7 py-3.5 text-[15px] font-semibold text-white transition-[background-color,transform] duration-200 hover:bg-[#3d47e6] active:scale-[0.98]"
-							>
-								Crear mi tienda
-								<ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden />
-							</Link>
-							<Link
-								href="/#como-funciona"
-								className="text-[15px] font-medium text-[#d4d4d8] underline decoration-white/20 underline-offset-[6px] transition-colors duration-200 hover:text-white hover:decoration-white/60"
-							>
-								Ver cómo funciona
-							</Link>
+							<div className="mt-9 flex flex-col items-center gap-5 sm:flex-row sm:gap-7">
+								<Link
+									href={`/onboarding?pais=${country.code}`}
+									className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#4f5bff] px-7 py-3.5 text-[15px] font-semibold text-white transition-[background-color,transform] duration-200 hover:bg-[#3d47e6] active:scale-[0.98]"
+								>
+									Crear mi tienda
+									<ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden />
+								</Link>
+								<Link
+									href="/#como-funciona"
+									className="text-[15px] font-medium text-[#d4d4d8] underline decoration-white/20 underline-offset-[6px] transition-colors duration-200 hover:text-white hover:decoration-white/60"
+								>
+									Ver cómo funciona
+								</Link>
+							</div>
+
+							{/* Las mismas tres garantías que el hero de la home; el país añade la promo del primer pago. */}
+							<HeroAssurances
+								items={buildHeroAssurances(fromPrice, [HERO_ASSURANCE_FIRST_PAYMENT_PROMO])}
+								className="mt-8 text-sm leading-relaxed text-[#a1a1aa]"
+							/>
 						</div>
-
-						{/* Las mismas tres garantías que el hero de la home; el país añade la promo del primer pago. */}
-						<HeroAssurances
-							items={buildHeroAssurances(fromPrice, [HERO_ASSURANCE_FIRST_PAYMENT_PROMO])}
-							className="mt-8 text-sm leading-relaxed text-[#a1a1aa]"
-						/>
+						<div className="v3-hero-phones relative z-10 flex w-full items-center justify-center">
+							<HeroPhoneShowcase phones={heroPhones} />
+						</div>
 					</div>
 				</section>
 

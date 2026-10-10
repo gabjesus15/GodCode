@@ -9,6 +9,7 @@ import { getLandingSocialLinks } from "@/lib/landing/contact-server";
 import { LANDING_COUNTRIES, type LandingCountrySlug } from "@/lib/landing/countries";
 import { buildLandingCountryJsonLd, buildLandingCountryMetadata } from "@/lib/landing/country-page";
 import { resolveLowestPlanPrice } from "@/lib/landing/price";
+import { loadLandingV3Config } from "@/lib/landing/v3-config";
 import { getPublicPlansForLanding } from "@/lib/plans/public-plans";
 import { serializeJsonLd } from "@/lib/seo/serialize-json-ld";
 import { getAppUrl } from "@/lib/tenant/app-url";
@@ -29,7 +30,12 @@ export async function LandingCountryPage({ slug }: { slug: LandingCountrySlug })
 	if (!isMainDomain(hdrs.get("host") || "")) notFound();
 
 	const country = LANDING_COUNTRIES[slug];
-	const [plans, rawSocialLinks] = await Promise.all([getPublicPlansForLanding(DEFAULT_LOCALE), getLandingSocialLinks()]);
+	const [plans, rawSocialLinks, v3Config] = await Promise.all([
+		getPublicPlansForLanding(DEFAULT_LOCALE),
+		getLandingSocialLinks(),
+		// Los mismos teléfonos del hero de la home (con imágenes por defecto si la base no responde).
+		loadLandingV3Config(),
+	]);
 	// El mismo WhatsApp de ventas que la home, con el saludo ya escrito.
 	const socialLinks = landingSocialLinksWithGreeting(rawSocialLinks);
 	// El precio se resuelve para el país de la página, no para el del visitante:
@@ -37,5 +43,13 @@ export async function LandingCountryPage({ slug }: { slug: LandingCountrySlug })
 	const fromPrice = resolveLowestPlanPrice(plans, country.code);
 	const jsonLd = serializeJsonLd(buildLandingCountryJsonLd(getAppUrl(), country));
 
-	return <CountryLanding country={country} fromPrice={fromPrice} socialLinks={socialLinks} jsonLd={jsonLd} />;
+	return (
+		<CountryLanding
+			country={country}
+			fromPrice={fromPrice}
+			socialLinks={socialLinks}
+			jsonLd={jsonLd}
+			heroPhones={v3Config.heroPhones}
+		/>
+	);
 }
