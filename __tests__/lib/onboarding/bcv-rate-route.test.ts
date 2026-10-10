@@ -1,8 +1,10 @@
+import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ getCurrentExchangeRate: vi.fn() }));
 vi.mock("@/lib/exchange-rates/current", () => ({ getCurrentExchangeRate: mocks.getCurrentExchangeRate }));
 vi.mock("@/lib/infra/supabase-admin", () => ({ supabaseAdmin: {} }));
+vi.mock("@/lib/infra/api-guard", () => ({ enforceRateLimit: vi.fn(async () => null) }));
 
 import { GET } from "../../../services/onboarding-billing/app/api/onboarding/bcv-rate/route";
 
@@ -26,7 +28,7 @@ function stubDolarApi(response: Response | Error) {
 }
 
 async function read() {
-	const res = await GET();
+	const res = await GET(new NextRequest("http://localhost/api/onboarding/bcv-rate"));
 	return { body: (await res.json()) as Record<string, unknown>, cache: res.headers.get("Cache-Control") };
 }
 

@@ -1,9 +1,15 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 import { getCurrentExchangeRate } from "@/lib/exchange-rates/current";
+import { enforceRateLimit } from "@/lib/infra/api-guard";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 
-/**
+/** @service-role public
+ *
+ * Pública a propósito (sin sesión), con límite por IP. El service role solo registra una tasa
+ * nueva cuando la guardada venció (`record_exchange_rate`), y ese valor viene siempre de
+ * dolarapi, nunca de la petición.
+ *
  * Tasa oficial del BCV para mostrar en bolívares el monto del alta y de los pagos de
  * /cuenta. Es la misma de la tienda (`lib/exchange-rates`, con historial en
  * `exchange_rates`): antes este servicio leía dolarapi por su cuenta y el alta podía
@@ -59,7 +65,11 @@ function envFallbackRate(): number | null {
 	return Number.isFinite(rate) && rate > 0 ? rate : null;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+	// El proxy de la app ya limita por IP; esto cubre las llamadas directas al servicio.
+	const limited = await enforceRateLimit(req, "onboarding_bcv_rate", 120, 60_000);
+	if (limited) return limited;
+
 	const live = await currentRate();
 	if (live) {
 		return NextResponse.json(

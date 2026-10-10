@@ -44,12 +44,12 @@ describe("buildWhatsAppHandoffMessage", () => {
 		});
 		expect(message).toContain("*Nuevo pedido · Rica Pizza*");
 		expect(message).toContain("Ref. AB12CD");
-		expect(message).toContain("*2x Suprema (Grande)* — $23.00");
+		expect(message).toContain("*2x Suprema (Grande)* · $23.00");
 		expect(message).toContain("↳ Extras: 1x Queso");
 		expect(message).toContain("↳ Cambios: Sin cebolla");
 		expect(message).toContain("↳ Nota: bien cocida");
-		expect(message).toContain("*1x Coca* — $1.50");
-		expect(message).toContain("*1x Servilletas* — $0.00");
+		expect(message).toContain("*1x Coca* · $1.50");
+		expect(message).toContain("*1x Servilletas* · $0.00");
 		expect(message).not.toContain("Masa madre");
 		expect(message).toContain("*Delivery*");
 		expect(message).toContain("Referencia: Casa azul");
