@@ -1,5 +1,12 @@
 import { test, expect } from "@playwright/test";
 
+/**
+ * Lo que puede mostrar una tienda que no carga: «Tienda no disponible» si la base dice que no
+ * existe, o la página de error (app/error.tsx, en el idioma del navegador) si la base no
+ * contesta, como en CI, que corre sin Supabase. Nunca la pantalla genérica de Next.
+ */
+const STORE_UNAVAILABLE = /tienda no disponible|no pudimos cargar esta página|we couldn't load this page/i;
+
 test.describe("smoke", () => {
 	test("robots.txt responde", async ({ page }) => {
 		const res = await page.goto("/robots.txt");
@@ -41,9 +48,9 @@ test.describe("smoke", () => {
 		await expect(page.getByRole("heading", { name: /todas las empresas/i })).toBeVisible({ timeout: 20_000 });
 	});
 
-	test("ruta menú tenant responde (slug inexistente → tienda no disponible)", async ({ page }) => {
+	test("ruta menú tenant responde (slug inexistente → tienda no disponible, o página de error sin base)", async ({ page }) => {
 		await page.goto("/__e2e_no_such_tenant__/menu");
-		await expect(page.getByRole("heading", { name: /tienda no disponible/i })).toBeVisible({
+		await expect(page.getByRole("heading", { name: STORE_UNAVAILABLE })).toBeVisible({
 			timeout: 15_000,
 		});
 	});
