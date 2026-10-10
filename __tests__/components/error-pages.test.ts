@@ -1,4 +1,4 @@
-import { createElement, type ComponentType } from "react";
+import { createElement, type ComponentProps, type ComponentType, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
@@ -10,10 +10,16 @@ import { SUPPORTED_LOCALES, type AppLocale } from "@/lib/i18n/config";
 
 type ErrorPageProps = { error: Error & { digest?: string }; unstable_retry: () => void };
 
+// Los hijos van como tercer argumento de createElement (react/no-children-prop); el tipo del
+// proveedor los pide en las props, así que aquí se declaran opcionales.
+const IntlProvider = NextIntlClientProvider as ComponentType<
+	Omit<ComponentProps<typeof NextIntlClientProvider>, "children"> & { children?: ReactNode }
+>;
+
 function render(Page: ComponentType<ErrorPageProps>, locale: AppLocale) {
 	const props: ErrorPageProps = { error: Object.assign(new Error("boom"), { digest: "123" }), unstable_retry: () => {} };
 	return renderToStaticMarkup(
-		createElement(NextIntlClientProvider, { locale, messages: getMessagesForLocale(locale) }, createElement(Page, props)),
+		createElement(IntlProvider, { locale, messages: getMessagesForLocale(locale) }, createElement(Page, props)),
 	);
 }
 
