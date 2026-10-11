@@ -18,7 +18,26 @@ export const TENANT_ICON_SECURITY_HEADERS = {
 } as const;
 
 const RASTER_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/avif", "image/x-icon", "image/vnd.microsoft.icon"]);
+/** Tipos que no dicen nada del archivo: ahí se mira el contenido (`sniffRasterType`). */
+const GENERIC_TYPES = new Set(["", "application/octet-stream", "binary/octet-stream"]);
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
+
+/**
+ * El tipo de una imagen por sus primeros bytes. El Storage sirve como
+ * `application/octet-stream` los archivos que se copiaron al servidor nuevo (perdieron su
+ * tipo): sin esto, el favicon y la tarjeta para compartir de esos negocios salían sin logo ni
+ * portada. Solo reconoce mapas de bits: un SVG o un HTML no pasan.
+ */
+export function sniffRasterType(buf: Uint8Array): string | null {
+	const ascii = (start: number, end: number) => String.fromCharCode(...buf.subarray(start, end));
+	if (buf.length >= 8 && buf[0] === 0x89 && ascii(1, 4) === "PNG") return "image/png";
+	if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "image/jpeg";
+	if (buf.length >= 12 && ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "image/webp";
+	if (buf.length >= 6 && (ascii(0, 6) === "GIF87a" || ascii(0, 6) === "GIF89a")) return "image/gif";
+	if (buf.length >= 12 && ascii(4, 8) === "ftyp" && (ascii(8, 12) === "avif" || ascii(8, 12) === "avis")) return "image/avif";
+	if (buf.length >= 4 && buf[0] === 0 && buf[1] === 0 && buf[2] === 1 && buf[3] === 0) return "image/x-icon";
+	return null;
+}
 
 export function escapeXml(value: string): string {
 	return value.replace(/[<>&"']/g, (char) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" })[char] ?? char);
@@ -66,7 +85,8 @@ function isFetchableLogoUrl(raw: string): boolean {
 /**
  * Descarga el logo para convertirlo en ícono. Solo https público, sin seguir
  * redirecciones, con tope de tamaño y solo imágenes de mapa de bits: un SVG o
- * un HTML ajeno nunca se sirve con nuestro origen.
+ * un HTML ajeno nunca se sirve con nuestro origen. Si el servidor no dice el tipo
+ * (`application/octet-stream`), vale solo si los primeros bytes son de una imagen.
  */
 export async function fetchTenantLogo(logoUrl: string): Promise<{ buf: Buffer; contentType: string } | null> {
 	if (!isFetchableLogoUrl(logoUrl)) return null;
@@ -81,12 +101,14 @@ export async function fetchTenantLogo(logoUrl: string): Promise<{ buf: Buffer; c
 			},
 		});
 		if (!upstream.ok) return null;
-		const contentType = (upstream.headers.get("content-type") || "").split(";")[0]?.trim().toLowerCase() ?? "";
-		if (!RASTER_TYPES.has(contentType)) return null;
+		const declaredType = (upstream.headers.get("content-type") || "").split(";")[0]?.trim().toLowerCase() ?? "";
+		if (!RASTER_TYPES.has(declaredType) && !GENERIC_TYPES.has(declaredType)) return null;
 		const declared = Number(upstream.headers.get("content-length") ?? 0);
 		if (declared > MAX_LOGO_BYTES) return null;
 		const buf = Buffer.from(await upstream.arrayBuffer());
 		if (buf.byteLength === 0 || buf.byteLength > MAX_LOGO_BYTES) return null;
+		const contentType = RASTER_TYPES.has(declaredType) ? declaredType : sniffRasterType(buf);
+		if (!contentType) return null;
 		return { buf, contentType };
 	} catch {
 		return null;
