@@ -2,16 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { logger } from "@/lib/infra/logger";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { captureOnboardingMercadoPagoOrder } from "@/lib/onboarding/mercadopago-onboarding";
-import { getMercadoPagoPaymentOrderId, isMercadoPagoNumericId, verifyMercadoPagoSignature } from "@/lib/payments/mercadopago";
+import { captureOnboardingMercadoPagoPayment } from "@/lib/onboarding/mercadopago-onboarding";
+import { isMercadoPagoNumericId, verifyMercadoPagoSignature } from "@/lib/payments/mercadopago";
 
 /** @service-role webhook-signature
  *
  * Avisos de Mercado Pago (tópico `payment`, evento «Pagos» del panel). Solo se procesa lo
  * firmado con la clave secreta de la aplicación (`MERCADOPAGO_WEBHOOK_SECRET`); sin esa
- * variable responde 503 y no toca nada. Se consulta a Mercado Pago la merchant order del pago
- * y se cierra el alta con los mismos controles que el regreso del checkout, así que se activa
- * aunque la persona cierre la pestaña.
+ * variable responde 503 y no toca nada. Se consulta el pago a Mercado Pago y se cierra el
+ * alta con los mismos controles que el regreso del checkout, así que se activa aunque la
+ * persona cierre la pestaña. Los pagos de la cuenta que no son de un alta se ignoran.
  */
 
 export const runtime = "nodejs";
@@ -53,15 +53,12 @@ export async function POST(req: NextRequest) {
 		return NextResponse.json({ ok: true, ignored: true });
 	}
 
-	// El aviso es por pago: el estado completo está en su merchant order.
-	const merchantOrderId = await getMercadoPagoPaymentOrderId(dataId);
-	if (merchantOrderId === undefined) return retryLater();
-	if (merchantOrderId === null) return NextResponse.json({ ok: true, ignored: true });
-
-	const result = await captureOnboardingMercadoPagoOrder({ supabaseAdmin, merchantOrderId });
+	const result = await captureOnboardingMercadoPagoPayment({ supabaseAdmin, paymentId: dataId });
 	if (result.ok) return NextResponse.json({ ok: true, outcome: "applied" });
-	// Aún no cobrada o Mercado Pago no respondió: llegará otro aviso, o este se reintenta.
+	// Aún no cobrado o Mercado Pago no respondió: llegará otro aviso, o este se reintenta.
 	if (result.reason === "pending" && result.status >= 500) return retryLater();
-	logger.warn("mercadopago_webhook_not_applied", { paymentId: dataId, merchantOrderId, action: event.action, reason: result.reason });
+	// Pagos de la cuenta que no son de un alta (la misma cuenta cobra otras cosas).
+	if (result.reason === "ignored") return NextResponse.json({ ok: true, ignored: true });
+	logger.warn("mercadopago_webhook_not_applied", { paymentId: dataId, action: event.action, reason: result.reason });
 	return NextResponse.json({ ok: true, outcome: result.reason });
 }

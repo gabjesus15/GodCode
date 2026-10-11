@@ -3,21 +3,18 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const capture = vi.fn();
-const paymentOrderId = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/onboarding/mercadopago-onboarding", () => ({
-	captureOnboardingMercadoPagoOrder: (...args: unknown[]) => capture(...args),
-}));
-vi.mock("@/lib/payments/mercadopago", async (importOriginal) => ({
-	...(await importOriginal<typeof import("@/lib/payments/mercadopago")>()),
-	getMercadoPagoPaymentOrderId: (...args: unknown[]) => paymentOrderId(...args),
+	captureOnboardingMercadoPagoPayment: (...args: unknown[]) => capture(...args),
 }));
 vi.mock("@/lib/infra/supabase-admin", () => ({ supabaseAdmin: { tag: "admin" } }));
 
+import { parsePayPalCustomId } from "@/lib/payments/paypal";
 import {
 	fromMercadoPagoReference,
+	isMercadoPagoCheckoutReference,
 	isMercadoPagoNumericId,
-	isMercadoPagoPreferenceId,
-	mercadoPagoOrderState,
+	mercadoPagoPaymentState,
+	newMercadoPagoCheckoutReference,
 	parseUsdClpRate,
 	toClp,
 	toMercadoPagoReference,
@@ -51,8 +48,6 @@ function webhookRequest(params: { dataId?: string; type?: string; signature?: st
 beforeEach(() => {
 	vi.stubEnv("MERCADOPAGO_WEBHOOK_SECRET", SECRET);
 	capture.mockReset();
-	paymentOrderId.mockReset();
-	paymentOrderId.mockResolvedValue(ORDER_ID);
 });
 afterEach(() => vi.unstubAllEnvs());
 
@@ -83,31 +78,49 @@ describe("external_reference", () => {
 		expect(fromMercadoPagoReference(reference)).toBe(customId);
 		expect(fromMercadoPagoReference(null)).toBe("");
 	});
-});
 
-describe("estado de la merchant order", () => {
-	const order = { orderStatus: "paid", totalAmount: 18050, paidAmount: 18050, paymentStatuses: ["approved"] };
-
-	it("solo cuenta como pagada si se cobró el total", () => {
-		expect(mercadoPagoOrderState(order)).toBe("paid");
-		expect(mercadoPagoOrderState({ ...order, orderStatus: "partially_paid", paidAmount: 9000 })).toBe("pending");
-		expect(mercadoPagoOrderState({ ...order, orderStatus: "payment_in_process", paidAmount: 0, paymentStatuses: ["in_process"] })).toBe("pending");
-		expect(mercadoPagoOrderState({ ...order, orderStatus: "payment_required", paidAmount: 0, paymentStatuses: [] })).toBe("pending");
+	it("cada checkout lleva un sufijo único que cabe en 64 caracteres y no cambia lo que se lee", () => {
+		const customId = "ob|0b6f1c2e-9a3d-4e5f-8a7b-1c2d3e4f5a6b|12|24|1";
+		const a = newMercadoPagoCheckoutReference(customId);
+		const b = newMercadoPagoCheckoutReference(customId);
+		expect(a).not.toBe(b);
+		expect(a).toMatch(/^ob_0b6f1c2e-9a3d-4e5f-8a7b-1c2d3e4f5a6b_12_24_1_[0-9a-f]{10}$/);
+		expect(a.length).toBeLessThanOrEqual(64);
+		expect(isMercadoPagoCheckoutReference(a)).toBe(true);
+		expect(parsePayPalCustomId(fromMercadoPagoReference(a))).toEqual({
+			kind: "onboarding",
+			applicationId: "0b6f1c2e-9a3d-4e5f-8a7b-1c2d3e4f5a6b",
+			chargedMonths: 12,
+			grantedMonths: 24,
+			promoApplied: true,
+		});
 	});
 
-	it("vencida o con todos los pagos rechazados hay que volver a pagarla", () => {
-		expect(mercadoPagoOrderState({ ...order, orderStatus: "expired", paidAmount: 0, paymentStatuses: [] })).toBe("failed");
-		expect(mercadoPagoOrderState({ ...order, orderStatus: "payment_required", paidAmount: 0, paymentStatuses: ["rejected", "cancelled"] })).toBe("failed");
-		expect(mercadoPagoOrderState({ ...order, orderStatus: "payment_required", paidAmount: 0, paymentStatuses: ["rejected", "in_process"] })).toBe("pending");
+	it("reconoce las referencias de checkout y nada más", () => {
+		expect(isMercadoPagoCheckoutReference("3751385378-4d78444f-87fb-4ab4-878d-b484e6c987dd")).toBe(false);
+		expect(isMercadoPagoCheckoutReference("manual-a1-1")).toBe(false);
+		expect(isMercadoPagoCheckoutReference("ob_x?y")).toBe(false);
+		expect(isMercadoPagoCheckoutReference(null)).toBe(false);
+	});
+});
+
+describe("estado del pago", () => {
+	it("solo `approved` es cobro; rechazado, cancelado o devuelto hay que volver a pagar", () => {
+		expect(mercadoPagoPaymentState({ status: "approved" })).toBe("paid");
+		for (const status of ["pending", "in_process", "authorized", "in_mediation", ""]) {
+			expect(mercadoPagoPaymentState({ status })).toBe("pending");
+		}
+		for (const status of ["rejected", "cancelled", "refunded", "charged_back"]) {
+			expect(mercadoPagoPaymentState({ status })).toBe("failed");
+		}
 	});
 
 	it("valida el formato de los ids que llegan por URL", () => {
-		expect(isMercadoPagoNumericId(ORDER_ID)).toBe(true);
+		expect(isMercadoPagoNumericId(PAYMENT_ID)).toBe(true);
 		expect(isMercadoPagoNumericId("12/../x")).toBe(false);
+		expect(isMercadoPagoNumericId("null")).toBe(false);
 		expect(isMercadoPagoNumericId("")).toBe(false);
 		expect(isMercadoPagoNumericId(null)).toBe(false);
-		expect(isMercadoPagoPreferenceId("3751385378-4d78444f-87fb-4ab4-878d-b484e6c987dd")).toBe(true);
-		expect(isMercadoPagoPreferenceId("x?y")).toBe(false);
 	});
 });
 
@@ -149,26 +162,24 @@ describe("POST /api/payments/mercadopago/webhook", () => {
 		expect(capture).not.toHaveBeenCalled();
 	});
 
-	it("aviso firmado de un pago: confirma su merchant order contra Mercado Pago", async () => {
-		capture.mockResolvedValue({ ok: true, ref: "pref-1" });
+	it("aviso firmado de un pago: confirma el pago contra Mercado Pago", async () => {
+		capture.mockResolvedValue({ ok: true, ref: "ob_app-1_1_1_0_abc" });
 		const res = await POST(webhookRequest({ dataId: PAYMENT_ID, signature: sign(PAYMENT_ID, "req-1") }));
 		expect(res.status).toBe(200);
-		expect(paymentOrderId).toHaveBeenCalledWith(PAYMENT_ID);
-		expect(capture).toHaveBeenCalledWith({ supabaseAdmin: { tag: "admin" }, merchantOrderId: ORDER_ID });
+		expect(await res.json()).toEqual({ ok: true, outcome: "applied" });
+		expect(capture).toHaveBeenCalledWith({ supabaseAdmin: { tag: "admin" }, paymentId: PAYMENT_ID });
 	});
 
-	it("otros tópicos y pagos sin orden se ignoran", async () => {
+	it("otros tópicos y pagos que no son de un alta se ignoran", async () => {
 		const res = await POST(webhookRequest({ dataId: "123", type: "merchant_order", signature: sign("123", "req-1") }));
 		expect(await res.json()).toEqual({ ok: true, ignored: true });
-		paymentOrderId.mockResolvedValueOnce(null);
+		expect(capture).not.toHaveBeenCalled();
+		capture.mockResolvedValueOnce({ ok: false, reason: "ignored", error: "x", status: 400 });
 		const res2 = await POST(webhookRequest({ dataId: PAYMENT_ID, signature: sign(PAYMENT_ID, "req-1") }));
 		expect(await res2.json()).toEqual({ ok: true, ignored: true });
-		expect(capture).not.toHaveBeenCalled();
 	});
 
-	it("si Mercado Pago no respondió pide reintento; si aún no está cobrada, no", async () => {
-		paymentOrderId.mockResolvedValueOnce(undefined);
-		expect((await POST(webhookRequest({ dataId: PAYMENT_ID, signature: sign(PAYMENT_ID, "req-1") }))).status).toBe(503);
+	it("si Mercado Pago no respondió pide reintento; si aún no está cobrado, no", async () => {
 		capture.mockResolvedValueOnce({ ok: false, reason: "pending", error: "x", status: 502 });
 		expect((await POST(webhookRequest({ dataId: PAYMENT_ID, signature: sign(PAYMENT_ID, "req-1") }))).status).toBe(503);
 		capture.mockResolvedValueOnce({ ok: false, reason: "pending", error: "x", status: 409 });

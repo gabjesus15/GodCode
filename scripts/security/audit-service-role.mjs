@@ -93,7 +93,7 @@ export const POSTURES = {
 	},
 	"payment-provider-verified": {
 		description: "el estado del pago se confirma contra la pasarela, no contra la petición",
-		evidence: /OrdersController|captureOnboardingPayPalOrder|capturePayPalOrder|captureOnboardingMercadoPagoOrder/,
+		evidence: /OrdersController|captureOnboardingPayPalOrder|capturePayPalOrder|captureOnboardingMercadoPagoPayment/,
 	},
 	"public-read": {
 		description:

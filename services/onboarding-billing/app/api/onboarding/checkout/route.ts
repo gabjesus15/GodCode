@@ -26,7 +26,7 @@ import { completeOnboardingPayment } from "@/lib/onboarding/complete-onboarding-
 import { isFirstPaymentPromoEligible } from "@/lib/onboarding/first-payment-promo-service";
 import { alertOnboardingTeam } from "@/lib/onboarding/team-alerts";
 import { isPaymentMethodAvailableForCountry } from "@/lib/payments/payment-method-countries";
-import { createMercadoPagoPreference, toClp, toMercadoPagoReference } from "@/lib/payments/mercadopago";
+import { createMercadoPagoPreference, newMercadoPagoCheckoutReference, toClp } from "@/lib/payments/mercadopago";
 import { createPayPalOrder, encodePayPalCustomId, isPayPalConfigured } from "@/lib/payments/paypal";
 import { getAppUrl } from "@/lib/tenant/app-url";
 
@@ -257,29 +257,31 @@ export async function POST(req: NextRequest) {
 			if (!(amountClp > 0)) {
 				return NextResponse.json({ error: "No pudimos calcular el total en pesos. Escríbenos a soporte." }, { status: 409 });
 			}
+			// Mismo contenido que el customId de PayPal (meses pagados y otorgados), con `_` en vez
+			// de `|` y un sufijo único: es lo único del checkout que vuelve en el pago.
+			const checkoutReference = newMercadoPagoCheckoutReference(
+				encodePayPalCustomId({
+					kind: "onboarding",
+					applicationId: app.id,
+					chargedMonths: grant.chargedMonths,
+					grantedMonths: grant.grantedMonths,
+					promoApplied: grant.promoApplied,
+				}),
+			);
 			const preference = await createMercadoPagoPreference({
 				amountClp,
 				title: `${plan.name} · ${app.business_name}`,
-				// Mismo contenido que el customId de PayPal (meses pagados y otorgados), con `_` en vez de `|`.
-				externalReference: toMercadoPagoReference(
-					encodePayPalCustomId({
-						kind: "onboarding",
-						applicationId: app.id,
-						chargedMonths: grant.chargedMonths,
-						grantedMonths: grant.grantedMonths,
-						promoApplied: grant.promoApplied,
-					}),
-				),
+				externalReference: checkoutReference,
 				returnUrl: `${getAppUrl()}/api/onboarding/mercadopago-return`,
 			});
 			if (!preference.ok) {
 				return NextResponse.json({ error: preference.error }, { status: 502 });
 			}
 
-			// La preferencia vigente queda en la solicitud: el regreso y el webhook solo aceptan esta.
+			// El checkout vigente queda en la solicitud: el regreso, el webhook y el barrido solo aceptan pagos de este.
 			await updateApplicationPaymentState(supabaseAdmin, app.id, {
 				applicationStatus: "payment_pending",
-				paymentReference: preference.preferenceId,
+				paymentReference: checkoutReference,
 				paymentStatus: "pending",
 				paymentReferenceUrl: null,
 				paymentMonths: grant.chargedMonths,

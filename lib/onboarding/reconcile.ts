@@ -3,10 +3,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendEmail } from "@/lib/email/send";
 import { kvStore } from "@/lib/infra/kv-store";
 import { logger } from "@/lib/infra/logger";
+import { findMercadoPagoPaymentsByReference, isMercadoPagoCheckoutReference, mercadoPagoPaymentState } from "@/lib/payments/mercadopago";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { ensureOnboardingOwnerAccess } from "./complete-onboarding-payment";
 import { isMissingColumnError } from "./db-compat";
 import { expireUnverifiedApplications } from "./expire-unverified";
+import { captureOnboardingMercadoPagoPayment } from "./mercadopago-onboarding";
 import { captureOnboardingPayPalOrder, isChargedFailure } from "./paypal-onboarding";
 import { loadPanelOnlyPlanIds } from "./store-draft-service";
 import { alertOnboardingTeam } from "./team-alerts";
@@ -53,6 +55,8 @@ const COLUMNS = "id,status,payment_status,payment_reference,business_name,email,
 export type ReconcileSummary = {
 	paypal_checked: number;
 	paypal_completed: number;
+	mercadopago_checked: number;
+	mercadopago_completed: number;
 	owners_checked: number;
 	owners_fixed: number;
 	stuck: number;
@@ -68,9 +72,20 @@ type Stuck = { row: Row; problem: string };
 type DbError = { message: string; code?: string | null };
 type RowsQuery = PromiseLike<{ data: unknown; error: DbError | null }>;
 
+/** Id de preferencia de Mercado Pago (`<cuenta>-<uuid>`), como se guardaba antes de octubre de 2026. */
+function isLegacyMercadoPagoPreference(ref: string): boolean {
+	return /^\d+-[0-9a-f]{8}-[0-9a-f]{4}-/i.test(ref);
+}
+
 function isPayPalReference(ref: string | null): boolean {
 	const value = String(ref ?? "").trim();
-	return Boolean(value) && !value.startsWith("manual-") && !value.startsWith("coupon-");
+	return (
+		Boolean(value) &&
+		!value.startsWith("manual-") &&
+		!value.startsWith("coupon-") &&
+		!isMercadoPagoCheckoutReference(value) &&
+		!isLegacyMercadoPagoPreference(value)
+	);
 }
 
 const reclaimKey = (applicationId: string) => `onboarding_reconcile:reclaim:${applicationId}`;
@@ -106,7 +121,8 @@ async function clearReclaimFailures(applicationId: string): Promise<void> {
  *
  * 1. Órdenes de PayPal del alta sin cerrar: si PayPal ya las aprobó o cobró, se cobran y
  *    se cierra el alta (quien aprobó y cerró la pestaña antes de volver). Las que nadie
- *    aprobó se dejan: es un pago abandonado, no un fallo.
+ *    aprobó se dejan: es un pago abandonado, no un fallo. Igual con los checkouts de Mercado
+ *    Pago: si tienen un pago aprobado, se cierra el alta.
  * 2. Cierres que se cayeron después de reclamar el pago: se retoman (PayPal), como mucho
  *    `MAX_RECLAIM_ATTEMPTS` veces, o se avisan.
  * 3. Empresas ya pagadas sin dueño o sin bienvenida: se reintenta el alta del dueño.
@@ -127,6 +143,8 @@ export async function reconcileOnboarding(params: {
 	const summary: ReconcileSummary = {
 		paypal_checked: 0,
 		paypal_completed: 0,
+		mercadopago_checked: 0,
+		mercadopago_completed: 0,
 		owners_checked: 0,
 		owners_fixed: 0,
 		stuck: 0,
@@ -158,7 +176,47 @@ export async function reconcileOnboarding(params: {
 		return (data ?? []) as Row[];
 	};
 
-	// 1 y 2: pagos sin cerrar (pendientes de PayPal, o reclamados y caídos a medias).
+	/**
+	 * Checkout de Mercado Pago sin cerrar: se buscan sus pagos y, si uno está aprobado, se
+	 * cierra el alta (quien pagó y cerró la pestaña sin que llegara el webhook). Sin pago
+	 * aprobado es un abandono. Mismo tope de reintentos y mismos avisos que PayPal.
+	 */
+	const reconcileMercadoPago = async (row: Row, paid: boolean) => {
+		const reference = String(row.payment_reference);
+		if ((await readReclaimFailures(row.id)) >= MAX_RECLAIM_ATTEMPTS) {
+			summary.retries_capped += 1;
+			stuck.push({
+				row,
+				problem: `Mercado Pago cobró pero el alta no se cerró (referencia ${reference}). Ya se reintentó ${MAX_RECLAIM_ATTEMPTS} veces: ciérrala a mano desde la ficha de la empresa.`,
+			});
+			return;
+		}
+		summary.mercadopago_checked += 1;
+		const payments = await findMercadoPagoPaymentsByReference(reference);
+		if (payments === null) {
+			summary.errors.push(`Mercado Pago no respondió para la referencia ${reference}`);
+			return;
+		}
+		const approved = payments.find((payment) => mercadoPagoPaymentState(payment) === "paid");
+		if (!approved) {
+			if (paid) stuck.push({ row, problem: `El alta quedó marcada como pagada pero Mercado Pago no muestra un pago aprobado (referencia ${reference}).` });
+			return;
+		}
+		const result = await captureOnboardingMercadoPagoPayment({ supabaseAdmin, paymentId: approved.id });
+		if (result.ok) {
+			summary.mercadopago_completed += 1;
+			await clearReclaimFailures(row.id);
+			return;
+		}
+		if (result.reason === "pending" && result.status === 502) {
+			summary.errors.push(`Mercado Pago no respondió para el pago ${approved.id}`);
+			return;
+		}
+		await countReclaimFailure(row.id);
+		stuck.push({ row, problem: `Mercado Pago cobró pero el alta no se cerró (pago ${approved.id}): ${result.error}` });
+	};
+
+	// 1 y 2: pagos sin cerrar (pendientes de PayPal o Mercado Pago, o reclamados y caídos a medias).
 	const pending = await loadRows("pendientes", (columns) =>
 		supabaseAdmin
 			.from("onboarding_applications")
@@ -174,6 +232,10 @@ export async function reconcileOnboarding(params: {
 	for (const row of pending) {
 		if (outOfTime()) break;
 		const paid = String(row.payment_status ?? "") === "paid";
+		if (isMercadoPagoCheckoutReference(row.payment_reference)) {
+			await reconcileMercadoPago(row, paid);
+			continue;
+		}
 		if (!isPayPalReference(row.payment_reference)) {
 			// Un pago manual o con cupón reclamado que no terminó: lo cierra el equipo
 			// volviendo a validarlo desde «Pagos por validar».

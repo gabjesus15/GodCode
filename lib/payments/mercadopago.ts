@@ -1,16 +1,17 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 /**
  * Cobros del SaaS con Mercado Pago (Checkout Pro, API de Preferencias). Hoy solo el alta en
  * Chile: la cuenta de GodCode es chilena y cobra en CLP.
  *
  * Igual que con PayPal, la preferencia la crea siempre el servidor con el monto ya calculado y
- * su `external_reference` (mismo contenido que el `customId` de PayPal) dice qué se pagó.
- * Antes de activar nada se consulta a Mercado Pago la *merchant order* de la preferencia: lo
- * que llega por la URL de regreso o por el webhook solo sirve para saber qué mirar.
+ * su `external_reference` (mismo contenido que el `customId` de PayPal, más un sufijo único)
+ * dice qué se pagó. Antes de activar nada se consulta el *pago* a Mercado Pago: lo que llega
+ * por la URL de regreso o por el webhook solo sirve para saber qué mirar.
  *
- * Se usa la API de Preferencias y no la de Orders: la cuenta de GodCode responde 403 («At
- * least one policy returned UNAUTHORIZED») al crear órdenes de Checkout Pro.
+ * Solo se leen pagos (`/v1/payments`): la cuenta de GodCode responde 403 («At least one policy
+ * returned UNAUTHORIZED») al crear órdenes (API de Orders) y al leer preferencias o merchant
+ * orders.
  */
 
 const API_BASE = "https://api.mercadopago.com";
@@ -18,10 +19,8 @@ const TIMEOUT_MS = 15_000;
 /** Un link de pago abandonado no queda vivo: mañana el monto (o la tasa) puede ser otro. */
 const PREFERENCE_TTL_MS = 24 * 60 * 60 * 1000;
 
-/** Estados de pago que no van a cobrarse: si no queda otro, hay que volver a pagar. */
+/** Estados de pago que no van a cobrarse: hay que volver a pagar. */
 const FAILED_PAYMENT_STATUSES = new Set(["rejected", "cancelled", "refunded", "charged_back"]);
-/** Estados de la merchant order que ya no van a cobrarse. */
-const FAILED_ORDER_STATUSES = new Set(["expired", "reverted"]);
 
 function accessToken(): string {
 	return (process.env.MERCADOPAGO_ACCESS_TOKEN ?? "").trim();
@@ -43,45 +42,35 @@ export function parseUsdClpRate(value: string | null | undefined): number | null
 	return Number.isFinite(rate) && rate > 0 ? rate : null;
 }
 
-/** Merchant order: agrupa los pagos (aprobados, rechazados, en proceso) de una preferencia. */
-export type MercadoPagoOrderSnapshot = {
+/** Lo que se lee de un pago para decidir si el alta se cierra. */
+export type MercadoPagoPaymentSnapshot = {
 	id: string;
-	/** La preferencia que se guardó como pago vigente de la solicitud. */
-	preferenceId: string | null;
-	orderStatus: string;
+	status: string;
 	externalReference: string | null;
 	currency: string | null;
-	/** En la moneda de la cuenta (CLP), redondeado al peso. */
-	totalAmount: number;
-	paidAmount: number;
-	paymentStatuses: string[];
+	/** Lo cobrado, en pesos. */
+	amount: number;
+	/** Total de los ítems de la preferencia que se pagó, en pesos. */
+	itemsTotal: number;
 };
 
-export type MercadoPagoOrderState = "paid" | "pending" | "failed";
+export type MercadoPagoPaymentState = "paid" | "pending" | "failed";
 
-/**
- * Pagada solo si se cobró el total: un pago parcial o en revisión no activa la cuenta.
- * Fallida si la orden venció o todos sus pagos se rechazaron; sin pagos, sigue pendiente.
- */
-export function mercadoPagoOrderState(
-	order: Pick<MercadoPagoOrderSnapshot, "orderStatus" | "totalAmount" | "paidAmount" | "paymentStatuses">,
-): MercadoPagoOrderState {
-	if (order.totalAmount > 0 && order.paidAmount >= order.totalAmount) return "paid";
-	if (FAILED_ORDER_STATUSES.has(order.orderStatus.toLowerCase())) return "failed";
-	const statuses = order.paymentStatuses.map((status) => status.toLowerCase());
-	if (statuses.length > 0 && statuses.every((status) => FAILED_PAYMENT_STATUSES.has(status))) return "failed";
+/** Solo `approved` es cobro; en proceso o autorizado sin capturar sigue pendiente. */
+export function mercadoPagoPaymentState(payment: Pick<MercadoPagoPaymentSnapshot, "status">): MercadoPagoPaymentState {
+	const status = payment.status.toLowerCase();
+	if (status === "approved") return "paid";
+	if (FAILED_PAYMENT_STATUSES.has(status)) return "failed";
 	return "pending";
 }
 
-type RawMerchantOrder = {
+type RawPayment = {
 	id?: number | string;
-	preference_id?: string | null;
-	order_status?: string | null;
+	status?: string | null;
 	external_reference?: string | null;
-	total_amount?: string | number | null;
-	paid_amount?: string | number | null;
-	items?: Array<{ currency_id?: string | null }> | null;
-	payments?: Array<{ status?: string | null; currency_id?: string | null }> | null;
+	currency_id?: string | null;
+	transaction_amount?: string | number | null;
+	additional_info?: { items?: Array<{ unit_price?: string | number | null; quantity?: string | number | null }> | null } | null;
 };
 
 function toPesos(value: string | number | null | undefined): number {
@@ -89,18 +78,16 @@ function toPesos(value: string | number | null | undefined): number {
 	return Number.isFinite(n) ? Math.round(n) : 0;
 }
 
-function snapshot(order: RawMerchantOrder): MercadoPagoOrderSnapshot | null {
-	if (order.id == null || order.id === "") return null;
-	const payments = order.payments ?? [];
+function paymentSnapshot(payment: RawPayment): MercadoPagoPaymentSnapshot | null {
+	if (payment.id == null || payment.id === "") return null;
+	const items = payment.additional_info?.items ?? [];
 	return {
-		id: String(order.id),
-		preferenceId: order.preference_id ?? null,
-		orderStatus: String(order.order_status ?? ""),
-		externalReference: order.external_reference ?? null,
-		currency: payments.find((payment) => payment.currency_id)?.currency_id ?? order.items?.[0]?.currency_id ?? null,
-		totalAmount: toPesos(order.total_amount),
-		paidAmount: toPesos(order.paid_amount),
-		paymentStatuses: payments.map((payment) => String(payment.status ?? "")),
+		id: String(payment.id),
+		status: String(payment.status ?? ""),
+		externalReference: payment.external_reference ?? null,
+		currency: payment.currency_id ?? null,
+		amount: toPesos(payment.transaction_amount),
+		itemsTotal: items.reduce((sum, item) => sum + toPesos(item.unit_price) * (Number(item.quantity) || 1), 0),
 	};
 }
 
@@ -110,6 +97,21 @@ function snapshot(order: RawMerchantOrder): MercadoPagoOrderSnapshot | null {
  */
 export function toMercadoPagoReference(customId: string): string {
 	return customId.replace(/\|/g, "_");
+}
+
+/**
+ * Referencia de un checkout: la del alta más un sufijo al azar, que la hace única. Se guarda
+ * como `payment_reference` de la solicitud y es lo que dice cuál es el pago vigente: el pago
+ * no trae el id de la preferencia, y la cuenta no puede leer preferencias ni merchant orders
+ * (403 de Mercado Pago). Cabe en los 64 caracteres que acepta `external_reference`.
+ */
+export function newMercadoPagoCheckoutReference(customId: string): string {
+	return `${toMercadoPagoReference(customId)}_${randomBytes(5).toString("hex")}`;
+}
+
+/** Referencia de un checkout de Mercado Pago del alta (`ob_<solicitud>_…`). */
+export function isMercadoPagoCheckoutReference(value: string | null | undefined): value is string {
+	return typeof value === "string" && /^ob_[A-Za-z0-9_-]{1,61}$/.test(value);
 }
 
 /** Devuelve la referencia al formato de PayPal para leerla con `parsePayPalCustomId`. */
@@ -172,27 +174,11 @@ export async function createMercadoPagoPreference(params: {
 	}
 }
 
-/** Estado actual de la merchant order; `null` si no se pudo consultar (reintentar más tarde). */
-export async function getMercadoPagoOrder(merchantOrderId: string): Promise<MercadoPagoOrderSnapshot | null> {
-	if (!isMercadoPagoConfigured()) return null;
-	try {
-		const res = await mercadoPagoFetch(`/merchant_orders/${encodeURIComponent(merchantOrderId)}`);
-		if (!res.ok) {
-			console.error("mercadopago get merchant order:", res.status);
-			return null;
-		}
-		return snapshot((await res.json()) as RawMerchantOrder);
-	} catch (error) {
-		console.error("mercadopago get merchant order:", error);
-		return null;
-	}
-}
-
 /**
- * Merchant order de un pago (el webhook avisa por pago). `undefined` si Mercado Pago no
- * respondió (reintentar); `null` si el pago no tiene orden.
+ * Estado actual de un pago. `undefined` si Mercado Pago no respondió (reintentar más tarde);
+ * `null` si el pago no existe o no es de esta cuenta.
  */
-export async function getMercadoPagoPaymentOrderId(paymentId: string): Promise<string | null | undefined> {
+export async function getMercadoPagoPayment(paymentId: string): Promise<MercadoPagoPaymentSnapshot | null | undefined> {
 	if (!isMercadoPagoConfigured()) return undefined;
 	try {
 		const res = await mercadoPagoFetch(`/v1/payments/${encodeURIComponent(paymentId)}`);
@@ -201,23 +187,34 @@ export async function getMercadoPagoPaymentOrderId(paymentId: string): Promise<s
 			console.error("mercadopago get payment:", res.status);
 			return undefined;
 		}
-		const json = (await res.json()) as { order?: { id?: number | string | null } | null };
-		const orderId = json.order?.id;
-		return orderId == null || orderId === "" ? null : String(orderId);
+		return paymentSnapshot((await res.json()) as RawPayment);
 	} catch (error) {
 		console.error("mercadopago get payment:", error);
 		return undefined;
 	}
 }
 
-/** Ids de merchant order y de pago son numéricos: lo que llega por URL se valida antes de usarlo. */
-export function isMercadoPagoNumericId(value: string | null | undefined): value is string {
-	return typeof value === "string" && /^\d{1,20}$/.test(value);
+/** Pagos de un checkout, del más nuevo al más viejo; `null` si Mercado Pago no respondió. */
+export async function findMercadoPagoPaymentsByReference(externalReference: string): Promise<MercadoPagoPaymentSnapshot[] | null> {
+	if (!isMercadoPagoConfigured()) return null;
+	try {
+		const query = new URLSearchParams({ external_reference: externalReference, sort: "date_created", criteria: "desc", limit: "10" });
+		const res = await mercadoPagoFetch(`/v1/payments/search?${query.toString()}`);
+		if (!res.ok) {
+			console.error("mercadopago search payments:", res.status);
+			return null;
+		}
+		const json = (await res.json()) as { results?: RawPayment[] | null };
+		return (json.results ?? []).map(paymentSnapshot).filter((payment): payment is MercadoPagoPaymentSnapshot => payment != null);
+	} catch (error) {
+		console.error("mercadopago search payments:", error);
+		return null;
+	}
 }
 
-/** Id de preferencia (`<collector>-<uuid>`). */
-export function isMercadoPagoPreferenceId(value: string | null | undefined): value is string {
-	return typeof value === "string" && /^[A-Za-z0-9-]{6,100}$/.test(value);
+/** Los ids de pago son numéricos: lo que llega por URL o por el webhook se valida antes de usarlo. */
+export function isMercadoPagoNumericId(value: string | null | undefined): value is string {
+	return typeof value === "string" && /^\d{1,20}$/.test(value);
 }
 
 export type MercadoPagoSignatureCheck = { ok: true } | { ok: false; reason: "not_configured" | "missing" | "invalid" };

@@ -5,6 +5,15 @@ vi.mock("@/lib/onboarding/paypal-onboarding", () => ({
 	captureOnboardingPayPalOrder: (...args: unknown[]) => captureOnboardingPayPalOrder(...args),
 	isChargedFailure: (code: string) => code.startsWith("charged_"),
 }));
+const captureOnboardingMercadoPagoPayment = vi.fn();
+vi.mock("@/lib/onboarding/mercadopago-onboarding", () => ({
+	captureOnboardingMercadoPagoPayment: (...args: unknown[]) => captureOnboardingMercadoPagoPayment(...args),
+}));
+const findMercadoPagoPaymentsByReference = vi.fn();
+vi.mock("@/lib/payments/mercadopago", async (importOriginal) => ({
+	...(await importOriginal<typeof import("@/lib/payments/mercadopago")>()),
+	findMercadoPagoPaymentsByReference: (...args: unknown[]) => findMercadoPagoPaymentsByReference(...args),
+}));
 const ensureOnboardingOwnerAccess = vi.fn();
 vi.mock("@/lib/onboarding/complete-onboarding-payment", () => ({
 	ensureOnboardingOwnerAccess: (...args: unknown[]) => ensureOnboardingOwnerAccess(...args),
@@ -83,6 +92,8 @@ const row = (overrides: Record<string, unknown>) => ({
 
 beforeEach(() => {
 	captureOnboardingPayPalOrder.mockReset();
+	captureOnboardingMercadoPagoPayment.mockReset();
+	findMercadoPagoPaymentsByReference.mockReset();
 	ensureOnboardingOwnerAccess.mockReset();
 	alertOnboardingTeam.mockClear();
 	alertOnboardingTeam.mockResolvedValue("sent");
@@ -170,6 +181,52 @@ describe("reconcileOnboarding", () => {
 		captureOnboardingPayPalOrder.mockResolvedValueOnce({ ok: true, ref: "ORDER-1" });
 		await reconcileOnboarding({ supabaseAdmin: adminReturning([row({})], []).client, now: NOW });
 		expect(kv.size).toBe(0);
+	});
+
+	describe("Mercado Pago", () => {
+		const MP_REF = "ob_a1_1_2_1_0a1b2c3d4e";
+		const mpPayment = (id: string, status: string) => ({ id, status, externalReference: MP_REF, currency: "CLP", amount: 950, itemsTotal: 950 });
+
+		it("cierra el alta de quien pagó y cerró la pestaña, sin pasar por PayPal", async () => {
+			findMercadoPagoPaymentsByReference.mockResolvedValue([mpPayment("2", "rejected"), mpPayment("1", "approved")]);
+			captureOnboardingMercadoPagoPayment.mockResolvedValue({ ok: true, ref: MP_REF });
+			const summary = await reconcileOnboarding({ supabaseAdmin: adminReturning([row({ payment_reference: MP_REF })], []).client, now: NOW });
+
+			expect(findMercadoPagoPaymentsByReference).toHaveBeenCalledWith(MP_REF);
+			expect(captureOnboardingMercadoPagoPayment).toHaveBeenCalledWith(expect.objectContaining({ paymentId: "1" }));
+			expect(captureOnboardingPayPalOrder).not.toHaveBeenCalled();
+			expect(summary).toMatchObject({ mercadopago_checked: 1, mercadopago_completed: 1, paypal_checked: 0, stuck: 0 });
+		});
+
+		it("sin pago aprobado es un abandono: no se avisa", async () => {
+			findMercadoPagoPaymentsByReference.mockResolvedValue([mpPayment("2", "rejected")]);
+			const summary = await reconcileOnboarding({ supabaseAdmin: adminReturning([row({ payment_reference: MP_REF })], []).client, now: NOW });
+			expect(captureOnboardingMercadoPagoPayment).not.toHaveBeenCalled();
+			expect(summary).toMatchObject({ mercadopago_checked: 1, mercadopago_completed: 0, stuck: 0 });
+			expect(alertOnboardingTeam).not.toHaveBeenCalled();
+		});
+
+		it("cobrado pero sin cerrar: cuenta el reintento y avisa; si Mercado Pago no responde, solo lo anota", async () => {
+			findMercadoPagoPaymentsByReference.mockResolvedValue([mpPayment("1", "approved")]);
+			captureOnboardingMercadoPagoPayment.mockResolvedValue({ ok: false, reason: "pending", error: "falló", status: 500 });
+			const stuck = await reconcileOnboarding({ supabaseAdmin: adminReturning([row({ payment_reference: MP_REF })], []).client, now: NOW });
+			expect(stuck.stuck).toBe(1);
+			expect(kv.size).toBe(1);
+
+			kv.clear();
+			findMercadoPagoPaymentsByReference.mockResolvedValue(null);
+			const down = await reconcileOnboarding({ supabaseAdmin: adminReturning([row({ payment_reference: MP_REF })], []).client, now: NOW });
+			expect(down).toMatchObject({ stuck: 0, errors: [expect.stringContaining(MP_REF)] });
+			expect(kv.size).toBe(0);
+		});
+
+		it("un id de preferencia viejo no se manda a PayPal", async () => {
+			const legacy = "470274190-7f77c42c-a8e2-4651-802a-431195d3df12";
+			const summary = await reconcileOnboarding({ supabaseAdmin: adminReturning([row({ payment_reference: legacy })], []).client, now: NOW });
+			expect(captureOnboardingPayPalOrder).not.toHaveBeenCalled();
+			expect(findMercadoPagoPaymentsByReference).not.toHaveBeenCalled();
+			expect(summary.stuck).toBe(0);
+		});
 	});
 
 	it("sin la columna reconcile_alerted_at el barrido sigue y avisa como antes", async () => {
