@@ -12,15 +12,14 @@ import { getAppUrl } from "@/lib/tenant/app-url";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
 
 /**
- * Vista previa de la home corporativa de Gcode Labs.
+ * Home corporativa de Gcode Labs.
  *
- * Mientras el landing de Gcode POS siga en la raíz, esta página vive en /labs
- * sin indexar. El paso final (en un PR aparte, tras unificar los abiertos) la
- * mueve a «/» y lleva el landing del producto a «/pos» (`POS_PATH` en
- * `lib/labs/content.ts`).
+ * Mientras el landing de Gcode POS siga en la raíz, esta página vive en /labs, ya indexable
+ * (está en el sitemap). Cuando pase a «/» con el landing del producto en «/pos» (`POS_PATH` en
+ * `lib/labs/content.ts`), /labs redirige con 301 y no se pierde lo que haya ganado en Google.
  */
 const PATH = "/labs";
-const INDEX = false;
+const INDEX = true;
 
 export async function generateMetadata(): Promise<Metadata> {
 	const host = (await headers()).get("host") || "";

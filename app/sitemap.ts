@@ -71,6 +71,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			changeFrequency: "monthly",
 			priority: 0.8,
 		},
+		// Gcode Labs, el estudio: servicios, proyectos y cotización.
+		{
+			url: `${base}/labs`,
+			lastModified: marketingLastModified,
+			changeFrequency: "monthly",
+			priority: 0.8,
+		},
 		// Páginas de país: compiten por «menú digital Chile» y «sistema para restaurantes Venezuela».
 		...LANDING_COUNTRY_SLUGS.map((slug) => ({
 			url: `${base}/${slug}`,
