@@ -12,6 +12,8 @@ import type { BranchInfo, CategoryListItem } from "./menu-types";
 
 type MenuNavbarProps = {
 	navbarType: string;
+	/** Con la portada a la vista, la barra no repite logo y nombre: ya los muestra la portada. */
+	brandHidden?: boolean;
 	displayName: string;
 	logoUrl: string | null | undefined;
 	logoError: boolean;
@@ -40,6 +42,7 @@ type MenuNavbarProps = {
 
 export const MenuNavbar = memo(function MenuNavbar({
 	navbarType,
+	brandHidden = false,
 	displayName,
 	logoUrl,
 	logoError,
@@ -71,7 +74,7 @@ export const MenuNavbar = memo(function MenuNavbar({
 				<button type="button" onClick={onBackHome} className="nav-back-button" aria-label={t("nav.backHome")}>
 					<ChevronLeft size={28} />
 				</button>
-				<div className={`nav-brand-wrapper ${searchExpanded ? "mobile-search-active" : ""} ${navbarType === "sidebar-categories" ? "nav-brand-sidebar-hidden" : ""}`}>
+				<div className={`nav-brand-wrapper ${searchExpanded ? "mobile-search-active" : ""} ${navbarType === "sidebar-categories" ? "nav-brand-sidebar-hidden" : ""}${brandHidden ? " nav-brand-wrapper--behind-cover" : ""}`}>
 					{logoUrl && !logoError ? (
 						<Image
 							src={logoUrl}

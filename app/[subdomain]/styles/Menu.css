@@ -968,7 +968,7 @@ html, body {
 
 .mega-menu-fab {
     position: fixed;
-    bottom: 24px;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
     right: 24px;
     z-index: 9900;
     display: flex;
@@ -983,7 +983,32 @@ html, body {
     font-size: 0.9rem;
     cursor: pointer;
     box-shadow: var(--menu-shadow-chrome);
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/*
+ * «Categorías» y el carrito compartían la esquina de abajo a la derecha y se tapaban.
+ * - Con el carrito flotante (círculo a la derecha), «Categorías» pasa a la izquierda con el mismo
+ *   margen y a la altura del centro del círculo (64 px a 30 px; en el teléfono, 60 px a 25 px).
+ *   En escritorio el círculo se estira hacia la izquierda al pasar el ratón: así tampoco choca.
+ * - Con la barra del carrito a la vista (aparece con el primer producto), sube por encima de ella.
+ *   El carrito va en un portal fuera de `.page-wrapper`: de ahí el `:has()` sobre el body.
+ */
+.page-wrapper.cart-style-float .mega-menu-fab {
+    right: auto;
+    left: 30px;
+    bottom: calc(38px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 768px) {
+    .page-wrapper.cart-style-float .mega-menu-fab {
+        left: 25px;
+        bottom: calc(31px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+body:has(.cart-bar.is-visible) .page-wrapper.cart-style-bar .mega-menu-fab {
+    bottom: calc(16px + 58px + 12px + env(safe-area-inset-bottom, 0px));
 }
 
 /* Mega Menu overlay & content */

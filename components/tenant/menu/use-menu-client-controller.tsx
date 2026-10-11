@@ -104,6 +104,8 @@ export function useMenuClientController(props: MenuClientProps) {
 		[rawHeaderStyle, rawFeaturedStyle, rawCartStyle, rawCoverImageUrl],
 	);
 	const [menuLayout, setMenuLayout] = useState<MenuLayoutConfig>(initialMenuLayout);
+	// La portada avisa si se ve: mientras se ve, la barra de arriba esconde logo y nombre.
+	const [coverInView, setCoverInView] = useState(false);
 	const [previewDisplayName, setPreviewDisplayName] = useState<string | null>(null);
 	const [previewLogoUrl, setPreviewLogoUrl] = useState<string | null>(null);
 	const [activeBottomTab, setActiveBottomTab] = useState<"home" | "cart" | "contact" | "account">("home");
@@ -523,6 +525,7 @@ export function useMenuClientController(props: MenuClientProps) {
 	const navbar = (
 		<MenuNavbar
 			navbarType={navbarType}
+			brandHidden={menuLayout.headerStyle === "cover" && coverInView}
 			displayName={displayName}
 			logoUrl={effectiveLogoUrl}
 			logoError={logoError}
@@ -650,6 +653,7 @@ export function useMenuClientController(props: MenuClientProps) {
 		isMegaMenuOpen,
 		setIsMegaMenuOpen,
 		showMegaMenuFab: navbarType === "mega-menu" && !showBottomNav,
+		setCoverInView,
 		banners: props.banners ?? [],
 		showContactTab,
 		availableContactChannels,

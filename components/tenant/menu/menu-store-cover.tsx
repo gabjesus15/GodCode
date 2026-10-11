@@ -18,9 +18,10 @@ import type { BranchInfo } from "./menu-types";
  * La foto es la imagen de fondo del tema o, sin ella, el primer banner. Sin
  * ninguna de las dos solo van el logo y el nombre, sin bloque de relleno.
  *
- * Mientras la portada se ve, la barra de arriba esconde su logo y nombre
- * (clase `cover-in-view` en `.page-wrapper`) para no mostrarlos dos veces;
- * al bajar, vuelven.
+ * Mientras la portada se ve, la barra de arriba esconde su logo y nombre para no
+ * mostrarlos dos veces; al bajar, vuelven. La portada solo avisa (`onInViewChange`) y el
+ * controlador se lo pasa a la barra: antes ponía una clase a mano en `.page-wrapper`, que
+ * React borraba al cambiar la clase de la página, y la barra va en un portal fuera de ella.
  */
 export function MenuStoreCover({
 	displayName,
@@ -30,6 +31,7 @@ export function MenuStoreCover({
 	coverImageUrl,
 	branch,
 	isOpen,
+	onInViewChange,
 }: {
 	displayName: string;
 	logoUrl: string | null | undefined;
@@ -38,6 +40,7 @@ export function MenuStoreCover({
 	coverImageUrl: string | null;
 	branch: BranchInfo | null;
 	isOpen: boolean | null;
+	onInViewChange?: (inView: boolean) => void;
 }) {
 	const t = useTranslations("tenant.home.status");
 	const place = [branch?.name, branch?.address].filter(Boolean).join(" · ");
@@ -47,19 +50,29 @@ export function MenuStoreCover({
 	const [failedCover, setFailedCover] = useState<string | null>(null);
 	const cover = coverImageUrl && coverImageUrl !== failedCover ? coverImageUrl : null;
 
+	// El aviso va por ref: cambiar la función no vuelve a crear el observador.
+	const onInViewChangeRef = useRef(onInViewChange);
+	useEffect(() => {
+		onInViewChangeRef.current = onInViewChange;
+	}, [onInViewChange]);
+
 	useEffect(() => {
 		const section = sectionRef.current;
-		const page = section?.closest(".page-wrapper");
-		if (!section || !page || typeof IntersectionObserver === "undefined") return;
-		const observer = new IntersectionObserver(
-			([entry]) => page.classList.toggle("cover-in-view", entry.isIntersecting),
-			// Cuenta como fuera en cuanto el nombre pasa por debajo de la barra fija.
-			{ rootMargin: "-120px 0px 0px 0px" },
-		);
+		if (!section || typeof IntersectionObserver === "undefined") return;
+		const report = ([entry]: IntersectionObserverEntry[]) => onInViewChangeRef.current?.(entry.isIntersecting);
+		// Cuenta como fuera en cuanto el nombre pasa por debajo de la barra fija. Con el documento como
+		// raíz el margen vale también dentro del iframe de la vista previa (con la raíz implícita se
+		// mediría contra la ventana de afuera).
+		let observer: IntersectionObserver;
+		try {
+			observer = new IntersectionObserver(report, { root: document, rootMargin: "-120px 0px 0px 0px" });
+		} catch {
+			observer = new IntersectionObserver(report, { rootMargin: "-120px 0px 0px 0px" });
+		}
 		observer.observe(section);
 		return () => {
 			observer.disconnect();
-			page.classList.remove("cover-in-view");
+			onInViewChangeRef.current?.(false);
 		};
 	}, []);
 

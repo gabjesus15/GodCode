@@ -10,7 +10,6 @@ import { isPromocionesCategoryName } from "@/lib/tenant/menu/menu-helpers";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";
 import { Navbar } from "../navbar/navbar";
 import { useSlidingIndicator } from "../navbar/use-sliding-indicator";
-import { PoweredByGcode } from "../branding/powered-by-gcode";
 import type { BranchInfo, CategoryListItem } from "./menu-types";
 
 /**
@@ -170,7 +169,6 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 	categories,
 	activeCategory,
 	onCategoryClick,
-	tenantSlug = null,
 }: {
 	displayName: string;
 	logoUrl: string | null | undefined;
@@ -183,7 +181,6 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 	categories: CategoryListItem[];
 	activeCategory: string | null;
 	onCategoryClick: (id: string) => void;
-	tenantSlug?: string | null;
 }) {
 	const t = useTranslations("tenant.menu");
 	// El fondo de la activa se desliza por la lista en vez de saltar.
@@ -259,9 +256,6 @@ export const SidebarCategoriesPanel = memo(function SidebarCategoriesPanel({
 					</button>
 				))}
 			</nav>
-			{!isEmbeddedPreview ? (
-				<PoweredByGcode tenantSlug={tenantSlug} surface="sidebar" />
-			) : null}
 		</aside>
 	);
 });

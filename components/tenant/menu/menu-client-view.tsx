@@ -78,6 +78,8 @@ export type MenuClientViewProps = {
 	onCloseMegaMenu: () => void;
 	showMegaMenuFab: boolean;
 	onOpenMegaMenuFab: () => void;
+	/** La portada avisa si está a la vista (la barra de arriba esconde la marca mientras tanto). */
+	onCoverInViewChange: (inView: boolean) => void;
 	availableContactChannels: BranchContactChannel[];
 	isContactChannelSheetOpen: boolean;
 	isContactBranchModalOpen: boolean;
@@ -149,6 +151,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 		onCloseMegaMenu,
 		showMegaMenuFab,
 		onOpenMegaMenuFab,
+		onCoverInViewChange,
 		availableContactChannels,
 		isContactChannelSheetOpen,
 		isContactBranchModalOpen,
@@ -186,7 +189,6 @@ export function MenuClientView(props: MenuClientViewProps) {
 					categories={categoriesList}
 					activeCategory={activeCategory}
 					onCategoryClick={onCategoryClick}
-					tenantSlug={tenantSlug}
 				/>
 			)}
 
@@ -211,6 +213,7 @@ export function MenuClientView(props: MenuClientViewProps) {
 						coverImageUrl={menuLayout.coverImageUrl || banners[0]?.image_url || null}
 						branch={selectedBranch}
 						isOpen={selectedBranchOpen}
+						onInViewChange={onCoverInViewChange}
 					/>
 				) : null}
 				{carouselBanners.length > 0 && <HeroCarousel banners={carouselBanners} autoplayEnabled={heroAutoplay} />}

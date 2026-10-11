@@ -64,6 +64,7 @@ function MenuClientViewFromVm({ vm }: { vm: ReturnType<typeof useMenuClientContr
 				onCloseMegaMenu={() => vm.setIsMegaMenuOpen(false)}
 				showMegaMenuFab={vm.showMegaMenuFab}
 				onOpenMegaMenuFab={() => vm.setIsMegaMenuOpen(true)}
+				onCoverInViewChange={vm.setCoverInView}
 				availableContactChannels={vm.availableContactChannels}
 				isContactChannelSheetOpen={vm.isContactChannelSheetOpen}
 				isContactBranchModalOpen={vm.isContactBranchModalOpen}
