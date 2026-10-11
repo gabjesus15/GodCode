@@ -327,9 +327,15 @@ export const LABS_PROJECTS: LabsProject[] = [
 export const LABS_TEAM: LabsTeamMember[] = [
 	{
 		name: "Jesús Rodríguez Morales",
-		role: "Fundador y desarrollador",
+		role: "Cofundador y desarrollador",
 		photoUrl: "/labs/equipo/jesus-rodriguez.jpg",
 		linkedinUrl: "https://www.linkedin.com/in/jesus-rodriguez-morales/",
+	},
+	{
+		// Sin foto todavía: la tarjeta muestra sus iniciales en un retrato del mismo tamaño.
+		name: "Jhon Belandria",
+		role: "Cofundador",
+		linkedinUrl: "https://www.linkedin.com/in/jhon-belandria-6b823b378/",
 	},
 ];
 

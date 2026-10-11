@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, LoaderCircle } from "lucide-react";
 
 import { trackEvent } from "@/lib/analytics/track-event";
 import { LABS_QUOTE_BUDGETS, LABS_QUOTE_PROJECT_TYPES } from "@/lib/labs/content";
@@ -10,6 +10,7 @@ import { LABS_QUOTE_LIMITS, parseQuoteRequest, type LabsQuoteRequest } from "@/l
 import { RECAPTCHA_ACTIONS } from "@/lib/onboarding/recaptcha";
 import { cn } from "@/utils/cn";
 
+import { LabsSelect } from "./labs-select";
 import { RECAPTCHA_SITE_KEY, getRecaptchaToken, preloadRecaptcha } from "./lazy-recaptcha";
 
 type QuoteField = keyof LabsQuoteRequest;
@@ -26,6 +27,16 @@ const FIELD_INVALID = "border-red-400";
 const LABEL = "block text-sm font-medium text-[#1d1d1f]";
 /** Error de un campo, bajo el campo; el campo lo enlaza con `aria-describedby`. */
 const fieldErrorId = (field: QuoteField) => `labs-quote-error-${field}`;
+/** Id del control de cada campo: el foco va ahí cuando hay que corregirlo (los selectores guardan su valor en un input oculto, que no recibe foco). */
+const FIELD_IDS: Record<QuoteField, string> = {
+	name: "labs-name",
+	company: "labs-company",
+	email: "labs-email",
+	phone: "labs-phone",
+	projectType: "labs-type",
+	budget: "labs-budget",
+	message: "labs-message",
+};
 
 const RECAPTCHA_UNAVAILABLE =
 	"No pudimos cargar la verificación contra spam. Si tienes un bloqueador de anuncios, desactívalo en esta página e inténtalo de nuevo.";
@@ -44,7 +55,6 @@ const RECAPTCHA_UNAVAILABLE =
  */
 export function QuoteForm({ whatsappHref }: { whatsappHref: string | null }) {
 	const [status, setStatus] = useState<Status>({ kind: "idle" });
-	const formRef = useRef<HTMLFormElement>(null);
 	const sentTitleRef = useRef<HTMLHeadingElement>(null);
 
 	// Tras enviar, el foco cuenta lo que pasó: va al título de confirmación o al campo que hay que corregir.
@@ -54,8 +64,7 @@ export function QuoteForm({ whatsappHref }: { whatsappHref: string | null }) {
 			return;
 		}
 		if (status.kind === "error" && status.field) {
-			const field = formRef.current?.elements.namedItem(status.field);
-			if (field instanceof HTMLElement) field.focus();
+			document.getElementById(FIELD_IDS[status.field])?.focus();
 		}
 	}, [status]);
 
@@ -100,14 +109,14 @@ export function QuoteForm({ whatsappHref }: { whatsappHref: string | null }) {
 	if (status.kind === "sent") {
 		return (
 			<div role="status" className="rounded-2xl border border-black/[0.08] bg-white p-8">
-				<span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#4f5bff]/10 text-[#4f5bff]">
+				<span className="labs-check-in inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#4f5bff]/10 text-[#4f5bff]">
 					<Check className="h-5 w-5" strokeWidth={2.5} aria-hidden />
 				</span>
 				{/* Recibe el foco al aparecer: el lector de pantalla anuncia la confirmación y el teclado sigue desde aquí. */}
-				<h3 ref={sentTitleRef} tabIndex={-1} className="mt-5 text-xl font-semibold tracking-tight text-[#1d1d1f] focus:outline-none">
+				<h3 ref={sentTitleRef} tabIndex={-1} className="labs-sent-text mt-5 text-xl font-semibold tracking-tight text-[#1d1d1f] focus:outline-none">
 					Recibimos tu solicitud
 				</h3>
-				<p className="mt-2 text-[15px] leading-relaxed text-[#6e6e73]">
+				<p className="labs-sent-text mt-2 text-[15px] leading-relaxed text-[#6e6e73]">
 					Te escribimos en menos de dos días hábiles al correo que indicaste. Si prefieres adelantar, también
 					puedes contarnos por WhatsApp.
 				</p>
@@ -116,10 +125,10 @@ export function QuoteForm({ whatsappHref }: { whatsappHref: string | null }) {
 						href={whatsappHref}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#1d1d1f] underline decoration-black/20 underline-offset-4 hover:decoration-black/60"
+						className="group mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#1d1d1f] underline decoration-black/20 underline-offset-4 transition-[text-decoration-color] hover:decoration-black/60"
 					>
 						Abrir WhatsApp
-						<ArrowRight className="h-4 w-4" aria-hidden />
+						<ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
 					</a>
 				) : null}
 			</div>
@@ -133,6 +142,10 @@ export function QuoteForm({ whatsappHref }: { whatsappHref: string | null }) {
 	const invalid = (name: QuoteField) =>
 		errorField === name ? { "aria-invalid": true as const, "aria-describedby": fieldErrorId(name) } : {};
 	/** El mensaje bajo el campo con error. */
+	/** Los selectores no disparan `input`: al elegir otra opción, su error también desaparece. */
+	const clearError = (name: QuoteField) => {
+		if (errorField === name) setStatus({ kind: "idle" });
+	};
 	const fieldError = (name: QuoteField) =>
 		status.kind === "error" && errorField === name ? (
 			<p id={fieldErrorId(name)} className="mt-1.5 text-sm text-red-600">
@@ -142,7 +155,6 @@ export function QuoteForm({ whatsappHref }: { whatsappHref: string | null }) {
 
 	return (
 		<form
-			ref={formRef}
 			onSubmit={onSubmit}
 			// El script de reCAPTCHA se pide al primer foco en el formulario, no al cargar la página.
 			onFocus={() => void preloadRecaptcha()}
@@ -218,45 +230,34 @@ export function QuoteForm({ whatsappHref }: { whatsappHref: string | null }) {
 					{fieldError("phone")}
 				</div>
 				<div>
-					<label htmlFor="labs-type" className={LABEL}>
+					<label id="labs-type-label" htmlFor="labs-type" className={LABEL}>
 						Tipo de proyecto
 					</label>
-					<select
+					<LabsSelect
 						id="labs-type"
 						name="projectType"
-						required
-						defaultValue=""
-						className={cn(FIELD, errorField === "projectType" && FIELD_INVALID)}
-						{...invalid("projectType")}
-					>
-						<option value="" disabled>
-							Elige una opción
-						</option>
-						{LABS_QUOTE_PROJECT_TYPES.map((type) => (
-							<option key={type.value} value={type.value}>
-								{type.label}
-							</option>
-						))}
-					</select>
+						labelId="labs-type-label"
+						options={LABS_QUOTE_PROJECT_TYPES}
+						placeholder="Elige una opción"
+						invalid={errorField === "projectType"}
+						describedBy={errorField === "projectType" ? fieldErrorId("projectType") : undefined}
+						onValueChange={() => clearError("projectType")}
+					/>
 					{fieldError("projectType")}
 				</div>
 				<div>
-					<label htmlFor="labs-budget" className={LABEL}>
+					<label id="labs-budget-label" htmlFor="labs-budget" className={LABEL}>
 						Presupuesto estimado
 					</label>
-					<select
+					<LabsSelect
 						id="labs-budget"
 						name="budget"
-						defaultValue=""
-						className={cn(FIELD, errorField === "budget" && FIELD_INVALID)}
-						{...invalid("budget")}
-					>
-						{LABS_QUOTE_BUDGETS.map((budget) => (
-							<option key={budget.value || "none"} value={budget.value}>
-								{budget.label}
-							</option>
-						))}
-					</select>
+						labelId="labs-budget-label"
+						options={LABS_QUOTE_BUDGETS}
+						invalid={errorField === "budget"}
+						describedBy={errorField === "budget" ? fieldErrorId("budget") : undefined}
+						onValueChange={() => clearError("budget")}
+					/>
 					{fieldError("budget")}
 				</div>
 				<div className="sm:col-span-2">
@@ -304,10 +305,14 @@ export function QuoteForm({ whatsappHref }: { whatsappHref: string | null }) {
 				<button
 					type="submit"
 					disabled={status.kind === "sending"}
-					className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#1d1d1f] px-7 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-[#4f5bff] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4f5bff] focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
+					className="group inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#1d1d1f] px-7 py-3.5 text-[15px] font-semibold text-white transition-[background-color,scale] duration-200 hover:bg-[#4f5bff] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4f5bff] focus-visible:ring-offset-2 active:scale-[0.97] disabled:cursor-wait disabled:opacity-70 disabled:active:scale-100"
 				>
 					{status.kind === "sending" ? "Enviando…" : "Enviar solicitud"}
-					<ArrowRight className="h-4 w-4" aria-hidden />
+					{status.kind === "sending" ? (
+						<LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+					) : (
+						<ArrowRight className="h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:translate-x-1" aria-hidden />
+					)}
 				</button>
 				<p className="text-xs leading-relaxed text-[#6e6e73]">
 					Usamos estos datos solo para responderte y no te sumamos a listas de correo. Más en la{" "}

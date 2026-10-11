@@ -74,37 +74,51 @@
 	color: transparent;
 }
 
-/* Movimiento ligado al scroll. Solo donde el navegador lo entiende (Chrome y Edge); en el resto todo se ve fijo y completo. */
+/*
+ * Entradas al hacer scroll (labs-motion.tsx): cada bloque entra una sola vez al llegar a la
+ * pantalla, en todos los navegadores. Solo se oculta bajo `.labs-motion`, que pone el script:
+ * sin JavaScript o con «reducir movimiento», todo se ve fijo y completo.
+ */
+.labs-stagger-0 { --labs-stagger: 0; }
+.labs-stagger-1 { --labs-stagger: 1; }
+.labs-stagger-2 { --labs-stagger: 2; }
+.labs-stagger-3 { --labs-stagger: 3; }
+.labs-stagger-4 { --labs-stagger: 4; }
+
+@media (prefers-reduced-motion: no-preference) {
+	.labs-motion .labs-reveal {
+		transition:
+			opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+			transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+		/* Escalonado: cada tarjeta de una fila entra un poco después que la anterior. */
+		transition-delay: calc(var(--labs-stagger, 0) * 90ms);
+	}
+	.labs-motion .labs-reveal:not(.is-in) {
+		opacity: 0;
+		transform: translate3d(0, 2.25rem, 0);
+	}
+
+	/* Iconos de la frase grande: saltan con un rebote corto, después de que aparece la frase. */
+	.labs-motion .labs-pop {
+		transition:
+			opacity 0.35s ease-out,
+			transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+		transition-delay: calc(0.25s + var(--labs-stagger, 0) * 110ms);
+	}
+	.labs-motion .labs-pop:not(.is-in) {
+		opacity: 0;
+		transform: scale(0.4) rotate(-14deg);
+	}
+}
+
+/* Barra de avance de la tira de servicios, ligada a su desplazamiento horizontal. Donde no hay
+   scroll-timeline en CSS la mueve labs-motion.tsx con el mismo recorrido. */
+.labs-progress {
+	transform-origin: left center;
+	transition: transform 0.15s linear;
+}
 @supports (animation-timeline: view()) {
 	@media (prefers-reduced-motion: no-preference) {
-		@keyframes labs-reveal {
-			from { opacity: 0; transform: translateY(28px); }
-			to { opacity: 1; transform: none; }
-		}
-		.labs-reveal {
-			animation: labs-reveal linear both;
-			animation-timeline: view();
-			animation-range: entry 5% entry 60%;
-		}
-		/* Escalonado: cada tarjeta de una fila entra un poco después que la anterior. */
-		.labs-stagger-0 { animation-range: entry 0% entry 45%; }
-		.labs-stagger-1 { animation-range: entry 12% entry 57%; }
-		.labs-stagger-2 { animation-range: entry 24% entry 69%; }
-		.labs-stagger-3 { animation-range: entry 36% entry 81%; }
-		.labs-stagger-4 { animation-range: entry 48% entry 93%; }
-
-		/* Iconos dentro de la frase grande: saltan al entrar. */
-		@keyframes labs-pop {
-			from { opacity: 0; transform: scale(0.4) rotate(-14deg); }
-			to { opacity: 1; transform: none; }
-		}
-		.labs-pop {
-			animation: labs-pop linear both;
-			animation-timeline: view();
-			animation-range: entry 10% entry 70%;
-		}
-
-		/* Barra de progreso de la tira de servicios, ligada a su desplazamiento horizontal. */
 		.labs-track-scope { timeline-scope: --labs-track; }
 		.labs-track { scroll-timeline-name: --labs-track; scroll-timeline-axis: inline; }
 		@keyframes labs-progress {
@@ -112,10 +126,85 @@
 			to { transform: scaleX(1); }
 		}
 		.labs-progress {
-			transform-origin: left center;
 			animation: labs-progress linear both;
 			animation-timeline: --labs-track;
 		}
+	}
+}
+
+/* Lista del selector del formulario (labs-select.tsx): baja desde el campo con un leve zoom. */
+.labs-select-list {
+	top: 100%;
+	margin-top: 0.5rem;
+	transform-origin: top center;
+	visibility: hidden;
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(-6px) scale(0.98);
+	transition:
+		opacity 0.16s ease-out,
+		transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+		visibility 0s linear 0.22s;
+}
+.labs-select-list[data-up] {
+	top: auto;
+	bottom: 100%;
+	margin-top: 0;
+	margin-bottom: 0.5rem;
+	transform-origin: bottom center;
+	transform: translateY(6px) scale(0.98);
+}
+.labs-select-list[data-open] {
+	visibility: visible;
+	opacity: 1;
+	pointer-events: auto;
+	transform: none;
+	transition-delay: 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+	.labs-select-list,
+	.labs-select-list[data-up] {
+		transform: none;
+		transition: none;
+	}
+}
+
+/* Preguntas frecuentes: la respuesta se despliega en vez de aparecer de golpe. La altura anima
+   donde el navegador entiende ::details-content (Chrome, Edge, Safari 18.4+); el texto entra
+   suave en todos. */
+.labs-root {
+	interpolate-size: allow-keywords;
+}
+@media (prefers-reduced-motion: no-preference) {
+	.labs-faq::details-content {
+		height: 0;
+		overflow: clip;
+		transition:
+			height 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+			content-visibility 0.45s allow-discrete;
+	}
+	.labs-faq[open]::details-content {
+		height: auto;
+	}
+	@keyframes labs-faq-in {
+		from { opacity: 0; transform: translateY(-6px); }
+		to { opacity: 1; transform: none; }
+	}
+	.labs-faq[open] .labs-faq-answer {
+		animation: labs-faq-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+	}
+
+	/* Confirmación del formulario: el check entra con un rebote y el texto sube detrás. */
+	@keyframes labs-check-in {
+		0% { opacity: 0; transform: scale(0.4); }
+		60% { opacity: 1; transform: scale(1.12); }
+		100% { opacity: 1; transform: none; }
+	}
+	.labs-check-in {
+		animation: labs-check-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+	}
+	.labs-sent-text {
+		animation: labs-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
 	}
 }
 

@@ -23,6 +23,7 @@ import { cn } from "@/utils/cn";
 
 import { BrowserFrame, LaptopFrame, PhoneFrame } from "./labs-frames";
 import { LabsHeroVisual } from "./labs-hero-visual";
+import { LabsMotion } from "./labs-motion";
 import { LABS_LOGOS, LabsLogoIcon } from "./labs-logos";
 import { LabsNavbar, type LabsNavLink } from "./labs-navbar";
 import { LabsSourceBanner } from "./labs-source-banner";
@@ -68,9 +69,22 @@ const PROCESS_COLORS = [
 	"bg-[#ffd33d] text-[#15151a]",
 ] as const;
 
-/** Botón principal: el azul de la marca con una sombra corta del mismo tono. */
+/** Botón principal: el azul de la marca con una sombra corta del mismo tono. Al pasar, la sombra crece; al apretar, se hunde un poco. */
 const PRIMARY_BUTTON =
-	"inline-flex items-center gap-2 rounded-full bg-[#4f5bff] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(79,91,255,0.75)] transition-colors hover:bg-[#15151a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f5bff] focus-visible:ring-offset-2";
+	"group inline-flex items-center gap-2 rounded-full bg-[#4f5bff] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(79,91,255,0.75)] transition-[background-color,box-shadow,scale] duration-200 hover:bg-[#15151a] hover:shadow-[0_16px_32px_-16px_rgba(21,21,26,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f5bff] focus-visible:ring-offset-2 active:scale-[0.97]";
+
+/** La flecha de los botones avanza un poco al pasar (con un rebote corto). Va dentro de un `group`. */
+const ARROW_NUDGE = "h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:translate-x-1";
+
+/** La flecha diagonal de los enlaces que salen del sitio: se asoma hacia arriba y a la derecha. */
+const ARROW_OUT = "transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5";
+
+/** Enlaces del pie: se aclaran y se corren un poco a la derecha al pasar. */
+const FOOTER_LINK = "inline-block text-white/75 transition-[color,translate] duration-200 hover:translate-x-0.5 hover:text-white";
+
+/** Iconos redondos de redes en el pie. */
+const SOCIAL_BUTTON =
+	"inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white/75 transition-[border-color,color,background-color,scale] duration-200 hover:scale-110 hover:border-white/40 hover:bg-white/10 hover:text-white active:scale-95";
 
 /** Mantenimiento no tiene pantalla que mostrar: esto es lo que corre de verdad sobre nuestro código en cada cambio (.github/workflows). */
 const MAINTENANCE_CHECKS = [
@@ -99,6 +113,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 	const linkedin = socialLinks.find((link) => link.kind === "linkedin") ?? null;
 	const instagram = socialLinks.find((link) => link.kind === "instagram") ?? null;
 	const year = new Date().getFullYear();
+	const teamHasPhotos = LABS_TEAM.some((member) => member.photoUrl);
 
 	/** Columnas del pie: las rutas de siempre, agrupadas como en el sitio de una empresa grande. */
 	const footerColumns: Array<{
@@ -141,7 +156,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 				{ label: "Cookies", href: "/onboarding/cookies" },
 			],
 			// El mismo botón que llevan los pies del landing y del alta: reabre el aviso de cookies.
-			trailing: <CookieSettingsLink label="Preferencias de cookies" className="text-white/75 transition-colors hover:text-white" />,
+			trailing: <CookieSettingsLink label="Preferencias de cookies" className={FOOTER_LINK} />,
 		},
 	];
 
@@ -152,6 +167,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 				// biome-ignore lint/security/noDangerouslySetInnerHtml: structured data JSON-LD must be inline for Googlebot
 				dangerouslySetInnerHTML={{ __html: jsonLd }}
 			/>
+			<LabsMotion />
 			<LabsNavbar
 				links={NAV_LINKS}
 				homeHref={path}
@@ -182,16 +198,16 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 							{LABS_HOME.intro}
 						</p>
 						<div className="labs-rise mt-8 flex flex-wrap items-center justify-center gap-3" style={rise(3)}>
-								<Link href="#cotizar" className={PRIMARY_BUTTON}>
+							<Link href="#cotizar" className={PRIMARY_BUTTON}>
 								{LABS_HOME.primaryCta}
-								<ArrowRight className="h-4 w-4" aria-hidden />
+								<ArrowRight className={ARROW_NUDGE} aria-hidden />
 							</Link>
 							<Link
 								href="#proyectos"
-								className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-7 py-3.5 text-[15px] font-semibold text-[#15151a] transition-colors hover:border-black/30"
+								className="group inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-7 py-3.5 text-[15px] font-semibold text-[#15151a] transition-[border-color,box-shadow,scale] duration-200 hover:border-black/30 hover:shadow-[0_12px_28px_-18px_rgba(20,8,90,0.45)] active:scale-[0.97]"
 							>
 								{LABS_HOME.secondaryCta}
-								<ArrowRight className="h-4 w-4" aria-hidden />
+								<ArrowRight className={ARROW_NUDGE} aria-hidden />
 							</Link>
 						</div>
 						{/* Las tres garantías en una línea con punto medio. En el teléfono van una debajo de otra, sin puntos. */}
@@ -355,7 +371,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 								<div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
 									<Link href={posPath} className={PRIMARY_BUTTON}>
 										{LABS_HOME.productCta}
-										<ArrowRight className="h-4 w-4" aria-hidden />
+										<ArrowRight className={ARROW_NUDGE} aria-hidden />
 									</Link>
 									<p className="text-sm text-[#6b6b76]">{LABS_HOME.productNote}</p>
 								</div>
@@ -399,13 +415,16 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 								<li
 									key={step.num}
 									className={cn(
-										"labs-reveal relative flex min-h-[19rem] flex-col overflow-hidden rounded-[2rem] p-7",
+										"labs-reveal group relative flex min-h-[19rem] flex-col overflow-hidden rounded-[2rem] p-7",
 										PROCESS_COLORS[index % PROCESS_COLORS.length],
 										`labs-stagger-${index}`,
 									)}
 								>
 									{/* Abajo a la derecha: arriba tapaba los títulos largos («Lanzamiento y acompañamiento»). */}
-									<span aria-hidden className="absolute -bottom-14 -right-12 h-44 w-44 rounded-full bg-white/20" />
+									<span
+										aria-hidden
+										className="absolute -bottom-14 -right-12 h-44 w-44 rounded-full bg-white/20 transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.35]"
+									/>
 									<h3 className="relative text-xl font-semibold tracking-tight">{step.title}</h3>
 									<p className="relative mt-3 text-[15px] leading-relaxed opacity-90 text-pretty">{step.text}</p>
 									<span className="relative mt-auto pt-10 text-[4rem] font-semibold leading-none tracking-[-0.04em] tabular-nums">
@@ -438,7 +457,10 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 									<dt className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#15151a]/60">{group.label}</dt>
 									<dd className="mt-4 flex flex-wrap gap-2">
 										{group.items.map((item) => (
-											<span key={item} className="rounded-full bg-white px-3 py-1.5 text-sm font-medium text-[#15151a] shadow-sm">
+											<span
+												key={item}
+												className="rounded-full bg-white px-3 py-1.5 text-sm font-medium text-[#15151a] shadow-sm transition-[translate,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-md"
+											>
 												{item}
 											</span>
 										))}
@@ -471,16 +493,13 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 												<h3 className="flex items-center gap-2 text-[1.35rem] font-semibold tracking-tight">
 													{project.name}
 													{project.href ? (
-														<ArrowUpRight
-															className="h-5 w-5 text-[#6b6b76] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-															aria-hidden
-														/>
+														<ArrowUpRight className={cn("h-5 w-5 text-[#6b6b76] group-hover:text-[#15151a]", ARROW_OUT)} aria-hidden />
 													) : null}
 												</h3>
 												<p className="mt-1 text-sm text-[#6b6b76]">{project.kind}</p>
 											</div>
 											{project.href && project.linkLabel ? (
-												<span className="mt-0.5 hidden shrink-0 rounded-full border border-black/10 px-3.5 py-1.5 text-xs font-semibold text-[#15151a] transition-colors group-hover:border-black/40 sm:inline-block">
+												<span className="mt-0.5 hidden shrink-0 rounded-full border border-black/10 px-3.5 py-1.5 text-xs font-semibold text-[#15151a] transition-colors duration-200 group-hover:border-[#15151a] group-hover:bg-[#15151a] group-hover:text-white sm:inline-block">
 													{project.linkLabel}
 												</span>
 											) : null}
@@ -545,6 +564,13 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 												sizes="(min-width: 1024px) 300px, (min-width: 640px) 45vw, 90vw"
 												className="aspect-[4/5] w-full rounded-[1.5rem] object-cover"
 											/>
+										) : teamHasPhotos ? (
+											// Junto a una foto, las iniciales van en un retrato del mismo tamaño: si no, una tarjeta queda alta y la otra baja.
+											<div className="relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden rounded-[1.5rem] bg-[linear-gradient(135deg,#6a5cff,#36219f)] text-[clamp(3rem,7vw,4.5rem)] font-semibold tracking-[-0.04em] text-white">
+												<span aria-hidden className="absolute -bottom-10 -right-8 h-36 w-36 rounded-full bg-[#ff5fa8]/80" />
+												<span aria-hidden className="absolute -left-6 top-8 h-16 w-16 rounded-full bg-[#ffd33d]/90" />
+												<span className="relative">{initials(member.name)}</span>
+											</div>
 										) : (
 											<div className="flex h-16 w-16 items-center justify-center rounded-full bg-[linear-gradient(135deg,#6a5cff,#36219f)] text-lg font-semibold text-white">
 												{initials(member.name)}
@@ -557,10 +583,10 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 												href={member.linkedinUrl}
 												target="_blank"
 												rel="noopener noreferrer"
-												className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#15151a] underline decoration-black/20 underline-offset-4 hover:decoration-black/60"
+												className="group mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#15151a] underline decoration-black/20 underline-offset-4 transition-[text-decoration-color] hover:decoration-black/60"
 											>
 												LinkedIn
-												<ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+												<ArrowUpRight className={cn("h-3.5 w-3.5", ARROW_OUT)} aria-hidden />
 											</a>
 										) : null}
 									</li>
@@ -581,12 +607,14 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 						</div>
 						<div className="labs-reveal mt-12 divide-y divide-[#e8e8ef] border-y border-[#e8e8ef]">
 							{LABS_FAQ.map((item) => (
-								<details key={item.question} className="group py-5">
-									<summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-left text-lg font-semibold tracking-tight [&::-webkit-details-marker]:hidden">
+								<details key={item.question} className="labs-faq group py-5">
+									<summary className="flex cursor-pointer list-none items-center justify-between gap-6 rounded-lg text-left text-lg font-semibold tracking-tight transition-colors duration-200 hover:text-[#4f5bff] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4f5bff] focus-visible:ring-offset-4 [&::-webkit-details-marker]:hidden">
 										{item.question}
-										<ChevronDown className="h-5 w-5 shrink-0 text-[#6b6b76] transition-transform duration-300 group-open:rotate-180" aria-hidden />
+										<span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f4f4f8] text-[#6b6b76] transition-colors duration-300 group-open:bg-[#4f5bff] group-open:text-white">
+											<ChevronDown className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-open:rotate-180" aria-hidden />
+										</span>
 									</summary>
-									<p className="mt-3 max-w-2xl leading-relaxed text-[#6b6b76] text-pretty">{item.answer}</p>
+									<p className="labs-faq-answer mt-3 max-w-2xl leading-relaxed text-[#6b6b76] text-pretty">{item.answer}</p>
 								</details>
 							))}
 						</div>
@@ -595,15 +623,11 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 
 				{/* Cotizar: el cierre, dentro de un panel violeta como el del hero. */}
 				<section id="cotizar" className="scroll-mt-24 px-6 pb-16 pt-6 sm:pb-24">
-					<div className="labs-reveal relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] bg-[linear-gradient(135deg,#6a5cff_0%,#4a2fd8_55%,#36219f_100%)] px-6 py-12 text-white sm:px-12 sm:py-16">
-						<span
-							aria-hidden
-							className="pointer-events-none absolute -bottom-12 -left-10 h-40 w-40 rounded-full bg-[radial-gradient(circle_at_30%_30%,#ffe9a3,#ffb13d_55%,#e5651a)] opacity-90 blur-[1px]"
-						/>
-						<span
-							aria-hidden
-							className="pointer-events-none absolute -bottom-20 -right-16 hidden h-52 w-52 rounded-full border-[26px] border-[#ff5fa8] opacity-80 sm:block"
-						/>
+					<div className="labs-reveal relative mx-auto max-w-6xl rounded-[2.5rem] bg-[linear-gradient(135deg,#6a5cff_0%,#4a2fd8_55%,#36219f_100%)] px-6 py-12 text-white sm:px-12 sm:py-16">
+						<div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[2.5rem]">
+							<span className="absolute -bottom-12 -left-10 h-40 w-40 rounded-full bg-[radial-gradient(circle_at_30%_30%,#ffe9a3,#ffb13d_55%,#e5651a)] opacity-90 blur-[1px]" />
+							<span className="absolute -bottom-20 -right-16 hidden h-52 w-52 rounded-full border-[26px] border-[#ff5fa8] opacity-80 sm:block" />
+						</div>
 						<div className="relative grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
 							<div>
 								<p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">{LABS_HOME.quoteEyebrow}</p>
@@ -615,7 +639,12 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 									{whatsapp && whatsappHref ? (
 										<li>
 											<span className="block text-xs font-semibold uppercase tracking-[0.18em] text-white/60">WhatsApp</span>
-											<a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block font-semibold hover:underline">
+											<a
+												href={whatsappHref}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="mt-1 inline-block font-semibold underline decoration-white/0 underline-offset-4 transition-[text-decoration-color] duration-200 hover:decoration-white/80"
+											>
 												{phoneDisplay(whatsapp.display)}
 											</a>
 										</li>
@@ -623,7 +652,10 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 									{email ? (
 										<li>
 											<span className="block text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Correo</span>
-											<a href={email.href} className="mt-1 inline-block font-semibold hover:underline">
+											<a
+												href={email.href}
+												className="mt-1 inline-block font-semibold underline decoration-white/0 underline-offset-4 transition-[text-decoration-color] duration-200 hover:decoration-white/80"
+											>
 												{email.display}
 											</a>
 										</li>
@@ -640,9 +672,10 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 				</section>
 			</main>
 
-			{/* Pie: un panel negro con columnas de enlaces y el nombre del estudio gigante, entero a lo ancho (la letra se mide con el ancho del panel) y cortado solo por el borde inferior. */}
-			<footer className="px-4 pb-6 sm:px-6 sm:pb-8">
-				<div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] bg-[#0f0f13] px-7 pt-14 text-white [container-type:inline-size] sm:px-12 sm:pt-20">
+			{/* Pie: un panel negro de borde a borde, con columnas de enlaces alineadas con la página y el nombre del estudio gigante, entero a lo ancho (la letra se mide con el ancho del panel) y cortado por el borde inferior. */}
+			<footer className="relative overflow-hidden rounded-t-[2.5rem] bg-[#0f0f13] pt-14 text-white [container-type:inline-size] sm:pt-20">
+				{/* La misma columna que las secciones (px-6 y max-w-6xl): las columnas del pie empiezan donde empieza la página. */}
+				<div className="mx-auto max-w-[75rem] px-6">
 					<div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_minmax(0,1.5fr)]">
 						{footerColumns.map((column) => (
 							<nav key={column.title} aria-label={column.title}>
@@ -655,12 +688,12 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 													href={link.href}
 													target={link.href.startsWith("http") ? "_blank" : undefined}
 													rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
-													className="text-white/75 transition-colors hover:text-white"
+													className={FOOTER_LINK}
 												>
 													{link.label}
 												</a>
 											) : (
-												<Link href={link.href} className="text-white/75 transition-colors hover:text-white">
+												<Link href={link.href} className={FOOTER_LINK}>
 													{link.label}
 												</Link>
 											)}
@@ -675,10 +708,10 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 							<p className="mt-5 max-w-xs text-sm leading-relaxed text-white/75 text-pretty">{LABS_HOME.footerLead}</p>
 							<Link
 								href="#cotizar"
-								className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#15151a] transition-colors hover:bg-[#ffd33d]"
+								className="group mt-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#15151a] transition-[background-color,scale] duration-200 hover:bg-[#ffd33d] active:scale-[0.97]"
 							>
 								{LABS_HOME.primaryCta}
-								<ArrowRight className="h-4 w-4" aria-hidden />
+								<ArrowRight className={ARROW_NUDGE} aria-hidden />
 							</Link>
 							<div className="mt-6 flex items-center gap-3">
 								{linkedin ? (
@@ -687,7 +720,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 										target="_blank"
 										rel="noopener noreferrer"
 										aria-label="LinkedIn"
-										className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white/75 transition-colors hover:border-white/40 hover:text-white"
+										className={SOCIAL_BUTTON}
 									>
 										<LandingLinkedInIcon size={16} />
 									</a>
@@ -698,7 +731,7 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 										target="_blank"
 										rel="noopener noreferrer"
 										aria-label="Instagram"
-										className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white/75 transition-colors hover:border-white/40 hover:text-white"
+										className={SOCIAL_BUTTON}
 									>
 										<LandingInstagramIcon size={16} />
 									</a>
@@ -711,13 +744,13 @@ export function LabsHome({ path, posPath, socialLinks, jsonLd }: LabsHomeProps) 
 							</p>
 						</div>
 					</div>
-					<p
-						aria-hidden
-						className="labs-wordmark pointer-events-none -mb-[0.14em] mt-12 select-none whitespace-nowrap text-center text-[18.2cqw] font-bold leading-[0.85] tracking-[-0.06em] sm:mt-16"
-					>
-						{LABS_HOME.footerWordmark}
-					</p>
 				</div>
+				<p
+					aria-hidden
+					className="labs-wordmark pointer-events-none -mb-[0.14em] mt-12 select-none whitespace-nowrap text-center text-[18.2cqw] font-bold leading-[0.85] tracking-[-0.06em] sm:mt-16"
+				>
+					{LABS_HOME.footerWordmark}
+				</p>
 			</footer>
 		</div>
 	);

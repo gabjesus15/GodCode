@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 import {
 	LANDING_BRAND_ALTERNATE,
@@ -121,11 +122,16 @@ export function Footer({ socialLinks }: { socialLinks: LandingSocialLink[] }) {
 							Estudio de desarrollo web y sistemas a medida. {LANDING_PRODUCT_NAME} es nuestro
 							producto para restaurantes.
 						</p>
+						{/* El sitio del estudio. «Sobre Gcode» sigue enlazada desde la sección de confianza y el sitemap. */}
 						<Link
-							href="/sobre-godcode"
-							className="mt-4 inline-flex text-base font-semibold text-[#0d0d0d] underline decoration-[#0d0d0d]/25 underline-offset-4 transition-colors hover:text-[#4f5bff] hover:decoration-[#4f5bff]"
+							href="/labs"
+							className="group mt-5 inline-flex items-center gap-2 rounded-full bg-[#0d0d0d] px-5 py-2.5 text-sm font-semibold text-white transition-[background-color,scale] duration-200 hover:bg-[#4f5bff] active:scale-[0.97]"
 						>
-							Conocer el estudio
+							Ir a {LANDING_COMPANY_NAME}
+							<ArrowRight
+								className="h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:translate-x-1"
+								aria-hidden
+							/>
 						</Link>
 						<address className="mt-6 not-italic text-base text-[#52525b]">Santiago, Chile</address>
 					</div>
