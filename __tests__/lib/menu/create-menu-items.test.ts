@@ -32,7 +32,9 @@ function fakeDb(initial: { branches?: Row[]; categories?: Row[]; products?: Row[
 
 	const rpc = vi.fn(async (name: string, args: Row) => {
 		if (name === "admin_create_category_with_overrides") {
-			db.categories.push({ id: `c${++seq}`, name: args.p_name });
+			// Como la RPC real: `category_branch.order` es NOT NULL, un orden nulo falla entero.
+			if (args.p_order == null) return { data: null, error: { message: 'null value in column "order" of relation "category_branch" violates not-null constraint' } };
+			db.categories.push({ id: `c${++seq}`, name: args.p_name, position: args.p_order });
 			return { data: null, error: null };
 		}
 		if (name === "admin_upsert_product_with_branch") {
@@ -81,7 +83,7 @@ describe("createMenuItems", () => {
 		expect(rpc).toHaveBeenCalledWith("admin_create_category_with_overrides", {
 			p_name: "Pizzas",
 			p_branch_id: "b-main",
-			p_order: null,
+			p_order: 1,
 			p_is_active: true,
 		});
 		expect(rpc).toHaveBeenCalledWith(
@@ -89,6 +91,31 @@ describe("createMenuItems", () => {
 			expect.objectContaining({ p_name: "Agua", p_category_id: "c-existing", p_price: "1000", p_description: null, p_apply_to_all_branches: true }),
 		);
 		expect(db.products).toHaveLength(2);
+	});
+
+	it("pone las categorías nuevas después de las que ya hay, en el orden de la carta (nunca con orden nulo)", async () => {
+		const { rpc, clients } = fakeDb({
+			categories: [
+				{ id: "c-a", name: "Entradas", position: 3 },
+				{ id: "c-b", name: "Postres", position: 7 },
+			],
+		});
+		const result = await createMenuItems({
+			...clients,
+			draft: {
+				categories: [
+					{ name: "Hamburguesas", products: [{ name: "Clásica", description: "", price: 5 }] },
+					{ name: "Entradas", products: [{ name: "Papas", description: "", price: 2 }] },
+					{ name: "Bebidas", products: [{ name: "Agua", description: "", price: 1 }] },
+				],
+			},
+		});
+		expect(result.errors).toEqual([]);
+		const orders = rpc.mock.calls.filter(([name]) => name === "admin_create_category_with_overrides").map(([, args]) => [args.p_name, args.p_order]);
+		expect(orders).toEqual([
+			["Hamburguesas", 8],
+			["Bebidas", 9],
+		]);
 	});
 
 	it("no repite productos que ya existen en esa categoría y anota los que fallan", async () => {
