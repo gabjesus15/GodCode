@@ -1,4 +1,5 @@
-import type { CompanySnapshot, MenuSetupSummary, StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import type { CompanySnapshot, MenuSetupSummary } from "@/components/customer-portal/shared/customer-account-types";
+import type { StoreThemeConfig } from "@/lib/store-theme/store-theme-types";
 import type { BusinessSector } from "@/lib/onboarding/business-sectors";
 import type { BusinessHours, BusinessHoursWeek } from "@/lib/tenant/business-hours";
 

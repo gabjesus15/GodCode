@@ -1,4 +1,4 @@
-import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import type { StoreThemeConfig } from "@/lib/store-theme/store-theme-types";
 
 export function sanitizeHexColor(value: string | undefined, fallback: string): string {
 	const normalized = String(value ?? "").trim();

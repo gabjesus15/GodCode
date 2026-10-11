@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import type { StoreThemeConfig } from "@/lib/store-theme/store-theme-types";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { resolveMenuImageUrl } from "@/lib/tenant/images/resolve-menu-image-url";
 

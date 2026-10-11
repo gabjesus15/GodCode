@@ -11,7 +11,7 @@ import {
   rebaseStoreTheme,
   validateStoreThemeAssetFile,
 } from "@/lib/store-theme/store-theme-utils";
-import { STORE_THEME_FIELD_LABELS } from "../shared/customer-account-store-theme-constants";
+import { STORE_THEME_FIELD_LABELS } from "@/lib/store-theme/store-theme-constants";
 import { getMenuTemplate, menuTemplatePatch, type MenuTemplateId } from "@/lib/store-theme/menu-templates";
 
 export type UseStoreThemeReturn = {

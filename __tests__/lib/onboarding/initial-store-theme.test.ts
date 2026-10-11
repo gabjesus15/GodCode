@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_STORE_THEME } from "@/components/customer-portal/shared/customer-account-store-theme-constants";
+import { DEFAULT_STORE_THEME } from "@/lib/store-theme/store-theme-constants";
 import { initialStoreTheme } from "@/lib/onboarding/checkout-service";
 import { BUSINESS_SECTORS } from "@/lib/onboarding/business-sectors";
 import { applyMenuTemplate, MENU_TEMPLATES, templatesForSector } from "@/lib/store-theme/menu-templates";

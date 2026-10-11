@@ -1,5 +1,5 @@
-import { DEFAULT_STORE_THEME } from "@/components/customer-portal/shared/customer-account-store-theme-constants";
-import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import { DEFAULT_STORE_THEME } from "@/lib/store-theme/store-theme-constants";
+import type { StoreThemeConfig } from "@/lib/store-theme/store-theme-types";
 import { asThemeConfigObject, STORE_THEME_PATCH_KEYS } from "@/lib/store-theme/merge-theme-config";
 
 export const NAVBAR_TYPES = [

@@ -23,7 +23,7 @@ import {
 } from "@/lib/store-theme/theme-config";
 import { parseThemeColor, themeColorsToCssVarEntries } from "@/lib/store-theme/apply-theme-css-vars";
 import { contrastRatio } from "@/lib/store-theme/store-theme-utils";
-import { DEFAULT_STORE_THEME } from "../shared/customer-account-store-theme-constants";
+import { DEFAULT_STORE_THEME } from "@/lib/store-theme/store-theme-constants";
 import type { StoreThemeConfig } from "../shared/customer-account-types";
 
 const PRODUCT_DETAILS_OPTIONS: Array<{ value: ProductDetailsMode; label: string; description: string }> = [

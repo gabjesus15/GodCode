@@ -10,7 +10,7 @@ import {
 	recommendMenuTemplate,
 	templatesForSector,
 } from "@/lib/store-theme/menu-templates";
-import { DEFAULT_STORE_THEME } from "@/components/customer-portal/shared/customer-account-store-theme-constants";
+import { DEFAULT_STORE_THEME } from "@/lib/store-theme/store-theme-constants";
 import { normalizeStoreThemeConfig, PRODUCT_CARD_STYLES, STORE_THEME_FONTS } from "@/lib/store-theme/theme-config";
 
 /** Los tipos de negocio del paso 2 del alta (OnboardingStep2Form, campo `sector`). */

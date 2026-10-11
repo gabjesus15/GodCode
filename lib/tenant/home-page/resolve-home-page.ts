@@ -1,4 +1,4 @@
-import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import type { StoreThemeConfig } from "@/lib/store-theme/store-theme-types";
 import { parseThemeColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { STORE_THEME_FONTS, normalizeBackgroundMode, normalizeBrandNameColor, normalizeFontFamily } from "@/lib/store-theme/theme-config";
 import { brandInitials } from "@/lib/tenant/brand-initials";

@@ -1,4 +1,4 @@
-import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import type { StoreThemeConfig } from "@/lib/store-theme/store-theme-types";
 
 export const PREVIEW_THEME_MESSAGE_TYPE = "godcode:preview-theme" as const;
 

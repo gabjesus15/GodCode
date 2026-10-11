@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_STORE_THEME } from "@/components/customer-portal/shared/customer-account-store-theme-constants";
+import { DEFAULT_STORE_THEME } from "@/lib/store-theme/store-theme-constants";
 import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
 import { formatThemeColor, parseThemeColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { mergeThemeConfig, storeThemePatchFromRawDraft } from "@/lib/store-theme/merge-theme-config";

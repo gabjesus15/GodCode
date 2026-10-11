@@ -1,4 +1,4 @@
-import type { StoreThemeConfig } from "./customer-account-types";
+import type { StoreThemeConfig } from "./store-theme-types";
 
 export const STORE_THEME_COLOR_FIELDS = [
   ["primaryColor", "Color primario"],

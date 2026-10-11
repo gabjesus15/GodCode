@@ -1,4 +1,4 @@
-import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import type { StoreThemeConfig } from "@/lib/store-theme/store-theme-types";
 import { applyMenuTemplate, findMenuTemplate } from "@/lib/store-theme/menu-templates";
 import { brandButtonColors } from "@/lib/tenant/logo-colors";
 

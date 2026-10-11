@@ -7,7 +7,7 @@ import { ownerSetupCompletion, ownerSetupStepDone } from "./progress";
 import { nextOwnerSetupStep, OWNER_SETUP_STEPS, ownerSetupStepIndex, previousOwnerSetupStep, type OwnerSetupStep } from "./steps";
 import type { LocalForm, OwnerSetupInitial, OwnerSetupMenuStatus } from "./types";
 
-import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import type { StoreThemeConfig } from "@/lib/store-theme/store-theme-types";
 import { trackEvent } from "@/lib/analytics/track-event";
 import { diffStoreTheme } from "@/lib/store-theme/store-theme-utils";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";

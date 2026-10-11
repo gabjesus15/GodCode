@@ -5,7 +5,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { CheckCircle2, ChevronDown, Download, History, Upload, XCircle } from "lucide-react";
 import Image from "next/image";
 
-import { STORE_THEME_COLOR_FIELDS, STORE_THEME_COLOR_HELPERS } from "../../shared/customer-account-store-theme-constants";
+import { STORE_THEME_COLOR_FIELDS, STORE_THEME_COLOR_HELPERS } from "@/lib/store-theme/store-theme-constants";
 import type { MenuTemplateId } from "@/lib/store-theme/menu-templates";
 import { MenuTemplatePicker } from "../../store-theme/menu-template-picker";
 import { shouldUnoptimizeImageSrc } from "@/lib/tenant/images/should-unoptimize-image";

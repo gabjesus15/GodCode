@@ -2,8 +2,9 @@
 
 import type { FirstStep } from "@/lib/tenant/account-first-steps";
 import type { PlanChangeQuote, RenewalQuote, SubscriptionPhase } from "@/lib/billing/portal-pricing";
+import type { StoreThemeAssetField, StoreThemeConfig } from "@/lib/store-theme/store-theme-types";
 
-export type { SubscriptionPhase };
+export type { StoreThemeAssetField, StoreThemeConfig, SubscriptionPhase };
 
 export type PlanOption = {
   id: string;
@@ -296,40 +297,6 @@ export type RealtimeSnapshotResponse = {
   }>;
 };
 
-export type StoreThemeConfig = {
-  displayName: string;
-  primaryColor: string;
-  secondaryColor: string;
-  priceColor: string;
-  discountColor: string;
-  hoverColor: string;
-  backgroundColor: string;
-  /** Brillo de la imagen de fondo (0.2–1.8). `null` = automático según opacidad del color. */
-  backgroundBrightness: number | null;
-  backgroundImageUrl: string;
-  logoUrl: string;
-  navbarType?: string;
-  navigationMode?: string;
-  productCardStyle?: string;
-  productDetailsMode?: string;
-  /** Claro u oscuro para tarjetas y cromo del menú; "auto" sigue al color de fondo. */
-  surfaceScheme?: string;
-  /** "image" (imagen + color) o "solid" (solo color liso, sin imagen). */
-  backgroundMode?: string;
-  /** Color del nombre del local en el header; vacío = color primario. */
-  brandNameColor?: string;
-  /** Tipografía del menú público (id de STORE_THEME_FONTS). */
-  fontFamily?: string;
-  /** Plantilla de menú elegida (id de MENU_TEMPLATES); vacío = ninguna. */
-  templateId?: string;
-  /** Cabecera del menú: "bar" o "cover" (portada con foto y logo grande). */
-  headerStyle?: string;
-  /** Destacados ("Solo hoy"): "section" o "carousel". */
-  featuredStyle?: string;
-  /** Carrito: "float" (botón) o "bar" (barra con el total). */
-  cartStyle?: string;
-};
-
 export type StoreThemeResponse = {
   company: {
     id: string;
@@ -357,7 +324,5 @@ export type StoreThemeResponse = {
 };
 
 export type StoreThemeAutosaveStatus = "idle" | "pending" | "saving" | "saved" | "error";
-
-export type StoreThemeAssetField = "logoUrl" | "backgroundImageUrl";
 
 export type PortalTab = "resumen" | "menu" | "perfil" | "tienda" | "plan" | "sucursales" | "facturacion" | "soporte" | "correo" | "seguridad";

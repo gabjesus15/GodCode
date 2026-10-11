@@ -3,8 +3,8 @@
  * Extraídas del monolito CustomerAccountClient para ser reutilizadas en hooks y tests.
  */
 
-import { STORE_THEME_FIELD_LABELS } from "@/components/customer-portal/shared/customer-account-store-theme-constants";
-import type { StoreThemeAssetField, StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import { STORE_THEME_FIELD_LABELS } from "@/lib/store-theme/store-theme-constants";
+import type { StoreThemeAssetField, StoreThemeConfig } from "@/lib/store-theme/store-theme-types";
 import { parseThemeColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 

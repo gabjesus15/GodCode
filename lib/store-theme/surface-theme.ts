@@ -1,4 +1,4 @@
-import type { StoreThemeConfig } from "@/components/customer-portal/shared/customer-account-types";
+import type { StoreThemeConfig } from "@/lib/store-theme/store-theme-types";
 import { isLightTextColor } from "@/lib/tenant/theme/surface-scheme";
 import {
 	STORE_THEME_FONTS,
