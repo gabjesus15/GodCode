@@ -7,7 +7,9 @@
   min-height: 100vh;
   background: #ffffff;
   color: #0f172a;
-  overflow-x: hidden;
+  /* `clip` y no `hidden`: `hidden` vuelve la página un contenedor de scroll y la cabecera y
+     el resumen del plan dejan de quedarse fijos (`sticky`) al bajar. */
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-variant-numeric: tabular-nums;

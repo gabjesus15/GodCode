@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { useLocale } from "next-intl";
-import { Building2, Check, CreditCard, Landmark, Wallet } from "lucide-react";
+import { ArrowLeft, Building2, Check, CreditCard, Landmark, Wallet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics/track-event";
@@ -75,6 +76,7 @@ const STEP2_COPY = {
     manualDescription: "Te damos los datos para transferir y subes el comprobante.",
     continueButton: "Continuar al pago",
     noChargeNote: "Todavía no se cobra nada: en el siguiente paso eliges cuántos meses pagar.",
+    backToStore: "Volver a armar mi tienda",
     betaUsedLabel: "Ya usaste el plan beta.",
     monthsSuffix: "/mes",
     planRegionPrefix: "Precio para",
@@ -111,6 +113,7 @@ const STEP2_COPY = {
     manualDescription: "We give you the transfer details and you upload the receipt.",
     continueButton: "Continue to payment",
     noChargeNote: "Nothing is charged yet: in the next step you choose how many months to pay.",
+    backToStore: "Back to building my store",
     betaUsedLabel: "You already used the beta plan.",
     monthsSuffix: "/month",
     planRegionPrefix: "Price for",
@@ -147,6 +150,7 @@ const STEP2_COPY = {
     manualDescription: "Damos os dados para transferir e você envia o comprovante.",
     continueButton: "Continuar para o pagamento",
     noChargeNote: "Nada é cobrado ainda: no próximo passo você escolhe quantos meses pagar.",
+    backToStore: "Voltar a montar minha loja",
     betaUsedLabel: "Você já usou o plano beta.",
     monthsSuffix: "/mês",
     planRegionPrefix: "Preço para",
@@ -183,6 +187,7 @@ const STEP2_COPY = {
     manualDescription: "Nous vous donnons les coordonnées du virement et vous envoyez le justificatif.",
     continueButton: "Continuer vers le paiement",
     noChargeNote: "Rien n’est encore facturé : à l’étape suivante vous choisissez le nombre de mois.",
+    backToStore: "Revenir à ma boutique",
     betaUsedLabel: "Vous avez déjà utilisé l’offre bêta.",
     monthsSuffix: "/mois",
     planRegionPrefix: "Prix pour",
@@ -219,6 +224,7 @@ const STEP2_COPY = {
     manualDescription: "Wir geben Ihnen die Überweisungsdaten, Sie laden den Beleg hoch.",
     continueButton: "Weiter zur Zahlung",
     noChargeNote: "Noch wird nichts berechnet: Im nächsten Schritt wählen Sie die Anzahl der Monate.",
+    backToStore: "Zurück zum Einrichten meines Shops",
     betaUsedLabel: "Sie haben den Beta-Plan bereits genutzt.",
     monthsSuffix: "/Monat",
     planRegionPrefix: "Preis für",
@@ -255,6 +261,7 @@ const STEP2_COPY = {
     manualDescription: "Ti diamo i dati per il bonifico e carichi la ricevuta.",
     continueButton: "Continua al pagamento",
     noChargeNote: "Non addebitiamo ancora nulla: nel passaggio successivo scegli quanti mesi pagare.",
+    backToStore: "Torna a preparare il mio negozio",
     betaUsedLabel: "Hai già usato il piano beta.",
     monthsSuffix: "/mese",
     planRegionPrefix: "Prezzo per",
@@ -425,6 +432,7 @@ export function OnboardingStep2Form({
   plans,
   addons = [],
   storeUrl = null,
+  backToStoreHref = null,
 }: {
   token: string;
   initialData: {
@@ -443,6 +451,8 @@ export function OnboardingStep2Form({
   addons?: Addon[];
   /** Cómo quedará el enlace público de la tienda. */
   storeUrl?: string | null;
+  /** Con la tienda ya armada en vista previa: vuelve al asistente para seguir armándola. */
+  backToStoreHref?: string | null;
 }) {
   const locale = useLocale();
   const copy = useMemo(() => getStep2Copy(locale), [locale]);
@@ -930,6 +940,15 @@ export function OnboardingStep2Form({
             {copy.continueButton}
           </Button>
           <p className="mt-3 text-xs leading-relaxed text-slate-500">{copy.noChargeNote}</p>
+          {backToStoreHref ? (
+            <Link
+              href={backToStoreHref}
+              className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 px-5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4F5BFF]/40"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              {copy.backToStore}
+            </Link>
+          ) : null}
         </div>
       </aside>
     </form>

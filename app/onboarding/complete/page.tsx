@@ -409,6 +409,7 @@ export default async function OnboardingCompletePage({
           sector: app.sector,
         }}
         storeUrl={storeSlug ? getTenantHomeUrl(storeSlug) : null}
+        backToStoreHref={fromDraft ? "/cuenta/configurar" : null}
         plans={plans}
         addons={addons}
       />
