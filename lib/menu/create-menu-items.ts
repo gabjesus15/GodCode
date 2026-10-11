@@ -18,8 +18,11 @@ import { isSampleProduct, SAMPLE_CATEGORY_NAMES } from "./sample-menus";
  *
  *   admin_create_category_with_overrides(
  *     p_name text, p_branch_id uuid,
- *     p_order integer (opcional; aquí null), p_is_active boolean (opcional)
+ *     p_order integer (opcional, 0 por omisión), p_is_active boolean (opcional)
  *   ) → id de la categoría (texto). No se usa: se vuelve a leer por nombre.
+ *   La RPC copia `p_order` a `categories.order` y a `category_branch.order`, que no admite
+ *   null: aquí va el siguiente número después de las categorías que ya hay, en el orden
+ *   de la carta (con null, la carga fallaba entera).
  *
  *   admin_upsert_product_with_branch(
  *     p_product_id uuid (null para crear),
@@ -47,7 +50,7 @@ export type CreateMenuItemsResult = {
 	errors: string[];
 };
 
-type CategoryRow = { id: string; name: string | null };
+type CategoryRow = { id: string; name: string | null; position?: number | null };
 type ProductRow = { id: string; name: string | null; description: string | null; category_id: string | null };
 
 const CONCURRENCY = 4;
@@ -68,14 +71,17 @@ export async function resolveMenuBranchId(adminClient: SupabaseClient, companyId
 	return (rows.find((b) => b.is_active !== false) ?? rows[0])?.id ?? null;
 }
 
-async function loadCategories(adminClient: SupabaseClient, companyId: string): Promise<Map<string, string>> {
-	const { data, error } = await adminClient.from("categories").select("id,name").eq("company_id", companyId);
+async function loadCategories(adminClient: SupabaseClient, companyId: string): Promise<{ byName: Map<string, string>; lastOrder: number }> {
+	// `order` es palabra reservada: se lee con alias.
+	const { data, error } = await adminClient.from("categories").select("id,name,position:order").eq("company_id", companyId);
 	if (error) throw new Error(error.message);
-	const map = new Map<string, string>();
+	const byName = new Map<string, string>();
+	let lastOrder = 0;
 	for (const row of (data ?? []) as CategoryRow[]) {
-		if (!map.has(key(row.name))) map.set(key(row.name), row.id);
+		if (!byName.has(key(row.name))) byName.set(key(row.name), row.id);
+		if (typeof row.position === "number" && row.position > lastOrder) lastOrder = row.position;
 	}
-	return map;
+	return { byName, lastOrder };
 }
 
 async function loadProducts(adminClient: SupabaseClient, companyId: string): Promise<ProductRow[]> {
@@ -109,19 +115,22 @@ export async function createMenuItems(params: Clients & { draft: MenuDraft }): P
 		return result;
 	}
 
-	let categories = await loadCategories(adminClient, companyId);
+	const loaded = await loadCategories(adminClient, companyId);
+	let categories = loaded.byName;
 	const missing = draft.categories.filter((c) => !categories.has(key(c.name)));
+	// Las nuevas van después de las que ya hay, en el orden de la carta.
+	let nextOrder = loaded.lastOrder + 1;
 	for (const category of missing) {
 		const { error } = await userClient.rpc("admin_create_category_with_overrides", {
 			p_name: category.name,
 			p_branch_id: branchId,
-			p_order: null,
+			p_order: nextOrder++,
 			p_is_active: true,
 		});
 		if (error) result.errors.push(`Categoría «${category.name}»: ${error.message}`);
 		else result.categoriesCreated += 1;
 	}
-	if (missing.length > 0) categories = await loadCategories(adminClient, companyId);
+	if (missing.length > 0) categories = (await loadCategories(adminClient, companyId)).byName;
 
 	const existing = new Set((await loadProducts(adminClient, companyId)).map((p) => `${p.category_id}\u0000${key(p.name)}`));
 	const jobs: Array<{ categoryId: string; name: string; description: string; price: number }> = [];
