@@ -106,7 +106,7 @@ export function CompanyGeneralSection({ company }: { company: CompanyDetail }) {
           hint={
             v.custom_domain.trim()
               ? "Debe estar configurado en Vercel y en el DNS del cliente. Vence junto con la suscripción."
-              : `Sin dominio propio: el menú está en ${v.public_slug || "subdominio"}.${baseDomain}`
+              : `Sin dominio propio: el menú está en ${baseDomain}/${v.public_slug || "negocio"}`
           }
         >
           <Input

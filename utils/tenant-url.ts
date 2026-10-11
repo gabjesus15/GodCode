@@ -29,11 +29,6 @@ const isLocalhostLike = (host: string) => {
   );
 };
 
-const shouldUsePathRouting = (baseDomain: string) => {
-  const cleanHost = baseDomain.toLowerCase();
-  return isLocalhostLike(cleanHost) || cleanHost.endsWith(".vercel.app");
-};
-
 const getRuntimeHostBase = () => {
   if (typeof window === "undefined") return null;
 
@@ -135,12 +130,8 @@ export const getTenantHost = (slug: string, customDomain?: string | null) => {
     return normalizeBaseDomain(custom);
   }
 
-  const baseDomain = getTenantBaseDomain();
-  if (shouldUsePathRouting(baseDomain)) {
-    return `${baseDomain}/${safeSlug}`;
-  }
-
-  return `${safeSlug}.${baseDomain}`;
+  // Mismo formato que getTenantUrl: dominio.com/negocio (los subdominios no existen en DNS).
+  return `${getTenantBaseDomain()}/${safeSlug}`;
 };
 
 export const getTenantUrl = (slug: string, customDomain?: string | null) => {
