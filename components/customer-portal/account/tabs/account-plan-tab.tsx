@@ -1,11 +1,21 @@
 "use client";
 
-import { AlertTriangle, CalendarClock, Check, ChevronRight, Clock, Minus, Package, Plus, RotateCcw } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertTriangle, CalendarClock, Check, ChevronRight, Clock, Minus, Package, Plus, RotateCcw, Sparkles } from "lucide-react";
+
+import {
+  ADDON_REQUEST_STATUS_LABELS,
+  ADDON_REQUEST_URGENCIES,
+  type AddonRequestStatus,
+  type AddonRequestSummary,
+  type AddonRequestUrgency,
+} from "@/lib/billing/addon-requests";
 
 import { classifyPortalPaymentReference, isOrderAwaitingPayment } from "@/lib/billing/portal-orders";
 import { RENEWAL_MONTH_OPTIONS, type SubscriptionPhase } from "@/lib/billing/portal-pricing";
 import { isSingleInstanceAddon, resolveAddonUnitPrice } from "@/lib/plans/addon-pricing";
 import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
+import type { AddonRequestsState } from "../../hooks/use-addon-requests";
 import type { AddonPurchase, SubscriptionBilling } from "../../hooks/use-subscription-billing";
 import { fmtDay, fmtUsd, paymentStatusLabel } from "../../shared/customer-account-format";
 import type {
@@ -36,6 +46,7 @@ export type AccountPlanTabProps = {
   describeOrder: (order: PaymentSummary) => string;
   billing: SubscriptionBilling;
   addonPurchase: AddonPurchase;
+  addonRequests: AddonRequestsState;
   onPayOrder: (order: PaymentSummary) => void;
 };
 
@@ -584,8 +595,10 @@ function ExtrasCatalog({
   activeAddonRows,
   openOrders,
   addonPurchase,
+  addonRequests,
   billing,
-}: Pick<AccountPlanTabProps, "company" | "availablePlans" | "availableAddons" | "activeAddonRows" | "openOrders" | "addonPurchase" | "billing">) {
+}: Pick<AccountPlanTabProps, "company" | "availablePlans" | "availableAddons" | "activeAddonRows" | "openOrders" | "addonPurchase" | "addonRequests" | "billing">) {
+  const [requestOpen, setRequestOpen] = useState(false);
   const currentPlan = availablePlans.find((plan) => plan.id === company.planId) ?? null;
   const ownedIds = new Set(
     activeAddonRows.filter((row) => String(row.status ?? "").toLowerCase() === "active").map((row) => row.addonId),
@@ -602,7 +615,7 @@ function ExtrasCatalog({
       <PageHeader title="Extras" description="Servicios que puedes sumar a tu plan. Los mensuales vencen y se renuevan junto con él." />
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {availableAddons.length === 0 ? (
-          <EmptyState icon={Package} title="Sin extras disponibles" description="Por ahora no hay servicios adicionales para tu plan." className="col-span-full" />
+          <EmptyState icon={Package} title="Sin extras disponibles" description="Por ahora no hay servicios adicionales para tu plan. Si necesitas algo, pídelo a medida." className="col-span-full" />
         ) : (
           availableAddons.map((addon) => {
             const { isMonthly, unitPrice } = resolveAddonUnitPrice(addon);
@@ -656,6 +669,226 @@ function ExtrasCatalog({
             );
           })
         )}
+        <Card compact className="flex flex-col gap-3 border-dashed">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-indigo-600" aria-hidden />
+            <p className="font-semibold text-[#1d1d1f]">¿Necesitas algo a medida?</p>
+          </div>
+          <p className="-mt-1 text-xs leading-relaxed text-[#6e6e73]">
+            Cuéntanos qué te falta (una función, un reporte, una integración) y te respondemos con un precio.
+          </p>
+          <div className="mt-auto flex justify-end border-t border-[#f5f5f7] pt-3">
+            <Button size="sm" variant="secondary" disabled={billing.phase === "expired"} onClick={() => setRequestOpen(true)}>
+              Pedir extra personalizado
+            </Button>
+          </div>
+        </Card>
+      </div>
+      <CustomRequestList company={company} openOrders={openOrders} addonPurchase={addonPurchase} addonRequests={addonRequests} billing={billing} />
+      <CustomRequestDialog open={requestOpen} onOpenChange={setRequestOpen} addonRequests={addonRequests} billing={billing} />
+    </div>
+  );
+}
+
+// ─── Extras a medida ──────────────────────────────────────────────────────────
+
+const REQUEST_BADGE: Record<AddonRequestStatus, ColorVariant> = {
+  submitted: "info",
+  quoted: "warning",
+  accepted: "warning",
+  paid: "accent",
+  delivered: "success",
+  rejected: "neutral",
+  cancelled: "neutral",
+};
+
+const fieldClass =
+  "w-full rounded-xl border border-[#d2d2d7] bg-white px-3 text-sm text-[#1d1d1f] focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
+
+function CustomRequestDialog({
+  open,
+  onOpenChange,
+  addonRequests,
+  billing,
+}: { open: boolean; onOpenChange: (open: boolean) => void } & Pick<AccountPlanTabProps, "addonRequests" | "billing">) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [urgency, setUrgency] = useState<AddonRequestUrgency>("normal");
+  const [error, setError] = useState<string | null>(null);
+  const busy = addonRequests.busyId === "new";
+
+  const submit = async () => {
+    setError(null);
+    const result = await addonRequests.create({ title, description, urgency });
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setTitle("");
+    setDescription("");
+    setUrgency("normal");
+    onOpenChange(false);
+    billing.setFeedback({ tone: "success", message: result.message ?? "Recibimos tu pedido." });
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Pedir extra personalizado"
+      description="Te respondemos con un precio. Si te sirve, lo aceptas y lo pagas desde aquí."
+      size="md"
+    >
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="custom-request-title" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">¿Qué necesitas?</label>
+          <input
+            id="custom-request-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            maxLength={120}
+            placeholder="Ej.: cuadre diario de caja con los puntos de venta"
+            className={`h-10 ${fieldClass}`}
+          />
+        </div>
+        <div>
+          <label htmlFor="custom-request-description" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">Cuéntanos más</label>
+          <textarea
+            id="custom-request-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={5}
+            maxLength={4000}
+            placeholder="Para qué lo usarías, cómo lo haces hoy y qué te gustaría ver."
+            className={`resize-none py-2 ${fieldClass}`}
+          />
+        </div>
+        <div>
+          <label htmlFor="custom-request-urgency" className="mb-1.5 block text-xs font-medium text-[#6e6e73]">¿Para cuándo?</label>
+          <select
+            id="custom-request-urgency"
+            value={urgency}
+            onChange={(e) => setUrgency(e.target.value as AddonRequestUrgency)}
+            className={`h-10 ${fieldClass}`}
+          >
+            {ADDON_REQUEST_URGENCIES.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </div>
+        {error && <Alert variant="danger">{error}</Alert>}
+      </div>
+      <DialogFooter>
+        <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancelar</Button>
+        <Button loading={busy} disabled={busy || title.trim().length < 3 || description.trim().length < 10} onClick={() => void submit()}>
+          Enviar pedido
+        </Button>
+      </DialogFooter>
+    </Dialog>
+  );
+}
+
+function CustomRequestList({
+  company,
+  openOrders,
+  addonPurchase,
+  addonRequests,
+  billing,
+}: Pick<AccountPlanTabProps, "company" | "openOrders" | "addonPurchase" | "addonRequests" | "billing">) {
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const { requests, busyId, refresh, act } = addonRequests;
+
+  // El pago lo valida el equipo: al volver a la pestaña se ve si ya quedó «Pagado».
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  if (requests.length === 0) return null;
+
+  const pendingAddonIds = new Set(
+    openOrders
+      .map((order) => classifyPortalPaymentReference(order.payment_reference)?.addonId)
+      .filter((id): id is string => Boolean(id)),
+  );
+
+  const run = async (request: AddonRequestSummary, action: "cancel" | "reject_quote" | "accept") => {
+    setConfirmingId(null);
+    const result = await act(request.id, action);
+    if (!result.ok) {
+      billing.setFeedback({ tone: "danger", message: result.error });
+      return;
+    }
+    if (action === "accept" && result.addonId) addonPurchase.openAddon(result.addonId);
+    if (action === "cancel") billing.setFeedback({ tone: "info", message: "Pedido cancelado." });
+    if (action === "reject_quote") billing.setFeedback({ tone: "info", message: "Rechazaste la cotización." });
+  };
+
+  return (
+    <div className="mt-8">
+      <PageHeader title="Mis pedidos a medida" description="Lo que nos pediste y en qué va cada cosa." />
+      <div className="mt-4 space-y-3">
+        {requests.map((request) => {
+          const busy = busyId === request.id;
+          const awaitingPayment = request.addonId ? pendingAddonIds.has(request.addonId.toLowerCase()) : false;
+          const canCancel = request.status === "submitted" || request.status === "quoted" || request.status === "accepted";
+          const showQuote =
+            request.quoteAmount != null &&
+            (request.status === "quoted" || request.status === "accepted" || request.status === "paid" || request.status === "delivered");
+          return (
+            <Card key={request.id} compact className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-[#1d1d1f]">{request.title}</p>
+                  <p className="mt-0.5 text-xs text-[#6e6e73]">Pedido el {fmtDay(request.createdAt, company.timezone)}</p>
+                </div>
+                <Badge variant={REQUEST_BADGE[request.status]} dot>{ADDON_REQUEST_STATUS_LABELS[request.status]}</Badge>
+              </div>
+              <p className="line-clamp-3 whitespace-pre-line text-xs leading-relaxed text-[#6e6e73]">{request.description}</p>
+
+              {showQuote && request.quoteAmount != null && (
+                <div className="rounded-xl bg-[#fbfbfd] px-4 py-3 text-sm">
+                  <p className="font-semibold tabular-nums text-[#1d1d1f]">
+                    {fmtUsd(request.quoteAmount, company.locale)}
+                    <span className="font-normal text-[#6e6e73]">{request.quoteBilling === "monthly" ? "/mes" : " pago único"}</span>
+                  </p>
+                  {request.quoteNote && <p className="mt-1 whitespace-pre-line text-xs text-[#6e6e73]">{request.quoteNote}</p>}
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[#f5f5f7] pt-3">
+                {request.status === "submitted" && <span className="mr-auto text-xs text-[#6e6e73]">Lo estamos revisando para darte un precio.</span>}
+                {request.status === "paid" && <span className="mr-auto text-xs text-[#6e6e73]">Pagado. Lo estamos preparando.</span>}
+                {request.status === "delivered" && (
+                  <span className="mr-auto flex items-center gap-1 text-xs text-[#6e6e73]">
+                    <Check className="h-3.5 w-3.5" aria-hidden /> Entregado{request.deliveredAt ? ` el ${fmtDay(request.deliveredAt, company.timezone)}` : ""}
+                  </span>
+                )}
+                {awaitingPayment && request.status === "accepted" && <span className="mr-auto text-xs text-[#6e6e73]">En «Pagos pendientes»</span>}
+
+                {canCancel && confirmingId === request.id ? (
+                  <>
+                    <Button size="sm" variant="ghost" disabled={busy} onClick={() => setConfirmingId(null)}>No</Button>
+                    <Button size="sm" variant="danger" loading={busy} onClick={() => void run(request, "cancel")}>Sí, cancelar pedido</Button>
+                  </>
+                ) : (
+                  <>
+                    {canCancel && (
+                      <Button size="sm" variant="ghost" disabled={busy} onClick={() => setConfirmingId(request.id)}>Cancelar</Button>
+                    )}
+                    {request.status === "quoted" && (
+                      <Button size="sm" variant="secondary" disabled={busy} onClick={() => void run(request, "reject_quote")}>Rechazar precio</Button>
+                    )}
+                    {(request.status === "quoted" || (request.status === "accepted" && !awaitingPayment)) && (
+                      <Button size="sm" loading={busy} disabled={billing.phase === "expired"} onClick={() => void run(request, "accept")}>
+                        {request.status === "quoted" ? "Aceptar y pagar" : "Pagar"}
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

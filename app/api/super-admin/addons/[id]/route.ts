@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { logAdminAudit } from "@/lib/super-admin/admin-audit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { sanitizeAddonUnlockTabs, sanitizePanelModule } from "@/lib/plans/addon-unlocks";
 import { SAAS_MUTATE_ROLES, validateAdminRolesOnServer } from "../../../../../utils/admin/server-auth";
 
 /** @service-role super-admin */
@@ -15,6 +16,8 @@ type PatchBody = {
 	type?: "one_time" | "monthly";
 	is_active?: boolean;
 	sort_order?: number;
+	unlocks_tabs?: string[];
+	panel_module?: string | null;
 };
 
 export async function PATCH(
@@ -43,6 +46,14 @@ export async function PATCH(
 	if (body.type !== undefined) updates.type = body.type === "monthly" ? "monthly" : "one_time";
 	if (body.is_active !== undefined) updates.is_active = Boolean(body.is_active);
 	if (body.sort_order !== undefined) updates.sort_order = Math.max(0, Number(body.sort_order) || 0);
+	if (body.unlocks_tabs !== undefined) updates.unlocks_tabs = sanitizeAddonUnlockTabs(body.unlocks_tabs);
+	if (body.panel_module !== undefined) {
+		const panelModule = sanitizePanelModule(body.panel_module);
+		if (body.panel_module && !panelModule) {
+			return NextResponse.json({ error: "El módulo del panel va en minúsculas, números y guiones (p. ej. cuadre-caja)." }, { status: 400 });
+		}
+		updates.panel_module = panelModule;
+	}
 
 	const { error } = await supabaseAdmin.from("addons").update(updates).eq("id", id);
 

@@ -10,6 +10,7 @@ import { SUBSCRIPTION_STATUS_LABELS, PAYMENT_STATUS_LABELS, TICKET_CATEGORY_LABE
 import { displayStatus, fmtDay, fmtUsd, branchEntitlementStatusLabel } from "@/components/customer-portal/shared/customer-account-format";
 
 import { useAccountSnapshot }  from "@/components/customer-portal/hooks/use-account-snapshot";
+import { useAddonRequests }    from "@/components/customer-portal/hooks/use-addon-requests";
 import { useAddonPurchase, useSubscriptionBilling } from "@/components/customer-portal/hooks/use-subscription-billing";
 import { useStoreTheme }       from "@/components/customer-portal/hooks/use-store-theme";
 import { useMenuSettings }     from "@/components/customer-portal/hooks/use-menu-settings";
@@ -112,6 +113,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
     onOpenOrder: openOrderById,
   });
 
+  const addonRequests = useAddonRequests(props.initialAddonRequests ?? []);
   const addonPurchase = useAddonPurchase({
     onRefresh: refreshAll,
     onOrderCreated: openOrderPayment,
@@ -177,8 +179,10 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
     addon: (id) =>
       availableAddons.find((addon) => addon.id === id)?.name ??
       snapshot.activeAddonRows.find((row) => row.addonId === id)?.addonName ??
+      // Extra privado cotizado a medida: se nombra como el pedido.
+      addonRequests.requests.find((request) => request.addonId === id)?.title ??
       null,
-  }), [company.planId, company.planName, availablePlans, availableAddons, snapshot.activeAddonRows]);
+  }), [company.planId, company.planName, availablePlans, availableAddons, snapshot.activeAddonRows, addonRequests.requests]);
 
   const openOrders = billing.openOrders;
   const openTicketsCount       = snapshot.tickets.filter((t) => ["open","in_progress","waiting_customer"].includes(t.status)).length;
@@ -382,6 +386,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             describeOrder={describeOrder}
             billing={subscriptionBilling}
             addonPurchase={addonPurchase}
+            addonRequests={addonRequests}
             onPayOrder={openOrderPayment}
           />
         )}

@@ -116,6 +116,7 @@ type AddonCatalogRow = {
 	price_monthly: number | null;
 	price_one_time: number | null;
 	is_active: boolean | null;
+	company_id?: string | null;
 };
 
 export type PricedApplicationAddon = {
@@ -144,14 +145,15 @@ export async function priceApplicationAddons(
 
 	const { data } = await supabaseAdmin
 		.from("addons")
-		.select("id,slug,name,type,description,price_monthly,price_one_time,is_active")
+		.select("id,slug,name,type,description,price_monthly,price_one_time,is_active,company_id")
 		.in("id", ids);
 	const catalog = new Map(((data ?? []) as AddonCatalogRow[]).map((row) => [row.id, row]));
 
 	const priced: PricedApplicationAddon[] = [];
 	for (const id of ids) {
 		const addon = catalog.get(id);
-		if (!addon || addon.is_active === false) continue;
+		// Los privados son de una empresa ya creada: en el alta no se cobran.
+		if (!addon || addon.is_active === false || addon.company_id) continue;
 		const offer = resolveAddonOfferForPlan(plan, addon);
 		if (offer.status === "blocked") continue;
 		const choice = choices.find((item) => String(item.addon_id).trim() === id);

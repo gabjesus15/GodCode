@@ -337,7 +337,7 @@ export default async function OnboardingCompletePage({
   const [plansResult, addonsResult, applicationAddonsResult, storeSlug, storeContact, panelOnlyHint] = await Promise.all([
     // Solo planes a la venta: los internos (dev, promos) no se contratan desde aquí.
     supabaseAdmin.from("plans").select("id,name,name_i18n,price,prices_by_continent,max_branches,features,marketing_lines,marketing_lines_i18n").eq("is_active", true).eq("is_public", true).order("price", { ascending: true }),
-    supabaseAdmin.from("addons").select("id,slug,name,description,price_one_time,price_monthly,type,sort_order").eq("is_active", true).order("sort_order", { ascending: true }),
+    supabaseAdmin.from("addons").select("id,slug,name,description,price_one_time,price_monthly,type,sort_order").eq("is_active", true).is("company_id", null).order("sort_order", { ascending: true }),
     supabaseAdmin.from("onboarding_application_addons").select("addon_id,quantity").eq("application_id", app.id),
     // Cómo quedará el enlace de la tienda: el de la tienda en vista previa si ya la armó, o
     // el mismo cálculo que hace el alta al crearla.

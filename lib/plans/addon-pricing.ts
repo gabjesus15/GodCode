@@ -16,8 +16,17 @@ export function resolveAddonUnitPrice(addon: AddonPricingRow): { isMonthly: bool
 	return { isMonthly: false, unitPrice: Number.isFinite(oneTime) && oneTime > 0 ? oneTime : 0 };
 }
 
-/** Extras que solo tienen sentido una vez por empresa (p. ej. dominio propio). */
-export function isSingleInstanceAddon(addon: { name?: string | null; slug?: string | null; type?: string | null }): boolean {
+/**
+ * Extras que solo tienen sentido una vez por empresa (p. ej. dominio propio). Los privados
+ * (`company_id`, cotizados a medida) también: se pagan una sola vez.
+ */
+export function isSingleInstanceAddon(addon: {
+	name?: string | null;
+	slug?: string | null;
+	type?: string | null;
+	company_id?: string | null;
+}): boolean {
+	if (addon.company_id) return true;
 	const haystack = `${addon.name ?? ""} ${addon.slug ?? ""} ${addon.type ?? ""}`.toLowerCase();
 	return (
 		haystack.includes("dominio") ||

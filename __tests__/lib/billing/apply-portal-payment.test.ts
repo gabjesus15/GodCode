@@ -149,6 +149,22 @@ describe("applyPortalPayment", () => {
 		expect(db.company_addons.find((row) => row.addon_id === ADDON_ONCE)).toMatchObject({ status: "active", expires_at: null });
 	});
 
+	it("un extra cotizado a medida deja su pedido en «Pagado»", async () => {
+		const ADDON_CUSTOM = "5b6c7d8e-9f01-4a2b-8c3d-4e5f6a7b8c9d";
+		const pay = payment({ payment_reference: `ADDON-${ADDON_CUSTOM}-M1-X`, amount_paid: 120 });
+		seed({}, pay);
+		db.addons.push({ id: ADDON_CUSTOM, name: "Cuadre de caja", price_monthly: null, price_one_time: 120, company_id: "co-1" });
+		db.addon_requests = [
+			{ id: "req-1", company_id: "co-1", addon_id: ADDON_CUSTOM, status: "accepted" },
+			{ id: "req-2", company_id: "co-1", addon_id: ADDON_CUSTOM, status: "cancelled" },
+		];
+
+		await applyPortalPayment(client, pay, { now: NOW, claimFrom: ["pending_validation"] });
+
+		expect(db.company_addons.find((row) => row.addon_id === ADDON_CUSTOM)).toMatchObject({ status: "active", expires_at: null });
+		expect(db.addon_requests.map((row) => row.status)).toEqual(["paid", "cancelled"]);
+	});
+
 	it("sucursales extra: se activa la compra ligada al pago hasta el vencimiento", async () => {
 		const pay = payment({ payment_reference: "CUST-1-X" });
 		seed({}, pay);

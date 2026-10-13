@@ -85,6 +85,7 @@ export async function getCustomerAccountBillingContext(companyId: string): Promi
 				.from("addons")
 				.select("id,slug,name,type,price_monthly,price_one_time")
 				.eq("is_active", true)
+				.is("company_id", null)
 				.order("sort_order", { ascending: true }),
 			supabaseAdmin
 				.from("company_branch_extra_entitlements")

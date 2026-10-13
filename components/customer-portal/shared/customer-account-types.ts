@@ -1,5 +1,6 @@
 /** Tipos compartidos del portal de cuenta cliente (`/cuenta`). */
 
+import type { AddonRequestSummary } from "@/lib/billing/addon-requests";
 import type { FirstStep } from "@/lib/tenant/account-first-steps";
 import type { PlanChangeQuote, RenewalQuote, SubscriptionPhase } from "@/lib/billing/portal-pricing";
 import type { StoreThemeAssetField, StoreThemeConfig } from "@/lib/store-theme/store-theme-types";
@@ -178,6 +179,8 @@ export type CustomerAccountClientProps = {
   availableAddons: AddonOption[];
   initialTickets: TicketSummary[];
   initialBranchEntitlements: BranchEntitlementSummary[];
+  /** Pedidos de extras a medida (Plan y extras). */
+  initialAddonRequests?: AddonRequestSummary[];
   initialBillingOptions?: BillingOptionsResponse | null;
   initialSyncedAt?: string | null;
   /** Lo que le falta a la tienda para vender (Resumen). */

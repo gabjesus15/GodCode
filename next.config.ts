@@ -35,7 +35,8 @@ const nextConfig: NextConfig = {
   // Solo `next dev`: sin esto, Next 16 bloquea los recursos de desarrollo pedidos desde
   // otro host y la página no se hidrata. `127.0.0.1` permite tener abiertas a la vez dos
   // sesiones (las cookies van por host); `*.localhost` es el storefront de un tenant.
-  allowedDevOrigins: ["127.0.0.1", "*.localhost"],
+  // La IP y el nombre de Tailscale de esta PC permiten abrir el dev desde otra máquina.
+  allowedDevOrigins: ["127.0.0.1", "*.localhost", "100.126.176.61", "ghamwin.taile103e6.ts.net"],
   // Quita console.info/debug del build, pero deja error, warn y log: `true` los
   // borraba también en el servidor y `lib/infra/logger.ts` no escribía nada en
   // los logs de producción. `log` se queda porque es lo que usa el logger para

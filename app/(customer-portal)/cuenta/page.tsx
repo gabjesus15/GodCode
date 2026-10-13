@@ -10,6 +10,7 @@ import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 import { resolveRegionalPlanPrice } from "@/lib/plans/plan-regional-pricing";
 import { BranchSummary, BusinessInfoSummary, type PortalTab } from "@/components/customer-portal/shared/customer-account-types";
 import { PORTAL_TAB_ORDER } from "@/components/customer-portal/shared/customer-account-constants";
+import { ADDON_REQUEST_FIELDS, toAddonRequestSummary, type AddonRequestRow } from "@/lib/billing/addon-requests";
 import { selectWithOptionalColumns } from "@/lib/infra/db-compat";
 import { logger } from "@/lib/infra/logger";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
@@ -52,6 +53,8 @@ const getCachedActiveAddons = unstable_cache(
       .from("addons")
       .select("id,slug,name,description,type,price_monthly,price_one_time")
       .eq("is_active", true)
+      // Los privados (cotizados a una empresa) se pagan desde «Mis pedidos a medida».
+      .is("company_id", null)
       .order("sort_order", { ascending: true });
     return data ?? [];
   },
@@ -127,7 +130,7 @@ export default async function CustomerAccountPage({
       .maybeSingle(),
   ]);
 
-  const [{ data: company }, { data: branches, error: branchesError }, { data: businessInfoRaw }, { data: payments }, { data: companyAddons }, { data: tickets }, { data: branchEntitlements }, { data: schedule }] = await Promise.all([
+  const [{ data: company }, { data: branches, error: branchesError }, { data: businessInfoRaw }, { data: payments }, { data: companyAddons }, { data: tickets }, { data: branchEntitlements }, { data: schedule }, { data: addonRequestRows }] = await Promise.all([
     supabaseAdmin
       .from("companies")
       .select("id,name,public_slug,custom_domain,country,subscription_status,subscription_ends_at,plan_id,theme_config,created_at,plan:plans(id,name,name_i18n,price,prices_by_continent,max_branches,max_users,features)")
@@ -182,6 +185,12 @@ export default async function CustomerAccountPage({
       .eq("company_id", companyId)
       .eq("status", "scheduled")
       .maybeSingle(),
+    supabaseAdmin
+      .from("addon_requests")
+      .select(ADDON_REQUEST_FIELDS)
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false })
+      .limit(50),
   ]);
 
   // Otro error deja la lista vacía como antes, para que el resto de Mi cuenta siga usable, pero
@@ -398,6 +407,7 @@ export default async function CustomerAccountPage({
         }
         availableAddons={filteredAddons}
         initialTickets={initialTickets}
+        initialAddonRequests={((addonRequestRows ?? []) as AddonRequestRow[]).map(toAddonRequestSummary)}
         initialBranchEntitlements={initialBranchEntitlements}
         initialBillingOptions={initialBillingOptions}
         initialSyncedAt={initialSyncedAt}

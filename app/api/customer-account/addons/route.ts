@@ -24,6 +24,7 @@ type AddonRow = {
 	price_one_time: number | null;
 	price_monthly: number | null;
 	is_active: boolean | null;
+	company_id: string | null;
 };
 
 type Impact = { id: string; level: "block" | "info"; title: string; detail: string };
@@ -35,20 +36,23 @@ async function buildPreview(companyId: string, addonId: string, requestedQuantit
 		loadPortalBillingContext(companyId),
 		supabaseAdmin
 			.from("addons")
-			.select("id,slug,name,type,description,price_one_time,price_monthly,is_active")
+			.select("id,slug,name,type,description,price_one_time,price_monthly,is_active,company_id")
 			.eq("id", addonId)
 			.maybeSingle(),
 	]);
 	if (!billing) return { error: "Empresa no encontrada", status: 404 } as const;
 	const addonRow = addon as AddonRow | null;
 	if (!addonRow?.id || addonRow.is_active === false) return { error: "Ese extra no está disponible.", status: 400 } as const;
+	// Un extra cotizado a medida solo lo compra la empresa a la que se le cotizó.
+	if (addonRow.company_id && addonRow.company_id !== companyId) return { error: "Ese extra no está disponible.", status: 400 } as const;
 
 	const { isMonthly, unitPrice } = resolveAddonUnitPrice(addonRow);
 	const singleInstance = isSingleInstanceAddon(addonRow);
 	// Los mensuales son uno por empresa (se renuevan con el plan); los de pago único admiten cantidad.
 	const quantity = singleInstance || isMonthly ? 1 : Math.max(1, Math.min(MAX_ONE_TIME_QUANTITY, Math.floor(requestedQuantity) || 1));
 	const owned = billing.activeAddons.some((row) => row.addonId === addonRow.id);
-	const offer = resolveAddonOfferForPlan(billing.currentPlan, addonRow);
+	// Lo cotizado a medida ya se acordó con la empresa: las reglas del plan no aplican.
+	const offer = addonRow.company_id ? null : resolveAddonOfferForPlan(billing.currentPlan, addonRow);
 
 	const impacts: Impact[] = [];
 	const block = (id: string, title: string, detail: string) => impacts.push({ id, level: "block", title, detail });
@@ -58,8 +62,8 @@ async function buildPreview(companyId: string, addonId: string, requestedQuantit
 	} else if (billing.phase === "expired") {
 		block("phase", "Tu suscripción venció", "Renueva tu plan para volver a contratar extras.");
 	}
-	if (offer.status === "included") block("included", "Ya viene incluido en tu plan", offer.reason);
-	if (offer.status === "blocked") block("blocked", "No está disponible para tu plan", offer.reason);
+	if (offer?.status === "included") block("included", "Ya viene incluido en tu plan", offer.reason);
+	if (offer?.status === "blocked") block("blocked", "No está disponible para tu plan", offer.reason);
 	if (owned && (isMonthly || singleInstance)) {
 		block(
 			"owned",

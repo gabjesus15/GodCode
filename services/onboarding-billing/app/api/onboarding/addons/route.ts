@@ -12,6 +12,8 @@ export async function GET() {
 		.from("addons")
 		.select("id,slug,name,description,price_one_time,price_monthly,type,sort_order")
 		.eq("is_active", true)
+		// Los privados son de una empresa ya creada; en el alta no se ofrecen.
+		.is("company_id", null)
 		.order("sort_order", { ascending: true });
 
 	if (error) {

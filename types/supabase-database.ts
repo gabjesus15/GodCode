@@ -38,47 +38,130 @@ export type Database = {
   }
   public: {
     Tables: {
+      addon_requests: {
+        Row: {
+          addon_id: string | null
+          company_id: string
+          created_at: string
+          delivered_at: string | null
+          description: string
+          id: string
+          quote_amount: number | null
+          quote_billing: string | null
+          quote_note: string | null
+          quoted_at: string | null
+          requested_by_email: string | null
+          status: string
+          title: string
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          addon_id?: string | null
+          company_id: string
+          created_at?: string
+          delivered_at?: string | null
+          description: string
+          id?: string
+          quote_amount?: number | null
+          quote_billing?: string | null
+          quote_note?: string | null
+          quoted_at?: string | null
+          requested_by_email?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          urgency?: string
+        }
+        Update: {
+          addon_id?: string | null
+          company_id?: string
+          created_at?: string
+          delivered_at?: string | null
+          description?: string
+          id?: string
+          quote_amount?: number | null
+          quote_billing?: string | null
+          quote_note?: string | null
+          quoted_at?: string | null
+          requested_by_email?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "addon_requests_addon_id_fkey"
+            columns: ["addon_id"]
+            referencedRelation: "addons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "addon_requests_company_id_fkey"
+            columns: ["company_id"]
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       addons: {
         Row: {
+          company_id: string | null
           created_at: string
           description: string | null
           id: string
           is_active: boolean
           name: string
+          panel_module: string | null
           price_monthly: number | null
           price_one_time: number | null
           slug: string
           sort_order: number
           type: string
+          unlocks_tabs: string[]
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           is_active?: boolean
           name: string
+          panel_module?: string | null
           price_monthly?: number | null
           price_one_time?: number | null
           slug: string
           sort_order?: number
           type?: string
+          unlocks_tabs?: string[]
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           is_active?: boolean
           name?: string
+          panel_module?: string | null
           price_monthly?: number | null
           price_one_time?: number | null
           slug?: string
           sort_order?: number
           type?: string
+          unlocks_tabs?: string[]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "addons_company_id_fkey"
+            columns: ["company_id"]
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       admin_audit_logs: {
         Row: {

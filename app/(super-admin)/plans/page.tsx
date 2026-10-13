@@ -32,6 +32,7 @@ export default async function PlansPage() {
 				.from("addons")
 				.select("id,slug,name")
 				.eq("is_active", true)
+				.is("company_id", null)
 				.order("sort_order", { ascending: true }),
 		]);
 		const { data, error } = plansResult;

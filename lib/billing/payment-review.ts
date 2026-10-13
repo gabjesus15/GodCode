@@ -278,7 +278,7 @@ export async function applyPortalPayment(
 	} else if (kind.kind === "addon" && kind.addonId) {
 		const { data: addon } = await supabaseAdmin
 			.from("addons")
-			.select("id,price_monthly,price_one_time")
+			.select("id,price_monthly,price_one_time,company_id")
 			.eq("id", kind.addonId)
 			.maybeSingle();
 		if (!addon) {
@@ -301,6 +301,16 @@ export async function applyPortalPayment(
 		if (addonError) {
 			await release();
 			return { ok: false, error: "No se pudo activar el extra; el pago quedó para revisión.", status: 500 };
+		}
+		// Extra cotizado a medida: su pedido pasa a «Pagado» y el equipo lo prepara.
+		if (addon.company_id) {
+			const { error: requestError } = await supabaseAdmin
+				.from("addon_requests")
+				.update({ status: "paid", updated_at: now.toISOString() })
+				.eq("company_id", company.id)
+				.eq("addon_id", addon.id)
+				.in("status", ["quoted", "accepted"]);
+			if (requestError) console.error("[payment-review] addon request not marked paid:", requestError.message);
 		}
 		message = "Pago validado: el extra quedó activo.";
 		detail = isMonthly ? "Se renueva junto con tu plan." : undefined;

@@ -30,7 +30,7 @@ vi.mock("@/lib/infra/supabase-admin", () => {
 			from: (table: string) => {
 				let columns = "*";
 				const query: Record<string, unknown> = {};
-				for (const method of ["eq", "neq", "in", "or", "order", "limit", "maybeSingle", "single"]) query[method] = () => query;
+				for (const method of ["eq", "neq", "in", "is", "or", "order", "limit", "maybeSingle", "single"]) query[method] = () => query;
 				query.select = (selected?: string) => {
 					columns = selected ?? "*";
 					return query;
