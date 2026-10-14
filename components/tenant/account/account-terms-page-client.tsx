@@ -1,17 +1,17 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChevronLeft } from "lucide-react";
 
 import { useApplyTenantSurfaceScheme } from "@/lib/tenant/hooks/use-tenant-surface-scheme";
 
 import { PoweredByGcode } from "../branding/powered-by-gcode";
 import { getTenantScopedPath } from "../utils/tenant-route";
 
+import { AccountHero } from "./account-hero";
 import { MENU_ACCOUNT_TERMS_UPDATED_AT, MenuAccountTermsContent } from "./menu-account-terms-content";
+import { useAccountScheme } from "./use-account-scheme";
 
 type AccountTermsPageClientProps = {
 	businessName: string;
@@ -23,24 +23,28 @@ export function AccountTermsPageClient({ businessName, logoUrl = null, companySl
 	const t = useTranslations("tenant.account");
 	const pathname = usePathname();
 	const accountPath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/mi-cuenta"), [pathname]);
-	// Mismo claro/oscuro que el menú y Mi cuenta.
+	const menuPath = useMemo(() => getTenantScopedPath(pathname ?? "/", "/menu"), [pathname]);
+	// El mismo claro/oscuro que eligió la persona en Mi cuenta.
 	useApplyTenantSurfaceScheme();
+	const { scheme, toggle } = useAccountScheme();
 
 	return (
-		<div className="account-page">
-			<header className="account-page-header">
-				<Link href={accountPath} className="account-back-button" aria-label={t("terms.back")}>
-					<ChevronLeft size={26} />
-				</Link>
-				<div className="account-page-heading">
-					<h1 className="account-page-title">{t("terms.title")}</h1>
-					<span className="account-page-business">{businessName}</span>
+		<div className="account-page" data-menu-scheme={scheme}>
+			<AccountHero
+				businessName={businessName}
+				menuPath={menuPath}
+				scheme={scheme}
+				onToggleScheme={toggle}
+				back={{ href: accountPath, label: t("title"), ariaLabel: t("terms.back") }}
+			>
+				<div className="account-hero-text account-hero-text--section">
+					<h1 className="account-hero-title">{t("terms.title")}</h1>
+					<span className="account-hero-sub">{t("terms.updated", { date: MENU_ACCOUNT_TERMS_UPDATED_AT })}</span>
 				</div>
-			</header>
+			</AccountHero>
 
 			<div className="account-page-body account-page-body--terms">
 				<article className="account-terms-page">
-					<p className="account-terms-updated">{t("terms.updated", { date: MENU_ACCOUNT_TERMS_UPDATED_AT })}</p>
 					<MenuAccountTermsContent />
 				</article>
 			</div>

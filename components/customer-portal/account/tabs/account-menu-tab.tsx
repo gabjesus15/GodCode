@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef } from "react";
-import { ExternalLink, FileUp, LayoutList, Lock, Trash2, UtensilsCrossed } from "lucide-react";
+import { useRef, useState } from "react";
+import { ExternalLink, FileUp, LayoutList, Lock, Star, Trash2, UtensilsCrossed } from "lucide-react";
 
 import type { CompanySnapshot, MenuSetupSummary } from "../../shared/customer-account-types";
 import { Alert } from "../../ui/Alert";
@@ -10,6 +10,8 @@ import { Card } from "../../ui/Card";
 import { PageHeader } from "../../ui/PageHeader";
 import { shrinkImage } from "../../shared/shrink-image";
 import { MenuImportReview } from "./menu-import-review";
+import { LoyaltyRulesEditor } from "../loyalty-rules-editor";
+import { useLoyaltyRules } from "../../hooks/use-loyalty-rules";
 
 import { pluralize as plural, useMenuSetup, type MenuStatus } from "@/lib/menu/use-menu-setup";
 import { SAMPLE_MENU_SECTORS } from "@/lib/menu/sample-menus";
@@ -33,6 +35,9 @@ export function AccountMenuTab({ company, menuSetup, storeDraft = false, onStatu
 	const menu = useMenuSetup({ menuSetup, onStatusChange, prepareFile: shrinkImage });
 	const { status, sector, setSector, busy, feedback, draft, draftNote, realProducts } = menu;
 	const fileInput = useRef<HTMLInputElement>(null);
+	// Las reglas de puntos se cargan recién al abrir su card.
+	const [loyaltyOpen, setLoyaltyOpen] = useState(false);
+	const loyalty = useLoyaltyRules(loyaltyOpen);
 
 	// En vista previa no hay acceso al panel CEO: se muestra cuándo llega en vez del enlace.
 	const panelUrl = storeDraft ? "" : resolveSalesPanelUrl(company.publicSlug, { tab: "products" });
@@ -211,8 +216,31 @@ export function AccountMenuTab({ company, menuSetup, storeDraft = false, onStatu
 							</a>
 						) : null}
 					</Card>
+
+					<Card compact className="flex flex-col gap-3">
+						<div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f5f5f7]">
+							<Star className="h-4 w-4 text-[#1d1d1f]" aria-hidden />
+						</div>
+						<div>
+							<p className="text-sm font-semibold text-[#1d1d1f]">Puntos para tus clientes</p>
+							<p className="mt-1 text-[13px] leading-relaxed text-[#6e6e73]">
+								Define cuántos puntos ganan al comprar: por dinero gastado, por compra, por producto o por categoría.
+								Los canjean por las recompensas que armas en el panel CEO.
+							</p>
+						</div>
+						<Button
+							variant="secondary"
+							className="mt-auto self-start"
+							aria-expanded={loyaltyOpen}
+							onClick={() => setLoyaltyOpen((open) => !open)}
+						>
+							{loyaltyOpen ? "Cerrar" : "Configurar"}
+						</Button>
+					</Card>
 				</div>
 			)}
+
+			{loyaltyOpen && !draft ? <LoyaltyRulesEditor loyalty={loyalty} /> : null}
 		</div>
 	);
 }

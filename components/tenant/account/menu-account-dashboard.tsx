@@ -3,28 +3,35 @@
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { FileText, LogOut, MapPin, Package, Settings, Trash2, UserRound, UtensilsCrossed } from "lucide-react";
+import { FileText, Gift, House, LogOut, MapPin, Receipt, Settings, Trash2, UtensilsCrossed } from "lucide-react";
 
 import { getFormStrategy } from "@/lib/geo/country-forms";
 import type { MenuAccountDeliveryOptions } from "@/lib/menu-account/delivery-options";
 
 import { AccountBusyLabel, AccountPasswordInput, accountFieldRules } from "./account-fields";
+import { AccountAvatar, AccountHero, initialsOf, type AccountHeroChrome } from "./account-hero";
 import type { MenuAccountBranchOption, MenuAccountPublic } from "./menu-account-types";
 import { MenuAccountAddresses } from "./menu-account-addresses";
 import { errorMessage } from "./menu-account-auth-panel";
+import { MenuAccountHome } from "./menu-account-home";
 import { MenuAccountOrders } from "./menu-account-orders";
+import { MenuAccountRewards } from "./menu-account-rewards";
 import { MenuAccountTermsDialog } from "./menu-account-terms-dialog";
+import { useAccountOrders } from "./use-account-orders";
+import { useAccountPoints } from "./use-account-points";
 import { useMenuAccount } from "./use-menu-account";
 
 type MenuAccountDashboardProps = {
+	/** Cabecera compartida con el acceso: negocio, menú y claro/oscuro. */
+	chrome: AccountHeroChrome;
+	/** Aviso de la página (p. ej. "vinculamos este negocio"), ya traducido. */
+	notice: string | null;
 	companySlug: string;
 	countryCode: string;
 	branches: MenuAccountBranchOption[];
 	account: MenuAccountPublic;
 	/** Si el negocio reparte por dirección o por zonas; decide el formulario de direcciones. */
 	deliveryOptions: MenuAccountDeliveryOptions;
-	/** Ruta del menú público, ya con el prefijo del tenant. */
-	menuPath: string;
 	onSignedOut: () => void;
 	/**
 	 * Cambiar la contraseña revoca la sesión en Supabase, así que hay que devolver a
@@ -35,103 +42,149 @@ type MenuAccountDashboardProps = {
 	onAccountDeleted: () => void;
 };
 
-type DashboardSection = "account" | "orders" | "addresses" | "settings";
+type DashboardSection = "home" | "orders" | "rewards" | "addresses" | "settings";
 
-const SECTIONS: Array<{ id: DashboardSection; icon: typeof UserRound }> = [
-	{ id: "account", icon: UserRound },
-	{ id: "orders", icon: Package },
+const SECTIONS: Array<{ id: DashboardSection; icon: typeof House }> = [
+	{ id: "home", icon: House },
+	{ id: "orders", icon: Receipt },
+	{ id: "rewards", icon: Gift },
 	{ id: "addresses", icon: MapPin },
 	{ id: "settings", icon: Settings },
 ];
 
 export function MenuAccountDashboard({
+	chrome,
+	notice,
 	companySlug,
 	countryCode,
 	branches,
 	account: initialAccount,
 	deliveryOptions,
-	menuPath,
 	onSignedOut,
 	onPasswordChanged,
 	onAccountDeleted,
 }: MenuAccountDashboardProps) {
 	const t = useTranslations("tenant.account");
-	const [section, setSection] = useState<DashboardSection>("account");
+	const [section, setSection] = useState<DashboardSection>("home");
 	// Vive aquí y no en la sección: al cambiar de sección el formulario se desmonta, y
 	// al volver debe mostrar lo último guardado.
 	const [account, setAccount] = useState(initialAccount);
-	// El detalle de un pedido trae su propio encabezado con "Volver".
-	const [orderDetailOpen, setOrderDetailOpen] = useState(false);
+	/* Pedidos: una sola petición al entrar, compartida por el inicio y "Mis pedidos".
+	   Direcciones sigue pidiéndose solo al abrir su sección. */
+	const ordersState = useAccountOrders(companySlug);
+	const { points, earnRules, setPoints } = useAccountPoints(companySlug);
+	// Pedido tocado en el inicio: "Mis pedidos" lo abre al montarse.
+	const [openOrderId, setOpenOrderId] = useState<string | null>(null);
+
+	const go = (next: DashboardSection, orderId: string | null = null) => {
+		setOpenOrderId(orderId);
+		setSection(next);
+		window.scrollTo({ top: 0 });
+	};
+
+	const firstName = account.fullName.trim().split(/\s+/)[0] ?? account.fullName;
 
 	return (
-		<div className="account-dashboard">
-			<nav className="account-nav" aria-label={t("title")}>
-				<span className="account-nav-heading">{t("title")}</span>
-				{SECTIONS.map(({ id, icon: Icon }) => (
-					<button
-						key={id}
-						type="button"
-						className={`account-nav-item ${section === id ? "is-active" : ""}`}
-						aria-current={section === id ? "page" : undefined}
-						onClick={() => {
-							setSection(id);
-							setOrderDetailOpen(false);
-						}}
-					>
-						<Icon size={16} aria-hidden />
-						<span>{t(`nav.${id}`)}</span>
-					</button>
-				))}
-				{/* Salida al menú siempre a mano, sin depender de la flecha del encabezado. */}
-				<Link href={menuPath} className="account-nav-item account-nav-item--link">
-					<UtensilsCrossed size={16} aria-hidden />
-					<span>{t("nav.menu")}</span>
-				</Link>
-			</nav>
-
-			{/* Cada sección se monta solo al abrirla: pedidos y direcciones hacen su
-			    petición al entrar, no todas al cargar la página. */}
-			{/* `key={section}`: cada sección entra con su animación al cambiar. */}
-			<div className="account-dashboard-content account-view" key={section}>
-				{section === "orders" && orderDetailOpen ? null : (
-					<header className="account-section-head">
-						<h2 className="account-section-heading">{t(`nav.${section}`)}</h2>
-						<p className="account-section-description">{t(`sectionDescriptions.${section}`)}</p>
-					</header>
+		<>
+			<AccountHero {...chrome}>
+				{section === "home" ? (
+					<div className="account-hero-me">
+						<AccountAvatar label={initialsOf(account.fullName)} />
+						<div className="account-hero-text">
+							<h1 className="account-hero-title">{t("dashboard.greeting", { name: firstName })}</h1>
+							<span className="account-hero-sub">{account.email}</span>
+						</div>
+					</div>
+				) : (
+					<div className="account-hero-text account-hero-text--section">
+						<h1 className="account-hero-title">{t(`nav.${section}`)}</h1>
+						<span className="account-hero-sub">{t(`sectionDescriptions.${section}`)}</span>
+					</div>
 				)}
+			</AccountHero>
 
-				{section === "account" ? (
-					<ProfileSection
-						companySlug={companySlug}
-						countryCode={countryCode}
-						branches={branches}
-						account={account}
-						onAccountUpdated={setAccount}
-					/>
-				) : null}
-				{section === "orders" ? (
-					<MenuAccountOrders companySlug={companySlug} onDetailChange={setOrderDetailOpen} />
-				) : null}
-				{section === "addresses" ? (
-					<MenuAccountAddresses companySlug={companySlug} deliveryOptions={deliveryOptions} />
-				) : null}
-				{section === "settings" ? (
-					<SettingsSection
-						companySlug={companySlug}
-						onSignedOut={onSignedOut}
-						onPasswordChanged={onPasswordChanged}
-						onAccountDeleted={onAccountDeleted}
-					/>
-				) : null}
+			<div className="account-page-body account-dashboard">
+				<nav className="account-nav" aria-label={t("title")}>
+					{SECTIONS.map(({ id, icon: Icon }) => (
+						<button
+							key={id}
+							type="button"
+							className={`account-nav-item ${section === id ? "is-active" : ""}`}
+							aria-current={section === id ? "page" : undefined}
+							onClick={() => go(id)}
+						>
+							<Icon size={20} aria-hidden />
+							<span>{t(`navShort.${id}`)}</span>
+						</button>
+					))}
+					{/* Salida al menú en escritorio; en el teléfono está en la cabecera. */}
+					<Link href={chrome.menuPath} className="account-nav-item account-nav-item--link">
+						<UtensilsCrossed size={20} aria-hidden />
+						<span>{t("nav.menu")}</span>
+					</Link>
+				</nav>
+
+				{/* `key={section}`: cada sección entra con su animación al cambiar. */}
+				<div className="account-dashboard-content account-view" key={section}>
+					{notice ? <p className="account-notice">{notice}</p> : null}
+
+					{section === "home" ? (
+						<MenuAccountHome
+							points={points}
+							earnRules={earnRules}
+							orders={ordersState.orders}
+							loading={ordersState.loading}
+							errorCode={ordersState.errorCode}
+							onOpenOrder={(id) => go("orders", id)}
+							onGo={(next) => go(next)}
+						/>
+					) : null}
+					{section === "orders" ? (
+						<MenuAccountOrders
+							orders={ordersState.orders}
+							loading={ordersState.loading}
+							errorCode={ordersState.errorCode}
+							initialOrderId={openOrderId}
+						/>
+					) : null}
+					{section === "rewards" ? (
+						<MenuAccountRewards
+							companySlug={companySlug}
+							menuPath={chrome.menuPath}
+							points={points}
+							onPointsChange={setPoints}
+						/>
+					) : null}
+					{section === "addresses" ? (
+						<MenuAccountAddresses companySlug={companySlug} deliveryOptions={deliveryOptions} />
+					) : null}
+					{section === "settings" ? (
+						<>
+							<ProfileSection
+								companySlug={companySlug}
+								countryCode={countryCode}
+								branches={branches}
+								account={account}
+								onAccountUpdated={setAccount}
+							/>
+							<SettingsSection
+								companySlug={companySlug}
+								onSignedOut={onSignedOut}
+								onPasswordChanged={onPasswordChanged}
+								onAccountDeleted={onAccountDeleted}
+							/>
+						</>
+					) : null}
+				</div>
 			</div>
-		</div>
+		</>
 	);
 }
 
-/** Grupo con título en mayúsculas, al estilo de un formulario de ajustes. */
-function SettingsGroup({ title, children }: { title: string; children: ReactNode }) {
+/** Tarjeta de ajustes con su título; `danger` la tiñe de rojo (eliminar la cuenta). */
+function SettingsGroup({ title, tone, children }: { title: string; tone?: "danger"; children: ReactNode }) {
 	return (
-		<section className="account-group">
+		<section className={`account-group ${tone === "danger" ? "account-group--danger" : ""}`}>
 			<h3 className="account-group-title">{title}</h3>
 			<div className="account-rows">{children}</div>
 		</section>
@@ -208,6 +261,13 @@ function ProfileSection({
 
 	return (
 		<form className="account-panel" onSubmit={handleProfileSubmit} noValidate>
+			<div className="account-profile-head">
+				<AccountAvatar label={initialsOf(account.fullName)} />
+				<div className="account-profile-text">
+					<span className="account-profile-name">{account.fullName}</span>
+					<span className="account-profile-email">{account.email}</span>
+				</div>
+			</div>
 			<SettingsGroup title={t("dashboard.profileTitle")}>
 				<SettingsRow label={t("dashboard.fullNameLabel")} htmlFor="account-full-name">
 					<input
@@ -461,7 +521,7 @@ function DeleteAccountGroup({ companySlug, onAccountDeleted }: DeleteAccountGrou
 
 	return (
 		<form onSubmit={handleDelete} noValidate>
-			<SettingsGroup title={t("dashboard.deleteTitle")}>
+			<SettingsGroup title={t("dashboard.deleteTitle")} tone="danger">
 				{!codeSent ? (
 					<SettingsRow label={t("dashboard.deleteLabel")}>
 						<button

@@ -83,3 +83,34 @@ export type MenuAccountCheckoutProfile = {
 	document: string;
 	addresses: MenuAccountAddress[];
 };
+
+/** Recompensa que el negocio ofrece por puntos (`GET /api/menu-account/rewards`). */
+export type MenuAccountReward = {
+	id: string;
+	title: string;
+	description: string | null;
+	pointsCost: number;
+	kind: "product" | "discount";
+	/** Lo que entrega el cupón al canjear: % o monto fijo sobre el pedido. */
+	discountType: "percent" | "fixed_amount";
+	discountValue: number;
+	minOrderSubtotal: number | null;
+	/** Días que dura el cupón desde el canje; null = no vence. */
+	validDays: number | null;
+	productName: string | null;
+	productImageUrl: string | null;
+};
+
+/** Estado del cupón de un canje: se usa una sola vez y puede vencer. */
+export type MenuAccountRedemptionStatus = "available" | "used" | "expired" | "cancelled";
+
+/** Un canje de la cuenta, con el cupón que entregó. */
+export type MenuAccountRedemption = {
+	id: string;
+	rewardTitle: string;
+	pointsCost: number;
+	createdAt: string;
+	couponCode: string | null;
+	validUntil: string | null;
+	status: MenuAccountRedemptionStatus;
+};

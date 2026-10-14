@@ -89,13 +89,17 @@
         "orders": "Meine Bestellungen",
         "addresses": "Meine Adressen",
         "settings": "Einstellungen",
-        "menu": "Menü ansehen"
+        "menu": "Menü ansehen",
+        "home": "Start",
+        "rewards": "Meine Punkte"
       },
       "sectionDescriptions": {
         "account": "Deine Kontaktdaten für schnellere Bestellungen.",
         "orders": "Deine Bestellhistorie bei diesem Geschäft.",
         "addresses": "Die Adressen, die du für Lieferungen genutzt hast.",
-        "settings": "Passwort und Sitzung deines Kontos."
+        "settings": "Deine Daten, dein Passwort und deine Sitzung.",
+        "home": "Deine laufende Bestellung und deine letzten Bestellungen.",
+        "rewards": "Löse deine Punkte gegen Gutscheine dieses Geschäfts ein."
       },
       "tabs": {
         "login": "Anmelden",
@@ -189,7 +193,9 @@
         "invalid_address": "Gib die Adresse mit Straße und Hausnummer ein.",
         "delivery_unavailable": "Dieses Geschäft liefert nicht.",
         "email_not_verified": "Bestätige deine E-Mail mit dem Code, den wir dir gesendet haben.",
-        "invalid_code": "Der Code ist ungültig oder abgelaufen."
+        "invalid_code": "Der Code ist ungültig oder abgelaufen.",
+        "insufficient_points": "Du hast nicht genug Punkte für diese Prämie.",
+        "reward_unavailable": "Diese Prämie ist nicht mehr verfügbar."
       },
       "code": {
         "label": "Code aus der E-Mail",
@@ -252,7 +258,8 @@
           "deliveryFee": "Lieferkosten",
           "free": "Kostenlos",
           "total": "Gesamt",
-          "notAvailable": "Keine Angabe"
+          "notAvailable": "Keine Angabe",
+          "handoffHint": "Zeig ihn, wenn du deine Bestellung erhältst."
         },
         "paymentStatus": {
           "paid": "Bezahlt",
@@ -265,7 +272,21 @@
         "orderNow": "Meine erste Bestellung aufgeben",
         "repeatHint": "Die Produkte kommen mit den heutigen Preisen in deinen Warenkorb. Du kannst sie vor dem Bestätigen ändern.",
         "repeatUnavailable": "Diese Bestellung enthält keine Produkte, die erneut bestellt werden können.",
-        "repeating": "Wird vorbereitet…"
+        "repeating": "Wird vorbereitet…",
+        "track": {
+          "received": "Eingegangen",
+          "preparing": "In Zubereitung",
+          "ready": "Fertig",
+          "delivered": "Geliefert",
+          "pickedUp": "Abgeholt"
+        },
+        "filters": {
+          "label": "Bestellungen filtern",
+          "all": "Alle",
+          "active": "Laufend",
+          "past": "Frühere"
+        },
+        "viewDetail": "Details ansehen"
       },
       "addresses": {
         "loading": "Adressen werden geladen…",
@@ -312,6 +333,91 @@
         "view": "AGB ansehen",
         "rowLabel": "AGB",
         "acceptLabel": "Ich akzeptiere die <link>AGB</link>"
+      },
+      "hero": {
+        "back": "Menü",
+        "guestTitle": "Dein Konto bei {business}",
+        "perks": {
+          "repeat": "Bestellungen mit einem Tipp wiederholen",
+          "addresses": "Lieferadressen speichern",
+          "track": "Den Status jeder Bestellung verfolgen"
+        }
+      },
+      "scheme": {
+        "toDark": "Zum dunklen Modus wechseln",
+        "toLight": "Zum hellen Modus wechseln"
+      },
+      "navShort": {
+        "home": "Start",
+        "orders": "Bestellungen",
+        "addresses": "Adressen",
+        "settings": "Einstellungen",
+        "rewards": "Punkte"
+      },
+      "home": {
+        "liveTitle": "Laufende Bestellung",
+        "viewOrder": "Bestellung ansehen",
+        "recent": "Letzte Bestellungen",
+        "seeAll": "Alle ansehen",
+        "quick": {
+          "repeat": "Wiederholen",
+          "repeatSub": "deine letzte Bestellung",
+          "menu": "Zum Menü",
+          "menuSub": "erste Bestellung aufgeben",
+          "addresses": "Adressen",
+          "addressesSub": "für die Lieferung",
+          "profile": "Meine Daten",
+          "profileSub": "und Sicherheit"
+        },
+        "points": {
+          "title": "Deine Punkte",
+          "unit": "{count, plural, one {Punkt} other {Punkte}}",
+          "redeem": "Einlösen",
+          "more": "{count, plural, one {und # weitere Möglichkeit} other {und # weitere Möglichkeiten}}"
+        }
+      },
+      "rewards": {
+        "loading": "Prämien werden geladen…",
+        "balanceTitle": "Deine Punkte",
+        "title": "Prämien",
+        "empty": "Dieses Geschäft hat noch keine Prämien zum Einlösen.",
+        "cost": "{count, plural, one {# Punkt} other {# Punkte}}",
+        "benefitPercent": "{value} % Rabatt auf deine Bestellung",
+        "benefitAmount": "{amount} Rabatt auf deine Bestellung",
+        "benefitProduct": "Gutschein über {amount} für {product}",
+        "minOrder": "Mindestbestellwert {amount}",
+        "validDays": "{count, plural, one {# Tag gültig} other {# Tage gültig}}",
+        "noExpiry": "Läuft nicht ab",
+        "redeem": "Einlösen",
+        "redeeming": "Wird eingelöst…",
+        "missing": "{count, plural, one {Noch # Punkt} other {Noch # Punkte}}",
+        "confirm": "Jetzt einlösen?",
+        "confirmYes": "Ja, einlösen",
+        "cancel": "Abbrechen",
+        "doneTitle": "Fertig! Hier ist dein Gutschein",
+        "doneHint": "Gib ihn beim Bezahlen im Warenkorb ein. Er gilt einmal und nur mit deinem Konto.",
+        "copy": "Kopieren",
+        "copied": "Kopiert",
+        "goToMenu": "Zum Menü",
+        "validUntil": "Gültig bis {date}.",
+        "historyTitle": "Meine Einlösungen",
+        "redeemedOn": "Eingelöst am {date}",
+        "status": {
+          "available": "Verfügbar",
+          "used": "Verwendet",
+          "expired": "Abgelaufen",
+          "cancelled": "Storniert"
+        },
+        "earn": {
+          "title": "So sammelst du Punkte",
+          "none": "Dieses Geschäft hat noch nicht festgelegt, wie man Punkte sammelt.",
+          "perAmount": "{points, plural, one {# Punkt} other {# Punkte}} pro {amount}, die du ausgibst",
+          "perOrder": "{points, plural, one {# Punkt} other {# Punkte}} pro Einkauf",
+          "product": "{points, plural, one {# Punkt} other {# Punkte}} pro {name}",
+          "category": "{points, plural, one {# Punkt} other {# Punkte}} pro Produkt aus {name}",
+          "until": "Aktion bis {date}",
+          "from": "Ab {date}"
+        }
       }
     },
     "cart": {

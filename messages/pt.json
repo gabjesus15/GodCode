@@ -89,13 +89,17 @@
         "orders": "Meus pedidos",
         "addresses": "Meus endereços",
         "settings": "Configurações",
-        "menu": "Ver cardápio"
+        "menu": "Ver cardápio",
+        "home": "Início",
+        "rewards": "Meus pontos"
       },
       "sectionDescriptions": {
         "account": "Seus dados de contato para agilizar seus pedidos.",
         "orders": "O histórico dos seus pedidos neste negócio.",
         "addresses": "Os endereços que você usou para entrega.",
-        "settings": "Senha e sessão da sua conta."
+        "settings": "Seus dados, sua senha e sua sessão.",
+        "home": "Seu pedido em andamento e seus pedidos recentes.",
+        "rewards": "Troque seus pontos por cupons deste estabelecimento."
       },
       "tabs": {
         "login": "Entrar",
@@ -189,7 +193,9 @@
         "invalid_address": "Informe o endereço com rua e número.",
         "delivery_unavailable": "Este negócio não faz entregas.",
         "email_not_verified": "Confirme seu e-mail com o código que enviamos.",
-        "invalid_code": "O código é inválido ou expirou."
+        "invalid_code": "O código é inválido ou expirou.",
+        "insufficient_points": "Você não tem pontos suficientes para esta recompensa.",
+        "reward_unavailable": "Esta recompensa não está mais disponível."
       },
       "code": {
         "label": "Código do e-mail",
@@ -252,7 +258,8 @@
           "deliveryFee": "Entrega",
           "free": "Grátis",
           "total": "Total",
-          "notAvailable": "Sem dados"
+          "notAvailable": "Sem dados",
+          "handoffHint": "Mostre ao receber seu pedido."
         },
         "paymentStatus": {
           "paid": "Pago",
@@ -265,7 +272,21 @@
         "orderNow": "Fazer meu primeiro pedido",
         "repeatHint": "Ao repetir, os produtos vão para o carrinho com os preços de hoje. Você pode alterá-los antes de confirmar.",
         "repeatUnavailable": "Este pedido não tem produtos que possam ser repetidos.",
-        "repeating": "Preparando…"
+        "repeating": "Preparando…",
+        "track": {
+          "received": "Recebido",
+          "preparing": "Preparando",
+          "ready": "Pronto",
+          "delivered": "Entregue",
+          "pickedUp": "Retirado"
+        },
+        "filters": {
+          "label": "Filtrar pedidos",
+          "all": "Todos",
+          "active": "Em andamento",
+          "past": "Anteriores"
+        },
+        "viewDetail": "Ver detalhes"
       },
       "addresses": {
         "loading": "Carregando endereços…",
@@ -312,6 +333,91 @@
         "view": "Ver termos",
         "rowLabel": "Termos e condições",
         "acceptLabel": "Aceito os <link>termos e condições</link>"
+      },
+      "hero": {
+        "back": "Menu",
+        "guestTitle": "Sua conta em {business}",
+        "perks": {
+          "repeat": "Repita seus pedidos com um toque",
+          "addresses": "Salve seus endereços de entrega",
+          "track": "Acompanhe o status de cada pedido"
+        }
+      },
+      "scheme": {
+        "toDark": "Mudar para o modo escuro",
+        "toLight": "Mudar para o modo claro"
+      },
+      "navShort": {
+        "home": "Início",
+        "orders": "Pedidos",
+        "addresses": "Endereços",
+        "settings": "Ajustes",
+        "rewards": "Pontos"
+      },
+      "home": {
+        "liveTitle": "Pedido em andamento",
+        "viewOrder": "Ver pedido",
+        "recent": "Pedidos recentes",
+        "seeAll": "Ver todos",
+        "quick": {
+          "repeat": "Repetir",
+          "repeatSub": "seu último pedido",
+          "menu": "Ir ao cardápio",
+          "menuSub": "faça seu primeiro pedido",
+          "addresses": "Endereços",
+          "addressesSub": "suas entregas",
+          "profile": "Meus dados",
+          "profileSub": "e segurança"
+        },
+        "points": {
+          "title": "Seus pontos",
+          "unit": "{count, plural, one {ponto} other {pontos}}",
+          "redeem": "Trocar",
+          "more": "{count, plural, one {e mais # forma} other {e mais # formas}}"
+        }
+      },
+      "rewards": {
+        "loading": "Carregando recompensas…",
+        "balanceTitle": "Seus pontos",
+        "title": "Recompensas",
+        "empty": "Este estabelecimento ainda não tem recompensas para trocar.",
+        "cost": "{count, plural, one {# ponto} other {# pontos}}",
+        "benefitPercent": "{value}% de desconto no seu pedido",
+        "benefitAmount": "{amount} de desconto no seu pedido",
+        "benefitProduct": "Cupom de {amount} para pedir {product}",
+        "minOrder": "Pedido mínimo {amount}",
+        "validDays": "{count, plural, one {Válido por # dia} other {Válido por # dias}}",
+        "noExpiry": "Não vence",
+        "redeem": "Trocar",
+        "redeeming": "Trocando…",
+        "missing": "{count, plural, one {Falta # ponto} other {Faltam # pontos}}",
+        "confirm": "Trocar agora?",
+        "confirmYes": "Sim, trocar",
+        "cancel": "Cancelar",
+        "doneTitle": "Pronto! Este é o seu cupom",
+        "doneHint": "Digite-o no carrinho ao pagar. É de uso único e só funciona com a sua conta.",
+        "copy": "Copiar",
+        "copied": "Copiado",
+        "goToMenu": "Ir ao menu",
+        "validUntil": "Vence em {date}.",
+        "historyTitle": "Minhas trocas",
+        "redeemedOn": "Trocado em {date}",
+        "status": {
+          "available": "Disponível",
+          "used": "Usado",
+          "expired": "Vencido",
+          "cancelled": "Anulado"
+        },
+        "earn": {
+          "title": "Como ganhar pontos",
+          "none": "Este estabelecimento ainda não definiu como ganhar pontos.",
+          "perAmount": "{points, plural, one {# ponto} other {# pontos}} a cada {amount} gastos",
+          "perOrder": "{points, plural, one {# ponto} other {# pontos}} por compra",
+          "product": "{points, plural, one {# ponto} other {# pontos}} por cada {name}",
+          "category": "{points, plural, one {# ponto} other {# pontos}} por cada produto de {name}",
+          "until": "Promo até {date}",
+          "from": "A partir de {date}"
+        }
       }
     },
     "cart": {

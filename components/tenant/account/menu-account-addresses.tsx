@@ -124,14 +124,20 @@ export function MenuAccountAddresses({ companySlug, deliveryOptions }: MenuAccou
 		<div className="account-panel">
 			{shownError ? <p className="account-error">{errorMessage(tAccount, shownError)}</p> : null}
 
-			{addresses === null && list.pending ? <p className="account-note">{t("loading")}</p> : null}
+			{/* Mientras carga, la misma tarjeta que el vacío y el botón ya en su lugar:
+			   así nada salta al llegar la lista. */}
+			{addresses === null && !list.errorCode ? (
+				<p className="account-empty" aria-busy="true">
+					{t("loading")}
+				</p>
+			) : null}
 
 			{addresses !== null && addresses.length === 0 && !formOpen ? (
 				<p className="account-empty">{t(canAdd ? "empty" : "noDelivery")}</p>
 			) : null}
 
 			{addresses && addresses.length > 0 ? (
-				<ul className="account-list">
+				<ul className="account-address-list">
 					{addresses.map((address) => {
 						const zone = address.namedAreaId ? zoneById.get(address.namedAreaId) : undefined;
 						const line = cleanLine(address.addressLine);
@@ -140,15 +146,13 @@ export function MenuAccountAddresses({ companySlug, deliveryOptions }: MenuAccou
 						return (
 							<li key={address.id} className="account-address">
 								<span className="account-address-icon" aria-hidden>
-									<MapPin size={16} />
+									<MapPin size={20} />
 								</span>
 								<div className="account-address-text">
+									{zone && street ? <span className="account-address-zone">{zone.name}</span> : null}
 									<span className="account-address-line">
-										{zone ? zone.name : street || t("noStreet")}
+										{zone && street ? street : zone ? zone.name : street || t("noStreet")}
 									</span>
-									{zone && street ? (
-										<span className="account-address-reference">{street}</span>
-									) : null}
 									{address.reference ? (
 										<span className="account-address-reference">{address.reference}</span>
 									) : null}
@@ -293,21 +297,20 @@ export function MenuAccountAddresses({ companySlug, deliveryOptions }: MenuAccou
 					</div>
 				</form>
 			) : canAdd ? (
-				<div className="account-actions account-actions--between">
+				<div className="account-address-add">
+					<button
+						type="button"
+						className="account-add-button"
+						onClick={() => {
+							mutation.setErrorCode(null);
+							setFormOpen(true);
+						}}
+						disabled={addresses === null}
+					>
+						<Plus size={18} aria-hidden />
+						{t("add")}
+					</button>
 					<p className="account-note">{t(usesZones ? "zoneHint" : "hint")}</p>
-					{addresses !== null ? (
-						<button
-							type="button"
-							className="account-button"
-							onClick={() => {
-								mutation.setErrorCode(null);
-								setFormOpen(true);
-							}}
-						>
-							<Plus size={15} aria-hidden />
-							{t("add")}
-						</button>
-					) : null}
 				</div>
 			) : addresses !== null && addresses.length > 0 ? (
 				<p className="account-note">{t("noDelivery")}</p>

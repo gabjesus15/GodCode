@@ -102,3 +102,9 @@ export const menuAccountAddressDeleteSchema = z.object({
 	companySlug,
 	id: z.string().uuid(),
 });
+
+/** Canje de una recompensa de puntos: el saldo y el costo los revisa la base, no el navegador. */
+export const menuAccountRedeemRewardSchema = z.object({
+	companySlug,
+	rewardId: z.string().uuid(),
+});

@@ -1487,6 +1487,7 @@ export type Database = {
           restricted_account_id: string | null
           restricted_client_id: string | null
           scope: string
+          source: string
           updated_at: string
           valid_from: string | null
           valid_until: string | null
@@ -1506,6 +1507,7 @@ export type Database = {
           restricted_account_id?: string | null
           restricted_client_id?: string | null
           scope?: string
+          source?: string
           updated_at?: string
           valid_from?: string | null
           valid_until?: string | null
@@ -1525,6 +1527,7 @@ export type Database = {
           restricted_account_id?: string | null
           restricted_client_id?: string | null
           scope?: string
+          source?: string
           updated_at?: string
           valid_from?: string | null
           valid_until?: string | null
@@ -1974,6 +1977,290 @@ export type Database = {
           url?: string
         }
         Relationships: []
+      }
+      loyalty_earn_rules: {
+        Row: {
+          category_id: string | null
+          company_id: string
+          created_at: string
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          mode: string | null
+          name: string | null
+          per_amount: number | null
+          points: number
+          product_id: string | null
+          scope: string
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          company_id: string
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          mode?: string | null
+          name?: string | null
+          per_amount?: number | null
+          points: number
+          product_id?: string | null
+          scope: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          company_id?: string
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          mode?: string | null
+          name?: string | null
+          per_amount?: number | null
+          points?: number
+          product_id?: string | null
+          scope?: string
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_earn_rules_category_id_fkey"
+            columns: ["category_id"]
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_earn_rules_company_id_fkey"
+            columns: ["company_id"]
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_earn_rules_product_id_fkey"
+            columns: ["product_id"]
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_ledger: {
+        Row: {
+          client_id: string
+          company_id: string
+          created_at: string
+          id: string
+          kind: string
+          order_id: number | null
+          points: number
+        }
+        Insert: {
+          client_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          order_id?: number | null
+          points: number
+        }
+        Update: {
+          client_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          order_id?: number | null
+          points?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_ledger_client_id_fkey"
+            columns: ["client_id"]
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_ledger_company_id_fkey"
+            columns: ["company_id"]
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_ledger_order_id_fkey"
+            columns: ["order_id"]
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_redemptions: {
+        Row: {
+          account_id: string | null
+          client_id: string | null
+          company_id: string
+          coupon_id: string | null
+          created_at: string
+          id: string
+          points_cost: number
+          reward_id: string | null
+          reward_title: string
+          status: string
+        }
+        Insert: {
+          account_id?: string | null
+          client_id?: string | null
+          company_id: string
+          coupon_id?: string | null
+          created_at?: string
+          id?: string
+          points_cost: number
+          reward_id?: string | null
+          reward_title: string
+          status?: string
+        }
+        Update: {
+          account_id?: string | null
+          client_id?: string | null
+          company_id?: string
+          coupon_id?: string | null
+          created_at?: string
+          id?: string
+          points_cost?: number
+          reward_id?: string | null
+          reward_title?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_redemptions_account_id_fkey"
+            columns: ["account_id"]
+            referencedRelation: "menu_client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_redemptions_client_id_fkey"
+            columns: ["client_id"]
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_redemptions_company_id_fkey"
+            columns: ["company_id"]
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_redemptions_coupon_id_fkey"
+            columns: ["coupon_id"]
+            referencedRelation: "discount_coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            referencedRelation: "loyalty_rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_rewards: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          kind: string
+          min_order_subtotal: number | null
+          points_cost: number
+          product_id: string | null
+          sort_order: number
+          title: string
+          updated_at: string
+          valid_days: number | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          id?: string
+          is_active?: boolean
+          kind: string
+          min_order_subtotal?: number | null
+          points_cost: number
+          product_id?: string | null
+          sort_order?: number
+          title: string
+          updated_at?: string
+          valid_days?: number | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          kind?: string
+          min_order_subtotal?: number | null
+          points_cost?: number
+          product_id?: string | null
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          valid_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_rewards_company_id_fkey"
+            columns: ["company_id"]
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_rewards_product_id_fkey"
+            columns: ["product_id"]
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_settings: {
+        Row: {
+          company_id: string
+          ledger_started_at: string | null
+          points_per_amount: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          ledger_started_at?: string | null
+          points_per_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          ledger_started_at?: string | null
+          points_per_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_settings_company_id_fkey"
+            columns: ["company_id"]
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       manual_order_metrics: {
         Row: {
@@ -4971,6 +5258,31 @@ export type Database = {
           rate: number
           source: string
         }
+      }
+      loyalty_balances: {
+        Args: { p_company_id: string }
+        Returns: {
+          available: number
+          client_id: string
+          earned: number
+          redeemed: number
+        }[]
+      }
+      loyalty_client_balance: {
+        Args: { p_client_id: string; p_company_id: string }
+        Returns: {
+          available: number
+          earned: number
+          redeemed: number
+        }[]
+      }
+      loyalty_points_for_order: {
+        Args: { p_at: string; p_company_id: string; p_items: Json; p_total: number }
+        Returns: number
+      }
+      redeem_loyalty_reward: {
+        Args: { p_account_id: string; p_reward_id: string }
+        Returns: Json
       }
       redeem_subscription_coupon: {
         Args: {

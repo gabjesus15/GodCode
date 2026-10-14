@@ -46,8 +46,11 @@ body {
    activa con `data-scheme="light"` en `.tenant-theme-vars` cuando el fondo que
    configuró el local es claro (ver use-tenant-surface-scheme). Del tenant solo
    entra el acento; el color de precio del menú no se usa en tarjetas nuevas.
+   `data-menu-scheme` deja a una pantalla fijar su propio esquema sin tocar el del
+   local: "Mi cuenta" abre en claro y la persona puede pasarla a oscuro.
    ----------------------------------------------------------------------------- */
-.tenant-theme-vars {
+.tenant-theme-vars,
+.tenant-theme-vars [data-menu-scheme="dark"] {
     /* Lienzo de página en modo manual (App.css): neutro, sin tinte. */
     --menu-canvas: #0c0c0e;
     /* Cromo (cabecera y barra inferior) y superficies (tarjetas, hojas,
@@ -122,7 +125,12 @@ body {
     --menu-dur-enter: 240ms;
 }
 
-.tenant-theme-vars[data-scheme="light"] {
+.tenant-theme-vars [data-menu-scheme="dark"] {
+    color-scheme: dark;
+}
+
+.tenant-theme-vars[data-scheme="light"],
+.tenant-theme-vars [data-menu-scheme="light"] {
     color-scheme: light;
     /* Paleta clara neutra (el cliente eligió el gris #f0f0f0 de página):
        página gris claro < cromo casi blanco < tarjeta blanco puro. */

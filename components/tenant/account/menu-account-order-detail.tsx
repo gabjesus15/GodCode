@@ -1,38 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ChevronLeft, RotateCcw, UtensilsCrossed } from "lucide-react";
+import { Bike, ChevronLeft, CreditCard, MapPin, RotateCcw, Store, UtensilsCrossed } from "lucide-react";
 
 import { formatCartMoney } from "../cart/utils/format-cart-money";
 
 import { AccountBusyLabel } from "./account-fields";
 import type { MenuAccountOrder } from "./menu-account-types";
+import { OrderStatusPill, OrderTracker, orderHasTracker } from "./menu-account-order-parts";
 import { repeatableItems, useRepeatOrder } from "./use-repeat-order";
 
-/** Estados con etiqueta propia; cualquier otro cae en `status.other`. */
-export const KNOWN_ORDER_STATUSES = new Set([
-	"pending",
-	"in_progress",
-	"ready",
-	"picked_up",
-	"delivered",
-	"completed",
-	"cancelled",
-	"rejected",
-]);
-
 const KNOWN_PAYMENT_STATUSES = new Set(["paid", "pending", "partial"]);
-
-export function orderStatusKey(status: string): string {
-	return KNOWN_ORDER_STATUSES.has(status) ? status : "other";
-}
 
 type MenuAccountOrderDetailProps = {
 	order: MenuAccountOrder;
 	onBack: () => void;
 };
+
+/** Fila con ícono: título pequeño arriba y el dato debajo. */
+function DetailItem({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
+	return (
+		<div className="account-kv">
+			<span className="account-kv-icon" aria-hidden>
+				{icon}
+			</span>
+			<div className="account-kv-body">
+				<span className="account-kv-label">{label}</span>
+				{children}
+			</div>
+		</div>
+	);
+}
 
 export function MenuAccountOrderDetail({ order, onBack }: MenuAccountOrderDetailProps) {
 	const t = useTranslations("tenant.account.orders");
@@ -40,7 +40,6 @@ export function MenuAccountOrderDetail({ order, onBack }: MenuAccountOrderDetail
 	const locale = useLocale();
 
 	const money = (amount: number) => formatCartMoney(amount, order.currency);
-	const status = orderStatusKey(order.status);
 	const paymentStatus = order.paymentStatus
 		? KNOWN_PAYMENT_STATUSES.has(order.paymentStatus)
 			? order.paymentStatus
@@ -69,7 +68,7 @@ export function MenuAccountOrderDetail({ order, onBack }: MenuAccountOrderDetail
 	};
 
 	return (
-		<div className="account-panel">
+		<div className="account-panel account-detail">
 			<div className="account-detail-head">
 				<button type="button" className="account-back-link" onClick={onBack}>
 					<ChevronLeft size={16} aria-hidden />
@@ -77,147 +76,134 @@ export function MenuAccountOrderDetail({ order, onBack }: MenuAccountOrderDetail
 				</button>
 				<div className="account-detail-title-row">
 					<h3 className="account-detail-title">{t("number", { number: order.number })}</h3>
-					<span className={`account-order-status account-order-status--${status}`}>
-						{t(`status.${status}`)}
-					</span>
+					<OrderStatusPill status={order.status} />
 				</div>
 				<span className="account-section-description">{createdAt}</span>
-				<OrderActions
-					menuHref={menuPath(order.branchId)}
-					canRepeat={canRepeat}
-					repeating={repeating}
-					onRepeat={handleRepeat}
-				/>
 			</div>
 
-			<section className="account-group">
-				<h4 className="account-group-title">{t("detail.payment")}</h4>
-				<div className="account-rows">
-					<div className="account-row">
-						<span className="account-row-label">{t("detail.paymentMethod")}</span>
-						<span className="account-row-value">{paymentMethod ?? t("detail.notAvailable")}</span>
-					</div>
-					{paymentStatus ? (
-						<div className="account-row">
-							<span className="account-row-label">{t("detail.paymentStatus")}</span>
-							<span>
-								<span
-									className={`account-payment-status account-payment-status--${paymentStatus}`}
-								>
-									{t(`paymentStatus.${paymentStatus}`)}
-								</span>
-							</span>
+			<div className="account-detail-grid">
+				<div className="account-detail-col">
+					{orderHasTracker(order.status) ? (
+						<div className="account-card-block">
+							<OrderTracker order={order} />
 						</div>
 					) : null}
-				</div>
-			</section>
 
-			<section className="account-group">
-				<h4 className="account-group-title">{t("detail.fulfillment")}</h4>
-				<div className="account-rows">
-					<div className="account-row">
-						<span className="account-row-label">{t("detail.type")}</span>
-						<span className="account-row-value">{t(`fulfillment.${order.fulfillment}`)}</span>
-					</div>
-					{order.delivery ? (
-						<>
-							<div className="account-row">
-								<span className="account-row-label">{t("detail.address")}</span>
-								<span className="account-row-text">
-									{order.delivery.address || t("detail.notAvailable")}
-								</span>
+					{order.delivery && order.handoffCode ? (
+						<div className="account-handoff">
+							<div>
+								<span className="account-handoff-title">{t("detail.handoffCode")}</span>
+								<span className="account-handoff-hint">{t("detail.handoffHint")}</span>
 							</div>
-							{order.delivery.reference ? (
-								<div className="account-row">
-									<span className="account-row-label">{t("detail.reference")}</span>
-									<span className="account-row-text">{order.delivery.reference}</span>
-								</div>
-							) : null}
-							{order.handoffCode ? (
-								<div className="account-row">
-									<span className="account-row-label">{t("detail.handoffCode")}</span>
-									<span className="account-handoff-code">{order.handoffCode}</span>
-								</div>
-							) : null}
-						</>
-					) : null}
-					{order.branch ? (
-						<div className="account-row">
-							<span className="account-row-label">{t("detail.branch")}</span>
-							<span className="account-row-text">
-								{order.branch.name}
-								{order.branch.address ? (
-									<span className="account-row-subtext">{order.branch.address}</span>
-								) : null}
-							</span>
+							<span className="account-handoff-code">{order.handoffCode}</span>
 						</div>
 					) : null}
-				</div>
-			</section>
 
-			<section className="account-group">
-				<h4 className="account-group-title">{t("detail.products", { count: itemCount })}</h4>
-				<ul className="account-list account-list--flush">
-					{order.items.map((item, index) => (
-						<li key={`${item.name}-${index}`} className="account-line">
-							<span className="account-line-qty">{item.quantity}×</span>
-							<div className="account-line-main">
-								<span className="account-line-name">{item.name}</span>
-								{item.extras.map((extra, extraIndex) => (
-									<span key={`${extra.name}-${extraIndex}`} className="account-line-extra">
-										+ {extra.quantity > 1 ? `${extra.quantity}× ` : ""}
-										{extra.name}
-										{extra.price > 0 ? ` (${money(extra.price)})` : ""}
-									</span>
-								))}
-								{item.note ? (
-									<span className="account-line-note">
-										{t("detail.itemNote", { note: item.note })}
+					<section className="account-card-block">
+						<h4 className="account-block-title">{t("detail.fulfillment")}</h4>
+						<DetailItem
+							icon={order.fulfillment === "delivery" ? <Bike size={18} /> : <Store size={18} />}
+							label={t("detail.type")}
+						>
+							<span className="account-kv-value">{t(`fulfillment.${order.fulfillment}`)}</span>
+						</DetailItem>
+						{order.delivery ? (
+							<DetailItem icon={<MapPin size={18} />} label={t("detail.address")}>
+								<span className="account-kv-value">{order.delivery.address || t("detail.notAvailable")}</span>
+								{order.delivery.reference ? (
+									<span className="account-kv-sub">
+										{t("detail.reference")}: {order.delivery.reference}
 									</span>
 								) : null}
-							</div>
-							<span className="account-line-total">{money(item.lineTotal)}</span>
-						</li>
-					))}
-				</ul>
-			</section>
+							</DetailItem>
+						) : null}
+						{order.branch ? (
+							<DetailItem icon={<Store size={18} />} label={t("detail.branch")}>
+								<span className="account-kv-value">{order.branch.name}</span>
+								{order.branch.address ? <span className="account-kv-sub">{order.branch.address}</span> : null}
+							</DetailItem>
+						) : null}
+					</section>
 
-			{order.note ? (
-				<section className="account-group">
-					<h4 className="account-group-title">{t("detail.note")}</h4>
-					<p className="account-detail-note">{order.note}</p>
-				</section>
-			) : null}
-
-			<section className="account-group">
-				<h4 className="account-group-title">{t("detail.summary")}</h4>
-				<div className="account-rows">
-					<div className="account-row account-row--compact">
-						<span className="account-row-label">{t("detail.subtotal")}</span>
-						<span className="account-row-amount">{money(order.subtotal)}</span>
-					</div>
-					{order.discountTotal > 0 ? (
-						<div className="account-row account-row--compact">
-							<span className="account-row-label">{t("detail.discount")}</span>
-							<span className="account-row-amount account-row-amount--discount">
-								−{money(order.discountTotal)}
+					<section className="account-card-block">
+						<h4 className="account-block-title">{t("detail.payment")}</h4>
+						<DetailItem icon={<CreditCard size={18} />} label={t("detail.paymentMethod")}>
+							<span className="account-kv-value account-kv-value--inline">
+								{paymentMethod ?? t("detail.notAvailable")}
+								{paymentStatus ? (
+									<span className={`account-payment-status account-payment-status--${paymentStatus}`}>
+										{t(`paymentStatus.${paymentStatus}`)}
+									</span>
+								) : null}
 							</span>
-						</div>
-					) : null}
-					{order.fulfillment === "delivery" ? (
-						<div className="account-row account-row--compact">
-							<span className="account-row-label">{t("detail.deliveryFee")}</span>
-							<span className="account-row-amount">
-								{order.deliveryFee > 0 ? money(order.deliveryFee) : t("detail.free")}
-							</span>
-						</div>
-					) : null}
-					<div className="account-row account-row--total">
-						<span className="account-row-label">{t("detail.total")}</span>
-						<span className="account-row-amount">{money(order.total)}</span>
-					</div>
+						</DetailItem>
+					</section>
 				</div>
-			</section>
+
+				<div className="account-detail-col">
+					<section className="account-card-block">
+						<h4 className="account-block-title">{t("detail.products", { count: itemCount })}</h4>
+						<ul className="account-lines">
+							{order.items.map((item, index) => (
+								<li key={`${item.name}-${index}`} className="account-line">
+									<span className="account-line-qty">{item.quantity}×</span>
+									<div className="account-line-main">
+										<span className="account-line-name">{item.name}</span>
+										{item.extras.map((extra, extraIndex) => (
+											<span key={`${extra.name}-${extraIndex}`} className="account-line-extra">
+												+ {extra.quantity > 1 ? `${extra.quantity}× ` : ""}
+												{extra.name}
+												{extra.price > 0 ? ` (${money(extra.price)})` : ""}
+											</span>
+										))}
+										{item.note ? (
+											<span className="account-line-note">{t("detail.itemNote", { note: item.note })}</span>
+										) : null}
+									</div>
+									<span className="account-line-total">{money(item.lineTotal)}</span>
+								</li>
+							))}
+						</ul>
+
+						{order.note ? (
+							<div className="account-detail-note">
+								<span className="account-kv-label">{t("detail.note")}</span>
+								<p>{order.note}</p>
+							</div>
+						) : null}
+
+						<dl className="account-summary">
+							<div>
+								<dt>{t("detail.subtotal")}</dt>
+								<dd>{money(order.subtotal)}</dd>
+							</div>
+							{order.discountTotal > 0 ? (
+								<div className="account-summary-discount">
+									<dt>{t("detail.discount")}</dt>
+									<dd>−{money(order.discountTotal)}</dd>
+								</div>
+							) : null}
+							{order.fulfillment === "delivery" ? (
+								<div>
+									<dt>{t("detail.deliveryFee")}</dt>
+									<dd>{order.deliveryFee > 0 ? money(order.deliveryFee) : t("detail.free")}</dd>
+								</div>
+							) : null}
+							<div className="account-summary-total">
+								<dt>{t("detail.total")}</dt>
+								<dd>{money(order.total)}</dd>
+							</div>
+						</dl>
+					</section>
+
+					<OrderActions
+						menuHref={menuPath(order.branchId)}
+						canRepeat={canRepeat}
+						repeating={repeating}
+						onRepeat={handleRepeat}
+					/>
+				</div>
+			</div>
 		</div>
 	);
 }
@@ -233,20 +219,22 @@ function OrderActions({ menuHref, canRepeat, repeating, onRepeat }: OrderActions
 	const t = useTranslations("tenant.account.orders");
 	return (
 		<div className="account-order-actions">
-			<button
-				type="button"
-				className="account-button"
-				onClick={onRepeat}
-				disabled={!canRepeat || repeating}
-				title={canRepeat ? undefined : t("repeatUnavailable")}
-			>
-				{repeating ? null : <RotateCcw size={15} aria-hidden />}
-				<AccountBusyLabel busy={repeating} idle={t("repeat")} working={t("repeating")} />
-			</button>
-			<Link href={menuHref} className="account-button account-button--ghost">
-				<UtensilsCrossed size={15} aria-hidden />
-				{t("goToMenu")}
-			</Link>
+			<div className="account-order-actions-row">
+				<button
+					type="button"
+					className="account-button account-button--primary"
+					onClick={onRepeat}
+					disabled={!canRepeat || repeating}
+					title={canRepeat ? undefined : t("repeatUnavailable")}
+				>
+					{repeating ? null : <RotateCcw size={16} aria-hidden />}
+					<AccountBusyLabel busy={repeating} idle={t("repeat")} working={t("repeating")} />
+				</button>
+				<Link href={menuHref} className="account-button account-button--ghost">
+					<UtensilsCrossed size={16} aria-hidden />
+					{t("goToMenu")}
+				</Link>
+			</div>
 			<p className="account-note account-order-actions-hint">{t("repeatHint")}</p>
 		</div>
 	);

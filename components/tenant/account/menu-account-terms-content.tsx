@@ -86,12 +86,27 @@ export function MenuAccountTermsContent() {
 						Elegir cómo pagarás cada pedido y, si el Negocio lo pide, adjuntar el comprobante.
 					</li>
 					<li>
+						Ver los puntos que acumulas en el Negocio y canjearlos por las recompensas que ofrezca.
+					</li>
+					<li>
 						Eliminar la Cuenta cuando quieras (sección 7).
 					</li>
 				</ul>
 				<p>
-					Por ahora la Cuenta no tiene programa de puntos. Si se agrega uno, estos Términos se actualizarán antes
-					con sus reglas.
+					<strong>Puntos.</strong> Cada pedido que haces en el Negocio suma los puntos que indiquen sus reglas al
+					momento de la compra: por ejemplo, por lo que gastas, por cada compra o por ciertos productos o
+					categorías. Las reglas las define el Negocio y las ves en tu Cuenta; si las cambia, los puntos que ya
+					ganaste no cambian. Si un pedido se cancela, los puntos que te dio se descuentan. Son los mismos puntos que
+					el Negocio ve de ti en su sistema. No
+					tienen valor en dinero, no se pueden transferir ni cambiar por dinero, y solo valen en el Negocio donde los
+					acumulaste.
+				</p>
+				<p>
+					<strong>Canje.</strong> El Negocio decide qué recompensas ofrece, cuántos puntos cuesta cada una y sus
+					condiciones (por ejemplo, una compra mínima), y puede cambiarlas o retirarlas. Al canjear, se descuentan
+					los puntos y recibes un cupón de descuento de un solo uso que solo funciona con tu Cuenta en ese Negocio.
+					El cupón se aplica a tu siguiente pedido, no incluye el costo de envío y puede tener fecha de vencimiento:
+					si vence sin usarse, los puntos no se devuelven.
 				</p>
 			</section>
 			<section>

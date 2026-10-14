@@ -11,6 +11,17 @@
       "port": 3000
     },
     {
+      "name": "dev-account",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "cross-env",
+        "NEXT_PUBLIC_MENU_ACCOUNT_ENABLED=1",
+        "next",
+        "dev"
+      ],
+      "port": 3000
+    },
+    {
       "name": "dev-attach",
       "url": "http://localhost:3000",
       "port": 3000

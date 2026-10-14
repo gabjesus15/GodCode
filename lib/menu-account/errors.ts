@@ -21,6 +21,8 @@ export type MenuAccountErrorCode =
 	| "invalid_address"
 	| "delivery_unavailable"
 	| "unauthorized"
+	| "insufficient_points"
+	| "reward_unavailable"
 	| "weak_password"
 	| "email_not_verified"
 	| "invalid_code"
@@ -82,6 +84,10 @@ export const menuAccountErrors = {
 		new MenuAccountError(403, "email_not_verified", "Confirma tu correo con el código que te enviamos."),
 	invalidCode: () =>
 		new MenuAccountError(400, "invalid_code", "El código no es válido o ya caducó."),
+	insufficientPoints: () =>
+		new MenuAccountError(409, "insufficient_points", "No tienes puntos suficientes para esta recompensa."),
+	rewardUnavailable: () =>
+		new MenuAccountError(409, "reward_unavailable", "Esta recompensa ya no está disponible."),
 	unauthorized: () =>
 		new MenuAccountError(401, "unauthorized", "Tu sesión expiró. Vuelve a entrar."),
 	internal: (message = "No se pudo completar la operación. Intenta de nuevo.") =>

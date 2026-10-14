@@ -89,13 +89,17 @@
         "orders": "My orders",
         "addresses": "My addresses",
         "settings": "Settings",
-        "menu": "View menu"
+        "menu": "View menu",
+        "home": "Home",
+        "rewards": "My points"
       },
       "sectionDescriptions": {
         "account": "Your contact details to speed up your orders.",
         "orders": "Your order history at this business.",
         "addresses": "The addresses you used for delivery.",
-        "settings": "Your account password and session."
+        "settings": "Your details, password and session.",
+        "home": "Your current order and your recent orders.",
+        "rewards": "Redeem your points for coupons from this business."
       },
       "tabs": {
         "login": "Sign in",
@@ -189,7 +193,9 @@
         "invalid_address": "Enter the address with street and number.",
         "delivery_unavailable": "This business doesn’t deliver.",
         "email_not_verified": "Confirm your email with the code we sent you.",
-        "invalid_code": "The code is invalid or has expired."
+        "invalid_code": "The code is invalid or has expired.",
+        "insufficient_points": "You don't have enough points for this reward.",
+        "reward_unavailable": "This reward is no longer available."
       },
       "orders": {
         "loading": "Loading orders…",
@@ -232,7 +238,8 @@
           "deliveryFee": "Delivery fee",
           "free": "Free",
           "total": "Total",
-          "notAvailable": "Not available"
+          "notAvailable": "Not available",
+          "handoffHint": "Show it when you receive your order."
         },
         "paymentStatus": {
           "paid": "Paid",
@@ -245,7 +252,21 @@
         "orderNow": "Place my first order",
         "repeatHint": "Reordering adds the products to your cart at today's prices. You can change them before confirming.",
         "repeatUnavailable": "This order has no products that can be reordered.",
-        "repeating": "Preparing…"
+        "repeating": "Preparing…",
+        "track": {
+          "received": "Received",
+          "preparing": "Preparing",
+          "ready": "Ready",
+          "delivered": "Delivered",
+          "pickedUp": "Picked up"
+        },
+        "filters": {
+          "label": "Filter orders",
+          "all": "All",
+          "active": "In progress",
+          "past": "Past"
+        },
+        "viewDetail": "View details"
       },
       "addresses": {
         "loading": "Loading addresses…",
@@ -312,6 +333,91 @@
         "view": "View terms",
         "rowLabel": "Terms and conditions",
         "acceptLabel": "I accept the <link>terms and conditions</link>"
+      },
+      "hero": {
+        "back": "Menu",
+        "guestTitle": "Your account at {business}",
+        "perks": {
+          "repeat": "Reorder in one tap",
+          "addresses": "Save your delivery addresses",
+          "track": "Follow every order's status"
+        }
+      },
+      "scheme": {
+        "toDark": "Switch to dark mode",
+        "toLight": "Switch to light mode"
+      },
+      "navShort": {
+        "home": "Home",
+        "orders": "Orders",
+        "addresses": "Addresses",
+        "settings": "Settings",
+        "rewards": "Points"
+      },
+      "home": {
+        "liveTitle": "Order in progress",
+        "viewOrder": "View order",
+        "recent": "Recent orders",
+        "seeAll": "See all",
+        "quick": {
+          "repeat": "Reorder",
+          "repeatSub": "your last order",
+          "menu": "Go to menu",
+          "menuSub": "place your first order",
+          "addresses": "Addresses",
+          "addressesSub": "for delivery",
+          "profile": "My details",
+          "profileSub": "and security"
+        },
+        "points": {
+          "title": "Your points",
+          "unit": "{count, plural, one {point} other {points}}",
+          "redeem": "Redeem",
+          "more": "{count, plural, one {and # more way} other {and # more ways}}"
+        }
+      },
+      "rewards": {
+        "loading": "Loading rewards…",
+        "balanceTitle": "Your points",
+        "title": "Rewards",
+        "empty": "This business doesn't have rewards to redeem yet.",
+        "cost": "{count, plural, one {# point} other {# points}}",
+        "benefitPercent": "{value}% off your order",
+        "benefitAmount": "{amount} off your order",
+        "benefitProduct": "{amount} coupon to order {product}",
+        "minOrder": "Minimum order {amount}",
+        "validDays": "{count, plural, one {Valid for # day} other {Valid for # days}}",
+        "noExpiry": "Doesn't expire",
+        "redeem": "Redeem",
+        "redeeming": "Redeeming…",
+        "missing": "{count, plural, one {# point to go} other {# points to go}}",
+        "confirm": "Redeem it?",
+        "confirmYes": "Yes, redeem",
+        "cancel": "Cancel",
+        "doneTitle": "Done! Here's your coupon",
+        "doneHint": "Enter it in the cart at checkout. It can be used once and only with your account.",
+        "copy": "Copy",
+        "copied": "Copied",
+        "goToMenu": "Go to menu",
+        "validUntil": "Expires on {date}.",
+        "historyTitle": "My redemptions",
+        "redeemedOn": "Redeemed on {date}",
+        "status": {
+          "available": "Available",
+          "used": "Used",
+          "expired": "Expired",
+          "cancelled": "Cancelled"
+        },
+        "earn": {
+          "title": "How to earn points",
+          "none": "This business hasn't set how to earn points yet.",
+          "perAmount": "{points, plural, one {# point} other {# points}} for every {amount} you spend",
+          "perOrder": "{points, plural, one {# point} other {# points}} per purchase",
+          "product": "{points, plural, one {# point} other {# points}} for each {name}",
+          "category": "{points, plural, one {# point} other {# points}} for each item in {name}",
+          "until": "Promo until {date}",
+          "from": "From {date}"
+        }
       }
     },
     "cart": {

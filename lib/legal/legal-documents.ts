@@ -14,8 +14,8 @@ import { LANDING_BRAND_NAME, LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "
  *   `getAppUrl() + LEGAL_TERMS_PATH`.
  * Las solicitudes guardadas antes de existir `legal_version` quedan en null.
  */
-export const LEGAL_DOCUMENTS_VERSION = "2026-10-09";
-export const LEGAL_UPDATED_AT_LABEL = "9 de octubre de 2026";
+export const LEGAL_DOCUMENTS_VERSION = "2026-10-13";
+export const LEGAL_UPDATED_AT_LABEL = "13 de octubre de 2026";
 
 /** Rutas de los documentos, para enlazarlos desde el alta y los correos sin escribirlas a mano. */
 export const LEGAL_TERMS_PATH = "/onboarding/terminos";

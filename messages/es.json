@@ -89,13 +89,17 @@
         "orders": "Mis pedidos",
         "addresses": "Mis direcciones",
         "settings": "Configuración",
-        "menu": "Ver menú"
+        "menu": "Ver menú",
+        "home": "Inicio",
+        "rewards": "Mis puntos"
       },
       "sectionDescriptions": {
         "account": "Tus datos de contacto para agilizar tus pedidos.",
         "orders": "El historial de tus pedidos en este negocio.",
         "addresses": "Las direcciones que usaste para delivery.",
-        "settings": "Contraseña y sesión de tu cuenta."
+        "settings": "Tus datos, tu contraseña y tu sesión.",
+        "home": "Tu pedido en curso y tus pedidos recientes.",
+        "rewards": "Canjea tus puntos por cupones de este negocio."
       },
       "tabs": {
         "login": "Entrar",
@@ -189,7 +193,9 @@
         "invalid_address": "Escribe la dirección con calle y número.",
         "delivery_unavailable": "Este negocio no hace delivery.",
         "email_not_verified": "Confirma tu correo con el código que te enviamos.",
-        "invalid_code": "El código no es válido o ya caducó."
+        "invalid_code": "El código no es válido o ya caducó.",
+        "insufficient_points": "No tienes puntos suficientes para esta recompensa.",
+        "reward_unavailable": "Esta recompensa ya no está disponible."
       },
       "orders": {
         "loading": "Cargando pedidos…",
@@ -232,7 +238,8 @@
           "deliveryFee": "Envío",
           "free": "Gratis",
           "total": "Total",
-          "notAvailable": "Sin datos"
+          "notAvailable": "Sin datos",
+          "handoffHint": "Muéstralo al recibir tu pedido."
         },
         "paymentStatus": {
           "paid": "Pagado",
@@ -245,7 +252,21 @@
         "orderNow": "Hacer mi primer pedido",
         "repeatHint": "Al repetir, los productos se cargan en tu carrito con los precios de hoy. Puedes cambiarlos antes de confirmar.",
         "repeatUnavailable": "Este pedido no tiene productos que se puedan repetir.",
-        "repeating": "Preparando…"
+        "repeating": "Preparando…",
+        "track": {
+          "received": "Recibido",
+          "preparing": "Preparando",
+          "ready": "Listo",
+          "delivered": "Entregado",
+          "pickedUp": "Retirado"
+        },
+        "filters": {
+          "label": "Filtrar pedidos",
+          "all": "Todos",
+          "active": "En curso",
+          "past": "Anteriores"
+        },
+        "viewDetail": "Ver detalle"
       },
       "addresses": {
         "loading": "Cargando direcciones…",
@@ -312,6 +333,91 @@
         "view": "Ver términos",
         "rowLabel": "Términos y condiciones",
         "acceptLabel": "Acepto los <link>términos y condiciones</link>"
+      },
+      "hero": {
+        "back": "Menú",
+        "guestTitle": "Tu cuenta en {business}",
+        "perks": {
+          "repeat": "Repite tus pedidos en un toque",
+          "addresses": "Guarda tus direcciones de entrega",
+          "track": "Sigue el estado de cada pedido"
+        }
+      },
+      "scheme": {
+        "toDark": "Cambiar a modo oscuro",
+        "toLight": "Cambiar a modo claro"
+      },
+      "navShort": {
+        "home": "Inicio",
+        "orders": "Pedidos",
+        "addresses": "Direcciones",
+        "settings": "Ajustes",
+        "rewards": "Puntos"
+      },
+      "home": {
+        "liveTitle": "Pedido en curso",
+        "viewOrder": "Ver pedido",
+        "recent": "Pedidos recientes",
+        "seeAll": "Ver todos",
+        "quick": {
+          "repeat": "Repetir",
+          "repeatSub": "tu último pedido",
+          "menu": "Ir al menú",
+          "menuSub": "haz tu primer pedido",
+          "addresses": "Direcciones",
+          "addressesSub": "tus entregas",
+          "profile": "Mis datos",
+          "profileSub": "y seguridad"
+        },
+        "points": {
+          "title": "Tus puntos",
+          "unit": "{count, plural, one {punto} other {puntos}}",
+          "redeem": "Canjear",
+          "more": "{count, plural, one {y # forma más} other {y # formas más}}"
+        }
+      },
+      "rewards": {
+        "loading": "Cargando recompensas…",
+        "balanceTitle": "Tus puntos",
+        "title": "Recompensas",
+        "empty": "Este negocio todavía no tiene recompensas para canjear.",
+        "cost": "{count, plural, one {# punto} other {# puntos}}",
+        "benefitPercent": "{value}% de descuento en tu pedido",
+        "benefitAmount": "{amount} de descuento en tu pedido",
+        "benefitProduct": "Cupón de {amount} para pedir {product}",
+        "minOrder": "Compra mínima {amount}",
+        "validDays": "{count, plural, one {Vale # día} other {Vale # días}}",
+        "noExpiry": "No vence",
+        "redeem": "Canjear",
+        "redeeming": "Canjeando…",
+        "missing": "{count, plural, one {Te falta # punto} other {Te faltan # puntos}}",
+        "confirm": "¿Lo canjeas?",
+        "confirmYes": "Sí, canjear",
+        "cancel": "Cancelar",
+        "doneTitle": "¡Listo! Este es tu cupón",
+        "doneHint": "Escríbelo en el carrito al pagar. Es de un solo uso y solo funciona con tu cuenta.",
+        "copy": "Copiar",
+        "copied": "Copiado",
+        "goToMenu": "Ir al menú",
+        "validUntil": "Vence el {date}.",
+        "historyTitle": "Mis canjes",
+        "redeemedOn": "Canjeado el {date}",
+        "status": {
+          "available": "Disponible",
+          "used": "Usado",
+          "expired": "Vencido",
+          "cancelled": "Anulado"
+        },
+        "earn": {
+          "title": "Cómo sumar puntos",
+          "none": "Este negocio todavía no definió cómo se ganan puntos.",
+          "perAmount": "{points, plural, one {# punto} other {# puntos}} por cada {amount} que gastas",
+          "perOrder": "{points, plural, one {# punto} other {# puntos}} por cada compra",
+          "product": "{points, plural, one {# punto} other {# puntos}} por cada {name}",
+          "category": "{points, plural, one {# punto} other {# puntos}} por cada producto de {name}",
+          "until": "Promo hasta el {date}",
+          "from": "Desde el {date}"
+        }
       }
     },
     "cart": {

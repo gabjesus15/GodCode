@@ -2,46 +2,41 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useLocale, useTranslations } from "next-intl";
-import { ChevronRight, UtensilsCrossed } from "lucide-react";
-
-import { formatCartMoney } from "../cart/utils/format-cart-money";
+import { useTranslations } from "next-intl";
+import { UtensilsCrossed } from "lucide-react";
 
 import type { MenuAccountOrder } from "./menu-account-types";
 import { errorMessage } from "./menu-account-auth-panel";
-import { MenuAccountOrderDetail, orderStatusKey } from "./menu-account-order-detail";
-import { useMenuAccount } from "./use-menu-account";
+import { MenuAccountOrderDetail } from "./menu-account-order-detail";
+import { OrderCard } from "./menu-account-order-parts";
+import { isActiveOrder } from "./use-account-orders";
 import { useRepeatOrder } from "./use-repeat-order";
 
-const ITEMS_PREVIEW = 3;
+type OrdersFilter = "all" | "active" | "past";
 
 type MenuAccountOrdersProps = {
-	companySlug: string;
+	/** Lista compartida con el inicio (`useAccountOrders`); null mientras carga. */
+	orders: MenuAccountOrder[] | null;
+	loading: boolean;
+	errorCode: string | null;
+	/** Pedido que se abre al entrar, cuando se tocó desde el inicio. */
+	initialOrderId?: string | null;
 	/** Avisa al dashboard para ocultar su encabezado mientras se ve un detalle. */
 	onDetailChange?: (open: boolean) => void;
 };
 
-export function MenuAccountOrders({ companySlug, onDetailChange }: MenuAccountOrdersProps) {
+export function MenuAccountOrders({
+	orders,
+	loading,
+	errorCode,
+	initialOrderId = null,
+	onDetailChange,
+}: MenuAccountOrdersProps) {
 	const t = useTranslations("tenant.account.orders");
 	const tAccount = useTranslations("tenant.account");
-	const locale = useLocale();
-	const { pending, errorCode, run } = useMenuAccount("login");
-	const [orders, setOrders] = useState<MenuAccountOrder[] | null>(null);
 	const [selectedId, setSelectedId] = useState<string | null>(null);
+	const [filter, setFilter] = useState<OrdersFilter>("all");
 	const { menuPath } = useRepeatOrder();
-
-	useEffect(() => {
-		let cancelled = false;
-		void run<{ orders: MenuAccountOrder[] }>(
-			`orders?companySlug=${encodeURIComponent(companySlug)}`,
-			{ method: "GET" },
-		).then((result) => {
-			if (!cancelled && result.ok) setOrders(result.data.orders);
-		});
-		return () => {
-			cancelled = true;
-		};
-	}, [companySlug, run]);
 
 	/* El detalle es una "pantalla" dentro de la sección: entra con un estado en el
 	   historial para que el gesto de volver del teléfono (o el botón atrás) lo
@@ -68,82 +63,78 @@ export function MenuAccountOrders({ companySlug, onDetailChange }: MenuAccountOr
 		// openDetail solo toca estado propio; no hace falta rehacer el listener.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+	useEffect(() => {
+		if (initialOrderId) showDetail(initialOrderId);
+		// Solo al montar: el pedido elegido en el inicio se abre una vez.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const selected = selectedId ? orders?.find((order) => order.id === selectedId) : null;
 	if (selected) {
 		return <MenuAccountOrderDetail order={selected} onBack={closeDetail} />;
 	}
 
-	const dateFormatter = new Intl.DateTimeFormat(locale, {
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
+	const activeCount = orders?.filter(isActiveOrder).length ?? 0;
+	const shown =
+		orders?.filter((order) =>
+			filter === "all" ? true : filter === "active" ? isActiveOrder(order) : !isActiveOrder(order),
+		) ?? [];
 
 	return (
 		<div className="account-panel">
 			{errorCode ? <p className="account-error">{errorMessage(tAccount, errorCode)}</p> : null}
 
-			{orders === null && pending ? <p className="account-note">{t("loading")}</p> : null}
+			{loading ? <p className="account-note">{t("loading")}</p> : null}
 
 			{orders !== null && orders.length === 0 ? (
-				<p className="account-empty">{t("empty")}</p>
+				<div className="account-empty">
+					<p>{t("empty")}</p>
+					<Link href={menuPath()} className="account-button account-button--primary">
+						<UtensilsCrossed size={16} aria-hidden />
+						{t("orderNow")}
+					</Link>
+				</div>
 			) : null}
 
 			{orders && orders.length > 0 ? (
-				<ul className="account-list">
-					{orders.map((order) => {
-						const status = orderStatusKey(order.status);
-						const extraItems = order.items.length - ITEMS_PREVIEW;
-						return (
-							<li key={order.id}>
+				<>
+					{/* Filtros solo cuando hay algo en curso: si todo es historial, sobran. */}
+					{activeCount > 0 ? (
+						<div className="account-chips" role="group" aria-label={t("filters.label")}>
+							{(
+								[
+									["all", orders.length],
+									["active", activeCount],
+									["past", orders.length - activeCount],
+								] as const
+							).map(([id, count]) => (
 								<button
+									key={id}
 									type="button"
-									className="account-order"
-									onClick={() => showDetail(order.id)}
-									aria-label={t("detail.open", { number: order.number })}
+									className={`account-chip ${filter === id ? "is-active" : ""}`}
+									aria-pressed={filter === id}
+									onClick={() => setFilter(id)}
 								>
-									<div className="account-order-main">
-										<span className="account-order-number">
-											{t("number", { number: order.number })}
-										</span>
-										<span className="account-order-meta">
-											{dateFormatter.format(new Date(order.createdAt))} ·{" "}
-											{t(`fulfillment.${order.fulfillment}`)}
-										</span>
-										{order.items.length > 0 ? (
-											<span className="account-order-items">
-												{order.items
-													.slice(0, ITEMS_PREVIEW)
-													.map((item) => `${item.quantity}× ${item.name}`)
-													.join(", ")}
-												{extraItems > 0 ? ` ${t("moreItems", { count: extraItems })}` : ""}
-											</span>
-										) : null}
-									</div>
-									<div className="account-order-side">
-										<span className={`account-order-status account-order-status--${status}`}>
-											{t(`status.${status}`)}
-										</span>
-										<span className="account-order-total">
-											{formatCartMoney(order.total, order.currency)}
-										</span>
-									</div>
-									<ChevronRight size={16} className="account-order-chevron" aria-hidden />
+									{t(`filters.${id}`)} · {count}
 								</button>
+							))}
+						</div>
+					) : null}
+					<ul className="account-order-list">
+						{shown.map((order) => (
+							<li key={order.id}>
+								<OrderCard order={order} onOpen={() => showDetail(order.id)} />
 							</li>
-						);
-					})}
-				</ul>
+						))}
+					</ul>
+				</>
 			) : null}
 
-			{orders !== null ? (
+			{orders && orders.length > 0 ? (
 				<div className="account-actions">
-					<Link href={menuPath()} className="account-button">
-						<UtensilsCrossed size={15} aria-hidden />
-						{t(orders.length === 0 ? "orderNow" : "goToMenu")}
+					<Link href={menuPath()} className="account-button account-button--ghost">
+						<UtensilsCrossed size={16} aria-hidden />
+						{t("goToMenu")}
 					</Link>
 				</div>
 			) : null}

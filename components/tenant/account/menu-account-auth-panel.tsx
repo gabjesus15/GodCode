@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
-import { UserRound } from "lucide-react";
 
 import { getFormStrategy } from "@/lib/geo/country-forms";
 
@@ -256,10 +255,6 @@ export function MenuAccountAuthPanel({
 
 	return (
 		<div className="account-card account-card--form">
-			<span className="account-card-glyph" aria-hidden>
-				<UserRound size={28} strokeWidth={1.8} />
-			</span>
-
 			{showTabs ? (
 				<div className="account-tabs" role="tablist">
 					<button
@@ -540,6 +535,8 @@ export function errorMessage(t: ReturnType<typeof useTranslations>, code: string
 		"weak_password",
 		"email_not_verified",
 		"invalid_code",
+		"insufficient_points",
+		"reward_unavailable",
 		"validation_error",
 		"network",
 		"rate_limited",

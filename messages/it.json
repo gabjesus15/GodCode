@@ -89,13 +89,17 @@
         "orders": "I miei ordini",
         "addresses": "I miei indirizzi",
         "settings": "Impostazioni",
-        "menu": "Vedi il menu"
+        "menu": "Vedi il menu",
+        "home": "Home",
+        "rewards": "I miei punti"
       },
       "sectionDescriptions": {
         "account": "I tuoi dati di contatto per ordinare più velocemente.",
         "orders": "Lo storico dei tuoi ordini in questo negozio.",
         "addresses": "Gli indirizzi usati per la consegna.",
-        "settings": "Password e sessione del tuo account."
+        "settings": "I tuoi dati, la password e la sessione.",
+        "home": "Il tuo ordine in corso e i tuoi ordini recenti.",
+        "rewards": "Riscatta i tuoi punti con coupon di questo locale."
       },
       "tabs": {
         "login": "Accedi",
@@ -189,7 +193,9 @@
         "invalid_address": "Scrivi l’indirizzo con via e numero.",
         "delivery_unavailable": "Questo locale non fa consegne.",
         "email_not_verified": "Conferma la tua email con il codice che ti abbiamo inviato.",
-        "invalid_code": "Il codice non è valido o è scaduto."
+        "invalid_code": "Il codice non è valido o è scaduto.",
+        "insufficient_points": "Non hai abbastanza punti per questo premio.",
+        "reward_unavailable": "Questo premio non è più disponibile."
       },
       "code": {
         "label": "Codice dell'email",
@@ -252,7 +258,8 @@
           "deliveryFee": "Consegna",
           "free": "Gratis",
           "total": "Totale",
-          "notAvailable": "Non disponibile"
+          "notAvailable": "Non disponibile",
+          "handoffHint": "Mostralo quando ricevi il tuo ordine."
         },
         "paymentStatus": {
           "paid": "Pagato",
@@ -265,7 +272,21 @@
         "orderNow": "Fai il mio primo ordine",
         "repeatHint": "Ripetendo, i prodotti vanno nel carrello ai prezzi di oggi. Puoi modificarli prima di confermare.",
         "repeatUnavailable": "Questo ordine non ha prodotti che si possano ripetere.",
-        "repeating": "Preparazione…"
+        "repeating": "Preparazione…",
+        "track": {
+          "received": "Ricevuto",
+          "preparing": "In preparazione",
+          "ready": "Pronto",
+          "delivered": "Consegnato",
+          "pickedUp": "Ritirato"
+        },
+        "filters": {
+          "label": "Filtra ordini",
+          "all": "Tutti",
+          "active": "In corso",
+          "past": "Precedenti"
+        },
+        "viewDetail": "Vedi dettagli"
       },
       "addresses": {
         "loading": "Caricamento indirizzi…",
@@ -312,6 +333,91 @@
         "view": "Vedi i termini",
         "rowLabel": "Termini e condizioni",
         "acceptLabel": "Accetto i <link>termini e condizioni</link>"
+      },
+      "hero": {
+        "back": "Menu",
+        "guestTitle": "Il tuo account da {business}",
+        "perks": {
+          "repeat": "Ripeti i tuoi ordini con un tocco",
+          "addresses": "Salva i tuoi indirizzi di consegna",
+          "track": "Segui lo stato di ogni ordine"
+        }
+      },
+      "scheme": {
+        "toDark": "Passa alla modalità scura",
+        "toLight": "Passa alla modalità chiara"
+      },
+      "navShort": {
+        "home": "Home",
+        "orders": "Ordini",
+        "addresses": "Indirizzi",
+        "settings": "Impostazioni",
+        "rewards": "Punti"
+      },
+      "home": {
+        "liveTitle": "Ordine in corso",
+        "viewOrder": "Vedi ordine",
+        "recent": "Ordini recenti",
+        "seeAll": "Vedi tutti",
+        "quick": {
+          "repeat": "Ripeti",
+          "repeatSub": "il tuo ultimo ordine",
+          "menu": "Vai al menu",
+          "menuSub": "fai il tuo primo ordine",
+          "addresses": "Indirizzi",
+          "addressesSub": "per la consegna",
+          "profile": "I miei dati",
+          "profileSub": "e sicurezza"
+        },
+        "points": {
+          "title": "I tuoi punti",
+          "unit": "{count, plural, one {punto} other {punti}}",
+          "redeem": "Riscatta",
+          "more": "{count, plural, one {e # altro modo} other {e altri # modi}}"
+        }
+      },
+      "rewards": {
+        "loading": "Caricamento premi…",
+        "balanceTitle": "I tuoi punti",
+        "title": "Premi",
+        "empty": "Questo locale non ha ancora premi da riscattare.",
+        "cost": "{count, plural, one {# punto} other {# punti}}",
+        "benefitPercent": "{value}% di sconto sul tuo ordine",
+        "benefitAmount": "{amount} di sconto sul tuo ordine",
+        "benefitProduct": "Coupon da {amount} per ordinare {product}",
+        "minOrder": "Ordine minimo {amount}",
+        "validDays": "{count, plural, one {Valido # giorno} other {Valido # giorni}}",
+        "noExpiry": "Non scade",
+        "redeem": "Riscatta",
+        "redeeming": "Riscatto in corso…",
+        "missing": "{count, plural, one {Ti manca # punto} other {Ti mancano # punti}}",
+        "confirm": "Lo riscatti?",
+        "confirmYes": "Sì, riscatta",
+        "cancel": "Annulla",
+        "doneTitle": "Fatto! Ecco il tuo coupon",
+        "doneHint": "Inseriscilo nel carrello al pagamento. Si usa una sola volta e solo con il tuo account.",
+        "copy": "Copia",
+        "copied": "Copiato",
+        "goToMenu": "Vai al menu",
+        "validUntil": "Scade il {date}.",
+        "historyTitle": "I miei riscatti",
+        "redeemedOn": "Riscattato il {date}",
+        "status": {
+          "available": "Disponibile",
+          "used": "Usato",
+          "expired": "Scaduto",
+          "cancelled": "Annullato"
+        },
+        "earn": {
+          "title": "Come guadagnare punti",
+          "none": "Questo locale non ha ancora definito come guadagnare punti.",
+          "perAmount": "{points, plural, one {# punto} other {# punti}} ogni {amount} spesi",
+          "perOrder": "{points, plural, one {# punto} other {# punti}} per acquisto",
+          "product": "{points, plural, one {# punto} other {# punti}} per ogni {name}",
+          "category": "{points, plural, one {# punto} other {# punti}} per ogni prodotto di {name}",
+          "until": "Promo fino al {date}",
+          "from": "Dal {date}"
+        }
       }
     },
     "cart": {
