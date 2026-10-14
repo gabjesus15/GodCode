@@ -25,8 +25,13 @@ const footerLinks = [
 	{ label: "Precios", href: "/#precios" },
 	{ label: "Preguntas frecuentes", href: "/#faq" },
 	{ label: "Calculadora de comisiones", href: "/calculadora-comisiones" },
+	{ label: "Comisiones de delivery en Chile", href: "/comisiones-delivery-chile" },
+	{ label: "Menú digital por tipo de negocio", href: "/menu-digital" },
+	{ label: "Funciones: caja, menú QR, delivery", href: "/funciones" },
 	{ label: "Gcode en Chile", href: "/chile" },
 	{ label: "Gcode en Venezuela", href: "/venezuela" },
+	{ label: "Gcode en Estados Unidos", href: "/estados-unidos" },
+	{ label: "English", href: "/en" },
 	{ label: "Negocios que usan Gcode", href: "/onboarding/negocios" },
 	{ label: "Crear mi tienda", href: "/onboarding" },
 ];

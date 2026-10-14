@@ -142,7 +142,18 @@ export function CountryLanding({ country, fromPrice, socialLinks, jsonLd, heroPh
 										<Check className="h-3.5 w-3.5" strokeWidth={3} />
 									</span>
 									<div>
-										<h3 className="text-base font-semibold text-[#f4f4f5]">{item.title}</h3>
+										<h3 className="text-base font-semibold text-[#f4f4f5]">
+											{item.href ? (
+												<Link
+													href={item.href}
+													className="underline decoration-white/15 underline-offset-4 transition-colors hover:decoration-[#8b93ff]"
+												>
+													{item.title}
+												</Link>
+											) : (
+												item.title
+											)}
+										</h3>
 										<p className="mt-1.5 text-sm leading-relaxed text-[#a1a1aa] text-pretty">{item.text}</p>
 									</div>
 								</li>
@@ -191,6 +202,15 @@ export function CountryLanding({ country, fromPrice, socialLinks, jsonLd, heroPh
 								>
 									Calcular cuánto pagas hoy en comisiones
 								</Link>
+								{/* La guía con fuentes habla de las apps en Chile: solo se enlaza desde /chile. */}
+								{country.code === "CL" ? (
+									<Link
+										href="/comisiones-delivery-chile"
+										className="text-sm text-[#71717a] underline decoration-white/15 underline-offset-[6px] transition-colors hover:text-[#d4d4d8]"
+									>
+										Cuánto cobra cada app de delivery en Chile
+									</Link>
+								) : null}
 							</div>
 						</div>
 					</div>

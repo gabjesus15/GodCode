@@ -13,7 +13,7 @@ const BASE = "https://www.godcode.me";
 
 describe("páginas de país del landing", () => {
 	it("existen Chile y Venezuela y el proxy no las trata como tenants", () => {
-		expect(LANDING_COUNTRY_SLUGS).toEqual(["chile", "venezuela"]);
+		expect(LANDING_COUNTRY_SLUGS).toEqual(["chile", "venezuela", "estados-unidos"]);
 		for (const slug of LANDING_COUNTRY_SLUGS) {
 			expect(MAIN_DOMAIN_RESERVED_PATH_SEGMENTS.has(slug)).toBe(true);
 			expect(resolveTenantSlugFromPathname(`/${slug}`)).toBeNull();

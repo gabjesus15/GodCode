@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
@@ -143,7 +144,10 @@ export default async function CalculadoraComisionesPage() {
 								Calcula cuánto pagas cada mes en comisiones y cuánto ahorrarías vendiendo desde tu propia tienda.
 							</p>
 							<p className="mx-auto mt-4 max-w-md text-sm text-[#71717a] lg:mx-0">
-								Sirve para PedidosYa, Uber Eats, Rappi o cualquier otra app.
+								Sirve para PedidosYa, Uber Eats, Rappi o cualquier otra app.{" "}
+								<Link href="/comisiones-delivery-chile" className="underline decoration-white/20 underline-offset-4 hover:text-[#d4d4d8]">
+									¿Cuánto cobra cada una en Chile?
+								</Link>
 							</p>
 						</div>
 						<CommissionCalculator plan={plan} />

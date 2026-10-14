@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "./brand";
 import { type LandingCountry, type LandingCountrySlug, LANDING_COUNTRIES } from "./countries";
+import { spanishPageLanguages } from "./english-page-seo";
 import { buildOrganizationJsonLd, getOrganizationId } from "./json-ld";
 
 export function getLandingCountryPath(slug: LandingCountrySlug): string {
@@ -25,7 +26,8 @@ export function buildLandingCountryMetadata(base: string, country: LandingCountr
 		title: country.metaTitle,
 		description: country.metaDescription,
 		keywords: country.keywords,
-		alternates: { canonical: url },
+		// hreflang solo si hay versión en inglés (Estados Unidos ↔ /en); las demás no tienen.
+		alternates: { canonical: url, languages: spanishPageLanguages(base, getLandingCountryPath(country.slug)) },
 		openGraph: {
 			title: country.metaTitle,
 			description: country.metaDescription,
