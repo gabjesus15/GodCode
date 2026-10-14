@@ -33,7 +33,7 @@ describe("lista única de páginas de marketing", () => {
 			"/menu-digital/panaderias",
 			"/funciones",
 			"/funciones/punto-de-venta",
-			"/funciones/carta-qr",
+			"/funciones/menu-qr",
 			"/funciones/pedidos-online",
 			"/funciones/delivery-propio",
 			"/funciones/inventario",

@@ -68,7 +68,7 @@ export type LandingCountry = {
 export const LANDING_COUNTRY_SHARED_FEATURES: LandingCountryFeature[] = [
 	{
 		title: "Menú digital con QR",
-		href: "/funciones/carta-qr",
+		href: "/funciones/menu-qr",
 		text: "Fotos, variantes, combos y tamaños. Tus clientes lo abren desde la mesa, Instagram o WhatsApp sin descargar nada.",
 	},
 	{
@@ -189,7 +189,9 @@ const VENEZUELA: LandingCountry = {
 		"menú QR para restaurantes Venezuela",
 		"carta digital Venezuela",
 		"sistema para restaurantes Venezuela",
-		"punto de venta para restaurantes Venezuela",
+		// «Punto de venta» en Venezuela es el datáfono del banco: no se apunta a esa búsqueda.
+		"sistema de caja para restaurantes Venezuela",
+		"sistema administrativo para restaurantes",
 		"sistema de pedidos online Venezuela",
 		"pedidos por WhatsApp Venezuela",
 		"menú digital con pago móvil",
@@ -241,6 +243,11 @@ const VENEZUELA: LandingCountry = {
 			question: "¿Qué pasa cuando cambia la tasa?",
 			answer:
 				"El menú usa la tasa BCV vigente, y cada pedido guarda la tasa con la que se cobró. En el cierre de caja ves lo que entró en cada moneda sin tener que recalcular nada.",
+		},
+		{
+			question: "¿Funciona con el punto de mi banco?",
+			answer:
+				"Sí. Sigues cobrando con el punto de venta de tu banco como siempre; en la caja marcas que el pago fue con tarjeta y el cierre te lo muestra separado del pago móvil, el Zelle y el efectivo.",
 		},
 		{
 			question: "¿Funciona con el internet de Venezuela?",

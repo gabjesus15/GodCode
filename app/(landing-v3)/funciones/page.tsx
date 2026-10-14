@@ -60,7 +60,7 @@ export default async function FuncionesIndexPage() {
 							Todo para vender en <span className="text-[#4f5bff]">tu restaurante</span>
 						</h1>
 						<p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-[#a1a1aa] text-pretty lg:mx-0">
-							Caja, carta QR, pedidos online, delivery e inventario en un solo panel. Elige una función para ver qué
+							Caja, menú QR, pedidos online, delivery e inventario en un solo panel. Elige una función para ver qué
 							debería tener y cómo se usa.
 						</p>
 					</div>

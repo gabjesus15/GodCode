@@ -8,7 +8,7 @@ import { LANDING_FEATURES_PATH } from "./marketing-paths";
 
 export const LANDING_FEATURES_INDEX_TITLE = `Funciones de ${LANDING_PRODUCT_NAME} para restaurantes`;
 export const LANDING_FEATURES_INDEX_DESCRIPTION =
-	"Punto de venta, carta digital con QR, pedidos online y por WhatsApp, delivery propio e inventario para restaurantes, en un solo panel y sin comisión por venta.";
+	"Sistema POS y caja, menú QR, pedidos online y por WhatsApp, delivery propio e inventario para restaurantes, en un solo panel y sin comisión por venta.";
 
 export function getLandingFeaturePath(feature: Pick<LandingFeature, "slug">): string {
 	return `${LANDING_FEATURES_PATH}/${feature.slug}`;

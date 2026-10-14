@@ -2,10 +2,10 @@ import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "./brand";
 import type { LANDING_FEATURE_SLUG_LIST } from "./marketing-paths";
 
 /**
- * Páginas por función (/funciones/punto-de-venta, /funciones/carta-qr…).
+ * Páginas por función (/funciones/punto-de-venta, /funciones/menu-qr…).
  *
  * La home compite por «menú digital y POS para restaurantes» todo junto; quien busca
- * «punto de venta para restaurante» o «carta QR» encuentra antes una página dedicada a
+ * «sistema POS para restaurante» o «menú QR» encuentra antes una página dedicada a
  * eso. Es el patrón de los sistemas grandes: una página por función, además de las de
  * rubro (`business-types.ts`) y país (`countries.ts`).
  *
@@ -46,20 +46,22 @@ export type LandingFeature = {
 
 const PUNTO_DE_VENTA: LandingFeature = {
 	slug: "punto-de-venta",
-	label: "Punto de venta",
-	metaTitle: "Punto de venta (POS) para restaurantes",
+	label: "Sistema POS y caja",
+	metaTitle: "Sistema POS y caja para restaurantes",
 	metaDescription:
-		"Caja para restaurantes que se usa desde el navegador: turnos, pedidos del mostrador y online en la misma pantalla, comandas a cocina y cierre por medio de pago.",
+		"Sistema POS y caja para restaurantes desde el navegador: turnos, pedidos del mostrador y online juntos, comandas a cocina y cierre por medio de pago.",
 	keywords: [
 		"punto de venta para restaurantes",
 		"sistema POS para restaurantes",
 		"POS restaurante",
+		"sistema de caja para restaurante",
+		"sistema administrativo para restaurantes",
 		"caja para restaurante",
 		"software de caja restaurante",
 		"sistema de comandas",
 		"POS sin comisión",
 	],
-	heroTitle: ["Punto de venta para", "restaurantes"],
+	heroTitle: ["Sistema POS y caja para", "restaurantes"],
 	heroSubtitle:
 		"Abres el turno, tomas los pedidos del mostrador junto a los que llegan por tu menú online, los mandas a cocina y cierras la caja con el detalle de cada medio de pago.",
 	teaser: "Turnos, comandas y cierre de caja, con los pedidos online en la misma pantalla.",
@@ -99,59 +101,64 @@ const PUNTO_DE_VENTA: LandingFeature = {
 				"Cuando los pedidos online se guardan en tu caja, el menú los acepta solo con un turno abierto. Así nunca entra un pedido que nadie está viendo.",
 		},
 		{
-			question: `¿El punto de venta de ${LANDING_PRODUCT_NAME} emite boleta electrónica?`,
+			question: `¿${LANDING_PRODUCT_NAME} es un datáfono para pasar tarjetas?`,
 			answer:
-				`Hoy registra la venta y el medio de pago; el documento tributario lo sigues emitiendo con tu sistema de siempre. Si necesitas la integración, ${LANDING_COMPANY_NAME} también construye sistemas a medida.`,
+				"No. Es el sistema de caja, no la máquina para cobrar con tarjeta (en Venezuela le dicen «el punto»). Sigues cobrando con el datáfono de tu banco y registras en la caja que el pago fue con tarjeta.",
+		},
+		{
+			question: "¿Emite boleta o factura electrónica?",
+			answer:
+				`Hoy registra la venta y el medio de pago; la boleta o factura la sigues emitiendo con tu sistema de siempre. Si necesitas la integración, ${LANDING_COMPANY_NAME} también construye sistemas a medida.`,
 		},
 	],
 };
 
-const CARTA_QR: LandingFeature = {
-	slug: "carta-qr",
-	label: "Carta QR",
-	metaTitle: "Carta digital con QR para restaurantes",
+const MENU_QR: LandingFeature = {
+	slug: "menu-qr",
+	label: "Menú QR",
+	metaTitle: "Menú QR y carta digital para restaurantes",
 	metaDescription:
-		"Carta digital con QR para tu restaurante: fotos, tamaños y variantes, una tarjeta lista para imprimir en las mesas y un QR que no cambia aunque cambies los precios.",
+		"Menú digital con QR para tu restaurante: fotos, tamaños y variantes, una tarjeta lista para imprimir en las mesas y un QR que no cambia aunque cambies los precios.",
 	keywords: [
-		"carta digital QR",
 		"menú QR para restaurantes",
-		"carta QR restaurante",
 		"menú digital con QR",
 		"crear menú QR",
-		"carta digital para restaurante",
+		"carta digital QR",
+		"carta QR restaurante",
+		"menú QR gratis",
 	],
-	heroTitle: ["Carta digital con QR para", "tu restaurante"],
+	heroTitle: ["Menú QR para", "tu restaurante"],
 	heroSubtitle:
-		"Tus clientes escanean el QR de la mesa y ven tu carta con fotos y precios al día, sin descargar ninguna app. El mismo link sirve para pedir para llevar o con delivery.",
-	teaser: "Un QR que no cambia, una tarjeta lista para imprimir y la carta siempre al día.",
-	guideTitle: "Qué debe tener una buena carta QR",
+		"Tus clientes escanean el QR de la mesa y ven tu menú con fotos y precios al día, sin descargar ninguna app. El mismo link sirve para pedir para llevar o con delivery.",
+	teaser: "Un QR que no cambia, una tarjeta lista para imprimir y el menú siempre al día.",
+	guideTitle: "Qué debe tener un buen menú QR",
 	guide: [
 		{
 			title: "Un QR que no se reimprime",
-			text: "El QR lleva al link de tu carta, no a un PDF. Cambias un precio o un plato en el panel y el mismo QR muestra lo nuevo en todas las mesas.",
+			text: "El QR lleva al link de tu menú, no a un PDF. Cambias un precio o un plato en el panel y el mismo QR muestra lo nuevo en todas las mesas.",
 		},
 		{
 			title: "Tarjeta lista para imprimir",
-			text: "Descargas una imagen con el nombre de tu local, el QR y la dirección de tu carta, del tamaño justo para imprimir y poner en cada mesa.",
+			text: "Descargas una imagen con el nombre de tu local, el QR y la dirección de tu menú, del tamaño justo para imprimir y poner en cada mesa.",
 		},
 		{
 			title: "Fotos, tamaños y variantes",
-			text: "Cada plato con su foto y, si los tiene, sus tamaños y opciones con precio. El cliente entiende lo que pide sin preguntar al garzón.",
+			text: "Cada plato con su foto y, si los tiene, sus tamaños y opciones con precio. El cliente entiende lo que pide sin preguntarle al mesero.",
 		},
 		{
 			title: "Horario y pausa",
-			text: "Fuera de tu horario la carta avisa que estás cerrado, y si la cocina se satura puedes pausar los pedidos sin bajar la carta.",
+			text: "Fuera de tu horario el menú avisa que estás cerrado, y si la cocina se satura puedes pausar los pedidos sin bajar el menú.",
 		},
 	],
 	steps: [
-		{ title: "Armas tu carta", text: "Partes con un menú de ejemplo de tu rubro y lo cambias por tus platos, fotos y precios." },
+		{ title: "Armas tu menú", text: "Partes con un menú de ejemplo de tu rubro y lo cambias por tus platos, fotos y precios." },
 		{ title: "Descargas el QR", text: "Al publicar, bajas la tarjeta con tu QR para imprimir y poner en las mesas." },
-		{ title: "El cliente escanea", text: "Ve la carta en su teléfono, con fotos y precios al día." },
+		{ title: "El cliente escanea", text: "Ve el menú en su teléfono, con fotos y precios al día." },
 	],
 	faq: [
 		{
-			question: "¿El cliente tiene que descargar una app para ver la carta?",
-			answer: "No. El QR abre tu carta en el navegador del teléfono, en cualquier marca y sin instalar nada.",
+			question: "¿El cliente tiene que descargar una app para ver el menú?",
+			answer: "No. El QR abre tu menú en el navegador del teléfono, en cualquier marca y sin instalar nada.",
 		},
 		{
 			question: "¿Tengo que cambiar el QR si cambio los precios?",
@@ -159,9 +166,9 @@ const CARTA_QR: LandingFeature = {
 				"No. El QR apunta siempre al mismo link; lo que cambias en el panel se ve al instante con el mismo QR impreso.",
 		},
 		{
-			question: "¿Puedo usar la misma carta en Instagram?",
+			question: "¿Puedo usar el mismo menú en Instagram?",
 			answer:
-				"Sí. El link de tu carta sirve igual para la bio de Instagram, los estados de WhatsApp y el QR de las mesas.",
+				"Sí. El link de tu menú sirve igual para la bio de Instagram, los estados de WhatsApp y el QR de las mesas.",
 		},
 	],
 };
@@ -231,19 +238,19 @@ const DELIVERY_PROPIO: LandingFeature = {
 	label: "Delivery propio",
 	metaTitle: "Delivery propio para restaurantes, sin comisión",
 	metaDescription:
-		"Ofrece delivery desde tu propio menú: costo de envío por distancia o por comuna, retiro en el local y la dirección con mapa para tu repartidor. Sin comisión por pedido.",
+		"Ofrece delivery desde tu propio menú: costo de envío por distancia o por zona, retiro en el local y la dirección con mapa para tu repartidor. Sin comisión por pedido.",
 	keywords: [
 		"delivery propio restaurante",
 		"delivery sin comisión",
 		"sistema de delivery para restaurantes",
-		"cobrar envío por comuna",
+		"cobrar envío por zona",
 		"costo de envío por distancia",
 		"alternativa a apps de delivery",
 	],
 	heroTitle: ["Delivery propio para", "restaurantes"],
 	heroSubtitle:
-		"Tu menú calcula el envío según dónde vive el cliente, por distancia o por comuna, y el pedido llega con la dirección y el mapa para tu repartidor. Sin pagarle comisión a una app.",
-	teaser: "Envío por distancia o por comuna, retiro en el local y el mapa para tu repartidor.",
+		"Tu menú calcula el envío según dónde vive el cliente, por distancia o por zona, y el pedido llega con la dirección y el mapa para tu repartidor. Sin pagarle comisión a una app.",
+	teaser: "Envío por distancia o por zona, retiro en el local y el mapa para tu repartidor.",
 	guideTitle: "Qué necesitas para tener delivery propio",
 	guide: [
 		{
@@ -251,8 +258,8 @@ const DELIVERY_PROPIO: LandingFeature = {
 			text: "Defines anillos por kilómetros desde tu local, cada uno con su costo. El menú ubica la dirección del cliente y cobra el anillo que corresponde.",
 		},
 		{
-			title: "O por comuna o sector",
-			text: "Si prefieres cobrar por zonas con nombre, como comunas o sectores, armas la lista con su precio y el cliente elige la suya, o se reconoce por su dirección.",
+			title: "O por zonas con nombre",
+			text: "Si prefieres cobrar por zonas, como comunas, municipios, urbanizaciones o sectores, armas la lista con su precio y el cliente elige la suya, o se reconoce por su dirección.",
 		},
 		{
 			title: "También para retirar",
@@ -264,7 +271,7 @@ const DELIVERY_PROPIO: LandingFeature = {
 		},
 	],
 	steps: [
-		{ title: "Configuras tus zonas", text: "Por distancia en kilómetros o por comunas y sectores, cada una con su precio." },
+		{ title: "Configuras tus zonas", text: "Por distancia en kilómetros o por zonas con nombre, cada una con su precio." },
 		{ title: "El cliente pone su dirección", text: "El menú calcula el envío y lo suma al total antes de confirmar." },
 		{ title: "Despachas", text: "Tú o tu repartidor reciben la dirección con mapa y referencia." },
 	],
@@ -275,9 +282,9 @@ const DELIVERY_PROPIO: LandingFeature = {
 				`No. ${LANDING_PRODUCT_NAME} calcula el envío y te entrega el pedido con la dirección; el despacho lo haces tú o tu repartidor de confianza.`,
 		},
 		{
-			question: "¿Puedo cobrar distinto según la comuna?",
+			question: "¿Puedo cobrar distinto según el barrio o la zona?",
 			answer:
-				"Sí. Armas una lista de comunas o sectores, cada uno con su costo de envío, y el cliente paga el que le corresponde.",
+				"Sí. Armas una lista de zonas (comunas, municipios o sectores), cada uno con su costo de envío, y el cliente paga el que le corresponde.",
 		},
 		{
 			question: "¿Puedo tener delivery en una sucursal y solo retiro en otra?",
@@ -310,7 +317,7 @@ const INVENTARIO: LandingFeature = {
 			text: "Cada venta, del mostrador o del menú online, descuenta el stock del producto. No hay que anotar las salidas a mano.",
 		},
 		{
-			title: "Lo agotado sale de la carta",
+			title: "Lo agotado sale del menú",
 			text: "Cuando algo se acaba, lo desactivas y deja de aparecer en el menú hasta que vuelvas a activarlo, para no vender lo que no tienes.",
 		},
 		{
@@ -346,7 +353,7 @@ const INVENTARIO: LandingFeature = {
 
 export const LANDING_FEATURES: Record<LandingFeatureSlug, LandingFeature> = {
 	"punto-de-venta": PUNTO_DE_VENTA,
-	"carta-qr": CARTA_QR,
+	"menu-qr": MENU_QR,
 	"pedidos-online": PEDIDOS_ONLINE,
 	"delivery-propio": DELIVERY_PROPIO,
 	inventario: INVENTARIO,

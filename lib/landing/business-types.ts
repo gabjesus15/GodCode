@@ -58,11 +58,11 @@ const PIZZERIAS: LandingBusinessType = {
 	label: "Pizzerías",
 	metaTitle: "Menú digital y pedidos online para pizzerías",
 	metaDescription:
-		"Carta digital con QR, pedidos online por tamaño y delivery por zonas para tu pizzería, sin comisión por pedido. Tu tienda parte con un menú de pizzería de ejemplo.",
+		"Menú digital con QR, pedidos online por tamaño y delivery por zonas para tu pizzería, sin comisión por pedido. Tu tienda parte con un menú de pizzería de ejemplo.",
 	keywords: [
 		"menú digital para pizzería",
 		"sistema de pedidos para pizzería",
-		"carta QR pizzería",
+		"menú QR pizzería",
 		"pedidos online pizzería sin comisión",
 		"software para pizzerías",
 		"delivery pizzería propio",
@@ -78,7 +78,7 @@ const PIZZERIAS: LandingBusinessType = {
 		},
 		{
 			title: "Delivery por zonas",
-			text: "El costo de envío no es el mismo a diez cuadras que al otro lado de la comuna. Define tus zonas una vez y el menú cobra el envío correcto solo.",
+			text: "El costo de envío no es el mismo a diez cuadras que al otro lado de la ciudad. Define tus zonas una vez y el menú cobra el envío correcto solo.",
 		},
 		{
 			title: "Pausar pedidos en la hora punta",
@@ -116,7 +116,7 @@ const SUSHI: LandingBusinessType = {
 	label: "Sushi",
 	metaTitle: "Menú digital y delivery para locales de sushi",
 	metaDescription:
-		"Carta digital con fotos, promociones por piezas y pedidos online para tu local de sushi, con delivery por zonas y sin comisión por pedido. Hecho en Santiago.",
+		"Menú digital con fotos, promociones por piezas y pedidos online para tu local de sushi, con delivery por zonas y sin comisión por pedido. Hecho en Santiago.",
 	keywords: [
 		"menú digital para sushi",
 		"sistema de pedidos sushi",
@@ -178,7 +178,7 @@ const HAMBURGUESERIAS: LandingBusinessType = {
 	keywords: [
 		"menú digital hamburguesería",
 		"sistema de pedidos hamburguesería",
-		"carta QR hamburguesas",
+		"menú QR hamburguesas",
 		"punto de venta hamburguesería",
 		"pedidos online hamburguesas sin comisión",
 	],
@@ -231,17 +231,17 @@ const COMIDA_RAPIDA: LandingBusinessType = {
 	label: "Comida rápida",
 	metaTitle: "Menú digital y caja para comida rápida",
 	metaDescription:
-		"Menú QR, pedidos para retirar y caja para tu local de comida rápida, sanguchería o food truck. Combos, pedidos ordenados y un plan fijo, sin comisión por venta.",
+		"Menú QR, pedidos para retirar y caja para tu local de comida rápida, de sándwiches o food truck. Combos, pedidos ordenados y un plan fijo, sin comisión por venta.",
 	keywords: [
 		"menú digital comida rápida",
 		"sistema para local de comida rápida",
-		"menú QR sanguchería",
+		"menú QR para food truck",
 		"sistema de pedidos food truck",
 		"caja para comida rápida",
 	],
 	heroTitle: ["Menú digital y caja para", "comida rápida"],
 	heroSubtitle:
-		"Completos, churrascos, arepas o salchipapas: el cliente pide desde el QR o tu link, paga como prefiera y el pedido sale del mostrador sin errores ni filas largas.",
+		"Perros calientes, sándwiches, arepas o salchipapas: el cliente pide desde el QR o tu link, paga como prefiera y el pedido sale del mostrador sin errores ni filas largas.",
 	teaser: "Pedidos para retirar, combos y una caja que no se traba en la hora de almuerzo.",
 	guide: [
 		{
@@ -263,7 +263,7 @@ const COMIDA_RAPIDA: LandingBusinessType = {
 	],
 	faq: [
 		{
-			question: "¿Sirve para una sanguchería o un carro de completos?",
+			question: "¿Sirve para un local de sándwiches o un carrito de perros calientes?",
 			answer:
 				"Sí. Sirve para cualquier local que venda por pedido: armas tu menú con tus sándwiches y combos, y lo compartes con un QR o un link.",
 		},
@@ -286,9 +286,9 @@ const RESTAURANTES: LandingBusinessType = {
 	plural: "restaurantes",
 	singular: "restaurante",
 	label: "Restaurantes a la carta",
-	metaTitle: "Carta digital para restaurantes a la carta",
+	metaTitle: "Menú digital para restaurantes a la carta",
 	metaDescription:
-		"Carta digital con QR para restaurantes a la carta y de menú del día: entradas, fondos y postres con foto, pedidos para llevar y caja, sin comisión por venta.",
+		"Menú digital con QR para restaurantes a la carta y de menú del día: entradas, platos principales y postres con foto, pedidos para llevar y caja, sin comisión por venta.",
 	keywords: [
 		"carta digital restaurante",
 		"menú del día digital",
@@ -296,18 +296,18 @@ const RESTAURANTES: LandingBusinessType = {
 		"sistema para restaurante",
 		"pedidos para llevar restaurante",
 	],
-	heroTitle: ["Carta digital y caja para", "restaurantes a la carta"],
+	heroTitle: ["Menú digital y caja para", "restaurantes a la carta"],
 	heroSubtitle:
-		"Entradas, platos de fondo y postres con su foto en el QR de la mesa, pedidos para llevar desde tu link y una caja que cierra el día con el detalle de cada venta.",
-	teaser: "Entradas, fondos y postres en una carta QR, con pedidos para llevar y caja.",
+		"Entradas, platos principales y postres con su foto en el QR de la mesa, pedidos para llevar desde tu link y una caja que cierra el día con el detalle de cada venta.",
+	teaser: "Entradas, principales y postres en un menú QR, con pedidos para llevar y caja.",
 	guide: [
 		{
 			title: "Una carta ordenada por tiempos",
-			text: "Entradas, platos de fondo, postres y bebidas en categorías, para que el cliente recorra la carta como en el papel.",
+			text: "Entradas, platos principales, postres y bebidas en categorías, para que el cliente recorra el menú como en el papel.",
 		},
 		{
 			title: "El plato del día sin reimprimir",
-			text: "Cambias el plato del día o un precio en el panel y la carta de todas las mesas se actualiza con el mismo QR.",
+			text: "Cambias el plato del día o un precio en el panel y el menú de todas las mesas se actualiza con el mismo QR.",
 		},
 		{
 			title: "Acompañamientos y opciones",
@@ -327,7 +327,7 @@ const RESTAURANTES: LandingBusinessType = {
 		{
 			question: "¿Los clientes pueden pedir desde la mesa?",
 			answer:
-				"En la mesa ven la carta en su teléfono; el pedido lo toma tu equipo y lo registra en la caja. Los pedidos online del link son para retirar o con delivery.",
+				"En la mesa ven el menú en su teléfono; el pedido lo toma tu equipo y lo registra en la caja. Los pedidos online del link son para retirar o con delivery.",
 		},
 		{
 			question: "¿Sirve para un restaurante con varias sucursales?",
@@ -343,9 +343,9 @@ const CAFETERIAS: LandingBusinessType = {
 	plural: "cafeterías",
 	singular: "cafetería",
 	label: "Cafeterías",
-	metaTitle: "Carta digital QR y caja para cafeterías",
+	metaTitle: "Menú QR y caja para cafeterías",
 	metaDescription:
-		"Carta digital con QR para la mesa, pedidos para llevar y punto de venta para tu cafetería. Tamaños, tipo de leche y vitrina del día, sin comisión por venta.",
+		"Menú digital con QR para la mesa, pedidos para llevar y caja para tu cafetería. Tamaños, tipo de leche y vitrina del día, sin comisión por venta.",
 	keywords: [
 		"carta digital cafetería",
 		"menú QR cafetería",
@@ -353,13 +353,13 @@ const CAFETERIAS: LandingBusinessType = {
 		"punto de venta cafetería",
 		"pedidos para llevar cafetería",
 	],
-	heroTitle: ["Carta digital QR y caja para", "cafeterías"],
+	heroTitle: ["Menú QR y caja para", "cafeterías"],
 	heroSubtitle:
-		"La carta en la mesa con un QR, los pedidos para llevar desde tu link y una caja que cierra el día sola. Para que la fila avance y la barra no se sature.",
+		"El menú en la mesa con un QR, los pedidos para llevar desde tu link y una caja que cierra el día sola. Para que la fila avance y la barra no se sature.",
 	teaser: "QR en la mesa, tamaños y tipo de leche, y la vitrina del día siempre al día.",
 	guide: [
 		{
-			title: "Una carta QR que se actualiza sola",
+			title: "Un menú QR que se actualiza solo",
 			text: "Cambias un precio o la torta del día en el panel y el QR de todas las mesas ya muestra lo nuevo. Sin reimprimir cartas.",
 		},
 		{
@@ -368,10 +368,10 @@ const CAFETERIAS: LandingBusinessType = {
 		},
 		{
 			title: "Pedidos para llevar, listos al llegar",
-			text: "El cliente pide desde tu link camino a la cafetería y lo retira en el mesón. Menos fila en la hora del café de la mañana.",
+			text: "El cliente pide desde tu link camino a la cafetería y lo retira en el mostrador. Menos fila en la hora del café de la mañana.",
 		},
 		{
-			title: "Lo que se acabó, fuera de la carta",
+			title: "Lo que se acabó, fuera del menú",
 			text: "La vitrina cambia durante el día. Desactivas lo que ya no queda y deja de aparecer en el menú, para no vender lo que no tienes.",
 		},
 	],
@@ -379,7 +379,7 @@ const CAFETERIAS: LandingBusinessType = {
 		{
 			question: "¿Necesito imprimir un QR por mesa?",
 			answer:
-				"Basta con un QR que lleve a tu menú; puedes imprimir el mismo en todas las mesas. Como la carta vive en la web, el QR no cambia aunque cambies los productos.",
+				"Basta con un QR que lleve a tu menú; puedes imprimir el mismo en todas las mesas. Como el menú vive en la web, el QR no cambia aunque cambies los productos.",
 		},
 		{
 			question: "¿Puedo cobrar distinto por leche vegetal?",
@@ -389,7 +389,7 @@ const CAFETERIAS: LandingBusinessType = {
 		{
 			question: `¿${LANDING_PRODUCT_NAME} sirve también para una cafetería con panadería?`,
 			answer:
-				"Sí. Ordenas la carta en categorías, por ejemplo cafés, para comer y panadería, y el inventario descuenta el stock de cada producto con cada venta.",
+				"Sí. Ordenas el menú en categorías, por ejemplo cafés, para comer y panadería, y el inventario descuenta el stock de cada producto con cada venta.",
 		},
 	],
 };

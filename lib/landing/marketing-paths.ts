@@ -24,7 +24,7 @@ export const LANDING_BUSINESS_TYPE_SLUG_LIST = [
 ] as const;
 
 /** Slugs de las páginas por función (/funciones/{slug}); `features.ts` tipa su registro con esta lista. */
-export const LANDING_FEATURE_SLUG_LIST = ["punto-de-venta", "carta-qr", "pedidos-online", "delivery-propio", "inventario"] as const;
+export const LANDING_FEATURE_SLUG_LIST = ["punto-de-venta", "menu-qr", "pedidos-online", "delivery-propio", "inventario"] as const;
 
 /** Índice de las funciones. */
 export const LANDING_FEATURES_PATH = "/funciones";
