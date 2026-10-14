@@ -6,6 +6,7 @@ import { LANDING_ENGLISH_SLUGS } from "@/lib/landing/english-pages";
 import {
 	LANDING_BUSINESS_TYPES_PATH,
 	LANDING_COMMISSIONS_GUIDE_PATH,
+	LABS_SUBPAGE_PATHS,
 	LANDING_ENGLISH_PATH,
 	LANDING_FEATURES_PATH,
 } from "@/lib/landing/marketing-paths";
@@ -14,7 +15,7 @@ import { getAppUrl } from "@/lib/tenant/app-url";
 import { createSupabasePublicServerClient } from "../utils/supabase/server";
 
 /** Actualizar al desplegar cambios de marketing relevantes para incentivar recrawl. */
-const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-10-13T00:00:00.000Z";
+const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-10-14T00:00:00.000Z";
 
 function getMarketingLastModified(): Date {
 	const fromEnv = process.env.NEXT_PUBLIC_SITEMAP_LAST_MODIFIED?.trim();
@@ -113,6 +114,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			lastModified: marketingLastModified,
 			changeFrequency: "monthly" as const,
 			priority: 0.8,
+		})),
+		// Gcode Labs: un servicio, un proyecto o la guía de costos por página.
+		...LABS_SUBPAGE_PATHS.map((path) => ({
+			url: `${base}${path}`,
+			lastModified: marketingLastModified,
+			changeFrequency: "monthly" as const,
+			priority: 0.7,
 		})),
 		// Páginas en inglés para EE. UU., con hreflang hacia su par en español.
 		{

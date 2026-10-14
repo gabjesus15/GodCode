@@ -35,6 +35,22 @@ export const LANDING_ENGLISH_SLUG_LIST = ["online-ordering", "qr-code-menu", "re
 /** Home en inglés. */
 export const LANDING_ENGLISH_PATH = "/en";
 
+/**
+ * Páginas de Gcode Labs debajo de /labs (servicios, proyectos, guía). Se escriben aquí a mano
+ * porque este archivo no importa nada; un test comprueba que coinciden con `lib/labs/pages.ts`.
+ */
+export const LABS_SUBPAGE_PATHS = [
+	"/labs/servicios/sitios-web",
+	"/labs/servicios/sistemas-a-medida",
+	"/labs/servicios/tiendas-y-pedidos",
+	"/labs/servicios/integraciones",
+	"/labs/servicios/mantenimiento",
+	"/labs/proyectos/auto-care-planet",
+	"/labs/proyectos/midinerito",
+	"/labs/proyectos/colorin",
+	"/labs/cuanto-cuesta-un-sitio-web",
+] as const;
+
 /** Índice de los tipos de negocio. */
 export const LANDING_BUSINESS_TYPES_PATH = "/menu-digital";
 
@@ -54,6 +70,7 @@ export const MAIN_DOMAIN_MARKETING_PATHS: readonly string[] = [
 	...LANDING_FEATURE_SLUG_LIST.map((slug) => `${LANDING_FEATURES_PATH}/${slug}`),
 	LANDING_ENGLISH_PATH,
 	...LANDING_ENGLISH_SLUG_LIST.map((slug) => `${LANDING_ENGLISH_PATH}/${slug}`),
+	...LABS_SUBPAGE_PATHS,
 ];
 
 const MARKETING_PATH_SET = new Set(MAIN_DOMAIN_MARKETING_PATHS);

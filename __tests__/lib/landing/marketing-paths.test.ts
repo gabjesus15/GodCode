@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { LANDING_BUSINESS_TYPE_SLUGS } from "@/lib/landing/business-types";
 import { LANDING_COUNTRY_SLUGS } from "@/lib/landing/countries";
 import {
+	LABS_SUBPAGE_PATHS,
 	LANDING_BUSINESS_TYPE_SLUG_LIST,
 	LANDING_COUNTRY_SLUG_LIST,
 	MAIN_DOMAIN_MARKETING_PATHS,
@@ -42,6 +43,7 @@ describe("lista única de páginas de marketing", () => {
 			"/en/online-ordering",
 			"/en/qr-code-menu",
 			"/en/restaurant-pos",
+			...LABS_SUBPAGE_PATHS,
 		]);
 		expect([...LANDING_COUNTRY_SLUG_LIST]).toEqual(LANDING_COUNTRY_SLUGS);
 		expect([...LANDING_BUSINESS_TYPE_SLUG_LIST]).toEqual(LANDING_BUSINESS_TYPE_SLUGS);
