@@ -1,11 +1,13 @@
 import type { MetadataRoute } from "next";
+import { LANDING_BUSINESS_TYPE_SLUGS } from "@/lib/landing/business-types";
 import { LANDING_COUNTRY_SLUGS } from "@/lib/landing/countries";
+import { LANDING_BUSINESS_TYPES_PATH, LANDING_COMMISSIONS_GUIDE_PATH } from "@/lib/landing/marketing-paths";
 import { isPubliclyListedCompany } from "@/lib/seo/public-tenant-listing";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { createSupabasePublicServerClient } from "../utils/supabase/server";
 
 /** Actualizar al desplegar cambios de marketing relevantes para incentivar recrawl. */
-const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-10-08T00:00:00.000Z";
+const DEFAULT_SITEMAP_LAST_MODIFIED = "2026-10-13T00:00:00.000Z";
 
 function getMarketingLastModified(): Date {
 	const fromEnv = process.env.NEXT_PUBLIC_SITEMAP_LAST_MODIFIED?.trim();
@@ -84,6 +86,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			lastModified: marketingLastModified,
 			changeFrequency: "monthly" as const,
 			priority: 0.9,
+		})),
+		// Guía con fuentes: compite por «cuánto cobra PedidosYa / Uber Eats».
+		{
+			url: `${base}${LANDING_COMMISSIONS_GUIDE_PATH}`,
+			lastModified: marketingLastModified,
+			changeFrequency: "monthly",
+			priority: 0.9,
+		},
+		// Páginas por tipo de negocio: «menú digital para pizzería», «carta QR cafetería»…
+		{
+			url: `${base}${LANDING_BUSINESS_TYPES_PATH}`,
+			lastModified: marketingLastModified,
+			changeFrequency: "monthly",
+			priority: 0.8,
+		},
+		...LANDING_BUSINESS_TYPE_SLUGS.map((slug) => ({
+			url: `${base}${LANDING_BUSINESS_TYPES_PATH}/${slug}`,
+			lastModified: marketingLastModified,
+			changeFrequency: "monthly" as const,
+			priority: 0.8,
 		})),
 		{
 			url: `${base}/calculadora-comisiones`,

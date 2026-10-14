@@ -191,6 +191,15 @@ export function CountryLanding({ country, fromPrice, socialLinks, jsonLd, heroPh
 								>
 									Calcular cuánto pagas hoy en comisiones
 								</Link>
+								{/* La guía con fuentes habla de las apps en Chile: solo se enlaza desde /chile. */}
+								{country.code === "CL" ? (
+									<Link
+										href="/comisiones-delivery-chile"
+										className="text-sm text-[#71717a] underline decoration-white/15 underline-offset-[6px] transition-colors hover:text-[#d4d4d8]"
+									>
+										Cuánto cobra cada app de delivery en Chile
+									</Link>
+								) : null}
 							</div>
 						</div>
 					</div>

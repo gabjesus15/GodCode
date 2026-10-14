@@ -2,8 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { LANDING_BUSINESS_TYPE_SLUGS } from "@/lib/landing/business-types";
 import { LANDING_COUNTRY_SLUGS } from "@/lib/landing/countries";
 import {
+	LANDING_BUSINESS_TYPE_SLUG_LIST,
 	LANDING_COUNTRY_SLUG_LIST,
 	MAIN_DOMAIN_MARKETING_PATHS,
 	isMainDomainMarketingPath,
@@ -12,14 +14,30 @@ import {
 import { MAIN_DOMAIN_RESERVED_PATH_SEGMENTS } from "@/lib/tenant/reserved-path-segments";
 
 describe("lista única de páginas de marketing", () => {
-	it("trae la home, /labs, «Sobre», la calculadora y una ruta por cada página de país", () => {
-		expect(MAIN_DOMAIN_MARKETING_PATHS).toEqual(["/", "/labs", "/sobre-godcode", "/calculadora-comisiones", "/chile", "/venezuela"]);
+	it("trae la home, /labs, «Sobre», la calculadora, los países, la guía y los tipos de negocio", () => {
+		expect(MAIN_DOMAIN_MARKETING_PATHS).toEqual([
+			"/",
+			"/labs",
+			"/sobre-godcode",
+			"/calculadora-comisiones",
+			"/chile",
+			"/venezuela",
+			"/comisiones-delivery-chile",
+			"/menu-digital",
+			"/menu-digital/pizzerias",
+			"/menu-digital/sushi",
+			"/menu-digital/hamburgueserias",
+			"/menu-digital/cafeterias",
+			"/menu-digital/panaderias",
+		]);
 		expect([...LANDING_COUNTRY_SLUG_LIST]).toEqual(LANDING_COUNTRY_SLUGS);
+		expect([...LANDING_BUSINESS_TYPE_SLUG_LIST]).toEqual(LANDING_BUSINESS_TYPE_SLUGS);
 	});
 
 	it("ninguna se confunde con el slug de una tienda", () => {
 		for (const path of MAIN_DOMAIN_MARKETING_PATHS.filter((p) => p !== "/")) {
-			expect(MAIN_DOMAIN_RESERVED_PATH_SEGMENTS.has(path.slice(1))).toBe(true);
+			// Basta con el primer segmento: /menu-digital/sushi no es la tienda «menu-digital».
+			expect(MAIN_DOMAIN_RESERVED_PATH_SEGMENTS.has(path.split("/")[1] ?? "")).toBe(true);
 		}
 	});
 
