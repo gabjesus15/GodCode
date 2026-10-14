@@ -2,7 +2,13 @@ import type { MetadataRoute } from "next";
 import { LANDING_BUSINESS_TYPE_SLUGS } from "@/lib/landing/business-types";
 import { LANDING_COUNTRY_SLUGS } from "@/lib/landing/countries";
 import { LANDING_FEATURE_SLUGS } from "@/lib/landing/features";
-import { LANDING_BUSINESS_TYPES_PATH, LANDING_COMMISSIONS_GUIDE_PATH, LANDING_FEATURES_PATH } from "@/lib/landing/marketing-paths";
+import { LANDING_ENGLISH_SLUGS } from "@/lib/landing/english-pages";
+import {
+	LANDING_BUSINESS_TYPES_PATH,
+	LANDING_COMMISSIONS_GUIDE_PATH,
+	LANDING_ENGLISH_PATH,
+	LANDING_FEATURES_PATH,
+} from "@/lib/landing/marketing-paths";
 import { isPubliclyListedCompany } from "@/lib/seo/public-tenant-listing";
 import { getAppUrl } from "@/lib/tenant/app-url";
 import { createSupabasePublicServerClient } from "../utils/supabase/server";
@@ -104,6 +110,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		},
 		...LANDING_BUSINESS_TYPE_SLUGS.map((slug) => ({
 			url: `${base}${LANDING_BUSINESS_TYPES_PATH}/${slug}`,
+			lastModified: marketingLastModified,
+			changeFrequency: "monthly" as const,
+			priority: 0.8,
+		})),
+		// Páginas en inglés para EE. UU., con hreflang hacia su par en español.
+		{
+			url: `${base}${LANDING_ENGLISH_PATH}`,
+			lastModified: marketingLastModified,
+			changeFrequency: "monthly",
+			priority: 0.8,
+		},
+		...LANDING_ENGLISH_SLUGS.map((slug) => ({
+			url: `${base}${LANDING_ENGLISH_PATH}/${slug}`,
 			lastModified: marketingLastModified,
 			changeFrequency: "monthly" as const,
 			priority: 0.8,

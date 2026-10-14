@@ -30,6 +30,8 @@ const footerLinks = [
 	{ label: "Funciones: caja, menú QR, delivery", href: "/funciones" },
 	{ label: "Gcode en Chile", href: "/chile" },
 	{ label: "Gcode en Venezuela", href: "/venezuela" },
+	{ label: "Gcode en Estados Unidos", href: "/estados-unidos" },
+	{ label: "English", href: "/en" },
 	{ label: "Negocios que usan Gcode", href: "/onboarding/negocios" },
 	{ label: "Crear mi tienda", href: "/onboarding" },
 ];

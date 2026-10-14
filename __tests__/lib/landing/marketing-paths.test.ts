@@ -22,6 +22,7 @@ describe("lista única de páginas de marketing", () => {
 			"/calculadora-comisiones",
 			"/chile",
 			"/venezuela",
+			"/estados-unidos",
 			"/comisiones-delivery-chile",
 			"/menu-digital",
 			"/menu-digital/pizzerias",
@@ -37,6 +38,10 @@ describe("lista única de páginas de marketing", () => {
 			"/funciones/pedidos-online",
 			"/funciones/delivery-propio",
 			"/funciones/inventario",
+			"/en",
+			"/en/online-ordering",
+			"/en/qr-code-menu",
+			"/en/restaurant-pos",
 		]);
 		expect([...LANDING_COUNTRY_SLUG_LIST]).toEqual(LANDING_COUNTRY_SLUGS);
 		expect([...LANDING_BUSINESS_TYPE_SLUG_LIST]).toEqual(LANDING_BUSINESS_TYPE_SLUGS);

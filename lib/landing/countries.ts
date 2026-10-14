@@ -33,7 +33,7 @@ type LandingCountryFeature = { title: string; text: string; href?: string };
 export type LandingCountry = {
 	slug: LandingCountrySlug;
 	/** ISO 3166-1 alpha-2, para `areaServed` y para resolver el precio regional. */
-	code: "CL" | "VE";
+	code: "CL" | "VE" | "US";
 	/** Nombre del país tal como se escribe en el texto. */
 	name: string;
 	/** Gentilicio en plural («restaurantes chilenos»). */
@@ -257,9 +257,88 @@ const VENEZUELA: LandingCountry = {
 	],
 };
 
+/**
+ * Estados Unidos, en español: para dueños hispanos (Miami, Doral, Houston…). Solo lo que
+ * funciona hoy para un local de allá (rama fix/checkout-otros-paises): carrito sin documento
+ * y con +1, centavos, sales tax por sucursal, menú en inglés. No hay cobro con tarjeta
+ * dentro del menú ni despacho con Uber: no se promete.
+ */
+const ESTADOS_UNIDOS: LandingCountry = {
+	slug: "estados-unidos",
+	code: "US",
+	name: "Estados Unidos",
+	demonym: "hispanos en Estados Unidos",
+	cities: ["Miami", "Doral", "Houston", "Orlando", "Dallas", "Nueva York", "Los Ángeles"],
+	metaTitle: "Menú digital para restaurantes en Estados Unidos",
+	metaDescription:
+		"Menú QR y pedidos online para restaurantes hispanos en Estados Unidos: tú lo manejas en español y tus clientes piden en inglés. Dólares, Zelle y sin comisión por pedido.",
+	keywords: [
+		"menú digital restaurante Miami",
+		"sistema para restaurantes en Estados Unidos",
+		"menú QR restaurante hispano",
+		"pedidos online restaurante Doral",
+		"software para restaurante en español Estados Unidos",
+		"alternativa a DoorDash sin comisión",
+		"pedidos por WhatsApp restaurante Houston",
+	],
+	heroTitle: ["Menú digital y pedidos para", "restaurantes en EE. UU."],
+	heroSubtitle:
+		"Tú manejas todo en español; tus clientes ven el menú en inglés y piden desde tu link o tu QR. Precios en dólares con centavos, sales tax incluido en la cuenta y sin comisión por pedido.",
+	deliveryApps: ["DoorDash", "Uber Eats", "Grubhub"],
+	paymentMethods: ["Efectivo", "Tarjeta al retirar o al entregar", "Zelle", "PayPal"],
+	billingNote: "Armas tu tienda gratis y eliges tu plan cuando la publicas. Es un monto fijo al mes en dólares, sin comisión por venta.",
+	currencyNote: LEGAL_PRICES_IN_USD,
+	localFeatures: [
+		{
+			title: "Tú en español, tus clientes en inglés",
+			text: "El panel y la caja están en español. El menú que ven tus clientes sale en inglés, y los nombres de los platos los escribes como quieras, en un idioma o en los dos.",
+		},
+		{
+			title: "Dólares y sales tax",
+			text: "Precios con centavos y la tasa de sales tax de tu ciudad configurada por local: el menú la suma al precio y el cliente ve el total antes de pedir.",
+		},
+		{
+			title: "Zelle y PayPal con comprobante",
+			text: "El cliente paga en efectivo o con tarjeta al retirar, o por Zelle o PayPal y adjunta el comprobante al pedido. Tú confirmas el pago en la caja.",
+		},
+		{
+			title: "Sin la comisión de DoorDash",
+			text: "Las apps de delivery cobran un porcentaje de cada pedido. Con tu propio link pagas un plan fijo al mes y los clientes que repiten te piden a ti.",
+		},
+	],
+	faq: [
+		{
+			question: `¿Cuánto cuesta ${LANDING_PRODUCT_NAME} en Estados Unidos?`,
+			answer:
+				`Armar tu tienda no cuesta nada. Pagas cuando la publicas, con un plan mensual fijo en dólares por PayPal. ${LEGAL_PRICES_IN_USD} No hay comisión por venta ni por pedido, y en tu primer pago llevas 2 meses al precio de 1.`,
+		},
+		{
+			question: "¿Mis clientes pueden pagar con tarjeta dentro del menú?",
+			answer:
+				"Hoy no hay cobro con tarjeta dentro del menú. El cliente paga en efectivo o con tarjeta al retirar o recibir el pedido, o por Zelle o PayPal adjuntando el comprobante, que tú confirmas en la caja.",
+		},
+		{
+			question: "¿El menú sale en inglés?",
+			answer:
+				"Sí. Para un negocio en Estados Unidos, los botones, el carrito y los avisos del menú salen en inglés. Los platos y sus descripciones los escribes tú, en el idioma que prefieras.",
+		},
+		{
+			question: "¿Cómo se cobra el sales tax?",
+			answer:
+				"Configuras la tasa de tu ciudad en cada local y el menú la suma al precio de los productos. Es una tasa fija por local, no se calcula por dirección del cliente.",
+		},
+		{
+			question: "¿Puedo tener delivery propio?",
+			answer:
+				"Sí, con tu repartidor. El costo de envío se calcula por distancia (en kilómetros) o por zonas que defines tú, y el pedido llega con la dirección y un enlace de Google Maps.",
+		},
+	],
+};
+
 export const LANDING_COUNTRIES: Record<LandingCountrySlug, LandingCountry> = {
 	chile: CHILE,
 	venezuela: VENEZUELA,
+	"estados-unidos": ESTADOS_UNIDOS,
 };
 
 export const LANDING_COUNTRY_SLUGS = Object.keys(LANDING_COUNTRIES) as LandingCountrySlug[];

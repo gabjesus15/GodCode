@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { LANDING_COMPANY_NAME, LANDING_PRODUCT_NAME } from "./brand";
 import { marketingMetadata } from "./business-type-page";
 import { type LandingFeature, LANDING_FEATURES } from "./features";
+import { spanishPageLanguages } from "./english-page-seo";
 import { buildOrganizationJsonLd, getOrganizationId } from "./json-ld";
 import { LANDING_FEATURES_PATH } from "./marketing-paths";
 
@@ -15,7 +16,11 @@ export function getLandingFeaturePath(feature: Pick<LandingFeature, "slug">): st
 }
 
 export function buildLandingFeatureMetadata(base: string, feature: LandingFeature): Metadata {
-	return marketingMetadata(base, getLandingFeaturePath(feature), feature.metaTitle, feature.metaDescription, feature.keywords);
+	const path = getLandingFeaturePath(feature);
+	const metadata = marketingMetadata(base, path, feature.metaTitle, feature.metaDescription, feature.keywords);
+	// hreflang recíproco con su página en inglés, si la tiene (/en/*).
+	const languages = spanishPageLanguages(base, path);
+	return languages ? { ...metadata, alternates: { ...metadata.alternates, languages } } : metadata;
 }
 
 export function buildLandingFeaturesIndexMetadata(base: string): Metadata {
