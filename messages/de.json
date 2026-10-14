@@ -473,7 +473,8 @@
           "areaLabel": {
             "commune": "Gemeinde",
             "municipality": "Gemeinde oder Stadt",
-            "city": "Stadt oder Viertel"
+            "city": "Stadt oder Viertel",
+            "cityZip": "Stadt und Postleitzahl"
           },
           "example": "z. B. {value}",
           "invalidNamedArea": "Die gewählte Zone ist nicht mehr verfügbar.",

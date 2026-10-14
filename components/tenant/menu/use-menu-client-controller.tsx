@@ -10,6 +10,7 @@ import { normalizeDeliverySettings } from "@/lib/delivery/delivery-settings";
 import { isVenezuelaCountry } from "@/lib/geo/venezuela";
 import { mergeMenuPathQuery } from "@/utils/tenant-url";
 import { readEmbeddedPreviewFromLocation } from "@/lib/store-theme/preview-theme-messaging";
+import { getFormStrategy } from "@/lib/geo/country-forms";
 import { MENU_ACCOUNT_ENABLED } from "@/lib/menu-account/feature";
 import {
 	FIRE_ICON,
@@ -572,7 +573,7 @@ export function useMenuClientController(props: MenuClientProps) {
 			showContactTab={showContactTab}
 			showBranchSelector={branchSelectorInBottomNav && canSwitchBranch}
 			isEmbeddedPreview={isEmbeddedPreview}
-			showAccountTab={MENU_ACCOUNT_ENABLED && !isEmbeddedPreview}
+			showAccountTab={MENU_ACCOUNT_ENABLED && !isEmbeddedPreview && getFormStrategy(effectiveCountry).requiresId}
 			onOpenBranchModal={() => {
 				if (isContactChannelSheetOpen || isContactBranchModalOpen) {
 					closeContactUi();

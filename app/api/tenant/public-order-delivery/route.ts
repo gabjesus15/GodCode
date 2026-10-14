@@ -22,6 +22,7 @@ import {
 	orphanCancelNote,
 } from "@/lib/orders/orphan-cancel";
 import { logger } from "@/lib/infra/logger";
+import { roundMoney } from "@/lib/money/round-money";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 import { isMenuAccountClient, sealOrderDeliveryAddress } from "@/lib/menu-account/order-address";
 import { fetchUberDeliveryEstimate } from "@/lib/delivery/uber-direct";
@@ -325,7 +326,7 @@ export async function POST(req: NextRequest) {
 					if (!uber.ok) {
 						return await rechazarYCancelar({ error: uber.message }, 502);
 					}
-					expectedFee = Math.round(uber.feeMajor);
+					expectedFee = roundMoney(uber.feeMajor, currencyCode);
 					uberQuoteIdResolved = uber.estimateId;
 				}
 			} else {
@@ -398,7 +399,7 @@ export async function POST(req: NextRequest) {
 									: "Zona de entrega no válida";
 					return await rechazarYCancelar({ error: msg }, 400);
 				}
-				expectedFee = Math.round(r.fee);
+				expectedFee = roundMoney(r.fee, currencyCode);
 			}
 		} else {
 			expectedFee = 0;
@@ -439,9 +440,9 @@ export async function POST(req: NextRequest) {
 			baseTotal = subAfterDiscount.add(devFee);
 		}
 
-		const expectedTotal = Math.round(Math.max(0, baseTotal.value));
+		const expectedTotal = roundMoney(Math.max(0, baseTotal.value), currencyCode);
 		// RPC stores total as items − coupon + fee (without excluded IVA). Compare against that contract.
-		const expectedRpcTotal = Math.round(Math.max(0, subAfterDiscount.add(devFee).value));
+		const expectedRpcTotal = roundMoney(Math.max(0, subAfterDiscount.add(devFee).value), currencyCode);
 		const orderTotal = Number(order.total) || 0;
 		if (Math.abs(orderTotal - expectedRpcTotal) > TOTAL_EPS) {
 			return await rechazarYCancelar(

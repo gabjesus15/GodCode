@@ -1,3 +1,4 @@
+import { normalizeCountryCode } from "@/lib/geo/country-registry";
 import { getSubdomainFromHost, isMainDomain } from "@/lib/tenant/main-domain-host";
 import { resolveTenantSlugFromCustomDomainHost } from "@/lib/tenant/custom-domain-resolve";
 import { getCachedCompany } from "@/utils/tenant-cache";
@@ -102,7 +103,7 @@ function normalizeCountry(country: unknown): string {
     .replace(/^_+|_+$/g, "");
 }
 
-function resolveLocaleFromCountry(country: unknown): AppLocale | null {
+export function resolveLocaleFromCountry(country: unknown): AppLocale | null {
   const normalized = normalizeCountry(country);
   if (!normalized) return null;
 
@@ -110,6 +111,16 @@ function resolveLocaleFromCountry(country: unknown): AppLocale | null {
   if (direct) return direct;
 
   if (ENGLISH_FALLBACK_COUNTRIES.has(normalized)) return "en";
+
+  // El alta guarda el nombre en español («Estados Unidos»): se pasa por el registro de
+  // países para llegar al código («US») y de ahí al idioma. Sin esto, los negocios de
+  // EE. UU. quedaban con el menú en español.
+  const code = normalizeCountryCode(String(country ?? ""))?.toLowerCase();
+  if (code) {
+    const byCode = COUNTRY_TO_LOCALE[code];
+    if (byCode) return byCode;
+    if (ENGLISH_FALLBACK_COUNTRIES.has(code)) return "en";
+  }
   return "es";
 }
 

@@ -3,6 +3,8 @@
  * Claves en camelCase al guardar desde el panel.
  */
 
+import { roundToCents } from "@/lib/money/round-money";
+
 export const DELIVERY_MAX_PRICE_PER_KM = 500_000;
 export const DELIVERY_MAX_BASE_FEE = 10_000_000;
 export const DELIVERY_MAX_FEE_CAP = 50_000_000;
@@ -764,5 +766,7 @@ export function orderItemsSubtotalFromPayload(
 		const q = Math.max(1, Number(it.quantity) || 1);
 		sum += (unit + extras) * q;
 	}
-	return Math.round(sum);
+	// A centavos, no a enteros: con precios en dólares el redondeo al entero perdía los
+	// centavos. Con pesos chilenos los precios ya son enteros y la suma no cambia.
+	return roundToCents(sum);
 }

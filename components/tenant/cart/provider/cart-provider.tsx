@@ -1,5 +1,6 @@
 "use client";
 
+import { roundMoney } from "@/lib/money/round-money";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
@@ -223,15 +224,17 @@ export function CartProvider({
 		return coerce(product.price);
 	}, []);
 
+	// A los decimales de la moneda: en dólares se conservan los centavos.
 	const productsTotal = useMemo(
 		() =>
-			Math.round(
+			roundMoney(
 				store.cart.reduce((acc, item) => {
 					if (typeof item.quantity !== "number" || item.quantity < 1) return acc;
 					return acc + lineTotal(item, getPrice(item));
 				}, 0),
+				cartCurrency,
 			),
-		[store.cart, getPrice],
+		[store.cart, getPrice, cartCurrency],
 	);
 	const globalExtrasTotal = useMemo(
 		() =>
@@ -241,7 +244,7 @@ export function CartProvider({
 			),
 		[store.globalExtras],
 	);
-	const cartSubtotal = Math.round(productsTotal + globalExtrasTotal);
+	const cartSubtotal = roundMoney(productsTotal + globalExtrasTotal, cartCurrency);
 
 	const isDelivery = store.fulfillment === "delivery";
 
@@ -328,8 +331,8 @@ export function CartProvider({
 			: null;
 
 	const appliedCouponDiscount = Math.min(
-		Math.round(cartSubtotal),
-		Math.max(0, Math.round(Number(store.appliedCouponDiscount) || 0)),
+		cartSubtotal,
+		Math.max(0, roundMoney(Number(store.appliedCouponDiscount) || 0, cartCurrency)),
 	);
 
 	const totals = useMemo(

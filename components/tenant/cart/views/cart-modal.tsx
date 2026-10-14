@@ -730,7 +730,8 @@ export function CartModal({
 			notice={notice}
 			aside={aside}
 			onClose={flow.dismissCart}
-			onOpenAccount={MENU_ACCOUNT_ENABLED ? openAccount : undefined}
+			// La cuenta se identifica con el documento: en países sin documento no se ofrece.
+			onOpenAccount={MENU_ACCOUNT_ENABLED && strategy.requiresId ? openAccount : undefined}
 			accountLabel={checkoutProfile?.fullName.trim().split(/\s+/)[0] || null}
 			footer={footer}
 		>

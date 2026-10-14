@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import type { DeliveryLocationSource } from "@/lib/delivery/delivery-location";
+import { roundToCents } from "@/lib/money/round-money";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type {
 	AddToCartOptions,
@@ -102,7 +103,7 @@ function sanitizeQty(n: unknown): number {
 
 function sanitizePrice(n: unknown): number {
 	const v = Number(n);
-	return Number.isFinite(v) && v > 0 ? Math.round(v) : 0;
+	return Number.isFinite(v) && v > 0 ? roundToCents(v) : 0;
 }
 
 function normalizeSelections(
@@ -265,7 +266,7 @@ export const useCartStore = create<CartState>()(
 			setAppliedCoupon: (code, discountAmount) =>
 				set({
 					appliedCouponCode: String(code ?? "").trim().toUpperCase(),
-					appliedCouponDiscount: Math.max(0, Math.round(Number(discountAmount) || 0)),
+					appliedCouponDiscount: Math.max(0, roundToCents(Number(discountAmount) || 0)),
 				}),
 			clearAppliedCoupon: () => set({ appliedCouponCode: null, appliedCouponDiscount: 0 }),
 
