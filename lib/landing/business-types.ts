@@ -223,6 +223,120 @@ const HAMBURGUESERIAS: LandingBusinessType = {
 	],
 };
 
+const COMIDA_RAPIDA: LandingBusinessType = {
+	slug: "comida-rapida",
+	sector: "Comida rápida",
+	plural: "locales de comida rápida",
+	singular: "local de comida rápida",
+	label: "Comida rápida",
+	metaTitle: "Menú digital y caja para comida rápida",
+	metaDescription:
+		"Menú QR, pedidos para retirar y caja para tu local de comida rápida, sanguchería o food truck. Combos, pedidos ordenados y un plan fijo, sin comisión por venta.",
+	keywords: [
+		"menú digital comida rápida",
+		"sistema para local de comida rápida",
+		"menú QR sanguchería",
+		"sistema de pedidos food truck",
+		"caja para comida rápida",
+	],
+	heroTitle: ["Menú digital y caja para", "comida rápida"],
+	heroSubtitle:
+		"Completos, churrascos, arepas o salchipapas: el cliente pide desde el QR o tu link, paga como prefiera y el pedido sale del mostrador sin errores ni filas largas.",
+	teaser: "Pedidos para retirar, combos y una caja que no se traba en la hora de almuerzo.",
+	guide: [
+		{
+			title: "Pedir sin hacer fila",
+			text: "Con el QR en el mostrador o en la vitrina, el cliente arma su pedido desde el teléfono mientras espera, y tú lo recibes ordenado.",
+		},
+		{
+			title: "Combos que se venden solos",
+			text: "Sándwich, papas y bebida en un combo con su precio y su foto. Tu tienda parte con una categoría de combos de ejemplo.",
+		},
+		{
+			title: "Una caja para la hora de almuerzo",
+			text: "Los pedidos del mostrador y los del menú entran al mismo turno, y el cierre te dice cuánto entró por cada medio de pago.",
+		},
+		{
+			title: "El mismo link donde te instales",
+			text: "Si tienes un food truck o vendes en ferias, el menú va contigo: el mismo QR y el mismo link sirven en cualquier punto.",
+		},
+	],
+	faq: [
+		{
+			question: "¿Sirve para una sanguchería o un carro de completos?",
+			answer:
+				"Sí. Sirve para cualquier local que venda por pedido: armas tu menú con tus sándwiches y combos, y lo compartes con un QR o un link.",
+		},
+		{
+			question: "¿El cliente puede pagar por transferencia?",
+			answer:
+				"Sí. Eliges los medios de pago que aceptas, como efectivo, tarjeta en el local o transferencia, y el cliente elige al pedir. Si paga por transferencia, adjunta el comprobante al pedido.",
+		},
+		{
+			question: "¿Cuánto me demoro en tener el menú listo?",
+			answer:
+				"La tienda parte con un menú de comida rápida de ejemplo: cambias nombres, fotos y precios, y la publicas. Se arma en una tarde, y armarla no cuesta nada: pagas cuando la publicas.",
+		},
+	],
+};
+
+const RESTAURANTES: LandingBusinessType = {
+	slug: "restaurantes",
+	sector: "Restaurante",
+	plural: "restaurantes",
+	singular: "restaurante",
+	label: "Restaurantes a la carta",
+	metaTitle: "Carta digital para restaurantes a la carta",
+	metaDescription:
+		"Carta digital con QR para restaurantes a la carta y de menú del día: entradas, fondos y postres con foto, pedidos para llevar y caja, sin comisión por venta.",
+	keywords: [
+		"carta digital restaurante",
+		"menú del día digital",
+		"carta QR restaurante a la carta",
+		"sistema para restaurante",
+		"pedidos para llevar restaurante",
+	],
+	heroTitle: ["Carta digital y caja para", "restaurantes a la carta"],
+	heroSubtitle:
+		"Entradas, platos de fondo y postres con su foto en el QR de la mesa, pedidos para llevar desde tu link y una caja que cierra el día con el detalle de cada venta.",
+	teaser: "Entradas, fondos y postres en una carta QR, con pedidos para llevar y caja.",
+	guide: [
+		{
+			title: "Una carta ordenada por tiempos",
+			text: "Entradas, platos de fondo, postres y bebidas en categorías, para que el cliente recorra la carta como en el papel.",
+		},
+		{
+			title: "El plato del día sin reimprimir",
+			text: "Cambias el plato del día o un precio en el panel y la carta de todas las mesas se actualiza con el mismo QR.",
+		},
+		{
+			title: "Acompañamientos y opciones",
+			text: "Arroz o puré, ensalada o papas: cada plato puede tener variantes, con o sin diferencia de precio, y llegan escritas al pedido.",
+		},
+		{
+			title: "Para llevar y delivery",
+			text: "Además de la mesa, tus clientes piden para retirar o con delivery desde el mismo link, y el pedido entra a tu caja.",
+		},
+	],
+	faq: [
+		{
+			question: "¿Puedo publicar un menú del día?",
+			answer:
+				"Sí. Lo publicas como un producto o una categoría que actualizas cada día; el QR de las mesas siempre muestra lo vigente.",
+		},
+		{
+			question: "¿Los clientes pueden pedir desde la mesa?",
+			answer:
+				"En la mesa ven la carta en su teléfono; el pedido lo toma tu equipo y lo registra en la caja. Los pedidos online del link son para retirar o con delivery.",
+		},
+		{
+			question: "¿Sirve para un restaurante con varias sucursales?",
+			answer:
+				"Sí. Cada sucursal tiene su horario y sus zonas de delivery, y los reportes se ven por local o consolidados.",
+		},
+	],
+};
+
 const CAFETERIAS: LandingBusinessType = {
 	slug: "cafeterias",
 	sector: "Cafetería",
@@ -341,6 +455,8 @@ export const LANDING_BUSINESS_TYPES: Record<LandingBusinessTypeSlug, LandingBusi
 	pizzerias: PIZZERIAS,
 	sushi: SUSHI,
 	hamburgueserias: HAMBURGUESERIAS,
+	"comida-rapida": COMIDA_RAPIDA,
+	restaurantes: RESTAURANTES,
 	cafeterias: CAFETERIAS,
 	panaderias: PANADERIAS,
 };

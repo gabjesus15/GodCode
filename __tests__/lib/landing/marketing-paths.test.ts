@@ -27,8 +27,16 @@ describe("lista única de páginas de marketing", () => {
 			"/menu-digital/pizzerias",
 			"/menu-digital/sushi",
 			"/menu-digital/hamburgueserias",
+			"/menu-digital/comida-rapida",
+			"/menu-digital/restaurantes",
 			"/menu-digital/cafeterias",
 			"/menu-digital/panaderias",
+			"/funciones",
+			"/funciones/punto-de-venta",
+			"/funciones/carta-qr",
+			"/funciones/pedidos-online",
+			"/funciones/delivery-propio",
+			"/funciones/inventario",
 		]);
 		expect([...LANDING_COUNTRY_SLUG_LIST]).toEqual(LANDING_COUNTRY_SLUGS);
 		expect([...LANDING_BUSINESS_TYPE_SLUG_LIST]).toEqual(LANDING_BUSINESS_TYPE_SLUGS);

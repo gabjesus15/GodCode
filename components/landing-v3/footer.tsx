@@ -27,6 +27,7 @@ const footerLinks = [
 	{ label: "Calculadora de comisiones", href: "/calculadora-comisiones" },
 	{ label: "Comisiones de delivery en Chile", href: "/comisiones-delivery-chile" },
 	{ label: "Menú digital por tipo de negocio", href: "/menu-digital" },
+	{ label: "Funciones: caja, carta QR, delivery", href: "/funciones" },
 	{ label: "Gcode en Chile", href: "/chile" },
 	{ label: "Gcode en Venezuela", href: "/venezuela" },
 	{ label: "Negocios que usan Gcode", href: "/onboarding/negocios" },

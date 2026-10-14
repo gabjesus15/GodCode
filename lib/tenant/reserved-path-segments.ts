@@ -27,6 +27,8 @@ export const MAIN_DOMAIN_RESERVED_PATH_SEGMENTS = new Set([
 	// Guía de comisiones y páginas por tipo de negocio (app/(landing-v3)/comisiones-delivery-chile y /menu-digital/*).
 	"comisiones-delivery-chile",
 	"menu-digital",
+	// Páginas por función (app/(landing-v3)/funciones/*).
+	"funciones",
 	// Vista previa de la home corporativa de Gcode Labs (app/labs).
 	"labs",
 	"images",

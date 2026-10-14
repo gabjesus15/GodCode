@@ -27,7 +27,8 @@ export type LandingCountrySlug = (typeof LANDING_COUNTRY_SLUG_LIST)[number];
 
 type LandingCountryFaq = { question: string; answer: string };
 
-type LandingCountryFeature = { title: string; text: string };
+/** `href`: la página de esa función (/funciones/…), si existe. */
+type LandingCountryFeature = { title: string; text: string; href?: string };
 
 export type LandingCountry = {
 	slug: LandingCountrySlug;
@@ -67,22 +68,27 @@ export type LandingCountry = {
 export const LANDING_COUNTRY_SHARED_FEATURES: LandingCountryFeature[] = [
 	{
 		title: "Menú digital con QR",
+		href: "/funciones/carta-qr",
 		text: "Fotos, variantes, combos y tamaños. Tus clientes lo abren desde la mesa, Instagram o WhatsApp sin descargar nada.",
 	},
 	{
 		title: "Pedidos online sin comisión",
+		href: "/funciones/pedidos-online",
 		text: "Carrito y checkout en tu propio link. Cada pedido llega a tu caja y la venta completa es tuya.",
 	},
 	{
 		title: "Punto de venta y comandas",
+		href: "/funciones/punto-de-venta",
 		text: "Abres el turno, tomas pedidos en mostrador, los mandas a cocina y cierras caja con el detalle del día.",
 	},
 	{
 		title: "Delivery y retiro en tienda",
+		href: "/funciones/delivery-propio",
 		text: "Zonas de reparto, costo de envío y pedidos para retirar, desde el mismo panel que la sala.",
 	},
 	{
 		title: "Inventario y reportes",
+		href: "/funciones/inventario",
 		text: "Stock que se descuenta con cada venta, y reportes de ventas, pedidos y ticket promedio.",
 	},
 	{

@@ -99,7 +99,11 @@ export default async function MenuDigitalIndexPage() {
 							>
 								cuánto cobran las apps de delivery en Chile
 							</Link>
-							.
+							. También puedes ver{" "}
+							<Link href="/funciones" className="text-[#d4d4d8] underline decoration-white/25 underline-offset-[6px] hover:text-white">
+								todas las funciones
+							</Link>
+							: caja, carta QR, pedidos, delivery e inventario.
 						</p>
 					</div>
 				</section>

@@ -9,7 +9,7 @@ import { LANDING_BUSINESS_TYPES_PATH } from "./marketing-paths";
 
 export const LANDING_BUSINESS_TYPES_INDEX_TITLE = "Menú digital por tipo de negocio";
 export const LANDING_BUSINESS_TYPES_INDEX_DESCRIPTION =
-	"Menú digital, pedidos online y caja pensados para pizzerías, sushi, hamburgueserías, cafeterías y panaderías. Cada tienda parte con un menú de ejemplo de su rubro.";
+	"Menú digital, pedidos online y caja para pizzerías, sushi, hamburgueserías, comida rápida, restaurantes, cafeterías y panaderías, con un menú de ejemplo de cada rubro.";
 
 export function getLandingBusinessTypePath(type: Pick<LandingBusinessType, "slug">): string {
 	return `${LANDING_BUSINESS_TYPES_PATH}/${type.slug}`;
@@ -19,7 +19,7 @@ function ogImage(base: string, alt: string) {
 	return { url: `${base}/api/system/og`, width: 1200, height: 630, type: "image/png", alt };
 }
 
-function marketingMetadata(base: string, path: string, title: string, description: string, keywords?: string[]): Metadata {
+export function marketingMetadata(base: string, path: string, title: string, description: string, keywords?: string[]): Metadata {
 	const url = `${base}${path}`;
 	const image = ogImage(base, title);
 	return {

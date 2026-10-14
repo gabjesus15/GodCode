@@ -13,7 +13,21 @@
 export const LANDING_COUNTRY_SLUG_LIST = ["chile", "venezuela"] as const;
 
 /** Slugs de las páginas por tipo de negocio (/menu-digital/{slug}); `business-types.ts` tipa su registro con esta lista. */
-export const LANDING_BUSINESS_TYPE_SLUG_LIST = ["pizzerias", "sushi", "hamburgueserias", "cafeterias", "panaderias"] as const;
+export const LANDING_BUSINESS_TYPE_SLUG_LIST = [
+	"pizzerias",
+	"sushi",
+	"hamburgueserias",
+	"comida-rapida",
+	"restaurantes",
+	"cafeterias",
+	"panaderias",
+] as const;
+
+/** Slugs de las páginas por función (/funciones/{slug}); `features.ts` tipa su registro con esta lista. */
+export const LANDING_FEATURE_SLUG_LIST = ["punto-de-venta", "carta-qr", "pedidos-online", "delivery-propio", "inventario"] as const;
+
+/** Índice de las funciones. */
+export const LANDING_FEATURES_PATH = "/funciones";
 
 /** Índice de los tipos de negocio. */
 export const LANDING_BUSINESS_TYPES_PATH = "/menu-digital";
@@ -30,6 +44,8 @@ export const MAIN_DOMAIN_MARKETING_PATHS: readonly string[] = [
 	LANDING_COMMISSIONS_GUIDE_PATH,
 	LANDING_BUSINESS_TYPES_PATH,
 	...LANDING_BUSINESS_TYPE_SLUG_LIST.map((slug) => `${LANDING_BUSINESS_TYPES_PATH}/${slug}`),
+	LANDING_FEATURES_PATH,
+	...LANDING_FEATURE_SLUG_LIST.map((slug) => `${LANDING_FEATURES_PATH}/${slug}`),
 ];
 
 const MARKETING_PATH_SET = new Set(MAIN_DOMAIN_MARKETING_PATHS);
