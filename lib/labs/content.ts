@@ -332,9 +332,9 @@ export const LABS_TEAM: LabsTeamMember[] = [
 		linkedinUrl: "https://www.linkedin.com/in/jesus-rodriguez-morales/",
 	},
 	{
-		// Sin foto todavía: la tarjeta muestra sus iniciales en un retrato del mismo tamaño.
 		name: "Jhon Belandria",
-		role: "Cofundador",
+		role: "Cofundador · Infraestructura y seguridad",
+		photoUrl: "/labs/equipo/jhon-belandria.jpg",
 		linkedinUrl: "https://www.linkedin.com/in/jhon-belandria-6b823b378/",
 	},
 ];
