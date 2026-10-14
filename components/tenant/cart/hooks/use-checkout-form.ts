@@ -182,7 +182,7 @@ export function useCheckoutForm(params: UseCheckoutFormParams) {
 		const name = values.name.trim();
 		const nameOk = name.length > 2 && /^[\p{L} .'-]+$/u.test(name);
 		const phoneOk = strategy.validatePhone(values.phone);
-		const rutOk = strategy.validateId(values.rut);
+		const rutOk = !strategy.requiresId || strategy.validateId(values.rut);
 		const receiptOk = requiresReceipt ? Boolean(values.receiptFile) : true;
 		return {
 			name: nameOk,

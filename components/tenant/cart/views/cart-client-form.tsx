@@ -36,7 +36,7 @@ export function CartClientForm({
 }: CartClientFormProps) {
 	const t = useTranslations("tenant.cart.modal");
 	const nameError = showFieldErrors && !validation.name;
-	const idError = showFieldErrors && !validation.rut;
+	const idError = strategy.requiresId && showFieldErrors && !validation.rut;
 	const phoneError = showFieldErrors && !validation.phone;
 	const receiptError = showFieldErrors && requiresReceipt && !validation.receipt;
 	const pending = [
@@ -75,6 +75,8 @@ export function CartClientForm({
 				</div>
 
 				<div className="cart-fields__row">
+					{/* Sin documento en el país (EE. UU., México…): no se pide, para no bloquear el pedido. */}
+					{strategy.requiresId ? (
 					<div className="cart-fields__group cart-fields__group--grow">
 						<label className="cart-label" htmlFor="cart-client-id">
 							{strategy.idName}
@@ -91,6 +93,7 @@ export function CartClientForm({
 							aria-invalid={idError || undefined}
 						/>
 					</div>
+					) : null}
 					<div className="cart-fields__group cart-fields__group--grow">
 						<label className="cart-label" htmlFor="cart-client-phone">
 							{t("payment.fields.phone")}

@@ -473,7 +473,8 @@
           "areaLabel": {
             "commune": "Commune",
             "municipality": "Municipality or city",
-            "city": "City or neighborhood"
+            "city": "City or neighborhood",
+            "cityZip": "City and ZIP code"
           },
           "example": "E.g. {value}",
           "invalidNamedArea": "The selected zone is no longer available.",
