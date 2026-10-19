@@ -411,7 +411,7 @@ function PlanChangeDialog({ company, availablePlans, billing }: Pick<AccountPlan
                 <span className="text-sm tabular-nums text-[#1d1d1f]">{fmtUsd(plan.price, company.locale)}<span className="text-[#6e6e73]">/mes</span></span>
                 <span className="text-xs text-[#6e6e73]">
                   {formatLimit(plan.max_branches, "sucursal", "sucursales", "Sucursales ilimitadas")} ·{" "}
-                  {formatLimit(plan.max_users, "usuario", "usuarios", "usuarios ilimitados")}
+                  {formatLimit(plan.max_users, "usuario de equipo", "usuarios de equipo", "usuarios ilimitados")}
                 </span>
               </button>
             );

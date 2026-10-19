@@ -511,6 +511,14 @@
           },
           "loginCta": "Sign in"
         },
+        "affiliation": {
+          "title": "Are you a member?",
+          "body": "If you have an account with {business}, sign in and this order earns points.",
+          "bodyGeneric": "If you have an account, sign in and this order earns points.",
+          "yes": "Yes, sign in",
+          "no": "No, continue as guest",
+          "register": "No account? Create one and earn points"
+        },
         "actions": {
           "close": "Close",
           "loading": "Loading...",

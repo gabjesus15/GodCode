@@ -6,12 +6,15 @@ import { supabaseAdmin } from "@/lib/infra/supabase-admin";
 /** @service-role super-admin */
 
 const TENANT_MANAGEABLE_ROLES = new Set(["admin", "ceo", "cashier"]);
-const RESERVED_NON_TENANT_ROLES = new Set(["super_admin", "owner"]);
+const RESERVED_NON_TENANT_ROLES = new Set(["super_admin"]);
 
 /** Tope por página: alcanza para cualquier negocio real y evita traer tablas enteras. */
 const USERS_PAGE_MAX = 500;
+const USERS_SELECT = "id,email,role,branch_id,branch:branches!users_branch_id_fkey(name)";
 
 function pageParam(value: string | null, fallback: number, max: number): number {
+	// Sin parámetro va el valor por defecto: `Number(null)` y `Number("")` dan 0, no NaN.
+	if (value == null || value.trim() === "") return fallback;
 	const n = Math.floor(Number(value));
 	return Number.isFinite(n) && n >= 0 ? Math.min(n, max) : fallback;
 }
@@ -53,13 +56,17 @@ export async function GET(req: NextRequest) {
 	// Paginado con orden estable; se pide uno de más para saber si quedan.
 	const limit = Math.max(1, pageParam(url.searchParams.get("limit"), USERS_PAGE_MAX, USERS_PAGE_MAX));
 	const offset = pageParam(url.searchParams.get("offset"), 0, Number.MAX_SAFE_INTEGER);
-	const { data, error } = await supabaseAdmin
-		.from("users")
-		.select("id,email,role,branch_id,branch:branches!users_branch_id_fkey(name)")
-		.eq("company_id", companyId)
-		.order("email", { ascending: true })
-		.order("id", { ascending: true })
-		.range(offset, offset + limit);
+	const page = (select: string) =>
+		supabaseAdmin
+			.from("users")
+			.select(select)
+			.eq("company_id", companyId)
+			.order("email", { ascending: true })
+			.order("id", { ascending: true })
+			.range(offset, offset + limit);
+	// Con el rol propio del negocio (/cuenta › Equipo); si la base aún no lo tiene, sin él.
+	let { data, error } = await page(`${USERS_SELECT},company_role:company_roles(name)`);
+	if (error) ({ data, error } = await page(USERS_SELECT));
 
 	if (error) {
 		return NextResponse.json({ error: error.message }, { status: 400 });

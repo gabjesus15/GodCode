@@ -511,6 +511,14 @@
           },
           "loginCta": "Accedi"
         },
+        "affiliation": {
+          "title": "Sei iscritto?",
+          "body": "Se hai un account da {business}, accedi e questo ordine accumula punti.",
+          "bodyGeneric": "Se hai un account, accedi e questo ordine accumula punti.",
+          "yes": "Sì, accedi",
+          "no": "No, continua come ospite",
+          "register": "Non hai un account? Crealo e accumula punti"
+        },
         "actions": {
           "close": "Chiudi",
           "loading": "Caricamento...",

@@ -43,7 +43,18 @@ describe("GET /api/auth/super-admin-user", () => {
 		expect(chain.range).toHaveBeenCalledWith(0, 2);
 	});
 
-	it("sin parámetros usa el tope de 500 y no deja pedir más", async () => {
+	it("sin limit trae a todos los usuarios (página de 500)", async () => {
+		// Es la llamada de la pestaña Usuarios: antes `Number(null)` daba 0 y la página quedaba en 1.
+		const rows = Array.from({ length: 3 }, (_, i) => ({ id: i, email: `u${i}@x.cl`, role: "ceo" }));
+		adminHolder.current = makeAdminMock({ tables: { users: [{ data: rows, error: null }] } });
+		const res = await listUsers(new NextRequest("http://localhost/api/auth/super-admin-user?companyId=c1"));
+		const body = (await res.json()) as { users: unknown[]; hasMore: boolean };
+		expect(body.users).toHaveLength(3);
+		expect(body.hasMore).toBe(false);
+		expect(adminHolder.current.chains[0].chain.range).toHaveBeenCalledWith(0, 500);
+	});
+
+	it("un limit mayor al tope se recorta a 500", async () => {
 		adminHolder.current = makeAdminMock({ tables: { users: [{ data: [], error: null }] } });
 		await listUsers(new NextRequest("http://localhost/api/auth/super-admin-user?companyId=c1&limit=100000"));
 		expect(adminHolder.current.chains[0].chain.range).toHaveBeenCalledWith(0, 500);

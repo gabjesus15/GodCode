@@ -328,4 +328,4 @@ export type StoreThemeResponse = {
 
 export type StoreThemeAutosaveStatus = "idle" | "pending" | "saving" | "saved" | "error";
 
-export type PortalTab = "resumen" | "menu" | "perfil" | "tienda" | "plan" | "sucursales" | "facturacion" | "soporte" | "correo" | "seguridad";
+export type PortalTab = "resumen" | "menu" | "perfil" | "tienda" | "plan" | "sucursales" | "equipo" | "facturacion" | "soporte" | "correo" | "seguridad";

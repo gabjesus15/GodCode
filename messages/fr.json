@@ -511,6 +511,14 @@
           },
           "loginCta": "Se connecter"
         },
+        "affiliation": {
+          "title": "Êtes-vous membre ?",
+          "body": "Si vous avez un compte chez {business}, connectez-vous et cette commande vous rapporte des points.",
+          "bodyGeneric": "Si vous avez un compte, connectez-vous et cette commande vous rapporte des points.",
+          "yes": "Oui, me connecter",
+          "no": "Non, continuer en invité",
+          "register": "Pas de compte ? Créez-en un et cumulez des points"
+        },
         "actions": {
           "close": "Fermer",
           "loading": "Chargement...",

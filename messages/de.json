@@ -511,6 +511,14 @@
           },
           "loginCta": "Anmelden"
         },
+        "affiliation": {
+          "title": "Bist du Mitglied?",
+          "body": "Wenn du ein Konto bei {business} hast, melde dich an und sammle mit dieser Bestellung Punkte.",
+          "bodyGeneric": "Wenn du ein Konto hast, melde dich an und sammle mit dieser Bestellung Punkte.",
+          "yes": "Ja, anmelden",
+          "no": "Nein, als Gast fortfahren",
+          "register": "Kein Konto? Erstelle eins und sammle Punkte"
+        },
         "actions": {
           "close": "Schließen",
           "loading": "Laden...",

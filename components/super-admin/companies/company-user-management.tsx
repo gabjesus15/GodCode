@@ -20,7 +20,7 @@ const ROLE_LABELS: Record<string, string> = {
   cashier: "Cajero",
 };
 
-const RESERVED_NON_TENANT_ROLES = new Set(["super_admin", "owner"]);
+const RESERVED_NON_TENANT_ROLES = new Set(["super_admin"]);
 
 interface CompanyUser {
   id: string;
@@ -28,6 +28,8 @@ interface CompanyUser {
   role: string;
   branch_id?: string | null;
   branch_name?: string | null;
+  /** Rol propio del negocio que le dio el CEO en /cuenta › Equipo. */
+  company_role_name?: string | null;
 }
 
 interface BranchOption {
@@ -97,12 +99,14 @@ export function CompanyUserManagement({ companyId }: CompanyUserManagementProps)
           role: string;
           branch_id?: string | null;
           branch?: { name?: string | null } | null;
+          company_role?: { name?: string | null } | null;
         }) => ({
           id: String(row.id),
           email: String(row.email),
           role: String(row.role),
           branch_id: row.branch_id ?? null,
           branch_name: row.branch?.name ?? null,
+          company_role_name: row.company_role?.name ?? null,
         })
       );
       setUsers(mappedUsers);
@@ -279,7 +283,7 @@ export function CompanyUserManagement({ companyId }: CompanyUserManagementProps)
                   <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{user.email}</td>
                   <td className="px-4 py-3">
                     <Badge variant="neutral" className="capitalize">
-                      {user.role}
+                      {user.company_role_name ? `${user.role} · ${user.company_role_name}` : user.role}
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">

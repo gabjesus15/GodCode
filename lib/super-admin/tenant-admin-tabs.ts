@@ -5,7 +5,7 @@
  *
  * Al agregar una pestaña nueva:
  * 1. Añadirla en TENANT_ADMIN_TAB_OPTIONS.
- * 2. Si solo admin/owner deben verla por defecto, añadir su id a ADMIN_ONLY_TAB_IDS.
+ * 2. Si solo admin debe verla por defecto, añadir su id a ADMIN_ONLY_TAB_IDS.
  * 3. Reflejarla en el cliente del panel tenant: `AdminSidebar` + contenido cuando `activeTab === id`.
  *
  * Esta lista es el filtro de TODO lo que el super panel puede conceder: lo que no
@@ -18,7 +18,7 @@
  * añaden con el id canónico del tenant, que no necesita traducción.
  */
 
-/** Pestañas que por defecto no reciben CEO ni cashier (solo owner y admin). */
+/** Pestañas que por defecto no reciben CEO ni cashier (solo admin). */
 export const ADMIN_ONLY_TAB_IDS = ["admin_menu_options"] as const;
 
 export const TENANT_ADMIN_TAB_OPTIONS = [
@@ -53,7 +53,6 @@ const adminOnlySet = new Set<string>(ADMIN_ONLY_TAB_IDS as unknown as string[]);
 const TABS_FOR_CEO_DEFAULT = ALL_TABS.filter((id) => !adminOnlySet.has(id));
 
 export const DEFAULT_ROLE_NAV_PERMISSIONS: Record<string, string[]> = {
-	owner: [...ALL_TABS],
 	admin: [...ALL_TABS],
 	ceo: [...TABS_FOR_CEO_DEFAULT],
 	// Igual que el panel del local: un cajero registra gastos del turno.

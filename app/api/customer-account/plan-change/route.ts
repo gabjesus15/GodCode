@@ -15,6 +15,7 @@ import { formatEmailDate, formatUtcLongDate, timeZoneForCountry } from "@/lib/em
 import { sendEmail } from "@/lib/email/send";
 import { resolveAddonOfferForPlan } from "@/lib/plans/plan-offer-rules";
 import { syncCompanyPanelAccessFromPlanId } from "@/lib/super-admin/sync-company-panel-access";
+import { countUsedSeats, teamSeatLimit } from "@/lib/tenant/company-team";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 
@@ -56,9 +57,10 @@ async function buildPreview(companyId: string, targetPlanId: string) {
 	if (!target) return { error: "Ese plan no está disponible.", status: 400 } as const;
 	if (billing.currentPlan?.id === target.id) return { error: "Ya estás en ese plan.", status: 400 } as const;
 
-	const [{ count: activeBranches }, { count: activeUsers }] = await Promise.all([
+	// Usuarios: los del equipo, como en /cuenta › Equipo (los CEO no cuentan en el tope).
+	const [{ count: activeBranches }, usersCount] = await Promise.all([
 		supabaseAdmin.from("branches").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("is_active", true),
-		supabaseAdmin.from("users").select("id", { count: "exact", head: true }).eq("company_id", companyId).eq("is_active", true),
+		countUsedSeats(companyId),
 	]);
 
 	const country = billing.company.country;
@@ -73,7 +75,6 @@ async function buildPreview(companyId: string, targetPlanId: string) {
 
 	const extraBranches = billing.branchExtras.reduce((sum, extra) => sum + extra.quantity, 0);
 	const branchesCount = Number(activeBranches ?? 0);
-	const usersCount = Number(activeUsers ?? 0);
 	const targetEffectiveBranches = target.max_branches == null ? null : target.max_branches + extraBranches;
 	const scheduledTarget = billing.scheduledChange
 		? billing.plans.find((plan) => plan.id === billing.scheduledChange?.target_plan_id) ?? null
@@ -100,12 +101,13 @@ async function buildPreview(companyId: string, targetPlanId: string) {
 			detail: `Tienes ${branchesCount} sucursales activas y el plan ${target.name} permite ${targetEffectiveBranches}. Desactiva ${branchesCount - targetEffectiveBranches} antes de cambiar.`,
 		});
 	}
-	if (target.max_users != null && usersCount > target.max_users) {
+	const targetUserLimit = teamSeatLimit(target.max_users);
+	if (targetUserLimit != null && usersCount > targetUserLimit) {
 		impacts.push({
 			id: "users-over-limit",
 			level: "block",
 			title: "Tienes más usuarios de los que permite ese plan",
-			detail: `Tienes ${usersCount} usuarios activos y el plan ${target.name} permite ${target.max_users}. Desactiva ${usersCount - target.max_users} antes de cambiar.`,
+			detail: `Tienes ${usersCount} usuarios activos en tu equipo y el plan ${target.name} permite ${targetUserLimit}. Desactiva ${usersCount - targetUserLimit} en «Equipo» antes de cambiar.`,
 		});
 	}
 	if (quote.mode === "downgrade") {

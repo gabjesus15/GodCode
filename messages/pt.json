@@ -511,6 +511,14 @@
           },
           "loginCta": "Entrar"
         },
+        "affiliation": {
+          "title": "Você é cadastrado?",
+          "body": "Se você tem conta em {business}, entre e este pedido soma pontos.",
+          "bodyGeneric": "Se você tem conta, entre e este pedido soma pontos.",
+          "yes": "Sim, entrar",
+          "no": "Não, continuar como convidado",
+          "register": "Não tem conta? Crie uma e acumule pontos"
+        },
         "actions": {
           "close": "Fechar",
           "loading": "Carregando...",

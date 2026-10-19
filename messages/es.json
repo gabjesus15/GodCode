@@ -511,6 +511,14 @@
           },
           "loginCta": "Iniciar sesión"
         },
+        "affiliation": {
+          "title": "¿Estás afiliado?",
+          "body": "Si tienes cuenta en {business}, entra y este pedido suma puntos.",
+          "bodyGeneric": "Si tienes cuenta, entra y este pedido suma puntos.",
+          "yes": "Sí, iniciar sesión",
+          "no": "No, seguir como invitado",
+          "register": "¿No tienes cuenta? Créala y suma puntos"
+        },
         "actions": {
           "close": "Cerrar",
           "loading": "Cargando…",

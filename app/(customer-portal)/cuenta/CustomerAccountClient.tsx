@@ -15,6 +15,7 @@ import { useAddonPurchase, useSubscriptionBilling } from "@/components/customer-
 import { useStoreTheme }       from "@/components/customer-portal/hooks/use-store-theme";
 import { useMenuSettings }     from "@/components/customer-portal/hooks/use-menu-settings";
 import { useEmailSender }      from "@/components/customer-portal/hooks/use-email-sender";
+import { useTeam }             from "@/components/customer-portal/hooks/use-team";
 import { useBranchFlow }       from "@/components/customer-portal/hooks/use-branch-flow";
 import { useBillingFilters }   from "@/components/customer-portal/hooks/use-billing-filters";
 import { useTickets }          from "@/components/customer-portal/hooks/use-tickets";
@@ -29,6 +30,7 @@ import { AccountPerfilPublicoTab } from "@/components/customer-portal/account/ta
 import { AccountTiendaTab }     from "@/components/customer-portal/account/tabs/account-tienda-tab";
 import { AccountPlanTab }       from "@/components/customer-portal/account/tabs/account-plan-tab";
 import { AccountSucursalesTab } from "@/components/customer-portal/account/tabs/account-sucursales-tab";
+import { AccountEquipoTab }     from "@/components/customer-portal/account/tabs/account-equipo-tab";
 import { AccountFacturacionTab } from "@/components/customer-portal/account/tabs/account-facturacion-tab";
 import { AccountSoporteTab }    from "@/components/customer-portal/account/tabs/account-soporte-tab";
 import { AccountCorreoTab }     from "@/components/customer-portal/account/tabs/account-correo-tab";
@@ -72,7 +74,7 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
     payments, initialTickets, initialBranchEntitlements, activeAddons,
     company.subscriptionStatus, company.subscriptionEndsAt,
     {
-      enablePolling: tab !== "tienda" && tab !== "correo" && tab !== "seguridad",
+      enablePolling: tab !== "tienda" && tab !== "correo" && tab !== "equipo" && tab !== "seguridad",
       companyId: company.id,
       initialSyncedAt,
       initialScheduledPlanChange: company.scheduledPlanChange,
@@ -132,6 +134,8 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
   const menuSettings = useMenuSettings(tab === "tienda");
 
   const emailSender = useEmailSender(tab === "correo");
+
+  const team = useTeam(tab === "equipo");
 
   const tickets = useTickets(snapshot.tickets, company);
 
@@ -402,6 +406,10 @@ export function CustomerAccountClient(props: CustomerAccountClientProps) {
             branchFlow={branchFlow}
             storeDraft={Boolean(storeDraft)}
           />
+        )}
+
+        {tab === "equipo" && (
+          <AccountEquipoTab team={team} onGoToPlan={() => void handleTabChange("plan")} />
         )}
 
         {tab === "facturacion" && (

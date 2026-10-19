@@ -19,6 +19,8 @@ type MenuAccountAuthPanelProps = {
 	onAuthenticated: (account: MenuAccountPublic, how: "login" | "created" | "linked") => void;
 	/** La contraseña se cambió con el código de recuperación; toca entrar con la nueva. */
 	onPasswordReset: () => void;
+	/** Pestaña con la que abre: "Crear cuenta" cuando se llega desde la oferta del carrito. */
+	initialView?: "login" | "register";
 };
 
 type RegisterResponse =
@@ -33,11 +35,12 @@ export function MenuAccountAuthPanel({
 	branches,
 	onAuthenticated,
 	onPasswordReset,
+	initialView = "login",
 }: MenuAccountAuthPanelProps) {
 	const t = useTranslations("tenant.account");
 	const strategy = useMemo(() => getFormStrategy(countryCode), [countryCode]);
 
-	const { view, setView, pending, errorCode, setErrorCode, run } = useMenuAccount("login");
+	const { view, setView, pending, errorCode, setErrorCode, run } = useMenuAccount(initialView);
 	const cooldown = useResendCooldown();
 
 	const [document, setDocument] = useState("");

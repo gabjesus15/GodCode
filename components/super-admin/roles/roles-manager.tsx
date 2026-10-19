@@ -1,21 +1,39 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Pencil, Save, X, Users } from "lucide-react";
+import { Plus, Trash2, Pencil, Save, X, Users, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 import { toast } from "sonner";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { SaasStatusBadge } from "@/components/super-admin/shared/saas-status-badge";
 import { SaasEmptyState } from "@/components/super-admin/shared/saas-empty-state";
+import { ROLE_ACTION_OPTIONS, ROLE_TAB_OPTIONS } from "@/lib/super-admin/role-permissions";
+import { DEFAULT_ROLE_NAV_PERMISSIONS } from "@/lib/super-admin/tenant-admin-tabs";
 
 interface Role {
   id: string;
   name: string;
   description: string;
   isSystem: boolean;
+  /** admin/ceo/super_admin: ven y hacen todo, sin permisos que editar. */
+  fullAccess?: boolean;
+  /** false si la base aún no tiene las columnas de permisos. */
+  permissionsReady?: boolean;
+  /** null = lo del código (para un rol nuevo, lo mismo que el cajero). */
+  navTabs?: string[] | null;
+  actions?: string[];
+}
+
+/** Pestañas que el panel le da hoy a un rol sin pestañas guardadas. */
+const FALLBACK_ROLE_TABS = DEFAULT_ROLE_NAV_PERMISSIONS.cashier;
+
+function toggleIn(list: string[], value: string, checked: boolean): string[] {
+  if (checked) return list.includes(value) ? list : [...list, value];
+  return list.filter((item) => item !== value);
 }
 
 export default function RolesManager() {
@@ -28,6 +46,10 @@ export default function RolesManager() {
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  /** Rol con el editor de permisos abierto, y lo marcado sin guardar. */
+  const [permissionsRoleId, setPermissionsRoleId] = useState<string | null>(null);
+  const [draftTabs, setDraftTabs] = useState<string[]>([]);
+  const [draftActions, setDraftActions] = useState<string[]>([]);
   const [listRef] = useAutoAnimate();
 
   const customRolesCount = useMemo(
@@ -59,9 +81,49 @@ export default function RolesManager() {
     setEditDescription("");
   };
 
+  const closePermissions = () => {
+    setPermissionsRoleId(null);
+    setDraftTabs([]);
+    setDraftActions([]);
+  };
+
   useEffect(() => {
-    if (readOnly) cancelEditRole();
+    if (readOnly) {
+      cancelEditRole();
+      closePermissions();
+    }
   }, [readOnly]);
+
+  const openPermissions = (role: Role) => {
+    if (readOnly || role.fullAccess) return;
+    setPermissionsRoleId(role.id);
+    setDraftTabs(Array.isArray(role.navTabs) ? role.navTabs : [...FALLBACK_ROLE_TABS]);
+    setDraftActions(Array.isArray(role.actions) ? role.actions : []);
+  };
+
+  const handleSavePermissions = () => {
+    void (async () => {
+      if (readOnly || !permissionsRoleId) return;
+      setSaving(true);
+      try {
+        const res = await fetch("/api/super-admin/roles", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: permissionsRoleId, navTabs: draftTabs, actions: draftActions }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "No se pudieron guardar los permisos");
+
+        await loadRoles();
+        closePermissions();
+        toast.success(`Permisos de "${data.role?.name ?? "rol"}" guardados.`);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "No se pudieron guardar los permisos");
+      } finally {
+        setSaving(false);
+      }
+    })();
+  };
 
   const handleAddRole = () => {
     void (async () => {
@@ -194,7 +256,7 @@ export default function RolesManager() {
           </div>
           <div>
             <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 sm:text-lg">Gestión de roles</h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Administra roles en base de datos (crear, editar, eliminar).</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">Crea roles y define qué ve y qué puede hacer cada uno en el panel del local.</p>
           </div>
         </div>
 
@@ -238,8 +300,8 @@ export default function RolesManager() {
           ) : (
             <div ref={listRef} className="divide-y divide-zinc-100 rounded-2xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
               {roles.map((role) => (
+                <div key={role.id}>
                 <div
-                  key={role.id}
                   className="flex items-center justify-between gap-4 p-4 transition hover:bg-zinc-50/60 dark:hover:bg-zinc-900/40"
                 >
                   <div className="min-w-0 flex-1">
@@ -267,12 +329,31 @@ export default function RolesManager() {
                             {role.name}
                           </code>
                           {role.isSystem && <SaasStatusBadge label="Sistema" variant="info" />}
+                          {role.fullAccess && role.name !== "super_admin" && (
+                            <SaasStatusBadge label="Ve y hace todo" variant="neutral" />
+                          )}
                         </div>
                         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{role.description}</p>
                       </>
                     )}
                   </div>
                   <div className="flex gap-1">
+                    {!readOnly && !role.fullAccess && permissionsRoleId !== role.id && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => openPermissions(role)}
+                        disabled={saving || role.permissionsReady === false}
+                        title={
+                          role.permissionsReady === false
+                            ? "Falta aplicar en la base sql/2026-10-16_role_permissions.sql"
+                            : "Qué ve y qué puede hacer este rol en el panel del local"
+                        }
+                      >
+                        <SlidersHorizontal className="mr-1.5 h-4 w-4" />
+                        Permisos
+                      </Button>
+                    )}
                     {!readOnly && !role.isSystem && editingRoleId !== role.id && (
                       <Button size="sm" variant="ghost" onClick={() => startEditRole(role)}>
                         <Pencil className="h-4 w-4" />
@@ -299,6 +380,65 @@ export default function RolesManager() {
                       </Button>
                     )}
                   </div>
+                </div>
+                {permissionsRoleId === role.id && (
+                  <div className="space-y-4 border-t border-zinc-100 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
+                    {!role.isSystem && (
+                      <p className="rounded-xl border border-amber-200/60 bg-amber-50/60 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+                        Este rol todavía no puede entrar al panel del local: por ahora los permisos se aplican al cajero.
+                      </p>
+                    )}
+                    <fieldset className="space-y-2">
+                      <legend className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Pestañas que ve</legend>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        Solo aparecen si además el plan de la empresa las incluye.
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {ROLE_TAB_OPTIONS.map((tab) => (
+                          <label key={tab.id} className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                            <Checkbox
+                              checked={draftTabs.includes(tab.id)}
+                              disabled={saving}
+                              onCheckedChange={(checked) => setDraftTabs((prev) => toggleIn(prev, tab.id, checked))}
+                            />
+                            {tab.label}
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <fieldset className="space-y-2">
+                      <legend className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Acciones que puede hacer</legend>
+                      <div className="space-y-2">
+                        {ROLE_ACTION_OPTIONS.map((action) => (
+                          <label key={action.key} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                            <Checkbox
+                              className="mt-0.5"
+                              checked={draftActions.includes(action.key)}
+                              disabled={saving}
+                              onCheckedChange={(checked) => setDraftActions((prev) => toggleIn(prev, action.key, checked))}
+                            />
+                            <span>
+                              <span className="font-medium text-zinc-900 dark:text-zinc-100">{action.label}</span>
+                              <span className="block text-xs text-zinc-500 dark:text-zinc-400">{action.description}</span>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Vale para todas las empresas. Owner, admin y CEO siempre ven y hacen todo.
+                    </p>
+                    <div className="flex justify-end gap-2">
+                      <Button size="sm" variant="ghost" onClick={closePermissions} disabled={saving}>
+                        Cancelar
+                      </Button>
+                      <Button size="sm" onClick={handleSavePermissions} disabled={saving}>
+                        <Save className="mr-1.5 h-4 w-4" />
+                        {saving ? "Guardando..." : "Guardar permisos"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 </div>
               ))}
             </div>

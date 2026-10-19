@@ -56,7 +56,9 @@ import { mergeActiveSessionInfo, resolveCheckoutTimeZone } from "../utils/active
 import { mergeCartWithBranchPrices } from "../utils/cart-pricing";
 import { resolveCheckoutPaymentMethods } from "../utils/checkout-payment-methods";
 import { parseEnhancementCatalogs } from "../utils/enhancement-catalogs";
+import { hasChosenGuestThisVisit, rememberGuestChoice, shouldAskAffiliation } from "../utils/affiliation";
 import { evaluateFulfillment } from "../utils/fulfillment-validation";
+import { CartAffiliationBody, CartAffiliationFoot } from "./cart-affiliation-step";
 import { CartDialogShell, type CartNotice, type CartStepDirection } from "./cart-dialog-shell";
 import { fulfillmentBlockerMessage } from "./cart-fulfillment-copy";
 import { CartFulfillmentBody, CartFulfillmentFoot } from "./cart-fulfillment-step";
@@ -77,7 +79,7 @@ const WHATSAPP_HANDOFF_DELAY_MS = 1500;
 const NO_RECEIPT_METHODS: ReadonlySet<string> = new Set();
 
 /** Orden de los pasos: decide si un cambio se anima "hacia adelante" o "hacia atrás". */
-const STEP_ORDER = ["summary", "fulfillment", "payment:pick", "payment:detail", "payment:form", "success"];
+const STEP_ORDER = ["summary", "affiliation", "fulfillment", "payment:pick", "payment:detail", "payment:form", "success"];
 
 export function CartModal({
 	businessInfo,
@@ -106,7 +108,7 @@ export function CartModal({
 	const live = useCheckoutBranchLive({ branch: selectedBranch, isCartOpen: cart.isCartOpen, supabase });
 	const branch = live.branch;
 	// Persona con sesión en "Mi cuenta": rellena sus datos y ata el pedido a su cuenta.
-	const checkoutProfile = useCheckoutProfile(selectedBranch?.company_id, cart.isCartOpen);
+	const { profile: checkoutProfile, isGuest } = useCheckoutProfile(selectedBranch?.company_id, cart.isCartOpen);
 	const accountCompanyId = checkoutProfile ? (selectedBranch?.company_id ?? null) : null;
 	const settings = useMemo(
 		() => normalizeDeliverySettings(stripStaffOnlyDeliverySettings(branch?.delivery_settings)),
@@ -128,7 +130,9 @@ export function CartModal({
 		[branch?.country, selectedBranch?.country, businessInfo?.country, cart.country],
 	);
 	const strategy = useMemo(() => getFormStrategy(countryCode), [countryCode]);
-	const activeInfo = useMemo(() => mergeActiveSessionInfo(businessInfo, selectedBranch), [businessInfo, selectedBranch]);
+	// La cuenta se identifica con el documento: en países sin documento no se ofrece.
+	const offerAccount = MENU_ACCOUNT_ENABLED && strategy.requiresId;
+	const activeInfo =useMemo(() => mergeActiveSessionInfo(businessInfo, selectedBranch), [businessInfo, selectedBranch]);
 
 	const lines = useMemo(
 		() =>
@@ -154,10 +158,16 @@ export function CartModal({
 			: "payment";
 	const paymentStage = resolvePaymentStage(flow.paymentMethodKey, flow.checkoutSession.showForm);
 
+	// "¿Estás afiliado?": se decide al tocar "Ir a pagar" y se muestra antes de la entrega.
+	const [affiliationPending, setAffiliationPending] = useState(false);
+	const showAffiliation = phase === "fulfillment" && affiliationPending && isGuest;
+
 	// Paso actual y el anterior, para animar el cuerpo según la dirección del cambio.
 	const stepKey = result.showSuccess
 		? "success"
-		: phase === "payment"
+		: showAffiliation
+			? "affiliation"
+			: phase === "payment"
 			? `payment:${paymentStage}`
 			: phase;
 	const [stepTrail, setStepTrail] = useState({ previous: stepKey, current: stepKey });
@@ -259,7 +269,12 @@ export function CartModal({
 	const blockerMessage = fulfillmentBlockerMessage(evaluation.blocker, t, currency);
 
 	const address = useDeliveryAddress({
-		active: cart.isCartOpen && phase === "fulfillment" && cart.fulfillment === "delivery" && evaluation.mapAddressMode,
+		active:
+			cart.isCartOpen &&
+			phase === "fulfillment" &&
+			!showAffiliation &&
+			cart.fulfillment === "delivery" &&
+			evaluation.mapAddressMode,
 		branch: selectedBranch,
 		line1: cart.deliveryLine1,
 		area: cart.deliveryCommune,
@@ -296,6 +311,15 @@ export function CartModal({
 	const goToFulfillment = () => {
 		flow.setActiveEnhancePanel("none");
 		setFulfillmentVisit((visit) => visit + 1);
+		setAffiliationPending(
+			shouldAskAffiliation({
+				offerAccount,
+				isGuest,
+				companyId: selectedBranch?.company_id,
+				orderChannel,
+				chosenGuestThisVisit: hasChosenGuestThisVisit,
+			}),
+		);
 		flow.patchCheckoutSession({ showPaymentInfo: true, showPaymentMethods: false, showForm: false });
 	};
 
@@ -327,10 +351,18 @@ export function CartModal({
 	const backFromPaymentForm = () =>
 		flow.skipPaymentDetail ? backToPaymentMethods() : flow.patchCheckoutSession({ showForm: false });
 
-	const openAccount = () => {
+	const openAccount = (view?: "register") => {
+		// Si vuelve sin entrar, se le pregunta de nuevo en el próximo "Ir a pagar".
+		setAffiliationPending(false);
 		flow.dismissCart();
 		// `next=cart`: al entrar o registrarse vuelve aquí con el carrito abierto.
-		router.push(getTenantScopedPath(pathname ?? "/", "/mi-cuenta?next=cart"));
+		const query = view === "register" ? "?next=cart&view=register" : "?next=cart";
+		router.push(getTenantScopedPath(pathname ?? "/", `/mi-cuenta${query}`));
+	};
+
+	const continueAsGuest = () => {
+		setAffiliationPending(false);
+		if (selectedBranch?.company_id) rememberGuestChoice(selectedBranch.company_id);
 	};
 
 	const resetFlow = () => {
@@ -638,44 +670,51 @@ export function CartModal({
 				? ({ kind: "closed", message: closedMessage } as const)
 				: ({ kind: "ready", onContinue: goToFulfillment } as const);
 
-	const body =
-		phase === "summary" ? (
-			<CartSummaryBody lines={lines} onBackToMenu={flow.dismissCart} accountCompanyId={accountCompanyId} />
-		) : phase === "fulfillment" ? (
-			<CartFulfillmentBody
-				settings={settings}
-				pricingMode={pricingMode}
-				address={address}
-				strategy={strategy}
-				evaluation={evaluation}
-				touched={fulfillmentTouched}
-				onTouch={touchFulfillment}
-				onFulfillmentChange={changeFulfillment}
-				pickup={pickupInfo}
-				savedAddresses={checkoutProfile?.addresses}
-			/>
-		) : (
-			<CartPaymentBody
-				methods={paymentMethods}
-				paymentMethodKey={paymentMethodKey}
-				receiptRequiredMethods={receiptRequiredMethods}
-				stage={paymentStage}
-				onPickMethod={flow.pickPaymentMethod}
-				activeInfo={activeInfo}
-				strategy={strategy}
-				cartTotal={cart.grandTotal}
-				form={{
-					values: form.values,
-					validation: form.validation,
-					showFieldErrors,
-					onInputChange: form.handleInputChange,
-					onFileChange: form.handleFileChange,
-					onSubmit: submit,
-				}}
-			/>
-		);
+	const body = showAffiliation ? (
+		<CartAffiliationBody businessName={businessInfo?.name} />
+	) : phase === "summary" ? (
+		<CartSummaryBody lines={lines} onBackToMenu={flow.dismissCart} accountCompanyId={accountCompanyId} />
+	) : phase === "fulfillment" ? (
+		<CartFulfillmentBody
+			settings={settings}
+			pricingMode={pricingMode}
+			address={address}
+			strategy={strategy}
+			evaluation={evaluation}
+			touched={fulfillmentTouched}
+			onTouch={touchFulfillment}
+			onFulfillmentChange={changeFulfillment}
+			pickup={pickupInfo}
+			savedAddresses={checkoutProfile?.addresses}
+		/>
+	) : (
+		<CartPaymentBody
+			methods={paymentMethods}
+			paymentMethodKey={paymentMethodKey}
+			receiptRequiredMethods={receiptRequiredMethods}
+			stage={paymentStage}
+			onPickMethod={flow.pickPaymentMethod}
+			activeInfo={activeInfo}
+			strategy={strategy}
+			cartTotal={cart.grandTotal}
+			form={{
+				values: form.values,
+				validation: form.validation,
+				showFieldErrors,
+				onInputChange: form.handleInputChange,
+				onFileChange: form.handleFileChange,
+				onSubmit: submit,
+			}}
+		/>
+	);
 
-	const footer = !hasLines ? null : phase === "summary" ? (
+	const footer = !hasLines ? null : showAffiliation ? (
+		<CartAffiliationFoot
+			onSignIn={() => openAccount()}
+			onContinueAsGuest={continueAsGuest}
+			onRegister={() => openAccount("register")}
+		/>
+	) : phase === "summary" ? (
 		<CartSummaryFoot
 			settings={settings}
 			catalogs={catalogs}
@@ -730,8 +769,7 @@ export function CartModal({
 			notice={notice}
 			aside={aside}
 			onClose={flow.dismissCart}
-			// La cuenta se identifica con el documento: en países sin documento no se ofrece.
-			onOpenAccount={MENU_ACCOUNT_ENABLED && strategy.requiresId ? openAccount : undefined}
+			onOpenAccount={offerAccount ? () => openAccount() : undefined}
 			accountLabel={checkoutProfile?.fullName.trim().split(/\s+/)[0] || null}
 			footer={footer}
 		>

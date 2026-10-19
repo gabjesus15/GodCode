@@ -52,6 +52,8 @@ export function AccountPageClient({
 	/* `?next=cart`: quien vino desde el carrito (botón de cuenta o cupón que pide
 	   sesión) vuelve al menú con el carrito abierto en cuanto entra. */
 	const returnToCart = searchParams.get("next") === "cart";
+	/* `?view=register`: viene de "Créala y suma puntos" del carrito; abre en "Crear cuenta". */
+	const initialAuthView = searchParams.get("view") === "register" ? "register" : "login";
 
 	const [account, setAccount] = useState<MenuAccountPublic | null>(initialAccount);
 	const [notice, setNotice] = useState<"passwordChanged" | "linked" | "accountDeleted" | null>(null);
@@ -118,6 +120,7 @@ export function AccountPageClient({
 								}
 							}}
 							onPasswordReset={() => setNotice("passwordChanged")}
+							initialView={initialAuthView}
 						/>
 					</div>
 				</>

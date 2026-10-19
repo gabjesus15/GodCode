@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { SAAS_MUTATE_ROLES, SAAS_READ_ROLES, validateSuperAdminAccess } from "@/utils/admin/server-auth";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { logAdminAudit } from "@/lib/super-admin/admin-audit";
+import { isFullAccessRole, sanitizeRoleActions, sanitizeRoleNavTabs } from "@/lib/super-admin/role-permissions";
 
 /** @service-role super-admin */
 
@@ -10,15 +12,20 @@ type RoleRow = {
 	name: string;
 	description: string | null;
 	is_system: boolean;
+	/** Columnas de sql/2026-10-16_role_permissions.sql; faltan si la base aún no lo tiene. */
+	nav_tabs?: string[] | null;
+	actions?: string[] | null;
 };
 
 export async function GET() {
 	const access = await validateSuperAdminAccess(SAAS_READ_ROLES);
 	if (!access.ok) return access.response;
 
+	// `*` y no la lista de columnas: así la pantalla sigue cargando aunque la base aún no
+	// tenga nav_tabs/actions.
 	const { data, error } = await supabaseAdmin
 		.from("role_definitions")
-		.select("id,name,description,is_system")
+		.select("*")
 		.order("is_system", { ascending: false })
 		.order("name", { ascending: true });
 
@@ -31,9 +38,61 @@ export async function GET() {
 		name: role.name,
 		description: role.description ?? "",
 		isSystem: role.is_system,
+		fullAccess: isFullAccessRole(role.name),
+		permissionsReady: "actions" in role,
+		navTabs: Array.isArray(role.nav_tabs) ? role.nav_tabs : null,
+		actions: Array.isArray(role.actions) ? role.actions : [],
 	}));
 
 	return NextResponse.json({ roles });
+}
+
+/** Pestañas y acciones de un rol. admin/ceo/super_admin no se tocan: ven y hacen todo. */
+export async function PATCH(req: NextRequest) {
+	const access = await validateSuperAdminAccess(SAAS_MUTATE_ROLES);
+	if (!access.ok) return access.response;
+
+	const body = (await req.json().catch(() => null)) as { id?: unknown; navTabs?: unknown; actions?: unknown } | null;
+	const id = typeof body?.id === "string" ? body.id.trim() : "";
+	if (!id) {
+		return NextResponse.json({ error: "Falta el id del rol" }, { status: 400 });
+	}
+
+	const { data: role, error: roleError } = await supabaseAdmin
+		.from("role_definitions")
+		.select("id,name")
+		.eq("id", id)
+		.maybeSingle();
+	if (roleError) {
+		return NextResponse.json({ error: roleError.message }, { status: 400 });
+	}
+	if (!role) {
+		return NextResponse.json({ error: "Rol no encontrado" }, { status: 404 });
+	}
+	if (isFullAccessRole(role.name)) {
+		return NextResponse.json({ error: "Este rol ve y hace todo; sus permisos no se editan" }, { status: 400 });
+	}
+
+	const navTabs = sanitizeRoleNavTabs(body?.navTabs);
+	const actions = sanitizeRoleActions(body?.actions);
+
+	const { error } = await supabaseAdmin
+		.from("role_definitions")
+		.update({ nav_tabs: navTabs, actions })
+		.eq("id", id);
+	if (error) {
+		return NextResponse.json({ error: error.message }, { status: 400 });
+	}
+
+	await logAdminAudit({
+		actorEmail: access.email ?? "",
+		action: "role.permissions.update",
+		resourceType: "role",
+		resourceId: id,
+		metadata: { role: role.name, nav_tabs: navTabs, actions },
+	});
+
+	return NextResponse.json({ success: true, role: { id, name: role.name, navTabs, actions } });
 }
 
 export async function POST(req: NextRequest) {
