@@ -120,12 +120,9 @@ export function AnalyticsCountryMap({ countriesTop }: Props) {
                         fill={fill}
                         stroke="#e4e4e7"
                         strokeWidth={0.5}
-                        className="outline-none transition duration-200"
-                        style={{
-                          default: { outline: "none" },
-                          hover: { outline: "none", fill: hasData ? "#2563eb" : "#e5e5ea" },
-                          pressed: { outline: "none" },
-                        }}
+                        className={`outline-none transition duration-200 ${
+                          hasData ? "hover:fill-[#2563eb]" : "hover:fill-[#e5e5ea]"
+                        }`}
                         onMouseEnter={() => {
                           if (hasData && row) {
                             setHovered({
