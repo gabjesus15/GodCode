@@ -1,6 +1,6 @@
 # Servicio de alta (onboarding-billing) para Coolify.
 # Contexto de build: raíz del repo, porque el servicio importa lib/ y utils/ de la raíz.
-FROM node:22-alpine AS build
+FROM node:22.23.4-alpine AS build
 
 WORKDIR /repo
 
@@ -22,7 +22,7 @@ ARG NEXT_PUBLIC_APP_URL
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 BUILD_STANDALONE=1
 RUN npm run build --workspace onboarding-billing-service
 
-FROM node:22-alpine
+FROM node:22.23.4-alpine
 
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3001 HOSTNAME=0.0.0.0
 
