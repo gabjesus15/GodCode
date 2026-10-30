@@ -349,6 +349,17 @@ export function readHomePageConfig(themeConfig: unknown, legacy?: { schedule?: s
 	return normalizeHomePageConfig(readThemeConfigObject(themeConfig)[HOME_PAGE_THEME_KEY], legacy);
 }
 
+/** Clave propia en `theme_config`, fuera de `homePage`: la decide el super admin, no el editor del dueño. */
+export const STOREFRONT_ENTRY_THEME_KEY = "storefrontEntry";
+export const STOREFRONT_ENTRIES = ["home", "menu-panel"] as const;
+export type StorefrontEntry = (typeof STOREFRONT_ENTRIES)[number];
+const DEFAULT_STOREFRONT_ENTRY: StorefrontEntry = "home";
+
+/** Cómo entra el cliente: la portada, o directo a la carta con los enlaces en el panel lateral. */
+export function readStorefrontEntry(themeConfig: unknown): StorefrontEntry {
+	return pick(readThemeConfigObject(themeConfig)[STOREFRONT_ENTRY_THEME_KEY], STOREFRONT_ENTRIES, DEFAULT_STOREFRONT_ENTRY);
+}
+
 /** Id para un enlace propio nuevo. */
 export function createHomeLinkId(): string {
 	const random =

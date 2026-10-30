@@ -6,11 +6,25 @@ import {
 	parseBranchContactUrlInput,
 	phoneToTelHref,
 	readHomePageConfig,
+	readStorefrontEntry,
 	resolveHomeLinkIcon,
 	sanitizeHomeUrl,
 	socialInputToUrl,
 } from "@/lib/tenant/home-page/home-page-config";
 import { brandCoverFill, resolveHomePage, type ResolveHomePageInput } from "@/lib/tenant/home-page/resolve-home-page";
+
+describe("readStorefrontEntry", () => {
+	it("sin elegir o con un valor raro, se queda en la portada", () => {
+		expect(readStorefrontEntry(null)).toBe("home");
+		expect(readStorefrontEntry({})).toBe("home");
+		expect(readStorefrontEntry({ storefrontEntry: "otra" })).toBe("home");
+	});
+
+	it("lee la elección, también con theme_config guardado como texto", () => {
+		expect(readStorefrontEntry({ storefrontEntry: "menu-panel" })).toBe("menu-panel");
+		expect(readStorefrontEntry('{"storefrontEntry":"menu-panel"}')).toBe("menu-panel");
+	});
+});
 
 describe("sanitizeHomeUrl", () => {
 	it("deja pasar http(s), mailto y tel", () => {

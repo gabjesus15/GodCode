@@ -10,6 +10,9 @@ import { buildTenantShareImage } from "@/lib/tenant/share-card/share-image-metad
 import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedMenuStaticData, getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
 import { getCachedCompany } from "@/utils/tenant-cache";
+import { readStorefrontEntry } from "@/lib/tenant/home-page/home-page-config";
+import { loadHomePageInput } from "@/lib/tenant/home-page/load-home-page";
+import { resolveHomePage } from "@/lib/tenant/home-page/resolve-home-page";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
 import { resolveMenuImageUrl } from "@/lib/tenant/images/resolve-menu-image-url";
 import { resolveStorefrontThemeAssets } from "@/lib/storage/storefront-branding";
@@ -464,6 +467,11 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
       };
     }).filter((section) => section.hasMenuItem.length > 0);
 
+    const linksModel =
+      readStorefrontEntry(company.theme_config) === "menu-panel"
+        ? resolveHomePage(await loadHomePageInput(company, resolvedParams.subdomain))
+        : null;
+
     const isMain = isMainDomain(host);
     const menuJsonLd = [
       {
@@ -549,6 +557,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
           onlineOrderingEnabled={onlineOrderingEnabled}
           orderChannel={orderChannel}
           tenantSlug={resolvedParams.subdomain}
+          linksModel={linksModel}
         />
       </>
     );

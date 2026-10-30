@@ -65,6 +65,7 @@ export function useMenuClientController(props: MenuClientProps) {
 		onlineOrderingEnabled,
 		orderChannel = "both",
 		tenantSlug: tenantSlugProp = null,
+		linksModel = null,
 	} = props;
 
 	const categories = useMemo(() => {
@@ -118,6 +119,9 @@ export function useMenuClientController(props: MenuClientProps) {
 	const [searchExpanded, setSearchExpanded] = useState(false);
 	const [logoError, setLogoError] = useState(false);
 	const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
+	const [isLinksPanelOpen, setIsLinksPanelOpen] = useState(false);
+	const openLinksPanel = useCallback(() => setIsLinksPanelOpen(true), []);
+	const closeLinksPanel = useCallback(() => setIsLinksPanelOpen(false), []);
 	const [selectedProductDetails, setSelectedProductDetails] = useState<(typeof products)[number] | null>(null);
 	const isSizePickerOpen = useSizePickerStore((state) => state.product !== null);
 	const closeSizePicker = useSizePickerStore((state) => state.close);
@@ -535,9 +539,11 @@ export function useMenuClientController(props: MenuClientProps) {
 			isEmbeddedPreview={isEmbeddedPreview}
 			onOpenBranchModal={() => setIsLocationModalOpen(true)}
 			showBranchSelector={!branchSelectorInBottomNav && canSwitchBranch}
+			hasLinksPanel={linksModel != null}
 			onBackHome={() => {
 				if (isEmbeddedPreview || readEmbeddedPreviewFromLocation()) return;
-				router.replace(homePath);
+				if (linksModel) openLinksPanel();
+				else router.replace(homePath);
 			}}
 			searchQuery={searchQuery}
 			searchExpanded={searchExpanded}
@@ -599,6 +605,10 @@ export function useMenuClientController(props: MenuClientProps) {
 
 	return {
 		tenantSlug,
+		linksModel,
+		isLinksPanelOpen,
+		openLinksPanel,
+		closeLinksPanel,
 		selectedBranch,
 		effectiveCountry,
 		effectiveCurrency,

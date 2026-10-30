@@ -5,6 +5,7 @@
 import { CartProvider } from "../cart/provider/cart-provider";
 import { MenuPerfProvider } from "@/lib/tenant/menu/menu-perf-context";
 import { MenuClientView } from "./menu-client-view";
+import { MenuLinksPanel } from "./menu-links-panel";
 import type { MenuClientProps } from "./menu-types";
 import { useMenuClientController } from "./use-menu-client-controller";
 
@@ -77,6 +78,17 @@ function MenuClientViewFromVm({ vm }: { vm: ReturnType<typeof useMenuClientContr
 				onActiveSectionChange={vm.handleScrollSpyCategoryChange}
 				tenantSlug={vm.tenantSlug}
 			/>
+			{vm.linksModel ? (
+				<MenuLinksPanel
+					model={vm.linksModel}
+					publicSlug={vm.tenantSlug ?? ""}
+					mounted={vm.mounted}
+					open={vm.isLinksPanelOpen}
+					autoOpen={!vm.isEmbeddedPreview}
+					onOpen={vm.openLinksPanel}
+					onClose={vm.closeLinksPanel}
+				/>
+			) : null}
 		</>
 	);
 }

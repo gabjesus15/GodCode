@@ -8,6 +8,7 @@ import { SaasCheckbox } from "@/components/super-admin/shared/saas-checkbox";
 import { formatThemeColor, parseThemeColor } from "@/lib/store-theme/apply-theme-css-vars";
 import { useAdminRole } from "@/components/super-admin/shell/admin-role-context";
 import { buildCompanyPanelAccessFromPlanFeatures } from "@/lib/super-admin/company-panel-access";
+import { readStorefrontEntry, type StorefrontEntry } from "@/lib/tenant/home-page/home-page-config";
 import { TENANT_ADMIN_TAB_OPTIONS } from "@/lib/super-admin/tenant-admin-tabs";
 import { Field, SectionCard, SectionSaveBar, useCompanySection } from "./company-section";
 import type { CompanyDetail, CompanyPlanOption } from "./company-detail-types";
@@ -173,6 +174,47 @@ export function CompanyBrandingSection({
         <div className="rounded-2xl border border-zinc-100 p-3 dark:border-zinc-800">
           <BrandingPreview publicSlug={company.public_slug ?? ""} companyName={company.name ?? ""} theme={previewTheme} />
         </div>
+      </fieldset>
+    </SectionCard>
+  );
+}
+
+const STOREFRONT_ENTRY_OPTIONS: Array<{ value: StorefrontEntry; label: string }> = [
+  { value: "home", label: "Portada con enlaces" },
+  { value: "menu-panel", label: "Directo a la carta, con panel lateral" },
+];
+
+export function CompanyStorefrontEntrySection({ company }: { company: CompanyDetail }) {
+  const { readOnly } = useAdminRole();
+  const section = useCompanySection({ entry: readStorefrontEntry(company.theme_config) });
+
+  return (
+    <SectionCard
+      title="Entrada de la tienda"
+      description="Qué ve el cliente al abrir el enlace o el QR. Los enlaces son los mismos que el dueño edita en /cuenta."
+      footer={
+        <SectionSaveBar
+          {...section}
+          onSave={() => void section.save((current) => ({ storefrontEntry: current.entry }))}
+          onReset={section.reset}
+          saveLabel="Guardar y publicar"
+        />
+      }
+    >
+      <fieldset disabled={readOnly || section.saving}>
+        <Field label="Al entrar se muestra">
+          <select
+            value={section.values.entry}
+            onChange={(e) => section.set("entry", e.target.value as StorefrontEntry)}
+            className="h-10 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+          >
+            {STOREFRONT_ENTRY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </Field>
       </fieldset>
     </SectionCard>
   );

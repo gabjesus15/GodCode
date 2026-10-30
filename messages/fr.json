@@ -786,6 +786,7 @@
     "menu": {
       "nav": {
         "backHome": "Retour à l’accueil",
+        "openLinks": "Voir les liens du local",
         "logoAlt": "Logo du commerce",
         "search": "Rechercher un plat",
         "searchPlaceholder": "Rechercher un plat…",
@@ -926,7 +927,7 @@
         "title": "Horaires"
       },
       "gcode": {
-        "label": "Créez votre menu",
+        "label": "Créez votre menu digital",
         "aria": "Créez votre menu digital avec {brand}"
       },
       "qr": {

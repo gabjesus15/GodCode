@@ -786,6 +786,7 @@
     "menu": {
       "nav": {
         "backHome": "Zur Startseite",
+        "openLinks": "Links des Geschäfts ansehen",
         "logoAlt": "Logo des Lokals",
         "search": "Gericht suchen",
         "searchPlaceholder": "Gericht suchen…",
@@ -926,7 +927,7 @@
         "title": "Öffnungszeiten"
       },
       "gcode": {
-        "label": "Erstelle deine Speisekarte",
+        "label": "Erstelle deine digitale Speisekarte",
         "aria": "Erstelle deine digitale Speisekarte mit {brand}"
       },
       "qr": {

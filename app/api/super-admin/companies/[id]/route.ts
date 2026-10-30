@@ -13,6 +13,11 @@ import {
 } from "@/lib/storage/storefront-branding";
 import { mergeThemeConfig } from "@/lib/store-theme/merge-theme-config";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
+import {
+  STOREFRONT_ENTRIES,
+  STOREFRONT_ENTRY_THEME_KEY,
+  type StorefrontEntry,
+} from "@/lib/tenant/home-page/home-page-config";
 import { MAIN_DOMAIN_RESERVED_PATH_SEGMENTS } from "@/lib/tenant/reserved-path-segments";
 import { slugify } from "@/utils/slugify";
 import { normalizeBaseDomain } from "@/utils/tenant-url";
@@ -50,6 +55,7 @@ type PutBody = {
     currency?: string | null;
   };
   themePatch?: ThemePatchBody;
+  storefrontEntry?: string;
 };
 
 /** Campos de marca que el super admin puede editar (mismos nombres que el tema de /cuenta). */
@@ -226,6 +232,14 @@ export async function PUT(
     }
   }
   const themePatch: Record<string, unknown> = { ...brandingPatch, ...(nextPanelAccess ? { panelAccess: nextPanelAccess } : {}) };
+  if (has(body, "storefrontEntry")) {
+    const entry = String(body.storefrontEntry ?? "") as StorefrontEntry;
+    if (!STOREFRONT_ENTRIES.includes(entry)) {
+      return NextResponse.json({ error: "Entrada de tienda no válida." }, { status: 400 });
+    }
+    themePatch[STOREFRONT_ENTRY_THEME_KEY] = entry;
+    changes.push("storefront_entry");
+  }
   if (Object.keys(themePatch).length > 0) {
     companyUpdate.theme_config = mergeThemeConfig(fresh.theme_config, themePatch);
   }

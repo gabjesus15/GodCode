@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import Image from "next/image";
-import { ChevronDown, ChevronLeft, MapPin, Search, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, MapPin, Menu, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { brandInitials } from "@/lib/tenant/brand-initials";
@@ -23,6 +23,8 @@ type MenuNavbarProps = {
 	onOpenBranchModal: () => void;
 	/** Con la barra inferior a la vista el selector de sucursal vive alli, no aqui. */
 	showBranchSelector: boolean;
+	/** Sin portada: el botón de arriba abre el panel de enlaces en vez de volver al inicio. */
+	hasLinksPanel: boolean;
 	onBackHome: () => void;
 	searchQuery: string;
 	searchExpanded: boolean;
@@ -51,6 +53,7 @@ export const MenuNavbar = memo(function MenuNavbar({
 	isEmbeddedPreview,
 	onOpenBranchModal,
 	showBranchSelector,
+	hasLinksPanel,
 	onBackHome,
 	searchQuery,
 	searchExpanded,
@@ -71,8 +74,8 @@ export const MenuNavbar = memo(function MenuNavbar({
 	return (
 		<header ref={headerRef} className={`navbar-sticky navbar-type-${navbarType}`}>
 			<div className="container nav-container-top">
-				<button type="button" onClick={onBackHome} className="nav-back-button" aria-label={t("nav.backHome")}>
-					<ChevronLeft size={28} />
+				<button type="button" onClick={onBackHome} className="nav-back-button" aria-label={t(hasLinksPanel ? "nav.openLinks" : "nav.backHome")}>
+					{hasLinksPanel ? <Menu size={26} /> : <ChevronLeft size={28} />}
 				</button>
 				<div className={`nav-brand-wrapper ${searchExpanded ? "mobile-search-active" : ""} ${navbarType === "sidebar-categories" ? "nav-brand-sidebar-hidden" : ""}${brandHidden ? " nav-brand-wrapper--behind-cover" : ""}`}>
 					{logoUrl && !logoError ? (

@@ -1,0 +1,205 @@
+/* =============================================================================
+   Panel de enlaces de la carta. Prefijo `mlp-`.
+
+   Reemplaza a la página de inicio: se monta sobre `.gh` para reutilizar sus
+   colores y sus puertas (`gh-door`), así se ve igual que la tarjeta anterior.
+   ============================================================================= */
+
+.gh.mlp {
+	position: fixed;
+	inset: 0;
+	z-index: 9000;
+	min-height: 0;
+	background: transparent;
+	pointer-events: none;
+	visibility: hidden;
+	transition: visibility 0s linear 0.42s;
+}
+
+.gh.mlp[data-open] {
+	pointer-events: auto;
+	visibility: visible;
+	transition-delay: 0s;
+}
+
+.mlp-scrim {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.5);
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+
+.mlp[data-open] .mlp-scrim {
+	opacity: 1;
+}
+
+/* Entra desde el borde izquierdo, del mismo lado que el botón que lo abre. */
+.mlp-panel {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	display: flex;
+	flex-direction: column;
+	width: min(380px, 88vw);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding: calc(28px + env(safe-area-inset-top, 0px)) 20px calc(28px + env(safe-area-inset-bottom, 0px));
+	background: var(--gh-canvas);
+	box-shadow: var(--gh-shadow-sheet);
+	border-radius: 0 var(--gh-radius-card) var(--gh-radius-card) 0;
+	transform: translateX(-102%);
+	transition: transform 0.42s var(--gh-ease);
+}
+
+.mlp[data-open] .mlp-panel {
+	transform: translateX(0);
+}
+
+.mlp-close {
+	position: absolute;
+	top: calc(14px + env(safe-area-inset-top, 0px));
+	right: 14px;
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border-radius: 50%;
+	border: 1px solid var(--gh-line);
+	background: var(--gh-surface);
+	color: var(--gh-fg);
+	cursor: pointer;
+	touch-action: manipulation;
+}
+
+.mlp-close:focus-visible {
+	outline: 2px solid var(--gh-fg);
+	outline-offset: 2px;
+}
+
+.mlp-head {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+
+.mlp-logo {
+	width: 76px;
+	height: 76px;
+	border-radius: 50%;
+	overflow: hidden;
+	background: var(--gh-surface);
+	box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+}
+
+.mlp-name {
+	margin: 12px 0 0;
+	padding: 0 32px;
+	font-family: var(--gh-name-font, inherit);
+	font-weight: var(--gh-name-weight, 700);
+	font-size: 1.5rem;
+	line-height: 1.1;
+	color: var(--gh-name-color, var(--gh-fg));
+	overflow-wrap: anywhere;
+}
+
+.mlp-status {
+	margin-top: 12px;
+}
+
+.mlp-links {
+	margin-top: 22px;
+}
+
+.mlp-links ul {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.mlp-links .gh-door {
+	min-height: 54px;
+}
+
+/* Al fondo del panel: si los enlaces no alcanzan a llenarlo, igual queda abajo. */
+.mlp-gcode {
+	margin-top: auto;
+	padding-top: 24px;
+}
+
+.mlp-gcode .gh-door {
+	min-height: 54px;
+}
+
+.mlp-credit {
+	margin: 10px 0 0;
+	font-size: 0.75rem;
+	font-weight: 500;
+	text-align: center;
+	color: var(--gh-fg-3);
+}
+
+.mlp-chevron svg {
+	transition: transform 0.25s var(--gh-ease);
+}
+
+.mlp-chevron[data-expanded] svg {
+	transform: rotate(180deg);
+}
+
+.mlp-links .mlp-branches {
+	gap: 4px;
+	margin-top: 6px;
+}
+
+.mlp-branch {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	min-height: 44px;
+	padding: 8px 18px;
+	border-radius: 12px;
+	font-size: 0.92rem;
+	font-weight: 600;
+	color: var(--gh-fg-2);
+	text-decoration: none;
+}
+
+.mlp-branch:focus-visible {
+	outline: 2px solid var(--gh-fg);
+	outline-offset: 1px;
+}
+
+.mlp-schedule {
+	margin-top: 24px;
+	text-align: center;
+}
+
+.mlp-schedule ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.mlp-schedule li {
+	font-size: 0.86rem;
+	line-height: 1.6;
+	color: var(--gh-fg-2);
+	font-variant-numeric: tabular-nums;
+	overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.gh.mlp,
+	.mlp-scrim,
+	.mlp-panel {
+		transition: none;
+	}
+}

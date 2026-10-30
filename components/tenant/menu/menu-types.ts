@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { HeroBanner } from "./hero-carousel";
 import type { Json } from "../../../types/supabase-database";
 import type { OrderChannelMode } from "@/lib/tenant/menu-settings";
+import type { HomeViewModel } from "@/lib/tenant/home-page/resolve-home-page";
 
 export interface BranchInfo {
 	id: string;
@@ -131,6 +132,8 @@ export interface MenuClientProps {
 	orderChannel?: OrderChannelMode;
 	/** public_slug del negocio (path o dominio custom). */
 	tenantSlug?: string | null;
+	/** Enlaces del local para el panel lateral; null = sin panel. */
+	linksModel?: HomeViewModel | null;
 }
 
 export type PreviewThemePayload = {

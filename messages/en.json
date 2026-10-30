@@ -786,6 +786,7 @@
     "menu": {
       "nav": {
         "backHome": "Back to home",
+        "openLinks": "View store links",
         "logoAlt": "Store logo",
         "search": "Search dishes",
         "searchPlaceholder": "Search dishes…",
@@ -926,7 +927,7 @@
         "title": "Opening hours"
       },
       "gcode": {
-        "label": "Create your menu",
+        "label": "Create your digital menu",
         "aria": "Create your digital menu with {brand}"
       },
       "qr": {

@@ -786,6 +786,7 @@
     "menu": {
       "nav": {
         "backHome": "Torna alla home",
+        "openLinks": "Vedi i link del locale",
         "logoAlt": "Logo del locale",
         "search": "Cerca un piatto",
         "searchPlaceholder": "Cerca un piatto…",
@@ -926,7 +927,7 @@
         "title": "Orari"
       },
       "gcode": {
-        "label": "Crea il tuo menu",
+        "label": "Crea il tuo menu digitale",
         "aria": "Crea il tuo menu digitale con {brand}"
       },
       "qr": {

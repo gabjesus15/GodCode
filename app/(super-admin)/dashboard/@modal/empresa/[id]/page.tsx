@@ -5,7 +5,11 @@ import { CompanyStatusToggle } from "@/components/super-admin/companies/company-
 import { CompanyUberCredentialsForm } from "@/components/super-admin/companies/company-uber-credentials-form";
 import { CompanyUserManagement } from "@/components/super-admin/companies/company-user-management";
 import { CompanyAddonsSection } from "@/components/super-admin/companies/detail/company-addons-section";
-import { CompanyBrandingSection, CompanyPanelAccessSection } from "@/components/super-admin/companies/detail/company-branding-section";
+import {
+	CompanyBrandingSection,
+	CompanyPanelAccessSection,
+	CompanyStorefrontEntrySection,
+} from "@/components/super-admin/companies/detail/company-branding-section";
 import { CompanyGeneralSection, CompanyPublicInfoSection } from "@/components/super-admin/companies/detail/company-data-sections";
 import { CompanyEmailSenderSection } from "@/components/super-admin/companies/detail/company-email-sender-section";
 import { CompanyEmailsSection } from "@/components/super-admin/companies/detail/company-emails-section";
@@ -261,6 +265,7 @@ export default async function CompanyManageModalPage({
 										company={company}
 										previewUrls={{ logoUrl: resolvedAssets.logoUrl, backgroundImageUrl: resolvedAssets.backgroundImageUrl }}
 									/>
+									<CompanyStorefrontEntrySection company={company} />
 									<CompanyPanelAccessSection company={company} plans={plans} />
 								</div>
 							),
