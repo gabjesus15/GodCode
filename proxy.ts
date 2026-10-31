@@ -21,10 +21,18 @@ const SECURITY_HEADERS: [string, string][] = [
   ["Content-Security-Policy", "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self';"],
 ];
 
-function applySecurityHeaders(res: NextResponse): NextResponse {
+// HSTS: includeSubDomains solo en godcode.me. En los dominios propios de los
+// clientes no, porque obligaria a HTTPS en todos sus subdominios por un año.
+// Sobre HTTP (localhost) los navegadores la ignoran.
+const HSTS_MAIN_DOMAIN = "max-age=31536000; includeSubDomains";
+const HSTS_CUSTOM_DOMAIN = "max-age=31536000";
+
+function applySecurityHeaders(req: NextRequest, res: NextResponse): NextResponse {
   for (const [key, value] of SECURITY_HEADERS) {
     res.headers.set(key, value);
   }
+  const host = (req.headers.get("host") ?? "").split(":")[0].toLowerCase();
+  res.headers.set("Strict-Transport-Security", isMainDomainHost(host) ? HSTS_MAIN_DOMAIN : HSTS_CUSTOM_DOMAIN);
   return res;
 }
 
@@ -52,6 +60,18 @@ const tenantBaseDomain = (process.env.NEXT_PUBLIC_TENANT_BASE_DOMAIN ?? "")
   .toLowerCase();
 const canonicalAppHost = getAppHostname();
 
+/** Apex o www del dominio principal (godcode.me); nunca dominios de clientes. */
+function isMainDomainHost(host: string): boolean {
+  const tenantBaseNoWww = tenantBaseDomain.replace(/^www\./, "");
+  const currentNoWww = host.replace(/^www\./, "");
+  const canonicalNoWww = (canonicalAppHost ?? "").replace(/^www\./, "");
+
+  return Boolean(
+    (tenantBaseNoWww && currentNoWww === tenantBaseNoWww) ||
+      (canonicalNoWww && currentNoWww === canonicalNoWww),
+  );
+}
+
 function maybeRedirectToCanonicalHost(req: NextRequest): NextResponse | null {
   if (!canonicalAppHost) return null;
 
@@ -68,16 +88,8 @@ function maybeRedirectToCanonicalHost(req: NextRequest): NextResponse | null {
     return null;
   }
 
-  const tenantBaseNoWww = tenantBaseDomain.replace(/^www\./, "");
-  const currentNoWww = currentHost.replace(/^www\./, "");
-  const canonicalNoWww = canonicalAppHost.replace(/^www\./, "");
-
-  const isMainDomainVariant =
-    (tenantBaseNoWww && currentNoWww === tenantBaseNoWww) ||
-    (canonicalNoWww && currentNoWww === canonicalNoWww);
-
   // Never normalize tenant/custom domains here; only apex/www variants of the main site.
-  if (!isMainDomainVariant || currentHost === canonicalAppHost) {
+  if (!isMainDomainHost(currentHost) || currentHost === canonicalAppHost) {
     return null;
   }
 
@@ -291,14 +303,14 @@ function handleApiRequest(req: NextRequest): NextResponse {
   if (PUBLIC_DELIVERY_API_PATHS.has(req.nextUrl.pathname) && req.method === "OPTIONS") {
     const cors = publicApiCorsHeaders(req);
     if ([...cors.keys()].length > 0) {
-      return applySecurityHeaders(new NextResponse(null, { status: 204, headers: cors }));
+      return applySecurityHeaders(req, new NextResponse(null, { status: 204, headers: cors }));
     }
   }
 
   const rejected = rejectCrossOriginApiRequest(req);
   const res = rejected ?? NextResponse.next();
 
-  applySecurityHeaders(res);
+  applySecurityHeaders(req, res);
   if (!CACHEABLE_API_PATHS.has(req.nextUrl.pathname)) res.headers.set("Cache-Control", "no-store");
   return attachPublicDeliveryApiCors(req, res);
 }
@@ -309,7 +321,7 @@ export async function proxy(req: NextRequest) {
   }
 
   const result = await _proxy(req);
-  applySecurityHeaders(result);
+  applySecurityHeaders(req, result);
   return result;
 }
 
