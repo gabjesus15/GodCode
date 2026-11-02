@@ -1,0 +1,31 @@
+# Actualizaciones semanales. Las menores y parches van agrupados en un solo PR por
+# ecosistema; las mayores llegan sueltas para revisarlas una por una.
+version: 2
+updates:
+  # La raíz cubre también el workspace services/onboarding-billing (un solo lockfile).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      npm-menores:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories:
+      - /
+      - /services/onboarding-billing
+    schedule:
+      interval: weekly
+      day: monday

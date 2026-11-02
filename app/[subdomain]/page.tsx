@@ -6,7 +6,7 @@ import { HomePageView } from "../../components/tenant/home/home-page-view";
 import { StoreComingSoon } from "@/components/tenant/store-draft/store-coming-soon";
 import { StorePreviewBanner } from "@/components/tenant/store-draft/store-preview-banner";
 import { resolveStorefrontAccess, storeDraftPublishHref } from "@/lib/tenant/store-draft-viewer";
-import { readStorefrontEntry } from "@/lib/tenant/home-page/home-page-config";
+import { resolveStorefrontEntry } from "@/lib/tenant/home-page/home-page-config";
 import { loadHomePageInput } from "@/lib/tenant/home-page/load-home-page";
 import { resolveHomePage } from "@/lib/tenant/home-page/resolve-home-page";
 import { isMainDomain } from "@/lib/tenant/main-domain-host";
@@ -27,8 +27,8 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
   if (access === "closed") notFound();
   if (access === "coming-soon") return <StoreComingSoon company={company} />;
 
-  // Elegido en el panel CEO: sin portada, se entra a la carta y los enlaces van en su panel lateral.
-  if (readStorefrontEntry(company.theme_config) === "menu-panel") {
+  // Sin portada: se entra a la carta y los enlaces van en su panel lateral.
+  if (resolveStorefrontEntry(company) === "menu-panel") {
     const hdrs = await headers();
     const host = hdrs.get("x-forwarded-host")?.split(",")[0]?.trim() ?? hdrs.get("host") ?? "";
     const pathPrefix = isMainDomain(host) ? `/${subdomain}` : "";

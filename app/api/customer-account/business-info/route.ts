@@ -4,6 +4,7 @@ import { revalidateTag } from "next/cache";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { auditFieldNames, logAuditEvent } from "@/lib/security/audit-log";
 
 /** @service-role customer-account */
 
@@ -111,6 +112,16 @@ export async function PUT(req: NextRequest) {
 	}
 
 	revalidateTag(`menu:${ctx.companyId}`, "max");
+
+	// Puede incluir datos bancarios: solo los nombres de los campos, nunca los valores.
+	await logAuditEvent(req, {
+		companyId: ctx.companyId,
+		actorAuthUserId: ctx.authUserId,
+		actorRole: ctx.role,
+		action: "cuenta.business_info.update",
+		targetType: "business_info",
+		metadata: { fields: auditFieldNames(payload) },
+	});
 
 	return NextResponse.json({ ok: true });
 }

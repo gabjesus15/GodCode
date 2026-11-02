@@ -10,7 +10,7 @@ import { buildTenantShareImage } from "@/lib/tenant/share-card/share-image-metad
 import { parseThemeLogoUrl, tenantBrandingIconVersionSeed } from "@/lib/tenant/tenant-favicon-utils";
 import { getCachedMenuStaticData, getCachedMenuRpcData } from "@/lib/tenant/cached-menu";
 import { getCachedCompany } from "@/utils/tenant-cache";
-import { readStorefrontEntry } from "@/lib/tenant/home-page/home-page-config";
+import { resolveStorefrontEntry } from "@/lib/tenant/home-page/home-page-config";
 import { loadHomePageInput } from "@/lib/tenant/home-page/load-home-page";
 import { resolveHomePage } from "@/lib/tenant/home-page/resolve-home-page";
 import { normalizeStoreThemeConfig } from "@/lib/store-theme/theme-config";
@@ -468,7 +468,7 @@ export default async function TenantMenuPage({ params, searchParams }: TenantMen
     }).filter((section) => section.hasMenuItem.length > 0);
 
     const linksModel =
-      readStorefrontEntry(company.theme_config) === "menu-panel"
+      resolveStorefrontEntry(company) === "menu-panel"
         ? resolveHomePage(await loadHomePageInput(company, resolvedParams.subdomain))
         : null;
 

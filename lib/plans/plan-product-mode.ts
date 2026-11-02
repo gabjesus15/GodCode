@@ -91,6 +91,17 @@ export function companyPlanFeatures(company: { plans?: unknown } | null | undefi
 	return (row as { features?: unknown }).features ?? null;
 }
 
+/**
+ * Elegir la entrada de la tienda (portada o carta con panel lateral) es de los planes
+ * internos: los que no se ofrecen al público (`plans.is_public = false`).
+ */
+export function companyCanChooseStorefrontEntry(company: { plans?: unknown } | null | undefined): boolean {
+	const plans = company?.plans;
+	const row = Array.isArray(plans) ? plans[0] : plans;
+	if (!row || typeof row !== "object") return false;
+	return (row as { is_public?: unknown }).is_public === false;
+}
+
 /** El negocio tiene menú y páginas públicas (todo menos «solo panel CEO»). */
 export function companyHasPublicMenu(company: { plans?: unknown } | null | undefined): boolean {
 	return planHasPublicMenu(companyPlanFeatures(company));

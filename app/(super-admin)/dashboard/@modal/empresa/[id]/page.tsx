@@ -8,7 +8,6 @@ import { CompanyAddonsSection } from "@/components/super-admin/companies/detail/
 import {
 	CompanyBrandingSection,
 	CompanyPanelAccessSection,
-	CompanyStorefrontEntrySection,
 } from "@/components/super-admin/companies/detail/company-branding-section";
 import { CompanyGeneralSection, CompanyPublicInfoSection } from "@/components/super-admin/companies/detail/company-data-sections";
 import { CompanyEmailSenderSection } from "@/components/super-admin/companies/detail/company-email-sender-section";
@@ -265,7 +264,6 @@ export default async function CompanyManageModalPage({
 										company={company}
 										previewUrls={{ logoUrl: resolvedAssets.logoUrl, backgroundImageUrl: resolvedAssets.backgroundImageUrl }}
 									/>
-									<CompanyStorefrontEntrySection company={company} />
 									<CompanyPanelAccessSection company={company} plans={plans} />
 								</div>
 							),

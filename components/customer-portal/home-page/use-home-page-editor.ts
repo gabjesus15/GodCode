@@ -11,6 +11,7 @@ import {
 	socialInputToUrl,
 	type HomePageConfig,
 	type HomeSocialPlatform,
+	type StorefrontEntry,
 } from "@/lib/tenant/home-page/home-page-config";
 import { resolveHomePage, type HomeViewModel, type ResolveHomePageInput } from "@/lib/tenant/home-page/resolve-home-page";
 import type { BranchSummary } from "../shared/customer-account-types";
@@ -81,6 +82,9 @@ export function useHomePageEditor({
 	const [savedConfig, setSavedConfig] = useState<HomePageConfig | null>(null);
 	const [socials, setSocials] = useState<SocialInputs | null>(null);
 	const [savedSocials, setSavedSocials] = useState<SocialInputs | null>(null);
+	const [storefrontEntry, setStorefrontEntry] = useState<StorefrontEntry>("home");
+	const [savedStorefrontEntry, setSavedStorefrontEntry] = useState<StorefrontEntry>("home");
+	const [canChooseStorefrontEntry, setCanChooseStorefrontEntry] = useState(false);
 	const [schedule, setSchedule] = useState(initialSchedule);
 	const [savedSchedule, setSavedSchedule] = useState(initialSchedule);
 	const [branchDrafts, setBranchDrafts] = useState<Record<string, BranchContactDraft>>(() =>
@@ -112,6 +116,9 @@ export function useHomePageEditor({
 			const inputs = socialsToInputs(loaded);
 			setSocials(inputs);
 			setSavedSocials(inputs);
+			setStorefrontEntry(data.storefrontEntry as StorefrontEntry);
+			setSavedStorefrontEntry(data.storefrontEntry as StorefrontEntry);
+			setCanChooseStorefrontEntry(data.canChooseStorefrontEntry === true);
 			setLoadState("ready");
 		} catch (err) {
 			setLoadError(err instanceof Error ? err.message : "No se pudo cargar tu página de inicio.");
@@ -139,8 +146,9 @@ export function useHomePageEditor({
 		setSavedSchedule(initialSchedule);
 	}, [initialSchedule]);
 
+	const entryDirty = storefrontEntry !== savedStorefrontEntry;
 	const configDirty =
-		JSON.stringify(config) !== JSON.stringify(savedConfig) || JSON.stringify(socials) !== JSON.stringify(savedSocials);
+		entryDirty || JSON.stringify(config) !== JSON.stringify(savedConfig) || JSON.stringify(socials) !== JSON.stringify(savedSocials);
 	const scheduleDirty = schedule.trim() !== savedSchedule.trim();
 	const changedBranchIds = activeBranches
 		.map((branch) => branch.id)
@@ -153,6 +161,11 @@ export function useHomePageEditor({
 			if (!prev) return prev;
 			return typeof patch === "function" ? patch(prev) : { ...prev, ...patch };
 		});
+	}, []);
+
+	const updateStorefrontEntry = useCallback((value: StorefrontEntry) => {
+		setOk(null);
+		setStorefrontEntry(value);
 	}, []);
 
 	const updateSocial = useCallback((platform: HomeSocialPlatform, value: string) => {
@@ -208,12 +221,13 @@ export function useHomePageEditor({
 	const discard = useCallback(() => {
 		setConfig(savedConfig);
 		setSocials(savedSocials);
+		setStorefrontEntry(savedStorefrontEntry);
 		setSchedule(savedSchedule);
 		setBranchDrafts(savedBranchDrafts);
 		setCoverUpload(null);
 		setErrors(EMPTY_ERRORS);
 		setError(null);
-	}, [savedBranchDrafts, savedConfig, savedSchedule, savedSocials]);
+	}, [savedBranchDrafts, savedConfig, savedSchedule, savedSocials, savedStorefrontEntry]);
 
 	/** Lo que se va a guardar, o los errores que lo impiden. */
 	const validate = useCallback((): { config: HomePageConfig } | null => {
@@ -262,10 +276,11 @@ export function useHomePageEditor({
 				const res = await fetch("/api/customer-account/home-page", {
 					method: "PUT",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ config: valid.config }),
+					body: JSON.stringify({ config: valid.config, ...(entryDirty ? { storefrontEntry } : {}) }),
 				});
 				const data = await readJson(res);
 				if (!res.ok) throw new Error(String(data.error ?? "No se pudo guardar la página."));
+				setSavedStorefrontEntry(storefrontEntry);
 				const stored = data.config as HomePageConfig;
 				const inputs = socialsToInputs(stored);
 				setConfig(stored);
@@ -320,9 +335,11 @@ export function useHomePageEditor({
 		configDirty,
 		context,
 		coverUpload,
+		entryDirty,
 		router,
 		schedule,
 		scheduleDirty,
+		storefrontEntry,
 		validate,
 	]);
 
@@ -358,6 +375,9 @@ export function useHomePageEditor({
 		config,
 		socials,
 		schedule,
+		storefrontEntry,
+		canChooseStorefrontEntry,
+		updateStorefrontEntry,
 		branchDrafts,
 		activeBranches,
 		previewBranches,

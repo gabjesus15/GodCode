@@ -1,0 +1,12 @@
+# Reglas por defecto de gitleaks, más excepciones para valores falsos conocidos.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fixtures de pruebas y placeholders del CI (no son secretos reales)"
+paths = [
+  '''^__tests__/''',
+  '''^e2e/''',
+  '''^\.github/workflows/ci\.yml$''',
+  '''\.env\.example$''',
+]

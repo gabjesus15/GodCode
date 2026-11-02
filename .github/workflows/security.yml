@@ -34,18 +34,58 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version: 22
 
       # No necesita dependencias: el auditor solo lee ficheros con la API de Node.
       # Cada punto de entrada que importe supabaseAdmin debe declarar como
       # autoriza, y el guard declarado tiene que aparecer en cada metodo HTTP.
       - name: Auditar el uso de la Service Role Key
         run: npm run security:service-role
+
+  npm-audit:
+    name: npm audit (producción)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      # Solo lo que llega a producción y desde severidad alta: lo moderado se revisa
+      # con Dependabot sin frenar el merge. Lee package-lock.json, no instala nada.
+      - name: Auditar dependencias de producción
+        run: npm audit --omit=dev --audit-level=high
+
+  gitleaks:
+    name: Gitleaks (secretos)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    timeout-minutes: 10
+
+    steps:
+      # Historial completo: en un push se revisan los commits nuevos y en el cron
+      # semanal todo el repositorio.
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+
+      - name: Buscar secretos
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   dependency-review:
     name: Dependency Review
@@ -58,7 +98,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # La acción falla de entrada si el repositorio tiene desactivado el grafo de
       # dependencias (Settings → Code security → Dependency graph), sin revisar
@@ -77,7 +117,7 @@ jobs:
 
       - name: Dependency review
         if: steps.graph.outputs.enabled == 'true'
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
 
   codeql:
     name: CodeQL
@@ -96,17 +136,17 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@4bfa242aa49c5f7c6770b98670d354a7dfac05f8 # v3.39.1
         with:
           languages: ${{ matrix.language }}
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@4bfa242aa49c5f7c6770b98670d354a7dfac05f8 # v3.39.1
 
       - name: Analyze
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@4bfa242aa49c5f7c6770b98670d354a7dfac05f8 # v3.39.1
         with:
           category: /language:${{ matrix.language }}

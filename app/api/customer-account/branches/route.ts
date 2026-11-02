@@ -7,6 +7,7 @@ import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-ra
 import { selectWithOptionalColumns, updateWithOptionalColumns } from "@/lib/infra/db-compat";
 import { logger } from "@/lib/infra/logger";
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
+import { auditFieldNames, logAuditEvent } from "@/lib/security/audit-log";
 import {
   mergePublicPaymentConfig,
   sanitizeBranchPaymentMethods,
@@ -259,6 +260,17 @@ export async function PUT(req: NextRequest) {
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
   }
+
+  // Puede incluir datos bancarios: solo los nombres de los campos, nunca los valores.
+  await logAuditEvent(req, {
+    companyId: ctx.companyId,
+    actorAuthUserId: ctx.authUserId,
+    actorRole: ctx.role,
+    action: "cuenta.branch.update",
+    targetType: "branches",
+    targetIds: [String(id)],
+    metadata: { fields: auditFieldNames(payload) },
+  });
 
   if (droppedColumns.length > 0) {
     logger.warn("branch_pending_migration_columns", {
