@@ -92,3 +92,7 @@ migrations/
 /*.mp4
 /*.gif
 scripts/video/
+
+# SQL de la base: se aplica a mano en el VPS y no se versiona.
+sql/
+Addons/sql/
