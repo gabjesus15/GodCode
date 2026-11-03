@@ -5,7 +5,9 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+# Con NODE_ENV=production, `npm ci` se salta las devDependencies, y el build las
+# necesita (Tailwind, TypeScript). El prune de más abajo las saca de la imagen.
+RUN npm ci --include=dev
 
 COPY . .
 
