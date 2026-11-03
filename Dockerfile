@@ -1,4 +1,4 @@
-FROM node:22.23.4-alpine
+FROM node:26.13.0-alpine
 
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
 
