@@ -19,7 +19,39 @@ const SECURITY_HEADERS: [string, string][] = [
   ["Permissions-Policy", "camera=(), microphone=(), geolocation=(self)"],
   ["X-DNS-Prefetch-Control", "on"],
   ["Content-Security-Policy", "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self';"],
+  // same-origin-allow-popups y no same-origin: PayPal abre un popup que necesita su opener.
+  ["Cross-Origin-Opener-Policy", "same-origin-allow-popups"],
 ];
+
+/**
+ * CSP completa en modo Report-Only: el navegador no bloquea nada, solo avisa a
+ * /api/security/csp-report de lo que bloquearía. Después de una semana de reportes
+ * se pasa a Content-Security-Policy. `'unsafe-inline'` en script-src queda como riesgo
+ * aceptado: con nonce se pierde el render estático de las páginas.
+ */
+const supabaseOrigin = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").origin;
+  } catch {
+    return "";
+  }
+})();
+const CSP_REPORT_ONLY = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'"} https://www.googletagmanager.com https://www.google.com https://www.gstatic.com https://*.paypal.com`,
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "media-src 'self' blob: https:",
+  `connect-src 'self' ${supabaseOrigin} ${supabaseOrigin.replace(/^http/, "ws")} https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://nominatim.openstreetmap.org https://*.paypal.com`,
+  "frame-src 'self' https://www.google.com https://www.youtube.com https://www.youtube-nocookie.com https://*.paypal.com",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'self'",
+  "frame-ancestors 'self'",
+  "report-uri /api/security/csp-report",
+].join("; ");
 
 // HSTS: includeSubDomains solo en godcode.me. En los dominios propios de los
 // clientes no, porque obligaria a HTTPS en todos sus subdominios por un año.
@@ -31,6 +63,7 @@ function applySecurityHeaders(req: NextRequest, res: NextResponse): NextResponse
   for (const [key, value] of SECURITY_HEADERS) {
     res.headers.set(key, value);
   }
+  res.headers.set("Content-Security-Policy-Report-Only", CSP_REPORT_ONLY);
   const host = (req.headers.get("host") ?? "").split(":")[0].toLowerCase();
   res.headers.set("Strict-Transport-Security", isMainDomainHost(host) ? HSTS_MAIN_DOMAIN : HSTS_CUSTOM_DOMAIN);
   return res;
@@ -245,6 +278,7 @@ const CSRF_EXEMPT_API_PATHS = new Set([
   "/api/system/cron/onboarding-reconcile", // CRON_SECRET
   "/api/system/health",                   // HEALTH_CHECK_SECRET
   "/api/email/unsubscribe",               // firma HMAC; el one-click de Gmail llega sin Origin
+  "/api/security/csp-report",             // el navegador manda los reportes CSP sin Origin; solo se loguean
 ]);
 
 const CSRF_PROTECTED_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
