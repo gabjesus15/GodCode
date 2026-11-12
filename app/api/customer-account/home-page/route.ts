@@ -9,15 +9,10 @@ import {
 } from "@/lib/storage/storefront-branding";
 import { getCustomerAccountContext } from "@/lib/tenant/customer-account-context";
 import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-rate-limit";
-import { companyCanChooseStorefrontEntry } from "@/lib/plans/plan-product-mode";
 import {
 	HOME_PAGE_THEME_KEY,
-	STOREFRONT_ENTRIES,
-	STOREFRONT_ENTRY_THEME_KEY,
 	normalizeHomePageConfig,
 	readHomePageConfig,
-	resolveStorefrontEntry,
-	type StorefrontEntry,
 } from "@/lib/tenant/home-page/home-page-config";
 import { loadHomePageInput } from "@/lib/tenant/home-page/load-home-page";
 
@@ -30,7 +25,7 @@ import { loadHomePageInput } from "@/lib/tenant/home-page/load-home-page";
 async function readCompany(companyId: string) {
 	return supabaseAdmin
 		.from("companies")
-		.select("id,name,public_slug,theme_config,plans:plans(features,is_public)")
+		.select("id,name,public_slug,theme_config,plans:plans(features)")
 		.eq("id", companyId)
 		.maybeSingle();
 }
@@ -52,12 +47,7 @@ export async function GET() {
 
 	const input = await loadHomePageInput(company, slug);
 	const { config, ...preview } = input;
-	return NextResponse.json({
-		config,
-		preview,
-		storefrontEntry: resolveStorefrontEntry(company),
-		canChooseStorefrontEntry: companyCanChooseStorefrontEntry(company),
-	});
+	return NextResponse.json({ config, preview });
 }
 
 export async function PUT(req: NextRequest) {
@@ -70,7 +60,7 @@ export async function PUT(req: NextRequest) {
 	const limited = await assertCustomerAccountRateLimit(ctx.companyId, "home_page_put", 30, 60_000);
 	if (limited) return limited;
 
-	const payload = (await req.json().catch(() => null)) as { config?: unknown; storefrontEntry?: string } | null;
+	const payload = (await req.json().catch(() => null)) as { config?: unknown } | null;
 	if (!payload || typeof payload.config !== "object" || payload.config === null) {
 		return NextResponse.json({ error: "Falta la configuración de la página." }, { status: 400 });
 	}
@@ -78,19 +68,6 @@ export async function PUT(req: NextRequest) {
 	const { data: company, error: readError } = await readCompany(ctx.companyId);
 	if (readError || !company) {
 		return NextResponse.json({ error: readError?.message ?? "Negocio no encontrado" }, { status: 500 });
-	}
-
-	const entryPatch: Record<string, StorefrontEntry> = {};
-	if (payload.storefrontEntry !== undefined) {
-		// El bloqueo del editor es solo visual: aquí es donde se hace valer el plan.
-		if (!companyCanChooseStorefrontEntry(company)) {
-			return NextResponse.json({ error: "Tu plan no incluye esta opción." }, { status: 403 });
-		}
-		const entry = payload.storefrontEntry as StorefrontEntry;
-		if (!STOREFRONT_ENTRIES.includes(entry)) {
-			return NextResponse.json({ error: "Entrada de tienda no válida." }, { status: 400 });
-		}
-		entryPatch[STOREFRONT_ENTRY_THEME_KEY] = entry;
 	}
 
 	const previous = readHomePageConfig(company.theme_config);
@@ -104,7 +81,7 @@ export async function PUT(req: NextRequest) {
 	const { error: updateError } = await supabaseAdmin
 		.from("companies")
 		.update({
-			theme_config: mergeThemeConfig(company.theme_config, { [HOME_PAGE_THEME_KEY]: next, ...entryPatch }),
+			theme_config: mergeThemeConfig(company.theme_config, { [HOME_PAGE_THEME_KEY]: next }),
 			updated_at: new Date().toISOString(),
 		})
 		.eq("id", ctx.companyId);

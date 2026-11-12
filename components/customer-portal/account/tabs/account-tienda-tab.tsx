@@ -43,6 +43,7 @@ import { EmptyState } from "../../ui/EmptyState";
 import { PageHeader } from "../../ui/PageHeader";
 import { Skeleton } from "../../ui/Skeleton";
 import { MenuOrderSettingsCard } from "../menu-order-settings-card";
+import { StorefrontEntryCard } from "../storefront-entry-card";
 import type { OrderChannelMode } from "@/lib/tenant/menu-settings";
 import type { PlanProductMode } from "@/lib/plans/plan-product-mode";
 
@@ -228,6 +229,8 @@ export function AccountTiendaTab({
         onOrderChannelChange={onMenuSettingsOrderChannelChange}
         onSave={onSaveMenuSettings}
       />
+
+      <StorefrontEntryCard />
 
       {/* ── Sticky top bar ── */}
       <div className="sticky top-0 z-10 -mx-4 bg-[#fbfbfd]/95 px-4 pb-2 pt-1 backdrop-blur-md md:-mx-5 md:px-5 lg:-mx-8 lg:px-8">
