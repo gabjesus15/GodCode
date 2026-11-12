@@ -35,6 +35,15 @@ describe("mapOrderItems", () => {
 		expect(item.lineTotal).toBe(16000);
 	});
 
+	it("marca las bebidas sugeridas para que «Repetir pedido» no las trate como producto", () => {
+		const [roll, bebida] = mapOrderItems([
+			{ id: "bf23d0b4-bb84-4a9a-ad92-cdafdc750683", name: "Chicken hot", price: 6000 },
+			{ id: "bebida-mnm58r7yf0xa", name: "bebidas de 2 litro", price: 2800, manual_order_source: "beverages", is_extra: false },
+		]);
+		expect(roll).not.toHaveProperty("beverage");
+		expect(bebida).toMatchObject({ productId: "bebida-mnm58r7yf0xa", beverage: true });
+	});
+
 	it("ignora extras sueltos, filas sin nombre y datos que no son lista", () => {
 		expect(mapOrderItems(null)).toEqual([]);
 		expect(

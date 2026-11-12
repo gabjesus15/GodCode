@@ -4,27 +4,16 @@ import { useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { useCartStore } from "../cart/cart-store";
-import type { CartItem } from "../cart/cart-context";
 import { getTenantScopedPath } from "../utils/tenant-route";
 
 import type { MenuAccountOrder } from "./menu-account-types";
+import { buildRepeatCartLines, repeatableItems } from "./repeat-order-lines";
 
-/** Mismo tope por línea que `addToCart`. */
-const MAX_LINE_QUANTITY = 20;
-
-/** Líneas del pedido que se pueden volver a poner en el carrito. */
-export function repeatableItems(order: MenuAccountOrder) {
-	return order.items.filter((item) => item.productId);
-}
+export { repeatableItems } from "./repeat-order-lines";
 
 /**
  * "Repetir pedido": reemplaza el carrito por los productos del pedido y abre el menú
- * en la misma sucursal con el carrito abierto.
- *
- * Los precios que se copian son los del pedido original a propósito: al llegar al
- * menú, el provider del carrito los reemplaza por los vigentes de la sucursal y quita
- * los productos que ya no se venden, igual que con un carrito guardado de otra visita.
- *
+ * en la misma sucursal con el carrito abierto. Las líneas las arma `buildRepeatCartLines`.
  */
 export function useRepeatOrder() {
 	const router = useRouter();
@@ -40,34 +29,9 @@ export function useRepeatOrder() {
 
 	const repeatOrder = useCallback(
 		async (order: MenuAccountOrder): Promise<boolean> => {
-			const items = repeatableItems(order);
-			if (items.length === 0) return false;
+			if (repeatableItems(order).length === 0) return false;
 
-			const cart: CartItem[] = items.map((item, index) => ({
-				lineId: `${item.productId}:repeat:${Date.now().toString(36)}${index}`,
-				id: item.productId as string,
-				name: item.name,
-				price: item.unitPrice,
-				has_discount: false,
-				discount_price: null,
-				// El provider refresca el precio del tamaño y quita la línea si el tamaño ya no existe.
-				...(item.sizeId ? { size_id: item.sizeId, size_name: item.sizeName ?? null } : {}),
-				...(item.variantIds && item.variantIds.length > 0
-					? { variant_ids: item.variantIds, variant_names: item.variantNames ?? [] }
-					: {}),
-				quantity: Math.min(Math.max(1, Math.round(item.quantity)), MAX_LINE_QUANTITY),
-				selected_extras: item.extras
-					.filter((extra) => extra.id)
-					.map((extra) => ({
-						id: extra.id as string,
-						name: extra.name,
-						price: extra.price,
-						qty: extra.quantity,
-					})),
-				selected_beverages: [],
-				line_summary: null,
-				line_note: item.note,
-			}));
+			const cart = buildRepeatCartLines(order);
 
 			/* El carrito persiste en una sola clave (`tenant_cart_storage`), la misma que
 			   lee el provider del menú. Se rehidrata antes de escribir para no pisar lo

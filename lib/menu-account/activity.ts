@@ -59,8 +59,10 @@ export function mapOrderItems(raw: unknown): MenuAccountOrderItem[] {
 				item.extras_total != null
 					? toNumber(item.extras_total)
 					: extras.reduce((sum, extra) => sum + extra.price * extra.quantity, 0);
+			const beverage = toText(item.manual_order_source).toLowerCase() === "beverages";
 			return {
 				productId: toText(item.id) || null,
+				...(beverage ? { beverage: true } : {}),
 				sizeId: toText(item.size_id) || null,
 				sizeName: toText(item.size_name) || null,
 				variantIds: Array.isArray(item.variant_ids) ? item.variant_ids.map((id) => toText(id)).filter(Boolean) : [],

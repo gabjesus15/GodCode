@@ -303,6 +303,16 @@ export const ordersService = {
         };
       });
 
+    // Una línea que no es producto de catálogo (UUID) ni extra/bebida (`custom_item`) no
+    // llega al RPC: el pedido se guardaba sin ella y con el total recalculado, mientras el
+    // cliente y WhatsApp sí la veían. Mejor rechazar el pedido que perderla en silencio.
+    const unknownLines = (orderData.items ?? []).filter(
+      (it) => it.custom_item !== true && !isCatalogOrderLine(it),
+    );
+    if (unknownLines.length > 0) {
+      throw new Error(STALE_CART_MESSAGE);
+    }
+
     const requestedCatalogLines = (orderData.items ?? []).filter(isCatalogOrderLine);
     if (requestedCatalogLines.length > normalizedItems.length) {
       throw new Error(

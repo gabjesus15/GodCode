@@ -51,6 +51,12 @@ export type MenuAccountOrder = {
 export type MenuAccountOrderItem = {
 	/** Id del producto en el catálogo; null en líneas manuales que no se pueden repetir. */
 	productId: string | null;
+	/**
+	 * Bebida sugerida del carrito (`manual_order_source = beverages`): su id es el del
+	 * catálogo de bebidas de la sucursal, no un producto. "Repetir pedido" la vuelve a
+	 * poner como bebida sugerida; como producto, el checkout la descartaba.
+	 */
+	beverage?: boolean;
 	/** Tamaño elegido (`product_sizes.id`); null si el producto se pidió sin tamaño. */
 	sizeId?: string | null;
 	sizeName?: string | null;

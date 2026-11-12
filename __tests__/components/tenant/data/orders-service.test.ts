@@ -117,6 +117,36 @@ describe("ordersService.createOrder con la tienda sin abrir", () => {
 		expect(fetchMock).toHaveBeenCalledWith("https://menu.test/api/tenant/public-order-delivery", expect.anything());
 	});
 
+	it("rechaza una línea que no es producto ni bebida/extra en vez de guardar el pedido sin ella", async () => {
+		stubRoutes({});
+		const bebidaCruda = { id: "bebida-mnm58r7yf0xa", name: "bebidas de 2 litro", quantity: 1, price: 2800 };
+		await expect(
+			ordersService.createOrder({ ...ORDER, total: 3800, items: [LINE, bebidaCruda] }),
+		).rejects.toThrow(/desactualizado/);
+		expect(mocks.rpc).not.toHaveBeenCalled();
+	});
+
+	it("la bebida sugerida (custom_item) llega a la RPC como su propia línea", async () => {
+		stubRoutes({});
+		const bebida = {
+			id: "upsell_beverage_bebida-mnm58r7yf0xa",
+			name: "bebidas de 2 litro",
+			quantity: 1,
+			price: 2800,
+			custom_item: true,
+		};
+		await ordersService.createOrder({ ...ORDER, total: 3800, items: [LINE, bebida] });
+		expect(mocks.rpc).toHaveBeenCalledWith(
+			"create_public_order_v1",
+			expect.objectContaining({
+				p_total: 3800,
+				p_items: expect.arrayContaining([
+					expect.objectContaining({ id: "bebida-mnm58r7yf0xa", manual_order_source: "beverages", is_extra: true }),
+				]),
+			}),
+		);
+	});
+
 	it("los demás errores de la RPC siguen con su propio texto y sin código", async () => {
 		stubRoutes({});
 		mocks.rpc.mockResolvedValue({ data: null, error: { message: "outside_business_hours" } });
