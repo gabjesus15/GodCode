@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 
 import { supabaseAdmin } from "@/lib/infra/supabase-admin";
-import { companyCanChooseStorefrontEntry } from "@/lib/plans/plan-product-mode";
 import { mergeThemeConfig } from "@/lib/store-theme/merge-theme-config";
 import {
 	STOREFRONT_ENTRIES,
@@ -22,7 +21,7 @@ import { assertCustomerAccountRateLimit } from "@/lib/tenant/customer-account-ra
 async function readCompany(companyId: string) {
 	return supabaseAdmin
 		.from("companies")
-		.select("public_slug,theme_config,plans:plans(is_public)")
+		.select("public_slug,theme_config")
 		.eq("id", companyId)
 		.maybeSingle();
 }
@@ -40,7 +39,6 @@ export async function GET() {
 
 	return NextResponse.json({
 		storefrontEntry: resolveStorefrontEntry(company),
-		canChooseStorefrontEntry: companyCanChooseStorefrontEntry(company),
 	});
 }
 
@@ -63,11 +61,6 @@ export async function PUT(req: NextRequest) {
 	const { data: company, error: readError } = await readCompany(ctx.companyId);
 	if (readError) return NextResponse.json({ error: readError.message }, { status: 500 });
 	if (!company) return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
-
-	// La tarjeta se oculta sin el plan, pero es aquí donde se hace valer.
-	if (!companyCanChooseStorefrontEntry(company)) {
-		return NextResponse.json({ error: "Tu plan no incluye esta opción." }, { status: 403 });
-	}
 
 	const { error: updateError } = await supabaseAdmin
 		.from("companies")

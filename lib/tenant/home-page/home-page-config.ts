@@ -11,7 +11,6 @@
  * que guarda y el editor de /cuenta, y todos normalizan con la misma función.
  */
 
-import { companyCanChooseStorefrontEntry } from "@/lib/plans/plan-product-mode";
 import { readThemeConfigObject } from "@/lib/store-theme/merge-theme-config";
 
 export const HOME_PAGE_THEME_KEY = "homePage" as const;
@@ -350,7 +349,7 @@ export function readHomePageConfig(themeConfig: unknown, legacy?: { schedule?: s
 	return normalizeHomePageConfig(readThemeConfigObject(themeConfig)[HOME_PAGE_THEME_KEY], legacy);
 }
 
-/** Clave propia en `theme_config`, fuera de `homePage`: está limitada por plan. */
+/** Clave propia en `theme_config`, fuera de `homePage`: la elige el dueño en la pestaña Tienda de /cuenta. */
 export const STOREFRONT_ENTRY_THEME_KEY = "storefrontEntry";
 export const STOREFRONT_ENTRIES = ["home", "menu-panel"] as const;
 export type StorefrontEntry = (typeof STOREFRONT_ENTRIES)[number];
@@ -361,9 +360,9 @@ export function readStorefrontEntry(themeConfig: unknown): StorefrontEntry {
 	return pick(readThemeConfigObject(themeConfig)[STOREFRONT_ENTRY_THEME_KEY], STOREFRONT_ENTRIES, DEFAULT_STOREFRONT_ENTRY);
 }
 
-/** La que vale en la tienda: si el plan ya no la incluye, vuelve la portada aunque quede guardada. */
-export function resolveStorefrontEntry(company: { theme_config?: unknown; plans?: unknown }): StorefrontEntry {
-	return companyCanChooseStorefrontEntry(company) ? readStorefrontEntry(company.theme_config) : DEFAULT_STOREFRONT_ENTRY;
+/** La que vale en la tienda: la que eligió el dueño. Es un ajuste de la tienda, no depende del plan. */
+export function resolveStorefrontEntry(company: { theme_config?: unknown }): StorefrontEntry {
+	return readStorefrontEntry(company.theme_config);
 }
 
 /** Id para un enlace propio nuevo. */

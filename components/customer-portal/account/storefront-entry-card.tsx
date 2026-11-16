@@ -11,9 +11,9 @@ import { Card } from "../ui/Card";
 
 const ENDPOINT = "/api/customer-account/storefront-entry";
 
-/** Switch de la pestaña Tienda. Sin el plan que lo incluye no se muestra. */
+/** Switch de la pestaña Tienda. Aparece cuando ya se sabe lo guardado, para no mostrar un valor falso. */
 export function StorefrontEntryCard() {
-	const [canChoose, setCanChoose] = useState(false);
+	const [loaded, setLoaded] = useState(false);
 	const [entry, setEntry] = useState<StorefrontEntry>("home");
 	const [savedEntry, setSavedEntry] = useState<StorefrontEntry>("home");
 	const [saving, setSaving] = useState(false);
@@ -26,13 +26,13 @@ export function StorefrontEntryCard() {
 			try {
 				const res = await fetch(ENDPOINT, { cache: "no-store" });
 				if (!res.ok) return;
-				const data = (await res.json()) as { storefrontEntry: StorefrontEntry; canChooseStorefrontEntry: boolean };
+				const data = (await res.json()) as { storefrontEntry: StorefrontEntry };
 				if (cancelled) return;
 				setEntry(data.storefrontEntry);
 				setSavedEntry(data.storefrontEntry);
-				setCanChoose(data.canChooseStorefrontEntry === true);
+				setLoaded(true);
 			} catch {
-				// Sin respuesta no se puede saber si el plan lo incluye: la tarjeta sigue oculta.
+				// Sin respuesta no se sabe qué está guardado: la tarjeta sigue oculta.
 			}
 		})();
 		return () => {
@@ -40,7 +40,7 @@ export function StorefrontEntryCard() {
 		};
 	}, []);
 
-	if (!canChoose) return null;
+	if (!loaded) return null;
 
 	const dirty = entry !== savedEntry;
 	const directToMenu = entry === "menu-panel";
