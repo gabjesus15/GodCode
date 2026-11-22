@@ -848,9 +848,9 @@
         "added": "Hinzugefügt"
       },
       "sizes": {
-        "title": "Größe wählen",
-        "groupAria": "Größen für {name}",
-        "choose": "Größe wählen",
+        "title": "Option wählen",
+        "groupAria": "Optionen für {name}",
+        "choose": "Option wählen",
         "sizeInCart": "{count} im Warenkorb"
       },
       "contact": {

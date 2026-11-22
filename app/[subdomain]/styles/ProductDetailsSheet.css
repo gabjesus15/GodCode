@@ -384,13 +384,14 @@
 .pds-seg__item {
 	position: relative;
 	flex: 1 1 0;
-	min-width: 88px;
+	min-width: 110px;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	gap: 2px;
 	min-height: 56px;
+	text-align: center;
 	padding: 8px 10px;
 	border-radius: 12px;
 	color: var(--menu-fg-2);
@@ -437,10 +438,21 @@
 	white-space: nowrap;
 }
 
+/* Nombres largos ("2 POLLO 1 CAMARÓN") bajan a una segunda línea en vez de
+   montarse sobre la opción vecina. */
 .pds-seg__name {
+	max-width: 100%;
 	font-size: 0.875rem;
 	font-weight: 600;
 	letter-spacing: -0.005em;
+	line-height: 1.2;
+	white-space: normal;
+	overflow-wrap: break-word;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
 }
 
 .pds-seg__price {

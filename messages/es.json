@@ -848,9 +848,9 @@
         "added": "Agregado"
       },
       "sizes": {
-        "title": "Elige el tamaño",
-        "groupAria": "Tamaños de {name}",
-        "choose": "Elegir tamaño",
+        "title": "Elige una opción",
+        "groupAria": "Opciones de {name}",
+        "choose": "Elegir opción",
         "sizeInCart": "{count} en el carrito"
       },
       "contact": {

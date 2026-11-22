@@ -848,9 +848,9 @@
         "added": "Added"
       },
       "sizes": {
-        "title": "Choose a size",
-        "groupAria": "Sizes for {name}",
-        "choose": "Choose size",
+        "title": "Choose an option",
+        "groupAria": "Options for {name}",
+        "choose": "Choose option",
         "sizeInCart": "{count} in cart"
       },
       "contact": {
